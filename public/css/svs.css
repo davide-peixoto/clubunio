@@ -1,0 +1,88 @@
+/* Narrow overrides on Filament components; no changes to vendor assets. */
+:root { --svs-border: #e4e4e7; }
+body { letter-spacing: 0; }
+.fi-body:not(.dark *) { background: #f7f8fa; }
+.svs-brand { display:flex; align-items:center; gap:10px; text-align:left; }
+.svs-brand img { width:36px; height:40px; object-fit:contain; }
+.svs-brand strong { display:block; font-size:16px; line-height:1.3; color:inherit; }
+.svs-brand span { display:block; font-size:9px; margin-top:3px; color:#71717a; }
+.svs-brand b { margin-left:6px; color:#a16207; font-weight:600; }
+.fi-sidebar { border-right:1px solid var(--svs-border); }
+.fi-topbar { border-bottom:1px solid var(--svs-border); box-shadow:none; }
+.fi-main { padding-top:24px; }
+.fi-header-heading { font-size:26px; line-height:1.25; letter-spacing:0; }
+.fi-header-subheading { font-size:14px; }
+.fi-ta-ctn { border-radius:6px; box-shadow:none; }
+.fi-ta-header-cell { background:#f4f4f5; font-size:12px; }
+.fi-ta-cell { padding-top:0; padding-bottom:0; }
+.fi-ta-row:hover { background:#fafafa; }
+.fi-ta-text { font-variant-numeric:tabular-nums; }
+.fi-btn { border-radius:5px; }
+.clubunio-message-body { white-space:pre-wrap; overflow-wrap:anywhere; margin-top:0.5rem; }
+.clubunio-message-section + .clubunio-message-section { margin-top:1.5rem; }
+.clubunio-placeholders { display:flex; flex-wrap:wrap; gap:0.5rem 1rem; margin-top:0.5rem; }
+.fi-in-repeatable-table { font-variant-numeric:tabular-nums; }
+.fi-in-entry-label { color:#71717a; font-size:12px; }
+.dark .fi-in-entry-label { color:#a1a1aa; }
+.fi-in-repeatable .fi-in-entry-label { font-size:14px; font-weight:600; }
+.fi-in-repeatable-table th { background:#f4f4f5; }
+.fi-in-repeatable-table td { vertical-align:top; }
+.svs-pdf-frame { display:block; width:100%; height:calc(100dvh - 190px); min-height:320px; border:1px solid var(--svs-border); background:#f4f4f5; border-radius:4px; }
+.dark { --svs-border:#3f3f46; }
+.dark .fi-ta-header-cell, .dark .fi-in-repeatable-table th { background:#27272a; }
+.dark .fi-ta-row:hover { background:#27272a; }
+.dark .svs-brand span { color:#a1a1aa; }
+.clubunio-signage { min-width:0; }
+.clubunio-display:fullscreen { background:#fff; color:#18181b; overflow:auto; padding:24px; }
+.clubunio-display:fullscreen .clubunio-signage { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:24px; }
+.clubunio-display:fullscreen .clubunio-signage-controls { grid-column:1/-1; }
+@media(max-width:900px) { .clubunio-display:fullscreen { padding:12px; } .clubunio-display:fullscreen .clubunio-signage { grid-template-columns:minmax(0,1fr); } }
+.clubunio-signage-feeds { display:grid; grid-template-columns:minmax(240px,1fr) minmax(0,2fr); gap:32px; min-width:0; }
+.clubunio-signage-feeds section { min-width:0; border-top:1px solid var(--svs-border); padding-top:16px; }
+.clubunio-signage-feeds h2 { font-size:18px; font-weight:600; margin-bottom:12px; }
+.clubunio-signage-feeds p { margin:8px 0; overflow-wrap:anywhere; }
+.clubunio-signage-feeds a { text-decoration:underline; }
+.clubunio-feed-time { font-size:12px; color:#52525b; }
+.dark .clubunio-feed-time { color:#a1a1aa; }
+.clubunio-signage-feeds .clubunio-weather-temperature { font-size:28px; font-weight:600; }
+.clubunio-weather-days { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.clubunio-weather-days > div { display:grid; align-content:start; gap:6px; font-size:13px; overflow-wrap:anywhere; }
+.clubunio-instagram-posts { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:20px; }
+.clubunio-instagram-posts img { width:100%; aspect-ratio:1; object-fit:contain; background:#f4f4f5; border-radius:4px; }
+.clubunio-instagram-posts p { font-size:13px; white-space:pre-wrap; }
+@media(max-width:760px) { .clubunio-signage-feeds { grid-template-columns:minmax(0,1fr); } }
+.clubunio-club-logo { display:inline-flex; flex:0 0 36px; width:36px; height:36px; align-items:center; justify-content:center; vertical-align:middle; }
+.clubunio-club-logo img { display:block; width:36px; height:36px; object-fit:contain; }
+.clubunio-club-name { display:flex; align-items:center; gap:10px; min-width:140px; }
+.clubunio-club-name > span:last-child { min-width:0; overflow-wrap:anywhere; }
+.clubunio-signage-controls { display:flex; flex-wrap:wrap; align-items:end; gap:1rem; }
+.clubunio-signage-controls label { display:grid; gap:0.35rem; max-width:100%; font-size:14px; }
+.clubunio-signage-controls input, .clubunio-signage-controls select { border:1px solid var(--svs-border); border-radius:5px; padding:8px 10px; color:inherit; background:transparent; min-height:40px; max-width:100%; }
+.clubunio-signage-controls label:has(input[type="checkbox"]) { display:flex; align-items:center; min-height:40px; gap:8px; }
+.clubunio-signage-controls input[type="checkbox"] { min-height:0; width:18px; height:18px; padding:0; }
+.clubunio-signage section { margin-top:1.75rem; min-width:0; }
+.clubunio-signage h2 { font-size:18px; font-weight:600; margin-bottom:0.5rem; }
+.clubunio-signage h3 { font-weight:600; }
+.clubunio-signage .overflow-x-auto { max-width:100%; overflow-x:auto; }
+.clubunio-signage table { border-collapse:collapse; width:100%; text-align:left; font-size:14px; }
+.clubunio-signage th, .clubunio-signage td { padding:10px 12px; border-bottom:1px solid var(--svs-border); vertical-align:top; }
+.clubunio-signage th { background:#f4f4f5; font-size:12px; font-weight:600; }
+.clubunio-signage td:first-child { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.clubunio-signage td { min-width:80px; max-width:320px; overflow-wrap:anywhere; }
+.clubunio-signage li { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--svs-border); }
+.clubunio-signage article { padding:12px 0; border-bottom:1px solid var(--svs-border); }
+.clubunio-signage p { white-space:pre-wrap; overflow-wrap:anywhere; padding:6px 0; }
+.dark .clubunio-signage th { background:#27272a; }
+.clubunio-contribution-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:20px 32px; max-width:980px; }
+.clubunio-contribution-summary > div { min-width:0; border-bottom:1px solid var(--svs-border); padding:0 0 12px; }
+.clubunio-contribution-summary dt { font-size:13px; color:#52525b; margin-bottom:4px; }
+.clubunio-contribution-summary dd { font-size:16px; font-weight:600; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.dark .clubunio-contribution-summary dt { color:#a1a1aa; }
+.clubunio-batch-table { width:100%; border-collapse:collapse; margin:16px 0; }
+.clubunio-batch-table th,.clubunio-batch-table td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--svs-border); }
+@media (max-width:640px) {
+    .fi-main { padding-top:16px; }
+    .fi-header-heading { font-size:22px; }
+    .svs-pdf-frame { height:calc(100dvh - 180px); }
+    .fi-in-repeatable { overflow-x:auto; max-width:100%; }
+}

@@ -1,0 +1,15 @@
+[Unit]
+Description=ClubUnio staging scheduler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/svs-laravel/current
+ExecStart=/usr/bin/php8.3 artisan schedule:run --no-interaction
+TimeoutStartSec=180
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true

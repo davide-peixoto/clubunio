@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ClubUnio staging scheduled work each minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=5s
+Persistent=false
+Unit=clubunio-scheduler.service
+
+[Install]
+WantedBy=timers.target

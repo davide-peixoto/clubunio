@@ -1,0 +1,54 @@
+:root { color-scheme: light; font-family: Inter, system-ui, sans-serif; color: #242a30; background: #f7f8fa; }
+* { box-sizing: border-box; letter-spacing: 0; }
+body { margin: 0; }
+.portal-header { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; min-height: 64px; padding: 12px 28px; background: #fff; border-bottom: 1px solid #dde1e6; }
+.portal-header strong { font-size: 22px; color: #12644b; }
+nav { display: flex; gap: 16px; flex-wrap: wrap; flex: 1; }
+a { color: #12644b; text-underline-offset: 3px; }
+nav a { text-decoration: none; } nav a[aria-current] { font-weight: 700; }
+main { max-width: 1400px; margin: 0 auto; padding: 28px; }
+h1 { font-size: 26px; margin: 0 0 20px; }
+.page-heading { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; }
+.page-heading span { color: #626873; font-size: 14px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 20px; }
+.toolbar > div { min-width: 180px; max-width: 100%; }
+label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+input, select { font: inherit; max-width: 100%; min-height: 42px; border: 1px solid #aeb6c1; border-radius: 4px; background: #fff; color: inherit; padding: 8px 10px; }
+input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 2px solid #267d9c; outline-offset: 2px; }
+button, .icon-button { cursor: pointer; font: inherit; border: 1px solid #b9c1ca; border-radius: 4px; background: #fff; color: #323a45; }
+.icon-button { display: inline-flex; justify-content: center; align-items: center; width: 42px; height: 42px; flex-shrink: 0; }
+.icon-button svg { width: 20px; height: 20px; }
+.primary { padding: 10px 18px; background: #12644b; color: white; border-color: #12644b; }
+.table-scroll { overflow: auto; background: #fff; border-top: 1px solid #d9dee5; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #e1e5eb; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; }
+th { color: #535c68; background: #eef1f5; font-weight: 600; }
+td:first-child { font-weight: 600; min-width: 170px; }
+.portal-login { max-width: 380px; margin: 48px auto; }
+.portal-login input { width: 100%; margin-bottom: 18px; }
+.portal-login .primary { width: 100%; }
+.admin-link { display: inline-block; margin-top: 24px; font-size: 14px; }
+.error { color: #a3253b; }
+.action-icon { width: 20px; height: 20px; }
+.notification-row { padding: 20px 0; border-bottom: 1px solid #d9dee5; overflow-wrap: anywhere; }
+.notification-row h2 { font-size: 18px; margin: 0; }
+.notification-row time { color: #626873; font-size: 13px; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 20px; }
+.filters label { display: grid; gap: 6px; }
+.registration-details, .registration-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 24px; padding: 20px 0; border-bottom: 1px solid #d9dee5; }
+.registration-details dt { font-size: 13px; color: #626873; }
+.registration-details dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.registration-form label { display: grid; gap: 6px; }
+.registration-form input, .registration-form select, .registration-form textarea { width: 100%; }
+.registration-form textarea { font: inherit; min-height: 100px; padding: 10px; border: 1px solid #aeb6c1; border-radius: 4px; }
+.registration-form button { padding: 10px 18px; background: #12644b; color: #fff; justify-self: start; }
+.full-width { grid-column: 1 / -1; }
+@media (max-width: 600px) { .registration-details, .registration-form { grid-template-columns: minmax(0,1fr); } .portal-header { flex-wrap: wrap; } }
+.pagination { margin-top: 20px; }
+.registration-form input[type="checkbox"] { width: 18px; height: 18px; }
+.review-status { display: inline-flex; vertical-align: middle; width: 22px; height: 22px; }
+.review-status.verified { color: #15803d; }
+.review-status.changed { color: #a16207; }
+.review-status svg { width: 100%; height: 100%; }
+.pagination ul { list-style: none; display: flex; justify-content: space-between; padding: 0; gap: 16px; }
+@media (max-width: 600px) { main { padding: 20px 16px; } .portal-header { padding: 12px 16px; gap: 14px; } .toolbar > div { flex: 1; min-width: 140px; } .toolbar input, .toolbar select { width: 100%; } h1 { font-size: 23px; } }
