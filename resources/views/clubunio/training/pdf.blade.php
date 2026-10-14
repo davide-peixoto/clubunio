@@ -3,4 +3,6 @@
 .training-diagram{width:400px;height:auto;page-break-inside:avoid}
 </style></head><body><header><strong>{{ $tenant->name }}</strong><p>{{ $row->input['teamName'] }} · {{ $row->input['durationMinutes'] }} Minuten · {{ $row->input['playerCount'] }} Spieler</p></header>
 @include('clubunio.training.content',['content'=>$row->plan])
+@if($row->legacy_source_id ?? false)<p>Übernommener Altplan: schematische Grafiken, keine Originalgrafiken.</p>@endif
+@if($row->legacy_quality_pending ?? false)<p>Aktuelle SV-Sissach-/SFV-Qualitätsprüfung ausstehend. Privater Prüfstand.</p>@endif
 <footer>Trainingsplan {{ $row->id }} · Revision {{ $row->revision }}</footer></body></html>

@@ -105,6 +105,7 @@ class TrainingPlanService
             DB::connection('clubunio')->table('clubora.training_plans')->where('id', $id)->where('tenant_id', $tenant->id)->update([
                 'title' => $plan['title'], 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => $shared,
                 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String(),
+                'legacy_quality_pending' => false,
             ]);
             $this->audit($actor, $tenant, $id, $revision, $revision + 1, $shared ? 'saved_shared' : 'saved_private');
         });
@@ -127,6 +128,9 @@ class TrainingPlanService
             if (($row->archived_at !== null) === $archived) {
                 return;
             }
+            if (! $archived && $row->legacy_quality_pending) {
+                throw ValidationException::withMessages(['revision' => 'Altplan braucht eine aktuelle Qualitätsprüfung. Zuerst eine private Kopie erstellen und prüfen.']);
+            }
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)
                 ->update(['archived_at' => $archived ? now() : null, 'updated_at' => now(), 'revision' => $revision + 1]);
             $this->audit($actor, $tenant, $id, $revision, $revision + 1, $archived ? 'archived' : 'restored');
@@ -145,11 +149,12 @@ class TrainingPlanService
             if ($attempt->state === 'completed' && $attempt->plan_id) {
                 return $this->get($actor, $tenant, $attempt->plan_id)->id;
             }
-            $plan = app(TrainingPlanContent::class)->validate($row->plan, (int) $row->input['durationMinutes']);
+            $plan = app(TrainingPlanContent::class)->validate($row->plan, (int) $row->input['durationMinutes'], ! $row->legacy_quality_pending);
             $plan['title'] = mb_substr($plan['title'], 0, 150).' (Kopie)';
             $new = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId([
                 'tenant_id' => $tenant->id, 'owner_id' => $actor->id, 'team_season_id' => $row->team_season_id,
                 'title' => $plan['title'], 'input_json' => $row->input_json, 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => false,
+                'legacy_quality_pending' => $row->legacy_quality_pending,
             ]);
             $this->finish($attempt, 'completed', $new);
             $this->audit($actor, $tenant, $new, 0, 1, 'copied');

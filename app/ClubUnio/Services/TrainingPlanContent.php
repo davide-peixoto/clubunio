@@ -7,7 +7,7 @@ use Illuminate\Validation\ValidationException;
 
 class TrainingPlanContent
 {
-    public function validate(array $plan, int $duration): array
+    public function validate(array $plan, int $duration, bool $requirePhilosophy = true): array
     {
         $data = Validator::make($plan, [
             'title' => 'required|string|max:160', 'focus' => 'required|string|max:1000',
@@ -37,7 +37,7 @@ class TrainingPlanContent
             throw ValidationException::withMessages(['plan' => 'Einstieg, Hauptteil und Abschluss müssen in dieser Reihenfolge vorkommen. Die Übungszeiten müssen der Gesamtdauer entsprechen.']);
         }
         $alignment = implode(' ', [...$data['principles'], ...$data['qualityChecks']]);
-        if (! preg_match('/SV\s*Sissach/iu', $alignment) || ! preg_match('/\bSFV\b/iu', $alignment)) {
+        if ($requirePhilosophy && (! preg_match('/SV\s*Sissach/iu', $alignment) || ! preg_match('/\bSFV\b/iu', $alignment))) {
             throw ValidationException::withMessages(['plan' => 'Die Prüfung der SV-Sissach- und SFV-Philosophie fehlt.']);
         }
 

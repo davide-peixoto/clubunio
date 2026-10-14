@@ -148,6 +148,9 @@ class BusReservationService
             }
             $change = ['status' => $status, 'decision_note' => $note, 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String(), 'decided_at' => now()->toIso8601String(), 'decided_by' => $actor->id];
             $this->table($tenant, 'bus_reservations')->where('id', $id)->update($change);
+            if ($status !== 'GENEHMIGT') {
+                app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id);
+            }
             $this->audit($actor, $tenant, $id, ['status' => $row->status, 'revision' => $revision], $change);
             $this->notify($tenant, $id, $status);
         });
@@ -196,6 +199,7 @@ class BusReservationService
             }
             $this->conflict($tenant, $change['bus_id'], $change['starts_at'], $change['ends_at'], $id);
             $this->table($tenant, 'bus_reservations')->where('id', $id)->update($change + ['revision' => $row->revision + 1, 'updated_at' => now()->toIso8601String()]);
+            app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id);
             $this->audit($actor, $tenant, $id, $before + ['revision' => $row->revision], $change + ['revision' => $row->revision + 1, 'reason' => $data['reason'], 'action' => 'reschedule']);
             $this->notify($tenant, $id, $row->status, 'bus.changed');
         });

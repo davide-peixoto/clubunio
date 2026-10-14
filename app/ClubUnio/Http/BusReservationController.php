@@ -11,6 +11,14 @@ use Illuminate\Http\Request;
 
 class BusReservationController
 {
+    public function keyboxSimulation(Request $request, Tenant $tenant, int $reservation)
+    {
+        $data = $request->validate(['revision' => 'required|integer|min:1']);
+        app(BusKeyboxAccessService::class)->issueSimulation($request->user(), $tenant, $reservation, (int) $data['revision']);
+
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', 'Simulation geprüft. Der Testcode öffnet keine echte Schlüsselbox.');
+    }
+
     public function __construct(private BusReservationService $service) {}
 
     private function context(Request $request, Tenant $tenant): array

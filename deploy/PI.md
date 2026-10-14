@@ -1,5 +1,9 @@
 # Pi staging: dev.clubunio.ch
 
+Release56: `20261015-clubunio-56-training-keybox-instagram`, Ruecksprung55.
+Eigene additive Migrationen55/56. Keine echte Schluesselboxausgabe, kein Versand
+und keine Bankzahlung. Details: CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md.
+
 ## Verbindlicher Releaseabschluss
 
 Nach jedem Release Aenderungen und Secret-Ausschluesse pruefen, committen

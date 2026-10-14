@@ -7,6 +7,8 @@
 @if($canReschedule)<a class="primary" href="{{ route('clubunio.bus.edit',[$tenant->slug,$row->id]) }}">@svg('heroicon-o-pencil-square') Umbuchen</a>@endif
 @if($actor->canAccessTenant($tenant) && $row->legacy_id && (!$row->member_id || !$row->team_season_id))<a class="primary" href="{{ route('clubunio.bus.assignment',[$tenant->slug,$row->id]) }}">@svg('heroicon-o-link') Historische Zuordnung</a>@endif
 @if($keybox['eligible'])<section><h2>Schlüsselbox</h2><p>Zugangsfenster: {{ $keybox['from']->format('d.m.Y H:i') }} – {{ $keybox['until']->format('d.m.Y H:i') }}</p><p>{{ $keybox['inWindow'] ? 'Zeitfenster aktiv.' : 'Ausserhalb des Zugangsfensters.' }} Code-Ausgabe im ClubUnio-Testbetrieb gesperrt.</p></section>@endif
+@if($keybox['simulationEnabled'])<section><h2>Schlüsselbox-Simulation</h2><p>Keine echte Geräteverbindung. Der Testcode öffnet keine Schlüsselbox.</p>
+@if($keybox['testCode'])<output>{{ $keybox['testCode'] }}</output>@elseif($keybox['inWindow'])<form method="post" action="{{ route('clubunio.bus.keybox.simulation',[$tenant->slug,$row->id]) }}">@csrf<input type="hidden" name="revision" value="{{ $row->revision }}"><button class="primary">@svg('heroicon-o-beaker') Testcode erzeugen</button></form>@endif</section>@endif
 @if(\Carbon\Carbon::parse($row->ends_at)->isFuture() && in_array($row->status,['ANGEFRAGT','GENEHMIGT','UNBEKANNT'],true))
 @if($actor->canAccessTenant($tenant) || ($canCancel && $row->status==='ANGEFRAGT'))
 <form method="post" action="{{ route('clubunio.bus.decide',[$tenant->slug,$row->id]) }}" class="planning-form">@csrf<input type="hidden" name="revision" value="{{ $row->revision }}">

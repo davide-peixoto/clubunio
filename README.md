@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket56: Trainingsaltbestand mit expliziter Zuordnung und Qualitaetssperre,
+Bus-Schluesselbox-Simulation (keine echte Hardwareausgabe) und Instagram-Livecheck.
+Siehe [Stand und offene Schritte](deploy/CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md).
+
 Vereinsverwaltung auf Laravel und Filament. Aktueller Fachstand: Release55,
 Gutschriften und manuelle Rueckerstattungsnachweise, ausschliesslich
 Bexio-Sandbox; keine echten Bankzahlungen. PHPMaker DEV/PROD bleibt parallel.

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\ClubUnio\Http\UseActiveTenant;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Pages\BexioDispatchTrials;
 use App\ClubUnio\Pages\BexioReconciliation;
@@ -17,10 +18,12 @@ use App\ClubUnio\Resources\BankAccountReportResource;
 use App\ClubUnio\Resources\BankResource;
 use App\ClubUnio\Resources\BexioCatalogEntryResource;
 use App\ClubUnio\Resources\BillingRecipientResource;
+use App\ClubUnio\Resources\BusKeyboxResource;
 use App\ClubUnio\Resources\CompetitionResource;
 use App\ClubUnio\Resources\ContributionPriceResource;
 use App\ClubUnio\Resources\ContributionRuleResource;
 use App\ClubUnio\Resources\CountryResource;
+use App\ClubUnio\Resources\CreditNoteResource;
 use App\ClubUnio\Resources\DocumentTypeResource;
 use App\ClubUnio\Resources\ExpenseResource;
 use App\ClubUnio\Resources\ExpenseRoundResource;
@@ -31,6 +34,7 @@ use App\ClubUnio\Resources\FamilyMemberResource;
 use App\ClubUnio\Resources\FamilyReportResource;
 use App\ClubUnio\Resources\FamilyResource;
 use App\ClubUnio\Resources\FieldAvailabilityResource;
+use App\ClubUnio\Resources\FinancialAdjustmentStatusResource;
 use App\ClubUnio\Resources\FootballClubResource;
 use App\ClubUnio\Resources\GameTypeResource;
 use App\ClubUnio\Resources\GenderResource;
@@ -40,6 +44,7 @@ use App\ClubUnio\Resources\InvoiceResource;
 use App\ClubUnio\Resources\InvoiceStatusResource;
 use App\ClubUnio\Resources\InvoiceWorkflowStatusResource;
 use App\ClubUnio\Resources\KeyReportResource;
+use App\ClubUnio\Resources\LegacyTrainingPlanResource;
 use App\ClubUnio\Resources\MemberDocumentResource;
 use App\ClubUnio\Resources\MemberReportResource;
 use App\ClubUnio\Resources\MemberResource;
@@ -51,6 +56,7 @@ use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\PassiveMemberResource;
 use App\ClubUnio\Resources\PaymentReportResource;
 use App\ClubUnio\Resources\PlayerReportResource;
+use App\ClubUnio\Resources\RefundResource;
 use App\ClubUnio\Resources\RegistrationResource;
 use App\ClubUnio\Resources\RegistrationStatusResource;
 use App\ClubUnio\Resources\SeasonResource;
@@ -69,6 +75,7 @@ use App\ClubUnio\Resources\TenantAccountResource;
 use App\ClubUnio\Resources\TrainingOptionResource;
 use App\ClubUnio\Resources\TrainingSlotResource;
 use App\ClubUnio\Resources\UnassignedMemberResource;
+use App\ClubUnio\SessionPanel;
 use App\ClubUnio\Widgets\ClubOverview;
 use App\ClubUnio\Widgets\ExpensesBySeason;
 use App\ClubUnio\Widgets\ExpensesByStatus;
@@ -100,19 +107,21 @@ class ClubUnioPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return \App\ClubUnio\SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
+        return SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
             ->login(Login::class)->brandName('ClubUnio')
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css" rel="stylesheet" data-navigate-track />')])
             ->tenant(Tenant::class, slugAttribute: 'slug', ownershipRelationship: 'tenant')
             ->tenantMenu(false)
-            ->tenantMiddleware([\App\ClubUnio\Http\UseActiveTenant::class], isPersistent: true)
+            ->tenantMiddleware([UseActiveTenant::class], isPersistent: true)
             ->renderHook('panels::sidebar.nav.start', fn () => view('clubunio.tenant-switcher'))
             ->colors(['primary' => Color::Emerald])
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
-                \App\ClubUnio\Resources\CreditNoteResource::class,
-                \App\ClubUnio\Resources\RefundResource::class,
-                \App\ClubUnio\Resources\FinancialAdjustmentStatusResource::class,
+                LegacyTrainingPlanResource::class,
+                BusKeyboxResource::class,
+                CreditNoteResource::class,
+                RefundResource::class,
+                FinancialAdjustmentStatusResource::class,
                 InvoiceCategoryResource::class,
                 BexioCatalogEntryResource::class,
                 StatusStyleResource::class,

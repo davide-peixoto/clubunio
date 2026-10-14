@@ -9,6 +9,7 @@ use App\ClubUnio\Http\NotificationPortalController;
 use App\ClubUnio\Http\PortalController;
 use App\ClubUnio\Http\RegistrationPortalController;
 use App\ClubUnio\Http\TeamPlanningController;
+use App\ClubUnio\Http\TenantNavigationController;
 use App\ClubUnio\Http\TrainingPlanController;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\InvoiceAccessService;
@@ -45,11 +46,11 @@ Route::middleware('auth:portal')->group(function () {
     Route::get('/portal/{tenant:slug}/registration-documents/{document}', [RegistrationPortalController::class, 'document'])->whereNumber('document')->name('clubunio.portal.registration.document');
 });
 
-Route::post('/tenant/switch', [\App\ClubUnio\Http\TenantNavigationController::class, 'switch'])
+Route::post('/tenant/switch', [TenantNavigationController::class, 'switch'])
     ->middleware('auth:clubunio')->name('clubunio.tenant.switch');
 Route::redirect('/clubunio/login', '/login');
 Route::redirect('/clubunio', '/');
-Route::get('/clubunio/{tenant}/{path?}', [\App\ClubUnio\Http\TenantNavigationController::class, 'legacy'])
+Route::get('/clubunio/{tenant}/{path?}', [TenantNavigationController::class, 'legacy'])
     ->where('path', '.*')->middleware('auth:clubunio');
 
 // Preserve bookmarks without changing the registered Bexio callback or replaying writes.
@@ -67,6 +68,7 @@ Route::middleware('auth:clubunio,portal')->prefix('/bus/{tenant:slug}')->name('c
     Route::get('/options', [$controller, 'options'])->name('options');
     Route::post('/options', [$controller, 'saveOption']);
     Route::get('/{reservation}', [$controller, 'show'])->whereNumber('reservation')->name('show');
+    Route::post('/{reservation}/keybox-simulation', [$controller, 'keyboxSimulation'])->whereNumber('reservation')->middleware('throttle:5,1')->name('keybox.simulation');
     Route::get('/{reservation}/edit', [$controller, 'edit'])->whereNumber('reservation')->name('edit');
     Route::post('/{reservation}/reschedule', [$controller, 'reschedule'])->whereNumber('reservation')->name('reschedule');
     Route::post('/{reservation}/decision', [$controller, 'decide'])->whereNumber('reservation')->name('decide');

@@ -7,12 +7,38 @@ use App\ClubUnio\Models\Setting;
 use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class SignageFeedService
 {
+    public function verifyInstagram(Account $actor, Tenant $tenant): array
+    {
+        abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
+        $reference = (string) Str::uuid();
+        $result = ['state' => 'missing', 'item_count' => 0, 'http_status' => null, 'reference' => $reference];
+        $setting = Setting::where('tenant_id', $tenant->id)->where('area', 'integrations')->where('key', 'INSTAGRAM_ACCESS_TOKEN')->first();
+        try {
+            $token = $setting ? trim(Crypt::decryptString($setting->encrypted_value)) : '';
+            if ($token !== '') {
+                $items = $this->instagram($token);
+                $result['state'] = 'ready';
+                $result['item_count'] = count($items);
+                $result['http_status'] = 200;
+            }
+        } catch (\Throwable $error) {
+            $result['state'] = 'failed';
+            $result['http_status'] = $error->getCode() >= 400 && $error->getCode() <= 599 ? (int) $error->getCode() : null;
+            Log::warning('clubunio.instagram.check_failed', ['tenant_id' => $tenant->id, 'reference' => $reference, 'http_status' => $result['http_status']]);
+        }
+        DB::connection('clubunio')->table('clubora.integration_checks')->insert($result + ['kind' => 'instagram', 'tenant_id' => $tenant->id, 'actor_id' => $actor->id]);
+
+        return $result;
+    }
+
     public function read(Account $actor, Tenant $tenant, string $feed): array
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);

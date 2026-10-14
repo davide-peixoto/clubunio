@@ -14,6 +14,16 @@ class Tenant extends Model
         return $this->hasMany(CreditNote::class);
     }
 
+    public function legacyTrainingPlans()
+    {
+        return $this->hasMany(LegacyTrainingPlan::class);
+    }
+
+    public function busKeyboxes()
+    {
+        return $this->hasMany(BusKeybox::class);
+    }
+
     public function refunds()
     {
         return $this->hasMany(Refund::class);

@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket56: Altplaene, Schluesselbox-Simulation, Instagram
+
+Eigene Migrationen55/56. 41 Quellen geprueft, ein Plan privat archiviert,
+29 gueltige Plaene warten auf Mannschaftszuordnung; elf Quellen ausgeschlossen.
+18 Altplaene benoetigen aktuelle Qualitaetspruefung. Keine Original-SVG-Ausfuehrung.
+Instagram live acht Beitraege; Schluesselbox nur nichtphysische Simulation.
+Echter Hardwareadapter und manueller Bexio-Teilgutschrifttest bleiben offen.
+Details: [Fachpaket56](CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md).
+PHPMaker DEV/PROD unveraendert; API/SaaS/Betrieb weiterhin ausgenommen.
+
 ## Fachpaket55: Gutschriften und Rueckerstattungen im Web
 
 Eigene Rechnungen: Teil-/Vollgutschriften, Originalpreis-/Steuersnapshots,
