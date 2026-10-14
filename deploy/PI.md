@@ -1,4 +1,46 @@
-# Pi staging: dev-my2.svsissach.ch
+# Pi staging: dev.clubunio.ch
+
+## Verbindlicher Releaseabschluss
+
+Nach jedem Release Aenderungen und Secret-Ausschluesse pruefen, committen
+und mit origin im ClubUnio-Repository synchronisieren. Arbeitsbaum und
+Remote-Abgleich abschliessend kontrollieren; Pushfehler offen melden.
+Private ENV-Dateien, Uploads, Logs und Testartefakte bleiben ausgeschlossen.
+
+## Fachpaket55: Gutschriften und Rueckerstattungen
+
+Aktiv20261014-clubunio-55-financial-corrections auf Basis54-tenant-navigation.
+Eigene Migration52/53/54 angewendet, keine PHPMaker-DEV-/PROD-Aenderung.
+Storno-Gutschrift33 bestaetigt, steuerhaltige Teilgutschrift10 lokal freigegeben;
+manuelle Bexio-Anlage noch offen. Live Bexio7 Eingangslista15/Total10/Guthaben5,
+manueller Rueckerstattungsnachweis5 ausdruecklich simuliert, keine Bankzahlung.
+Details/Abnahmegrenzen: CLUBUNIO-CREDITS-REFUNDS.md.
+Regression62Tests/440Assertions erfolgreich mit gecachten Routen, eigener
+DB/Rollback-Fixtures. Nachlauf15/77 einschliesslich expliziter Zeitoffsets.
+Angemeldete Listen/Dossiers und Gutschriftsdialog Desktop/390px geprueft.
+Providerwerte/Journal idempotent, 189 Settings/42 Vorlagen/Outbound aus
+verifiziert. Kurze URLs/Tenant-Middleware auf Pi geprueft, Ruecksprung54.
+Zeitoffsets nur neue Modelle/Snapshotwrites; drei synthetische Belege und
+deren Finanzsnapshot auditiert korrigiert. Kein globaler Altbestand-Update.
+
+## Release54: mandantenlose Verwaltungs-URLs
+
+https://dev.clubunio.ch/login und / als Dashboard; /members, /invoices usw.
+Mandant serverseitig aus eigener Mitgliedschaft, Wechsel ueber Dropdown.
+Keine DB/ENV-Aenderung; Ruecksprung53. Details/Testgrenzen:
+CLUBUNIO-TENANT-NAVIGATION.md.
+
+14.10.2026 Routingkorrektur: Assetordner public/clubunio darf Panelroute
+nicht verdecken. Nginx try_files ohne Verzeichnispruefung; beide neuen
+Domainwurzeln erreichen jetzt HTTPS-Login200 ohne internen Port. CSS200.
+Details CLUBUNIO-DOMAINS.md. PHP-Release53 unveraendert.
+
+## Zentraler Bexio-Callback Release53-bexio-domain
+
+Hauptdomain https://dev.clubunio.ch, APP_URL entsprechend umgestellt.
+Verbindung /integrations/bexio, Callback /integrations/bexio/callback.
+Alte Routen kompatibel; Filament-Pfade unveraendert. Keine DB-Migration.
+Details/Abnahmegrenzen: CLUBUNIO-BEXIO-DOMAIN.md.
 
 ## Domainvorbereitung 14.10.2026
 

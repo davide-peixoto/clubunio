@@ -6,4 +6,5 @@ use App\Providers\Filament\ClubUnioPanelProvider;
 return [
     AppServiceProvider::class,
     ClubUnioPanelProvider::class,
+    App\Providers\TenantNavigationServiceProvider::class,
 ];

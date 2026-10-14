@@ -45,7 +45,12 @@ Route::middleware('auth:portal')->group(function () {
     Route::get('/portal/{tenant:slug}/registration-documents/{document}', [RegistrationPortalController::class, 'document'])->whereNumber('document')->name('clubunio.portal.registration.document');
 });
 
-Route::redirect('/', '/clubunio');
+Route::post('/tenant/switch', [\App\ClubUnio\Http\TenantNavigationController::class, 'switch'])
+    ->middleware('auth:clubunio')->name('clubunio.tenant.switch');
+Route::redirect('/clubunio/login', '/login');
+Route::redirect('/clubunio', '/');
+Route::get('/clubunio/{tenant}/{path?}', [\App\ClubUnio\Http\TenantNavigationController::class, 'legacy'])
+    ->where('path', '.*')->middleware('auth:clubunio');
 
 // Preserve bookmarks without changing the registered Bexio callback or replaying writes.
 Route::get('/clubora/{path?}', function (Request $request, ?string $path = null) {
@@ -111,7 +116,13 @@ Route::middleware('auth:clubunio,portal')->prefix('/planning/{tenant:slug}')->na
     Route::post('/events/{event}/members/{member}', [$controller, 'participate'])->whereNumber('event')->whereNumber('member')->name('participate');
 });
 
-Route::middleware('auth:clubunio')->prefix('/clubora-bexio/{tenant:slug}')->name('clubunio.bexio.')->group(function () {
+Route::middleware('auth:clubunio')->prefix('/integrations/bexio')->name('clubunio.bexio.')->group(function () {
+    Route::get('/', [BexioConnectionController::class, 'centralShow'])->name('show');
+    Route::post('/connect', [BexioConnectionController::class, 'centralStart'])->middleware('throttle:5,1')->name('start');
+    Route::get('/callback', [BexioConnectionController::class, 'centralCallback'])->middleware('throttle:10,1')->name('callback');
+});
+
+Route::middleware('auth:clubunio')->prefix('/clubora-bexio/{tenant:slug}')->name('clubunio.bexio.legacy.')->group(function () {
     $controller = BexioConnectionController::class;
     Route::get('/', [$controller, 'show'])->name('show');
     Route::post('/connect', [$controller, 'start'])->middleware('throttle:5,1')->name('start');
@@ -139,7 +150,7 @@ Route::get('/clubora-expense-documents/{tenant:slug}/{line}', function (Request 
 
     return app(MemberDocumentService::class)->openExpense($request->user('clubunio'), $tenant, $line, $request->boolean('download'), (int) ($data['index'] ?? 0));
 })->middleware('auth:clubunio')->whereNumber('line')->name('clubunio.expenses.document');
-Route::get('/admin/{path?}', fn () => redirect('/clubunio'))->where('path', '.*');
+Route::get('/admin/{path?}', fn () => redirect('/'))->where('path', '.*');
 
 Route::get('/clubora-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
     return app(MemberDocumentService::class)->open($request->user('clubunio'), $tenant, $document, $request->boolean('download'));

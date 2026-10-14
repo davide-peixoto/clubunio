@@ -15,7 +15,7 @@ class ListSettings extends ListRecords
     {
         return [Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')
             ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
-            ->url(fn () => route('clubunio.bexio.show', Filament::getTenant()->slug))];
+            ->url(fn () => route('clubunio.bexio.show', ['tenant' => Filament::getTenant()->slug]))];
     }
 
     protected static string $resource = SettingResource::class;

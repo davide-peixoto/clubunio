@@ -1,5 +1,18 @@
 # ClubUnio: DEV-Domains und Mandantenrouting
 
+## Nachtrag 14.10.2026: Verzeichnis kollidierte mit Panelroute
+
+DNS inzwischen aktiv; APP_URL/Bexio siehe CLUBUNIO-BEXIO-DOMAIN.md.
+public/clubunio existiert als Assetordner. try_files $uri $uri/ fuehrte bei
+/clubunio zu Nginx301 auf http://dev.clubunio.ch:8092/clubunio/ und danach
+403 statt Laravel. Aktive Pi-Regel und Vorlage pruefen jetzt nur Dateien
+mit try_files $uri /index.php?$query_string; Verzeichnisse gehen an Laravel.
+nginx -t und Reload erfolgreich. Beide Domainwurzeln und /clubunio/ bis
+HTTPS-Login200 verfolgt; CSS200. Keine PHP-/DB-Aenderung, Release53 bleibt.
+Sicherung: svs-laravel.before-route-directory-fix-20261014 im Nginx-sites-
+available-Verzeichnis. Browser koennen die alte permanente301 gespeichert
+haben; dann Websitecache leeren oder in privatem Fenster erneut pruefen.
+
 Stand 14.10.2026. Domainvorbereitung, keine abgeschlossene Umstellung des
 Mandantenroutings. PHPMaker DEV/PROD unveraendert. Keine DB-Migration.
 

@@ -44,6 +44,6 @@ class InvoiceResource extends FinanceResource
 
     public static function getRelations(): array
     {
-        return [Relations\InvoiceLinesRelationManager::class];
+        return [Relations\InvoiceLinesRelationManager::class, Relations\InvoiceCreditsRelationManager::class, Relations\InvoiceRefundsRelationManager::class];
     }
 }

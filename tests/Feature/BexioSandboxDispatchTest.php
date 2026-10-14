@@ -122,8 +122,8 @@ class BexioSandboxDispatchTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
-        $this->get('/clubunio/'.$this->tenant->slug.'/invoices')->assertOk()->assertSee('Rechnung erstellen');
-        $this->get('/clubunio/'.$this->tenant->slug.'/invoices/'.$invoice->id)->assertOk()->assertSee('Steuerbehandlung');
+        $this->get('/invoices')->assertOk()->assertSee('Rechnung erstellen');
+        $this->get('/invoices/'.$invoice->id)->assertOk()->assertSee('Steuerbehandlung');
     }
 
     public function test_test_article_timeout_reconciles_without_second_post(): void
@@ -232,7 +232,7 @@ class BexioSandboxDispatchTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
-        $this->actingAs($this->actor, 'clubunio')->get('/clubunio/'.$this->tenant->slug.'/bexio-catalog-entries')
+        $this->actingAs($this->actor, 'clubunio')->get('/bexio-catalog-entries')
             ->assertOk()->assertSee('Bexio-Artikel und Steuern')->assertSee('Testartikel');
         $entry = (clone $model)->where('kind', 'article')->firstOrFail();
         $this->assertSame([$entry->id => 'Testartikel'], $service->articleOptions($this->tenant));

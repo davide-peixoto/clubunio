@@ -3,8 +3,10 @@
 namespace App\ClubUnio\Resources\InvoiceResource\Pages;
 
 use App\ClubUnio\Models\InvoiceCategory;
+use App\ClubUnio\Resources\FinancialAdjustmentActions;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\InvoiceResource;
+use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\InvoiceWorkflowService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -30,6 +32,10 @@ class ViewInvoice extends ViewRecord
         $revision = fn () => TextInput::make('revision')->label('Version')->readOnly()->required();
 
         return [
+            FinancialAdjustmentActions::credit(fn () => $this->getRecord()->id)
+                ->visible(fn () => ! $this->getRecord()->legacy_id && $this->getRecord()->active && in_array($this->getRecord()->workflowStatus?->code, ['released', 'cancelled'], true)),
+            FinancialAdjustmentActions::refund(fn () => $this->getRecord()->id)
+                ->visible(fn () => (bool) $this->getRecord()->bexio_invoice_id && ! $this->getRecord()->legacy_id && BexioConnectionService::canManage($actor(), $tenant())),
             Action::make('archive')->label('Archivieren')->icon('heroicon-o-archive-box')
                 ->visible(fn () => $this->getRecord()->active && ! $this->getRecord()->legacy_id && ! $this->getRecord()->bexio_invoice_id && $this->getRecord()->workflowStatus?->code === 'cancelled')
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])

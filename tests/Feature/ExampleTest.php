@@ -15,14 +15,14 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertRedirect('/clubunio');
+        $response->assertRedirect('/login');
     }
 
     public function test_old_pilot_is_removed(): void
     {
-        $this->get('/admin')->assertRedirect('/clubunio');
-        $this->get('/admin/login')->assertRedirect('/clubunio');
-        $this->get('/admin/invoices/123')->assertRedirect('/clubunio');
+        $this->get('/admin')->assertRedirect('/');
+        $this->get('/admin/login')->assertRedirect('/');
+        $this->get('/admin/invoices/123')->assertRedirect('/');
         $this->get('/invoices/123/pdf')->assertNotFound();
         $this->post('/invoices/123/pdf/connect')->assertNotFound();
         $this->assertNull(config('database.connections.legacy'));

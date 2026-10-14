@@ -1,5 +1,35 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket55: Gutschriften und Rueckerstattungen im Web
+
+Eigene Rechnungen: Teil-/Vollgutschriften, Originalpreis-/Steuersnapshots,
+Freigabe, manuelle Bexio-Zuordnung mit technischer Gesamtbetragspruefung,
+Rueckerstattungsvormerkung und synthetische manuelle Nachweise ohne Banktransfer.
+Listen/Statuslookups/Ansichten/Dossiers/Dashboard, Summe/Revision/UUID/Audit.
+Live Storno-Gutschrift33 zugeordnet; Bexio7 Eingang10+5, Zahlungsliste15 und
+Guthaben5 lesend bestaetigt. Lokaler Testnachweis5, keine echte Rueckzahlung.
+Neue Teilgutschrift10 mit Steuer lokal freigegeben; manuelle Bexio-Anlage noch
+offen, da kein API-Anlage-Endpunkt. Nicht als automatischen Kreditadapter werten.
+Migration52/53/54 eigeneDB; PHPMaker DEV/PROD, API/SaaS/Betrieb unveraendert.
+Details und Abnahmegrenzen: CLUBUNIO-CREDITS-REFUNDS.md. Danach Altplan-
+Konvertierung/Zuordnungen, Bus-Keybox und Instagram-Fachabnahme separat.
+
+## Verwaltungs-URLs und Mandantenwahl
+
+14.10.2026 Release54: Verwaltung ohne /clubunio/{slug}, automatische
+Mandantenwahl, Dropdown bei mehreren Berechtigungen. Filament-Scoping
+erhalten; Schutz alter Browser-Tabs und CSRF-Formulare beim Wechsel.
+Keine DB-Migration. Standalone Portal-/Dokument-/Kalenderlinks kompatibel.
+Tests/Framework-Upgrade-Hinweise: CLUBUNIO-TENANT-NAVIGATION.md.
+
+## Zentraler Bexio-Callback
+
+14.10.2026: ClubUnio-Bexio nach /integrations/bexio umgestellt. Callback
+ohne Mandantenslug, serverseitiger benutzergebundener Einmalkontext und
+erneute Rechtepruefung. APP_URL dev.clubunio.ch. Keine DB-Migration,
+PHPMaker unveraendert. Restliche mandantenlose Webnavigation bleibt offen.
+Details und Testgrenzen: CLUBUNIO-BEXIO-DOMAIN.md.
+
 ## Domainwechsel: Infrastruktur vorbereitet, Routing offen
 
 14.10.2026: Pi erlaubt dev.clubunio.ch, .com wird weitergeleitet. Proxy/TLS

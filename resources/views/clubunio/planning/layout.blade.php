@@ -2,7 +2,7 @@
 <html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Teamplanung · ClubUnio</title><link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}"><link rel="stylesheet" href="{{ asset('css/clubunio-planning.css') }}"></head>
 <body><header class="portal-header"><strong>ClubUnio</strong><nav aria-label="Teamplanung">
-<a href="{{ $actor->canAccessTenant($tenant) && auth('clubunio')->check() ? '/clubunio/'.$tenant->slug : route('clubunio.portal.members',$tenant->slug) }}" class="icon-button" title="Zur Übersicht" aria-label="Zur Übersicht">@svg('heroicon-o-arrow-left')</a>
+<a href="{{ $actor->canAccessTenant($tenant) && auth('clubunio')->check() ? '/' : route('clubunio.portal.members',$tenant->slug) }}" class="icon-button" title="Zur Übersicht" aria-label="Zur Übersicht">@svg('heroicon-o-arrow-left')</a>
 <a href="{{ route('clubunio.planning.index',$tenant->slug) }}">Teamplanung</a><a href="{{ route('clubunio.planning.absences',$tenant->slug) }}">Absenzen</a>
 <a href="{{ route('clubunio.planning.calendar',$tenant->slug) }}">Kalender</a>
 @if(count($managed))<a href="{{ route('clubunio.planning.sfv',$tenant->slug) }}">SFV-Spiele</a>@endif

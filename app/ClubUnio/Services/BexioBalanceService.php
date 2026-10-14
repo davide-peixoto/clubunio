@@ -29,9 +29,11 @@ class BexioBalanceService
             $total = $this->cents($data['total'] ?? null);
             $paid = $this->cents($data['total_received_payments'] ?? null);
             $credit = $this->cents($data['total_credit_vouchers'] ?? null);
-            $remaining = $this->cents($data['total_remaining_payments'] ?? null);
+            $value = $data['total_remaining_payments'] ?? null;
+            $negative = is_scalar($value) && str_starts_with((string) $value, '-');
+            $remaining = $this->cents($negative ? substr((string) $value, 1) : $value) * ($negative ? -1 : 1);
             $status = (string) ($data['kb_item_status_id'] ?? '');
-            $invalidStatus = ($status === '9' && $remaining !== 0)
+            $invalidStatus = ($status === '9' && $remaining > 0)
                 || ($status === '16' && ($remaining <= 0 || $paid + $credit <= 0))
                 || (in_array($status, ['7', '8', '31'], true) && $paid > 0);
         } else {
@@ -49,6 +51,7 @@ class BexioBalanceService
             throw ValidationException::withMessages(['balance' => 'Bexio-Status, Zahlungen, Gutschriften oder Restbetrag sind widerspruechlich.']);
         }
 
-        return ['total_cents' => $total, 'paid_cents' => $paid, 'credit_cents' => $credit, 'remaining_cents' => $remaining];
+        return ['total_cents' => $total, 'paid_cents' => $paid, 'credit_cents' => $credit,
+            'remaining_cents' => max(0, $remaining), 'overpaid_cents' => max(0, -$remaining)];
     }
 }

@@ -104,7 +104,13 @@ class BexioReconciliationService
         $expected = $type === 'invoice' ? app(InvoiceTaxService::class)->summary($document, true)['total_cents']
             : $money->cents((string) $document->activeLines()->sum('amount'));
 
-        return $money->normalize($type, $data, $expected);
+        $balance = $money->normalize($type, $data, $expected);
+        $tenant = Tenant::findOrFail($document->tenant_id);
+        if ($type === 'invoice' && $this->sandbox($tenant)) {
+            $balance += app(BexioInvoiceCashService::class)->read($tenant, (string) $data['id'], $balance);
+        }
+
+        return $balance;
     }
 
     private function proposal(Tenant $tenant, string $type, $document, string $status, array $data, ?array $financials = null): array
@@ -210,7 +216,7 @@ class BexioReconciliationService
             }
             $document->save();
             DB::connection('clubunio')->table('clubora.bexio_balances')->updateOrInsert(['tenant_id' => $tenant->id, 'object_type' => $check->object_type, 'object_id' => $document->id],
-                $financials + ['remote_id' => $check->remote_id, 'remote_status' => $check->remote_status, 'observed_at' => now()]);
+                $financials + ['remote_id' => $check->remote_id, 'remote_status' => $check->remote_status, 'observed_at' => now()->toIso8601String()]);
             if ($check->object_type === 'expense' && $before['status_id'] != $document->status_id) {
                 app(ExpenseMessageService::class)->record($tenant, $document->fresh(['status', 'member', 'season', 'round', 'teamSeason.team']));
             } elseif ($check->object_type === 'invoice' && $before['status_id'] != $document->status_id && $proposal['position_code'] !== 'P') {

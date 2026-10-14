@@ -91,6 +91,38 @@ class BexioConnectionTest extends TestCase
         ]);
     }
 
+    public function test_central_callback_uses_session_tenant_and_is_single_use(): void
+    {
+        config(['app.url' => 'https://dev.clubunio.ch']);
+        $this->get('/integrations/bexio')->assertOk();
+        $response = $this->post('/integrations/bexio/connect', ['tenant' => $this->tenant->slug])->assertRedirect();
+        parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('https://dev.clubunio.ch/integrations/bexio/callback', $query['redirect_uri']);
+        $this->fakeExchange($query);
+        $url = '/integrations/bexio/callback?'.http_build_query(['state' => $query['state'], 'code' => 'test-code', 'tenant' => 'another-tenant']);
+        $this->get($url)->assertSessionHas('notice');
+        $this->assertSame('new-refresh', $this->service->connection($this->tenant)['refresh_token']);
+        $this->get($url)->assertStatus(400);
+        Http::assertSentCount(2);
+    }
+
+    public function test_central_routes_reject_foreign_tenant_and_revoked_admin(): void
+    {
+        $other = Tenant::create(['slug' => 'other-'.bin2hex(random_bytes(6)), 'name' => 'Other']);
+        $this->post('/integrations/bexio/connect', ['tenant' => $other->slug])->assertForbidden();
+        $this->get('/integrations/bexio?tenant='.$other->slug)->assertForbidden();
+        $query = $this->begin();
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->get('/integrations/bexio/callback?'.http_build_query(['state' => $query['state'], 'code' => 'test-code']))->assertForbidden();
+        Http::assertNothingSent();
+    }
+
+    public function test_central_callback_without_context_never_contacts_provider(): void
+    {
+        $this->get('/integrations/bexio/callback?state=wrong&code=test')->assertStatus(400);
+        Http::assertNothingSent();
+    }
+
     public function test_real_oidc_library_verifies_signed_callback_and_prevents_replay(): void
     {
         $this->get($this->base())->assertOk()->assertDontSee('test-secret');

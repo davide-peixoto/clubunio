@@ -100,13 +100,19 @@ class ClubUnioPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->default()->id('clubunio')->path('clubunio')->authGuard('clubunio')
+        return \App\ClubUnio\SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
             ->login(Login::class)->brandName('ClubUnio')
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css" rel="stylesheet" data-navigate-track />')])
             ->tenant(Tenant::class, slugAttribute: 'slug', ownershipRelationship: 'tenant')
+            ->tenantMenu(false)
+            ->tenantMiddleware([\App\ClubUnio\Http\UseActiveTenant::class], isPersistent: true)
+            ->renderHook('panels::sidebar.nav.start', fn () => view('clubunio.tenant-switcher'))
             ->colors(['primary' => Color::Emerald])
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
+                \App\ClubUnio\Resources\CreditNoteResource::class,
+                \App\ClubUnio\Resources\RefundResource::class,
+                \App\ClubUnio\Resources\FinancialAdjustmentStatusResource::class,
                 InvoiceCategoryResource::class,
                 BexioCatalogEntryResource::class,
                 StatusStyleResource::class,

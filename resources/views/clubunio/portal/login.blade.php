@@ -11,6 +11,6 @@
         @if($errors->any())<p role="alert" class="error">{{ $errors->first() }}</p>@endif
         <button class="primary" type="submit">Anmelden</button>
     </form>
-    <a class="admin-link" href="{{ url('/clubunio/login') }}">Verwaltung</a>
+    <a class="admin-link" href="{{ url('/login') }}">Verwaltung</a>
 </section>
 @endsection

@@ -106,7 +106,7 @@ class BexioSandboxClient
         if ($cents < 0 || $bankId < 1 || ! preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) || ! Str::isUuid($reference)) {
             throw new \LogicException('Invalid financial action');
         }
-        $invoice = $kind === 'invoice' && preg_match('/^[1-9][0-9]{0,14}$/D', $id) && in_array($operation, ['payment_partial', 'payment_full'], true);
+        $invoice = $kind === 'invoice' && preg_match('/^[1-9][0-9]{0,14}$/D', $id) && in_array($operation, ['payment_partial', 'payment_full', 'payment_overpaid'], true);
         $bill = $kind === 'expense' && Str::isUuid($id) && in_array($operation, ['bill_book', 'bill_pay'], true);
         if (! $invoice && ! $bill) {
             throw new \LogicException('Unsupported financial action');

@@ -12,6 +12,41 @@ use Illuminate\Support\Str;
 
 class BexioConnectionController
 {
+    public function centralShow(Request $request, BexioConnectionService $service)
+    {
+        $tenants = $request->user('clubunio')->tenants()->wherePivot('role', 'admin')->get();
+        abort_unless($request->user('clubunio')->active && $tenants->isNotEmpty(), 403);
+        if ($request->filled('tenant')) {
+            $tenant = $tenants->firstWhere('slug', $request->validate(['tenant' => 'required|string|max:200'])['tenant']);
+            abort_unless($tenant, 403);
+        } elseif ($tenants->count() === 1) {
+            $tenant = $tenants->first();
+        } else {
+            return response()->view('clubunio.bexio.select', compact('tenants'))
+                ->header('Cache-Control', 'private, no-store');
+        }
+
+        return $this->show($request, $tenant, $service);
+    }
+
+    public function centralStart(Request $request, BexioConnectionService $service)
+    {
+        $data = $request->validate(['tenant' => 'required|string|max:200']);
+        $tenant = Tenant::where('slug', $data['tenant'])->firstOrFail();
+
+        return $this->start($request, $tenant, $service);
+    }
+
+    public function centralCallback(Request $request, BexioConnectionService $service)
+    {
+        // Never resolve a callback tenant from query parameters or a later UI selection.
+        $pending = $request->session()->pull('bexio_pending.'.$request->user('clubunio')->id);
+        abort_unless(is_array($pending) && ($pending['expires'] ?? 0) >= time(), 400);
+        $tenant = Tenant::findOrFail($pending['tenant_id']);
+
+        return $this->callback($request, $tenant, $service);
+    }
+
     public function show(Request $request, Tenant $tenant, BexioConnectionService $service)
     {
         $this->authorize($request, $tenant);
@@ -40,6 +75,7 @@ class BexioConnectionController
             $config = $service->configuration($tenant);
             $callback = $this->callbackUrl($tenant);
             $request->session()->put($prefix.'.context', ['expires' => time() + 600, 'callback' => $callback, 'fingerprint' => $config['fingerprint']]);
+            $request->session()->put('bexio_pending.'.$request->user('clubunio')->id, ['tenant_id' => $tenant->id, 'expires' => time() + 600]);
             $this->client($request, $config, $prefix, $callback)->run([]);
             throw new \RuntimeException('Authorization did not redirect');
         } catch (HttpResponseException $redirect) {
@@ -75,7 +111,7 @@ class BexioConnectionController
             }
             $service->connect($tenant, (array) $client->getTokenResponse(), $config['fingerprint'], $request->user('clubunio')->id);
 
-            return redirect()->route('clubunio.bexio.show', $tenant->slug)->with('notice', 'Bexio wurde mit ClubUnio verbunden.');
+            return redirect()->route('clubunio.bexio.show', ['tenant' => $tenant->slug])->with('notice', 'Bexio wurde mit ClubUnio verbunden.');
         } catch (\Throwable $error) {
             return $this->failure($tenant, $error);
         } finally {
@@ -104,7 +140,7 @@ class BexioConnectionController
 
     private function callbackUrl(Tenant $tenant): string
     {
-        return rtrim(config('app.url'), '/').route('clubunio.bexio.callback', $tenant->slug, false);
+        return rtrim(config('app.url'), '/').route('clubunio.bexio.callback', [], false);
     }
 
     private function failure(Tenant $tenant, \Throwable $error)
@@ -112,7 +148,7 @@ class BexioConnectionController
         $reference = (string) Str::uuid();
         Log::warning('clubunio.bexio.connection_failed', ['tenant_id' => $tenant->id, 'reference' => $reference, 'status' => (int) $error->getCode()]);
 
-        return redirect()->route('clubunio.bexio.show', $tenant->slug)->with('connection_error', 'Bexio konnte nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: '.$reference)
+        return redirect()->route('clubunio.bexio.show', ['tenant' => $tenant->slug])->with('connection_error', 'Bexio konnte nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: '.$reference)
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 }

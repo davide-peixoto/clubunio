@@ -141,7 +141,7 @@ class BexioDispatchTrialTest extends TestCase
 
     public function test_web_simulation_success_and_rejection_without_real_delivery(): void
     {
-        $this->get('/clubunio/'.$this->tenant->slug.'/bexio-dispatch-trials')->assertOk()->assertSee('Echtversand gesperrt');
+        $this->get('/bexio-dispatch-trials')->assertOk()->assertSee('Echtversand gesperrt');
         $page = Livewire::test(BexioDispatchTrials::class)->assertSee('Echtversand gesperrt')->call('check', $this->invoice);
         $id = $this->db->table('bexio_dispatch_trials')->where('tenant_id', $this->tenant->id)->value('id');
         $page->call('simulate', $id)->assertSee('Annahme simuliert');

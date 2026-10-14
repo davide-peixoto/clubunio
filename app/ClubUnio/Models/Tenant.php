@@ -9,6 +9,21 @@ class Tenant extends Model
 {
     use UsesClubUnioSchema;
 
+    public function creditNotes()
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class);
+    }
+
+    public function financialAdjustmentStatuses()
+    {
+        return $this->hasMany(FinancialAdjustmentStatus::class);
+    }
+
     public function bexioCatalogEntries()
     {
         return $this->hasMany(BexioCatalogEntry::class);

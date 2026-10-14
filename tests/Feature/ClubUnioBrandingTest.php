@@ -12,9 +12,10 @@ class ClubUnioBrandingTest extends TestCase
         $this->assertSame('ClubUnio', config('app.name'));
         $panel = Filament::getPanel('clubunio');
         $this->assertSame('ClubUnio', $panel->getBrandName());
-        $this->assertSame('clubunio', $panel->getPath());
-        $this->get('/')->assertRedirect('/clubunio');
-        $this->get('/clubunio/login')->assertOk()->assertSee('ClubUnio');
+        $this->assertSame('', $panel->getPath());
+        $this->get('/')->assertRedirect('/login');
+        $this->get('/clubunio/login')->assertRedirect('/login');
+        $this->get('/login')->assertOk()->assertSee('ClubUnio');
         $this->get('/portal/login')->assertOk()->assertSee('ClubUnio');
     }
 
@@ -38,7 +39,7 @@ class ClubUnioBrandingTest extends TestCase
         $this->assertSame('clubora.members', (new \App\ClubUnio\Models\Member)->getTable());
         $this->assertSame('clubora', config('clubunio.connection.search_path'));
         $this->assertSame('clubunio', config('auth.defaults.guard'));
-        $this->assertSame('/clubora-bexio/sv-sissach/callback', route('clubunio.bexio.callback', 'sv-sissach', false));
+        $this->assertSame('/integrations/bexio/callback', route('clubunio.bexio.callback', [], false));
         $this->assertTrue(view()->exists('clubunio.invoices.viewer'));
         $this->assertFileExists(public_path('clubunio/pdf-viewer.js'));
         $this->assertFileExists(public_path('css/clubunio-portal.css'));

@@ -165,7 +165,7 @@ class ClubUnioTest extends TestCase
             'number' => '=KEY', 'name' => 'Test key', 'color' => 'Blue']);
         $this->db->table('member_keys')->insert(['tenant_id' => $this->other->id, 'member_id' => $foreign->id,
             'number' => 'FOREIGN-KEY', 'name' => 'Foreign key', 'color' => 'Red']);
-        $this->get('/clubunio/'.$this->own->slug.'/key-reports')->assertOk();
+        $this->get('/key-reports')->assertOk();
         Livewire::test(ListKeys::class)
             ->searchTable('Test key')->filterTable('color', 'Blue')->assertSee('=KEY')->assertDontSee('FOREIGN-KEY')
             ->callTableAction('export')->assertHasNoActionErrors()->assertFileDownloaded('schluesselliste-'.now('Europe/Zurich')->format('Y-m-d').'.csv');
@@ -194,7 +194,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame(2, $query()->count());
         $link = $this->db->table('family_members')->insertGetId(['tenant_id' => $this->own->id, 'family_id' => $family, 'member_id' => $member->id]);
         $this->assertSame(['f-'.$family], $query()->pluck('id')->all());
-        $this->get('/clubunio/'.$this->own->slug.'/spots-recipients')->assertOk();
+        $this->get('/spots-recipients')->assertOk();
         Livewire::test(ListRecipients::class)
             ->filterTable('kind', 'family')->searchTable('SPOTS-FAMILY')->assertSee('SPOTS-FAMILY')->assertDontSee('FOREIGN-FAMILY')
             ->callTableAction('export')->assertHasNoActionErrors()->assertFileDownloaded('spots-versandliste-'.now('Europe/Zurich')->format('Y-m-d').'.csv');
@@ -217,8 +217,8 @@ class ClubUnioTest extends TestCase
     public function test_new_reports_reject_trainer_access_and_export(): void
     {
         $this->db->table('tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
-        $this->get('/clubunio/'.$this->own->slug.'/key-reports')->assertForbidden();
-        $this->get('/clubunio/'.$this->own->slug.'/spots-recipients')->assertForbidden();
+        $this->get('/key-reports')->assertForbidden();
+        $this->get('/spots-recipients')->assertForbidden();
         foreach (['keys' => MemberKey::class, 'spots' => SpotsRecipient::class] as $kind => $model) {
             try {
                 app(ReportExportService::class)->download($this->actor, $this->own, $kind, $model::query());
@@ -266,7 +266,7 @@ class ClubUnioTest extends TestCase
         } catch (ValidationException $error) {
             $this->assertArrayHasKey('revision', $error->errors());
         }
-        $this->get('/clubunio/'.$this->own->slug.'/invoices/'.$invoice->id)->assertOk()->assertSee('PDF-Vorschau');
+        $this->get('/invoices/'.$invoice->id)->assertOk()->assertSee('PDF-Vorschau');
         Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $invoice->fresh(), 'pageClass' => ViewInvoice::class])
             ->assertSee('Adjusted contribution');
         $response = $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/local');
@@ -306,7 +306,7 @@ class ClubUnioTest extends TestCase
         Livewire::test(ViewInvoice::class, ['record' => $invoice->id])
             ->callAction('archive', data: ['revision' => 5, 'reason' => 'Archive cancelled invoice'])->assertHasNoActionErrors();
         $this->assertFalse($invoice->fresh()->active);
-        $this->get('/clubunio/'.$this->own->slug.'/invoices/'.$invoice->id)->assertOk();
+        $this->get('/invoices/'.$invoice->id)->assertOk();
         Livewire::test(ViewInvoice::class, ['record' => $invoice->id])
             ->callAction('restore', data: ['revision' => 6, 'reason' => 'Review archive'])->assertHasNoActionErrors();
         $this->assertTrue($invoice->fresh()->active);
@@ -810,14 +810,14 @@ class ClubUnioTest extends TestCase
     public function test_new_reports_reject_portal_roles_and_foreign_tenants(): void
     {
         foreach (['family-reports', 'bank-account-reports'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
             $this->get('/clubunio/'.$this->other->slug.'/'.$slug)->assertNotFound();
         }
         foreach (['member', 'trainer', 'technical_lead'] as $role) {
             [$actor] = $this->portalActor($role);
             $this->actingAs($actor, 'clubunio');
             foreach (['family-reports', 'bank-account-reports'] as $slug) {
-                $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertForbidden();
+                $this->get('/'.$slug)->assertForbidden();
             }
         }
     }
@@ -1216,7 +1216,7 @@ class ClubUnioTest extends TestCase
     public function test_report_pages_and_combined_season_contribution_filters(): void
     {
         foreach (['player-reports', 'staff-reports', 'payment-reports', 'open-invoices'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
             $this->get('/clubunio/'.$this->other->slug.'/'.$slug)->assertNotFound();
         }
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
@@ -1691,7 +1691,7 @@ class ClubUnioTest extends TestCase
     public function test_expense_catalog_forms_create_valid_tenant_scoped_values(): void
     {
         foreach (['expense-types', 'banks', 'expense-rounds', 'expense-statuses', 'game-types'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
         }
         Livewire::test(ManageRecords::class)
             ->callTableAction('create', data: ['name' => 'Fixture type', 'code' => 'test-type', 'sort_order' => 0, 'active' => true, 'receipt_required' => true, 'amount_source' => 'team_laundry'])
@@ -1812,7 +1812,7 @@ class ClubUnioTest extends TestCase
     public function test_sfv_competition_web_preview_apply_and_role_boundary(): void
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
-        $this->get('/clubunio/'.$this->own->slug.'/sfv-competitions')->assertOk()->assertSee('SFV abrufen');
+        $this->get('/sfv-competitions')->assertOk()->assertSee('SFV abrufen');
         Livewire::test(SfvCompetitions::class)->set('match', (string) $match)->call('inspect')->assertHasNoErrors()->assertSee('Field K')->call('apply')->assertHasNoErrors();
         $this->assertSame(1, Competition::where('tenant_id', $this->own->id)->count());
         $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
@@ -1873,7 +1873,7 @@ class ClubUnioTest extends TestCase
         $this->assertStringNotContainsString($input['password'], $audit);
         $this->assertStringNotContainsString($account->password, $audit);
         Livewire::test(ManageAccounts::class)->filterTable('role', 'trainer')->searchTable('Edited fixture')->assertCanSeeTableRecords([$link]);
-        $this->get('/clubunio/'.$this->own->slug.'/tenant-accounts')->assertOk();
+        $this->get('/tenant-accounts')->assertOk();
         $this->expectException(ValidationException::class);
         $service->save($this->actor, $this->own, $link->id, $edit);
     }
@@ -1910,7 +1910,7 @@ class ClubUnioTest extends TestCase
             $this->assertTrue(true);
         }
         $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
-        $this->get('/clubunio/'.$this->own->slug.'/tenant-accounts')->assertForbidden();
+        $this->get('/tenant-accounts')->assertForbidden();
         $this->expectException(HttpException::class);
         $service->save($this->actor, $this->own, null, $this->accountAdminInput());
     }
@@ -2032,7 +2032,7 @@ class ClubUnioTest extends TestCase
 
     public function test_football_club_forms_revision_audit_and_immutable_number(): void
     {
-        $this->get('/clubunio/'.$this->own->slug.'/football-clubs')->assertOk();
+        $this->get('/football-clubs')->assertOk();
         Livewire::test(ManageClubs::class)->callTableAction('create', data: ['club_number' => 3560, 'name' => 'Fixture Sissach', 'active' => true, 'logo_enabled' => true])->assertHasNoTableActionErrors();
         $club = FootballClub::where('tenant_id', $this->own->id)->sole();
         $this->assertStringEndsWith('/3560.gif', $club->logo_url);
@@ -2192,7 +2192,7 @@ class ClubUnioTest extends TestCase
 
     public function test_contributions_catalog_forms_and_rule_overlap_protection(): void
     {
-        $this->get('/clubunio/'.$this->own->slug.'/contribution-prices')->assertOk();
+        $this->get('/contribution-prices')->assertOk();
         Livewire::test(ManagePrices::class)
             ->callTableAction('create', data: ['name' => 'Fixture tariff', 'amount' => '250.00', 'active' => true])->assertHasNoTableActionErrors();
         $price = ContributionPrice::where('tenant_id', $this->own->id)->sole();
@@ -2201,7 +2201,7 @@ class ClubUnioTest extends TestCase
         $service = app(ContributionTrainingService::class);
         $input = ['season_id' => $season, 'gender_id' => $gender, 'price_id' => $price->id, 'year_from' => 2010, 'year_to' => 2015, 'active' => true];
         $rule = $service->save($this->actor, $this->own, ContributionRule::class, null, $input);
-        $this->get('/clubunio/'.$this->own->slug.'/contribution-rules')->assertOk()->assertSee('Fixture tariff');
+        $this->get('/contribution-rules')->assertOk()->assertSee('Fixture tariff');
         try {
             $service->save($this->actor, $this->own, ContributionRule::class, null, array_replace($input, ['year_from' => 2015, 'year_to' => 2019]));
             $this->fail('Overlapping rule accepted');
@@ -2223,7 +2223,7 @@ class ClubUnioTest extends TestCase
             $ids[$category.'_id'] = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => 'fixture', 'name' => $category]);
         }
         $input = $ids + ['team_season_id' => $ts, 'starts_at' => '18:00', 'ends_at' => '19:30', 'all_fields' => true, 'without_main' => false, 'synthetic_only' => false, 'website_visible' => true, 'active' => true];
-        $this->get('/clubunio/'.$this->own->slug.'/training-slots')->assertOk();
+        $this->get('/training-slots')->assertOk();
         Livewire::test(ManageSlots::class)->callTableAction('create', data: $input)->assertHasNoTableActionErrors();
         $slot = TrainingSlot::where('tenant_id', $this->own->id)->sole();
         $this->assertSame('18:00:00', $slot->starts_at);
@@ -2245,9 +2245,9 @@ class ClubUnioTest extends TestCase
 
     public function test_dashboard_widget_and_training_option_form(): void
     {
-        $this->get('/clubunio/'.$this->own->slug)->assertOk();
+        $this->get('/')->assertOk();
         Livewire::test(ClubOverview::class)->assertSee('Aktive Mitglieder')->assertSee('Spesen zur Prüfung');
-        $this->get('/clubunio/'.$this->own->slug.'/training-options')->assertOk();
+        $this->get('/training-options')->assertOk();
         Livewire::test(ManageOptions::class)->callTableAction('create', data: ['category' => 'field', 'code' => 'extra', 'name' => 'Zusatzplatz', 'sort_order' => 10, 'active' => true])->assertHasNoTableActionErrors();
         $option = TrainingOption::where('tenant_id', $this->own->id)->sole();
         Livewire::test(ManageOptions::class)->callTableAction('edit', $option, data: ['revision' => 1, 'name' => 'Zusatzplatz neu', 'sort_order' => 10, 'active' => true])->assertHasNoTableActionErrors();
@@ -2267,7 +2267,7 @@ class ClubUnioTest extends TestCase
     {
         $member = Member::where('tenant_id', $this->own->id)->sole();
         $member->forceFill(['honorary' => true])->save();
-        $this->get('/clubunio/'.$this->own->slug.'/member-reports')->assertOk();
+        $this->get('/member-reports')->assertOk();
         Livewire::test(ListMemberReports::class)
             ->set('activeTab', 'honorary')->searchTable('OWN-MEMBER')->assertSee('OWN-MEMBER')->assertDontSee('FOREIGN-MEMBER')
             ->set('activeTab', 'sponsor')->assertCanNotSeeTableRecords([$member]);
@@ -2372,7 +2372,7 @@ class ClubUnioTest extends TestCase
 
     public function test_tenant_pages_hide_foreign_members_and_reject_foreign_routes(): void
     {
-        $this->get('/clubunio/'.$this->own->slug.'/members')->assertOk()->assertSee('OWN-MEMBER')->assertDontSee('FOREIGN-MEMBER');
+        $this->get('/members')->assertOk()->assertSee('OWN-MEMBER')->assertDontSee('FOREIGN-MEMBER');
         $this->get('/clubunio/'.$this->other->slug.'/members')->assertNotFound();
     }
 
@@ -2403,7 +2403,7 @@ class ClubUnioTest extends TestCase
                 'revision' => 1, 'reason' => 'Synthetic identity review'])
             ->callMountedTableAction()->assertHasNoTableActionErrors();
         $this->assertSame('revoked', $link->fresh()->state);
-        $this->actingAs($account, 'clubunio')->get('/clubunio/'.$this->own->slug.'/account-member-links')->assertForbidden();
+        $this->actingAs($account, 'clubunio')->get('/account-member-links')->assertForbidden();
     }
 
     public function test_portal_status_and_account_revocation_and_filters(): void
@@ -2565,7 +2565,7 @@ class ClubUnioTest extends TestCase
         $this->db->table('clubora.member_documents')->where('id', $id)->update(['active' => false]);
         $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertNotFound();
         auth('clubunio')->logout();
-        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/clubunio/login');
+        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/login');
     }
 
     public function test_message_templates_seed_edit_restore_and_locale_fallback(): void
@@ -2643,7 +2643,7 @@ class ClubUnioTest extends TestCase
         $service = app(MessageTemplateService::class);
         $data = ['event_key' => 'announcement.manual', 'channel' => 'push', 'locale' => 'de-CH', 'title' => 'Fixture news', 'body' => '{{ nachricht }}', 'active' => true];
         $template = $service->save($this->actor, $this->own, null, $data);
-        $this->get('/clubunio/'.$this->own->slug.'/message-templates')->assertOk()->assertSee('Fixture news');
+        $this->get('/message-templates')->assertOk()->assertSee('Fixture news');
         Livewire::test(ListMessageTemplates::class)
             ->filterTable('channel', 'push')->searchTable('Fixture')->assertCanSeeTableRecords([$template])
             ->mountTableAction('change', $template)
@@ -2767,13 +2767,13 @@ class ClubUnioTest extends TestCase
     public function test_member_dossier_and_all_relation_tabs_render(): void
     {
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
-        $this->get('/clubunio/'.$this->own->slug.'/members/'.$member->id)->assertOk()->assertSee('Stammdaten')->assertSee('Rechnungen')->assertSee('Bankkonten');
+        $this->get('/members/'.$member->id)->assertOk()->assertSee('Stammdaten')->assertSee('Rechnungen')->assertSee('Bankkonten');
         foreach (MemberResource::getRelations() as $manager) {
             Livewire::test($manager, ['ownerRecord' => $member, 'pageClass' => ViewMember::class])
                 ->loadTable()->assertSuccessful();
         }
         $foreign = Member::withoutGlobalScopes()->where('tenant_id', $this->other->id)->firstOrFail();
-        $this->get('/clubunio/'.$this->own->slug.'/members/'.$foreign->id)->assertNotFound();
+        $this->get('/members/'.$foreign->id)->assertNotFound();
         Livewire::test(NotesRelationManager::class, ['ownerRecord' => $foreign, 'pageClass' => ViewMember::class])->assertForbidden();
     }
 
@@ -2800,8 +2800,8 @@ class ClubUnioTest extends TestCase
             foreach ([[$id, true, 'VISIBLE', 25], [$id, false, 'ARCHIVED', 100], [$other, true, 'UNRELATED', 500]] as [$parent,$active,$label,$value]) {
                 $this->db->table($lines)->insert(['tenant_id' => $this->own->id, $fk => $parent, $amount => $value, $text => $label, 'active' => $active]);
             }
-            $this->get('/clubunio/'.$this->own->slug.'/'.$table)->assertOk();
-            $this->get('/clubunio/'.$this->own->slug.'/'.$table.'/'.$id)->assertOk()->assertSee('25.00');
+            $this->get('/'.$table)->assertOk();
+            $this->get('/'.$table.'/'.$id)->assertOk()->assertSee('25.00');
             $class = 'App\\ClubUnio\\Models\\'.$name;
             $record = $class::findOrFail($id);
             Livewire::test('App\\ClubUnio\\Resources\\Relations\\'.$name.'LinesRelationManager', [
@@ -2810,7 +2810,7 @@ class ClubUnioTest extends TestCase
                 ->assertTableActionDoesNotExist('edit');
             $foreignMember = Member::withoutGlobalScopes()->where('tenant_id', $this->other->id)->firstOrFail();
             $foreignId = $this->db->table($table)->insertGetId(['tenant_id' => $this->other->id, 'member_id' => $foreignMember->id]);
-            $this->get('/clubunio/'.$this->own->slug.'/'.$table.'/'.$foreignId)->assertNotFound();
+            $this->get('/'.$table.'/'.$foreignId)->assertNotFound();
         }
     }
 
@@ -2848,7 +2848,7 @@ class ClubUnioTest extends TestCase
         $this->db->table('team_players')->insert(['tenant_id' => $this->own->id, 'team_season_id' => $ts, 'member_id' => $member->id]);
         $this->db->table('family_members')->insert(['tenant_id' => $this->own->id, 'family_id' => $family, 'member_id' => $member->id, 'discount' => 10]);
         foreach ([['families', $family, 'Family'], ['teams', $team, 'Team'], ['seasons', $season, 'Season'], ['team-seasons', $ts, 'TeamSeason']] as [$slug,$id,$name]) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug.'/'.$id)->assertOk();
+            $this->get('/'.$slug.'/'.$id)->assertOk();
             $class = 'App\\ClubUnio\\Resources\\'.$name.'Resource';
             $model = 'App\\ClubUnio\\Models\\'.$name;
             foreach ($class::getRelations() as $manager) {
@@ -2875,7 +2875,7 @@ class ClubUnioTest extends TestCase
 
     public function test_settings_are_masked_and_changes_encrypted_and_audited(): void
     {
-        $this->get('/clubunio/'.$this->own->slug.'/settings')->assertOk()->assertDontSee('secret-fixture');
+        $this->get('/settings')->assertOk()->assertDontSee('secret-fixture');
         $id = $this->db->table('tenant_settings')->where('tenant_id', $this->own->id)->value('id');
         app(SettingsService::class)->update($this->actor, $this->own, $id, 'replacement-fixture');
         $cipher = $this->db->table('tenant_settings')->where('id', $id)->value('encrypted_value');
@@ -2947,7 +2947,7 @@ class ClubUnioTest extends TestCase
             ['name' => 'Custom member status', 'code' => 'custom', 'sort_order' => 15, 'active' => true]);
         $this->db->table('members')->where('tenant_id', $this->own->id)->update(['status_id' => $status->id]);
         foreach (['teams', 'team-seasons', 'seasons', 'registrations', 'member-statuses', 'member-types', 'registration-statuses'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
         }
         Livewire::test(ListMembers::class)
             ->set('tableFilters.status_id.value', (string) $status->id)->searchTable('OWN-MEMBER')
@@ -3024,7 +3024,7 @@ class ClubUnioTest extends TestCase
         $this->db->statement('SET LOCAL search_path TO public');
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         $this->assertTrue($this->actor->canAccessTenant($this->own));
-        $this->get('/clubunio/'.$this->own->slug.'/members')->assertOk()->assertSee('OWN-MEMBER');
+        $this->get('/members')->assertOk()->assertSee('OWN-MEMBER');
         $member = app(MemberService::class)->update($this->actor, $this->own, $member->id, array_merge($this->memberInput($member), ['city' => 'Schema-safe']));
         $this->assertSame('Schema-safe', $member->city);
         $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->count());
@@ -3033,7 +3033,7 @@ class ClubUnioTest extends TestCase
     public function test_extended_member_pages_and_country_form(): void
     {
         foreach (['countries', 'genders', 'billing-recipients', 'document-types', 'families', 'family-members', 'member-documents'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
             $this->get('/clubunio/'.$this->other->slug.'/'.$slug)->assertNotFound();
         }
         Livewire::test(ManageCountries::class)
@@ -3043,7 +3043,7 @@ class ClubUnioTest extends TestCase
     public function test_team_assignment_ui_preserves_filters_and_rejects_duplicates(): void
     {
         foreach (['team-players', 'team-staff', 'technical-leads', 'staff-functions'] as $slug) {
-            $this->get('/clubunio/'.$this->own->slug.'/'.$slug)->assertOk();
+            $this->get('/'.$slug)->assertOk();
         }
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         $team = $this->db->table('teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Team fixture']);
@@ -3147,7 +3147,7 @@ class ClubUnioTest extends TestCase
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         $service = app(MemberService::class);
         $service->archive($this->actor, $this->own, $member->id, MemberService::version($member));
-        $this->get('/clubunio/'.$this->own->slug.'/members')->assertOk()->assertDontSee('OWN-MEMBER');
+        $this->get('/members')->assertOk()->assertDontSee('OWN-MEMBER');
         $this->assertNotNull($member->fresh()->archived_at);
         $this->expectException(ModelNotFoundException::class);
         $service->update($this->actor, $this->own, $member->id, $this->memberInput($member));
@@ -3157,7 +3157,7 @@ class ClubUnioTest extends TestCase
     {
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         app(MemberService::class)->update($this->actor, $this->own, $member->id, array_merge($this->memberInput($member), ['city' => 'Audit fixture']));
-        $this->get('/clubunio/'.$this->own->slug.'/object-changes')->assertOk()->assertSee('Test Admin');
+        $this->get('/object-changes')->assertOk()->assertSee('Test Admin');
         $this->get('/clubunio/'.$this->other->slug.'/object-changes')->assertNotFound();
         $this->assertFalse(ObjectChangeResource::canCreate());
         $this->assertArrayNotHasKey('ahv_encrypted', $member->fresh()->toArray());

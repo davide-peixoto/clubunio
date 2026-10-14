@@ -188,7 +188,7 @@ class BexioReconciliationTest extends TestCase
 
     public function test_web_access_and_cross_tenant_checks(): void
     {
-        $this->get('/clubunio/'.$this->tenant->slug.'/bexio-reconciliation')->assertOk();
+        $this->get('/bexio-reconciliation')->assertOk();
         Livewire::test(BexioReconciliation::class)->assertSee('Bexio-Abgleich')->assertSee('Status prüfen');
         $this->actingAs($this->member, 'clubunio');
         Livewire::test(BexioReconciliation::class)->assertForbidden();
@@ -314,14 +314,14 @@ class BexioReconciliationTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('active', $e->errors());
         }
-        $this->get('/clubunio/'.$this->tenant->slug.'/invoice-statuses')->assertOk()->assertSee('Changed mapping');
-        $this->get('/clubunio/'.$this->tenant->slug.'/invoice-line-statuses')->assertOk()->assertSee('Bezahlt');
+        $this->get('/invoice-statuses')->assertOk()->assertSee('Changed mapping');
+        $this->get('/invoice-line-statuses')->assertOk()->assertSee('Bezahlt');
         Livewire::test(ManageRecords::class)
             ->callTableAction('edit', $record, data: ['name' => 'Web mapping', 'position_code' => 'O', 'active' => true])->assertHasNoTableActionErrors();
         $this->assertSame('Web mapping', $record->fresh()->name);
         Livewire::test(\App\ClubUnio\Resources\InvoiceLineStatusResource\Pages\ManageRecords::class)
             ->callTableAction('create', data: ['name' => 'Additional', 'code' => 'X', 'active' => true])->assertHasNoTableActionErrors();
-        $this->actingAs($this->member, 'clubunio')->get('/clubunio/'.$this->tenant->slug.'/invoice-statuses')->assertForbidden();
+        $this->actingAs($this->member, 'clubunio')->get('/invoice-statuses')->assertForbidden();
         $this->expectException(HttpException::class);
         $catalog->save($this->member, $this->tenant, $model, $record->id, ['name' => 'Denied', 'position_code' => 'B', 'active' => true]);
     }

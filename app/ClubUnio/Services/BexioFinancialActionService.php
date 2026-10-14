@@ -68,7 +68,7 @@ class BexioFinancialActionService
 
     public function execute(Account $actor, Tenant $tenant, string $kind, int $objectId, string $operation): void
     {
-        abort_unless(($kind === 'invoice' && in_array($operation, ['payment_partial', 'payment_full'], true))
+        abort_unless(($kind === 'invoice' && in_array($operation, ['payment_partial', 'payment_full', 'payment_overpaid'], true))
             || ($kind === 'expense' && in_array($operation, ['bill_book', 'bill_pay'], true)), 422);
         $guard = app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, $kind, $objectId);
         $existing = $this->table()->where('dispatch_id', $guard->id)->where('operation', $operation)->first();
@@ -80,9 +80,10 @@ class BexioFinancialActionService
         $this->released($tenant, $kind, $objectId);
         [$row, $remote, $balance] = $this->remote($actor, $tenant, $kind, $objectId);
         $status = $remote[$kind === 'invoice' ? 'kb_item_status_id' : 'status'];
-        abort_unless($kind === 'invoice' ? in_array((int) $status, [8, 16, 31], true)
+        abort_unless($kind === 'invoice' ? ($operation === 'payment_overpaid' ? (int) $status === 9 : in_array((int) $status, [8, 16, 31], true))
             : ($operation === 'bill_book' ? $status === 'DRAFT' : $status === 'BOOKED'), 409, 'Status erlaubt diese Testbuchung nicht.');
-        abort_unless($balance['remaining_cents'] > 0 && $balance['credit_cents'] === 0, 409);
+        abort_unless(($operation === 'payment_overpaid' ? $balance['remaining_cents'] === 0 && $balance['paid_cents'] === $balance['total_cents'] && $balance['overpaid_cents'] === 0
+            : $balance['remaining_cents'] > 0) && $balance['credit_cents'] === 0, 409);
         if ($kind === 'expense') {
             abort_unless(($remote['payment'] ?? null) === null, 409, 'Vorhandene Zahlungsdaten zuerst klaeren.');
         }
@@ -96,7 +97,7 @@ class BexioFinancialActionService
         if ($kind === 'expense' && $operation === 'bill_pay') {
             abort_unless($payments === [], 409, 'Bereits vorhandene Zahlungen zuerst abgleichen.');
         }
-        $cents = $operation === 'bill_book' ? 0 : ($operation === 'payment_partial' ? intdiv($balance['remaining_cents'], 2) : $balance['remaining_cents']);
+        $cents = $operation === 'payment_overpaid' ? 500 : ($operation === 'bill_book' ? 0 : ($operation === 'payment_partial' ? intdiv($balance['remaining_cents'], 2) : $balance['remaining_cents']));
         abort_unless($operation === 'bill_book' || $cents > 0, 409);
         $date = now('Europe/Zurich')->toDateString();
         if ($kind === 'expense') {
@@ -176,12 +177,14 @@ class BexioFinancialActionService
                                 : (($payment['payment_type'] ?? '') === 'MANUAL' && in_array($payment['status'] ?? '', ['TRANSFERRED', 'PAID'], true)
                                     && empty($payment['banking_payment_id']) && ($payment['note'] ?? '') === 'clubora-sandbox:'.$action->reference));
                     });
+                    $cash = $kind === 'invoice' ? app(BexioInvoiceCashService::class)->fromPayments($payments, $row->remote_id, $balance) : [];
                     if (count($matches) === 1 && $balance['paid_cents'] >= (int) $action->amount_cents
+                        && ($action->operation !== 'payment_overpaid' || $cash['cash_excess_cents'] >= (int) $action->amount_cents)
                         && (! in_array($action->operation, ['payment_full', 'bill_pay'], true) || $balance['remaining_cents'] === 0)) {
                         $found = (string) array_values($matches)[0]['id'];
                     }
                 }
-                $this->table()->where('id', $action->id)->update(['state' => $found ? 'accepted' : 'uncertain', 'remote_id' => $found ?? $action->remote_id, 'checked_at' => now()]);
+                $this->table()->where('id', $action->id)->update(['state' => $found ? 'accepted' : 'uncertain', 'remote_id' => $found ?? $action->remote_id, 'checked_at' => now()->toIso8601String()]);
             }
         });
         $service = app(BexioReconciliationService::class);

@@ -10,6 +10,17 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
+    public function refundableCash(Account $actor, Tenant $tenant): int
+    {
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+
+        return (int) DB::connection('clubunio')->table('clubora.bexio_balances as b')->join('clubora.invoices as i', fn ($j) => $j->on('i.id', '=', 'b.object_id')->on('i.tenant_id', '=', 'b.tenant_id'))
+            ->where('b.tenant_id', $tenant->id)->where('b.object_type', 'invoice')->where('i.active', true)
+            ->selectRaw("COALESCE(SUM(GREATEST(0,COALESCE(b.cash_excess_cents,0)-(SELECT COALESCE(SUM(r.amount_cents),0) FROM clubora.refunds r
+                JOIN clubora.financial_adjustment_statuses s ON s.id=r.status_id AND s.tenant_id=r.tenant_id WHERE r.invoice_id=i.id AND r.tenant_id=i.tenant_id AND s.code<>'cancelled'))),0) AS amount")
+            ->value('amount');
+    }
+
     public function newMembersMonthly(Account $actor, Tenant $tenant): array
     {
         abort_unless($actor->canAccessTenant($tenant), 403);

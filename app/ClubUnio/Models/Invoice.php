@@ -6,6 +6,16 @@ class Invoice extends CatalogModel
 {
     protected $casts = ['active' => 'boolean', 'cash_rounding' => 'boolean'];
 
+    public function creditNotes()
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(InvoiceCategory::class, 'invoice_category_id');

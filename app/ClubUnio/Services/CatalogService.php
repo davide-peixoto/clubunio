@@ -14,6 +14,7 @@ use App\ClubUnio\Models\ExpenseType;
 use App\ClubUnio\Models\GameType;
 use App\ClubUnio\Models\Gender;
 use App\ClubUnio\Models\InvoiceCategory;
+use App\ClubUnio\Models\FinancialAdjustmentStatus;
 use App\ClubUnio\Models\InvoiceLineStatus;
 use App\ClubUnio\Models\InvoiceStatus;
 use App\ClubUnio\Models\InvoiceWorkflowStatus;
@@ -34,7 +35,7 @@ class CatalogService
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input): CatalogModel
     {
         abort_unless($actor->canAccessTenant($tenant), 403);
-        if (! in_array($model, [InvoiceCategory::class, InvoiceStatus::class, InvoiceLineStatus::class, InvoiceWorkflowStatus::class, Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class, StaffFunction::class, Country::class, Gender::class, BillingRecipient::class, DocumentType::class, Bank::class, ExpenseType::class, ExpenseRound::class, ExpenseStatus::class, GameType::class], true)) {
+        if (! in_array($model, [FinancialAdjustmentStatus::class, InvoiceCategory::class, InvoiceStatus::class, InvoiceLineStatus::class, InvoiceWorkflowStatus::class, Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class, StaffFunction::class, Country::class, Gender::class, BillingRecipient::class, DocumentType::class, Bank::class, ExpenseType::class, ExpenseRound::class, ExpenseStatus::class, GameType::class], true)) {
             throw new \InvalidArgumentException('Unsupported catalog');
         }
 
