@@ -1,5 +1,9 @@
 # Pi staging: dev.clubunio.ch
 
+Release58: `20261015-clubunio-58-pmp-parity`, Ruecksprung57.
+Eigene Migration58: Revisionsfelder fuer Dossier-/Stammdatenpflege.
+PMP-Abgleich/Abgrenzung: CLUBUNIO-PMP-ACCEPTANCE.md und CLUBUNIO-PMP-COVERAGE.md.
+
 Release57: `20261015-clubunio-57-registration-completion`, Ruecksprung56.
 Eigene additive Migration57. Mitgliederanmeldungen/Wiedereintritt, private
 ClubUnio-Azure-Uploads und gezielter Testmailversand; externe Pushzustellung aus.

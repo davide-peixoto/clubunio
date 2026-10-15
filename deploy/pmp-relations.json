@@ -411,7 +411,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO2",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "Nationalitaet",
@@ -420,7 +421,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO3",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "TelefonPrivat",
@@ -724,7 +726,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "InstitutID",
@@ -734,7 +737,9 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Institut",
                 "FldTagLnkFld": "InstitutID",
-                "FldTagLnkDisplay": "BCNr"
+                "FldTagLnkDisplay": "BCNr",
+                "FldTagLnkDisp2": "Bank",
+                "FldTagLnkDisp3": "Ort"
             },
             {
                 "FldName": "IBAN",
@@ -818,7 +823,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Beitragspreise",
                 "FldTagLnkFld": "BeitragspreiseID",
-                "FldTagLnkDisplay": "Bezeichnung"
+                "FldTagLnkDisplay": "Bezeichnung",
+                "FldTagLnkDisp2": "BeitragCHF"
             },
             {
                 "FldName": "JahrgangVon",
@@ -865,7 +871,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "Bemerkung",
@@ -984,7 +991,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "ReservierungsStatus",
@@ -1209,7 +1217,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Nachname"
+                "FldTagLnkDisplay": "Nachname",
+                "FldTagLnkDisp2": "Vorname"
             },
             {
                 "FldName": "FamilieRabatt",
@@ -1261,7 +1270,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "FunktionsID",
@@ -1335,7 +1345,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Events",
                 "FldTagLnkFld": "EventID",
-                "FldTagLnkDisplay": "Beschreibung"
+                "FldTagLnkDisplay": "Beschreibung",
+                "FldTagLnkDisp2": "Ort"
             },
             {
                 "FldName": "MitgliederID",
@@ -1345,7 +1356,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "sdeletedAt",
@@ -1592,7 +1604,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "SaisonID",
@@ -2622,7 +2635,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "Mannschaftsname",
@@ -2910,7 +2924,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "Nachname",
@@ -2969,7 +2984,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO2",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "Nationalitaet",
@@ -2979,7 +2995,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO3",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "Geschlecht",
@@ -3399,7 +3416,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "Bemerkung",
@@ -3517,7 +3535,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "sdeletedAt",
@@ -3592,7 +3611,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "SaisonID",
@@ -4060,7 +4080,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "SponsorName",
@@ -4134,7 +4155,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "TeamsSaison",
                 "FldTagLnkFld": "TeamSaisonID",
-                "FldTagLnkDisplay": "TeamID"
+                "FldTagLnkDisplay": "TeamID",
+                "FldTagLnkDisp2": "SaisonID"
             },
             {
                 "FldName": "MitgliederID",
@@ -4144,7 +4166,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "PositionsID",
@@ -4313,7 +4336,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "TeamSaisonID",
@@ -4591,6 +4615,8 @@
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
                 "FldTagLnkDisplay": "MitgliederID",
+                "FldTagLnkDisp2": "Vorname",
+                "FldTagLnkDisp3": "Nachname",
                 "FldParentSelect": "Email",
                 "FldSelectFilterFld": "Email"
             }
@@ -4652,7 +4678,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Vereine",
                 "FldTagLnkFld": "VereinID",
-                "FldTagLnkDisplay": "Vereinsname"
+                "FldTagLnkDisplay": "Vereinsname",
+                "FldTagLnkDisp2": "VereinID"
             },
             {
                 "FldName": "Gastgeber",
@@ -4687,7 +4714,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Vereine",
                 "FldTagLnkFld": "VereinID",
-                "FldTagLnkDisplay": "Vereinsname"
+                "FldTagLnkDisplay": "Vereinsname",
+                "FldTagLnkDisp2": "VereinID"
             },
             {
                 "FldName": "Gast",
@@ -4940,7 +4968,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Nachname"
+                "FldTagLnkDisplay": "Nachname",
+                "FldTagLnkDisp2": "Vorname"
             },
             {
                 "FldName": "Geburtsdatum",
@@ -5333,7 +5362,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "DokumentTypID",
@@ -5488,7 +5518,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO2",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "Email",
@@ -5546,7 +5577,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Countries",
                 "FldTagLnkFld": "ISO3",
-                "FldTagLnkDisplay": "ISO2"
+                "FldTagLnkDisplay": "ISO2",
+                "FldTagLnkDisp2": "NameDE"
             },
             {
                 "FldName": "TeamStaffID",
@@ -5576,7 +5608,8 @@
                 "FldSelectType": "Table",
                 "FldTagLnkTbl": "Mitglieder",
                 "FldTagLnkFld": "MitgliederID",
-                "FldTagLnkDisplay": "Vorname"
+                "FldTagLnkDisplay": "Vorname",
+                "FldTagLnkDisp2": "Nachname"
             },
             {
                 "FldName": "SaisonID",
@@ -5596,6 +5629,7 @@
                 "FldTagLnkTbl": "TeamsSaison",
                 "FldTagLnkFld": "TeamSaisonID",
                 "FldTagLnkDisplay": "TeamID",
+                "FldTagLnkDisp2": "SaisonID",
                 "FldParentSelect": "SaisonID",
                 "FldSelectFilterFld": "SaisonID"
             },

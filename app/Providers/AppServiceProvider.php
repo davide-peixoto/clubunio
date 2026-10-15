@@ -27,6 +27,7 @@ use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\TeamStaff;
 use App\ClubUnio\Models\TechnicalLead;
 use App\ClubUnio\Policies\CatalogPolicy;
+use App\ClubUnio\Policies\DossierMaintenancePolicy;
 use App\ClubUnio\Policies\MemberPolicy;
 use App\ClubUnio\Policies\ReadOnlyPolicy;
 use App\ClubUnio\Policies\TeamAssignmentPolicy;
@@ -76,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
         }
         foreach (['InvoiceStatus', 'InvoiceLineStatus', 'Bank', 'ExpenseStatus', 'ExpenseRound', 'GameType', 'ExpenseType', 'ContributionPrice', 'ContributionRule', 'TrainingSlot', 'TrainingOption'] as $name) {
             Gate::policy('App\\ClubUnio\\Models\\'.$name, CatalogPolicy::class);
+        }
+        foreach (['ClubFunction', 'Qualification', 'ClubEvent', 'MemberFunction', 'MemberKey', 'Sponsorship', 'EventGuest'] as $name) {
+            Gate::policy('App\\ClubUnio\\Models\\'.$name, DossierMaintenancePolicy::class);
         }
         foreach ([Country::class, Gender::class, BillingRecipient::class, DocumentType::class, Family::class, FamilyMember::class] as $model) {
             Gate::policy($model, CatalogPolicy::class);

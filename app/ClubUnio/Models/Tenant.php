@@ -9,6 +9,21 @@ class Tenant extends Model
 {
     use UsesClubUnioSchema;
 
+    public function clubFunctions()
+    {
+        return $this->hasMany(ClubFunction::class);
+    }
+
+    public function qualifications()
+    {
+        return $this->hasMany(Qualification::class);
+    }
+
+    public function clubEvents()
+    {
+        return $this->hasMany(ClubEvent::class);
+    }
+
     public function creditNotes()
     {
         return $this->hasMany(CreditNote::class);

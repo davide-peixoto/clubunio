@@ -21,6 +21,11 @@ class BankAccountsRelationManager extends DossierRelationManager
 
     protected static ?string $title = 'Bankkonten';
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function table(Table $table): Table
     {
         $schema = fn () => [

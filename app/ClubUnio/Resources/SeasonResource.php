@@ -41,7 +41,7 @@ class SeasonResource extends CatalogResource
 
     public static function getRelations(): array
     {
-        return [Relations\TeamSeasonsRelationManager::class, Relations\InvoicesRelationManager::class, Relations\ExpensesRelationManager::class];
+        return [Relations\TeamSeasonsRelationManager::class, Relations\InvoicesRelationManager::class, Relations\ExpensesRelationManager::class, Relations\ContributionRulesRelationManager::class];
     }
 
     public static function infolist(Schema $schema): Schema

@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Resources\Relations;
 
-class KeysRelationManager extends DossierRelationManager
+class KeysRelationManager extends EditableDossierRelationManager
 {
     protected static string $relationship = 'keys';
 

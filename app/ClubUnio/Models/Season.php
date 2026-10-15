@@ -4,6 +4,11 @@ namespace App\ClubUnio\Models;
 
 class Season extends CatalogModel
 {
+    public function contributionRules()
+    {
+        return $this->hasMany(ContributionRule::class);
+    }
+
     public function teamSeasons()
     {
         return $this->hasMany(TeamSeason::class);

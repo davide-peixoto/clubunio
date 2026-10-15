@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Resources\Relations;
 
-class SponsorshipsRelationManager extends DossierRelationManager
+class SponsorshipsRelationManager extends EditableDossierRelationManager
 {
     protected static string $relationship = 'sponsorships';
 

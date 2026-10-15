@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Resources\Relations;
 
-class EventGuestsRelationManager extends DossierRelationManager
+class EventGuestsRelationManager extends EditableDossierRelationManager
 {
     protected static string $relationship = 'eventGuests';
 

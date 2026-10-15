@@ -19,6 +19,8 @@ use App\ClubUnio\Resources\BankResource;
 use App\ClubUnio\Resources\BexioCatalogEntryResource;
 use App\ClubUnio\Resources\BillingRecipientResource;
 use App\ClubUnio\Resources\BusKeyboxResource;
+use App\ClubUnio\Resources\ClubEventResource;
+use App\ClubUnio\Resources\ClubFunctionResource;
 use App\ClubUnio\Resources\CompetitionResource;
 use App\ClubUnio\Resources\ContributionPriceResource;
 use App\ClubUnio\Resources\ContributionRuleResource;
@@ -56,6 +58,7 @@ use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\PassiveMemberResource;
 use App\ClubUnio\Resources\PaymentReportResource;
 use App\ClubUnio\Resources\PlayerReportResource;
+use App\ClubUnio\Resources\QualificationResource;
 use App\ClubUnio\Resources\RefundResource;
 use App\ClubUnio\Resources\RegistrationResource;
 use App\ClubUnio\Resources\RegistrationStatusResource;
@@ -117,6 +120,9 @@ class ClubUnioPanelProvider extends PanelProvider
             ->colors(['primary' => Color::Emerald])
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
+                ClubEventResource::class,
+                ClubFunctionResource::class,
+                QualificationResource::class,
                 LegacyTrainingPlanResource::class,
                 BusKeyboxResource::class,
                 CreditNoteResource::class,

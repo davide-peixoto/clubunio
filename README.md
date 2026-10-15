@@ -1,10 +1,14 @@
 # ClubUnio
 
+Fachstand58: [PMP-Abgleich und Abnahmegrenzen](deploy/CLUBUNIO-PMP-ACCEPTANCE.md),
+[Abdeckungsmatrix](deploy/CLUBUNIO-PMP-COVERAGE.md). Dossier-/Stammdatenpflege
+ergaenzt; neue offene Webthemen ausdruecklich ausgewiesen.
+
 Fachpaket56: Trainingsaltbestand mit expliziter Zuordnung und Qualitaetssperre,
 Bus-Schluesselbox-Simulation (keine echte Hardwareausgabe) und Instagram-Livecheck.
 Siehe [Stand und offene Schritte](deploy/CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md).
 
-Vereinsverwaltung auf Laravel und Filament. Aktueller Fachstand: Release57,
+Vereinsverwaltung auf Laravel und Filament. Anmeldestand Release57,
 Mitgliederanmeldungen/Wiedereintritt und private Dokumentverwaltung:
 [Workflow und Migrationsschritte](deploy/CLUBUNIO-REGISTRATION-COMPLETION.md).
 

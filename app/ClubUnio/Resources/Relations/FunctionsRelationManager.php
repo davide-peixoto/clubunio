@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Resources\Relations;
 
-class FunctionsRelationManager extends DossierRelationManager
+class FunctionsRelationManager extends EditableDossierRelationManager
 {
     protected static string $relationship = 'functions';
 

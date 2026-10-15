@@ -1,5 +1,19 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket58: PMP-Fachabgleich und gezielte Dossierluecken
+
+104 Objekte/814 Felder/31 Beziehungen/218 Eventreferenzen inventarisiert,
+ohne Zugangsdaten oder Codeexport. Vollstaendige Objektzuordnung in
+CLUBUNIO-PMP-COVERAGE.md; kein automatisches Vollstaendigkeitsversprechen.
+Vereinsfunktionen/Qualifikationen/Veranstaltungen pflegbar, Dossierpflege fuer
+Funktionen mit Mehrfachqualifikation, Schluessel, Sponsoring und Gaeste ergaenzt.
+Saisondossier um Beitragsregeln erweitert; Lookup-Display2-Export korrigiert.
+Eigene Migration58 nur Revisionsfelder; keine Bestandsdaten neu zugeordnet.
+Weiter offen: eigene Web-Aenderungsantraege, allgemeine Mitglieder-Uploadpflege,
+redaktionelle Ankuendigungen und Quittungs-Fachvertrag sowie Benutzerabnahme.
+Details: CLUBUNIO-PMP-ACCEPTANCE.md. Alte Offen-Vermerke unten sind Historie.
+API/SaaS/Betrieb und PHPMaker DEV/PROD unveraendert.
+
 ## Fachpaket57: Mitgliederanmeldungen und Wiedereintritt
 
 Webworkflow samt TL/Pool/Probetraining/Annahme/Ablehnung, Dublettenpruefung,
