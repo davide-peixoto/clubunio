@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Member;
+use App\ClubUnio\Models\MemberChangeRequest;
 use App\ClubUnio\Models\MemberDocument;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\MemberChangeRequestResource\Pages\ListRequests;
@@ -16,9 +17,16 @@ use App\ClubUnio\Services\MemberDocumentMaintenanceService;
 use App\ClubUnio\Services\MemberService;
 use App\ClubUnio\Services\MessageTemplateService;
 use App\ClubUnio\Services\RegistrationBlobStore;
+use AzureOss\Storage\Blob\Sas\BlobSasBuilder;
+use AzureOss\Storage\Common\Auth\StorageSharedKeyCredential;
+use AzureOss\Storage\Common\Sas\SasProtocol;
+use Dompdf\Dompdf;
 use Filament\Facades\Filament;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -82,7 +90,7 @@ class MemberChangesDocumentsTest extends TestCase
     private function account(string $role): Account
     {
         $a = new Account;
-        $a->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic '.$role, 'password' => bcrypt('fixture'), 'active' => true])->save();
+        $a->forceFill(['username' => strtolower(Str::random(20)), 'display_name' => 'Synthetic '.$role, 'password' => bcrypt('fixture'), 'active' => true])->save();
         $this->insert('tenant_accounts', ['account_id' => $a->id, 'role' => $role, 'portal_enabled' => true]);
 
         return $a;
@@ -258,6 +266,157 @@ class MemberChangesDocumentsTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertStringNotContainsString('sensitive-provider-url', $e->getMessage());
             $this->assertSame($before, MemberDocument::where('tenant_id', $this->tenant->id)->count());
+        }
+    }
+
+    public function test_player_web_login_submit_approve_and_notification_are_owner_scoped(): void
+    {
+        Auth::guard('portal')->logout();
+        $this->post(route('clubunio.portal.login'), ['username' => $this->user->username, 'password' => 'fixture'])->assertRedirect()->assertSessionHasNoErrors();
+        $edit = route('clubunio.portal.member.edit', [$this->tenant->slug, $this->member->id]);
+        $this->get($edit)->assertOk()->assertSee('Old City')->assertSee('Änderungsantrag');
+        $this->post(route('clubunio.portal.member.submit', [$this->tenant->slug, $this->member->id]),
+            ['city' => 'Player request city', '_version' => MemberService::version($this->member->fresh())])->assertRedirect($edit)->assertSessionHasNoErrors();
+        $r = MemberChangeRequest::where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame('Old City', $this->member->fresh()->city);
+        $this->assertSame($this->user->id, $r->requested_by);
+        $this->get($edit)->assertSee('Player request city');
+        app(MemberChangeService::class)->review($this->office, $this->tenant, $r->id, 1, true, 'Synthetic approval');
+        $this->get($edit)->assertOk()->assertSee('Synthetic approval');
+        $this->assertSame('Player request city', $this->member->fresh()->city);
+        $this->get(route('clubunio.portal.notifications', $this->tenant->slug))->assertOk()->assertSee('Antrag öffnen');
+        $this->assertSame(1, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->where('account_id', $this->user->id)->count());
+        Mail::assertNothingSent();
+        Http::assertNothingSent();
+    }
+
+    public function test_parent_web_login_child_request_and_privacy_and_age_and_exit_boundaries(): void
+    {
+        $parent = $this->account('member');
+        $secondParent = $this->account('member');
+        $this->link($parent, $this->member, 'parent');
+        $this->link($secondParent, $this->member, 'parent');
+        $otherChild = new Member;
+        $otherChild->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Sibling', 'birth_date' => now()->subYears(8)->toDateString()])->save();
+        $this->link($parent, $otherChild, 'parent');
+        Auth::guard('portal')->logout();
+        $this->post(route('clubunio.portal.login'), ['username' => $parent->username, 'password' => 'fixture'])->assertRedirect()->assertSessionHasNoErrors();
+        $edit = route('clubunio.portal.member.edit', [$this->tenant->slug, $this->member->id]);
+        $this->get($edit)->assertOk();
+        $this->post(route('clubunio.portal.member.submit', [$this->tenant->slug, $this->member->id]),
+            ['city' => 'Parent request city', '_version' => MemberService::version($this->member->fresh())])->assertRedirect($edit)->assertSessionHasNoErrors();
+        $r = MemberChangeRequest::where('tenant_id', $this->tenant->id)->sole();
+        $this->actingAs($secondParent, 'portal')->get($edit)->assertOk()->assertDontSee('Parent request city');
+        $this->post(route('clubunio.portal.member.withdraw', [$this->tenant->slug, $r->id]), ['revision' => 1])->assertNotFound();
+        app(MemberChangeService::class)->review($this->office, $this->tenant, $r->id, 1, true, 'Parent-only decision note');
+        $this->get($edit)->assertDontSee('Parent-only decision note');
+        $this->actingAs($parent, 'portal')->get($edit)->assertSee('Parent-only decision note');
+        $this->member->forceFill(['birth_date' => now()->subYears(18)->toDateString()])->save();
+        $this->get($edit)->assertNotFound();
+        $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $otherChild->id]))->assertOk();
+        $this->member->forceFill(['birth_date' => now()->subYears(12)->toDateString(), 'exit_date' => now()->toDateString()])->save();
+        $this->get($edit)->assertNotFound();
+        $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->where('member_id', $otherChild->id)->update(['state' => 'revoked']);
+        $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $otherChild->id]))->assertForbidden();
+        Mail::assertNothingSent();
+        Http::assertNothingSent();
+    }
+
+    public function test_live_azure_private_upload_roundtrip_and_player_parent_http_access(): void
+    {
+        if (getenv('CLUBUNIO_TEST_AZURE') !== '1') {
+            $this->markTestSkipped('Explicit real private Azure opt-in required');
+        }
+        $config = config('clubunio-integrations.azure');
+        $this->assertTrue((bool) $config['enabled']);
+        $this->assertSame('svs-prod-private', $config['container']);
+        $this->assertFalse((bool) config('clubunio.outbound_enabled'));
+        config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
+        $parent = $this->account('member');
+        $stranger = $this->account('member');
+        $this->link($parent, $this->member, 'parent');
+        $other = new Member;
+        $other->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Stranger', 'birth_date' => '1990-01-01'])->save();
+        $this->link($stranger, $other, 'self');
+        $type = $this->insert('document_types', ['code' => 'azure-live-fixture', 'name' => 'Synthetic Azure test']);
+        $pdf = new Dompdf;
+        $pdf->loadHtml('<html><body><h1>ClubUnio storage test</h1><p>Synthetic fixture. No personal information.</p></body></html>');
+        $pdf->render();
+        $bytes = $pdf->output();
+        $sha = hash('sha256', $bytes);
+        $store = new class extends RegistrationBlobStore
+        {
+            public ?array $created = null;
+
+            public function put(string $folder, string $filename, string $bytes, string $mime): void
+            {
+                $this->created = [$folder, $filename];
+                parent::put($folder, $filename, $bytes, $mime);
+            }
+        };
+        $this->app->instance(RegistrationBlobStore::class, $store);
+        try {
+            $d = app(MemberDocumentMaintenanceService::class)->add($this->office, $this->tenant, $this->member->id, $type, false,
+                UploadedFile::fake()->createWithContent('ClubUnio Azure Test.pdf', $bytes));
+            $this->assertSame($sha, $d->sha256);
+            $this->assertSame(strlen($bytes), $d->file_size);
+            $this->assertSame($sha, hash('sha256', app(AzureDocumentReader::class)->read($d->storage_path, $d->filename)));
+            $this->assertFalse(is_file(public_path($d->storage_path.$d->filename)));
+            $unsigned = 'https://'.$config['account'].'.blob.core.windows.net/'.$config['container'].'/'.$d->storage_path.$d->filename;
+            $anonymous = (new Client)->request('GET', $unsigned, ['http_errors' => false, 'allow_redirects' => false, 'timeout' => 20]);
+            $this->assertContains($anonymous->getStatusCode(), [401, 403, 404]);
+            $url = route('clubunio.portal.member.document', [$this->tenant->slug, $d->id]);
+            $this->actingAs($this->user, 'portal')->get($url)->assertNotFound();
+            $this->actingAs($parent, 'portal')->get($url)->assertNotFound();
+            $admin = $this->actingAs($this->office, 'clubunio')->get(route('clubunio.documents.open', [$this->tenant->slug, $d->id]))->assertOk();
+            $this->assertSame($sha, hash('sha256', $admin->getContent()));
+            app(MemberDocumentMaintenanceService::class)->update($this->office, $this->tenant, $d->id, $this->member->id, 1, true, true);
+            foreach ([$this->user, $parent] as $actor) {
+                $response = $this->actingAs($actor, 'portal')->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertHeader('X-Content-Type-Options', 'nosniff');
+                $this->assertSame($sha, hash('sha256', $response->getContent()));
+                $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $this->member->id]))->assertOk()->assertSee('ClubUnio Azure Test.pdf');
+            }
+            $this->actingAs($stranger, 'portal')->get($url)->assertNotFound();
+            $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
+            $this->actingAs($parent, 'portal')->get($url)->assertNotFound();
+            app(MemberDocumentMaintenanceService::class)->update($this->office, $this->tenant, $d->id, $this->member->id, 2, false, true);
+            $this->actingAs($this->user, 'portal')->get($url)->assertNotFound();
+            $this->actingAs($this->office, 'clubunio')->get(route('clubunio.documents.open', [$this->tenant->slug, $d->id]))->assertNotFound();
+            Mail::assertNothingSent();
+            Http::assertNothingSent();
+        } finally {
+            if ($store->created) {
+                $this->removeLiveFixture($store->created, $sha);
+            }
+        }
+    }
+
+    private function removeLiveFixture(array $created, string $sha): void
+    {
+        [$folder, $name] = $created;
+        $this->assertSame('clubunio/members/'.$this->tenant->id.'/'.$this->member->id.'/', $folder);
+        $this->assertMatchesRegularExpression('/^[a-f0-9-]{36}\.pdf$/D', $name);
+        $config = config('clubunio-integrations.azure');
+        $path = $folder.$name;
+        $sas = BlobSasBuilder::new()->setContainerName($config['container'])->setBlobName($path)
+            ->setPermissions('rd')->setProtocol(SasProtocol::HTTPS)->setExpiresOn(now()->addMinutes(2))
+            ->build(new StorageSharedKeyCredential($config['account'], $config['key']));
+        $url = 'https://'.$config['account'].'.blob.core.windows.net/'.$config['container'].'/'.$path.'?'.$sas;
+        try {
+            $client = new Client(['http_errors' => false, 'allow_redirects' => false, 'timeout' => 20]);
+            $response = $client->get($url);
+            if ($response->getStatusCode() === 404) {
+                return;
+            }
+            $this->assertSame(200, $response->getStatusCode());
+            $this->assertSame($sha, hash('sha256', (string) $response->getBody()));
+            $etag = $response->getHeaderLine('ETag');
+            $this->assertNotSame('', $etag);
+            $deleted = $client->delete($url, ['headers' => ['If-Match' => $etag]]);
+            $this->assertSame(202, $deleted->getStatusCode());
+            $this->assertSame(404, $client->head($url)->getStatusCode());
+        } catch (GuzzleException) {
+            throw new \RuntimeException('Azure synthetic fixture cleanup unavailable; signed URL suppressed');
         }
     }
 }
