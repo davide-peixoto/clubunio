@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ClubUnio · Vereinsportal</title>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}">
-</head>
+    <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css').'?v=blue-v1' }}">
+@include('clubunio.brand.head')</head>
 <body>
     <header class="portal-header">
-        <strong>ClubUnio</strong>
+        @include('clubunio.brand.logo')
         @isset($tenant)
             <nav aria-label="Verein">
                 @foreach($tenants as $availableTenant)

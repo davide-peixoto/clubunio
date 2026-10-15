@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Blaue Identitaet, Release60
+
+15.10.2026: Verbundenes U als SVG, Verwaltung/Portal/Login/Favicon und
+Markenaktionen blau. Semantische Statusfarben unveraendert. Keine Migration;
+Ruecksprung59 moeglich. Details: CLUBUNIO-BLUE-BRAND.md.
+
 ## Fachpaket59: Mitgliederantraege und allgemeine Dokumentpflege
 
 Eigener Web-Antrags-/Pruefweg, verschluesselte Snapshots, aktuelle Eltern-/

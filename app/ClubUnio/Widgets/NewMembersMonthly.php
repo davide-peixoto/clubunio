@@ -23,6 +23,6 @@ class NewMembersMonthly extends ChartWidget
     {
         $data = app(DashboardService::class)->newMembersMonthly(Filament::auth()->user(), Filament::getTenant());
 
-        return ['labels' => array_keys($data), 'datasets' => [['label' => 'Neu erfasst', 'data' => array_values($data), 'backgroundColor' => '#0f766e']]];
+        return ['labels' => array_keys($data), 'datasets' => [['label' => 'Neu erfasst', 'data' => array_values($data), 'backgroundColor' => '#164B8A']]];
     }
 }

@@ -113,12 +113,20 @@ class ClubUnioPanelProvider extends PanelProvider
     {
         return SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
             ->login(Login::class)->brandName('ClubUnio')
-            ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css" rel="stylesheet" data-navigate-track />')])
+            ->brandLogo(asset('brand/blue-v1/clubunio-logo-horizontal.svg'))
+            ->darkModeBrandLogo(asset('brand/blue-v1/clubunio-logo-horizontal-white.svg'))
+            ->brandLogoHeight('3rem')
+            ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
+            ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
+            ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=blue-v1" rel="stylesheet" data-navigate-track />')])
             ->tenant(Tenant::class, slugAttribute: 'slug', ownershipRelationship: 'tenant')
             ->tenantMenu(false)
             ->tenantMiddleware([UseActiveTenant::class], isPersistent: true)
             ->renderHook('panels::sidebar.nav.start', fn () => view('clubunio.tenant-switcher'))
-            ->colors(['primary' => Color::Emerald])
+            ->colors(['primary' => array_replace(Color::hex('#164B8A'), [
+                400 => Color::convertToOklch('#48A9E8'),
+                600 => Color::convertToOklch('#164B8A'),
+            ])])
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
                 MemberChangeRequestResource::class,

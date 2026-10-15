@@ -1,5 +1,9 @@
 # Pi staging: dev.clubunio.ch
 
+Release60: `20261015-clubunio-60-blue-brand`, Ruecksprung59.
+Blaue SVG-Identitaet, Login/Navigation/Portal/Favicon, versioniertes CSS.
+Keine DB-/ENV-Aenderung. Details: CLUBUNIO-BLUE-BRAND.md.
+
 Release59: `20261015-clubunio-59-member-changes`, Ruecksprung58.
 Eigene additive Migration59, Mitgliederantraege und allgemeine Dokumentpflege.
 Private Azure-Praefixe, explizite Portal-Freigabe, interne Notifications;

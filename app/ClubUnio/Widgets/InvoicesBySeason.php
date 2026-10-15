@@ -25,7 +25,7 @@ class InvoicesBySeason extends ChartWidget
         $rows = app(DashboardService::class)->invoicesBySeason(Filament::auth()->user(), Filament::getTenant());
 
         return ['labels' => array_column($rows, 'season'), 'datasets' => [
-            ['label' => 'Gesamt CHF', 'data' => array_column($rows, 'amount'), 'backgroundColor' => '#0f766e'],
+            ['label' => 'Gesamt CHF', 'data' => array_column($rows, 'amount'), 'backgroundColor' => '#164B8A'],
             ['label' => 'Offen CHF', 'data' => array_column($rows, 'open_amount'), 'backgroundColor' => StatusAppearance::hex('Offen')],
         ]];
     }

@@ -25,6 +25,6 @@ class MembersByAge extends ChartWidget
         abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
         $counts = app(DashboardService::class)->ages(Filament::auth()->user(), $tenant);
 
-        return ['labels' => array_keys($counts), 'datasets' => [['label' => 'Mitglieder', 'data' => array_values($counts), 'backgroundColor' => '#059669']]];
+        return ['labels' => array_keys($counts), 'datasets' => [['label' => 'Mitglieder', 'data' => array_values($counts), 'backgroundColor' => '#48A9E8']]];
     }
 }

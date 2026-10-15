@@ -1,10 +1,11 @@
 :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; color: #242a30; background: #f7f8fa; }
 * { box-sizing: border-box; letter-spacing: 0; }
 body { margin: 0; }
+.clubunio-brand-logo { display:block; width:180px; height:50px; max-width:100%; object-fit:contain; flex-shrink:0; }
 .portal-header { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; min-height: 64px; padding: 12px 28px; background: #fff; border-bottom: 1px solid #dde1e6; }
-.portal-header strong { font-size: 22px; color: #12644b; }
+.portal-header strong { font-size: 22px; color: #164B8A; }
 nav { display: flex; gap: 16px; flex-wrap: wrap; flex: 1; }
-a { color: #12644b; text-underline-offset: 3px; }
+a { color: #164B8A; text-underline-offset: 3px; }
 nav a { text-decoration: none; } nav a[aria-current] { font-weight: 700; }
 main { max-width: 1400px; margin: 0 auto; padding: 28px; }
 h1 { font-size: 26px; margin: 0 0 20px; }
@@ -14,11 +15,11 @@ h1 { font-size: 26px; margin: 0 0 20px; }
 .toolbar > div { min-width: 180px; max-width: 100%; }
 label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
 input, select { font: inherit; max-width: 100%; min-height: 42px; border: 1px solid #aeb6c1; border-radius: 4px; background: #fff; color: inherit; padding: 8px 10px; }
-input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 2px solid #267d9c; outline-offset: 2px; }
+input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 2px solid #48A9E8; outline-offset: 2px; }
 button, .icon-button { cursor: pointer; font: inherit; border: 1px solid #b9c1ca; border-radius: 4px; background: #fff; color: #323a45; }
 .icon-button { display: inline-flex; justify-content: center; align-items: center; width: 42px; height: 42px; flex-shrink: 0; }
 .icon-button svg { width: 20px; height: 20px; }
-.primary { padding: 10px 18px; background: #12644b; color: white; border-color: #12644b; }
+.primary { padding: 10px 18px; background: #164B8A; color: white; border-color: #164B8A; }
 .table-scroll { overflow: auto; background: #fff; border-top: 1px solid #d9dee5; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #e1e5eb; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; }
@@ -41,7 +42,7 @@ td:first-child { font-weight: 600; min-width: 170px; }
 .registration-form label { display: grid; gap: 6px; }
 .registration-form input, .registration-form select, .registration-form textarea { width: 100%; }
 .registration-form textarea { font: inherit; min-height: 100px; padding: 10px; border: 1px solid #aeb6c1; border-radius: 4px; }
-.registration-form button { padding: 10px 18px; background: #12644b; color: #fff; justify-self: start; }
+.registration-form button { padding: 10px 18px; background: #164B8A; color: #fff; justify-self: start; }
 .full-width { grid-column: 1 / -1; }
 @media (max-width: 600px) { .registration-details, .registration-form { grid-template-columns: minmax(0,1fr); } .portal-header { flex-wrap: wrap; } }
 .pagination { margin-top: 20px; }

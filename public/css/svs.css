@@ -1,5 +1,9 @@
 /* Narrow overrides on Filament components; no changes to vendor assets. */
 :root { --svs-border: #e4e4e7; }
+.fi-logo { max-width:100%; object-fit:contain; }
+.fi-simple-header .fi-logo { height:auto !important; width:240px; max-width:100%; }
+.fi-simple-main { border-radius:8px; }
+.fi-simple-main-ctn { border-top:4px solid #164B8A; }
 body { letter-spacing: 0; }
 .fi-body:not(.dark *) { background: #f7f8fa; }
 .svs-brand { display:flex; align-items:center; gap:10px; text-align:left; }
