@@ -44,6 +44,7 @@ class RegistrationAcceptanceService
         if ($documents->contains('kind', 'identity') && ! $db->table('clubora.document_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $documentType)->exists()) {
             throw ValidationException::withMessages(['document_type_id' => 'Bitte den Dokumententyp für die Ausweise auswählen.']);
         }
+        $returning = $member && ($member->exit_date || $member->status?->ends_membership);
         $member = app(MemberService::class)->fromRegistration($actor, $tenant, $r, $member, $type);
         $values = app(RegistrationDataService::class)->values($r);
         if (! empty($values['ahv'])) {
@@ -55,7 +56,7 @@ class RegistrationAcceptanceService
             } else {
                 $db->table('clubora.member_documents')->insert([
                     'tenant_id' => $tenant->id, 'member_id' => $member->id, 'document_type_id' => $documentType,
-                    'filename' => $document->filename, 'original_filename' => $document->filename,
+                    'filename' => $document->filename, 'original_filename' => $document->original_filename ?: $document->filename,
                     'storage_path' => $document->storage_path, 'registration_document_id' => $document->id,
                 ]);
             }
@@ -64,7 +65,24 @@ class RegistrationAcceptanceService
         if (! empty($values['notes'])) {
             $db->table('clubora.member_notes')->insert(['tenant_id' => $tenant->id, 'member_id' => $member->id, 'body' => $values['notes']]);
         }
-        $r->forceFill(['member_id' => $member->id, 'accepted_at' => now()]);
+        $player = null;
+        if ($r->team_season_id) {
+            $player = $db->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('member_id', $member->id)
+                ->where('team_season_id', $r->team_season_id)->where('active', true)->value('id');
+            if (! $player) {
+                // Do not reactivate historical invoice-bound rows or move other memberships.
+                $player = $db->table('clubora.team_players')->insertGetId(['tenant_id' => $tenant->id,
+                    'member_id' => $member->id, 'team_season_id' => $r->team_season_id, 'active' => true]);
+                $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+                    'object_type' => 'team_players', 'object_id' => $player,
+                    'after_value' => json_encode(['registration_id' => $r->id, 'member_id' => $member->id, 'team_season_id' => $r->team_season_id], JSON_THROW_ON_ERROR)]);
+            }
+        }
+        $parents = app(RegistrationParentService::class)->propose($actor, $tenant, $r, $member);
+        $r->forceFill(['member_id' => $member->id, 'accepted_at' => now(), 'acceptance_summary' => [
+            'returning' => (bool) $returning, 'team_player_id' => $player, 'parent_link_ids' => $parents,
+            'document_count' => $documents->count(), 'actor_id' => $actor->id,
+        ]]);
 
         return $member;
     }

@@ -6,7 +6,7 @@ class Registration extends CatalogModel
 {
     protected $hidden = ['applicant_encrypted'];
 
-    protected $casts = ['birth_date' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'revision' => 'integer'];
+    protected $casts = ['birth_date' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'revision' => 'integer', 'acceptance_summary' => 'array', 'details_complete' => 'boolean', 'accepted_at' => 'datetime'];
 
     public function technicalLead()
     {

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Mail;
 
 class TestOutboxDispatcher
 {
-    public function dispatch(string $table, int $limit = 20): array
+    public function dispatch(string $table, int $limit = 20, ?int $tenantId = null, ?int $eventId = null): array
     {
         if (! in_array($table, ['registration_events', 'expense_events'], true)) {
             throw new \InvalidArgumentException('Unknown outbox');
@@ -23,8 +23,11 @@ class TestOutboxDispatcher
         }
         $table = 'clubora.'.$table;
         for ($i = 0; $i < min(50, max(0, $limit)); $i++) {
-            $event = $db->transaction(function () use ($db, $table) {
-                $row = $db->table($table)->where('delivery_state', 'ready')->orderBy('id')->lock('FOR UPDATE SKIP LOCKED')->first();
+            $event = $db->transaction(function () use ($db, $table, $tenantId, $eventId) {
+                $row = $db->table($table)->where('delivery_state', 'ready')
+                    ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+                    ->when($eventId !== null, fn ($q) => $q->where('id', $eventId))
+                    ->orderBy('id')->lock('FOR UPDATE SKIP LOCKED')->first();
                 if ($row) {
                     $db->table($table)->where('id', $row->id)->update(['delivery_state' => 'sending']);
                 }

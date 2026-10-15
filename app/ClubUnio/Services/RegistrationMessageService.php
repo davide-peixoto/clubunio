@@ -2,6 +2,7 @@
 
 namespace App\ClubUnio\Services;
 
+use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Registration;
 use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Crypt;
@@ -67,7 +68,8 @@ class RegistrationMessageService
         if ($event === 'registration.trial' && $r->team_season_id) {
             $cc = app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id', $db->table('clubora.team_staff')
                 ->where('tenant_id', $tenant->id)->where('team_season_id', $r->team_season_id)->where('active', true)->select('member_id'))
-                ->pluck('email')->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))->unique()->values()->all();
+                ->pluck('email')->map(fn ($email) => mb_strtolower(trim($email ?? '')))
+                ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL) && $email !== mb_strtolower($to))->unique()->values()->all();
         }
         $message = app(MessageTemplateService::class)->render($tenant, $event, 'email', [
             'verein' => $tenant->name, 'mitglied' => trim($r->first_name.' '.$r->last_name),
@@ -80,5 +82,17 @@ class RegistrationMessageService
     public function dispatch(int $limit = 20): array
     {
         return app(TestOutboxDispatcher::class)->dispatch('registration_events', $limit);
+    }
+
+    public function dispatchOne(Account $actor, Tenant $tenant, int $registration, int $event): array
+    {
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        abort_unless(DB::connection('clubunio')->table('clubora.registration_events')->where('tenant_id', $tenant->id)
+            ->where('registration_id', $registration)->where('id', $event)->where('delivery_state', 'ready')->exists(), 404);
+        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            'object_type' => 'registration_events', 'object_id' => $event,
+            'after_value' => json_encode(['operation' => 'test_mail_requested', 'registration_id' => $registration], JSON_THROW_ON_ERROR)]);
+
+        return app(TestOutboxDispatcher::class)->dispatch('registration_events', 1, $tenant->id, $event);
     }
 }

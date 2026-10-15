@@ -33,12 +33,14 @@ class RegistrationDataService
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Registration
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
         if (array_diff(array_keys($input), [...self::CORE, ...self::DETAILS, 'revision'])) {
             throw ValidationException::withMessages(['first_name' => 'Nicht erlaubte Eingabefelder.']);
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
             $r = $id ? Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id) : new Registration;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $r->revision) {
                 throw ValidationException::withMessages(['revision' => 'Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.']);

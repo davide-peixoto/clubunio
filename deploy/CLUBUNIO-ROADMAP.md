@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket57: Mitgliederanmeldungen und Wiedereintritt
+
+Webworkflow samt TL/Pool/Probetraining/Annahme/Ablehnung, Dublettenpruefung,
+Wiedereintritt auf vorhandener Mitglied-ID, atomarer Mannschaftsuebernahme und
+Elternvorschlaegen ohne automatische Berechtigungsfreigabe vervollstaendigt.
+Private UUID-Azure-Uploads, Dokumentverwaltung, Vorlagen/Protokoll und gezielter
+Testmailversand nur an admin@svsissach.ch. Eigene additive Migration57.
+Keine Bestands-Annahme oder Rueckmigration nach PHPMaker. Spaeteren neuen
+Produktionssnapshot, fachliche Abnahme und Cutover separat planen.
+Details: [Anmeldungen und Wiedereintritt](CLUBUNIO-REGISTRATION-COMPLETION.md).
+DEV/PROD, App-API, SaaS und Betrieb unveraendert.
+
 ## Fachpaket56: Altplaene, Schluesselbox-Simulation, Instagram
 
 Eigene Migrationen55/56. 41 Quellen geprueft, ein Plan privat archiviert,

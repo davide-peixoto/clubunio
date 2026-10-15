@@ -4,7 +4,11 @@ Fachpaket56: Trainingsaltbestand mit expliziter Zuordnung und Qualitaetssperre,
 Bus-Schluesselbox-Simulation (keine echte Hardwareausgabe) und Instagram-Livecheck.
 Siehe [Stand und offene Schritte](deploy/CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md).
 
-Vereinsverwaltung auf Laravel und Filament. Aktueller Fachstand: Release55,
+Vereinsverwaltung auf Laravel und Filament. Aktueller Fachstand: Release57,
+Mitgliederanmeldungen/Wiedereintritt und private Dokumentverwaltung:
+[Workflow und Migrationsschritte](deploy/CLUBUNIO-REGISTRATION-COMPLETION.md).
+
+Finanzstand Release55:
 Gutschriften und manuelle Rueckerstattungsnachweise, ausschliesslich
 Bexio-Sandbox; keine echten Bankzahlungen. PHPMaker DEV/PROD bleibt parallel.
 Siehe [Migrationsplan](deploy/CLUBUNIO-ROADMAP.md), [Pi-Stand](deploy/PI.md)

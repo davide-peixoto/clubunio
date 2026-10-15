@@ -34,6 +34,9 @@ class MemberDocumentService
     private function readResponse(Account $actor, Tenant $tenant, object $document, bool $download, string $objectType)
     {
         abort_unless($tenant->slug === config('clubunio-integrations.azure.tenant_slug'), 404);
+        if (str_starts_with($document->storage_path, 'clubunio/')) {
+            abort_unless(str_starts_with($document->storage_path, 'clubunio/registrations/'.$tenant->id.'/'), 404);
+        }
         try {
             $bytes = app(AzureDocumentReader::class)->read($document->storage_path, $document->filename);
         } catch (\Throwable $error) {

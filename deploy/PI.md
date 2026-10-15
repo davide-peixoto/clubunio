@@ -1,5 +1,10 @@
 # Pi staging: dev.clubunio.ch
 
+Release57: `20261015-clubunio-57-registration-completion`, Ruecksprung56.
+Eigene additive Migration57. Mitgliederanmeldungen/Wiedereintritt, private
+ClubUnio-Azure-Uploads und gezielter Testmailversand; externe Pushzustellung aus.
+Details: CLUBUNIO-REGISTRATION-COMPLETION.md. PHPMaker DEV/PROD unveraendert.
+
 Release56: `20261015-clubunio-56-training-keybox-instagram`, Ruecksprung55.
 Eigene additive Migrationen55/56. Keine echte Schluesselboxausgabe, kein Versand
 und keine Bankzahlung. Details: CLUBUNIO-TRAINING-KEYBOX-INSTAGRAM.md.

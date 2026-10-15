@@ -21,7 +21,7 @@ class AzureDocumentReader
             'upload/anmeldungen/' => 'upload/anmeldungen/',
             'upload/mitglieder/anhaenge/' => 'upload/mitglieder/anhaenge/',
             'var/member-documents/' => 'member-documents/',
-            default => throw new \InvalidArgumentException('Unsupported document folder'),
+            default => preg_match('~^clubunio/registrations/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder) ? $folder : throw new \InvalidArgumentException('Unsupported document folder'),
         };
         if ($filename === '' || $filename === '.' || $filename === '..' || preg_match('~[/\\\\:\x00-\x1f\x7f]~', $filename)) {
             throw new \InvalidArgumentException('Invalid document filename');

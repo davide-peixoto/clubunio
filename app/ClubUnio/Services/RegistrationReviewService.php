@@ -60,7 +60,6 @@ class RegistrationReviewService
 
     public function review(Account $actor, Tenant $tenant, int $id, array $input): Registration
     {
-        $office = $actor->canAccessTenant($tenant);
         $unknown = array_diff(array_keys($input), [...self::FIELDS, 'revision', 'reason', 'member_id', 'member_version', 'member_type_id', 'document_type_id']);
         if ($unknown) {
             throw ValidationException::withMessages(['status_id' => 'Diese Felder dürfen hier nicht verändert werden.']);
@@ -73,8 +72,11 @@ class RegistrationReviewService
             'member_type_id' => 'sometimes|nullable|integer', 'document_type_id' => 'sometimes|nullable|integer',
         ])->validate();
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data, $office) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $actor = $actor->fresh();
+            abort_unless($actor?->active, 403);
+            $office = $actor->canAccessTenant($tenant);
             $r = Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($this->canReview($actor, $tenant, $r), 403);
             if ((int) $r->revision !== (int) $data['revision']) {
@@ -118,6 +120,8 @@ class RegistrationReviewService
             }
             if ($statusChanged && $status->workflow_key === 'rejected') {
                 $r->rejected_at = now();
+            } elseif ($statusChanged) {
+                $r->rejected_at = null;
             }
             $r->forceFill(['revision' => $r->revision + 1, 'reviewed_by' => $actor->id, 'reviewed_at' => now()])->save();
             $db = DB::connection('clubunio');
