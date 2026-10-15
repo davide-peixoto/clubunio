@@ -63,7 +63,13 @@ Release58 ist mit den additiven Feldern kompatibel; Migration nicht blind down.
 
 Automatisierte Transaktionstests mit synthetischen Daten, privaten Upload/Reads
 gemockt. Kein echter Azure-Upload als End-to-End-Nachweis behauptet.
-Angemeldete visuelle Abnahme und realer synthetischer Azure-Upload separat pruefen.
+Angemeldete Verwaltungspruefung15.10.2026 erfolgt: Dashboard-Zaehler,
+Antragsliste mit Standardfilter In Pruefung, Dokumentliste mit70 Eintraegen,
+Upload-SlideOver, geladene Dokumenttypen und Freigabemaske erreichbar.
+Portal-Freigabe standardmaessig aus; alle Masken ohne Speicherung geschlossen.
+Keine echten Mitgliederdaten oder Dokumentberechtigungen veraendert.
+Kein offener Antrag vorhanden: Genehmigungsansicht nur automatisiert geprueft.
+Spieler-/Elternportal und realer synthetischer Azure-Upload separat pruefen.
 44 Tests/426 Assertions erfolgreich:33/320 fuer Antraege/Dokumente/Anmeldungen,
 Azure-Adapter, PMP-Inventar und Navigation,11/106 fuer bestehende Mitgliederdossiers,
 Dashboard und Mitgliederregeln. Routen-/View-Cache erfolgreich erstellt.
@@ -72,4 +78,4 @@ Aktiv auf ClubUnio-Pi:20261015-clubunio-59-member-changes, Ruecksprung58.
 Bestandszaehlung unveraendert:2438 Mitglieder,69 Anmeldungen,70 Konten.
 HTTP nach Deployment:Login200, Verwaltungslisten/Portal ohne Anmeldung302.
 SHA256 der beiden neuen Fachservices und Webrouten identisch lokal/Pi.
-Angemeldete Sichtpruefung bleibt offen; Browser steht auf Login.
+Die Verwaltungspruefung ersetzt keine vollstaendige Rollen-/End-to-End-Abnahme.
