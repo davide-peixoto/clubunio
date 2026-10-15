@@ -29,7 +29,7 @@ class ViewRefund extends ViewRecord
             ->fillForm(fn () => ['revision' => $this->getRecord()->revision, 'paid_on' => now('Europe/Zurich')->toDateString()])
             ->schema([$revision(), DatePicker::make('paid_on')->label('Nachweisdatum')->required()->maxDate(now('Europe/Zurich')->toDateString()),
                 TextInput::make('proof_reference')->label('Eindeutige Nachweisreferenz')->required()->maxLength(120),
-                Checkbox::make('attestation')->label('Der Betrag wurde ausserhalb von ClubUnio zurückerstattet. Im Sandbox-Test ist dies nur ein synthetischer Nachweis.')->accepted()])
+                Checkbox::make('attestation')->label('Rückerstattung ausserhalb von ClubUnio durchgeführt; nur den Nachweis übernehmen.')->accepted()])
             ->action(fn ($data) => $change('confirm', $data)),
             Action::make('cancel')->label('Stornieren')->icon('heroicon-o-x-mark')->color('danger')->visible(fn () => $this->getRecord()->status->code === 'draft')
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])->schema([$revision(), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])

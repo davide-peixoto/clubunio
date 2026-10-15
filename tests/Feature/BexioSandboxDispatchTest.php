@@ -14,6 +14,7 @@ use App\ClubUnio\Pages\BexioSandbox;
 use App\ClubUnio\Resources\ExpenseResource;
 use App\ClubUnio\Resources\InvoiceResource;
 use App\ClubUnio\Resources\InvoiceResource\Pages\ListInvoices;
+use App\ClubUnio\Resources\InvoiceResource\Pages\ViewInvoice;
 use App\ClubUnio\Services\AzureDocumentReader;
 use App\ClubUnio\Services\BexioCatalogFixtureService;
 use App\ClubUnio\Services\BexioCatalogService;
@@ -563,7 +564,9 @@ class BexioSandboxDispatchTest extends TestCase
         $this->assertStringContainsString('Rabatt CHF 5.00', $this->invoice['positions'][0]['text']);
         $this->assertSame('25.00', $this->invoice['positions'][0]['unit_price']);
         $this->assertSame('released', Invoice::find($id)->workflowStatus->code);
-        $viewer = route('clubunio.invoices.preview', ['tenant' => $this->tenant->slug, 'invoice' => $id, 'source' => 'bexio']);
+        $viewer = route('clubunio.workspace.invoices.preview', ['invoice' => $id, 'source' => 'bexio']);
+        $legacyViewer = route('clubunio.invoices.preview', ['tenant' => $this->tenant->slug, 'invoice' => $id, 'source' => 'bexio']);
+        $this->actingAs($this->actor, 'clubunio')->get($legacyViewer)->assertRedirect($viewer);
         $this->actingAs($this->actor, 'clubunio')->get($viewer)->assertOk()
             ->assertHeader('X-Frame-Options', 'SAMEORIGIN')->assertSee('pdf-viewer.js')
             ->assertSee('data-pdf-url', false)->assertSee('PDF herunterladen');
@@ -605,6 +608,16 @@ class BexioSandboxDispatchTest extends TestCase
         $this->invoiceStatus = 9;
         $this->expectException(HttpException::class);
         app(BexioInvoiceActionService::class)->execute($this->actor, $this->tenant, $id, 'cancel');
+    }
+
+    public function test_record_status_action_redirects_to_reload_aggregated_totals(): void
+    {
+        $id = $this->parentInvoice();
+        $url = InvoiceResource::getUrl('view', ['record' => $id], tenant: $this->tenant);
+        Livewire::test(ViewInvoice::class, ['record' => $id])
+            ->callAction('bexioStatus')->assertRedirect($url);
+        $this->get($url)->assertOk()->assertSee('33.00');
+        $this->assertSame('succeeded', $this->db->table('clubora.sync_work_items')->where('tenant_id', $this->tenant->id)->where('operation', 'invoice_sync')->sole()->state);
     }
 
     public function test_invoice_action_rejects_changed_recipient_and_nonadmin(): void

@@ -15,7 +15,7 @@
 @media(max-width:640px) { .clubunio-bexio-filters label { width:100%; } .clubunio-bexio table { min-width:700px; } }
 </style>
 <div class="clubunio-bexio">
-@if($sandbox)<p role="status"><strong>Sandbox · Nur registrierte Testbelege</strong></p>@endif
+@if($sandbox)<p role="status">Bexio-Verbindung: SVS Api Test</p>@endif
 @unless($enabled)<p role="status">Bexio kein Update - Deaktiviert</p>@endunless
 <div class="clubunio-bexio-filters">
 <label class="grid gap-1">Dokument<select wire:model.live="type" class="rounded border p-2"><option value="invoice">Rechnungen</option><option value="expense">Spesen</option></select></label>

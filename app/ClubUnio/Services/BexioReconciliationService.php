@@ -63,6 +63,14 @@ class BexioReconciliationService
 
     public function preview(Account $actor, Tenant $tenant, string $type, int $id): int
     {
+        $this->authorize($actor, $tenant);
+        abort_unless(in_array($type, ['invoice', 'expense'], true), 422);
+
+        return app(SyncWorkService::class)->run($actor, $tenant, $type.'_status', $id);
+    }
+
+    public function previewNow(Account $actor, Tenant $tenant, string $type, int $id): int
+    {
         $document = $this->document($actor, $tenant, $type, $id);
         $remote = trim((string) $document->{$type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id'});
         $reference = (string) Str::uuid();

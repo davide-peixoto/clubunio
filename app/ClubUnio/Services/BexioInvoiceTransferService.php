@@ -11,6 +11,13 @@ class BexioInvoiceTransferService
 {
     public function transfer(Account $actor, Tenant $tenant, int $id, int $revision): object
     {
+        app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
+
+        return app(SyncWorkService::class)->run($actor, $tenant, 'invoice_transfer', $id, compact('revision'));
+    }
+
+    public function transferNow(Account $actor, Tenant $tenant, int $id, int $revision): object
+    {
         $dispatch = app(BexioSandboxDispatchService::class);
         $dispatch->authorize($actor, $tenant);
         $invoice = Invoice::where('tenant_id', $tenant->id)->where('active', true)->whereNull('legacy_id')->findOrFail($id);

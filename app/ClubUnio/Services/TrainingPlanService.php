@@ -200,6 +200,7 @@ class TrainingPlanService
         } catch (\Throwable $error) {
             $this->finish($attempt, 'failed');
             DB::connection('clubunio')->table('clubora.training_plan_requests')->where('id', $attempt->id)->update(['provider_status' => (int) $error->getCode()]);
+            app(SyncWorkService::class)->remember($actor, $tenant, 'training_review', $attempt->id, ['input' => $input]);
             Log::warning('clubunio.training.failed', ['reference' => $attempt->reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['request' => 'Der Trainingsplan konnte nicht erstellt werden. Referenz: '.$attempt->reference]);
         }

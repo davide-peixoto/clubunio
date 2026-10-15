@@ -101,11 +101,7 @@ class BexioCatalogEntryResource extends Resource
             TernaryFilter::make('active')->label('Lokal aktiviert'),
             TernaryFilter::make('provider_active')->label('In Bexio aktiv'),
         ])->headerActions([
-            Action::make('testInvoice')->label('Artikeltestrechnung vorbereiten')->icon('heroicon-o-document-plus')->requiresConfirmation()
-                ->action(fn ($livewire) => $livewire->testInvoice()),
-            Action::make('testArticle')->label('Sandbox-Testartikel anlegen')->icon('heroicon-o-beaker')->requiresConfirmation()
-                ->action(fn ($livewire) => $livewire->testArticle()),
-            Action::make('sync')->label('Sandbox-Katalog aktualisieren')->icon('heroicon-o-arrow-path')->requiresConfirmation()
+            Action::make('sync')->label('Aus Bexio aktualisieren')->icon('heroicon-o-arrow-path')->requiresConfirmation()
                 ->action(fn ($livewire) => $livewire->syncCatalog()),
         ])->recordActions([
             EditAction::make()->iconButton()->tooltip('Bezeichnung und Aktivierung bearbeiten')

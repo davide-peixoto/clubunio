@@ -22,6 +22,8 @@ class BexioSandbox extends Page
 
     protected static ?string $title = 'Bexio-Sandbox';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Finanzen';

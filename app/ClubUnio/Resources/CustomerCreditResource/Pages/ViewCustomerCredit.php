@@ -34,7 +34,7 @@ class ViewCustomerCredit extends ViewRecord
                 Select::make('invoice_id')->label('Rechnung')->searchable()->required()->options(fn () => $this->invoiceOptions())
                     ->getSearchResultsUsing(fn (string $search) => $this->invoiceOptions($search))
                     ->getOptionLabelUsing(fn ($value) => $this->invoiceOptions('', (int) $value)[$value] ?? null),
-                Checkbox::make('attestation')->label('Verrechnung in der Bexio-Sandbox durchgeführt; nur den Nachweis übernehmen.')->accepted()])
+                Checkbox::make('attestation')->label('Verrechnung in Bexio durchgeführt; nur den Nachweis übernehmen.')->accepted()])
             ->action(function ($data) {
                 FormMutation::run($this, fn () => app(CustomerCreditService::class)->allocate(Filament::auth()->user(), Filament::getTenant(), $this->getRecord()->id, (int) $data['revision'], (int) $data['invoice_id']));
                 $this->redirect(CustomerCreditResource::getUrl('view', ['record' => $this->getRecord()->id]));

@@ -22,6 +22,8 @@ class BexioDispatchTrials extends Page
 
     protected static ?string $title = 'Bexio-Versandprüfung';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public string $type = 'invoice';
 
     public string $search = '';

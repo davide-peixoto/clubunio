@@ -30,6 +30,15 @@ class SfvPlanningService
         $this->planning->enter($actor, $tenant);
         abort_unless($this->planning->teams($actor, $tenant, true)->exists(), 403);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
+
+        return app(SyncWorkService::class)->run($actor, $tenant, 'sfv_schedule', $tenant->id, $data);
+    }
+
+    public function refreshNow(Account $actor, Tenant $tenant, array $input): int
+    {
+        $this->planning->enter($actor, $tenant);
+        abort_unless($this->planning->teams($actor, $tenant, true)->exists(), 403);
+        $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
         if (Time::parse($data['from'])->diffInDays(Time::parse($data['to'])) > 186) {
             throw ValidationException::withMessages(['to' => 'Maximal 186 Tage pro Abruf.']);
         }

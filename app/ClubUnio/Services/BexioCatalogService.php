@@ -63,6 +63,13 @@ class BexioCatalogService
 
     public function sync(Account $actor, Tenant $tenant): int
     {
+        app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
+
+        return app(SyncWorkService::class)->run($actor, $tenant, 'catalog', $tenant->id);
+    }
+
+    public function syncNow(Account $actor, Tenant $tenant): int
+    {
         $hash = $this->binding($actor, $tenant);
         $token = app(BexioConnectionService::class)->accessToken($tenant);
         $client = app(BexioSandboxClient::class);

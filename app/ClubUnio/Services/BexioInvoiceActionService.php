@@ -36,6 +36,13 @@ class BexioInvoiceActionService
 
     public function execute(Account $actor, Tenant $tenant, int $invoiceId, string $operation): void
     {
+        app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
+        abort_unless(in_array($operation, ['issue', 'cancel'], true), 422);
+        app(SyncWorkService::class)->run($actor, $tenant, 'invoice_action', $invoiceId, compact('operation'));
+    }
+
+    public function executeNow(Account $actor, Tenant $tenant, int $invoiceId, string $operation): void
+    {
         abort_unless(in_array($operation, ['issue', 'cancel'], true), 422);
         [$row, $remote] = $this->remote($actor, $tenant, $invoiceId);
         $existing = $this->table()->where('dispatch_id', $row->id)->where('operation', $operation)->first();

@@ -1,5 +1,20 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket71: Synchronisation und normale Bexio-Bedienung
+
+Eigene additive Migration67 speichert mandantengebundene Syncauftraege und
+unveraenderliche Ereignisse. Bexio-Uebertragung/-Aktionen/-Status/Katalog und
+SFV-Abruf werden vor externem Zugriff erfasst; KI-Fehler werden zur Pruefung
+gesichert. Bestehende Fehlerjournale koennen ohne externe Writes uebernommen
+werden. Nur Adminwiederholung mit Lease/Revision und unveraenderter Verbindung;
+unklare Bexio-Writes nur abgleichen, nie blind erneut senden. Manueller Abschluss
+ist kein Synchronisationsnachweis. Normale Rechnungsaktionen am Objekt,
+technische Testseiten nicht mehr in der Navigation. Azure-Upload-Staging und
+weitere externe Versandadapter sind ein gesonderter Ausbau, kein stiller
+Fallback. Kein neuer Cron/Worker. Details: CLUBUNIO-SYNCHRONISATION.md.
+GS-00005 in Bexio mit10.00 inkl.0.75 MWST bestaetigt, noch unverrechnet.
+PHPMaker DEV/PROD, API, SaaS und Betrieb unveraendert.
+
 ## Fachpaket69: Uebrige Verwaltungswege
 
 Bexio-Verbindung in Filament-Layout, zentraler Mandant und stale-tab-geschuetzter
