@@ -55,7 +55,7 @@ class TeamSeasonResource extends TeamAssignmentResource
             SelectFilter::make('season_id')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id')),
             SelectFilter::make('team_id')->label('Mannschaft')->searchable()->options(fn () => Team::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
             TernaryFilter::make('active')->label('Aktiv'),
-        ])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('legacy_id', 'desc')->paginated([25, 50, 100]);
+        ])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('legacy_id', 'desc')->paginated([25, 50, 100]);
     }
 
     public static function getPages(): array

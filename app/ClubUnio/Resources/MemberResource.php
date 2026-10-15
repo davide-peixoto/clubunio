@@ -148,7 +148,20 @@ class MemberResource extends Resource
             $entries[] = IconEntry::make($field)->label($label)->boolean();
         }
 
-        return $schema->columns(2)->components($entries);
+        $byField = collect($entries)->keyBy(fn ($entry) => $entry->getName());
+        $groups = [
+            'Person' => ['member_number', 'company', 'first_name', 'last_name', 'birth_date', 'gender.name', 'nationality.name', 'pass_number'],
+            'Kontakt' => ['street', 'house_number', 'postal_code', 'city', 'country.name', 'email', 'mobile', 'phone_private', 'phone_business', 'website'],
+            'Eltern & Rechnung' => ['mother_name', 'mother_email', 'mother_mobile', 'father_name', 'father_email', 'father_mobile', 'billingRecipient.name'],
+            'Mitgliedschaft' => ['status.name', 'type.name', 'exit_date', 'honorary', 'free_membership', 'supporter', 'sponsor', 'spots'],
+        ];
+        $tabs = [];
+        foreach ($groups as $label => $fields) {
+            $tabs[] = Tab::make($label)->columns(['default' => 1, 'md' => 2])
+                ->schema(array_map(fn ($field) => $byField[$field], $fields));
+        }
+
+        return $schema->components([Tabs::make('Mitgliederdaten')->columnSpanFull()->tabs($tabs)]);
     }
 
     public static function lookupOptions(string $model, ?int $current): array

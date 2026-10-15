@@ -32,7 +32,7 @@ class ContributionPriceResource extends ContributionTrainingResource
 
     public static function table(Table $table): Table
     {
-        return $table->columns([TextColumn::make('name')->label('Bezeichnung')->searchable()->sortable(), TextColumn::make('amount')->label('Betrag')->money('CHF'), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
+        return $table->columns([TextColumn::make('name')->label('Bezeichnung')->searchable()->sortable(), TextColumn::make('amount')->label('Betrag')->money('CHF'), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 
     public static function getPages(): array

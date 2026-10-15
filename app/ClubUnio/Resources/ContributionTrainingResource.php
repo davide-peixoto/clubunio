@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class ContributionTrainingResource extends CatalogResource
 {
+    use AssignmentRowActions;
+
     public static function createAction(): CreateAction
     {
         return CreateAction::make()->label('Hinzufügen')->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(ContributionTrainingService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), null, $data)));

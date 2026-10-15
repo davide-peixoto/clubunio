@@ -1,0 +1,9 @@
+.cu-nav-controls { display: grid; gap: 10px; min-width: 0; }
+.cu-nav-controls input[type=search] { width: 100%; min-width: 0; border: 1px solid #94a3b8; border-radius: 6px; padding: 8px 10px; background: transparent; color: inherit; }
+.cu-nav-width { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.cu-nav-width input { min-width: 0; width: 100%; accent-color: #164b8a; }
+.cu-nav-empty { font-size: 13px; }
+.fi-sidebar .cu-search-hidden { display: none !important; }
+.fi-sidebar .cu-search-open > .fi-sidebar-group-items { display: flex !important; height: auto !important; overflow: visible !important; }
+.fi-sidebar-item-label { white-space: normal; overflow-wrap: break-word; }
+@media (max-width: 1023px) { .cu-nav-width { display: none; } :root { --sidebar-width: min(280px, 85vw) !important; } }

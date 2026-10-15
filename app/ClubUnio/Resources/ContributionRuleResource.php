@@ -38,7 +38,7 @@ class ContributionRuleResource extends ContributionTrainingResource
 
     public static function table(Table $table): Table
     {
-        return $table->columns([TextColumn::make('season.name')->label('Saison')->sortable(), TextColumn::make('price.name')->label('Beitrag')->searchable(), TextColumn::make('price.amount')->label('Betrag')->money('CHF'), TextColumn::make('gender.name')->label('Geschlecht'), TextColumn::make('year_from')->label('Jahrgang von'), TextColumn::make('year_to')->label('Jahrgang bis'), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([SelectFilter::make('season_id')->label('Saison')->options(fn () => static::options(Season::class)), TernaryFilter::make('active')->label('Aktiv')])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
+        return $table->columns([TextColumn::make('season.name')->label('Saison')->sortable(), TextColumn::make('price.name')->label('Beitrag')->searchable(), TextColumn::make('price.amount')->label('Betrag')->money('CHF'), TextColumn::make('gender.name')->label('Geschlecht'), TextColumn::make('year_from')->label('Jahrgang von'), TextColumn::make('year_to')->label('Jahrgang bis'), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([SelectFilter::make('season_id')->label('Saison')->options(fn () => static::options(Season::class)), TernaryFilter::make('active')->label('Aktiv')])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 
     public static function getPages(): array

@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class DossierRelationManager extends RelationManager
 {
+    use AssignmentRelationActions;
+
     protected static string $kind;
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
@@ -39,7 +41,7 @@ abstract class DossierRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return true;
+        return ! $this->assignmentResource() || ! $this->assignmentParentField();
     }
 
     public function table(Table $table): Table
@@ -61,6 +63,6 @@ abstract class DossierRelationManager extends RelationManager
             ], array_values($table->getColumns())));
         }
 
-        return $table;
+        return $this->withAssignmentActions($table);
     }
 }

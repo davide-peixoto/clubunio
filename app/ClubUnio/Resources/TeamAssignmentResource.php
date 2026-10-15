@@ -24,6 +24,8 @@ use Filament\Tables\Table;
 
 abstract class TeamAssignmentResource extends CatalogResource
 {
+    use AssignmentRowActions;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Mannschaften';
@@ -31,12 +33,12 @@ abstract class TeamAssignmentResource extends CatalogResource
 
     public static function createAction(): CreateAction
     {
-        return CreateAction::make()->label('Zuordnen')->slideOver()->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(TeamAssignmentService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), null, $data)));
+        return CreateAction::make()->label('Zuordnen')->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(TeamAssignmentService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), null, $data)));
     }
 
     public static function editAction(): EditAction
     {
-        return EditAction::make()->slideOver()->iconButton()->tooltip('Zuordnung bearbeiten')
+        return EditAction::make()->iconButton()->tooltip('Zuordnung bearbeiten')
             ->mutateRecordDataUsing(fn (array $data, CatalogModel $record) => array_merge($data, ['_version' => FamilyService::version($record)]))
             ->using(fn (CatalogModel $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(TeamAssignmentService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
     }
@@ -69,7 +71,7 @@ abstract class TeamAssignmentResource extends CatalogResource
             SelectFilter::make('season')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id'))
                 ->query(fn ($query, array $data) => $query->when($data['value'] ?? null, fn ($q, $value) => $q->whereHas('teamSeason', fn ($q) => $q->where('season_id', $value)))),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
-        ])->headerActions([static::createAction()])->recordActions([static::editAction()])
+        ])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])
             ->defaultSort('id', 'desc')->paginated([25, 50, 100])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 }
