@@ -82,14 +82,15 @@ class Synchronisation extends Page
     protected function getViewData(): array
     {
         abort_unless(static::canAccess(), 403);
-        $this->validate(['state' => 'in:open,succeeded,closed,all', 'provider' => 'in:all,bexio,sfv,ai']);
+        $this->validate(['state' => 'in:open,succeeded,closed,all', 'provider' => 'in:all,bexio,sfv,ai,azure']);
         $base = app(SyncWorkService::class)->table()->where('tenant_id', Filament::getTenant()->id);
         $counts = (clone $base)->selectRaw('state, count(*) as total')->groupBy('state')->pluck('total', 'state');
         $rows = (clone $base)->when($this->state === 'open', fn ($q) => $q->whereIn('state', ['pending', 'attention', 'running']))
             ->when(in_array($this->state, ['succeeded', 'closed'], true), fn ($q) => $q->where('state', $this->state))
             ->when($this->provider === 'sfv', fn ($q) => $q->where('operation', 'sfv_schedule'))
-            ->when($this->provider === 'bexio', fn ($q) => $q->whereNotIn('operation', ['sfv_schedule', 'training_review']))
+            ->when($this->provider === 'bexio', fn ($q) => $q->whereNotIn('operation', ['sfv_schedule', 'training_review', 'azure_upload']))
             ->when($this->provider === 'ai', fn ($q) => $q->where('operation', 'training_review'))
+            ->when($this->provider === 'azure', fn ($q) => $q->where('operation', 'azure_upload'))
             ->orderByDesc('updated_at')->orderByDesc('id')->paginate(20);
         $events = DB::connection('clubunio')->table('clubora.sync_work_events')->whereIn('work_item_id', $rows->pluck('id'))
             ->orderByDesc('id')->get()->groupBy('work_item_id');
@@ -97,6 +98,9 @@ class Synchronisation extends Page
             $payload = json_decode(Crypt::decryptString($row->encrypted_payload), true, 512, JSON_THROW_ON_ERROR);
             $row->context = $row->operation === 'sfv_schedule' ? ($payload['from'].' – '.$payload['to'])
                 : ($row->operation === 'training_review' ? ($payload['input']['goal'] ?? '') : '');
+            if ($row->operation === 'azure_upload') {
+                $row->context = (['member' => 'Mitglied', 'registration' => 'Anmeldung', 'expense' => 'Spesenposition'][$payload['kind']] ?? 'Dokument').' #'.$payload['owner_id'];
+            }
         }
         foreach ($events as $items) {
             foreach ($items as $event) {

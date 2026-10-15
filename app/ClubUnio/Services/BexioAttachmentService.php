@@ -26,6 +26,9 @@ class BexioAttachmentService
     {
         $plan = [];
         $files = [];
+        if (app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('state', 'pending')->whereIn('object_id', $lines->pluck('id'))->exists()) {
+            $this->invalid('Ein Belegupload ist noch offen. Bitte Synchronisation zuerst abschliessen.');
+        }
         foreach ($lines as $line) {
             $type = $line->expenseType;
             if ($line->tenant_id != $tenant->id || ! $type || $type->tenant_id != $tenant->id || ! $type->active) {
@@ -40,6 +43,9 @@ class BexioAttachmentService
                 $this->invalid('Die Speicherzuordnung des Belegs fehlt bei Position #'.$line->id.'.');
             }
             foreach ($names as $name) {
+                if (str_starts_with($name, 'clubunio/') && ! str_starts_with($name, 'clubunio/expenses/'.$tenant->id.'/'.$line->id.'/')) {
+                    $this->invalid('Belegreferenz gehört nicht zu dieser Position.');
+                }
                 try {
                     app(AzureDocumentReader::class)->blobPath('azure.blob://files/', $name);
                 } catch (\Throwable) {

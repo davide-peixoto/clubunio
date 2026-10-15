@@ -25,6 +25,7 @@ class SyncWorkService
         'invoice_result' => 'Bexio · Rechnungsaktion klären',
         'finance_result' => 'Bexio · Finanzaktion klären',
         'training_review' => 'KI-Training · Anfrage prüfen',
+        'azure_upload' => 'Azure · Dokument übertragen',
     ];
 
     public const ERRORS = [
@@ -53,10 +54,10 @@ class SyncWorkService
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
     }
 
-    private function event(int $id, Account $actor, string $event, ?string $code = null, ?string $note = null): void
+    private function event(int $id, ?Account $actor, string $event, ?string $code = null, ?string $note = null): void
     {
         DB::connection('clubunio')->table('clubora.sync_work_events')->insert([
-            'work_item_id' => $id, 'actor_id' => $actor->id, 'event' => $event, 'code' => $code,
+            'work_item_id' => $id, 'actor_id' => $actor?->id, 'event' => $event, 'code' => $code,
             'encrypted_note' => $note === null ? null : Crypt::encryptString($note),
         ]);
     }
@@ -66,7 +67,7 @@ class SyncWorkService
         abort_unless($actor->fresh()?->active && $actor->fresh()?->tenants()->whereKey($tenant->id)->exists(), 403);
         abort_unless(isset(self::LABELS[$operation]), 422);
         $json = json_encode($payload, JSON_THROW_ON_ERROR);
-        $hash = in_array($operation, ['sfv_schedule', 'training_review'], true) ? null : app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant);
+        $hash = in_array($operation, ['sfv_schedule', 'training_review', 'azure_upload'], true) ? null : app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant);
         $key = hash('sha256', $operation.':'.$objectId.':'.$hash.':'.$json);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $operation, $objectId, $json, $hash, $key) {
@@ -97,7 +98,32 @@ class SyncWorkService
         return $this->execute($actor, $tenant, $id, $revision);
     }
 
-    private function execute(Account $actor, Tenant $tenant, int $id, ?int $revision = null): mixed
+    public function rememberDocument(Tenant $tenant, int $uploadId): int
+    {
+        $upload = app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->find($uploadId, ['id', 'kind', 'object_id', 'created_by']);
+        abort_unless($upload, 404);
+        $key = hash('sha256', 'azure_upload:'.$uploadId);
+        $row = $this->table()->where('tenant_id', $tenant->id)->where('deduplication_key', $key)->first();
+        if ($row) {
+            return (int) $row->id;
+        }
+        $id = $this->table()->insertGetId(['tenant_id' => $tenant->id, 'operation' => 'azure_upload', 'object_id' => $uploadId,
+            'deduplication_key' => $key, 'encrypted_payload' => Crypt::encryptString(json_encode(['kind' => $upload->kind, 'owner_id' => $upload->object_id], JSON_THROW_ON_ERROR)),
+            'created_by' => $upload->created_by]);
+        $this->event($id, $upload->created_by ? Account::findOrFail($upload->created_by) : null, 'recorded');
+
+        return $id;
+    }
+
+    public function runDocument(?Account $actor, Tenant $tenant, int $uploadId): int
+    {
+        $id = $this->table()->where('tenant_id', $tenant->id)->where('operation', 'azure_upload')->where('object_id', $uploadId)->value('id');
+        abort_unless($id, 404);
+
+        return $this->execute($actor, $tenant, (int) $id);
+    }
+
+    private function execute(?Account $actor, Tenant $tenant, int $id, ?int $revision = null): mixed
     {
         $token = (string) Str::uuid();
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $token) {
@@ -125,12 +151,12 @@ class SyncWorkService
             // Store only a stable classification, never provider bodies, tokens, signed URLs or personal data.
             $status = $error instanceof HttpExceptionInterface ? $error->getStatusCode() : (int) $error->getCode();
             $this->finish($id, $actor, $token, 'attention', in_array($status, [401, 403, 404, 409, 422, 429, 500, 502, 503, 504], true) ? 'status_'.$status : 'operation_failed');
-            Log::warning('clubunio.sync.failed', ['work_item_id' => $id, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'operation' => $row->operation, 'status' => $status]);
+            Log::warning('clubunio.sync.failed', ['work_item_id' => $id, 'tenant_id' => $tenant->id, 'actor_id' => $actor?->id, 'operation' => $row->operation, 'status' => $status]);
             throw $error;
         }
     }
 
-    private function finish(int $id, Account $actor, string $token, string $state, ?string $code): void
+    private function finish(int $id, ?Account $actor, string $token, string $state, ?string $code): void
     {
         DB::connection('clubunio')->transaction(function () use ($id, $actor, $token, $state, $code) {
             $count = $this->table()->where('id', $id)->where('lease_token', $token)->update([
@@ -143,9 +169,10 @@ class SyncWorkService
         });
     }
 
-    private function handle(Account $actor, Tenant $tenant, object $row, array $payload): mixed
+    private function handle(?Account $actor, Tenant $tenant, object $row, array $payload): mixed
     {
         return match ($row->operation) {
+            'azure_upload' => app(DocumentUploadService::class)->process($actor, $tenant, $row->object_id),
             'invoice_transfer' => app(BexioInvoiceTransferService::class)->transferNow($actor, $tenant, $row->object_id, (int) $payload['revision']),
             'invoice_action' => $this->invoiceAction($actor, $tenant, $row->object_id, $payload['operation']),
             'invoice_status', 'expense_status' => app(BexioReconciliationService::class)->previewNow($actor, $tenant, $row->operation === 'invoice_status' ? 'invoice' : 'expense', $row->object_id),
@@ -234,6 +261,9 @@ class SyncWorkService
             $row = $this->table()->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             abort_unless($row && (int) $row->revision === $revision, 409);
             abort_unless(in_array($row->state, ['attention', 'pending'], true), 409);
+            if ($row->operation === 'azure_upload') {
+                app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('id', $row->object_id)->where('state', 'pending')->update(['state' => 'cancelled']);
+            }
             $this->table()->where('id', $id)->update(['state' => 'closed', 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String()]);
             $this->event($id, $actor, 'closed_manually', null, trim($note));
         });

@@ -4,6 +4,7 @@ namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Models\TrainingOption;
+use App\ClubUnio\Services\DocumentUploadService;
 use App\ClubUnio\Services\PublicWebService;
 use App\ClubUnio\Services\RegistrationDataService;
 use App\ClubUnio\Services\RegistrationDocumentService;
@@ -86,6 +87,20 @@ class PublicWebController
             throw ValidationException::withMessages(['first_name' => 'Anmeldung nicht gespeichert. Bitte erneut versuchen. Referenz: '.$reference]);
         }
 
-        return redirect()->route('clubunio.public.registration', ['tenant' => $tenant->slug])->with('submitted', true);
+        // The application and all encrypted files are committed before any external upload.
+        $uploads = app(DocumentUploadService::class);
+        $registrationId = DB::connection('clubunio')->table('clubora.public_registration_submissions')
+            ->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->value('registration_id');
+        foreach ($uploads->table()->where('tenant_id', $tenant->id)->where('kind', 'registration')->where('object_id', $registrationId)
+            ->where('public_request_id', $form['id'])->where('state', 'pending')->orderBy('id')->pluck('id') as $upload) {
+            try {
+                $uploads->attempt(null, $tenant, $upload);
+            } catch (ValidationException) {
+                break;
+            }
+        }
+        $pending = $uploads->table()->where('tenant_id', $tenant->id)->where('kind', 'registration')->where('object_id', $registrationId)->where('state', 'pending')->exists();
+
+        return redirect()->route('clubunio.public.registration', ['tenant' => $tenant->slug])->with('submitted', true)->with('uploads_pending', $pending);
     }
 }

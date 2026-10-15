@@ -56,6 +56,7 @@ class RegistrationCompletionTest extends TestCase
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
         $this->tenant = Tenant::create(['slug' => 'registration-'.Str::random(9), 'name' => 'Registration fixture']);
+        config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         $this->actor = $this->account('office');
         foreach (['submitted', 'review', 'trial', 'accepted', 'rejected', 'pool'] as $key) {
             $this->statuses[$key] = $this->insert('registration_statuses', ['code' => $key, 'name' => $key, 'workflow_key' => $key]);

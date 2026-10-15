@@ -68,14 +68,20 @@ Ein vollstaendiger Datenverlustschutz auch gegen DB-/Hosting-Ausfall braucht
 weiterhin Backups. Bereits erfolgte externe Aenderungen werden nicht durch
 eine lokale DB-Ruecknahme rueckgaengig gemacht.
 
-Azure-Uploads und oeffentliche Anmeldeuploads bleiben bewusst atomar mit
-Fehlermeldung. Sie werden NICHT ohne privates binaeres Staging und zugehoerigen
-Berechtigungs-/Aufbewahrungsprozess in eine automatische Uploadqueue verschoben.
+Seit Release72 verwenden Azure-Uploads ein privates verschluesseltes binaeres
+DB-Staging und denselben manuellen Pruefauftrag. Details, Rechte, Limits und
+Aufbewahrung: CLUBUNIO-DOCUMENT-UPLOADS.md. Keine automatische Uploadqueue.
 Ebenso bleiben Signage-Feeds mit ihrem bestehenden letzten gueltigen Cache und
 deaktivierter externer Nachrichtenversand unveraendert. Weitere Adapter muessen
 diese zentrale Struktur verwenden, sobald ein asynchroner Sync hinzukommt.
 
 ## Gutschrift GS-00005
+
+Update Release72: GS-00005 inzwischen mit neuer RE-00013/ClubUnio9774 auf
+Kontakt3 verrechnet. Providerbestaetigte CHF10.00, Kundenguthaben41 Rest0.00;
+Rechnungsabgleich angewandt, offen10.00 von20.00. Gutschrift18 bestaetigt,
+OriginalRE-00006 unveraendert. Testaufbau: CLUBUNIO-DOCUMENT-UPLOADS.md.
+Der folgende Abschnitt dokumentiert den frueheren unzugeordneten Stand71.
 
 In Bexio SVS Api Test bestaetigt: CHF10 brutto, UN81/8.1%, enthaltene Steuer
 CHF0.75; wieder ausgestellt/Offen und nicht verrechnet. Bexio-Gutschriften

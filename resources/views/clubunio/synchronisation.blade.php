@@ -27,7 +27,7 @@
         </label>
         <label>Verbindung
             <x-filament::input.wrapper><x-filament::input.select wire:model.live="provider">
-                <option value="all">Alle</option><option value="bexio">Bexio</option><option value="sfv">SFV</option><option value="ai">KI-Training</option>
+                <option value="all">Alle</option><option value="bexio">Bexio</option><option value="sfv">SFV</option><option value="ai">KI-Training</option><option value="azure">Azure-Dokumente</option>
             </x-filament::input.select></x-filament::input.wrapper>
         </label>
         <x-filament::button wire:click="collectOutstanding" wire:loading.attr="disabled" icon="heroicon-o-arrow-down-tray" color="gray">Offene Protokolle übernehmen</x-filament::button>
@@ -52,7 +52,7 @@
                             @foreach($events[$row->id] ?? [] as $event)
                                 <p>{{ \Carbon\CarbonImmutable::parse($event->created_at)->tz('Europe/Zurich')->format('d.m.Y H:i:s') }} ·
                                     {{ ['recorded'=>'Auftrag gespeichert','started'=>'Versuch gestartet','succeeded'=>'Erfolgreich','attention'=>'Prüfung erforderlich','closed_manually'=>'Manuell abgeschlossen'][$event->event] ?? $event->event }}
-                                    · Benutzer {{ $event->actor_id }}
+                                    · {{ $event->actor_id ? 'Benutzer '.$event->actor_id : 'Öffentliche Anmeldung' }}
                                     @if($event->code) · {{ $event->code }} @endif
                                     @if($event->note)<br>{{ $event->note }}@endif
                                 </p>
@@ -67,7 +67,7 @@
                         @if(in_array($row->state,['pending','attention']))
                             <details class="mt-2"><summary>Manuell abschliessen</summary>
                                 <label>Begründung<x-filament::input.wrapper><x-filament::input wire:model="note" maxlength="1000" /></x-filament::input.wrapper></label>
-                                <x-filament::button wire:click="closeItem({{ $row->id }}, {{ $row->revision }})" wire:confirm="Nur den Prüfauftrag abschliessen? Dies bestätigt keine Synchronisation und ändert keine Quelldaten." color="gray" icon="heroicon-o-check">Abschliessen</x-filament::button>
+                                <x-filament::button wire:click="closeItem({{ $row->id }}, {{ $row->revision }})" wire:confirm="Auftrag mit Begründung abschliessen? Ein offener Dokumentupload wird damit verworfen, aber verschlüsselt aufbewahrt. Dies bestätigt keine erfolgreiche Synchronisation." color="gray" icon="heroicon-o-check">Abschliessen</x-filament::button>
                             </details>
                         @endif
                     </td>

@@ -43,6 +43,7 @@ class PublicWebTest extends TestCase
         $this->db->beginTransaction();
         config(['cache.default' => 'array']);
         $this->tenant = Tenant::create(['slug' => 'public-'.Str::random(10), 'name' => 'Synthetic public club']);
+        config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         foreach (['SIGNAGE_PUBLIC_ENABLED', 'REGISTRATION_PUBLIC_ENABLED'] as $key) {
             $this->insert('tenant_settings', ['area' => 'public', 'key' => $key, 'label' => $key, 'enabled' => true, 'value_type' => 'boolean', 'encrypted_value' => Crypt::encryptString('1')]);
         }
@@ -162,13 +163,18 @@ class PublicWebTest extends TestCase
         $this->assertSame(0, Registration::where('tenant_id', $this->tenant->id)->count());
     }
 
-    public function test_failed_upload_does_not_leave_successful_registration(): void
+    public function test_failed_upload_preserves_registration_and_encrypted_attachment_for_retry(): void
     {
         $this->mock(RegistrationBlobStore::class)->shouldReceive('put')->once()->andThrow(new \RuntimeException('Synthetic provider failure'));
         $file = UploadedFile::fake()->createWithContent('ausweis.pdf', "%PDF-1.4\nSynthetic test only\n%%EOF");
-        $this->submit(['identity' => [$file]])->assertSessionHasErrors('file');
-        $this->assertSame(0, Registration::where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.public_registration_submissions')->where('tenant_id', $this->tenant->id)->count());
+        $this->submit(['identity' => [$file]])->assertSessionHasNoErrors()->assertSessionHas('uploads_pending', true);
+        $this->assertSame(1, Registration::where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubora.public_registration_submissions')->where('tenant_id', $this->tenant->id)->count());
+        $upload = $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame('pending', $upload->state);
+        $this->assertNotNull($upload->encrypted_bytes);
+        $this->assertNull($upload->created_by);
+        $this->assertSame(0, $this->db->table('clubora.registration_documents')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_public_feed_mode_cannot_be_tampered_with(): void

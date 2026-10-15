@@ -73,6 +73,9 @@ class MemberDocumentService
             ->whereIn('expense_id', app(ExpenseService::class)->visible($actor, $tenant)->select('clubora.expenses.id'))->findOrFail($id);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         abort_unless($index >= 0 && isset($files[$index]), 404);
+        if (str_starts_with($files[$index], 'clubunio/')) {
+            abort_unless(str_starts_with($files[$index], 'clubunio/expenses/'.$tenant->id.'/'.$line->id.'/'), 404);
+        }
         $document = (object) ['id' => $id, 'filename' => $files[$index], 'storage_path' => 'azure.blob://files/', 'original_filename' => $line->filename ?: $files[$index]];
 
         return $this->readResponse($actor, $tenant, $document, $download, 'expense');

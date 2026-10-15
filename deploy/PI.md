@@ -1,6 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
-Aktuell: `20261016-clubunio-navigation`, Ruecksprung `20261016-clubunio-workspace-editing-v2`.
+Aktuell: `20261016-clubunio-72-uploads`, Basis/Ruecksprung
+`20261016-clubunio-navigation`. Eigene additive Migration68; keine Altdateien
+geloescht.58Tests432Assertions inkl. echtem privaten Azuretest erfolgreich.
+Caches/Checker und17 Quellhashes OK, Azurefilter Desktop/Mobil390px geprueft.
+Abschliessend23 Delta-Dateihashes identisch; Finanzregression33/161 ebenfalls OK.
+GS-00005 auf RE-00013 verrechnet,10.00 Rueckfluss bestaetigt, Restrechnung10.00.
+Details und Ruecknahme: CLUBUNIO-DOCUMENT-UPLOADS.md.
+
+Vorher: `20261016-clubunio-navigation`, Ruecksprung `20261016-clubunio-workspace-editing-v2`.
 Aufgabenorientiertes Menue und Einstellungen-Uebersicht unter /configuration.
 11 Tests117 Assertions erfolgreich; keine DB-Migration. Caches/Checker OK.
 Nur ClubUnio aktualisiert. Details: CLUBUNIO-NAVIGATION.md.

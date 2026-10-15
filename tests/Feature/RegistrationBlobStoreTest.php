@@ -24,6 +24,7 @@ class RegistrationBlobStoreTest extends TestCase
         $request = $history[0]['request'];
         $this->assertSame('PUT', $request->getMethod());
         $this->assertSame('*', $request->getHeaderLine('If-None-Match'));
+        $this->assertSame(base64_encode(md5($args[2], true)), $request->getHeaderLine('Content-MD5'));
         $this->assertSame('BlockBlob', $request->getHeaderLine('x-ms-blob-type'));
         parse_str($request->getUri()->getQuery(), $sas);
         $this->assertSame('c', $sas['sp']);

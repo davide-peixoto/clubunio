@@ -19,6 +19,9 @@ class RegistrationAcceptanceService
             throw new \LogicException('Registration acceptance requires the review transaction.');
         }
         abort_unless(app(RegistrationReviewService::class)->canReview($actor, $tenant, $r), 403);
+        if (app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'registration')->where('object_id', $r->id)->where('state', 'pending')->exists()) {
+            throw ValidationException::withMessages(['status_id' => 'Anhänge warten auf die Azure-Übertragung. Bitte zuerst Synchronisation abschliessen.']);
+        }
         if (! $r->details_complete) {
             throw ValidationException::withMessages(['status_id' => 'Die vollständigen Anmeldedaten fehlen.']);
         }

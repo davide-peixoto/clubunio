@@ -14,7 +14,7 @@ class RegistrationBlobStore
 
     public function put(string $folder, string $filename, string $bytes, string $mime): void
     {
-        if (! preg_match('~^clubunio/(registrations|members)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder)
+        if (! preg_match('~^clubunio/(registrations|members|expenses)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder)
             || ! preg_match('/^[a-f0-9-]{36}\.(pdf|png|jpg|webp)$/D', $filename)
             || strlen($bytes) === 0 || strlen($bytes) > AzureDocumentReader::MAX_BYTES) {
             throw new \InvalidArgumentException('Invalid registration document');
@@ -30,9 +30,10 @@ class RegistrationBlobStore
         $url = 'https://'.$config['account'].'.blob.core.windows.net/'.$config['container'].'/'.$path.'?'.$sas;
         try {
             $response = ($this->client ?? new Client)->request('PUT', $url, ['body' => $bytes,
-                'headers' => ['x-ms-blob-type' => 'BlockBlob', 'If-None-Match' => '*', 'Content-Type' => $mime],
+                'headers' => ['x-ms-blob-type' => 'BlockBlob', 'If-None-Match' => '*', 'Content-Type' => $mime, 'Content-MD5' => base64_encode(md5($bytes, true))],
                 'timeout' => 25, 'connect_timeout' => 5, 'allow_redirects' => false, 'http_errors' => false]);
-            if ($response->getStatusCode() !== 201) {
+            $md5 = $response->getHeaderLine('Content-MD5');
+            if ($response->getStatusCode() !== 201 || ($md5 !== '' && ! hash_equals(base64_encode(md5($bytes, true)), $md5))) {
                 throw new \RuntimeException('Upload rejected');
             }
         } catch (\Throwable) {

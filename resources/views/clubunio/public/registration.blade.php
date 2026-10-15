@@ -4,7 +4,9 @@
 <h1>Mitgliederanmeldung</h1>
 <p class="notice">Testumgebung: Diese Anmeldung wird nur in ClubUnio erfasst und ersetzt noch keine Anmeldung beim Verein.</p>
 @if(session('submitted'))
-    <section role="status"><h2>Anmeldung gespeichert</h2><p>Vielen Dank. Die Testanmeldung wurde zur Prüfung erfasst. Damit ist noch keine Mitgliedschaft bestätigt.</p><a href="{{ route('clubunio.public.registration', ['tenant'=>$tenant->slug, 'new'=>1]) }}">Weitere Anmeldung erfassen</a></section>
+    <section role="status"><h2>Anmeldung gespeichert</h2><p>Vielen Dank. Die Testanmeldung wurde zur Prüfung erfasst. Damit ist noch keine Mitgliedschaft bestätigt.</p>
+        @if(session('uploads_pending'))<p>Die Anhänge sind geschützt gespeichert. Ihre Übertragung wird intern geprüft; bitte nicht erneut anmelden.</p>@endif
+        <a href="{{ route('clubunio.public.registration', ['tenant'=>$tenant->slug, 'new'=>1]) }}">Weitere Anmeldung erfassen</a></section>
 @else
     @if($errors->any())<div role="alert" class="errors"><h2>Bitte Eingaben prüfen</h2><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul><p>Dateien bei Bedarf erneut auswählen.</p></div>@endif
     <form method="post" enctype="multipart/form-data" action="{{ route('clubunio.public.registration.submit', $tenant->slug) }}">

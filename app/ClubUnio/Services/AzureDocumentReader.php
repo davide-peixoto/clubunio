@@ -16,12 +16,15 @@ class AzureDocumentReader
 
     public function blobPath(string $folder, string $filename): string
     {
+        if ($folder === 'azure.blob://files/' && preg_match('~^clubunio/expenses/[1-9][0-9]*/[1-9][0-9]*/[a-f0-9-]{36}\.(pdf|png|jpg)$~D', $filename)) {
+            return $filename;
+        }
         $prefix = match ($folder) {
             'azure.blob://files/' => 'spesen/',
             'upload/anmeldungen/' => 'upload/anmeldungen/',
             'upload/mitglieder/anhaenge/' => 'upload/mitglieder/anhaenge/',
             'var/member-documents/' => 'member-documents/',
-            default => preg_match('~^clubunio/(registrations|members)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder) ? $folder : throw new \InvalidArgumentException('Unsupported document folder'),
+            default => preg_match('~^clubunio/(registrations|members|expenses)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder) ? $folder : throw new \InvalidArgumentException('Unsupported document folder'),
         };
         if ($filename === '' || $filename === '.' || $filename === '..' || preg_match('~[/\\\\:\x00-\x1f\x7f]~', $filename)) {
             throw new \InvalidArgumentException('Invalid document filename');

@@ -1,5 +1,19 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket72: Geschuetzte Dokumentuploads
+
+Additive eigene Migration68: verschluesselte Binaer-/Metadaten, SHA256 und
+unveraenderlicher Azure-Zielpfad in document_uploads; echte NULL-Akteure fuer
+oeffentliche Anmeldungen im Syncjournal. Mitglieder-/Anmelde-/Spesenanhaenge
+erst nach bestaetigter Uebertragung publizieren, Timeout mit gleichem Pfad
+lesend aufloesen; kein blindes Neuhochladen. Zentrale manuelle Azure-Pruefqueue,
+frische Quellrechte, Speicherlimits, Freigabesperre bei offenen Dateien.
+Keine Altdateimigration/-loeschung. Ruecknahme behaelt Staging und APP_KEY.
+Details/Migrationsschritte: CLUBUNIO-DOCUMENT-UPLOADS.md. API, SaaS, Betrieb
+und PHPMaker DEV/PROD unveraendert. GS-00005 mit RE-00013 auf Kontakt3 im
+Providerweb verrechnet und in ClubUnio bestaetigt:10.00 Guthaben verbraucht,
+Rechnung20.00/offen10.00. OriginalRE-00006 unveraendert. Keine Bankzahlung.
+
 ## Aufgabenorientiertes Menue (16.10.2026)
 
 Dashboard vor Mitglieder/Sport/Finanzen/Anlagen & Kommunikation/Auswertungen.

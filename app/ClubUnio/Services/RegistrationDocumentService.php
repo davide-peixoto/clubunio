@@ -7,9 +7,6 @@ use App\ClubUnio\Models\Registration;
 use App\ClubUnio\Models\Tenant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class RegistrationDocumentService
@@ -26,57 +23,42 @@ class RegistrationDocumentService
         app(PublicWebService::class)->authorize($tenant, 'registration');
         abort_unless(DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('tenant_id', $tenant->id)
             ->where('registration_id', $registration->id)->where('request_id', $requestId)->exists(), 403);
-        $this->store(null, $tenant, $registration->id, $registration->fresh()->revision, $kind, $file);
+        app(DocumentUploadService::class)->stage(null, $tenant, 'registration', $registration->id, ['kind' => $kind], $file, $requestId);
     }
 
     private function store(?Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
     {
-        Validator::make(['kind' => $kind, 'file' => $file], ['kind' => 'required|in:portrait,identity',
-            'file' => 'required|file|max:20480|mimetypes:application/pdf,image/jpeg,image/png,image/webp'])->validate();
-        $bytes = $file->get();
-        $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes);
-        if ($kind === 'portrait' && $mime === 'application/pdf') {
-            throw ValidationException::withMessages(['file' => 'Ein Passfoto muss ein Bild sein.']);
-        }
-        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $kind, $file, $bytes, $mime) {
+        $upload = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $kind, $file) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            if ($actor) {
-                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
-            } else {
-                app(PublicWebService::class)->authorize($tenant, 'registration');
-            }
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
                 throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen. Bitte erneut öffnen.']);
             }
-            $db = DB::connection('clubunio');
-            $query = $db->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true);
-            if ($kind === 'portrait' && (clone $query)->where('kind', 'portrait')->exists()) {
-                throw ValidationException::withMessages(['file' => 'Vor dem Ersetzen das bestehende Passfoto entfernen.']);
-            }
-            $sha = hash('sha256', $bytes);
-            if ((clone $query)->where('sha256', $sha)->where('kind', $kind)->exists()) {
-                return;
-            }
-            $folder = 'clubunio/registrations/'.$tenant->id.'/'.$id.'/';
-            $extension = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$mime];
-            $filename = Str::uuid().'.'.$extension;
-            try {
-                app(RegistrationBlobStore::class)->put($folder, $filename, $bytes, $mime);
-            } catch (\Throwable) {
-                $reference = (string) Str::uuid();
-                Log::warning('clubunio.registration.upload_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'registration_id' => $id]);
-                throw ValidationException::withMessages(['file' => 'Upload fehlgeschlagen. Referenz: '.$reference]);
-            }
-            $document = $db->table('clubora.registration_documents')->insertGetId(['tenant_id' => $tenant->id,
-                'registration_id' => $id, 'kind' => $kind, 'storage_path' => $folder, 'filename' => $filename,
-                'original_filename' => mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255),
-                'sha256' => $sha, 'file_size' => strlen($bytes), 'mime_type' => $mime, 'created_by' => $actor?->id]);
-            $r->forceFill(['revision' => $r->revision + 1])->save();
-            if ($actor) {
-                $this->audit($actor, $tenant, $document, $id, 'added');
-            }
+
+            return app(DocumentUploadService::class)->stage($actor, $tenant, 'registration', $id, compact('kind'), $file);
         });
+        app(DocumentUploadService::class)->attempt($actor, $tenant, $upload);
+    }
+
+    public function publishUpload(?Account $actor, Tenant $tenant, object $upload, array $metadata): int
+    {
+        abort_unless(DB::connection('clubunio')->transactionLevel() > 0, 409);
+        $db = DB::connection('clubunio');
+        $query = $db->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $upload->object_id)->where('active', true)
+            ->where('kind', $metadata['kind'])->where('sha256', $upload->sha256);
+        if ($existing = $query->value('id')) {
+            return (int) $existing;
+        }
+        $document = $db->table('clubora.registration_documents')->insertGetId(['tenant_id' => $tenant->id,
+            'registration_id' => $upload->object_id, 'kind' => $metadata['kind'], 'storage_path' => $upload->folder,
+            'filename' => $upload->filename, 'original_filename' => $metadata['original_filename'], 'sha256' => $upload->sha256,
+            'file_size' => $upload->byte_count, 'mime_type' => $upload->mime_type, 'created_by' => $upload->created_by]);
+        Registration::where('tenant_id', $tenant->id)->whereKey($upload->object_id)->increment('revision');
+        if ($actor) {
+            $this->audit($actor, $tenant, $document, $upload->object_id, 'added');
+        }
+
+        return $document;
     }
 
     public function remove(Account $actor, Tenant $tenant, int $id, int $document, int $revision): void
