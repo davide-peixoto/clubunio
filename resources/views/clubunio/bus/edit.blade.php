@@ -1,7 +1,7 @@
 @extends('clubunio.bus.layout')
 @section('content')
 <h1>Reservation umbuchen</h1>
-<form method="post" class="planning-form" action="{{ route('clubunio.bus.reschedule',[$tenant->slug,$row->id]) }}">@csrf
+<form method="post" class="planning-form" action="{{ route('clubunio.bus.reschedule',[$tenant->slug,$row->id]) }}">@csrf @include('clubunio.workspace.context')
 <input type="hidden" name="revision" value="{{ $row->revision }}">
 <label>Bus<select name="bus_id" required>@foreach($buses->where('active',true) as $bus)<option value="{{ $bus->id }}" @selected(old('bus_id',$row->bus_id)==$bus->id)>{{ $bus->name }}</option>@endforeach</select></label>
 <label>Von<input type="datetime-local" name="starts_at" required value="{{ old('starts_at',\Carbon\Carbon::parse($row->starts_at)->tz('Europe/Zurich')->format('Y-m-d\TH:i')) }}"></label>

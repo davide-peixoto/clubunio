@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('portal/*', 'planning/*') ? '/portal/login' : '/login');
+        $middleware->redirectGuestsTo(fn (Request $request) => ! $request->routeIs('clubunio.workspace.*') && $request->is('portal/*', 'planning/*') ? '/portal/login' : '/login');
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
     ->withExceptions(function (Exceptions $exceptions) {

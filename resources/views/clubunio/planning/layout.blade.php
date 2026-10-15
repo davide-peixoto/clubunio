@@ -1,3 +1,6 @@
+@if(request()->attributes->get('clubunioWorkspace'))
+@include('clubunio.workspace.layout', ['module' => 'planning'])
+@else
 <!doctype html>
 <html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Teamplanung · ClubUnio</title><link rel="stylesheet" href="{{ asset('css/clubunio-portal.css').'?v=blue-v1' }}"><link rel="stylesheet" href="{{ asset('css/clubunio-planning.css').'?v=blue-v1' }}">@include('clubunio.brand.head')</head>
@@ -13,3 +16,4 @@
 @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 @yield('content')
 </main></body></html>
+@endif

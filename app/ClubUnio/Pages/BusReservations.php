@@ -11,6 +11,16 @@ class BusReservations extends Page
 
     protected static ?string $title = 'Busreservierungen';
 
+    public static function getNavigationUrl(): string
+    {
+        return route('clubunio.workspace.bus.index');
+    }
+
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return ['clubunio.workspace.bus.*', parent::getNavigationItemActiveRoutePattern()];
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Anlagen und Spielbetrieb';
@@ -25,6 +35,6 @@ class BusReservations extends Page
     {
         $tenant = Filament::getTenant();
         abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
-        $this->redirect(route('clubunio.bus.index', $tenant->slug));
+        $this->redirect(route('clubunio.workspace.bus.index'));
     }
 }

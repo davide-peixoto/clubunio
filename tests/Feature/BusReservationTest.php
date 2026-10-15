@@ -82,6 +82,16 @@ class BusReservationTest extends TestCase
         return $a;
     }
 
+    private function officeWorkspace(): string
+    {
+        $this->actingAs($this->office, 'clubunio');
+        $page = $this->get('/bus/options')->assertOk();
+        preg_match('/name="_workspace" value="([^"]+)"/', $page->getContent(), $match);
+        $this->assertNotEmpty($match);
+
+        return html_entity_decode($match[1]);
+    }
+
     private function input(array $extra = []): array
     {
         return $extra + ['bus_id' => $this->bus, 'team_season_id' => $this->team, 'member_id' => $this->member, 'starts_at' => now('Europe/Zurich')->addDays(3)->setTime(10, 0)->format('Y-m-d\TH:i'), 'ends_at' => now('Europe/Zurich')->addDays(3)->setTime(12, 0)->format('Y-m-d\TH:i'), 'status' => 'GENEHMIGT', 'location' => 'Test destination', 'description' => 'Fixture only'];
@@ -113,8 +123,10 @@ class BusReservationTest extends TestCase
         $data = ['revision' => 1, 'member_id' => $this->member, 'team_season_id' => $this->team, 'reason' => 'Verified original application'];
         $this->actingAs($this->trainer, 'clubunio')->get($url)->assertForbidden();
         $this->post($url, $data)->assertForbidden();
-        $this->actingAs($this->office, 'clubunio')->get($url)->assertOk();
-        $this->post($url, $data + [])->assertRedirect();
+        $data['_workspace'] = $this->officeWorkspace();
+        $url = '/bus/'.$id.'/assignment';
+        $this->get($url)->assertOk();
+        $this->post($url, $data)->assertRedirect();
         $row = $this->db->table('bus_reservations')->find($id);
         $this->assertSame($this->team, $row->team_season_id);
         $this->assertSame($this->member, $row->member_id);
@@ -130,11 +142,11 @@ class BusReservationTest extends TestCase
     {
         $id = $this->insert('bus_reservations', ['legacy_id' => 900002, 'bus_id' => $this->bus, 'member_id' => $this->member, 'status' => 'GENEHMIGT',
             'starts_at' => '2020-01-01 10:00:00+01', 'ends_at' => '2020-01-01 12:00:00+01', 'revision' => 2]);
-        $url = '/bus/'.$this->tenant->slug.'/'.$id.'/assignment';
-        $this->actingAs($this->office, 'clubunio');
-        $this->post($url, ['revision' => 1, 'member_id' => $this->member, 'team_season_id' => $this->team, 'reason' => 'Test'])->assertSessionHasErrors('revision');
-        $this->post($url, ['revision' => 2, 'member_id' => $this->member + 1000000, 'team_season_id' => $this->team, 'reason' => 'Test'])->assertSessionHasErrors('member_id');
-        $this->post($url, ['revision' => 2, 'member_id' => $this->member, 'team_season_id' => $this->team + 1000000, 'reason' => 'Test'])->assertStatus(422);
+        $url = '/bus/'.$id.'/assignment';
+        $token = $this->officeWorkspace();
+        $this->post($url, ['_workspace' => $token, 'revision' => 1, 'member_id' => $this->member, 'team_season_id' => $this->team, 'reason' => 'Test'])->assertSessionHasErrors('revision');
+        $this->post($url, ['_workspace' => $token, 'revision' => 2, 'member_id' => $this->member + 1000000, 'team_season_id' => $this->team, 'reason' => 'Test'])->assertSessionHasErrors('member_id');
+        $this->post($url, ['_workspace' => $token, 'revision' => 2, 'member_id' => $this->member, 'team_season_id' => $this->team + 1000000, 'reason' => 'Test'])->assertStatus(422);
         $this->assertNull($this->db->table('bus_reservations')->where('id', $id)->value('team_season_id'));
     }
 
@@ -178,7 +190,7 @@ class BusReservationTest extends TestCase
     public function test_office_web_forms_filters_details_and_notification_link(): void
     {
         $id = $this->service->create($this->office, $this->tenant, $this->input());
-        $this->actingAs($this->office, 'clubunio');
+        $this->officeWorkspace();
         $this->get(route('clubunio.bus.create', $this->tenant->slug))->assertOk()->assertSee('Fixture / Season');
         $this->get(route('clubunio.bus.index', $this->tenant->slug).'?status=GENEHMIGT&q=Test')->assertOk()->assertSee('Test destination')->assertSee('name="status" value="GENEHMIGT"', false);
         $this->get(route('clubunio.bus.index', $this->tenant->slug).'?status=ABGELEHNT&q=Test')->assertOk()->assertDontSee('Test destination');
@@ -203,7 +215,7 @@ class BusReservationTest extends TestCase
         $this->service->saveOption($this->office, $this->tenant, ['kind' => 'bus', 'name' => 'Second bus', 'active' => 1]);
         $this->assertSame(2, $this->db->table('buses')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(2, $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->count());
-        $this->actingAs($this->office, 'clubunio');
+        $this->officeWorkspace();
         $this->get(route('clubunio.bus.options', $this->tenant->slug))->assertOk()->assertSee('Second bus');
     }
 

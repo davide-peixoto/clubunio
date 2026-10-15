@@ -13,10 +13,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\Concerns\WorkspaceForm;
 use Tests\TestCase;
 
 class TrainingPlanTest extends TestCase
 {
+    use WorkspaceForm;
+
     private $db;
 
     private Tenant $tenant;
@@ -82,8 +85,9 @@ class TrainingPlanTest extends TestCase
 
     public function test_web_edit_pdf_and_revision_conflict(): void
     {
+        $context = $this->workspaceForm();
         $id = $this->insert();
-        $url = '/planning/'.$this->tenant->slug.'/training-plans';
+        $url = '/planning/training-plans';
         $this->get($url)->assertOk()->assertSee('Testtraining');
         $this->get($url.'/new')->assertOk()->assertSee('Schwerpunkt');
         $this->get($url.'/'.$id)->assertOk()->assertSee('Trainingsplan bearbeiten');
@@ -93,9 +97,9 @@ class TrainingPlanTest extends TestCase
         }
         $plan = $this->plan();
         $plan['title'] = 'Geändert';
-        $this->post($url.'/'.$id, ['revision' => 1, 'plan' => $plan, 'shared' => 1])->assertRedirect();
+        $this->post($url.'/'.$id, $context + ['revision' => 1, 'plan' => $plan, 'shared' => 1])->assertRedirect();
         $this->assertSame(2, $this->db->table('training_plans')->where('id', $id)->value('revision'));
-        $this->post($url.'/'.$id, ['revision' => 1, 'plan' => $plan])->assertSessionHasErrors('revision');
+        $this->post($url.'/'.$id, $context + ['revision' => 1, 'plan' => $plan])->assertSessionHasErrors('revision');
         $this->assertSame('Geändert', $this->db->table('training_plans')->where('id', $id)->value('title'));
     }
 
@@ -117,15 +121,16 @@ class TrainingPlanTest extends TestCase
 
     public function test_archive_restore_and_private_copy_are_revision_safe_and_without_provider(): void
     {
+        $context = $this->workspaceForm();
         $id = $this->insert();
-        $url = '/planning/'.$this->tenant->slug.'/training-plans';
-        $this->post($url.'/'.$id.'/archive', ['revision' => 1, 'archived' => 1])->assertRedirect();
+        $url = '/planning/training-plans';
+        $this->post($url.'/'.$id.'/archive', $context + ['revision' => 1, 'archived' => 1])->assertRedirect();
         $this->get($url)->assertDontSee('Testtraining');
         $this->get($url.'?archived=1')->assertSee('Testtraining');
         $this->get($url.'/'.$id)->assertOk()->assertDontSee('Trainingsplan bearbeiten');
-        $this->post($url.'/'.$id, ['revision' => 2, 'plan' => $this->plan()])->assertStatus(409);
-        $this->post($url.'/'.$id.'/archive', ['revision' => 1, 'archived' => 0])->assertSessionHasErrors('revision');
-        $this->post($url.'/'.$id.'/archive', ['revision' => 2, 'archived' => 0])->assertRedirect();
+        $this->post($url.'/'.$id, $context + ['revision' => 2, 'plan' => $this->plan()])->assertStatus(409);
+        $this->post($url.'/'.$id.'/archive', $context + ['revision' => 1, 'archived' => 0])->assertSessionHasErrors('revision');
+        $this->post($url.'/'.$id.'/archive', $context + ['revision' => 2, 'archived' => 0])->assertRedirect();
         $this->db->table('training_plans')->where('id', $id)->update(['shared' => true]);
         $this->actingAs($this->trainer, 'clubunio');
         $this->post($url.'/'.$id.'/archive', ['revision' => 3, 'archived' => 1])->assertForbidden();
@@ -177,19 +182,20 @@ class TrainingPlanTest extends TestCase
 
     public function test_review_needs_confirmation_and_cannot_overwrite_changed_revision(): void
     {
+        $context = $this->workspaceForm();
         $id = $this->insert();
         $plan = $this->plan();
         $plan['title'] = 'KI Vorschlag';
         $this->mock(TrainingPlanAi::class)->shouldReceive('generate')->once()->andReturn($plan);
-        $url = '/planning/'.$this->tenant->slug.'/training-plans/'.$id;
-        $this->post($url.'/review', ['revision' => 1, 'request_key' => (string) Str::uuid()])->assertRedirect();
+        $url = '/planning/training-plans/'.$id;
+        $this->post($url.'/review', $context + ['revision' => 1, 'request_key' => (string) Str::uuid()])->assertRedirect();
         $this->assertSame('Testtraining', $this->db->table('training_plans')->where('id', $id)->value('title'));
         $this->get($url)->assertOk()->assertSee('Prüfvorschlag')->assertSee('KI Vorschlag');
-        $this->post($url.'/apply')->assertRedirect();
+        $this->post($url.'/apply', $context)->assertRedirect();
         $this->assertSame('KI Vorschlag', $this->db->table('training_plans')->where('id', $id)->value('title'));
-        $this->post($url.'/apply')->assertStatus(409);
+        $this->post($url.'/apply', $context)->assertStatus(409);
         $this->withSession(['training_review.'.$this->tenant->id.'.'.$id => ['actor' => $this->actor->id, 'expires' => time() + 100, 'revision' => 1, 'plan' => $plan]])
-            ->post($url.'/apply')->assertSessionHasErrors('revision');
+            ->post($url.'/apply', $context)->assertSessionHasErrors('revision');
     }
 
     public function test_content_rejects_wrong_duration_and_drops_executable_content(): void

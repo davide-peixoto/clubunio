@@ -6,7 +6,7 @@
 <label>Bis<input name="to" type="date" value="{{ $filters['to'] }}" required></label>
 <div class="actions"><button type="submit">@svg('heroicon-o-funnel') Filtern</button></div>
 </form>
-<form method="post" action="{{ route('clubunio.planning.sfv.refresh',$tenant->slug) }}">@csrf
+<form method="post" action="{{ route('clubunio.planning.sfv.refresh',$tenant->slug) }}">@csrf @include('clubunio.workspace.context')
 <input type="hidden" name="from" value="{{ $filters['from'] }}"><input type="hidden" name="to" value="{{ $filters['to'] }}">
 <button type="submit" class="primary">@svg('heroicon-o-arrow-path') Vom SFV aktualisieren</button></form>
 <div class="table-scroll"><table><thead><tr><th>Datum</th><th>Spiel</th><th>Ort</th><th>Heim/Auswärts</th><th>Verbandstatus</th><th>Übernahme</th></tr></thead><tbody>

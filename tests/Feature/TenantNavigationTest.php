@@ -104,4 +104,60 @@ class TenantNavigationTest extends TestCase
         $this->post('/tenant/switch', ['tenant' => $this->two->id, 'revision' => $this->context()['revision']])->assertRedirect('/');
         $this->postJson($update, ['components' => [['snapshot' => $snapshot, 'updates' => [], 'calls' => []]]], ['X-Livewire' => ''])->assertStatus(419);
     }
+
+    public function test_bus_and_planning_share_the_panel_and_clean_links(): void
+    {
+        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture', 'starts_on' => now()->subYear()->toDateString(), 'ends_on' => now()->addYear()->toDateString()]);
+        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture']);
+        $this->db->table('clubora.team_seasons')->insert(['tenant_id' => $this->one->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Fixture']);
+        foreach (['/bus', '/bus/options', '/planning', '/planning/calendar', '/planning/absences', '/planning/options', '/planning/sfv', '/planning/training-plans'] as $url) {
+            $this->get($url)->assertOk()->assertSee('fi-main-sidebar')->assertSee('First club');
+        }
+        $this->get('/bus')->assertDontSee('>Teamkalender</a>', false)->assertSee('/bus/options');
+        $this->get('/planning')->assertSee('>Teamkalender</a>', false);
+        $this->get('/bus/'.$this->one->slug.'?q=fixture')->assertRedirect('/bus?q=fixture');
+        $this->get('/planning/'.$this->one->slug.'/calendar')->assertRedirect('/planning/calendar');
+        $this->assertSame('/planning/events/123', route('clubunio.planning.show', [$this->one->slug, 123], false));
+        $this->assertSame('/bus/456', route('clubunio.bus.show', [$this->one->slug, 456], false));
+        $this->get('/bus/999999999')->assertNotFound();
+        $this->get('/planning/events/999999999')->assertNotFound();
+    }
+
+    public function test_workspace_posts_require_current_context_and_keep_tenant_isolation(): void
+    {
+        $page = $this->get('/bus/options')->assertOk();
+        preg_match('/name="_workspace" value="([^"]+)"/', $page->getContent(), $match);
+        $this->assertNotEmpty($match);
+        $token = html_entity_decode($match[1]);
+        $input = ['kind' => 'bus', 'name' => 'Workspace fixture', 'active' => 1];
+        $this->post('/bus/options', $input)->assertStatus(419);
+        $this->post('/bus/options', $input + ['_workspace' => 'invalid'])->assertStatus(419);
+        $this->post('/bus/options', $input + ['_workspace' => $token])->assertRedirect('/bus/options');
+        $this->assertSame(1, $this->db->table('clubora.buses')->where('tenant_id', $this->one->id)->where('name', 'Workspace fixture')->count());
+        $this->actor->tenants()->attach($this->two, ['role' => 'admin']);
+        $this->post('/tenant/switch', ['tenant' => $this->two->id, 'revision' => $this->context()['revision']])->assertRedirect('/');
+        $this->post('/bus/options', $input + ['_workspace' => $token])->assertStatus(419);
+        $this->get('/bus/'.$this->one->slug)->assertForbidden();
+        $this->post('/bus/'.$this->two->slug.'/options', $input)->assertStatus(419);
+        $this->assertSame(0, $this->db->table('clubora.buses')->where('tenant_id', $this->two->id)->where('name', 'Workspace fixture')->count());
+        $this->get('/planning')->assertOk()->assertSee('Second club');
+        $this->actor->tenants()->detach($this->two);
+        $this->get('/planning')->assertForbidden();
+    }
+
+    public function test_workspace_navigation_livewire_keeps_its_tenant(): void
+    {
+        $this->actor->tenants()->attach($this->two, ['role' => 'admin']);
+        $page = $this->get('/bus')->assertOk();
+        preg_match('/wire:snapshot="([^"]+)"/', $page->getContent(), $match);
+        $this->assertNotEmpty($match);
+        $snapshot = html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5);
+        $update = app(HandleRequests::class)->getUpdateUri();
+        Filament::setTenant(null);
+        $payload = ['components' => [['snapshot' => $snapshot, 'updates' => [], 'calls' => []]]];
+        $this->postJson($update, $payload, ['X-Livewire' => ''])->assertOk();
+        $this->assertSame($this->one->id, Filament::getTenant()->id);
+        $this->post('/tenant/switch', ['tenant' => $this->two->id, 'revision' => $this->context()['revision']])->assertRedirect('/');
+        $this->postJson($update, $payload, ['X-Livewire' => ''])->assertStatus(419);
+    }
 }

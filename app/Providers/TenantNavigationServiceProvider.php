@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\ClubUnio\Http\LegacyWorkspace;
 use App\ClubUnio\Http\UseActiveTenant;
+use App\ClubUnio\Http\UseClubWorkspace;
 use App\ClubUnio\Services\ActiveTenant;
 use App\ClubUnio\SessionUrlGenerator;
 use Filament\Facades\Filament;
+use Filament\Http\Middleware\SetUpPanel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +41,27 @@ class TenantNavigationServiceProvider extends ServiceProvider
             }
             // Adapt only our panel's generated routes, retaining all Filament middleware/scopes.
             $routes = new RouteCollection;
+            // Register clean workspace routes before legacy tenant-slug routes.
+            foreach ($this->app['router']->getRoutes() as $route) {
+                if (! preg_match('~^(bus|planning)/\{tenant(?::slug)?\}(/|$)~', $route->uri())) {
+                    continue;
+                }
+                $workspace = clone $route;
+                $workspace->setUri(preg_replace('~/\{tenant(?::slug)?\}~', '', $route->uri()));
+                $action = $workspace->getAction();
+                $action['prefix'] = preg_replace('~/\{tenant(?::slug)?\}~', '', $action['prefix'] ?? '');
+                if ($route->getName()) {
+                    $action['as'] = str_replace('clubunio.', 'clubunio.workspace.', $route->getName());
+                }
+                $action['middleware'] = array_values(array_filter($action['middleware'] ?? [], fn ($item) => $item !== 'auth:clubunio,portal'));
+                $action['middleware'][] = 'auth:clubunio';
+                $action['middleware'][] = SetUpPanel::class.':clubunio';
+                $action['middleware'][] = UseActiveTenant::class;
+                $action['middleware'][] = UseClubWorkspace::class;
+                $workspace->setAction($action);
+                $routes->add($workspace);
+                $route->middleware(LegacyWorkspace::class);
+            }
             foreach ($this->app['router']->getRoutes() as $route) {
                 if (str_starts_with($route->getName() ?? '', 'filament.clubunio.')) {
                     if ($route->getName() === 'filament.clubunio.tenant') {
@@ -80,7 +104,8 @@ class TenantNavigationServiceProvider extends ServiceProvider
             } catch (HttpExceptionInterface) {
                 abort(419);
             }
-            abort_if(in_array(UseActiveTenant::class, $route->gatherMiddleware(), true), 419);
+            abort_if(in_array(UseActiveTenant::class, $route->gatherMiddleware(), true)
+                || in_array(UseClubWorkspace::class, $route->gatherMiddleware(), true), 419);
         });
     }
 }

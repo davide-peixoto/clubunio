@@ -11,6 +11,16 @@ class TeamPlanning extends Page
 
     protected static ?string $title = 'Teamplanung';
 
+    public static function getNavigationUrl(): string
+    {
+        return route('clubunio.workspace.planning.index');
+    }
+
+    public static function getNavigationItemActiveRoutePattern(): string|array
+    {
+        return ['clubunio.workspace.planning.*', 'clubunio.workspace.training.*', parent::getNavigationItemActiveRoutePattern()];
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Mannschaften';
@@ -25,6 +35,6 @@ class TeamPlanning extends Page
     {
         $tenant = Filament::getTenant();
         abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
-        $this->redirect(route('clubunio.planning.index', $tenant->slug));
+        $this->redirect(route('clubunio.workspace.planning.index'));
     }
 }

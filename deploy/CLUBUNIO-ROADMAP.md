@@ -1,5 +1,18 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket68: Einheitliche Bus- und Planungsverwaltung
+
+Bus, Teamtermine, Absenzen, SFV und Trainingsplaene nutzen die gemeinsame
+Filament-Navigation mit aktivem Sitzungsmandanten statt Vereinskennung in URLs.
+Teamkalender bleibt in der Teamplanung; optionale Busbelegung dort bleibt.
+Vorhandene Fachservices und eingeschraenkte Portalwege werden nicht ersetzt.
+Formularnachweis mit Mandantenrevision, alte Verwaltungslinks nur bei passendem
+Kontext, keine Weiterleitung alter Schreibaktionen. Auch Routencache und
+Livewire-Folgeaufrufe erhalten den Kontext. Keine DB-Migration oder Datenkopie.
+Spaetere Portal-/App-Migration gesondert planen, nicht mit dieser Umstellung
+vermischen. Details und Rollback: CLUBUNIO-WORKSPACE.md.
+PHPMaker DEV/PROD, API, SaaS und Betriebsautomatisierung bleiben unveraendert.
+
 ## Fachpaket67: Teilkorrekturen / Kundenguthaben / Web-Fachabgleich
 
 Neue eigene Migration66: Kundenguthaben und unveraenderliches Verrechnungsjournal.

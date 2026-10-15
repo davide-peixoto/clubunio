@@ -1,5 +1,10 @@
 # ClubUnio
 
+Fachpaket68: [Busverwaltung und Teamplanung im gemeinsamen Arbeitsbereich](deploy/CLUBUNIO-WORKSPACE.md).
+Verwaltungswege `/bus` und `/planning` ohne Vereinskennung, normale Seitenleiste
+und Mandantenwahl. Teamkalender bleibt bei der Planung; bestehende Portalrechte
+und Fachservices bleiben erhalten. Keine Datenbankmigration.
+
 Fachpaket67: [Teilgutschriften und Kundenguthaben](deploy/CLUBUNIO-CUSTOMER-CREDITS.md).
 Webjournal fuer manuell attestierte Kundengutschriften und frisch nachgewiesene
 Bexio-Mehrrechnungsverrechnungen, Mitgliederdossier und Restbetragschutz.

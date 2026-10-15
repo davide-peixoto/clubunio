@@ -17,10 +17,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Sabre\VObject\Reader;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\Concerns\WorkspaceForm;
 use Tests\TestCase;
 
 class TeamPlanningTest extends TestCase
 {
+    use WorkspaceForm;
+
     private $db;
 
     private Tenant $tenant;
@@ -100,7 +103,7 @@ class TeamPlanningTest extends TestCase
         $input = $this->input(['title' => 'Kalender Äöü, Test; Termin']);
         $id = $this->service->saveEvent($this->admin, $this->tenant, null, $input);
         $date = substr($input['starts_at'], 0, 10);
-        $base = '/planning/'.$this->tenant->slug.'/calendar';
+        $base = '/planning/calendar';
         foreach (['month', 'week', 'teams'] as $view) {
             $this->get($base.'?date='.$date.'&view='.$view.'&team='.$this->team.'&q=Kalender')->assertOk()->assertSee('Kalender Äöü')->assertSee('Kalender exportieren')->assertSee('team='.$this->team)->assertSee('q=Kalender');
         }
@@ -226,7 +229,8 @@ class TeamPlanningTest extends TestCase
         $range = ['from' => now('Europe/Zurich')->toDateString(), 'to' => now('Europe/Zurich')->addMonth()->toDateString()];
         $this->assertSame(1, $sfv->refresh($this->trainer, $this->tenant, $range));
         $match = $this->db->table('sfv_schedule')->where('tenant_id', $this->tenant->id)->first();
-        $base = '/planning/'.$this->tenant->slug.'/sfv';
+        $context = $this->workspaceForm();
+        $base = '/planning/sfv';
         $this->get($base)->assertOk()->assertSee('Sissach - Guest');
         $this->get($base.'/'.$match->id)->assertOk()->assertSee('sfv_revision');
         $event = $sfv->import($this->trainer, $this->tenant, $match->id, $this->input() + ['sfv_revision' => 1]);
@@ -234,7 +238,8 @@ class TeamPlanningTest extends TestCase
         $sfv->refresh($this->trainer, $this->tenant, $range);
         $this->assertSame(1, $this->db->table('team_events')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(2, $this->db->table('team_events')->where('id', $event)->value('revision'));
-        $this->post($base.'/'.$match->id, $this->input() + ['sfv_revision' => 1, 'event_revision' => 2])->assertSessionHasErrors('revision');
+        $this->post($base.'/'.$match->id, $context + $this->input() + ['sfv_revision' => 1, 'event_revision' => 2])->assertSessionHasErrors('revision');
+        $base = '/planning/'.$this->tenant->slug.'/sfv';
         $this->actingAs($this->player, 'clubunio')->get($base)->assertForbidden();
         Http::swap(new Factory);
         Http::fake(['*' => Http::response('SECRET-ERROR', 401)]);
@@ -273,15 +278,16 @@ class TeamPlanningTest extends TestCase
 
     public function test_planning_pages_forms_filters_and_admin_authorization(): void
     {
+        $context = $this->workspaceForm();
         $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
-        $base = '/planning/'.$this->tenant->slug;
+        $base = '/planning';
         $this->get($base)->assertOk()->assertSee('Fixture training');
         $this->get($base.'?team='.$this->team.'&q=training&status=AKTIV')->assertOk()->assertSee('Fixture training')->assertSee('name="team"', false);
         foreach (['/new', '/events/'.$id, '/events/'.$id.'/edit', '/absences', '/options'] as $path) {
             $this->get($base.$path)->assertOk();
         }
-        $this->post($base.'/events/'.$id, $this->input(['revision' => 1, 'title' => 'Updated']))->assertRedirect();
-        $this->post($base.'/events/'.$id, $this->input(['revision' => 1]))->assertSessionHasErrors('revision');
+        $this->post($base.'/events/'.$id, $context + $this->input(['revision' => 1, 'title' => 'Updated']))->assertRedirect();
+        $this->post($base.'/events/'.$id, $context + $this->input(['revision' => 1]))->assertSessionHasErrors('revision');
         $this->assertSame(2, $this->db->table('team_events')->where('id', $id)->value('revision'));
     }
 

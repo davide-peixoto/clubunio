@@ -1,5 +1,18 @@
 # Pi staging: dev.clubunio.ch
 
+Release68 aktiv: `20261015-clubunio-68-workspace`, Ruecksprung67.
+Bus und Teamplanung in gemeinsamer Filament-Navigation, saubere /bus- und
+/planning-URLs, Sitzungsmandant samt Formular-/Livewire-Revisionsschutz.
+Keine DB-Migration. 51 Tests/485 Assertions mit aktivem Routencache erfolgreich.
+Zusaetzlicher Gast-/Deep-Link-Test1/14 erfolgreich; Planungslinks gehen ohne
+Anmeldung auf /login statt auf den getrennten Portal-Login (live302 geprueft).
+Angemeldete Desktoppruefung: Busliste, Busdetail /bus/16, Teamplanung und
+Weiterleitung des alten Planungs-Lesezeichens erfolgreich. Mobile Browser-
+Pruefung wegen Verbindungsabbruch der Browsersteuerung nicht abgeschlossen.
+Config-/Routen-/Viewcache auf Pi erneuert, FPM geladen, Route-Checker erfolgreich.
+Release67 als Basis komplett erhalten, nur eigenes Workspace-Delta hinzugefuegt.
+Details/Migrationshinweise: CLUBUNIO-WORKSPACE.md. PHPMaker DEV/PROD unveraendert.
+
 Release67 aktiv: `20261015-clubunio-67-customer-credits`, Ruecksprung66.
 Eigene additive Migration66: Kundenguthaben/Verrechnungsjournal, Dossierwerte.
 55 Tests392 Assertions plus abschliessend8/112 (ueberlappend) erfolgreich.
