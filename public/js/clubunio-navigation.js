@@ -38,6 +38,13 @@
                     matches += visible;
                 });
                 control.querySelector('.cu-nav-empty').hidden = matches > 0 || !query;
+                const settings = control.querySelector('.cu-settings-shortcut');
+                if (settings) {
+                    settings.hidden = !query;
+                    const url = new URL(settings.dataset.settingsUrl, location.origin);
+                    url.searchParams.set('search', search.value.trim());
+                    settings.href = url.href;
+                }
             });
         });
     };

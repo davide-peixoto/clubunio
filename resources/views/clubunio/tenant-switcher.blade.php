@@ -27,5 +27,8 @@
         <input id="cu-menu-width" type="range" min="240" max="420" step="10" value="280">
     </label>
     <p class="cu-nav-empty" role="status" hidden>Keine Menüpunkte gefunden.</p>
+    @if(\App\ClubUnio\Pages\SettingsOverview::canAccess())
+    <a class="cu-settings-shortcut" data-settings-url="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" href="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" hidden>In Einstellungen suchen</a>
+    @endif
 </div>
 @endif

@@ -3,6 +3,16 @@
 .cu-nav-width { display: flex; align-items: center; gap: 12px; font-size: 12px; }
 .cu-nav-width input { min-width: 0; width: 100%; accent-color: #164b8a; }
 .cu-nav-empty { font-size: 13px; }
+.cu-settings-shortcut { color: #164b8a; text-decoration: underline; font-size: 13px; }
+.dark .cu-settings-shortcut { color: #48a9e8; }
+.cu-settings-search { width: min(100%, 32rem); border: 1px solid #94a3b8; border-radius: 6px; padding: 10px 12px; background: transparent; color: inherit; }
+.cu-settings-section { padding: 24px 0; border-bottom: 1px solid #94a3b855; }
+.cu-settings-section h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+.cu-settings-section ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 4px 24px; }
+.cu-settings-section a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 8px; border-radius: 6px; }
+.cu-settings-section a:hover, .cu-settings-section a:focus-visible { background: #48a9e81a; outline: 2px solid #48a9e8; }
+.cu-settings-section svg { width: 20px; height: 20px; flex-shrink: 0; }
+.cu-settings-section span { flex: 1; overflow-wrap: anywhere; }
 .fi-sidebar .cu-search-hidden { display: none !important; }
 .fi-sidebar .cu-search-open > .fi-sidebar-group-items { display: flex !important; height: auto !important; overflow: visible !important; }
 .fi-sidebar-item-label { white-space: normal; overflow-wrap: break-word; }

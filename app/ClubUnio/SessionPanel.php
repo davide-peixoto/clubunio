@@ -9,6 +9,11 @@ class SessionPanel extends Panel
 {
     public function getNavigation(): array
     {
+        return NavigationStructure::partition($this, $this->getAuthorizedNavigation())['navigation'];
+    }
+
+    public function getAuthorizedNavigation(): array
+    {
         $groups = parent::getNavigation();
         $icons = ['mitglied' => 'user-group', 'anmeldung' => 'user-plus', 'saison' => 'calendar-days',
             'mannschaft' => 'users', 'staff' => 'identification', 'trainer' => 'academic-cap',

@@ -1,5 +1,23 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Aufgabenorientiertes Menue (16.10.2026)
+
+Dashboard vor Mitglieder/Sport/Finanzen/Anlagen & Kommunikation/Auswertungen.
+Stammdaten und Konfigurationen hinter einer gegliederten, durchsuchbaren
+Einstellungen-Uebersicht statt Einzelpunkten in der Hauptnavigation.
+Nur bereits autorisierte Links werden umgeordnet, alle Direktlinks bleiben.
+Kein DB-Migrationsschritt. Details und Pruefungen: CLUBUNIO-NAVIGATION.md.
+
+## Navigation und Dossierbearbeitung (16.10.2026)
+
+Menuesuche, benutzerbezogene Desktopbreite, Fachicons und gegliedertes
+Mitgliederdossier. Saison-/Mannschafts-/Mitgliederzuordnungen, Beitragsregeln
+und Trainingszeiten direkt im Dossier pflegen; passende Hauptlisten mit
+Kopieren/Deaktivieren. Historie und Fachvalidierung bleiben erhalten.
+Keine DB-Migration. Finanz-CRUD aus Saison bleibt bewusst ein gesonderter
+offener Schritt. Umfang und Testplan: CLUBUNIO-WORKSPACE-EDITING.md.
+PHPMaker DEV/PROD und API/SaaS bleiben unveraendert.
+
 ## Fachpaket71: Synchronisation und normale Bexio-Bedienung
 
 Eigene additive Migration67 speichert mandantengebundene Syncauftraege und

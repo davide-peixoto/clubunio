@@ -1,6 +1,19 @@
 # Pi staging: dev.clubunio.ch
 
-Release70 aktiv: `20261015-clubunio-70-mobile`, Ruecksprung69.
+Aktuell: `20261016-clubunio-navigation`, Ruecksprung `20261016-clubunio-workspace-editing-v2`.
+Aufgabenorientiertes Menue und Einstellungen-Uebersicht unter /configuration.
+11 Tests117 Assertions erfolgreich; keine DB-Migration. Caches/Checker OK.
+Nur ClubUnio aktualisiert. Details: CLUBUNIO-NAVIGATION.md.
+
+Historisch: `20261016-clubunio-workspace-editing-v2`, Ruecksprung `20261016-clubunio-71-sync-final`.
+Navigation/Mitgliederdossier und direkte Zuordnungsdialoge, keine DB-Migration.
+Aus dem aktuellen Sync71-Release geklont; dessen Aenderungen bleiben erhalten.
+Config-/Routen-/Viewcache und Mandantenchecker erfolgreich, Login HTTP200.
+Tests:9/104 neu plus31/353 Regressionen (1 optionaler Livetest ausgelassen).
+Visuelle Anmeldung noch ausstehend. Details: CLUBUNIO-WORKSPACE-EDITING.md.
+PHPMaker DEV/PROD unveraendert.
+
+Release70 historisch: `20261015-clubunio-70-mobile`, Ruecksprung69.
 Mobile Wortumbrueche und zusammenhaengende Reservations-Klickflaeche korrigiert.
 Live390px: Bus/VW lesbar, Klick navigiert /bus/16; Planung kein Seitenoverflow.
 Desktop1440px ebenfalls geprueft. Config/Route/Viewcache erneuert, Checker OK.

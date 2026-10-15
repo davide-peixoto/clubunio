@@ -10,6 +10,8 @@ use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Team;
 use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\NavigationStructure;
+use App\ClubUnio\Pages\SettingsOverview;
 use App\ClubUnio\Resources\ContributionPriceResource\Pages\ManagePrices;
 use App\ClubUnio\Resources\Relations\ContributionRulesRelationManager;
 use App\ClubUnio\Resources\Relations\TeamSeasonsRelationManager;
@@ -27,6 +29,30 @@ use Tests\TestCase;
 
 class WorkspaceEditingTest extends TestCase
 {
+    public function test_navigation_is_prioritized_and_settings_are_not_lost(): void
+    {
+        $this->get('/members')->assertOk();
+        $panel = Filament::getCurrentPanel();
+        $raw = $panel->getAuthorizedNavigation();
+        $partition = NavigationStructure::partition($panel, $raw);
+        $groups = array_map(fn ($group) => $group->getLabel(), $partition['navigation']);
+        $this->assertSame([null, 'Mitglieder', 'Sport', 'Finanzen', 'Anlagen & Kommunikation', 'Auswertungen', null], $groups);
+        $visible = collect($partition['navigation'])->flatMap(fn ($group) => $group->getItems());
+        $this->assertFalse($visible->contains(fn ($item) => str_contains($item->getUrl(), '/countries')));
+        $all = $visible->concat(collect($partition['settings'])->flatten(1))->map(fn ($item) => $item->getUrl())->sort()->values()->all();
+        $original = collect($raw)->flatMap(fn ($group) => $group->getItems())->map(fn ($item) => $item->getUrl())->sort()->values()->all();
+        $this->assertSame($original, $all);
+        $this->get('/configuration')->assertOk()->assertSee('Einstellungen suchen')->assertSee('Sport &amp; Anlagen', false)->assertSee('Parameter');
+    }
+
+    public function test_settings_overview_is_not_accessible_after_role_revocation(): void
+    {
+        $this->get('/configuration')->assertOk();
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->assertFalse(SettingsOverview::canAccess());
+        $this->get('/configuration')->assertForbidden();
+    }
+
     private $db;
 
     private Tenant $tenant;
