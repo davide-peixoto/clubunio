@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+Release63: `20261015-clubunio-63-credit-allocation`, Ruecksprung62.
+Konkreter GS-00004-Rueckfluss auf RE-00009, Webauswahl und Provider-ID-Pruefung.
+Keine Migration, Outbound unveraendert aus. Details: CLUBUNIO-CREDIT-ALLOCATION.md.
+59 Tests/394 Assertions plus ueberlappender Doppelschutz-Nachlauf1/2 erfolgreich.
+Live-Sandboxwerte auf Pi lesend bestaetigt, Quellhashes identisch,
+189 verschluesselte Settings/46 Vorlagen. Keine echten Bank-/Versandaktionen.
+
 Release62: `20261015-clubunio-62-material-receipts`, Ruecksprung61.
 Materialuebergaben/Empfangsbestaetigung und historische Quittung, Migration61/62.
 Weitere18 private archivierte Altplaene, elf Zuordnungen offen. Outbound aus.

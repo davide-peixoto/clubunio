@@ -1,5 +1,11 @@
 # ClubUnio: Gutschriften und Rueckerstattungen
 
+Nachtrag63: RE-00009/GS-00004 vollstaendig mit CHF10.05 ohne Geldzahlung
+verrechnet, lokal107 bestaetigt. Nummer/Voucher/Betrag/Eintrag/Rechnung werden
+jetzt einzeln geprueft. CLUBUNIO-CREDIT-ALLOCATION.md beschreibt den aktuellen
+Nachweis. Alter Test18/GS-00002 wurde nicht umgehaengt; eigenstaendiges Guthaben
+und Verteilung auf mehrere Rechnungen sind dadurch nicht als geloest zu bewerten.
+
 14.10.2026, Fachpaket55. Nur ClubUnio und eigene PostgreSQL-DB.
 PHPMaker DEV/PROD, App-API, SaaS und Betriebsentwicklung unveraendert.
 

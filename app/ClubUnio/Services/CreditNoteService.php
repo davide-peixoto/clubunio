@@ -208,13 +208,20 @@ class CreditNoteService
             } else {
                 abort_unless($code === 'released', 409);
                 abort_unless(hash_equals($remote['connection_hash'], app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
+                abort_unless((string) ($note->source_snapshot['bexio_invoice_id'] ?? '') === (string) $remote['remote_id'], 409, 'Ursprüngliche Bexio-Rechnung stimmt nicht überein.');
+                $reference = strtoupper(trim($input['external_reference']));
+                $matches = array_values(array_filter($remote['credit_allocations'], fn ($allocation) => $allocation['reference'] !== null && $allocation['reference'] === $reference));
+                if (count($matches) !== 1 || $matches[0]['amount_cents'] !== (int) $note->amount_cents) {
+                    $this->fail('Bexio bestätigt diese Gutschriftsnummer mit diesem Betrag nicht für diese Rechnung.');
+                }
                 $allocated = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->sum('amount_cents');
                 if ($remote['balance']['credit_cents'] < (int) $allocated + (int) $note->amount_cents) {
                     $this->fail('Bexio bestätigt noch keine ausreichende Gutschrift.');
                 }
-                abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])->where('external_reference', $input['external_reference'])->exists(), 409, 'Bexio-Referenz ist bereits zugeordnet.');
-                $note->forceFill(['status_id' => $this->status($tenant, 'confirmed'), 'external_reference' => $input['external_reference'],
-                    'connection_hash' => $remote['connection_hash'], 'external_snapshot' => $remote, 'confirmed_by' => $actor->id, 'confirmed_at' => now()]);
+                abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
+                    ->where(fn ($q) => $q->whereRaw('upper(external_reference)=?', [$reference])->orWhereRaw("external_snapshot->'allocation'->>'voucher_id' = ?", [$matches[0]['voucher_id']]))->exists(), 409, 'Bexio-Gutschrift ist bereits zugeordnet.');
+                $note->forceFill(['status_id' => $this->status($tenant, 'confirmed'), 'external_reference' => $reference,
+                    'connection_hash' => $remote['connection_hash'], 'external_snapshot' => $remote + ['allocation' => $matches[0]], 'confirmed_by' => $actor->id, 'confirmed_at' => now()]);
             }
             $note->revision++;
             $note->save();
@@ -251,9 +258,11 @@ class CreditNoteService
         abort_unless((int) ($data['currency_id'] ?? 0) === (int) $payload['currency_id'], 409);
 
         $balance = app(BexioBalanceService::class)->normalize('invoice', $data, app(InvoiceTaxService::class)->summary($invoice, true)['total_cents']);
-        $balance += app(BexioInvoiceCashService::class)->read($tenant, $row->remote_id, $balance);
+        $evidence = app(BexioInvoiceCashService::class)->creditEvidence($tenant, $row->remote_id, $balance);
+        $balance += $evidence['cash'];
 
-        return ['remote_id' => $row->remote_id, 'connection_hash' => $row->connection_hash, 'observed_at' => now()->toIso8601String(), 'balance' => $balance];
+        return ['remote_id' => $row->remote_id, 'connection_hash' => $row->connection_hash, 'observed_at' => now()->toIso8601String(), 'balance' => $balance,
+            'credit_allocations' => $evidence['credit_allocations']];
     }
 
     public function createRefund(Account $actor, Tenant $tenant, int $invoiceId, array $input): Refund

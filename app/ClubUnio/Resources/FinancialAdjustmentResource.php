@@ -61,6 +61,8 @@ abstract class FinancialAdjustmentResource extends CatalogResource
             TextEntry::make('revision')->label('Version'), TextEntry::make('reason')->label('Begründung')->columnSpanFull(),
             TextEntry::make('included_tax')->label('Enthaltene Steuer CHF')->placeholder('–')->visible(fn ($record) => $record instanceof CreditNote),
             TextEntry::make('external_reference')->label('Bexio-Referenz (manuell zugeordnet)')->placeholder('–')->visible(fn ($record) => $record instanceof CreditNote),
+            TextEntry::make('external_snapshot.allocation.voucher_id')->label('Bexio-Gutschrift-ID')->placeholder('–')->visible(fn ($record) => $record instanceof CreditNote),
+            TextEntry::make('external_snapshot.allocation.payment_ids')->label('Bexio-Verrechnungseinträge')->placeholder('–')->visible(fn ($record) => $record instanceof CreditNote),
             TextEntry::make('proof_reference')->label('Rückerstattungsnachweis (manuell)')->placeholder('–')->visible(fn ($record) => $record instanceof Refund),
             TextEntry::make('confirmed_at')->label('Manuell bestätigt am')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->placeholder('–'),
             TextEntry::make('paid_on')->label('Nachweisdatum')->date('d.m.Y')->placeholder('–')->visible(fn ($record) => $record instanceof Refund),

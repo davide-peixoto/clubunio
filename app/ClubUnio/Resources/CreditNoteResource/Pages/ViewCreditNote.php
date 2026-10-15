@@ -10,6 +10,7 @@ use App\ClubUnio\Services\CreditNoteService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\ViewRecord;
@@ -30,7 +31,12 @@ class ViewCreditNote extends ViewRecord
             Action::make('release')->label('Intern freigeben')->icon('heroicon-o-check')->visible(fn () => $this->getRecord()->status->code === 'draft')
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])->schema([$revision()])->action(fn ($data) => $change('release', $data)),
             Action::make('confirm')->label('Bexio-Zuordnung bestätigen')->icon('heroicon-o-link')->visible(fn () => $this->getRecord()->status->code === 'released' && BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
-                ->fillForm(fn () => ['revision' => $this->getRecord()->revision])->schema([$revision(), TextInput::make('external_reference')->label('Gutschriftsnummer aus Bexio')->required()->maxLength(120),
+                ->fillForm(fn () => ['revision' => $this->getRecord()->revision])->schema([$revision(), Select::make('external_reference')->label('Verrechnete Bexio-Gutschrift')->required()->options(function () {
+                    $remote = app(CreditNoteService::class)->remote(Filament::auth()->user(), Filament::getTenant(), $this->getRecord()->invoice_id);
+
+                    return collect($remote['credit_allocations'])->filter(fn ($row) => $row['reference'] !== null)
+                        ->mapWithKeys(fn ($row) => [$row['reference'] => $row['reference'].' · CHF '.number_format($row['amount_cents'] / 100, 2, '.', "'")])->all();
+                }),
                     Checkbox::make('attestation')->label('Diese Gutschrift ist in Bexio genau dieser Rechnung zugeordnet.')->accepted()])->action(fn ($data) => $change('confirm', $data)),
             FinancialAdjustmentActions::refund(fn () => $this->getRecord()->invoice_id, fn () => $this->getRecord()->id)->visible(fn () => $this->getRecord()->status->code === 'confirmed' && BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant())),
             Action::make('cancel')->label('Stornieren')->icon('heroicon-o-x-mark')->color('danger')->visible(fn () => in_array($this->getRecord()->status->code, ['draft', 'released'], true))

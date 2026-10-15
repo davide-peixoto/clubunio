@@ -1,5 +1,16 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket63: Bexio-Gutschriften eindeutig abgleichen
+
+RE-00009/GS-00004 live lesend bestaetigt und lokal abgeglichen: CHF10.05
+Gutschrift, keine Geldzahlung, Rest0. Lokaler Gutschriftsnachweis107; Wiederholung
+ohne neue Belege/Revision. Gutschriftnummer, Provider-ID, Eintrag, Betrag und
+urspruengliche Rechnung statt alleiniger Gesamtsaldo-Pruefung. Webauswahl der
+verrechneten GS-Nummern und sichtbarer Nachweis, keine freie Referenzbehauptung.
+Kein Schemaeingriff. Alter TestGS-00002 bleibt unveraendert; eigenstaendiges
+Kundenguthaben ohne Verrechnung und Mehrrechnungsverteilung weiterhin separat.
+Details: CLUBUNIO-CREDIT-ALLOCATION.md. Kein API/SaaS/Betrieb/PHPMaker-DEV/PROD.
+
 ## Fachpaket62: Materialuebergaben und historische Uebernahme
 
 Web-Entwurf, Materialpositionen, Bereitstellung, Selbst-/Eltern-Empfangsbestaetigung,

@@ -1,5 +1,8 @@
 # ClubUnio
 
+Fachpaket63: [Konkreter Bexio-Gutschriftrueckfluss](deploy/CLUBUNIO-CREDIT-ALLOCATION.md).
+RE-00009/GS-00004 abgeglichen, konkrete Voucher-/Betragspruefung statt nur Summen.
+
 Fachpaket62: [Materialuebergaben und Empfangsbestaetigungen](deploy/CLUBUNIO-MATERIAL-RECEIPTS.md).
 Mitgliederdossier/Portal, PDF-Quittung, historischer Azure-Nachweis und sichere
 Altplanuebernahme. Keine externe Zustellung oder Bankzahlung.

@@ -69,6 +69,10 @@ class CreditNoteTest extends TestCase
         $this->mock(BexioInvoiceCashService::class, function ($m) {
             $m->shouldReceive('read')->andReturnUsing(fn ($tenant, $id, $balance) => [
                 'cash_received_cents' => $balance['paid_cents'], 'cash_excess_cents' => $balance['overpaid_cents']]);
+            $m->shouldReceive('creditEvidence')->andReturnUsing(fn ($tenant, $id, $balance) => [
+                'cash' => ['cash_received_cents' => $balance['paid_cents'], 'cash_excess_cents' => $balance['overpaid_cents']],
+                'credit_allocations' => $balance['credit_cents'] ? [['voucher_id' => '4', 'reference' => 'GS-00004', 'amount_cents' => $balance['credit_cents'], 'payment_ids' => ['20']]] : [],
+            ]);
         });
         $this->mock(BexioSandboxDispatchService::class, function ($m) {
             $m->shouldReceive('statusDocument')->andReturn((object) ['remote_id' => '123', 'connection_hash' => 'synthetic', 'payload' => json_encode(['currency_id' => 1, 'mwst_type' => 2])]);
@@ -105,7 +109,7 @@ class CreditNoteTest extends TestCase
         $note = CreditNote::where('tenant_id', $this->tenant->id)->firstOrFail();
         Livewire::test(ViewCreditNote::class, ['record' => $note->id])->callAction('release', data: ['revision' => $note->revision])->assertHasNoActionErrors();
         $note->refresh();
-        Livewire::test(ViewCreditNote::class, ['record' => $note->id])->callAction('confirm', data: ['revision' => $note->revision, 'external_reference' => 'TEST-CREDIT-1', 'attestation' => true])->assertHasNoActionErrors();
+        Livewire::test(ViewCreditNote::class, ['record' => $note->id])->callAction('confirm', data: ['revision' => $note->revision, 'external_reference' => 'GS-00004', 'attestation' => true])->assertHasNoActionErrors();
         $this->assertSame('confirmed', $note->fresh()->status->code);
         Livewire::test(ViewCreditNote::class, ['record' => $note->id])->callAction('createRefund', data: ['request_id' => (string) Str::uuid(), 'amount' => '10.00', 'reason' => 'Synthetic refund'])->assertHasNoActionErrors();
         $refund = $note->refunds()->firstOrFail();
@@ -153,7 +157,7 @@ class CreditNoteTest extends TestCase
         $this->remote['total_credit_vouchers'] = '0.00';
         $this->remote['total_remaining_payments'] = '0.00';
         $this->expectException(ValidationException::class);
-        $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'TEST-CREDIT-1', 'attestation' => true]);
+        $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'GS-00004', 'attestation' => true]);
     }
 
     public function test_refund_cannot_exceed_verified_credit_balance(): void
@@ -270,5 +274,103 @@ class CreditNoteTest extends TestCase
     {
         $note = $this->create();
         $this->assertLessThan(15, abs($note->created_at->diffInSeconds(now('UTC'))));
+    }
+
+    public function test_credit_only_settlement_is_confirmed_but_is_not_cash_or_refundable(): void
+    {
+        $this->remote['total_received_payments'] = '0.00';
+        $this->remote['total_credit_vouchers'] = '20.00';
+        $this->remote['total_remaining_payments'] = '0.00';
+        $service = app(CreditNoteService::class);
+        $note = $this->create('20.00');
+        $note = $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'release');
+        $note = $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'gs-00004', 'attestation' => true]);
+        $this->assertSame('confirmed', $note->status->code);
+        $this->assertSame('GS-00004', $note->external_reference);
+        $this->assertSame('4', $note->external_snapshot['allocation']['voucher_id']);
+        $this->assertSame(['20'], $note->external_snapshot['allocation']['payment_ids']);
+        $this->assertSame(0, $note->external_snapshot['balance']['cash_excess_cents']);
+        $this->expectException(ValidationException::class);
+        $service->createRefund($this->actor, $this->tenant, $this->invoice->id, ['request_id' => (string) Str::uuid(), 'amount' => '0.01', 'reason' => 'No cash exists']);
+    }
+
+    public function test_wrong_number_cannot_be_confirmed_despite_sufficient_total_credit(): void
+    {
+        $service = app(CreditNoteService::class);
+        $note = $this->create();
+        $note = $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'release');
+        $this->expectException(ValidationException::class);
+        $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'GS-00002', 'attestation' => true]);
+    }
+
+    public function test_wrong_credit_amount_cannot_be_confirmed(): void
+    {
+        $this->remote['total_credit_vouchers'] = '20.00';
+        $this->remote['total_remaining_payments'] = '-20.00';
+        $service = app(CreditNoteService::class);
+        $note = $this->create();
+        $note = $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'release');
+        $this->expectException(ValidationException::class);
+        $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'GS-00004', 'attestation' => true]);
+    }
+
+    public function test_changed_source_invoice_cannot_be_confirmed(): void
+    {
+        $service = app(CreditNoteService::class);
+        $note = $this->create();
+        $note = $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'release');
+        $note->forceFill(['source_snapshot' => array_replace($note->source_snapshot, ['bexio_invoice_id' => '6'])])->save();
+        $this->expectException(HttpException::class);
+        $service->change($this->actor, $this->tenant, $note->id, $note->revision, 'confirm', ['external_reference' => 'GS-00004', 'attestation' => true]);
+    }
+
+    public function test_same_provider_voucher_cannot_be_reused_under_a_different_reference(): void
+    {
+        $service = app(CreditNoteService::class);
+        $first = $this->create();
+        $first = $service->change($this->actor, $this->tenant, $first->id, $first->revision, 'release');
+        $first = $service->change($this->actor, $this->tenant, $first->id, $first->revision, 'confirm', ['external_reference' => 'GS-00004', 'attestation' => true]);
+        // Simulate an old manual label; the immutable provider ID must still prevent reuse.
+        $first->forceFill(['external_reference' => 'OLD-LABEL'])->save();
+        $second = $this->create();
+        $second = $service->change($this->actor, $this->tenant, $second->id, $second->revision, 'release');
+        $this->remote['total_credit_vouchers'] = '20.00';
+        $this->remote['total_remaining_payments'] = '-20.00';
+        $this->mock(BexioInvoiceCashService::class)->shouldReceive('creditEvidence')->andReturn([
+            'cash' => ['cash_received_cents' => 2000, 'cash_excess_cents' => 2000],
+            'credit_allocations' => [['voucher_id' => '4', 'reference' => 'GS-00004', 'amount_cents' => 1000, 'payment_ids' => ['20']],
+                ['voucher_id' => '5', 'reference' => 'GS-00005', 'amount_cents' => 1000, 'payment_ids' => ['21']]],
+        ]);
+        $this->expectException(HttpException::class);
+        $service->change($this->actor, $this->tenant, $second->id, $second->revision, 'confirm', ['external_reference' => 'GS-00004', 'attestation' => true]);
+    }
+
+    public function test_cash_service_reads_real_credit_payment_shape_without_counting_it_as_cash(): void
+    {
+        $payment = ['id' => 20, 'value' => '10.050000', 'kb_invoice_id' => 9, 'kb_credit_voucher_id' => 4,
+            'kb_credit_voucher_text' => 'Gutschrift GS-00004', 'is_client_account_redemption' => false, 'is_cash_discount' => false];
+        $balance = ['total_cents' => 1005, 'paid_cents' => 0, 'credit_cents' => 1005];
+        $service = new BexioInvoiceCashService;
+        $data = $service->evidenceFromPayments([$payment], '9', $balance);
+        $this->assertSame(['cash_received_cents' => 0, 'cash_excess_cents' => 0], $data['cash']);
+        $this->assertSame([['voucher_id' => '4', 'reference' => 'GS-00004', 'amount_cents' => 1005, 'payment_ids' => ['20']]], $data['credit_allocations']);
+        try {
+            $service->evidenceFromPayments([$payment, $payment], '9', $balance);
+            $this->fail('Duplicate payment');
+        } catch (HttpException $e) {
+            $this->assertSame(409, $e->getStatusCode());
+        }
+        try {
+            $service->evidenceFromPayments([$payment], '6', $balance);
+            $this->fail('Wrong invoice');
+        } catch (HttpException $e) {
+            $this->assertSame(409, $e->getStatusCode());
+        }
+        try {
+            $service->evidenceFromPayments([$payment], '9', array_replace($balance, ['credit_cents' => 999]));
+            $this->fail('Different aggregate');
+        } catch (HttpException $e) {
+            $this->assertSame(409, $e->getStatusCode());
+        }
     }
 }
