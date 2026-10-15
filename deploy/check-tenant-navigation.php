@@ -2,6 +2,7 @@
 
 use App\ClubUnio\Http\UseActiveTenant;
 use App\ClubUnio\Http\UseClubWorkspace;
+use App\ClubUnio\WorkspaceRoutes;
 use Illuminate\Contracts\Console\Kernel;
 
 require __DIR__.'/../vendor/autoload.php';
@@ -36,3 +37,16 @@ foreach (['clubunio.workspace.bus.index' => '/bus', 'clubunio.workspace.bus.opti
     }
 }
 echo "Bus and planning workspace routes verified.\n";
+
+foreach (WorkspaceRoutes::DOCUMENTS as $legacy => $uri) {
+    $route = app('router')->getRoutes()->getByName(str_replace('clubunio.', 'clubunio.workspace.', $legacy));
+    if (! $route || $route->uri() !== $uri || ! in_array(UseClubWorkspace::class, $route->gatherMiddleware(), true)) {
+        throw new RuntimeException('Document workspace route mismatch: '.$legacy);
+    }
+}
+foreach (['clubunio.bexio.show', 'clubunio.bexio.start'] as $name) {
+    if (! in_array(UseClubWorkspace::class, app('router')->getRoutes()->getByName($name)->gatherMiddleware(), true)) {
+        throw new RuntimeException('Bexio workspace guard missing');
+    }
+}
+echo "Document and Bexio workspace guards verified.\n";

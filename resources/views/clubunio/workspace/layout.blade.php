@@ -1,8 +1,11 @@
 <x-filament-panels::layout>
     <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=1">
     <div class="club-workspace">
-        <nav class="workspace-navigation" aria-label="{{ $module === 'bus' ? 'Busverwaltung' : 'Teamplanung' }}">
-            @if($module === 'bus')
+        <nav class="workspace-navigation" aria-label="{{ match($module) { 'bus' => 'Busverwaltung', 'bexio' => 'Integrationen', default => 'Teamplanung' } }}">
+            @if($module === 'bexio')
+                <a href="{{ url('/settings') }}">Einstellungen</a>
+                <a href="{{ route('clubunio.bexio.show') }}" aria-current="page">Bexio-Verbindung</a>
+            @elseif($module === 'bus')
                 <a href="{{ route('clubunio.bus.index', $tenant->slug) }}" @if(request()->routeIs('clubunio.workspace.bus.index')) aria-current="page" @endif>Reservationen</a>
                 <a href="{{ route('clubunio.bus.options', $tenant->slug) }}" @if(request()->routeIs('clubunio.workspace.bus.options')) aria-current="page" @endif>Busse und Status</a>
             @else

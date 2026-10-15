@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\ActiveTenant;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioOidcClient;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -12,27 +13,17 @@ use Illuminate\Support\Str;
 
 class BexioConnectionController
 {
-    public function centralShow(Request $request, BexioConnectionService $service)
+    public function centralShow(Request $request, Tenant $tenant, BexioConnectionService $service)
     {
-        $tenants = $request->user('clubunio')->tenants()->wherePivot('role', 'admin')->get();
-        abort_unless($request->user('clubunio')->active && $tenants->isNotEmpty(), 403);
-        if ($request->filled('tenant')) {
-            $tenant = $tenants->firstWhere('slug', $request->validate(['tenant' => 'required|string|max:200'])['tenant']);
-            abort_unless($tenant, 403);
-        } elseif ($tenants->count() === 1) {
-            $tenant = $tenants->first();
-        } else {
-            return response()->view('clubunio.bexio.select', compact('tenants'))
-                ->header('Cache-Control', 'private, no-store');
-        }
+        abort_if($request->filled('tenant') && $request->input('tenant') !== $tenant->slug, 403);
 
         return $this->show($request, $tenant, $service);
     }
 
-    public function centralStart(Request $request, BexioConnectionService $service)
+    public function centralStart(Request $request, Tenant $tenant, BexioConnectionService $service)
     {
         $data = $request->validate(['tenant' => 'required|string|max:200']);
-        $tenant = Tenant::where('slug', $data['tenant'])->firstOrFail();
+        abort_unless($data['tenant'] === $tenant->slug, 403);
 
         return $this->start($request, $tenant, $service);
     }
@@ -50,6 +41,12 @@ class BexioConnectionController
     public function show(Request $request, Tenant $tenant, BexioConnectionService $service)
     {
         $this->authorize($request, $tenant);
+        if (! $request->attributes->get('clubunioWorkspace')) {
+            $selected = app(ActiveTenant::class)->resolve($request);
+            abort_unless($selected->is($tenant), 403);
+
+            return redirect()->route('clubunio.bexio.show');
+        }
         $ready = false;
         $connected = false;
         try {
@@ -111,7 +108,7 @@ class BexioConnectionController
             }
             $service->connect($tenant, (array) $client->getTokenResponse(), $config['fingerprint'], $request->user('clubunio')->id);
 
-            return redirect()->route('clubunio.bexio.show', ['tenant' => $tenant->slug])->with('notice', 'Bexio wurde mit ClubUnio verbunden.');
+            return redirect()->route('clubunio.bexio.show')->with('notice', 'Bexio wurde für '.$tenant->name.' mit ClubUnio verbunden.');
         } catch (\Throwable $error) {
             return $this->failure($tenant, $error);
         } finally {
@@ -148,7 +145,7 @@ class BexioConnectionController
         $reference = (string) Str::uuid();
         Log::warning('clubunio.bexio.connection_failed', ['tenant_id' => $tenant->id, 'reference' => $reference, 'status' => (int) $error->getCode()]);
 
-        return redirect()->route('clubunio.bexio.show', ['tenant' => $tenant->slug])->with('connection_error', 'Bexio konnte nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: '.$reference)
+        return redirect()->route('clubunio.bexio.show')->with('connection_error', 'Bexio konnte für '.$tenant->name.' nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: '.$reference)
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 }

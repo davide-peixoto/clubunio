@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket69: Uebrige Verwaltungswege
+
+Bexio-Verbindung in Filament-Layout, zentraler Mandant und stale-tab-geschuetzter
+Verbindungsstart; Dokumentrouten ohne Vereinskennung. Kein DB-Schritt, keine
+Neuverbindung. Oeffentliche Signage/Anmeldung und eingeschraenktes Portal bleiben
+bewusst getrennt. PDF-Drawer bleibt rahmenlos. Details: CLUBUNIO-WORKSPACE.md.
+Nur ClubUnio; bestehendes DEV/PROD und API/SaaS unveraendert.
+
 ## Fachpaket68: Einheitliche Bus- und Planungsverwaltung
 
 Bus, Teamtermine, Absenzen, SFV und Trainingsplaene nutzen die gemeinsame

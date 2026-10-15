@@ -7,6 +7,7 @@ use App\ClubUnio\Http\UseActiveTenant;
 use App\ClubUnio\Http\UseClubWorkspace;
 use App\ClubUnio\Services\ActiveTenant;
 use App\ClubUnio\SessionUrlGenerator;
+use App\ClubUnio\WorkspaceRoutes;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\SetUpPanel;
 use Illuminate\Http\Request;
@@ -43,13 +44,14 @@ class TenantNavigationServiceProvider extends ServiceProvider
             $routes = new RouteCollection;
             // Register clean workspace routes before legacy tenant-slug routes.
             foreach ($this->app['router']->getRoutes() as $route) {
-                if (! preg_match('~^(bus|planning)/\{tenant(?::slug)?\}(/|$)~', $route->uri())) {
+                $documentUri = WorkspaceRoutes::DOCUMENTS[$route->getName() ?? ''] ?? null;
+                if (! $documentUri && ! preg_match('~^(bus|planning)/\{tenant(?::slug)?\}(/|$)~', $route->uri())) {
                     continue;
                 }
                 $workspace = clone $route;
-                $workspace->setUri(preg_replace('~/\{tenant(?::slug)?\}~', '', $route->uri()));
+                $workspace->setUri($documentUri ?? preg_replace('~/\{tenant(?::slug)?\}~', '', $route->uri()));
                 $action = $workspace->getAction();
-                $action['prefix'] = preg_replace('~/\{tenant(?::slug)?\}~', '', $action['prefix'] ?? '');
+                $action['prefix'] = $documentUri ? '' : preg_replace('~/\{tenant(?::slug)?\}~', '', $action['prefix'] ?? '');
                 if ($route->getName()) {
                     $action['as'] = str_replace('clubunio.', 'clubunio.workspace.', $route->getName());
                 }

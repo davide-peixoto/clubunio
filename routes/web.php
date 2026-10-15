@@ -15,12 +15,15 @@ use App\ClubUnio\Http\RegistrationPortalController;
 use App\ClubUnio\Http\TeamPlanningController;
 use App\ClubUnio\Http\TenantNavigationController;
 use App\ClubUnio\Http\TrainingPlanController;
+use App\ClubUnio\Http\UseActiveTenant;
+use App\ClubUnio\Http\UseClubWorkspace;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\InvoiceAccessService;
 use App\ClubUnio\Services\InvoicePdfService;
 use App\ClubUnio\Services\LegacyMaterialReceiptService;
 use App\ClubUnio\Services\MaterialReceiptService;
 use App\ClubUnio\Services\MemberDocumentService;
+use Filament\Http\Middleware\SetUpPanel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -154,8 +157,9 @@ Route::middleware('auth:clubunio,portal')->prefix('/planning/{tenant:slug}')->na
 });
 
 Route::middleware('auth:clubunio')->prefix('/integrations/bexio')->name('clubunio.bexio.')->group(function () {
-    Route::get('/', [BexioConnectionController::class, 'centralShow'])->name('show');
-    Route::post('/connect', [BexioConnectionController::class, 'centralStart'])->middleware('throttle:5,1')->name('start');
+    $workspace = [SetUpPanel::class.':clubunio', UseActiveTenant::class, UseClubWorkspace::class];
+    Route::get('/', [BexioConnectionController::class, 'centralShow'])->middleware($workspace)->name('show');
+    Route::post('/connect', [BexioConnectionController::class, 'centralStart'])->middleware([...$workspace, 'throttle:5,1'])->name('start');
     Route::get('/callback', [BexioConnectionController::class, 'centralCallback'])->middleware('throttle:10,1')->name('callback');
 });
 

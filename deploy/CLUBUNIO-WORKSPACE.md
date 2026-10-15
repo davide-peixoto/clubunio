@@ -1,5 +1,40 @@
 # Busverwaltung und Teamplanung in ClubUnio
 
+## Ergaenzung69: Verwaltungs-Audit
+
+Alle Panel-Pages/Resources und eigenstaendigen HTML-Layouts wurden auf
+Vereins-URLs und separate Verwaltungsansichten geprueft. Bexio-Verbindung
+unter `/integrations/bexio` nutzt jetzt ebenfalls die normale Seitenleiste,
+Kopfzeile und zentrale Mandantenwahl. Die zweite Vereinsauswahl entfaellt.
+Verbindungsstart verlangt den verschluesselten Workspace-Formularnachweis;
+der OAuth-Callback bleibt unveraendert und bindet weiterhin an den beim
+Start gespeicherten Mandanten, niemals an spaetere UI-Auswahl/Querywerte.
+
+Verwaltungsdokumente erhalten folgende sitzungsgebundene URLs:
+- `/documents/members/{document}` und `/documents/registrations/{document}`
+- `/documents/expenses/{line}`
+- `/documents/invoices/{invoice}/{source}/preview` bzw. `/pdf`
+- `/documents/material/{receipt}/pdf` und `/documents/material-history/{receipt}/pdf`
+
+Bestehende Link-Aufrufer werden zentral umgeleitet. Alte GET-Lesezeichen
+leiten nur fuer den aktuell gewaehlten, berechtigten Verein weiter; Download-
+Parameter bleiben erhalten. Alle bestehenden objektbezogenen Zugriffspruefungen
+bleiben erhalten. PDF-Vorschau im Drawer sowie Druck-/Downloadansichten erhalten
+bewusst keine zweite Seitenleiste. Fehlende/fremde Dokumente bleiben 404.
+
+Bewusste Ausnahmen: `/signage/{tenant}` und `/join/{tenant}` sind oeffentlich
+und muessen den Verein ohne Login erkennen. Das eingeschraenkte Mitgliederportal
+hat andere Rollen/Rechte und wird nicht zum Verwaltungszugang erweitert.
+Alte OAuth-Callbacks/Startkompatibilitaet bleiben erhalten, die alte Bexio-
+Anzeigeseite leitet jedoch in den normalen Arbeitsbereich weiter.
+
+Migration: keine DB-Aenderung, keine erneute Bexio-Autorisierung erforderlich.
+Nur ClubUnio deployen, Routencache erneuern. PHPMaker DEV/PROD unveraendert.
+Pruefung69: Navigation/Bexio/Gast21 Tests273 Assertions; Dokumente/Material
+19 Tests176 Assertions erfolgreich,1 optionaler Azure-Livetest ausgelassen.
+Routencache-Checker, Blade-Kompilierung und Pint erfolgreich. Angemeldete
+visuelle Abnahme offen, weil die Browsersteuerung nicht erreichbar war.
+
 ## Oberflaeche
 
 Die Verwaltung nutzt die gemeinsame Filament-Seitenleiste, Kopfzeile,

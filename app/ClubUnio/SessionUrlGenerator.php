@@ -10,7 +10,7 @@ class SessionUrlGenerator extends UrlGenerator
 {
     public function toRoute($route, $parameters, $absolute)
     {
-        if (preg_match('/^clubunio\.(bus|planning|training)\./', $route->getName() ?? '')
+        if ((isset(WorkspaceRoutes::DOCUMENTS[$route->getName() ?? '']) || preg_match('/^clubunio\.(bus|planning|training)\./', $route->getName() ?? ''))
             && request()->hasSession() && request()->user('clubunio')) {
             $tenant = Filament::getTenant();
             if (! $tenant) {

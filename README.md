@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket69: Verwaltungs-Audit, Bexio-Verbindung in normaler Oberflaeche und
+PDF-/Anhang-URLs ohne Vereinskennung. Details und bewusste oeffentliche/Portal-
+Ausnahmen: [Workspace-Migrationsplan](deploy/CLUBUNIO-WORKSPACE.md).
+
 Fachpaket68: [Busverwaltung und Teamplanung im gemeinsamen Arbeitsbereich](deploy/CLUBUNIO-WORKSPACE.md).
 Verwaltungswege `/bus` und `/planning` ohne Vereinskennung, normale Seitenleiste
 und Mandantenwahl. Teamkalender bleibt bei der Planung; bestehende Portalrechte

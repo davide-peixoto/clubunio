@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\MemberDocumentService;
+use App\ClubUnio\WorkspaceRoutes;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -50,6 +52,58 @@ class TenantNavigationTest extends TestCase
     private function context(): array
     {
         return session('clubunio_context.'.$this->actor->id);
+    }
+
+    public function test_document_links_use_active_tenant_and_old_urls_redirect(): void
+    {
+        $this->get('/members')->assertOk();
+        foreach (WorkspaceRoutes::DOCUMENTS as $name => $uri) {
+            $route = app('router')->getRoutes()->getByName($name);
+            $values = ['tenant' => $this->one->slug];
+            foreach ($route->parameterNames() as $parameter) {
+                if ($parameter !== 'tenant') {
+                    $values[$parameter] = $parameter === 'source' ? 'local' : 999999999;
+                }
+            }
+            $expected = '/'.$uri;
+            $legacy = '/'.$route->uri();
+            foreach ($values as $key => $value) {
+                $expected = str_replace('{'.$key.'}', $value, $expected);
+                $legacy = str_replace(['{'.$key.'}', '{'.$key.':slug}'], $value, $legacy);
+            }
+            $this->assertSame($expected, route($name, $values, false));
+            $this->get($legacy.'?download=1')->assertRedirect($expected.'?download=1');
+            $this->get($expected)->assertNotFound();
+        }
+        $this->actor->tenants()->attach($this->two, ['role' => 'admin']);
+        $this->get('/clubora-documents/'.$this->two->slug.'/999999999')->assertForbidden();
+        $this->actor->tenants()->detach($this->one);
+        $this->get('/documents/members/999999999')->assertForbidden();
+        Http::assertNothingSent();
+    }
+
+    public function test_bexio_uses_normal_layout_and_rejects_stale_connection_form(): void
+    {
+        $page = $this->get('/integrations/bexio')->assertOk()->assertSee('fi-sidebar', false);
+        preg_match('/name="_workspace" value="([^"]+)"/', $page->getContent(), $match);
+        $this->assertNotEmpty($match);
+        $this->post('/integrations/bexio/connect', ['tenant' => $this->one->slug])->assertStatus(419);
+        $this->actor->tenants()->attach($this->two, ['role' => 'admin']);
+        $this->post('/tenant/switch', ['tenant' => $this->two->id, 'revision' => $this->context()['revision']])->assertRedirect('/');
+        $this->post('/integrations/bexio/connect', ['tenant' => $this->one->slug, '_workspace' => html_entity_decode($match[1])])->assertStatus(419);
+        $this->get('/integrations/bexio')->assertOk()->assertSee('Second club');
+        Http::assertNothingSent();
+    }
+
+    public function test_clean_document_controller_preserves_id_and_download_arguments(): void
+    {
+        $this->get('/members')->assertOk();
+        $this->mock(MemberDocumentService::class, function ($mock) {
+            $mock->shouldReceive('open')->once()->withArgs(fn ($actor, $tenant, $id, $download) => $actor->is($this->actor) && $tenant->is($this->one) && $id === 123 && $download === true)
+                ->andReturn(response('%PDF-synthetic', 200, ['Content-Type' => 'application/pdf']));
+        });
+        $this->get('/documents/members/123?download=1')->assertOk()->assertContent('%PDF-synthetic')
+            ->assertHeader('Content-Type', 'application/pdf')->assertHeader('Cache-Control', 'no-store, private');
     }
 
     public function test_clean_routes_and_automatic_tenant_preserve_scoping(): void

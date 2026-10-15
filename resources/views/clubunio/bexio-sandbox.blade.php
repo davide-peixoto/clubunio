@@ -12,7 +12,7 @@
         .sandbox-table li { margin-top: 6px; }
     </style>
     <p role="status"><strong>SVS Api Test · Testbuchungen · Keine Bankaufträge, kein E-Mail-Versand</strong></p>
-    <a href="{{ route('clubunio.bexio.show', ['tenant' => \Filament\Facades\Filament::getTenant()->slug]) }}">Bexio-Verbindung</a>
+    <a href="{{ route('clubunio.bexio.show') }}">Bexio-Verbindung</a>
     <a href="{{ \App\ClubUnio\Pages\BexioDispatchTrials::getUrl() }}">Allgemeine Versandprüfung</a>
     <a href="{{ \App\ClubUnio\Pages\BexioReconciliation::getUrl() }}">Statusabgleich</a>
     <div class="flex flex-wrap gap-3">

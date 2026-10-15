@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+Release69: `20261015-clubunio-69-admin-workspace`, Ruecksprung68.
+Bexio-Verbindungsseite in normaler Verwaltung; Dokument-/PDF-URLs ohne Verein.
+Alle bisherigen Objektberechtigungen und OAuth-Callbacks erhalten. Keine
+DB-Migration oder Aenderung der Bexio-Verbindung. Nur Delta auf Basis68.
+21 Tests/273 Assertions mit Routencache erfolgreich; weitere Dokument-/Material-
+Tests:19 erfolgreich,1 optionaler Azure-Livetest ausgelassen,176 Assertions.
+Browsersteuerung derzeit
+nicht verfuegbar; neue Bexio-Ansicht noch nicht visuell abgenommen.
+Details und bewusste Ausnahmen: CLUBUNIO-WORKSPACE.md. DEV/PROD unveraendert.
+
 Release68 aktiv: `20261015-clubunio-68-workspace`, Ruecksprung67.
 Bus und Teamplanung in gemeinsamer Filament-Navigation, saubere /bus- und
 /planning-URLs, Sitzungsmandant samt Formular-/Livewire-Revisionsschutz.

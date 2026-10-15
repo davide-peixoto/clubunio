@@ -8,15 +8,19 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioOidcClient;
 use App\ClubUnio\Services\SettingsService;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use phpseclib3\Crypt\RSA;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\Concerns\WorkspaceForm;
 use Tests\TestCase;
 
 class BexioConnectionTest extends TestCase
 {
+    use WorkspaceForm;
+
     private $db;
 
     private Tenant $tenant;
@@ -50,6 +54,7 @@ class BexioConnectionTest extends TestCase
 
     protected function tearDown(): void
     {
+        Filament::setTenant(null);
         if ($this->db) {
             $this->db->rollBack();
         }
@@ -95,7 +100,7 @@ class BexioConnectionTest extends TestCase
     {
         config(['app.url' => 'https://dev.clubunio.ch']);
         $this->get('/integrations/bexio')->assertOk();
-        $response = $this->post('/integrations/bexio/connect', ['tenant' => $this->tenant->slug])->assertRedirect();
+        $response = $this->post('/integrations/bexio/connect', ['tenant' => $this->tenant->slug] + $this->workspaceForm())->assertRedirect();
         parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
         $this->assertSame('https://dev.clubunio.ch/integrations/bexio/callback', $query['redirect_uri']);
         $this->fakeExchange($query);
@@ -109,7 +114,7 @@ class BexioConnectionTest extends TestCase
     public function test_central_routes_reject_foreign_tenant_and_revoked_admin(): void
     {
         $other = Tenant::create(['slug' => 'other-'.bin2hex(random_bytes(6)), 'name' => 'Other']);
-        $this->post('/integrations/bexio/connect', ['tenant' => $other->slug])->assertForbidden();
+        $this->post('/integrations/bexio/connect', ['tenant' => $other->slug] + $this->workspaceForm())->assertForbidden();
         $this->get('/integrations/bexio?tenant='.$other->slug)->assertForbidden();
         $query = $this->begin();
         $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
@@ -125,7 +130,8 @@ class BexioConnectionTest extends TestCase
 
     public function test_real_oidc_library_verifies_signed_callback_and_prevents_replay(): void
     {
-        $this->get($this->base())->assertOk()->assertDontSee('test-secret');
+        $this->get($this->base())->assertRedirect('/integrations/bexio');
+        $this->get('/integrations/bexio')->assertOk()->assertDontSee('test-secret')->assertSee('fi-sidebar', false);
         $query = $this->begin();
         Http::assertNothingSent();
         $this->fakeExchange($query);
