@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+Release62: `20261015-clubunio-62-material-receipts`, Ruecksprung61.
+Materialuebergaben/Empfangsbestaetigung und historische Quittung, Migration61/62.
+Weitere18 private archivierte Altplaene, elf Zuordnungen offen. Outbound aus.
+Details: CLUBUNIO-MATERIAL-RECEIPTS.md. Bexio-Gutschriftrueckfluss noch ausstehend.
+53 Tests/496 Assertions erfolgreich, angemeldete neue Listen/Erfassungsmaske
+geprueft. Beide historischen Azure-PDFs auf Pi200/Hash passend, keine Testbelege
+oder Bestaetigungen gespeichert. 189 Settings/46 Vorlagen, Outbound aus.
+
 Release61: `20261015-clubunio-61-announcements`, Ruecksprung60.
 Interne Web-Ankuendigungen/Rundnachrichten, additive eigene Migration60.
 Keine externe Zustellung, keine echten Nachrichten aus Tests. Branding60 bleibt.

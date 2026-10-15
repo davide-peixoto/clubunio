@@ -105,13 +105,13 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |AppPushLog|0|Ausgenommen|API/externe Pushzustellung; |API und Betrieb geparkt; interne Notifications bleiben vorhanden.|
 |AppNotification|0|Ausgenommen|API/externe Pushzustellung; |API und Betrieb geparkt; interne Notifications bleiben vorhanden.|
 |TechnischeLeiterTeams|10|Web|TeamResource, TeamSeasonResource, TeamAssignmentService; ClubUnioTest.php|Lookups und Zuordnungen mit Rollen-/Dubletten-/Finanzschutz.|
-|TrainingPlannerAuditLog|0|Teilweise|TrainingPlanService, LegacyTrainingPlanImporter; TrainingPlanTest.php, LegacyTrainingMigrationTest.php|29 Teamzuordnungen, 18 Qualitaetspruefungen und ein ungueltiger Altplan offen.|
+|TrainingPlannerAuditLog|0|Teilweise|TrainingPlanService, LegacyTrainingPlanImporter; TrainingPlanTest.php, LegacyTrainingMigrationTest.php, MaterialReceiptTest.php|19 Plaene privat archiviert; elf Teamzuordnungen, 18 Qualitaetspruefungen und ein ungueltiger Altplan bleiben offen.|
 |Verbandsspiele|40|Web|SfvCompetitions, CompetitionResource, SignagePreview; ClubUnioTest.php, SignageFeedsTest.php|SFV-Pruefung bewahrt manuelle Garderoben; Vereinskonflikte fachlich klaeren.|
 |TeamTermine|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
 |TeamTerminTeilnahmen|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
 |MitgliederAenderungsantraege|18|Ergaenzt59|MemberChangeRequestResource, MemberChangeService, MemberChangePortalController; MemberChangesDocumentsTest.php|Eigener Web-Pruefweg, Alt/Neu, Rechte/Revision/Konflikt, verschluesselte Snapshots; kein Altantragsimport.|
 |TeamAbsenzen|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
-|MitgliederQuittungen|0|Pruefen|Keine PMP-Felder/Generierung definiert; |Fachvertrag und Nutzung vor Implementierung klaeren.|
+|MitgliederQuittungen|0|Ergaenzt62|MaterialReceiptResource, MaterialReceiptService, LegacyMaterialReceiptService; MaterialReceiptTest.php|Materialpositionen, Selbst-/Elternbestaetigung, Snapshot/PDF; historische signierte Originale hashgeprueft. Keine qualifizierte Signatur.|
 |AppPenaltyChallenge|0|Ausgenommen|App-Spielmodul; |App-/API-spezifisch, kein Backoffice-Ersatz in diesem Auftrag.|
 |AppPenaltySessions|0|Ausgenommen|App-Spielmodul; |App-/API-spezifisch, kein Backoffice-Ersatz in diesem Auftrag.|
 |AppPenaltyBest|0|Ausgenommen|App-Spielmodul; |App-/API-spezifisch, kein Backoffice-Ersatz in diesem Auftrag.|

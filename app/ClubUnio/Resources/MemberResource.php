@@ -209,6 +209,7 @@ class MemberResource extends Resource
             Relations\FamiliesRelationManager::class, Relations\BankAccountsRelationManager::class,
             Relations\RegistrationsRelationManager::class, Relations\FunctionsRelationManager::class,
             Relations\NotesRelationManager::class, Relations\KeysRelationManager::class,
-            Relations\SponsorshipsRelationManager::class, Relations\EventGuestsRelationManager::class];
+            Relations\SponsorshipsRelationManager::class, Relations\EventGuestsRelationManager::class,
+            Relations\MaterialReceiptsRelationManager::class, Relations\LegacyMaterialReceiptsRelationManager::class];
     }
 }

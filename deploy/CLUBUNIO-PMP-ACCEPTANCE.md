@@ -53,6 +53,11 @@ Mitglieder bleiben lesbar, neue Dossier-Schreibwege sind gesperrt.
 
 ## Noch offen, nicht als fertig bewerten
 
+Nachtrag Release62: Quittungen als eigener Material-/Empfangsworkflow umgesetzt,
+eine vorhandene unterschriebene Quittung originalgetreu archiviert. Weitere18
+Altplaene uebernommen; elf brauchen Zuordnung, Qualitaetspruefungen bleiben.
+Details: CLUBUNIO-MATERIAL-RECEIPTS.md. Keine vollstaendige Abnahme behaupten.
+
 Nachtrag Release61: Redaktionelle Ankuendigungen (Punkt2) sind als interner
 Webworkflow umgesetzt; externe Zustellung weiter ausgenommen. Details:
 CLUBUNIO-ANNOUNCEMENTS.md. Diese Liste bleibt als historischer Befund58 erhalten.

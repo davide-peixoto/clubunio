@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket62: [Materialuebergaben und Empfangsbestaetigungen](deploy/CLUBUNIO-MATERIAL-RECEIPTS.md).
+Mitgliederdossier/Portal, PDF-Quittung, historischer Azure-Nachweis und sichere
+Altplanuebernahme. Keine externe Zustellung oder Bankzahlung.
+
 Fachpaket61: [Ankuendigungen und Rundnachrichten](deploy/CLUBUNIO-ANNOUNCEMENTS.md).
 Webentwurf, Empfaengervorschau und bestaetigte interne Zustellung; kein E-Mail/FCM.
 

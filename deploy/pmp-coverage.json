@@ -12139,8 +12139,8 @@
         "TrainingPlannerAuditLog": {
             "state": "Teilweise",
             "target": "TrainingPlanService, LegacyTrainingPlanImporter",
-            "evidence": "TrainingPlanTest.php, LegacyTrainingMigrationTest.php",
-            "note": "29 Teamzuordnungen, 18 Qualitaetspruefungen und ein ungueltiger Altplan offen."
+            "evidence": "TrainingPlanTest.php, LegacyTrainingMigrationTest.php, MaterialReceiptTest.php",
+            "note": "19 Plaene privat archiviert; elf Teamzuordnungen, 18 Qualitaetspruefungen und ein ungueltiger Altplan bleiben offen."
         },
         "Liste Offene Beiträge": {
             "state": "Web",
@@ -12323,10 +12323,10 @@
             "note": "Redaktioneller Webentwurf, Vorschau, Empfaengersnapshot, interne Notifications/Rueckzug. Keine externe Zustellung oder Altimporte."
         },
         "MitgliederQuittungen": {
-            "state": "Pruefen",
-            "target": "Keine PMP-Felder/Generierung definiert",
-            "evidence": "",
-            "note": "Fachvertrag und Nutzung vor Implementierung klaeren."
+            "state": "Ergaenzt62",
+            "target": "MaterialReceiptResource, MaterialReceiptService, LegacyMaterialReceiptService",
+            "evidence": "MaterialReceiptTest.php",
+            "note": "Materialpositionen, Selbst-/Elternbestaetigung, Snapshot/PDF; historische signierte Originale hashgeprueft. Keine qualifizierte Signatur."
         },
         "AppPenaltyChallenge": {
             "state": "Ausgenommen",

@@ -47,7 +47,9 @@ use App\ClubUnio\Resources\InvoiceResource;
 use App\ClubUnio\Resources\InvoiceStatusResource;
 use App\ClubUnio\Resources\InvoiceWorkflowStatusResource;
 use App\ClubUnio\Resources\KeyReportResource;
+use App\ClubUnio\Resources\LegacyMaterialReceiptResource;
 use App\ClubUnio\Resources\LegacyTrainingPlanResource;
+use App\ClubUnio\Resources\MaterialReceiptResource;
 use App\ClubUnio\Resources\MemberChangeRequestResource;
 use App\ClubUnio\Resources\MemberDocumentResource;
 use App\ClubUnio\Resources\MemberReportResource;
@@ -131,6 +133,8 @@ class ClubUnioPanelProvider extends PanelProvider
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
                 AnnouncementResource::class,
+                MaterialReceiptResource::class,
+                LegacyMaterialReceiptResource::class,
                 MemberChangeRequestResource::class,
                 ClubEventResource::class,
                 ClubFunctionResource::class,

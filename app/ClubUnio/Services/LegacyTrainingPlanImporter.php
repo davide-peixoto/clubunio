@@ -12,6 +12,53 @@ use Illuminate\Validation\ValidationException;
 
 class LegacyTrainingPlanImporter
 {
+    public function historicalCandidate(string $sourceName, string $createdAt, array $teams): ?int
+    {
+        // Explicit age categories, never fuzzy team-name similarity or newest-season guessing.
+        $patterns = ['B-Junioren' => '/^B[a-z]?[- ]Junioren$/iu', 'C-Junioren' => '/^C[a-z]?[- ]Junioren$/iu',
+            'D-Junioren' => '/^(D[a-z]?[- ]Junioren|D7[a-z]?)$/iu', 'D-Juniore' => '/^(D[a-z]?[- ]Junioren|D7[a-z]?)$/iu',
+            'E-Junioren' => '/^E (blau|rot|weiss)$/u', 'G-Junioren' => '/^G Junioren$/u',
+            'Aktive Herren' => '/^[12]te Mannschaft$/u'];
+        if (! isset($patterns[$sourceName]) || ! preg_match('/^(\d{4})-(\d{2})-\d{2}/D', $createdAt, $date)) {
+            return null;
+        }
+        $start = (int) $date[1] - ((int) $date[2] < 7 ? 1 : 0);
+        $matches = [];
+        foreach ($teams as $id => $label) {
+            if (preg_match('~^(.+) / '.$start.'/'.($start + 1).'$~uD', $label, $parts) && preg_match($patterns[$sourceName], $parts[1])) {
+                $matches[] = (int) $id;
+            }
+        }
+
+        return count($matches) === 1 ? $matches[0] : null;
+    }
+
+    public function importHistorical(Account $actor, Tenant $tenant, bool $apply = false): array
+    {
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        $sources = app(LegacyTrainingPlanSource::class)->rows($tenant)->keyBy('TrainingPlannerAuditLogID');
+        $result = ['eligible' => [], 'imported' => [], 'unresolved' => []];
+        foreach (LegacyTrainingPlan::where('tenant_id', $tenant->id)->where('state', 'review')->get() as $row) {
+            $source = $sources->get($row->source_id);
+            $candidate = null;
+            if ($source && $row->suggested_owner_id) {
+                $candidate = $row->suggested_team_season_id ?: $this->historicalCandidate($source->TeamName ?? '', $source->CreatedAt ?? '', $this->teams($actor, $tenant, $row->suggested_owner_id));
+            }
+            if (! $candidate) {
+                $result['unresolved'][] = $row->source_id;
+
+                continue;
+            }
+            $result['eligible'][] = ['source_id' => $row->source_id, 'team_season_id' => $candidate];
+            if ($apply) {
+                $result['imported'][] = $this->import($actor, $tenant, $row->id, ['revision' => $row->revision, 'owner_id' => $row->suggested_owner_id,
+                    'team_season_id' => $candidate, 'decision_note' => 'Historische Archivübernahme: eindeutige Schnittmenge aus Originalbesitzer, Quell-Alterskategorie und Saison des Erstellungsdatums. Qualitätsstatus bleibt erhalten.', 'schematic_confirmed' => true]);
+            }
+        }
+
+        return $result;
+    }
+
     public function convert(object $source): array
     {
         if ($source->Status !== 'success') {
@@ -141,7 +188,7 @@ class LegacyTrainingPlanImporter
             $row->forceFill(['state' => 'imported', 'plan_id' => $planId, 'owner_id' => $data['owner_id'], 'team_season_id' => $data['team_season_id'], 'imported_by' => $actor->id,
                 'imported_at' => now(), 'decision_note' => $data['decision_note'], 'revision' => $row->revision + 1])->save();
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'training_plans', 'object_id' => $planId,
-                'after_value' => json_encode(['action' => 'legacy_import', 'source_id' => $row->source_id, 'owner_id' => $row->owner_id, 'team_season_id' => $row->team_season_id, 'private' => true, 'archived' => true],JSON_THROW_ON_ERROR)]);
+                'after_value' => json_encode(['action' => 'legacy_import', 'source_id' => $row->source_id, 'owner_id' => $row->owner_id, 'team_season_id' => $row->team_season_id, 'private' => true, 'archived' => true], JSON_THROW_ON_ERROR)]);
 
             return $planId;
         });

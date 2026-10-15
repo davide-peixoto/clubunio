@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket62: Materialuebergaben und historische Uebernahme
+
+Web-Entwurf, Materialpositionen, Bereitstellung, Selbst-/Eltern-Empfangsbestaetigung,
+geschuetztes PDF, Revision/Audit, unveraenderliche bestaetigte Nachweise.
+Mitgliederdossier/Portal und eigener Statuslookup; keine qualifizierte Signatur.
+Additive eigene Migration61/62; eine historische unterschriebene Quittung mit
+beiden Azure-Originalen per Hash geprueft archiviert. Weitere18 Trainingsplaene
+eindeutig zugeordnet und privat archiviert, elf Quellen weiter zu klaeren;
+Qualitaetssperren bleiben. GS-00002 gemeldet, Bexio6 Rueckfluss noch0:
+keine blinde Bestaetigung. Details: CLUBUNIO-MATERIAL-RECEIPTS.md.
+Keine App-API, SaaS, Betriebsumstellung oder PHPMaker-DEV-/PROD-Aenderung.
+
 ## Fachpaket61: Ankuendigungen und Rundnachrichten
 
 Webentwuerfe mit Benutzer-/Rollen-/Mannschafts-/Gesamtauswahl, Vorschau und

@@ -6,6 +6,7 @@ use App\ClubUnio\Http\BexioConnectionController;
 use App\ClubUnio\Http\BusReservationController;
 use App\ClubUnio\Http\ExpensePortalController;
 use App\ClubUnio\Http\InvoicePortalController;
+use App\ClubUnio\Http\MaterialReceiptPortalController;
 use App\ClubUnio\Http\MemberChangePortalController;
 use App\ClubUnio\Http\NotificationPortalController;
 use App\ClubUnio\Http\PortalController;
@@ -16,6 +17,8 @@ use App\ClubUnio\Http\TrainingPlanController;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\InvoiceAccessService;
 use App\ClubUnio\Services\InvoicePdfService;
+use App\ClubUnio\Services\LegacyMaterialReceiptService;
+use App\ClubUnio\Services\MaterialReceiptService;
 use App\ClubUnio\Services\MemberDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +31,15 @@ Route::post('/portal/logout', [PortalController::class, 'logout'])
     ->middleware('auth:portal')->name('clubunio.portal.logout');
 
 Route::middleware('auth:portal')->group(function () {
+    Route::get('/portal/{tenant:slug}/material-history/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
+        return app(LegacyMaterialReceiptService::class)->pdf($request->user('portal'), $tenant, $receipt, false, $request->boolean('original'));
+    })->whereNumber('receipt')->name('clubunio.portal.material.history.pdf');
+    Route::get('/portal/{tenant:slug}/material', [MaterialReceiptPortalController::class, 'index'])->name('clubunio.portal.material.index');
+    Route::get('/portal/{tenant:slug}/material/{receipt}', [MaterialReceiptPortalController::class, 'show'])->whereNumber('receipt')->name('clubunio.portal.material.show');
+    Route::post('/portal/{tenant:slug}/material/{receipt}/confirm', [MaterialReceiptPortalController::class, 'confirm'])->whereNumber('receipt')->middleware('throttle:10,1')->name('clubunio.portal.material.confirm');
+    Route::get('/portal/{tenant:slug}/material/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
+        return app(MaterialReceiptService::class)->pdf($request->user('portal'), $tenant, $receipt);
+    })->whereNumber('receipt')->name('clubunio.portal.material.pdf');
     Route::get('/portal/{tenant:slug}/announcements', [AnnouncementPortalController::class, 'index'])->name('clubunio.portal.announcements');
     Route::get('/portal/{tenant:slug}/announcements/{announcement}', [AnnouncementPortalController::class, 'show'])->whereNumber('announcement')->name('clubunio.portal.announcement');
     Route::get('/portal/{tenant:slug}/members/{member}/edit', [MemberChangePortalController::class, 'show'])->whereNumber('member')->name('clubunio.portal.member.edit');
@@ -55,6 +67,14 @@ Route::middleware('auth:portal')->group(function () {
     Route::post('/portal/{tenant:slug}/registrations/{registration}', [RegistrationPortalController::class, 'update'])->whereNumber('registration')->name('clubunio.portal.registration.update');
     Route::get('/portal/{tenant:slug}/registration-documents/{document}', [RegistrationPortalController::class, 'document'])->whereNumber('document')->name('clubunio.portal.registration.document');
 });
+
+Route::get('/material/{tenant:slug}/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
+    return app(MaterialReceiptService::class)->pdf($request->user('clubunio'), $tenant, $receipt, true);
+})->whereNumber('receipt')->middleware('auth:clubunio')->name('clubunio.material.pdf');
+
+Route::get('/material-history/{tenant:slug}/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
+    return app(LegacyMaterialReceiptService::class)->pdf($request->user('clubunio'), $tenant, $receipt, true, $request->boolean('original'));
+})->whereNumber('receipt')->middleware('auth:clubunio')->name('clubunio.material.history.pdf');
 
 Route::post('/tenant/switch', [TenantNavigationController::class, 'switch'])
     ->middleware('auth:clubunio')->name('clubunio.tenant.switch');

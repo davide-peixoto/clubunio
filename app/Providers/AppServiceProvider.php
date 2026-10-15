@@ -11,6 +11,8 @@ use App\ClubUnio\Models\Family;
 use App\ClubUnio\Models\FamilyMember;
 use App\ClubUnio\Models\Gender;
 use App\ClubUnio\Models\InvoiceWorkflowStatus;
+use App\ClubUnio\Models\LegacyMaterialReceipt;
+use App\ClubUnio\Models\MaterialReceipt;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\MemberChangeRequest;
 use App\ClubUnio\Models\MemberDocument;
@@ -89,6 +91,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(MemberDocument::class, ReadOnlyPolicy::class);
         Gate::policy(MemberChangeRequest::class, ReadOnlyPolicy::class);
         Gate::policy(Announcement::class, ReadOnlyPolicy::class);
+        Gate::policy(MaterialReceipt::class, ReadOnlyPolicy::class);
+        Gate::policy(LegacyMaterialReceipt::class, ReadOnlyPolicy::class);
         Gate::policy(ObjectChange::class, ReadOnlyPolicy::class);
         foreach ([Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class] as $model) {
             Gate::policy($model, CatalogPolicy::class);

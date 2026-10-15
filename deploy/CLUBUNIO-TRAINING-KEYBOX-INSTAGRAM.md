@@ -1,5 +1,10 @@
 # Fachpaket 56: Altplaene, Schluesselbox und Instagram
 
+Nachtrag Release62: Weitere18 Altplaene anhand eindeutiger Besitzer-/Quell-
+Alterskategorie-/Saison-Schnittmenge privat archiviert, insgesamt19. Elf
+Zuordnungen und18 Qualitaetspruefungen bleiben offen. Details und Quell-IDs:
+CLUBUNIO-MATERIAL-RECEIPTS.md. Untenstehende Zahlen dokumentieren Release56.
+
 Stand: 15.10.2026. Nur ClubUnio; PHPMaker DEV/PROD unveraendert.
 
 ## Trainingsaltbestand
