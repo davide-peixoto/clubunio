@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+Release66 aktiv: `20261015-clubunio-66-signage-design`, Ruecksprung65.
+Vereinsdesign und kompakte TV-Ansicht, eigene additive Migration65 angewendet.
+27 Tests/158 Assertions erfolgreich. Oeffentliche Signage/CSS HTTP200,
+195 Settings/46 Vorlagen, Outbound aus. Layout mit synthetischen40 Spielen
+bei1024x768 sowie Desktop/Mobil geprueft, automatischer Seitenwechsel bestaetigt.
+Details und Bedienung: CLUBUNIO-SIGNAGE-DESIGN.md.
+
 Release65 aktiv: `20261015-clubunio-65-public-web`, Ruecksprung64.
 Signage-Alias repariert, oeffentliche Signage/Testanmeldung und Migration64.
 Zugaenge/Schutz/Abnahmegrenzen: CLUBUNIO-PUBLIC-WEB.md. Outbound aus.

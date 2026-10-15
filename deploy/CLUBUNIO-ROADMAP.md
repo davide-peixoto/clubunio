@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket66: Vereinsbezogenes Signage
+
+Kompakte TV-Ansicht nach SVS-Referenz, gemeinsame Vorschau/oeffentliche Anzeige.
+Vier mandantengebundene Designsettings, Admin-Dialog mit Audit/Versionsschutz.
+Eigene additive Migration65; keine Fachdatenmigration. Standardperiode initial
+erste aktive, explizite Pflege statt behaupteter automatischer Winterumschaltung.
+Details: CLUBUNIO-SIGNAGE-DESIGN.md. API/SaaS/Betrieb und PHPMaker unveraendert.
+
 ## Fachpaket65: Oeffentliche Signage und Testanmeldung
 
 Defekten Livewire-Alias der Signage-Vorschau explizit registriert. Neue Webseiten

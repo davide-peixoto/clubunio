@@ -65,7 +65,7 @@ class SettingResource extends Resource
             IconColumn::make('enabled')->label('Aktiv')->boolean(),
             TextColumn::make('updated_at')->label('Geändert')->dateTime('d.m.Y H:i')->sortable(),
         ])->filters([
-            SelectFilter::make('area')->label('Bereich')->options(['general' => 'Allgemein', 'app' => 'App', 'bexio' => 'Bexio', 'integrations' => 'Integrationen']),
+            SelectFilter::make('area')->label('Bereich')->options(['general' => 'Allgemein', 'app' => 'App', 'bexio' => 'Bexio', 'integrations' => 'Integrationen', 'public' => 'Öffentliche Seiten', 'signage' => 'Signage-Design']),
         ])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()
             ->recordActions([
                 Action::make('instagram')->label('Instagram-Feed')->icon('heroicon-o-adjustments-horizontal')->iconButton()->tooltip('Instagram-Feed aktivieren/deaktivieren')

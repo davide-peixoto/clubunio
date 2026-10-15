@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket66: [Signage in Vereinsfarben](deploy/CLUBUNIO-SIGNAGE-DESIGN.md).
+Kompakte TV-Ansicht; Logo, Farbe, Titel und Trainingsperiode je Verein unter
+Signage-Vorschau > Vereinsdesign (Admin), gemeinsam fuer Vorschau und Display.
+
 Fachpaket65: [Oeffentliche Signage und Mitgliederanmeldung](deploy/CLUBUNIO-PUBLIC-WEB.md).
 Signage-Vorschau repariert; anonyme Display-/Testformularseiten mit privaten
 Dokumenten, Lookups und Spam-/Doppelschutz. Kein Ersatz der bestehenden Website.

@@ -7,6 +7,7 @@ use App\ClubUnio\Models\TrainingOption;
 use App\ClubUnio\Services\PublicWebService;
 use App\ClubUnio\Services\RegistrationDataService;
 use App\ClubUnio\Services\RegistrationDocumentService;
+use App\ClubUnio\Services\SignageBrandService;
 use App\ClubUnio\Services\SignageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,12 @@ class PublicWebController
     {
         app(PublicWebService::class)->authorize($tenant, 'signage');
         $periods = TrainingOption::where('tenant_id', $tenant->id)->where('category', 'period')->where('active', true)->orderBy('sort_order')->get();
-        $periodId = $request->query('period_id', $periods->count() === 1 ? $periods->first()->id : null);
+        $brand = app(SignageBrandService::class)->read($tenant);
+        $configured = $periods->firstWhere('id', $brand['period_id'])?->id;
+        $periodId = $request->query('period_id', $configured ?? ($periods->count() === 1 ? $periods->first()->id : null));
         $data = app(SignageService::class)->publicDisplay($tenant, ['period_id' => $periodId]);
 
-        return response()->view('clubunio.public.signage', $data + compact('tenant', 'periods', 'periodId'))->header('Cache-Control', 'no-store')->header('X-Robots-Tag', 'noindex, nofollow');
+        return response()->view('clubunio.public.signage', $data + compact('tenant', 'periods', 'periodId', 'brand'))->header('Cache-Control', 'no-store')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function registration(Request $request, Tenant $tenant)

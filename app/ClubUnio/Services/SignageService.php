@@ -45,7 +45,7 @@ class SignageService
             $trainings = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $data['period_id'])
                 ->where($flag, true)->whereHas('weekday', fn ($q) => $q->where('active', true)->where('code', (string) ($date->dayOfWeek + 1)))
                 ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $data['date'])->where('ends_on', '>=', $data['date'])))
-                ->with(['teamSeason', 'field', 'room', 'side'])->orderBy('starts_at')->orderBy('id')->get();
+                ->with(['teamSeason.team', 'field', 'room', 'side'])->orderBy('starts_at')->orderBy('id')->get();
         }
 
         $competitions = Competition::where('tenant_id', $tenant->id)->where('active', true)->where('show_on_signage', true)->where('plays_on', $data['date'])->with(['field', 'hostRoom', 'guestRoom', 'hostSide', 'guestSide'])->orderBy('starts_at')->orderBy('id')->get();
@@ -57,5 +57,14 @@ class SignageService
             'notices' => SignageNotice::where('tenant_id', $tenant->id)->where('active', true)->where('shows_on', $data['date'])->orderBy('id')->get(),
             'fields' => $fields, 'trainings' => $trainings, 'training_variant' => $flag,
         ];
+    }
+
+    public static function roomLabel(?string $name): string
+    {
+        if (! $name || preg_match('/^(keine|ohne)\b/iu', trim($name))) {
+            return '–';
+        }
+
+        return preg_replace('/^Garderobe\s+/iu', '', $name);
     }
 }

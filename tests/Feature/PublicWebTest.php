@@ -81,7 +81,7 @@ class PublicWebTest extends TestCase
     public function test_public_pages_and_registered_signage_component_render_without_login(): void
     {
         $this->get('/join/'.$this->tenant->slug)->assertOk()->assertSee('Synthetic country')->assertSee('Testanmeldung absenden')->assertDontSee('synthetic@example.invalid');
-        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Spielplan heute')->assertSee('Heute keine Spiele')->assertSee('Wird geladen');
+        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Trainingsplan heute')->assertDontSee('sg-games')->assertSee('Wird geladen');
         Livewire::test('clubunio.signage-feeds', ['tenantId' => $this->tenant->id, 'publicDisplay' => true])->call('refreshFeeds')->assertSee('Instagram ist nicht aktiviert');
         Http::assertNothingSent();
     }

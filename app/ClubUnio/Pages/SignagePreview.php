@@ -2,12 +2,18 @@
 
 namespace App\ClubUnio\Pages;
 
+use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\TrainingSlotResource;
 use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\SignageBrandService;
 use App\ClubUnio\Services\SignageFeedService;
 use App\ClubUnio\Services\SignageService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +24,23 @@ class SignagePreview extends Page
     {
         return [Action::make('publicDisplay')->label('Öffentliche Signage')->icon('heroicon-o-arrow-top-right-on-square')
             ->url(fn () => route('clubunio.public.signage', ['tenant' => Filament::getTenant()->slug, 'period_id' => $this->periodId]))->openUrlInNewTab(),
+            Action::make('design')->label('Vereinsdesign')->icon('heroicon-o-swatch')
+                ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
+                ->fillForm(function () {
+                    $data = app(SignageBrandService::class)->read(Filament::getTenant());
+                    $data['period_id'] = $data['period_id'] ?: null;
+
+                    return $data + ['version' => app(SignageBrandService::class)->version(Filament::getTenant())];
+                })
+                ->schema([ColorPicker::make('color')->label('Vereinsfarbe')->required(), TextInput::make('title')->label('Vereinsname im Display')->required()->maxLength(100),
+                    TextInput::make('logo')->label('Logo-Bildadresse')->required()->maxLength(2048),
+                    Select::make('period_id')->label('Standard-Trainingsperiode')->options(fn () => TrainingSlotResource::choices('period'))->placeholder('Keine Standardperiode'),
+                    Hidden::make('version')->required()])
+                ->action(function (array $data) {
+                    FormMutation::run($this, fn () => app(SignageBrandService::class)->save(Filament::auth()->user(), Filament::getTenant(), $data));
+                    $this->periodId = $data['period_id'] ? (string) $data['period_id'] : null;
+                    Notification::make()->title('Vereinsdesign gespeichert')->success()->send();
+                }),
             Action::make('checkInstagram')->label('Instagram prüfen')->icon('heroicon-o-check-circle')
                 ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
                 ->action(function () {
@@ -79,6 +102,8 @@ class SignagePreview extends Page
     public function mount(): void
     {
         $this->date = now('Europe/Zurich')->toDateString();
+        $period = app(SignageBrandService::class)->read(Filament::getTenant())['period_id'];
+        $this->periodId = isset(TrainingSlotResource::choices('period')[$period]) ? (string) $period : null;
     }
 
     protected function getViewData(): array
@@ -88,9 +113,9 @@ class SignagePreview extends Page
         try {
             $data = app(SignageService::class)->preview(Filament::auth()->user(), Filament::getTenant(), ['date' => $this->date, 'period_id' => $this->periodId]);
         } catch (ValidationException $e) {
-            $data = ['competitions' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => 'Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.'];
+            $data = ['competitions' => collect(), 'clubs' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => 'Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.'];
         }
 
-        return $data + ['periods' => TrainingSlotResource::choices('period')];
+        return $data + ['periods' => TrainingSlotResource::choices('period'), 'tenant' => Filament::getTenant(), 'brand' => app(SignageBrandService::class)->read(Filament::getTenant())];
     }
 }
