@@ -1,5 +1,8 @@
 # ClubUnio
 
+Fachpaket61: [Ankuendigungen und Rundnachrichten](deploy/CLUBUNIO-ANNOUNCEMENTS.md).
+Webentwurf, Empfaengervorschau und bestaetigte interne Zustellung; kein E-Mail/FCM.
+
 Fachpaket59: [Mitgliederantraege und Dokumentpflege](deploy/CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md).
 Web-Antraege mit Alt-/Neuvergleich, Genehmigung/Konfliktschutz und private
 Azure-Mitgliederdokumente mit expliziter Portal-Freigabe. API/DEV/PROD unveraendert.

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\ClubUnio\Models\AccountMemberLink;
+use App\ClubUnio\Models\Announcement;
 use App\ClubUnio\Models\BillingRecipient;
 use App\ClubUnio\Models\Country;
 use App\ClubUnio\Models\DocumentType;
@@ -87,6 +88,7 @@ class AppServiceProvider extends ServiceProvider
         }
         Gate::policy(MemberDocument::class, ReadOnlyPolicy::class);
         Gate::policy(MemberChangeRequest::class, ReadOnlyPolicy::class);
+        Gate::policy(Announcement::class, ReadOnlyPolicy::class);
         Gate::policy(ObjectChange::class, ReadOnlyPolicy::class);
         foreach ([Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class] as $model) {
             Gate::policy($model, CatalogPolicy::class);

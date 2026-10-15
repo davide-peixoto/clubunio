@@ -6,6 +6,9 @@
 @forelse($notifications as $notification)
 <article class="notification-row">
     <h2>{{ $notification->title }}</h2><p>{{ $notification->body }}</p><time>{{ $notification->created_at }}</time>
+    @if($notification->object_type === 'announcement' && app(\App\ClubUnio\Services\AnnouncementService::class)->portal(auth('portal')->user(),$tenant)->whereKey($notification->object_id)->exists())
+        <a href="{{ route('clubunio.portal.announcement',[$tenant->slug,$notification->object_id]) }}">Ankündigung öffnen</a>
+    @endif
     @if($notification->object_type === 'member_document')
         @php($memberDocument = \App\ClubUnio\Models\MemberDocument::where('tenant_id',$tenant->id)->where('active',true)->where('portal_visible',true)->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubora.members.id'))->find($notification->object_id))
         @if($memberDocument)<a href="{{ route('clubunio.portal.member.edit',[$tenant->slug,$memberDocument->member_id]) }}">Dokumente öffnen</a>@endif

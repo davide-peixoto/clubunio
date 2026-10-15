@@ -1,5 +1,10 @@
 # Pi staging: dev.clubunio.ch
 
+Release61: `20261015-clubunio-61-announcements`, Ruecksprung60.
+Interne Web-Ankuendigungen/Rundnachrichten, additive eigene Migration60.
+Keine externe Zustellung, keine echten Nachrichten aus Tests. Branding60 bleibt.
+Details: CLUBUNIO-ANNOUNCEMENTS.md.
+
 Release60: `20261015-clubunio-60-blue-brand`, Ruecksprung59.
 Blaue SVG-Identitaet, Login/Navigation/Portal/Favicon, versioniertes CSS.
 Keine DB-/ENV-Aenderung. Details: CLUBUNIO-BLUE-BRAND.md.

@@ -53,6 +53,10 @@ Mitglieder bleiben lesbar, neue Dossier-Schreibwege sind gesperrt.
 
 ## Noch offen, nicht als fertig bewerten
 
+Nachtrag Release61: Redaktionelle Ankuendigungen (Punkt2) sind als interner
+Webworkflow umgesetzt; externe Zustellung weiter ausgenommen. Details:
+CLUBUNIO-ANNOUNCEMENTS.md. Diese Liste bleibt als historischer Befund58 erhalten.
+
 Nachtrag Release59: Punkte1 und3 sind inzwischen als eigene Web-Fachwege
 umgesetzt (CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md). Die folgende Liste dokumentiert
 den Befund von Release58; manuelle Fachabnahme/Altantragsmigration bleibt separat.

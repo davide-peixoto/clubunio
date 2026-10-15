@@ -18,6 +18,7 @@
             <a class="icon-button" href="{{ route('clubunio.portal.notifications', ['tenant' => $tenant->slug]) }}" title="Benachrichtigungen" aria-label="Benachrichtigungen">@svg('heroicon-o-bell')</a>
             <a href="{{ route('clubunio.portal.expenses', ['tenant'=>$tenant->slug]) }}">Spesen</a>
             <a href="{{ route('clubunio.portal.invoices', ['tenant'=>$tenant->slug]) }}">Rechnungen</a>
+            <a href="{{ route('clubunio.portal.announcements', $tenant->slug) }}">Ankündigungen</a>
             <a href="{{ route('clubunio.portal.banks', ['tenant'=>$tenant->slug]) }}">Bankkonten</a>
             <a href="{{ route('clubunio.planning.index', $tenant->slug) }}">Teamplanung</a>
             <a href="{{ route('clubunio.bus.index', $tenant->slug) }}">Bus</a>

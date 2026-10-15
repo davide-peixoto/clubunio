@@ -1,6 +1,6 @@
 # PMP-Abdeckungsmatrix ClubUnio
 
-Stand15.10.2026, Fachabgleich59. Automatisch aus einer expliziten Metadaten-Allowlist.
+Stand15.10.2026, Fachabgleich61. Automatisch aus einer expliziten Metadaten-Allowlist.
 
 Quelle: operative PMP, Version26.14.0. SHA256: `fa8f081a56d37f808c1c354656809ae36061697337d73ab509b548906c66ce4a`.
 Umfang: 104 Objekte, 814 Felder, 31 Beziehungen, 218 Eventreferenzen.
@@ -88,7 +88,7 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |ListeMitgliederOhneTeam|7|Web|MemberReportResource, PlayerReportResource, StaffReportResource, ReportExportService; ClubUnioTest.php|Funktionsaequivalente gefilterte Berichte statt identischer SQL-Views; Spezialspalten fachlich abnehmen.|
 |SignageController.php|0|Ersetzt|ClubOverview, SignagePreview, ExpenseService; ClubUnioTest.php|Neue Webmodule statt Legacy-Customseiten; AI-Ausgaben im Test gemockt.|
 |iniApp|5|Ersetzt|SettingResource, SettingsService; ClubUnioTest.php|Vereinheitlichte verschluesselte Einstellungen, keine Kopie alter Parameterseiten.|
-|AppAnkuendigungen|8|Offen|Vorlagen vorhanden, redaktionelle Rundnachrichtenpflege fehlt; |Manuelle Ankuendigungsverwaltung vom Betrieb/externer Zustellung trennen.|
+|AppAnkuendigungen|8|Ergaenzt61|AnnouncementResource, AnnouncementService, AnnouncementPortalController; AnnouncementTest.php|Redaktioneller Webentwurf, Vorschau, Empfaengersnapshot, interne Notifications/Rueckzug. Keine externe Zustellung oder Altimporte.|
 |WhatsAppWebhookLog|0|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|
 |vWhatsAppAdressbuch|0|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|
 |vWhatsAppInbox|20|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|

@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket61: Ankuendigungen und Rundnachrichten
+
+Webentwuerfe mit Benutzer-/Rollen-/Mannschafts-/Gesamtauswahl, Vorschau und
+bestaetigte interne Veroeffentlichung. Berechtigte Eltern, Deduplizierung,
+Empfaenger-/Textsnapshot, Revision/Audit, Rueckzug und Portalansichten.
+Eigene additive Migration60 (Brandingrelease60 hatte keine Migration).
+Keine Altnachrichten importiert, keine externen Rundmails/FCM, keine neuen Jobs.
+Details: CLUBUNIO-ANNOUNCEMENTS.md. API/SaaS/Betrieb und PHPMaker DEV/PROD bleiben
+ausgenommen; Quittungs-Fachvertrag sowie Hardware-/Sandbox-Fachabnahmen offen.
+
 ## Blaue Identitaet, Release60
 
 15.10.2026: Verbundenes U als SVG, Verwaltung/Portal/Login/Favicon und

@@ -12317,10 +12317,10 @@
             "note": "Eigener Web-Pruefweg, Alt/Neu, Rechte/Revision/Konflikt, verschluesselte Snapshots; kein Altantragsimport."
         },
         "AppAnkuendigungen": {
-            "state": "Offen",
-            "target": "Vorlagen vorhanden, redaktionelle Rundnachrichtenpflege fehlt",
-            "evidence": "",
-            "note": "Manuelle Ankuendigungsverwaltung vom Betrieb/externer Zustellung trennen."
+            "state": "Ergaenzt61",
+            "target": "AnnouncementResource, AnnouncementService, AnnouncementPortalController",
+            "evidence": "AnnouncementTest.php",
+            "note": "Redaktioneller Webentwurf, Vorschau, Empfaengersnapshot, interne Notifications/Rueckzug. Keine externe Zustellung oder Altimporte."
         },
         "MitgliederQuittungen": {
             "state": "Pruefen",

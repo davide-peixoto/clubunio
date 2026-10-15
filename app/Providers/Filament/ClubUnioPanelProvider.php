@@ -14,6 +14,7 @@ use App\ClubUnio\Pages\SfvCompetitions;
 use App\ClubUnio\Pages\SignagePreview;
 use App\ClubUnio\Pages\TeamPlanning;
 use App\ClubUnio\Resources\AccountMemberLinkResource;
+use App\ClubUnio\Resources\AnnouncementResource;
 use App\ClubUnio\Resources\BankAccountReportResource;
 use App\ClubUnio\Resources\BankResource;
 use App\ClubUnio\Resources\BexioCatalogEntryResource;
@@ -129,6 +130,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ])])
             ->maxContentWidth('full')->sidebarWidth('15rem')
             ->resources([
+                AnnouncementResource::class,
                 MemberChangeRequestResource::class,
                 ClubEventResource::class,
                 ClubFunctionResource::class,

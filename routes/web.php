@@ -1,5 +1,6 @@
 <?php
 
+use App\ClubUnio\Http\AnnouncementPortalController;
 use App\ClubUnio\Http\BankAccountPortalController;
 use App\ClubUnio\Http\BexioConnectionController;
 use App\ClubUnio\Http\BusReservationController;
@@ -27,6 +28,8 @@ Route::post('/portal/logout', [PortalController::class, 'logout'])
     ->middleware('auth:portal')->name('clubunio.portal.logout');
 
 Route::middleware('auth:portal')->group(function () {
+    Route::get('/portal/{tenant:slug}/announcements', [AnnouncementPortalController::class, 'index'])->name('clubunio.portal.announcements');
+    Route::get('/portal/{tenant:slug}/announcements/{announcement}', [AnnouncementPortalController::class, 'show'])->whereNumber('announcement')->name('clubunio.portal.announcement');
     Route::get('/portal/{tenant:slug}/members/{member}/edit', [MemberChangePortalController::class, 'show'])->whereNumber('member')->name('clubunio.portal.member.edit');
     Route::post('/portal/{tenant:slug}/members/{member}/changes', [MemberChangePortalController::class, 'submit'])->whereNumber('member')->middleware('throttle:10,1')->name('clubunio.portal.member.submit');
     Route::post('/portal/{tenant:slug}/member-changes/{change}/withdraw', [MemberChangePortalController::class, 'withdraw'])->whereNumber('change')->name('clubunio.portal.member.withdraw');
