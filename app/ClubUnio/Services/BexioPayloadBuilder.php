@@ -32,7 +32,7 @@ class BexioPayloadBuilder
     }
 
     // Called only after document authorization/eligibility in BexioDispatchTrialService.
-    public function build(Tenant $tenant, $document, array $positions, int $total): array
+    public function build(Tenant $tenant, $document, array $positions, int $total, ?int $sandboxContactId = null): array
     {
         $member = $document->member;
         if ($document->tenant_id != $tenant->id || $member?->tenant_id != $tenant->id) {
@@ -46,7 +46,7 @@ class BexioPayloadBuilder
             if (count($positions) > 150) {
                 $this->fail('Maximal 150 Rechnungspositionen pro Versandprüfung.');
             }
-            $contactId = app(BexioBillingRecipientService::class)->resolve($member);
+            $contactId = $sandboxContactId ?? app(BexioBillingRecipientService::class)->resolve($member);
             $inclusive = $document->tax_mode === 'inclusive';
             if (! $inclusive && $this->integer($tenant, 'BEXIO_MWST_TYPE', 0, 2) !== 2) {
                 $this->fail('Steuerbefreite Rechnungen benötigen BEXIO_MWST_TYPE=2.');

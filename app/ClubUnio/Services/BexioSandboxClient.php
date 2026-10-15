@@ -8,6 +8,28 @@ use Illuminate\Support\Str;
 // Dedicated, fixed endpoint allowlist. Never a replacement for the general mock client.
 class BexioSandboxClient
 {
+    public function createTestRecipient(string $token, int $registryId, string $marker): array
+    {
+        abort_unless($registryId > 0 && Str::isUuid($marker), 422);
+        $this->verify($token);
+        $user = $this->get($token, '/3.0/users/me');
+        abort_unless((int) ($user['id'] ?? 0) > 0, 409);
+        try {
+            $response = $this->request($token)->post('https://api.bexio.com/2.0/contact', [
+                'contact_type_id' => 2, 'name_1' => 'ClubUnio Testmitglied '.$registryId,
+                'user_id' => (int) $user['id'], 'owner_id' => (int) $user['id'],
+                'street_name' => 'Teststrasse', 'house_number' => '1', 'postcode' => '4450', 'city' => 'Sissach',
+                'remarks' => 'clubunio-sandbox-recipient:'.$marker,
+            ]);
+            $id = $response->json('id');
+            $accepted = $response->status() === 201 && preg_match('/^[1-9][0-9]{0,9}$/D', (string) $id);
+
+            return ['state' => $accepted ? 'accepted' : (in_array($response->status(), [400, 401, 403, 422], true) ? 'rejected' : 'uncertain'), 'id' => $accepted ? (int) $id : null];
+        } catch (\Throwable) {
+            return ['state' => 'uncertain', 'id' => null];
+        }
+    }
+
     public function createTestArticle(string $token, array $configuration): array
     {
         $this->verify($token);

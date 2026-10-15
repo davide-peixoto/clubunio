@@ -149,6 +149,11 @@ class BexioSandboxFixtureService
             $reference = 'clubora-sandbox:'.$dispatch->reference;
             $payload = json_decode($dispatch->payload, true, 512, JSON_THROW_ON_ERROR);
             app(BexioSandboxDispatchService::class)->invoiceContactLabel($tenant, (int) $payload['contact_id']);
+            $recipient = $dispatch->source_trial_id ? DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $dispatch->source_trial_id)->value('sandbox_recipient_id') : null;
+            if ($recipient) {
+                app(BexioSandboxRecipientService::class)->resolve($tenant, $invoice, (int) $recipient, (int) $payload['contact_id']);
+                $binding->member_id = $invoice->member_id;
+            }
             $binding->remote_contact_id = (int) $payload['contact_id'];
         }
         // Once sandbox testing starts, imported remote IDs must never resolve against it.

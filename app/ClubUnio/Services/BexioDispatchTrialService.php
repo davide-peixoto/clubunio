@@ -22,7 +22,7 @@ class BexioDispatchTrialService
             ->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
         abort_unless($trial && $trial->state === 'ready', 409, 'Keine offene eigene Versandpruefung.');
         abort_if(CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10)), 409, 'Vorschau abgelaufen.');
-        $prepared = $this->snapshot($actor, $tenant, $trial->object_type, $trial->object_id, false);
+        $prepared = $this->snapshot($actor, $tenant, $trial->object_type, $trial->object_id, false, null, $trial->sandbox_recipient_id ?? null);
         abort_unless(hash_equals($trial->fingerprint, $prepared['fingerprint']), 409, 'Versandgrundlagen wurden geaendert.');
 
         return $prepared + ['trial' => $trial];
@@ -38,7 +38,7 @@ class BexioDispatchTrialService
         throw ValidationException::withMessages(['dispatch' => $message]);
     }
 
-    private function snapshot(Account $actor, Tenant $tenant, string $type, int $id, bool $lock = true, ?array $attachments = null): array
+    private function snapshot(Account $actor, Tenant $tenant, string $type, int $id, bool $lock = true, ?array $attachments = null, ?int $sandboxRecipientId = null): array
     {
         $this->authorize($actor, $tenant);
         $class = match ($type) {
@@ -113,7 +113,12 @@ class BexioDispatchTrialService
                 $this->invalid('Der gerundete Endbetrag muss positiv sein; Nullrechnungen benötigen einen gesonderten Abschluss.');
             }
         }
-        $request = app(BexioPayloadBuilder::class)->build($tenant, $document, $positions, $total);
+        $sandboxContact = null;
+        if ($sandboxRecipientId !== null) {
+            abort_unless($type === 'invoice' && BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
+            $sandboxContact = (int) app(BexioSandboxRecipientService::class)->resolve($tenant, $document, $sandboxRecipientId)->remote_id;
+        }
+        $request = app(BexioPayloadBuilder::class)->build($tenant, $document, $positions, $total, $sandboxContact);
         if ($type === 'expense') {
             $service = app(BexioAttachmentService::class);
             $plan = $service->plan($tenant, $lines);
@@ -130,14 +135,14 @@ class BexioDispatchTrialService
             'attachment_count' => count($attachments['files'] ?? []), 'attachment_bytes' => $attachments['bytes'] ?? 0, '_attachments' => $attachments, '_request' => $request];
     }
 
-    public function preview(Account $actor, Tenant $tenant, string $type, int $id): int
+    public function preview(Account $actor, Tenant $tenant, string $type, int $id, ?int $sandboxRecipientId = null): int
     {
         $this->authorize($actor, $tenant);
-        $prepared = $this->snapshot($actor, $tenant, $type, $id, false);
+        $prepared = $this->snapshot($actor, $tenant, $type, $id, false, null, $sandboxRecipientId);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $type, $id, $prepared) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $type, $id, $prepared, $sandboxRecipientId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $snapshot = $this->snapshot($actor, $tenant, $type, $id, true, $prepared['_attachments']);
+            $snapshot = $this->snapshot($actor, $tenant, $type, $id, true, $prepared['_attachments'], $sandboxRecipientId);
             if (! hash_equals($prepared['fingerprint'], $snapshot['fingerprint'])) {
                 $this->invalid('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.');
             }
@@ -159,7 +164,7 @@ class BexioDispatchTrialService
                 $this->invalid('Ein vorheriger Testlauf hat einen unklaren Ausgang. Keine neue Übermittlung, auch nach Datenänderung.');
             }
 
-            return $query->insertGetId($snapshot + ['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id, 'reference' => (string) Str::uuid()]);
+            return $query->insertGetId($snapshot + ['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id, 'reference' => (string) Str::uuid(), 'sandbox_recipient_id' => $sandboxRecipientId]);
         });
     }
 

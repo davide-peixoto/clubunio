@@ -7,13 +7,18 @@ use App\ClubUnio\Resources\FinancialAdjustmentActions;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\InvoiceResource;
 use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\BexioInvoiceTransferService;
 use App\ClubUnio\Services\InvoiceWorkflowService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ViewInvoice extends ViewRecord
 {
@@ -32,6 +37,35 @@ class ViewInvoice extends ViewRecord
         $revision = fn () => TextInput::make('revision')->label('Version')->readOnly()->required();
 
         return [
+            Action::make('sendBexio')->label('An Bexio übertragen')->icon('heroicon-o-paper-airplane')
+                ->visible(fn () => $this->getRecord()->active && ! $this->getRecord()->legacy_id && ! $this->getRecord()->bexio_invoice_id
+                    && $this->getRecord()->workflowStatus?->code === 'released' && BexioConnectionService::canManage($actor(), $tenant()))
+                ->modalHeading('An Bexio-Sandbox übertragen')->modalSubmitActionLabel('An Bexio übertragen')
+                ->modalDescription('Ziel: SVS Api Test. Anonymisierter Testkontakt; Rechnungstexte und Beträge werden übertragen. Anlage als Entwurf, ohne E-Mail oder Zahlung.')
+                ->fillForm(fn () => ['revision' => $this->getRecord()->revision])
+                ->schema([$revision(), Checkbox::make('sandbox_confirmed')->label('Übertragung dieser Testrechnung in die Sandbox bestätigen')->required()->accepted()])
+                ->action(function (array $data) use ($actor, $tenant) {
+                    try {
+                        $row = FormMutation::run($this, fn () => app(BexioInvoiceTransferService::class)->transfer($actor(), $tenant(), $this->getRecord()->id, (int) $data['revision']));
+                    } catch (ValidationException $e) {
+                        Notification::make()->title('Rechnungsdaten prüfen')->body(collect($e->errors())->flatten()->first())->warning()->send();
+
+                        return;
+                    } catch (HttpException $e) {
+                        Notification::make()->title('Übertragung nicht ausgeführt')->body($e->getStatusCode() === 409 ? ($e->getMessage() ?: 'Rechnung neu laden und bestehenden Sandbox-Auftrag prüfen.') : 'Berechtigung oder Zuordnung prüfen.')->warning()->send();
+
+                        return;
+                    } catch (\RuntimeException $e) {
+                        report($e);
+                        Notification::make()->title('Sandbox nicht verfügbar')->body('Verbindung und bestehenden Auftrag prüfen. Keine unbestätigte Übertragung erneut anlegen.')->warning()->send();
+
+                        return;
+                    }
+                    Notification::make()->title($row->state === 'accepted' ? 'In Bexio-Sandbox angelegt' : 'Übertragung nicht bestätigt')
+                        ->body($row->state === 'accepted' ? 'Bexio-ID: '.$row->remote_id : 'Den bestehenden Auftrag unter Bexio-Sandbox abgleichen. Keine erneute Anlage.')
+                        ->status($row->state === 'accepted' ? 'success' : 'warning')->send();
+                    $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getRecord()->id]));
+                }),
             FinancialAdjustmentActions::credit(fn () => $this->getRecord()->id)
                 ->visible(fn () => ! $this->getRecord()->legacy_id && $this->getRecord()->active && in_array($this->getRecord()->workflowStatus?->code, ['released', 'cancelled'], true)),
             FinancialAdjustmentActions::refund(fn () => $this->getRecord()->id)

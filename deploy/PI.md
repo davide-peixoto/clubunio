@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+Release64 aktiv: `20261015-clubunio-64-invoice-transfer`, Ruecksprung63.
+Direkter Sandbox-Rechnungsbutton, separate Testkontakte und additive Migration63.
+Live synthetisch RE-00010/CHF1.00/Entwurf7, PDF-Guard erfolgreich.
+Details: CLUBUNIO-INVOICE-TRANSFER.md. Outbound bleibt aus, keine Bankzahlung.
+Regression32/246 und68/311 (teilweise ueberlappend), finaler Nachlauf8/45
+erfolgreich. Pi-Lesetest/Quellhashes passen, Login200/geschuetzte Rechnung302,
+189 Settings/46 Vorlagen geprueft. Keine manuelle Browserabnahme: Chrome-
+Erweiterungsfenster blockiert Automation; Webaktion automatisiert getestet.
+
 Release63: `20261015-clubunio-63-credit-allocation`, Ruecksprung62.
 Konkreter GS-00004-Rueckfluss auf RE-00009, Webauswahl und Provider-ID-Pruefung.
 Keine Migration, Outbound unveraendert aus. Details: CLUBUNIO-CREDIT-ALLOCATION.md.

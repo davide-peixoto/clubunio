@@ -54,7 +54,11 @@ class BexioSandboxDispatchService
         $trial = $prepared['trial'];
         $kind = $trial->object_type;
         $document = $this->document((object) ['kind' => $kind, 'tenant_id' => $tenant->id, $kind.'_id' => $trial->object_id]);
-        abort_unless(! $document->legacy_id && (int) $document->member_id === (int) ($kind === 'invoice' ? $binding->member_id : $binding->supplier_id), 409, 'Nur registrierte synthetische Sandbox-Mitglieder.');
+        $newRecipient = $kind === 'invoice' && ($trial->sandbox_recipient_id ?? null);
+        if ($newRecipient) {
+            app(BexioSandboxRecipientService::class)->resolve($tenant, $document, (int) $trial->sandbox_recipient_id, (int) $prepared['_request']['payload']['contact_id']);
+        }
+        abort_unless(! $document->legacy_id && ($newRecipient || (int) $document->member_id === (int) ($kind === 'invoice' ? $binding->member_id : $binding->supplier_id)), 409, 'Nur registrierte synthetische Sandbox-Mitglieder.');
         $hash = $this->snapshot($document);
         $reference = (string) Str::uuid();
         $payload = $prepared['_request']['payload'];
@@ -122,6 +126,13 @@ class BexioSandboxDispatchService
         $token = app(BexioConnectionService::class)->accessToken($tenant);
         $this->client()->verify($token);
         $this->client()->get($token, '/3.0/files');
+        $recipients = DB::connection('clubunio')->table('clubora.bexio_sandbox_recipients')->where('tenant_id', $tenant->id)->where('connection_hash', $registry->connection_hash)->get();
+        foreach ($recipients as $recipient) {
+            abort_if(in_array($recipient->state, ['running', 'uncertain'], true), 409, 'Unklaren Testkontakt zuerst abgleichen.');
+            if ($recipient->state === 'accepted') {
+                app(BexioSandboxRecipientService::class)->assertContact($recipient, $this->client()->get($token, '/2.0/contact/'.$recipient->remote_id));
+            }
+        }
         $baseline = $this->client()->get($token, '/2.0/kb_invoice/'.$registry->remote_invoice_id);
         abort_unless(($baseline['api_reference'] ?? '') === BexioSandboxFixtureService::REFERENCE
             && (int) ($baseline['contact_id'] ?? 0) === (int) $registry->remote_contact_id, 409);
@@ -136,7 +147,7 @@ class BexioSandboxDispatchService
                     && (int) ($data[$contactKey] ?? 0) === (int) $payload[$contactKey], 409);
             }
         }
-        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $hash, $registry, $rows) {
+        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $hash, $registry, $rows, $recipients) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $tenant);
             abort_unless(hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant))
@@ -145,6 +156,8 @@ class BexioSandboxDispatchService
                 ->where('connection_hash', $registry->connection_hash)->update(['connection_hash' => $hash]);
             abort_unless($count === 1, 409);
             $this->table()->where('tenant_id', $tenant->id)->update(['connection_hash' => $hash]);
+            abort_unless($recipients->toJson() === DB::connection('clubunio')->table('clubora.bexio_sandbox_recipients')->where('tenant_id', $tenant->id)->where('connection_hash', $registry->connection_hash)->get()->toJson(), 409);
+            DB::connection('clubunio')->table('clubora.bexio_sandbox_recipients')->where('tenant_id', $tenant->id)->where('connection_hash', $registry->connection_hash)->where('state', 'accepted')->update(['connection_hash' => $hash]);
             foreach ($rows as $row) {
                 $this->step($row->id, $actor, 'rebind', 'accepted');
             }
@@ -286,7 +299,13 @@ class BexioSandboxDispatchService
         $row = $this->table()->where('tenant_id', $tenant->id)->where('id', $id)->first();
         abort_unless($row && hash_equals($binding->connection_hash, $row->connection_hash), 409);
         $doc = $this->document($row);
-        abort_unless(! $doc->legacy_id && $doc->active && (int) $doc->member_id === (int) ($row->kind === 'invoice' ? $binding->member_id : $binding->supplier_id), 409);
+        $recipient = $row->source_trial_id ? DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $row->source_trial_id)->value('sandbox_recipient_id') : null;
+        if ($recipient) {
+            abort_unless($row->kind === 'invoice', 409);
+            $payload = json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR);
+            app(BexioSandboxRecipientService::class)->resolve($tenant, $doc, (int) $recipient, (int) $payload['contact_id']);
+        }
+        abort_unless(! $doc->legacy_id && $doc->active && ($recipient || (int) $doc->member_id === (int) ($row->kind === 'invoice' ? $binding->member_id : $binding->supplier_id)), 409);
         if ($row->state !== 'accepted') {
             abort_unless(hash_equals($row->snapshot_hash, $this->snapshot($doc)), 409, 'Testbeleg wurde geändert. Übertragung gesperrt.');
         }
@@ -310,9 +329,14 @@ class BexioSandboxDispatchService
             app(InvoiceTaxService::class)->verifyProvider($this->document($row), $token);
         }
         $contact = $this->client()->get($token, '/2.0/contact/'.$payload[$row->kind === 'invoice' ? 'contact_id' : 'supplier_id']);
-        $label = $row->kind === 'invoice' ? $this->invoiceContactLabel($tenant, (int) $payload['contact_id']) : 'Supplier';
-        abort_unless(($contact['remarks'] ?? '') === 'clubora-sandbox-fixture:v1:'.strtolower($label)
-            && ($contact['name_1'] ?? '') === 'Clubora Sandbox '.$label.' v1', 409, 'Sandbox-Kontakt wurde geändert.');
+        $recipient = $row->source_trial_id ? DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $row->source_trial_id)->value('sandbox_recipient_id') : null;
+        if ($recipient) {
+            app(BexioSandboxRecipientService::class)->assertContact(app(BexioSandboxRecipientService::class)->resolve($tenant, $this->document($row), (int) $recipient, (int) $payload['contact_id']), $contact);
+        } else {
+            $label = $row->kind === 'invoice' ? $this->invoiceContactLabel($tenant, (int) $payload['contact_id']) : 'Supplier';
+            abort_unless(($contact['remarks'] ?? '') === 'clubora-sandbox-fixture:v1:'.strtolower($label)
+                && ($contact['name_1'] ?? '') === 'Clubora Sandbox '.$label.' v1', 409, 'Sandbox-Kontakt wurde geändert.');
+        }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $row = $this->checked($actor, $tenant, $id);
@@ -385,6 +409,10 @@ class BexioSandboxDispatchService
     public function invoiceContactLabel(Tenant $tenant, int $contactId): string
     {
         $binding = $this->binding($tenant);
+        if (DB::connection('clubunio')->table('clubora.bexio_sandbox_recipients')->where('tenant_id', $tenant->id)->where('connection_hash', $binding->connection_hash)
+            ->where('state', 'accepted')->where('remote_id', $contactId)->exists()) {
+            return 'Testmitglied';
+        }
         if ($contactId === (int) $binding->remote_contact_id) {
             return 'Member';
         }

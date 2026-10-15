@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket64: [An Bexio uebertragen direkt bei der Rechnung](deploy/CLUBUNIO-INVOICE-TRANSFER.md).
+Admin-Webaktion nach interner Freigabe, nur Sandbox, separate Testkontakte auch
+fuer weitere Mitglieder; kein E-Mail-Versand oder Bankzahlung.
+
 Fachpaket63: [Konkreter Bexio-Gutschriftrueckfluss](deploy/CLUBUNIO-CREDIT-ALLOCATION.md).
 RE-00009/GS-00004 abgeglichen, konkrete Voucher-/Betragspruefung statt nur Summen.
 

@@ -1,5 +1,16 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket64: Direkte Rechnungsuebertragung in die Sandbox
+
+Admin-Button bei intern freigegebenen neuen Rechnungen, explizite Bestaetigung,
+separate generische Testkontakte fuer weitere Mitglieder. Importierte
+Kontakt-IDs/Altbelege bleiben unveraendert. Nur SVS Api Test, Entwurf ohne
+E-Mail/Bankzahlung. Additive eigene Migration63 fuer Empfaengerregistry und
+Versandpruefungszuordnung; keine Bestandsmigration. Timeoutabgleich nur lesend,
+keine blinde Wiederholung. Nachgewiesen mit synthetischer Rechnung9298 /
+RE-00010 CHF1.00. Ruecksprung belaesst Nachweise im additiven Schema.
+Details: CLUBUNIO-INVOICE-TRANSFER.md. API/SaaS/Betrieb/PHPMaker DEV/PROD ausgenommen.
+
 ## Fachpaket63: Bexio-Gutschriften eindeutig abgleichen
 
 RE-00009/GS-00004 live lesend bestaetigt und lokal abgeglichen: CHF10.05
