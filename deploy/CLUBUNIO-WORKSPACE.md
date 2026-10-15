@@ -1,5 +1,41 @@
 # Busverwaltung und Teamplanung in ClubUnio
 
+## Korrektur70: Mobile Tabellen und Reservationslink
+
+Kurze Woerter werden nicht mehr beliebig zwischen Buchstaben getrennt:
+Tabellenzellen nutzen break-word statt anywhere, Spaltenkoepfe nowrap.
+Der Reservationslink besitzt eine zusammenhaengende inline-flex-Flaeche
+mit mindestens44px Hoehe und100px Breite. Keine JavaScript-Navigation oder
+Aenderung an Berechtigungen/Routes. CSS-Version2 verhindert alten Browsercache.
+
+Auf dev.clubunio.ch nach Deployment geprueft: Mobil390x844 zeigt Bus/VW
+ungeteilt; Link gemessen100px+ breit/50px hoch. Locator-Klick oeffnet jetzt
+nachweislich /bus/16 mit Reservationsdetails. Teamplanung ohne Seitenoverflow,
+normale Wortumbrueche. Desktop1440x1000 Busliste ebenfalls ohne Overflow.
+Blade-Cache und Routen-Checker erfolgreich. Keine neue Fachtestsuite fuer
+diese reine CSS/Markup-Aenderung; keine Fachdaten oder Providerwrites.
+Release70 basiert auf69; Konfigurations-, Routen- und Viewcache neu aufgebaut.
+Ruecksprung69. Keine DB-Migration, PHPMaker DEV/PROD unveraendert.
+
+## Visuelle Nachpruefung69, 15.10.2026
+
+Nach Benutzeranmeldung im integrierten Browser auf dev.clubunio.ch geprueft:
+- Desktop1440x1000: Bexio-Verbindung, Busliste, Teamplanung und Monatskalender.
+  Gemeinsame Navigation sichtbar, saubere URLs, keine Seitenueberbreite.
+- Mobil390x844: dieselben Bereiche sowie Busdetail /bus/16. Filter stapeln sich,
+  Statusauswahl und Modulnavigation umbrechen, Detaildaten sind lesbar.
+- Kalender ist innerhalb seines Bereichs horizontal scrollbar; Wochenende
+  erfolgreich sichtbar gemacht. Kein horizontaler Overflow der Gesamtseite.
+- Bexio zusaetzlich320x740: Callback bricht um, Verbindungsbutton sichtbar.
+- Mobiles Seitenmenue erfolgreich geoeffnet und geschlossen.
+
+Offene Befunde: Schmale Tabellen umbrechen kurze Woerter (Bus/VW) und
+Mannschaft unguenstig. Reservationslink wurde durch die Browsersteuerung
+nicht navigiert, direkter Detailaufruf funktioniert. Ursache nicht bewiesen;
+echter Geraete-Tap noch zu pruefen. Keine vollstaendige Funktionsabnahme.
+Keine Buchungen/Formularwrites/erneute Bexio-Verbindung ausgeloest.
+Keine Codeaenderung oder Deployment; DEV/PROD unveraendert. Viewport reset.
+
 ## Ergaenzung69: Verwaltungs-Audit
 
 Alle Panel-Pages/Resources und eigenstaendigen HTML-Layouts wurden auf

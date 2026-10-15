@@ -1,5 +1,5 @@
 <x-filament-panels::layout>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=2">
     <div class="club-workspace">
         <nav class="workspace-navigation" aria-label="{{ match($module) { 'bus' => 'Busverwaltung', 'bexio' => 'Integrationen', default => 'Teamplanung' } }}">
             @if($module === 'bexio')

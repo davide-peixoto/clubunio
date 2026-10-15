@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+Release70 aktiv: `20261015-clubunio-70-mobile`, Ruecksprung69.
+Mobile Wortumbrueche und zusammenhaengende Reservations-Klickflaeche korrigiert.
+Live390px: Bus/VW lesbar, Klick navigiert /bus/16; Planung kein Seitenoverflow.
+Desktop1440px ebenfalls geprueft. Config/Route/Viewcache erneuert, Checker OK.
+Keine DB-Migration/Providerwrites. DEV/PROD unveraendert. Details:WORKSPACE.
+
 Release69: `20261015-clubunio-69-admin-workspace`, Ruecksprung68.
 Bexio-Verbindungsseite in normaler Verwaltung; Dokument-/PDF-URLs ohne Verein.
 Alle bisherigen Objektberechtigungen und OAuth-Callbacks erhalten. Keine
