@@ -4,10 +4,12 @@ namespace App\ClubUnio\Widgets;
 
 use App\ClubUnio\Models\CreditNote;
 use App\ClubUnio\Models\Expense;
+use App\ClubUnio\Models\MemberChangeRequest;
 use App\ClubUnio\Models\Refund;
 use App\ClubUnio\Models\Registration;
 use App\ClubUnio\Models\TrainingSlot;
 use App\ClubUnio\Resources\CreditNoteResource;
+use App\ClubUnio\Resources\MemberChangeRequestResource;
 use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\RefundResource;
 use App\ClubUnio\Services\DashboardService;
@@ -35,6 +37,8 @@ class ClubOverview extends StatsOverviewWidget
             Stat::make('Offener Rechnungsbetrag', 'CHF '.number_format((float) $open['amount'], 2, '.', "'"))
                 ->url(OpenInvoiceResource::getUrl()),
             Stat::make('Aktive Mitglieder', app(MemberAccessService::class)->activeMembers($tenant)->count())->icon('heroicon-o-users'),
+            Stat::make('Mitgliederänderungsanträge', MemberChangeRequest::where('tenant_id', $tenant->id)->where('state', 'pending')->count())
+                ->icon('heroicon-o-pencil-square')->url(MemberChangeRequestResource::getUrl()),
             Stat::make('Anmeldungen in Prüfung', Registration::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('workflow_key', 'review'))->count())->icon('heroicon-o-user-plus'),
             Stat::make('Spesen zur Prüfung', Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'F'))->count())->icon('heroicon-o-clipboard-document-check'),
             Stat::make('Spesen zur Zahlung', Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'Z'))->count())->icon('heroicon-o-banknotes'),

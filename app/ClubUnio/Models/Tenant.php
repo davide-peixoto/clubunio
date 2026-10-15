@@ -9,6 +9,11 @@ class Tenant extends Model
 {
     use UsesClubUnioSchema;
 
+    public function memberChangeRequests()
+    {
+        return $this->hasMany(MemberChangeRequest::class);
+    }
+
     public function clubFunctions()
     {
         return $this->hasMany(ClubFunction::class);

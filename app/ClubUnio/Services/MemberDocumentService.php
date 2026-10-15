@@ -31,11 +31,22 @@ class MemberDocumentService
         return $this->readResponse($actor, $tenant, $document, $download, 'registration');
     }
 
+    public function openPortal(Account $actor, Tenant $tenant, int $id, bool $download = false)
+    {
+        $document = MemberDocument::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->where('portal_visible', true)
+            ->whereIn('member_id', app(MemberAccessService::class)->represented($actor->fresh(), $tenant)->select('clubora.members.id'))->findOrFail($id);
+        abort_unless(app(MemberAccessService::class)->canEnter($actor->fresh(), $tenant), 403);
+
+        return $this->readResponse($actor, $tenant, $document, $download, 'member');
+    }
+
     private function readResponse(Account $actor, Tenant $tenant, object $document, bool $download, string $objectType)
     {
         abort_unless($tenant->slug === config('clubunio-integrations.azure.tenant_slug'), 404);
         if (str_starts_with($document->storage_path, 'clubunio/')) {
-            abort_unless(str_starts_with($document->storage_path, 'clubunio/registrations/'.$tenant->id.'/'), 404);
+            $registration = str_starts_with($document->storage_path, 'clubunio/registrations/'.$tenant->id.'/');
+            $member = $objectType === 'member' && $document->storage_path === 'clubunio/members/'.$tenant->id.'/'.$document->member_id.'/';
+            abort_unless($registration || $member, 404);
         }
         try {
             $bytes = app(AzureDocumentReader::class)->read($document->storage_path, $document->filename);

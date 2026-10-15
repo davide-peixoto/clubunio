@@ -58,8 +58,9 @@ class PortalController
             ->orderBy('last_name')->orderBy('first_name')->orderBy('id')->paginate(25)->withQueryString();
         $tenants = $actor->tenants()->get()->filter(fn ($t) => $access->canEnter($actor, $t));
         $statuses = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->get(['id', 'name']);
+        $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubora.members.id')->all();
 
-        return response()->view('clubunio.portal.members', compact('tenant', 'tenants', 'members', 'q', 'statuses'))
+        return response()->view('clubunio.portal.members', compact('tenant', 'tenants', 'members', 'q', 'statuses', 'editableMemberIds'))
             ->header('Cache-Control', 'private, no-store');
     }
 

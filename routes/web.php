@@ -5,6 +5,7 @@ use App\ClubUnio\Http\BexioConnectionController;
 use App\ClubUnio\Http\BusReservationController;
 use App\ClubUnio\Http\ExpensePortalController;
 use App\ClubUnio\Http\InvoicePortalController;
+use App\ClubUnio\Http\MemberChangePortalController;
 use App\ClubUnio\Http\NotificationPortalController;
 use App\ClubUnio\Http\PortalController;
 use App\ClubUnio\Http\RegistrationPortalController;
@@ -26,6 +27,12 @@ Route::post('/portal/logout', [PortalController::class, 'logout'])
     ->middleware('auth:portal')->name('clubunio.portal.logout');
 
 Route::middleware('auth:portal')->group(function () {
+    Route::get('/portal/{tenant:slug}/members/{member}/edit', [MemberChangePortalController::class, 'show'])->whereNumber('member')->name('clubunio.portal.member.edit');
+    Route::post('/portal/{tenant:slug}/members/{member}/changes', [MemberChangePortalController::class, 'submit'])->whereNumber('member')->middleware('throttle:10,1')->name('clubunio.portal.member.submit');
+    Route::post('/portal/{tenant:slug}/member-changes/{change}/withdraw', [MemberChangePortalController::class, 'withdraw'])->whereNumber('change')->name('clubunio.portal.member.withdraw');
+    Route::get('/portal/{tenant:slug}/member-documents/{document}', function (Request $request, Tenant $tenant, int $document) {
+        return app(MemberDocumentService::class)->openPortal($request->user('portal'), $tenant, $document, $request->boolean('download'));
+    })->whereNumber('document')->name('clubunio.portal.member.document');
     Route::get('/portal/{tenant:slug}/invoices', [InvoicePortalController::class, 'index'])->name('clubunio.portal.invoices');
     Route::get('/portal/{tenant:slug}/invoices/{invoice}', [InvoicePortalController::class, 'show'])->whereNumber('invoice')->name('clubunio.portal.invoice');
     Route::get('/portal/{tenant:slug}/bank-accounts', [BankAccountPortalController::class, 'index'])->name('clubunio.portal.banks');

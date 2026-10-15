@@ -14,6 +14,7 @@ class AzureDocumentReaderTest extends TestCase
     public function test_path_mapping_and_unicode_names(): void
     {
         $reader = new AzureDocumentReader;
+        $this->assertSame('clubunio/members/1/2/file.pdf', $reader->blobPath('clubunio/members/1/2/', 'file.pdf'));
         $this->assertSame('member-documents/Prüfung.pdf', $reader->blobPath('var/member-documents/', 'Prüfung.pdf'));
         $this->assertSame('upload/mitglieder/anhaenge/photo.png', $reader->blobPath('upload/mitglieder/anhaenge/', 'photo.png'));
         foreach (['../secret', '..\\secret', 'C:secret', "a\0b", '..', ''] as $invalid) {

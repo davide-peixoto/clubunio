@@ -11969,16 +11969,16 @@
             "note": "Familienrabatte und getrennte genehmigte Elternrechte."
         },
         "DokumentTyp": {
-            "state": "Teilweise",
-            "target": "MemberDocumentResource, MemberDocumentService, RegistrationDocumentService",
-            "evidence": "RegistrationCompletionTest.php",
-            "note": "Lesen/Migration/Annahme; allgemeine unabhaengige Mitglieder-Uploadpflege noch abzugleichen."
+            "state": "Ergaenzt59",
+            "target": "MemberDocumentResource, MemberDocumentMaintenanceService, DocumentsRelationManager",
+            "evidence": "MemberChangesDocumentsTest.php",
+            "note": "Allgemeine private Uploadpflege, Lookup-Typ, Dossier/Vorschau, explizite Portal-Freigabe, Revision/Audit; keine Signatur."
         },
         "MitgliederAnhaenge": {
-            "state": "Teilweise",
-            "target": "MemberDocumentResource, MemberDocumentService, RegistrationDocumentService",
-            "evidence": "RegistrationCompletionTest.php",
-            "note": "Lesen/Migration/Annahme; allgemeine unabhaengige Mitglieder-Uploadpflege noch abzugleichen."
+            "state": "Ergaenzt59",
+            "target": "MemberDocumentResource, MemberDocumentMaintenanceService, DocumentsRelationManager",
+            "evidence": "MemberChangesDocumentsTest.php",
+            "note": "Allgemeine private Uploadpflege, Lookup-Typ, Dossier/Vorschau, explizite Portal-Freigabe, Revision/Audit; keine Signatur."
         },
         "Teams": {
             "state": "Web",
@@ -12311,10 +12311,10 @@
             "note": "Neue Webmodule statt Legacy-Customseiten; AI-Ausgaben im Test gemockt."
         },
         "MitgliederAenderungsantraege": {
-            "state": "Offen",
-            "target": "Noch keine eigenstaendige ClubUnio-Web-Pruefwarteschlange",
-            "evidence": "",
-            "note": "PMP-Objekt erkannt; Web-Antrag/Freigabe als weiteres Fachpaket, keine automatische Uebernahme."
+            "state": "Ergaenzt59",
+            "target": "MemberChangeRequestResource, MemberChangeService, MemberChangePortalController",
+            "evidence": "MemberChangesDocumentsTest.php",
+            "note": "Eigener Web-Pruefweg, Alt/Neu, Rechte/Revision/Konflikt, verschluesselte Snapshots; kein Altantragsimport."
         },
         "AppAnkuendigungen": {
             "state": "Offen",

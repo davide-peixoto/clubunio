@@ -42,4 +42,17 @@ class RegistrationBlobStoreTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         (new RegistrationBlobStore)->put('upload/anmeldungen/', 'fixture.pdf', 'fixture', 'application/pdf');
     }
+
+    public function test_member_namespace_is_private_and_scoped_to_positive_ids(): void
+    {
+        config(['clubunio-integrations.azure' => ['enabled' => true, 'container' => 'svs-prod-private', 'account' => 'fixtureaccount', 'key' => base64_encode(str_repeat('x', 32))]]);
+        $history = [];
+        $stack = HandlerStack::create(new MockHandler([new Response(201)]));
+        $stack->push(Middleware::history($history));
+        $store = new RegistrationBlobStore(new Client(['handler' => $stack]));
+        $store->put('clubunio/members/1/2/', '12345678-1234-1234-1234-123456789012.pdf', '%PDF-1.4 fixture', 'application/pdf');
+        $this->assertSame('/svs-prod-private/clubunio/members/1/2/12345678-1234-1234-1234-123456789012.pdf', $history[0]['request']->getUri()->getPath());
+        $this->expectException(\InvalidArgumentException::class);
+        $store->put('clubunio/members/1/../', '12345678-1234-1234-1234-123456789012.pdf', 'fixture', 'application/pdf');
+    }
 }

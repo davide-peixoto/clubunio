@@ -53,6 +53,10 @@ Mitglieder bleiben lesbar, neue Dossier-Schreibwege sind gesperrt.
 
 ## Noch offen, nicht als fertig bewerten
 
+Nachtrag Release59: Punkte1 und3 sind inzwischen als eigene Web-Fachwege
+umgesetzt (CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md). Die folgende Liste dokumentiert
+den Befund von Release58; manuelle Fachabnahme/Altantragsmigration bleibt separat.
+
 1. Eigene Web-Pruefwarteschlange fuer MitgliederAenderungsantraege samt
    Antrag/Entscheidung/Konfliktbehandlung. Stammdaten-Direktbearbeitung ist kein Ersatz.
 2. Redaktionelle manuelle Rundnachrichten/Ankuendigungen. Bearbeitbare Vorlagen

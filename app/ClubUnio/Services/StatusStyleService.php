@@ -60,7 +60,7 @@ class StatusStyleService
         return $db->transaction(function () use ($db, $tenant) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $count = 0;
-            foreach (['member_statuses', 'registration_statuses', 'expense_statuses', 'invoice_statuses', 'facility_statuses', 'training_options', 'member_types', 'genders'] as $table) {
+            foreach (['member_statuses', 'member_change_statuses', 'registration_statuses', 'expense_statuses', 'invoice_statuses', 'facility_statuses', 'training_options', 'member_types', 'genders'] as $table) {
                 foreach ($db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->pluck('name') as $name) {
                     $key = StatusAppearance::key($name);
                     if ($key !== '' && ! StatusStyle::where('tenant_id', $tenant->id)->where('value_key', $key)->exists()) {

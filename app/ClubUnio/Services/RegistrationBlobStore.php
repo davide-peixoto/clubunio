@@ -14,7 +14,7 @@ class RegistrationBlobStore
 
     public function put(string $folder, string $filename, string $bytes, string $mime): void
     {
-        if (! preg_match('~^clubunio/registrations/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder)
+        if (! preg_match('~^clubunio/(registrations|members)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder)
             || ! preg_match('/^[a-f0-9-]{36}\.(pdf|png|jpg|webp)$/D', $filename)
             || strlen($bytes) === 0 || strlen($bytes) > AzureDocumentReader::MAX_BYTES) {
             throw new \InvalidArgumentException('Invalid registration document');

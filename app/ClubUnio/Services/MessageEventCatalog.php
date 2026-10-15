@@ -12,6 +12,10 @@ class MessageEventCatalog
             $events[$key] = compact('name', 'title', 'body', 'variables', 'channels');
         };
         $expense = ['verein', 'mitglied', 'saison', 'runde', 'mannschaft', 'betrag'];
+        $add('member.change.requested', 'Mitgliederdaten: Antrag', 'Mitgliederänderungsantrag eingereicht', 'Ein Änderungsantrag wartet auf Prüfung bei {{ verein }}.', ['verein'], ['push']);
+        $add('member.document.available', 'Mitgliederdokument: verfügbar', 'Neues Mitgliederdokument', 'Ein Dokument ist im Vereinsportal für dich freigegeben.', ['verein'], ['push']);
+        $add('member.change.approved', 'Mitgliederdaten: genehmigt', 'Mitgliederdaten aktualisiert', 'Dein Änderungsantrag wurde genehmigt.', ['verein'], ['push']);
+        $add('member.change.rejected', 'Mitgliederdaten: abgelehnt', 'Änderungsantrag abgelehnt', 'Dein Änderungsantrag wurde abgelehnt. Bitte prüfe die Rückmeldung im Vereinsportal.', ['verein'], ['push']);
         $add('expense.review', 'Spesen: zur Kontrolle', 'Spesenbeleg zur Kontrolle', 'Ein Spesenbeleg von {{ mitglied }} für {{ saison }}, {{ runde }} ({{ mannschaft }}) wurde zur Kontrolle freigegeben. Betrag: {{ betrag }}.', $expense);
         foreach (['payment_released' => 'zur Zahlung freigegeben', 'paid' => 'bezahlt', 'rejected' => 'abgelehnt', 'reopened' => 'wieder geöffnet'] as $key => $status) {
             $add('expense.'.$key, 'Spesen: '.$status, 'Spesenbeleg '.$status, 'Dein Spesenbeleg für {{ saison }}, {{ runde }} wurde '.$status.'. Betrag: {{ betrag }}.', $expense, $key === 'reopened' ? ['push'] : ['email', 'push']);

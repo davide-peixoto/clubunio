@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket59: Mitgliederantraege und allgemeine Dokumentpflege
+
+Eigener Web-Antrags-/Pruefweg, verschluesselte Snapshots, aktuelle Eltern-/
+Identitaetsrechte, Konflikt-/Doppelantragsschutz, Revision/Audit. Allgemeine
+Mitgliederdokumente auf privatem Azure mit UUIDs und expliziter Portal-Freigabe;
+Upload/Aktivpflege in Liste und Mitgliederdossier. Interne Notifications,
+kein echter Versand. Migration59 nur eigeneDB; keine Altantraege automatisch
+importiert, keine Bestandsdateien verschoben oder oeffentlich freigegeben.
+Details: CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md. Offen: redaktionelle Ankuendigungen,
+Quittungs-Fachvertrag und bestehende manuelle Hardware-/Sandbox-Abnahmen.
+API/SaaS/Betrieb und PHPMaker DEV/PROD bleiben ausgenommen.
+
 ## Fachpaket58: PMP-Fachabgleich und gezielte Dossierluecken
 
 104 Objekte/814 Felder/31 Beziehungen/218 Eventreferenzen inventarisiert,

@@ -5,6 +5,7 @@ namespace App\ClubUnio\Resources;
 use App\ClubUnio\Models\DocumentType;
 use App\ClubUnio\Models\MemberDocument;
 use Filament\Facades\Filament;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -43,11 +44,12 @@ class MemberDocumentResource extends CatalogResource
             TextColumn::make('documentType.name')->label('Dokumententyp')->sortable(),
             TextColumn::make('original_filename')->label('Dateiname')->searchable()->wrap(),
             TextColumn::make('file_size')->label('Bytes')->numeric(), TextColumn::make('content_type')->label('Dateityp'),
+            IconColumn::make('portal_visible')->label('Portal-Freigabe')->boolean(),
             TextColumn::make('source_created_at')->label('Erstellt')->dateTime('d.m.Y H:i'),
         ])->filters([
             SelectFilter::make('document_type_id')->label('Dokumententyp')->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
-        ])->recordActions(DocumentActions::make())->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
+        ])->headerActions([MemberDocumentActions::upload()])->recordActions([...DocumentActions::make(), MemberDocumentActions::manage()])->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 
     public static function getPages(): array

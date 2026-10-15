@@ -1,5 +1,10 @@
 # Pi staging: dev.clubunio.ch
 
+Release59: `20261015-clubunio-59-member-changes`, Ruecksprung58.
+Eigene additive Migration59, Mitgliederantraege und allgemeine Dokumentpflege.
+Private Azure-Praefixe, explizite Portal-Freigabe, interne Notifications;
+kein Versand an echte Empfaenger. Details: CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md.
+
 Release58: `20261015-clubunio-58-pmp-parity`, Ruecksprung57.
 Eigene Migration58: Revisionsfelder fuer Dossier-/Stammdatenpflege.
 PMP-Abgleich/Abgrenzung: CLUBUNIO-PMP-ACCEPTANCE.md und CLUBUNIO-PMP-COVERAGE.md.

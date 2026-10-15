@@ -1,6 +1,6 @@
 # PMP-Abdeckungsmatrix ClubUnio
 
-Stand15.10.2026, Fachabgleich58. Automatisch aus einer expliziten Metadaten-Allowlist.
+Stand15.10.2026, Fachabgleich59. Automatisch aus einer expliziten Metadaten-Allowlist.
 
 Quelle: operative PMP, Version26.14.0. SHA256: `fa8f081a56d37f808c1c354656809ae36061697337d73ab509b548906c66ce4a`.
 Umfang: 104 Objekte, 814 Felder, 31 Beziehungen, 218 Eventreferenzen.
@@ -97,8 +97,8 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |WhatsAppNachrichten|0|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|
 |WhatsAppVorlagen|0|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|
 |WhatsAppVersandQueue|0|Ausgenommen|WhatsApp-Transport/Betrieb; |Keine generierten Backoffice-Felder fuer diese Transporttabellen.|
-|DokumentTyp|5|Teilweise|MemberDocumentResource, MemberDocumentService, RegistrationDocumentService; RegistrationCompletionTest.php|Lesen/Migration/Annahme; allgemeine unabhaengige Mitglieder-Uploadpflege noch abzugleichen.|
-|MitgliederAnhaenge|13|Teilweise|MemberDocumentResource, MemberDocumentService, RegistrationDocumentService; RegistrationCompletionTest.php|Lesen/Migration/Annahme; allgemeine unabhaengige Mitglieder-Uploadpflege noch abzugleichen.|
+|DokumentTyp|5|Ergaenzt59|MemberDocumentResource, MemberDocumentMaintenanceService, DocumentsRelationManager; MemberChangesDocumentsTest.php|Allgemeine private Uploadpflege, Lookup-Typ, Dossier/Vorschau, explizite Portal-Freigabe, Revision/Audit; keine Signatur.|
+|MitgliederAnhaenge|13|Ergaenzt59|MemberDocumentResource, MemberDocumentMaintenanceService, DocumentsRelationManager; MemberChangesDocumentsTest.php|Allgemeine private Uploadpflege, Lookup-Typ, Dossier/Vorschau, explizite Portal-Freigabe, Revision/Audit; keine Signatur.|
 |Liste TeamStaff Saison|21|Web|MemberReportResource, PlayerReportResource, StaffReportResource, ReportExportService; ClubUnioTest.php|Funktionsaequivalente gefilterte Berichte statt identischer SQL-Views; Spezialspalten fachlich abnehmen.|
 |AppPushToken|0|Ausgenommen|API/externe Pushzustellung; |API und Betrieb geparkt; interne Notifications bleiben vorhanden.|
 |AppPushNachricht|0|Ausgenommen|API/externe Pushzustellung; |API und Betrieb geparkt; interne Notifications bleiben vorhanden.|
@@ -109,7 +109,7 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |Verbandsspiele|40|Web|SfvCompetitions, CompetitionResource, SignagePreview; ClubUnioTest.php, SignageFeedsTest.php|SFV-Pruefung bewahrt manuelle Garderoben; Vereinskonflikte fachlich klaeren.|
 |TeamTermine|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
 |TeamTerminTeilnahmen|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
-|MitgliederAenderungsantraege|18|Offen|Noch keine eigenstaendige ClubUnio-Web-Pruefwarteschlange; |PMP-Objekt erkannt; Web-Antrag/Freigabe als weiteres Fachpaket, keine automatische Uebernahme.|
+|MitgliederAenderungsantraege|18|Ergaenzt59|MemberChangeRequestResource, MemberChangeService, MemberChangePortalController; MemberChangesDocumentsTest.php|Eigener Web-Pruefweg, Alt/Neu, Rechte/Revision/Konflikt, verschluesselte Snapshots; kein Altantragsimport.|
 |TeamAbsenzen|0|Web|TeamPlanningController, PlanningService, PlanningAbsenceService; TeamPlanningTest.php|Termine, Absenzen, Fristsperren und Datenschutz; App-API unveraendert.|
 |MitgliederQuittungen|0|Pruefen|Keine PMP-Felder/Generierung definiert; |Fachvertrag und Nutzung vor Implementierung klaeren.|
 |AppPenaltyChallenge|0|Ausgenommen|App-Spielmodul; |App-/API-spezifisch, kein Backoffice-Ersatz in diesem Auftrag.|

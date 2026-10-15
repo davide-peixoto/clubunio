@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket59: [Mitgliederantraege und Dokumentpflege](deploy/CLUBUNIO-MEMBER-CHANGES-DOCUMENTS.md).
+Web-Antraege mit Alt-/Neuvergleich, Genehmigung/Konfliktschutz und private
+Azure-Mitgliederdokumente mit expliziter Portal-Freigabe. API/DEV/PROD unveraendert.
+
 Fachstand58: [PMP-Abgleich und Abnahmegrenzen](deploy/CLUBUNIO-PMP-ACCEPTANCE.md),
 [Abdeckungsmatrix](deploy/CLUBUNIO-PMP-COVERAGE.md). Dossier-/Stammdatenpflege
 ergaenzt; neue offene Webthemen ausdruecklich ausgewiesen.

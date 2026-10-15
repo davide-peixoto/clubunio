@@ -47,6 +47,7 @@ class PmpInventoryTest extends TestCase
                 $this->assertFileExists(base_path('tests/Feature/'.$file));
             }
         }
-        $this->assertSame('Offen', $inventory['coverage']['MitgliederAenderungsantraege']['state']);
+        $this->assertSame('Ergaenzt59', $inventory['coverage']['MitgliederAenderungsantraege']['state']);
+        $this->assertSame('Ergaenzt59', $inventory['coverage']['MitgliederAnhaenge']['state']);
     }
 }
