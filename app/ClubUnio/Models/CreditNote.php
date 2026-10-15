@@ -32,4 +32,9 @@ class CreditNote extends CatalogModel
     {
         return $this->hasMany(Refund::class);
     }
+
+    public function customerCredit()
+    {
+        return $this->hasOne(CustomerCredit::class);
+    }
 }

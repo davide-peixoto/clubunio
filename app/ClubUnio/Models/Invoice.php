@@ -11,6 +11,11 @@ class Invoice extends CatalogModel
         return $this->hasMany(CreditNote::class);
     }
 
+    public function customerCreditAllocations()
+    {
+        return $this->hasMany(CustomerCreditAllocation::class);
+    }
+
     public function refunds()
     {
         return $this->hasMany(Refund::class);

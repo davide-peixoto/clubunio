@@ -1,5 +1,9 @@
 # Konkreter Bexio-Gutschriftrueckfluss
 
+Nachtrag67: kontrollierte Mehrrechnungsverteilung jetzt als eigener Fachweg,
+siehe CLUBUNIO-CUSTOMER-CREDITS.md. Bestehender Einzelabgleich und seine
+Nachweise bleiben erhalten; keine automatische Umbuchung alter Gutschriften.
+
 Release63, 15.10.2026. Nur ClubUnio-Web, eigene DB und lesende Bexio-Sandbox.
 Keine Aenderungen an PHPMaker DEV/PROD, keine Bankzahlungen oder API-/SaaS-/
 Betriebsentwicklung. Keine neuen externen Schnittstellen oder DB-Migration.

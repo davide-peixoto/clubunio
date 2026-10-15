@@ -12042,21 +12042,21 @@
         },
         "Rechnung": {
             "state": "Web/Sandbox",
-            "target": "InvoiceResource, BexioReconciliation",
-            "evidence": "ClubUnioTest.php",
-            "note": "Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen."
+            "target": "InvoiceResource, BexioReconciliation, CustomerCreditResource",
+            "evidence": "ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php",
+            "note": "Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen."
         },
         "Positionen": {
             "state": "Web/Sandbox",
-            "target": "InvoiceResource, BexioReconciliation",
-            "evidence": "ClubUnioTest.php",
-            "note": "Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen."
+            "target": "InvoiceResource, BexioReconciliation, CustomerCreditResource",
+            "evidence": "ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php",
+            "note": "Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen."
         },
         "BexioStatusMapping": {
             "state": "Web/Sandbox",
-            "target": "InvoiceResource, BexioReconciliation",
-            "evidence": "ClubUnioTest.php",
-            "note": "Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen."
+            "target": "InvoiceResource, BexioReconciliation, CustomerCreditResource",
+            "evidence": "ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php",
+            "note": "Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen."
         },
         "Spesenbelege": {
             "state": "Web/Sandbox",

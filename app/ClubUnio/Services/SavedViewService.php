@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 
 class SavedViewService
 {
-    public const LISTS = ['credit-notes', 'refunds', 'members', 'member-reports', 'registrations', 'expenses', 'invoices', 'training-slots', 'open-invoices', 'player-reports', 'staff-reports', 'payment-reports', 'unassigned-members', 'passive-members', 'competitions', 'signage-notices', 'family-reports', 'bank-account-reports', 'football-clubs', 'key-reports', 'spots-recipients'];
+    public const LISTS = ['customer-credits', 'credit-notes', 'refunds', 'members', 'member-reports', 'registrations', 'expenses', 'invoices', 'training-slots', 'open-invoices', 'player-reports', 'staff-reports', 'payment-reports', 'unassigned-members', 'passive-members', 'competitions', 'signage-notices', 'family-reports', 'bank-account-reports', 'football-clubs', 'key-reports', 'spots-recipients'];
 
     public function query(Account $actor, Tenant $tenant, string $list)
     {

@@ -22,7 +22,7 @@ if ($unknown || $removed) {
 $inventory['coverage'] = $mapping;
 $json = json_encode($inventory, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n";
 $escape = fn ($value) => str_replace(['|', "\r", "\n"], ['\\|', '', ' '], $value);
-$lines = ['# PMP-Abdeckungsmatrix ClubUnio', '', 'Stand15.10.2026, Fachabgleich61. Automatisch aus einer expliziten Metadaten-Allowlist.', '',
+$lines = ['# PMP-Abdeckungsmatrix ClubUnio', '', 'Stand15.10.2026, Fachabgleich67. Automatisch aus einer expliziten Metadaten-Allowlist.', '',
     'Quelle: operative PMP, Version'.$inventory['version'].'. SHA256: `'.$inventory['source_sha256'].'`.',
     'Umfang: '.count($inventory['tables']).' Objekte, '.array_sum(array_map(fn ($t) => count($t['fields']), $inventory['tables'])).' Felder, '.count($inventory['relations']).' Beziehungen, '.count($inventory['hooks']).' Eventreferenzen.', '',
     '**Keine Vollstaendigkeitsquote:** Web bedeutet vorhandener Fachweg, nicht identische Felder/SQL oder bestaetigte Fachabnahme. Event-Hashes sind Inventar, kein Nachweis semantischer Gleichheit. Alle individuellen Freigaben bleiben dokumentiert offen.', '',

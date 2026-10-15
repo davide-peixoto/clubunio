@@ -9,6 +9,11 @@ class Tenant extends Model
 {
     use UsesClubUnioSchema;
 
+    public function customerCredits()
+    {
+        return $this->hasMany(CustomerCredit::class);
+    }
+
     public function materialReceipts()
     {
         return $this->hasMany(MaterialReceipt::class);

@@ -27,6 +27,7 @@ use App\ClubUnio\Resources\ContributionPriceResource;
 use App\ClubUnio\Resources\ContributionRuleResource;
 use App\ClubUnio\Resources\CountryResource;
 use App\ClubUnio\Resources\CreditNoteResource;
+use App\ClubUnio\Resources\CustomerCreditResource;
 use App\ClubUnio\Resources\DocumentTypeResource;
 use App\ClubUnio\Resources\ExpenseResource;
 use App\ClubUnio\Resources\ExpenseRoundResource;
@@ -142,6 +143,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 LegacyTrainingPlanResource::class,
                 BusKeyboxResource::class,
                 CreditNoteResource::class,
+                CustomerCreditResource::class,
                 RefundResource::class,
                 FinancialAdjustmentStatusResource::class,
                 InvoiceCategoryResource::class,

@@ -203,7 +203,7 @@ class MemberResource extends Resource
 
     public static function getRelations(): array
     {
-        return [Relations\InvoicesRelationManager::class, Relations\ExpensesRelationManager::class,
+        return [Relations\InvoicesRelationManager::class, Relations\CustomerCreditsRelationManager::class, Relations\ExpensesRelationManager::class,
             Relations\DocumentsRelationManager::class, Relations\TeamPlayersRelationManager::class,
             Relations\TeamStaffRelationManager::class, Relations\TechnicalLeadsRelationManager::class,
             Relations\FamiliesRelationManager::class, Relations\BankAccountsRelationManager::class,

@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+Release67 aktiv: `20261015-clubunio-67-customer-credits`, Ruecksprung66.
+Eigene additive Migration66: Kundenguthaben/Verrechnungsjournal, Dossierwerte.
+55 Tests392 Assertions plus abschliessend8/112 (ueberlappend) erfolgreich.
+PMP-Metadatencheck104 Objekte OK, angemeldete neue Webliste auf Pi geprueft,
+Servicehashes lokal/Pi identisch.195 Settings/46 Vorlagen/Outbound aus.
+RE-00006/ClubUnio-Korrektur18 weiterhin Bexio-Gutschrift0: manuelle Anlage und
+Live-Teilkorrektur nicht abgeschlossen; keine echten Bankzahlungen oder Mails.
+Paket aus Basis66 plus explizitem Finanzdelta gebaut; nebenlaeufige lokale
+Workspace-/Navigationsaenderungen bewusst nicht deployed/committed.
+Details und Restgrenzen:CLUBUNIO-CUSTOMER-CREDITS.md.
+
 Release66 aktiv: `20261015-clubunio-66-signage-design`, Ruecksprung65.
 Vereinsdesign und kompakte TV-Ansicht, eigene additive Migration65 angewendet.
 27 Tests/158 Assertions erfolgreich. Oeffentliche Signage/CSS HTTP200,

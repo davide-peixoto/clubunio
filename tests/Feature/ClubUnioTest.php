@@ -155,6 +155,19 @@ use Tests\TestCase;
 
 class ClubUnioTest extends TestCase
 {
+    public function test_catalog_rejects_disabled_account_even_when_actor_instance_is_stale(): void
+    {
+        Account::whereKey($this->actor->id)->update(['active' => false]);
+        try {
+            app(CatalogService::class)->save($this->actor, $this->own, MemberStatus::class, null,
+                ['name' => 'Must not exist', 'code' => 'disabled-write-test', 'sort_order' => 0, 'active' => true]);
+            $this->fail('Disabled account wrote a catalog');
+        } catch (HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+        $this->assertFalse(MemberStatus::where('tenant_id', $this->own->id)->where('code', 'disabled-write-test')->exists());
+    }
+
     public function test_key_report_preserves_archived_holders_filters_exports_and_scope(): void
     {
         $this->assertTrue(KeyReportResource::canViewAny());

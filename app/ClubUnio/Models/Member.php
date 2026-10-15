@@ -103,6 +103,11 @@ class Member extends Model
         return $this->hasMany(Invoice::class, 'member_id');
     }
 
+    public function customerCredits()
+    {
+        return $this->hasMany(CustomerCredit::class);
+    }
+
     public function expenses()
     {
         return $this->hasMany(Expense::class, 'member_id');

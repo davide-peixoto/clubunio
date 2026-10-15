@@ -1,5 +1,18 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket67: Teilkorrekturen / Kundenguthaben / Web-Fachabgleich
+
+Neue eigene Migration66: Kundenguthaben und unveraenderliches Verrechnungsjournal.
+Adminregistrierung aus freigegebener Originalkorrektur mit manueller
+Steuer-/Betragsattestation; providerbestaetigte Zuordnung auf mehrere Rechnungen
+des gleichen verifizierten Rechnungsempfaengers. Rest und Nachweise im
+Mitgliederdossier und auf Zielrechnungen; kein freies Geld-/Rueckerstattungskonto.
+PMP-Matrix fortgeschrieben und Metadatencheck konsistent. Stammdatenpflege
+prueft nun auch den Benutzer-Aktivstatus frisch. Keine Rueckmigration.
+Live-Steuerfall18/RE-00006 bleibt bis manuell neu angelegter GS offen;
+RE-00009/GS-00004 lesend bestaetigt. Details/Grenzen:CLUBUNIO-CUSTOMER-CREDITS.md.
+API/SaaS/Betrieb und PHPMaker DEV/PROD bleiben unveraendert.
+
 ## Fachpaket66: Vereinsbezogenes Signage
 
 Kompakte TV-Ansicht nach SVS-Referenz, gemeinsame Vorschau/oeffentliche Anzeige.

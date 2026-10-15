@@ -4,6 +4,8 @@ namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\CreditNote;
+use App\ClubUnio\Models\CustomerCredit;
+use App\ClubUnio\Models\CustomerCreditAllocation;
 use App\ClubUnio\Models\FinancialAdjustmentStatus;
 use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Models\Refund;
@@ -182,6 +184,7 @@ class CreditNoteService
         if ($operation === 'confirm') {
             Validator::make($input, ['external_reference' => 'required|string|max:120|regex:/^[A-Za-z0-9][A-Za-z0-9._\/-]{0,119}$/', 'attestation' => 'accepted'])->validate();
             $note = CreditNote::where('tenant_id', $tenant->id)->findOrFail($id);
+            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Zuordnung über das Kundenguthaben durchführen.');
             $remote = $this->remote($actor, $tenant, $note->invoice_id);
         }
 
@@ -202,11 +205,13 @@ class CreditNoteService
                 }
                 $note->forceFill(['status_id' => $this->status($tenant, 'released'), 'released_by' => $actor->id, 'released_at' => now()]);
             } elseif ($operation === 'cancel') {
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Kundenguthaben separat klären; keine Stornierung mit gebundenem Guthaben.');
                 abort_unless(in_array($code, ['draft', 'released'], true), 409, 'Bestätigte Gutschriften bleiben erhalten.');
                 $data = Validator::make($input, ['reason' => 'required|string|min:3|max:1000'])->validate();
                 $note->forceFill(['status_id' => $this->status($tenant, 'cancelled'), 'cancellation_reason' => $data['reason']]);
             } else {
                 abort_unless($code === 'released', 409);
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Zuordnung über das Kundenguthaben durchführen.');
                 abort_unless(hash_equals($remote['connection_hash'], app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
                 abort_unless((string) ($note->source_snapshot['bexio_invoice_id'] ?? '') === (string) $remote['remote_id'], 409, 'Ursprüngliche Bexio-Rechnung stimmt nicht überein.');
                 $reference = strtoupper(trim($input['external_reference']));
@@ -214,12 +219,17 @@ class CreditNoteService
                 if (count($matches) !== 1 || $matches[0]['amount_cents'] !== (int) $note->amount_cents) {
                     $this->fail('Bexio bestätigt diese Gutschriftsnummer mit diesem Betrag nicht für diese Rechnung.');
                 }
-                $allocated = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->sum('amount_cents');
+                $allocated = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)
+                    ->whereNotIn('id', CustomerCredit::where('tenant_id', $tenant->id)->select('credit_note_id'))
+                    ->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->sum('amount_cents');
+                $allocated += CustomerCreditAllocation::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)->sum('amount_cents');
                 if ($remote['balance']['credit_cents'] < (int) $allocated + (int) $note->amount_cents) {
                     $this->fail('Bexio bestätigt noch keine ausreichende Gutschrift.');
                 }
                 abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
                     ->where(fn ($q) => $q->whereRaw('upper(external_reference)=?', [$reference])->orWhereRaw("external_snapshot->'allocation'->>'voucher_id' = ?", [$matches[0]['voucher_id']]))->exists(), 409, 'Bexio-Gutschrift ist bereits zugeordnet.');
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
+                    ->where(fn ($q) => $q->where('external_reference', $reference)->orWhere('voucher_id', $matches[0]['voucher_id']))->exists(), 409, 'Gutschrift ist als Kundenguthaben gebunden.');
                 $note->forceFill(['status_id' => $this->status($tenant, 'confirmed'), 'external_reference' => $reference,
                     'connection_hash' => $remote['connection_hash'], 'external_snapshot' => $remote + ['allocation' => $matches[0]], 'confirmed_by' => $actor->id, 'confirmed_at' => now()]);
             }
@@ -262,6 +272,8 @@ class CreditNoteService
         $balance += $evidence['cash'];
 
         return ['remote_id' => $row->remote_id, 'connection_hash' => $row->connection_hash, 'observed_at' => now()->toIso8601String(), 'balance' => $balance,
+            'contact_id' => isset($data['contact_id'], $payload['contact_id']) && (string) $data['contact_id'] === (string) $payload['contact_id'] ? (string) $data['contact_id'] : null,
+            'currency_id' => (int) $payload['currency_id'],
             'credit_allocations' => $evidence['credit_allocations']];
     }
 
@@ -297,6 +309,7 @@ class CreditNoteService
             }
             if (! empty($data['credit_note_id'])) {
                 $note = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $invoiceId)->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->findOrFail($data['credit_note_id']);
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Verrechnetes Kundenguthaben ist keine auszahlbare Geldzahlung.');
                 $used = $note->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->sum('amount_cents');
                 if ($amount > (int) $note->amount_cents - (int) $used) {
                     $this->fail('Gutschrift ist bereits zur Rückerstattung vorgesehen.');

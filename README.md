@@ -1,5 +1,10 @@
 # ClubUnio
 
+Fachpaket67: [Teilgutschriften und Kundenguthaben](deploy/CLUBUNIO-CUSTOMER-CREDITS.md).
+Webjournal fuer manuell attestierte Kundengutschriften und frisch nachgewiesene
+Bexio-Mehrrechnungsverrechnungen, Mitgliederdossier und Restbetragschutz.
+Live-Teilkorrektur RE-00006 wartet noch auf manuelle Bexio-Anlage/Verrechnung.
+
 Fachpaket66: [Signage in Vereinsfarben](deploy/CLUBUNIO-SIGNAGE-DESIGN.md).
 Kompakte TV-Ansicht; Logo, Farbe, Titel und Trainingsperiode je Verein unter
 Signage-Vorschau > Vereinsdesign (Admin), gemeinsam fuer Vorschau und Display.

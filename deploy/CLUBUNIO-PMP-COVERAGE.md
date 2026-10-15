@@ -1,6 +1,6 @@
 # PMP-Abdeckungsmatrix ClubUnio
 
-Stand15.10.2026, Fachabgleich61. Automatisch aus einer expliziten Metadaten-Allowlist.
+Stand15.10.2026, Fachabgleich67. Automatisch aus einer expliziten Metadaten-Allowlist.
 
 Quelle: operative PMP, Version26.14.0. SHA256: `fa8f081a56d37f808c1c354656809ae36061697337d73ab509b548906c66ce4a`.
 Umfang: 104 Objekte, 814 Felder, 31 Beziehungen, 218 Eventreferenzen.
@@ -51,8 +51,8 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |MitgliederStatus|3|Web|MemberResource, MemberService, CountryResource; ClubUnioTest.php|Eigene IDs/Lookups, Firma-Regel und Austritt; Verwaltungsfelder geschuetzt.|
 |myuserprofile|11|Technisch|Laravel/Filament bzw. ungenutztes Legacy-Objekt; |Keine ungepruefte Uebernahme von Framework-Innentabellen oder ungenutzten Objekten.|
 |Platzverfügbarkeit|4|Web|SfvCompetitions, CompetitionResource, SignagePreview; ClubUnioTest.php, SignageFeedsTest.php|SFV-Pruefung bewahrt manuelle Garderoben; Vereinskonflikte fachlich klaeren.|
-|Positionen|11|Web/Sandbox|InvoiceResource, BexioReconciliation; ClubUnioTest.php|Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen.|
-|Rechnung|10|Web/Sandbox|InvoiceResource, BexioReconciliation; ClubUnioTest.php|Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen.|
+|Positionen|11|Web/Sandbox|InvoiceResource, BexioReconciliation, CustomerCreditResource; ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php|Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen.|
+|Rechnung|10|Web/Sandbox|InvoiceResource, BexioReconciliation, CustomerCreditResource; ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php|Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen.|
 |Saison|3|Ergaenzt58|SeasonResource, ContributionRulesRelationManager, TrainingSlotResource; ClubUnioTest.php, DossierMaintenanceTest.php|Beitragsregeln im Saisondossier; Trainingsauswahl ueber Tabellen.|
 |Schluesselliste|6|Ergaenzt58|DossierMaintenanceService, ClubEventResource, ClubFunctionResource, QualificationResource; DossierMaintenanceTest.php|Schreibpflege, Pflichtfelder, Mehrfachqualifikationen, Gaeste-Master/Detail, Version/Audit.|
 |settings|8|Technisch|Laravel/Filament bzw. ungenutztes Legacy-Objekt; |Keine ungepruefte Uebernahme von Framework-Innentabellen oder ungenutzten Objekten.|
@@ -77,7 +77,7 @@ Feldmetadaten inklusive Pflicht/Lookup/Elternabhaengigkeit in pmp-coverage.json.
 |ExpenseAiController.php|0|Ersetzt|ClubOverview, SignagePreview, ExpenseService; ClubUnioTest.php|Neue Webmodule statt Legacy-Customseiten; AI-Ausgaben im Test gemockt.|
 |ApiExceptionSubscriber.php|0|Ausgenommen|API/externe Pushzustellung; |API und Betrieb geparkt; interne Notifications bleiben vorhanden.|
 |Dashboard.php|0|Ersetzt|ClubOverview, SignagePreview, ExpenseService; ClubUnioTest.php|Neue Webmodule statt Legacy-Customseiten; AI-Ausgaben im Test gemockt.|
-|BexioStatusMapping|3|Web/Sandbox|InvoiceResource, BexioReconciliation; ClubUnioTest.php|Keine echten Zahlungen; manueller Bexio-Teilgutschrifttest bleibt offen.|
+|BexioStatusMapping|3|Web/Sandbox|InvoiceResource, BexioReconciliation, CustomerCreditResource; ClubUnioTest.php, CreditNoteTest.php, CustomerCreditTest.php|Steuersnapshots und Mehrrechnungsverrechnung geprueft; keine echten Zahlungen. Live-Teilkorrektur RE-00006 bleibt bis manueller Bexio-Anlage offen.|
 |sysdiagrams|0|Technisch|Laravel/Filament bzw. ungenutztes Legacy-Objekt; |Keine ungepruefte Uebernahme von Framework-Innentabellen oder ungenutzten Objekten.|
 |Countries|6|Web|MemberResource, MemberService, CountryResource; ClubUnioTest.php|Eigene IDs/Lookups, Firma-Regel und Austritt; Verwaltungsfelder geschuetzt.|
 |vCountriesLookup|7|Web|MemberResource, MemberService, CountryResource; ClubUnioTest.php|Eigene IDs/Lookups, Firma-Regel und Austritt; Verwaltungsfelder geschuetzt.|

@@ -34,12 +34,13 @@ class CatalogService
 {
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input): CatalogModel
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
         if (! in_array($model, [FinancialAdjustmentStatus::class, InvoiceCategory::class, InvoiceStatus::class, InvoiceLineStatus::class, InvoiceWorkflowStatus::class, Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class, StaffFunction::class, Country::class, Gender::class, BillingRecipient::class, DocumentType::class, Bank::class, ExpenseType::class, ExpenseRound::class, ExpenseStatus::class, GameType::class], true)) {
             throw new \InvalidArgumentException('Unsupported catalog');
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
+            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
             // Serialize mapping changes with invoice status reconciliation.
             if (in_array($model, [InvoiceStatus::class, InvoiceLineStatus::class], true)) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();

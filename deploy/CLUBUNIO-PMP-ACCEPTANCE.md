@@ -1,5 +1,11 @@
 # Fachabgleich58: PMP und ClubUnio
 
+Nachtrag67: erneuter Metadatencheck konsistent (104/814/31/218), Finanzmatrix
+um Kundenguthaben/Verrechnungsjournal erweitert. Deaktivierter Benutzer mit
+veraltetem Actorobjekt kann Stammdaten nicht mehr schreiben. Finanzdossier
+zeigt getrennte Kredit-/Cash-/Rueckerstattungswerte und Beobachtungszeit.
+Details/Abnahmegrenzen:CLUBUNIO-CUSTOMER-CREDITS.md. Keine pauschale Endabnahme.
+
 Stand15.10.2026. Technischer Abgleich und gezielte Fehlerbehebung, keine pauschale
 fachliche Endabnahme und kein Cutover. API, SaaS, Betrieb und PHPMaker DEV/PROD
 bleiben unveraendert. Operative PMP wird ausschliesslich gelesen.

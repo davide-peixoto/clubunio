@@ -1,5 +1,9 @@
 # ClubUnio: Gutschriften und Rueckerstattungen
 
+Nachtrag67: Mehrrechnungsverrechnung aus Originalkorrekturen und getrenntes
+Kundenguthaben-Journal siehe CLUBUNIO-CUSTOMER-CREDITS.md. Historische Grenzen
+unten gelten fuer Release55; manuelle Bexio-Teilkorrektur RE-00006 bleibt offen.
+
 Nachtrag63: RE-00009/GS-00004 vollstaendig mit CHF10.05 ohne Geldzahlung
 verrechnet, lokal107 bestaetigt. Nummer/Voucher/Betrag/Eintrag/Rechnung werden
 jetzt einzeln geprueft. CLUBUNIO-CREDIT-ALLOCATION.md beschreibt den aktuellen
