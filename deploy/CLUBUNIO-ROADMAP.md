@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Fachpaket65: Oeffentliche Signage und Testanmeldung
+
+Defekten Livewire-Alias der Signage-Vorschau explizit registriert. Neue Webseiten
+/signage/sv-sissach und /join/sv-sissach, Links in Vorschau/Anmeldeliste. Nur
+heutige freigegebene Spiele, keine Mitglieder-/Anmeldedaten im Display.
+Anonyme Neuanmeldung mit Vereinslookups, privatem Azure-Upload, Einwilligung,
+CSRF/Session/Throttle/Honeypot und UUID-Doppelschutz; kein oeffentlicher Editweg.
+Additive eigene Migration64 plus explizite Publikationssettings. Outbound aus,
+Testkennzeichnung bleibt; vor spaeterem Ersatz der bestehenden Anmeldung
+Datenschutz/Dokumentpflicht/Versand fachlich abnehmen. Keine Altuebernahme.
+Details: CLUBUNIO-PUBLIC-WEB.md. API/SaaS/Betrieb/PHPMaker DEV/PROD unveraendert.
+
 ## Fachpaket64: Direkte Rechnungsuebertragung in die Sandbox
 
 Admin-Button bei intern freigegebenen neuen Rechnungen, explizite Bestaetigung,

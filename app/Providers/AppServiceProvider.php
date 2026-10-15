@@ -38,12 +38,14 @@ use App\ClubUnio\Policies\TeamAssignmentPolicy;
 use App\ClubUnio\Services\StatusAppearance;
 use App\ClubUnio\Services\StatusStyleService;
 use App\ClubUnio\Services\TestMailGuard;
+use App\Livewire\ClubUnio\SignageFeeds;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Livewire::component('clubunio.signage-feeds', SignageFeeds::class);
         // Shared display semantics for status/lookup values in every ClubUnio table and detail.
         foreach ([TextColumn::class, TextEntry::class] as $component) {
             $component::configureUsing(function ($entry) {

@@ -83,6 +83,8 @@ class RegistrationResource extends CatalogResource
     public static function table(Table $table): Table
     {
         return $table->headerActions([
+            Action::make('publicForm')->label('Öffentliches Anmeldeformular')->icon('heroicon-o-arrow-top-right-on-square')
+                ->url(fn () => route('clubunio.public.registration', Filament::getTenant()->slug))->openUrlInNewTab(),
             Action::make('newRegistration')->label('Anmeldung erfassen')->icon('heroicon-o-plus')->slideOver()->schema([Grid::make(2)->schema(RegistrationFields::applicant())])
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(RegistrationDataService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data))),
         ])->columns([

@@ -10,6 +10,7 @@ use App\ClubUnio\Http\MaterialReceiptPortalController;
 use App\ClubUnio\Http\MemberChangePortalController;
 use App\ClubUnio\Http\NotificationPortalController;
 use App\ClubUnio\Http\PortalController;
+use App\ClubUnio\Http\PublicWebController;
 use App\ClubUnio\Http\RegistrationPortalController;
 use App\ClubUnio\Http\TeamPlanningController;
 use App\ClubUnio\Http\TenantNavigationController;
@@ -22,6 +23,10 @@ use App\ClubUnio\Services\MaterialReceiptService;
 use App\ClubUnio\Services\MemberDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/signage/{tenant:slug}', [PublicWebController::class, 'signage'])->middleware('throttle:120,1')->name('clubunio.public.signage');
+Route::get('/join/{tenant:slug}', [PublicWebController::class, 'registration'])->middleware('throttle:60,1')->name('clubunio.public.registration');
+Route::post('/join/{tenant:slug}', [PublicWebController::class, 'submit'])->middleware('throttle:5,10')->name('clubunio.public.registration.submit');
 
 Route::get('/portal/login', [PortalController::class, 'loginForm'])->name('clubunio.portal.login');
 Route::post('/portal/login', [PortalController::class, 'login']);

@@ -18,6 +18,19 @@ class SignageService
     public function preview(Account $actor, Tenant $tenant, array $input): array
     {
         abort_unless($actor->canAccessTenant($tenant), 403);
+
+        return $this->display($tenant, $input);
+    }
+
+    public function publicDisplay(Tenant $tenant, array $input): array
+    {
+        app(PublicWebService::class)->authorize($tenant, 'signage');
+
+        return $this->display($tenant, ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => $input['period_id'] ?? null]);
+    }
+
+    private function display(Tenant $tenant, array $input): array
+    {
         $data = Validator::make($input, [
             'date' => 'required|date_format:Y-m-d',
             'period_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true)->where('category', 'period'))],

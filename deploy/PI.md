@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+Release65 aktiv: `20261015-clubunio-65-public-web`, Ruecksprung64.
+Signage-Alias repariert, oeffentliche Signage/Testanmeldung und Migration64.
+Zugaenge/Schutz/Abnahmegrenzen: CLUBUNIO-PUBLIC-WEB.md. Outbound aus.
+Regression29/168 und finaler Public-Web-Nachlauf12/77 (ueberlappend) erfolgreich,
+letzter Lauf mit aktivem Routen-Cache. Beide oeffentlichen Seiten/CSS200,
+POST ohne CSRF419. Quellhashes lokal/Pi gleich,191 Settings/46 Vorlagen geprueft.
+69 Bestandsanmeldungen unveraendert, synthetische Testdaten zurueckgerollt.
+Azure-Uploads gemockt; keine manuelle Browserabnahme (Chrome blockiert).
+
 Release64 aktiv: `20261015-clubunio-64-invoice-transfer`, Ruecksprung63.
 Direkter Sandbox-Rechnungsbutton, separate Testkontakte und additive Migration63.
 Live synthetisch RE-00010/CHF1.00/Entwurf7, PDF-Guard erfolgreich.

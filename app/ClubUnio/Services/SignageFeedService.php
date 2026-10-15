@@ -42,6 +42,19 @@ class SignageFeedService
     public function read(Account $actor, Tenant $tenant, string $feed): array
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+
+        return $this->loadFeed($tenant, $feed);
+    }
+
+    public function readPublic(Tenant $tenant, string $feed): array
+    {
+        app(PublicWebService::class)->authorize($tenant, 'signage');
+
+        return $this->loadFeed($tenant, $feed);
+    }
+
+    private function loadFeed(Tenant $tenant, string $feed): array
+    {
         abort_unless(in_array($feed, ['weather', 'instagram'], true), 404);
         $empty = ['state' => 'disabled', 'data' => null, 'updated' => null];
         try {

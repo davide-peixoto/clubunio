@@ -8,6 +8,7 @@ use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -34,13 +35,43 @@ class RegistrationDataService
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Registration
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+
+        return $this->persist($actor, $tenant, $id, $input);
+    }
+
+    public function submitPublic(Tenant $tenant, array $input, string $requestId): Registration
+    {
+        app(PublicWebService::class)->authorize($tenant, 'registration');
+        abort_unless(Str::isUuid($requestId), 422);
+
+        return DB::connection('clubunio')->transaction(function () use ($tenant, $input, $requestId) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $existing = DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('request_id', $requestId)->where('tenant_id', $tenant->id)->first();
+            if ($existing) {
+                return Registration::where('tenant_id', $tenant->id)->findOrFail($existing->registration_id);
+            }
+            $r = $this->persist(null, $tenant, null, $input);
+            DB::connection('clubunio')->table('clubora.public_registration_submissions')->insert(['request_id' => $requestId,
+                'tenant_id' => $tenant->id, 'registration_id' => $r->id]);
+
+            return $r;
+        });
+    }
+
+    private function persist(?Account $actor, Tenant $tenant, ?int $id, array $input): Registration
+    {
         if (array_diff(array_keys($input), [...self::CORE, ...self::DETAILS, 'revision'])) {
             throw ValidationException::withMessages(['first_name' => 'Nicht erlaubte Eingabefelder.']);
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            if ($actor) {
+                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            } else {
+                app(PublicWebService::class)->authorize($tenant, 'registration');
+                abort_unless($id === null, 403);
+            }
             $r = $id ? Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id) : new Registration;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $r->revision) {
                 throw ValidationException::withMessages(['revision' => 'Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.']);
@@ -88,11 +119,13 @@ class RegistrationDataService
             }
             $r->forceFill(['applicant_encrypted' => Crypt::encryptString(json_encode($details, JSON_THROW_ON_ERROR)), 'details_complete' => true,
                 'revision' => $id ? $r->revision + 1 : 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert([
-                'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'registrations', 'object_id' => $r->id,
-                'before_value' => null, 'after_value' => json_encode(['revision' => $r->revision, 'operation' => $id ? 'applicant_updated' : 'created',
-                    'fields' => array_keys($valid)], JSON_THROW_ON_ERROR),
-            ]);
+            if ($actor) {
+                DB::connection('clubunio')->table('clubora.object_changes')->insert([
+                    'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'registrations', 'object_id' => $r->id,
+                    'before_value' => null, 'after_value' => json_encode(['revision' => $r->revision, 'operation' => $id ? 'applicant_updated' : 'created',
+                        'fields' => array_keys($valid)], JSON_THROW_ON_ERROR),
+                ]);
+            }
             if (! $id) {
                 app(RegistrationMessageService::class)->record($tenant, $r, 'registration.created');
                 app(RegistrationMessageService::class)->record($tenant, $r, 'registration.received');

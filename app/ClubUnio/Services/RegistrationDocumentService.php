@@ -17,6 +17,20 @@ class RegistrationDocumentService
     public function add(Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+
+        $this->store($actor, $tenant, $id, $revision, $kind, $file);
+    }
+
+    public function addPublic(Tenant $tenant, Registration $registration, string $requestId, string $kind, UploadedFile $file): void
+    {
+        app(PublicWebService::class)->authorize($tenant, 'registration');
+        abort_unless(DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('tenant_id', $tenant->id)
+            ->where('registration_id', $registration->id)->where('request_id', $requestId)->exists(), 403);
+        $this->store(null, $tenant, $registration->id, $registration->fresh()->revision, $kind, $file);
+    }
+
+    private function store(?Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
+    {
         Validator::make(['kind' => $kind, 'file' => $file], ['kind' => 'required|in:portrait,identity',
             'file' => 'required|file|max:20480|mimetypes:application/pdf,image/jpeg,image/png,image/webp'])->validate();
         $bytes = $file->get();
@@ -26,7 +40,11 @@ class RegistrationDocumentService
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $kind, $file, $bytes, $mime) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            if ($actor) {
+                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            } else {
+                app(PublicWebService::class)->authorize($tenant, 'registration');
+            }
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
                 throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen. Bitte erneut öffnen.']);
@@ -53,9 +71,11 @@ class RegistrationDocumentService
             $document = $db->table('clubora.registration_documents')->insertGetId(['tenant_id' => $tenant->id,
                 'registration_id' => $id, 'kind' => $kind, 'storage_path' => $folder, 'filename' => $filename,
                 'original_filename' => mb_substr(basename(str_replace('\\', '/', $file->getClientOriginalName())), 0, 255),
-                'sha256' => $sha, 'file_size' => strlen($bytes), 'mime_type' => $mime, 'created_by' => $actor->id]);
+                'sha256' => $sha, 'file_size' => strlen($bytes), 'mime_type' => $mime, 'created_by' => $actor?->id]);
             $r->forceFill(['revision' => $r->revision + 1])->save();
-            $this->audit($actor, $tenant, $document, $id, 'added');
+            if ($actor) {
+                $this->audit($actor, $tenant, $document, $id, 'added');
+            }
         });
     }
 

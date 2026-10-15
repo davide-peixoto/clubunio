@@ -16,19 +16,21 @@ class SignagePreview extends Page
 {
     protected function getHeaderActions(): array
     {
-        return [Action::make('checkInstagram')->label('Instagram prüfen')->icon('heroicon-o-check-circle')
-            ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
-            ->action(function () {
-                $result = app(SignageFeedService::class)->verifyInstagram(Filament::auth()->user(), Filament::getTenant());
-                $notice = Notification::make()->title($result['state'] === 'ready' ? 'Instagram-Verbindung geprüft' : 'Instagram-Verbindung nicht verfügbar')
-                    ->body($result['state'] === 'ready' ? $result['item_count'].' Beiträge verfügbar.' : 'Zugang prüfen. Referenz: '.$result['reference']);
-                if ($result['state'] === 'ready') {
-                    $notice->success();
-                } else {
-                    $notice->warning();
-                }
-                $notice->send();
-            })];
+        return [Action::make('publicDisplay')->label('Öffentliche Signage')->icon('heroicon-o-arrow-top-right-on-square')
+            ->url(fn () => route('clubunio.public.signage', ['tenant' => Filament::getTenant()->slug, 'period_id' => $this->periodId]))->openUrlInNewTab(),
+            Action::make('checkInstagram')->label('Instagram prüfen')->icon('heroicon-o-check-circle')
+                ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
+                ->action(function () {
+                    $result = app(SignageFeedService::class)->verifyInstagram(Filament::auth()->user(), Filament::getTenant());
+                    $notice = Notification::make()->title($result['state'] === 'ready' ? 'Instagram-Verbindung geprüft' : 'Instagram-Verbindung nicht verfügbar')
+                        ->body($result['state'] === 'ready' ? $result['item_count'].' Beiträge verfügbar.' : 'Zugang prüfen. Referenz: '.$result['reference']);
+                    if ($result['state'] === 'ready') {
+                        $notice->success();
+                    } else {
+                        $notice->warning();
+                    }
+                    $notice->send();
+                })];
     }
 
     protected string $view = 'clubunio.signage-preview';

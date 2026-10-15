@@ -1,5 +1,9 @@
 # ClubUnio
 
+Fachpaket65: [Oeffentliche Signage und Mitgliederanmeldung](deploy/CLUBUNIO-PUBLIC-WEB.md).
+Signage-Vorschau repariert; anonyme Display-/Testformularseiten mit privaten
+Dokumenten, Lookups und Spam-/Doppelschutz. Kein Ersatz der bestehenden Website.
+
 Fachpaket64: [An Bexio uebertragen direkt bei der Rechnung](deploy/CLUBUNIO-INVOICE-TRANSFER.md).
 Admin-Webaktion nach interner Freigabe, nur Sandbox, separate Testkontakte auch
 fuer weitere Mitglieder; kein E-Mail-Versand oder Bankzahlung.

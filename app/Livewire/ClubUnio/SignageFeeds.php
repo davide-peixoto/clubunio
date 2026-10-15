@@ -3,6 +3,7 @@
 namespace App\Livewire\ClubUnio;
 
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\PublicWebService;
 use App\ClubUnio\Services\SignageFeedService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Isolate;
@@ -18,16 +19,24 @@ class SignageFeeds extends Component
     #[Locked]
     public array $feeds = [];
 
-    public function mount(int $tenantId): void
+    #[Locked]
+    public bool $publicDisplay = false;
+
+    public function mount(int $tenantId, bool $publicDisplay = false): void
     {
         $this->tenantId = $tenantId;
+        $this->publicDisplay = $publicDisplay;
         $this->authorizedTenant();
     }
 
     private function authorizedTenant(): Tenant
     {
         $tenant = Tenant::findOrFail($this->tenantId);
-        abort_unless(Auth::guard('clubunio')->user()?->fresh()?->canAccessTenant($tenant), 403);
+        if ($this->publicDisplay) {
+            app(PublicWebService::class)->authorize($tenant, 'signage');
+        } else {
+            abort_unless(Auth::guard('clubunio')->user()?->fresh()?->canAccessTenant($tenant), 403);
+        }
 
         return $tenant;
     }
@@ -36,7 +45,8 @@ class SignageFeeds extends Component
     {
         $tenant = $this->authorizedTenant();
         foreach (['weather', 'instagram'] as $feed) {
-            $this->feeds[$feed] = app(SignageFeedService::class)->read(Auth::guard('clubunio')->user(), $tenant, $feed);
+            $this->feeds[$feed] = $this->publicDisplay ? app(SignageFeedService::class)->readPublic($tenant, $feed)
+                : app(SignageFeedService::class)->read(Auth::guard('clubunio')->user(), $tenant, $feed);
         }
     }
 
