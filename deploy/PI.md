@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Dashboard- und Detailperformance (16.10.2026)
+
+Release `20261016-clubunio-dashboard-details-performance`, Basis/Ruecksprung
+`20261016-clubunio-dossier-lifecycle`. Kennzahlen504->202ms/16->6 Queries;
+zehn Widgets sequenziell2030->1586ms/63->51; Rechnungsdetail1555->1221ms,
+Refresh885->635ms. Mitglieder-/Spesendossiers mitgeprueft, Rechte unveraendert.
+54 Tests/634 Assertions erfolgreich; keine DB-Migration. Config-/Route-/
+Viewcache und Guards OK, PHP-FPM graceful reload, Login/Health HTTP200.
+Details und Messgrenzen: CLUBUNIO-DASHBOARD-DETAIL-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS unveraendert.
+
 ## Dossier-Aktivstatus und Kopien (16.10.2026)
 
 Release `20261016-clubunio-dossier-lifecycle`, Delta auf aktuellem Release.

@@ -3,22 +3,58 @@
 namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\CreditNote;
+use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
+use App\ClubUnio\Models\MemberChangeRequest;
+use App\ClubUnio\Models\Refund;
+use App\ClubUnio\Models\Registration;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Models\TrainingSlot;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
+    public function overview(Account $actor, Tenant $tenant): array
+    {
+        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        $counts = [
+            'members' => app(MemberAccessService::class)->activeMembers($tenant),
+            'changes' => MemberChangeRequest::where('tenant_id', $tenant->id)->where('state', 'pending'),
+            'registrations' => Registration::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('workflow_key', 'review')),
+            'expenses_review' => Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'F')),
+            'expenses_payment' => Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'Z')),
+            'training_slots' => TrainingSlot::where('tenant_id', $tenant->id)->where('active', true),
+            'credits' => CreditNote::where('tenant_id', $tenant->id)->whereHas('status', fn ($q) => $q->whereIn('code', ['draft', 'released'])),
+            'refunds' => Refund::where('tenant_id', $tenant->id)->whereHas('status', fn ($q) => $q->where('code', 'draft')),
+        ];
+        $query = DB::connection('clubunio')->query();
+        foreach ($counts as $name => $count) {
+            $query->selectSub($count->selectRaw('count(*)')->toBase(), $name);
+        }
+
+        $open = $this->summarizeOpenInvoices($this->scopeOpenInvoices(Invoice::where('tenant_id', $tenant->id)->where('active', true), $tenant));
+        $row = (array) $query->fromSub($open, 'open_totals')->crossJoinSub($this->refundableCashQuery($tenant), 'cash_totals')
+            ->addSelect('open_totals.total as open_count', 'open_totals.amount as open_amount', 'cash_totals.amount as refundable_cents')->first();
+        $amount = (string) $row['open_amount'];
+
+        return array_replace(array_map(intval(...), $row), ['open_amount' => $amount]);
+    }
+
     public function refundableCash(Account $actor, Tenant $tenant): int
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
 
-        return (int) DB::connection('clubunio')->table('clubora.bexio_balances as b')->join('clubora.invoices as i', fn ($j) => $j->on('i.id', '=', 'b.object_id')->on('i.tenant_id', '=', 'b.tenant_id'))
+        return (int) $this->refundableCashQuery($tenant)->value('amount');
+    }
+
+    private function refundableCashQuery(Tenant $tenant): \Illuminate\Database\Query\Builder
+    {
+        return DB::connection('clubunio')->table('clubora.bexio_balances as b')->join('clubora.invoices as i', fn ($j) => $j->on('i.id', '=', 'b.object_id')->on('i.tenant_id', '=', 'b.tenant_id'))
             ->where('b.tenant_id', $tenant->id)->where('b.object_type', 'invoice')->where('i.active', true)
             ->selectRaw("COALESCE(SUM(GREATEST(0,COALESCE(b.cash_excess_cents,0)-(SELECT COALESCE(SUM(r.amount_cents),0) FROM clubora.refunds r
-                JOIN clubora.financial_adjustment_statuses s ON s.id=r.status_id AND s.tenant_id=r.tenant_id WHERE r.invoice_id=i.id AND r.tenant_id=i.tenant_id AND s.code<>'cancelled'))),0) AS amount")
-            ->value('amount');
+                JOIN clubora.financial_adjustment_statuses s ON s.id=r.status_id AND s.tenant_id=r.tenant_id WHERE r.invoice_id=i.id AND r.tenant_id=i.tenant_id AND s.code<>'cancelled'))),0) AS amount");
     }
 
     public function newMembersMonthly(Account $actor, Tenant $tenant): array
@@ -88,11 +124,15 @@ class DashboardService
 
     public function openSummary(Account $actor, Tenant $tenant): array
     {
-        $query = $this->openInvoices($actor, $tenant)->toBase();
-        $totals = DB::connection('clubunio')->query()->fromSub($query, 'open_invoices')
-            ->selectRaw('count(*) as total, COALESCE(sum(open_amount), 0) as amount')->first();
+        $totals = $this->summarizeOpenInvoices($this->openInvoices($actor, $tenant))->first();
 
         return ['count' => (int) $totals->total, 'amount' => $totals->amount];
+    }
+
+    private function summarizeOpenInvoices(Builder $query): \Illuminate\Database\Query\Builder
+    {
+        return DB::connection('clubunio')->query()->fromSub($query->toBase(), 'open_invoices')
+            ->selectRaw('count(*) as total, COALESCE(sum(open_amount), 0) as amount');
     }
 
     public function ages(Account $actor, Tenant $tenant): array

@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+16.10.2026: Dashboard and invoice detail reads consolidated without changing
+roles, mutation checks, balances or membership rules. Member/expense dossiers
+profiled as well. No schema migration or legacy DEV/PROD deployment.
+See CLUBUNIO-DASHBOARD-DETAIL-PERFORMANCE.md for measurements and tests.
+
 16.10.2026: Filter/search rendering now uses a bounded Livewire permission
 snapshot; property changes, actions and nested mounts retain fresh checks.
 No schema/data migration or legacy deployment. Filter/search combination and

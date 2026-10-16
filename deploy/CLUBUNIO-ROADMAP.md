@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dashboard- und Detailperformance (16.10.2026)
+
+Kennzahlen, Statusdiagramme und Rechnungsdetail-Summen mit gebuendelten
+Abfragen; fachlich unpassende Bexio-Aktionen kurzgeschlossen, ohne Rechte
+zu cachen. Mitglieder-/Spesendetails und Dossier-Untertabellen mitgeprueft.
+Frische Rollen-/Schreibpruefungen, Betrags- und Austrittsregeln erhalten.
+Keine Datenmigration. Details: CLUBUNIO-DASHBOARD-DETAIL-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS unveraendert.
+
 ## Dossier-Kopien und Aktivstatus (16.10.2026)
 
 Funktionen, Sponsoring und Veranstaltungszuordnungen: direkte Kopier-,

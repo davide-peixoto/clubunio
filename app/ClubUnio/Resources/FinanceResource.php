@@ -2,6 +2,7 @@
 
 namespace App\ClubUnio\Resources;
 
+use App\ClubUnio\Services\InvoiceDetailTotals;
 use App\ClubUnio\Services\InvoiceTaxService;
 use App\ClubUnio\Services\StatusAppearance;
 use Filament\Infolists\Components\TextEntry;
@@ -75,11 +76,11 @@ abstract class FinanceResource extends CatalogResource
         }
         $items[] = TextEntry::make('bexioBalance.observed_at')->label('Finanzabgleich vom')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->placeholder('–');
         if (static::$kind === 'invoices') {
-            $items[] = TextEntry::make('pending_credits')->label('ClubUnio Gutschriften offen CHF')->state(fn ($record) => number_format($record->creditNotes()->whereHas('status', fn ($q) => $q->whereIn('code', ['draft', 'released']))->sum('amount_cents') / 100, 2, '.', "'"));
-            $items[] = TextEntry::make('pending_refunds')->label('Rückerstattungen vorgesehen CHF')->state(fn ($record) => number_format($record->refunds()->whereHas('status', fn ($q) => $q->where('code', 'draft'))->sum('amount_cents') / 100, 2, '.', "'"));
-            $items[] = TextEntry::make('confirmed_refunds')->label('Rückerstattungen manuell bestätigt CHF')->state(fn ($record) => number_format($record->refunds()->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->sum('amount_cents') / 100, 2, '.', "'"));
+            $items[] = TextEntry::make('pending_credits')->label('ClubUnio Gutschriften offen CHF')->state(fn ($record) => number_format(app(InvoiceDetailTotals::class)->for($record)['pending_credits'] / 100, 2, '.', "'"));
+            $items[] = TextEntry::make('pending_refunds')->label('Rückerstattungen vorgesehen CHF')->state(fn ($record) => number_format(app(InvoiceDetailTotals::class)->for($record)['pending_refunds'] / 100, 2, '.', "'"));
+            $items[] = TextEntry::make('confirmed_refunds')->label('Rückerstattungen manuell bestätigt CHF')->state(fn ($record) => number_format(app(InvoiceDetailTotals::class)->for($record)['confirmed_refunds'] / 100, 2, '.', "'"));
             $items[] = TextEntry::make('available_cash')->label('Noch verfügbares Guthaben CHF')->state(fn ($record) => number_format(max(0, (int) ($record->bexioBalance?->cash_excess_cents ?? 0)
-                - (int) $record->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->sum('amount_cents')) / 100, 2, '.', "'"));
+                - app(InvoiceDetailTotals::class)->for($record)['reserved_refunds']) / 100, 2, '.', "'"));
         }
 
         return $schema->columns(3)->components($items);

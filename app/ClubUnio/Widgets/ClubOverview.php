@@ -2,18 +2,11 @@
 
 namespace App\ClubUnio\Widgets;
 
-use App\ClubUnio\Models\CreditNote;
-use App\ClubUnio\Models\Expense;
-use App\ClubUnio\Models\MemberChangeRequest;
-use App\ClubUnio\Models\Refund;
-use App\ClubUnio\Models\Registration;
-use App\ClubUnio\Models\TrainingSlot;
 use App\ClubUnio\Resources\CreditNoteResource;
 use App\ClubUnio\Resources\MemberChangeRequestResource;
 use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\RefundResource;
 use App\ClubUnio\Services\DashboardService;
-use App\ClubUnio\Services\MemberAccessService;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -29,25 +22,25 @@ class ClubOverview extends StatsOverviewWidget
             return [];
         }
 
-        $open = app(DashboardService::class)->openSummary(Filament::auth()->user(), $tenant);
+        $counts = app(DashboardService::class)->overview(Filament::auth()->user(), $tenant);
 
         return [
-            Stat::make('Offene Rechnungen', $open['count'])->icon('heroicon-o-document-text')
+            Stat::make('Offene Rechnungen', $counts['open_count'])->icon('heroicon-o-document-text')
                 ->url(OpenInvoiceResource::getUrl()),
-            Stat::make('Offener Rechnungsbetrag', 'CHF '.number_format((float) $open['amount'], 2, '.', "'"))
+            Stat::make('Offener Rechnungsbetrag', 'CHF '.number_format((float) $counts['open_amount'], 2, '.', "'"))
                 ->url(OpenInvoiceResource::getUrl()),
-            Stat::make('Aktive Mitglieder', app(MemberAccessService::class)->activeMembers($tenant)->count())->icon('heroicon-o-users'),
-            Stat::make('Mitgliederänderungsanträge', MemberChangeRequest::where('tenant_id', $tenant->id)->where('state', 'pending')->count())
+            Stat::make('Aktive Mitglieder', $counts['members'])->icon('heroicon-o-users'),
+            Stat::make('Mitgliederänderungsanträge', $counts['changes'])
                 ->icon('heroicon-o-pencil-square')->url(MemberChangeRequestResource::getUrl()),
-            Stat::make('Anmeldungen in Prüfung', Registration::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('workflow_key', 'review'))->count())->icon('heroicon-o-user-plus'),
-            Stat::make('Spesen zur Prüfung', Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'F'))->count())->icon('heroicon-o-clipboard-document-check'),
-            Stat::make('Spesen zur Zahlung', Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->where('code', 'Z'))->count())->icon('heroicon-o-banknotes'),
-            Stat::make('Aktive Trainingszeiten', TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->count())->icon('heroicon-o-clock'),
-            Stat::make('Offene Gutschriften', CreditNote::where('tenant_id', $tenant->id)->whereHas('status', fn ($q) => $q->whereIn('code', ['draft', 'released']))->count())
+            Stat::make('Anmeldungen in Prüfung', $counts['registrations'])->icon('heroicon-o-user-plus'),
+            Stat::make('Spesen zur Prüfung', $counts['expenses_review'])->icon('heroicon-o-clipboard-document-check'),
+            Stat::make('Spesen zur Zahlung', $counts['expenses_payment'])->icon('heroicon-o-banknotes'),
+            Stat::make('Aktive Trainingszeiten', $counts['training_slots'])->icon('heroicon-o-clock'),
+            Stat::make('Offene Gutschriften', $counts['credits'])
                 ->icon('heroicon-o-receipt-refund')->url(CreditNoteResource::getUrl()),
-            Stat::make('Vorgesehene Rückerstattungen', Refund::where('tenant_id', $tenant->id)->whereHas('status', fn ($q) => $q->where('code', 'draft'))->count())
+            Stat::make('Vorgesehene Rückerstattungen', $counts['refunds'])
                 ->icon('heroicon-o-arrow-uturn-left')->url(RefundResource::getUrl()),
-            Stat::make('Verfügbares Guthaben', 'CHF '.number_format(app(DashboardService::class)->refundableCash(Filament::auth()->user(), $tenant) / 100, 2, '.', "'"))
+            Stat::make('Verfügbares Guthaben', 'CHF '.number_format($counts['refundable_cents'] / 100, 2, '.', "'"))
                 ->icon('heroicon-o-banknotes')->url(RefundResource::getUrl()),
         ];
     }

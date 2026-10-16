@@ -41,9 +41,9 @@ class BexioRecordActions
     {
         return Action::make('bexio_'.$operation)->label($operation === 'issue' ? 'In Bexio freigeben' : 'In Bexio stornieren')
             ->icon($operation === 'issue' ? 'heroicon-o-check' : 'heroicon-o-x-mark')
-            ->visible(fn ($livewire) => self::eligible($livewire, 'invoice')
-                && ($operation === 'issue' ? (string) $livewire->getRecord()->status?->code === '7'
-                    : in_array((string) $livewire->getRecord()->status?->code, ['8', '31'], true)))
+            ->visible(fn ($livewire) => ($operation === 'issue' ? (string) $livewire->getRecord()->status?->code === '7'
+                : in_array((string) $livewire->getRecord()->status?->code, ['8', '31'], true))
+                && self::eligible($livewire, 'invoice'))
             ->requiresConfirmation()->modalDescription($operation === 'issue' ? 'Rechnung in der verbundenen Bexio-Organisation freigeben. Kein E-Mail-Versand.' : 'Unbezahlte Rechnung in Bexio stornieren. Belege mit Zahlungen oder Gutschriften bleiben gesperrt.')
             ->action(function ($livewire) use ($operation) {
                 try {

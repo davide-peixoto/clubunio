@@ -25,17 +25,22 @@ abstract class StatusDistribution extends ChartWidget
         $tenant = Filament::getTenant();
         abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
         $model = $this->modelClass();
-        $query = $model::where('tenant_id', $tenant->id);
+        $record = new $model;
+        $query = $model::where($record->qualifyColumn('tenant_id'), $tenant->id);
         if ($model === Member::class) {
-            $query->whereNull('archived_at');
+            $query->whereNull($record->qualifyColumn('archived_at'));
         } else {
-            $query->where('active', true);
+            $query->where($record->qualifyColumn('active'), true);
         }
-        $counts = $query->selectRaw('status_id, count(*) as total')->groupBy('status_id')->pluck('total', 'status_id');
-        $statuses = (new $model)->status()->getRelated()->newQuery()->where('tenant_id', $tenant->id)->pluck('name', 'id');
-        $labels = $counts->keys()->map(fn ($id) => $statuses[$id] ?? 'Ohne Status')->all();
+        $statusTable = $record->status()->getRelated()->getTable();
+        $statusId = $record->qualifyColumn('status_id');
+        $rows = $query->leftJoin($statusTable.' as dashboard_status', fn ($join) => $join
+            ->on('dashboard_status.id', '=', $statusId)->where('dashboard_status.tenant_id', $tenant->id))
+            ->select($statusId, 'dashboard_status.name')->selectRaw('count(*) as total')
+            ->groupBy($statusId, 'dashboard_status.name')->get();
+        $labels = $rows->map(fn ($row) => $row->name ?? 'Ohne Status')->all();
 
-        return ['labels' => $labels, 'datasets' => [['label' => 'Anzahl', 'data' => $counts->values()->all(),
+        return ['labels' => $labels, 'datasets' => [['label' => 'Anzahl', 'data' => $rows->pluck('total')->all(),
             'backgroundColor' => array_map(StatusAppearance::hex(...), $labels)]]];
     }
 }
