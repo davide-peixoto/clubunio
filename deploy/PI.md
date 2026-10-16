@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+## Untertabellen-Aktionen (16.10.2026)
+
+Delta-Release `20261016-clubunio-relation-actions`, auf aktuellem Release
+aufgebaut. Installer meldet den konkreten Ruecksprung. Keine DB-Migration.
+Details: CLUBUNIO-RELATION-ACTIONS.md. PHPMaker DEV/PROD unveraendert.
+
 ## Teamplanung und Kalenderperformance (16.10.2026)
 
 Release `20261016-clubunio-planning-performance`, Basis/Ruecksprung

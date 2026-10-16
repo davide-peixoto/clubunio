@@ -160,6 +160,8 @@ class WorkspaceEditingTest extends TestCase
         $component->callTableAction('deactivateAssignment', $record)->assertHasNoTableActionErrors();
         $this->assertNotNull($record->fresh());
         $this->assertFalse($record->fresh()->active);
+        $component->filterTable('active', false)->callTableAction('restoreAssignment', $record->fresh())->assertHasNoTableActionErrors();
+        $this->assertTrue($record->fresh()->active);
     }
 
     public function test_standalone_copy_and_deactivate_use_the_same_services(): void

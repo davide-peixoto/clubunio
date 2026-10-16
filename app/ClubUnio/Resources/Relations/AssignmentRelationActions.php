@@ -126,6 +126,16 @@ trait AssignmentRelationActions
             Action::make('addAssignment')->label('Hinzufügen')->icon('heroicon-o-plus')
                 ->schema($schema)->action(fn (array $data) => $save(null, $data)),
         ])->recordActions([
+            Action::make('restoreAssignment')->label('Wiederherstellen')->icon('heroicon-o-arrow-path')->iconButton()->tooltip('Wiederherstellen')
+                ->visible(fn (Model $record) => ! $record->active)->requiresConfirmation()
+                ->schema([Hidden::make('_version'), Hidden::make('revision')])
+                ->fillForm(fn (Model $record) => $this->assignmentData($record))
+                ->action(function (Model $record, array $data) use ($save) {
+                    $values = $this->assignmentData($record);
+                    $version = array_key_exists('revision', $values) ? 'revision' : '_version';
+                    $values[$version] = $data[$version] ?? null;
+                    $save($record->id, ['active' => true] + $values);
+                }),
             ...$table->getRecordActions(),
             Action::make('editAssignment')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')
                 ->schema($schema)->fillForm(fn (Model $record) => $this->assignmentData($record))

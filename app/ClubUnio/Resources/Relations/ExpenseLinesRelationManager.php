@@ -31,6 +31,14 @@ class ExpenseLinesRelationManager extends DossierRelationManager
                 ->action(fn (array $data) => FormMutation::run($this, fn () => app(ExpenseService::class)->saveLine(
                     Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, null, $data))),
         ])->recordActions([
+            Action::make('copyLine')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Ohne Beleg und KI-Nachweis kopieren')->slideOver()->visible($editable)
+                ->fillForm(fn ($record) => $record->only(['expense_type_id', 'game_type_id', 'opponent', 'amount', 'notes']) + ['active' => true, 'expense_revision' => $this->getOwnerRecord()->fresh()->revision])
+                ->schema(fn () => ExpenseFields::line($this->getOwnerRecord()))->after(fn () => $this->financeLinesChanged())
+                ->action(fn (array $data) => FormMutation::run($this, fn () => app(ExpenseService::class)->saveLine(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, null, $data))),
+            ...ActiveRecordActions::make(function ($record, $data, $active) {
+                FormMutation::run($this, fn () => app(ExpenseService::class)->saveLine(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, $record->id, ['revision' => $data['revision'], 'expense_revision' => $data['expense_revision'], 'active' => $active]));
+                $this->financeLinesChanged();
+            }, fn ($record) => $editable(), fn ($record) => ['revision' => $record->revision, 'expense_revision' => $this->getOwnerRecord()->fresh()->revision]),
             Action::make('uploadDocument')->label('Beleg hinzufügen')->icon('heroicon-o-arrow-up-tray')->iconButton()->tooltip('Beleg hinzufügen')->visible($editable)->slideOver()
                 ->after(fn () => $this->financeLinesChanged())
                 ->fillForm(fn ($record) => ['revision' => $record->revision, 'expense_revision' => $this->getOwnerRecord()->fresh()->revision])

@@ -236,6 +236,11 @@ class MemberChangesDocumentsTest extends TestCase
         $d = $this->document();
         Livewire::test(ListMemberDocuments::class)->assertSuccessful()->assertCanSeeTableRecords([$d])->mountTableAction('manageDocument', $d)->assertHasNoActionErrors();
         Livewire::test(DocumentsRelationManager::class, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class])->assertSuccessful()->mountTableAction('manageDocument', $d)->assertHasNoActionErrors();
+        $component = Livewire::test(DocumentsRelationManager::class, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+        $component->callTableAction('deactivateRecord', $d)->assertHasNoTableActionErrors();
+        $this->assertFalse($d->fresh()->active);
+        $component->filterTable('active', false)->callTableAction('restoreRecord', $d->fresh())->assertHasNoTableActionErrors();
+        $this->assertTrue($d->fresh()->active);
         $this->expectException(HttpException::class);
         app(MemberDocumentMaintenanceService::class)->update($this->user, $this->tenant, $d->id, $this->member->id, 1, false, false);
     }

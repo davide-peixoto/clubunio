@@ -39,6 +39,7 @@ class BankAccountsRelationManager extends DossierRelationManager
             Action::make('newBank')->label('Bankkonto erfassen')->icon('heroicon-o-plus')->slideOver()->schema($schema)
                 ->action(fn (array $data) => FormMutation::run($this, fn () => app(BankAccountService::class)->save(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, null, $data))),
         ])->recordActions([
+            ...ActiveRecordActions::make(fn ($record, $data, $active) => FormMutation::run($this, fn () => app(BankAccountService::class)->save(Filament::auth()->user()->fresh(), Filament::getTenant(), $this->getOwnerRecord()->id, $record->id, ['bank_id' => $record->bank_id, 'revision' => $data['revision'], 'active' => $active]))),
             Action::make('editBank')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bankkonto bearbeiten')->slideOver()->schema($schema)
                 ->fillForm(fn ($record) => $record->only(['revision', 'bank_id', 'active']))
                 ->action(fn ($record, array $data) => FormMutation::run($this, fn () => app(BankAccountService::class)->save(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, $record->id, $data))),

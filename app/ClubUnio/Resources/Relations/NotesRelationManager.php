@@ -30,13 +30,14 @@ class NotesRelationManager extends DossierRelationManager
             Toggle::make('active')->label('Aktiv')->default(true),
             Hidden::make('revision')];
         $save = fn ($id, $data) => app(MemberNoteService::class)->save(
-            Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, $id, $data
+            Filament::auth()->user()->fresh(), Filament::getTenant(), $this->getOwnerRecord()->id, $id, $data
         );
 
         return parent::table($table)->headerActions([
             Action::make('addNote')->label('Bemerkung hinzufügen')->icon('heroicon-o-plus')->schema($fields)
                 ->action(fn (array $data) => FormMutation::run($this, fn () => $save(null, $data))),
         ])->recordActions([
+            ...ActiveRecordActions::make(fn ($record, $data, $active) => FormMutation::run($this, fn () => $save($record->id, ['body' => $record->body, 'revision' => $data['revision'], 'active' => $active]))),
             Action::make('changeNote')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bemerkung bearbeiten')
                 ->fillForm(fn ($record) => $record->only(['body', 'active', 'revision']))->schema($fields)
                 ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save($record->id, $data))),

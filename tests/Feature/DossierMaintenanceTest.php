@@ -16,16 +16,21 @@ use App\ClubUnio\Resources\ClubEventResource\Pages\ManageEvents;
 use App\ClubUnio\Resources\ClubEventResource\Pages\ViewEvent;
 use App\ClubUnio\Resources\ClubFunctionResource\Pages\ManageFunctions;
 use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
+use App\ClubUnio\Resources\Relations\BankAccountsRelationManager;
 use App\ClubUnio\Resources\Relations\ContributionRulesRelationManager;
 use App\ClubUnio\Resources\Relations\EventAttendeesRelationManager;
 use App\ClubUnio\Resources\Relations\EventGuestsRelationManager;
 use App\ClubUnio\Resources\Relations\FunctionsRelationManager;
 use App\ClubUnio\Resources\Relations\KeysRelationManager;
+use App\ClubUnio\Resources\Relations\NotesRelationManager;
 use App\ClubUnio\Resources\Relations\SponsorshipsRelationManager;
 use App\ClubUnio\Resources\SeasonResource;
+use App\ClubUnio\Services\BankAccountService;
 use App\ClubUnio\Services\DossierMaintenanceService;
+use App\ClubUnio\Services\MemberNoteService;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -146,6 +151,40 @@ class DossierMaintenanceTest extends TestCase
         $this->assertSame(3, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
+    }
+
+    public function test_key_return_and_event_guest_shortcuts_are_reversible(): void
+    {
+        $key = $this->save(MemberKey::class, ['number' => '321', 'name' => 'Fixture', 'color' => 'Blue', 'active' => true], null, $this->member->id);
+        $event = $this->save(ClubEvent::class, ['name' => 'Fixture', 'location' => 'Here', 'season_id' => $this->season, 'active' => true]);
+        $guest = $this->save(EventGuest::class, ['club_event_id' => $event->id, 'active' => true], null, $this->member->id);
+        foreach ([[KeysRelationManager::class, $this->member, ViewMember::class, $key], [EventAttendeesRelationManager::class, $event, ViewEvent::class, $guest]] as [$manager, $owner, $page, $record]) {
+            $component = Livewire::test($manager, ['ownerRecord' => $owner, 'pageClass' => $page]);
+            $component->callTableAction('deactivateRecord', $record)->assertHasNoTableActionErrors();
+            $this->assertFalse($record->fresh()->active);
+            $component->filterTable('active', false)->callTableAction('restoreRecord', $record->fresh())->assertHasNoTableActionErrors();
+            $this->assertTrue($record->fresh()->active);
+            $component->filterTable('active', true)->mountTableAction('deactivateRecord', $record->fresh());
+            $record->refresh()->increment('revision');
+            $component->callMountedTableAction()->assertHasTableActionErrors();
+            $this->assertTrue($record->fresh()->active);
+        }
+    }
+
+    public function test_bank_and_note_shortcuts_preserve_content(): void
+    {
+        $bankId = $this->db->table('clubora.banks')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture bank', 'active' => true]);
+        $bank = app(BankAccountService::class)->save($this->actor, $this->tenant, $this->member->id, null, ['bank_id' => $bankId, 'iban' => 'CH9300762011623852957', 'active' => true]);
+        $note = app(MemberNoteService::class)->save($this->actor, $this->tenant, $this->member->id, null, ['body' => 'Fixture note', 'active' => true]);
+        foreach ([[BankAccountsRelationManager::class, $bank], [NotesRelationManager::class, $note]] as [$manager, $record]) {
+            $component = Livewire::test($manager, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+            $component->callTableAction('deactivateRecord', $record)->assertHasNoTableActionErrors();
+            $this->assertFalse($record->fresh()->active);
+            $component->filterTable('active', false)->callTableAction('restoreRecord', $record->fresh())->assertHasNoTableActionErrors();
+            $this->assertTrue($record->fresh()->active);
+        }
+        $this->assertSame('Fixture note', $note->fresh()->body);
+        $this->assertSame('CH9300762011623852957', Crypt::decryptString($bank->fresh()->iban_encrypted));
     }
 
     public function test_event_guest_master_detail_and_duplicate_protection(): void

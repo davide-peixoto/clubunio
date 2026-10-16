@@ -56,6 +56,9 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                 ->fillForm(fn () => ['revision' => $this->getOwnerRecord()->fresh()->revision, 'discount' => 0])->schema($schema)
                 ->action(fn (array $data) => $save($data, null)),
         ])->recordActions([
+            Action::make('copyLine')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Als neue manuelle Position kopieren')->visible(fn ($record) => $editable() && $record->active && ! $record->contribution)
+                ->fillForm(fn ($record) => $record->only(['description', 'gross_amount', 'discount', 'notes', 'bexio_catalog_article_id', 'bexio_catalog_tax_id']) + ['revision' => $this->getOwnerRecord()->fresh()->revision])
+                ->schema($schema)->action(fn (array $data) => $save($data, null)),
             Action::make('restoreLine')->label('Position wiederherstellen')->icon('heroicon-o-arrow-uturn-left')->iconButton()->tooltip('Position wiederherstellen')
                 ->visible(fn ($record) => $editable() && ! $record->active && ! $record->contribution)
                 ->fillForm(fn () => ['revision' => $this->getOwnerRecord()->fresh()->revision])

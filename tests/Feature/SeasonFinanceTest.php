@@ -172,6 +172,10 @@ class SeasonFinanceTest extends TestCase
         $this->assertEquals(20, $line->net_amount);
         $lines->callTableAction('editLine', $line, data: ['gross_amount' => '30.00'])->assertHasNoTableActionErrors()->assertNoRedirect();
         $this->assertEquals(25, $line->fresh()->net_amount);
+        $lines->callTableAction('copyLine', $line->fresh())->assertHasNoTableActionErrors()->assertNoRedirect();
+        $copy = $invoice->lines()->whereKeyNot($line->id)->sole();
+        $this->assertEquals(25, $copy->net_amount);
+        $this->assertNull($copy->contribution);
         $lines->callTableAction('removeLine', $line->fresh(), data: ['reason' => 'Synthetic removal'])->assertHasNoTableActionErrors()->assertNoRedirect();
         $this->assertFalse($line->fresh()->active);
         $lines->filterTable('active', false)->callTableAction('restoreLine', $line->fresh(), data: ['reason' => 'Synthetic restore'])->assertHasNoTableActionErrors()->assertNoRedirect();
@@ -197,6 +201,16 @@ class SeasonFinanceTest extends TestCase
         $line = $expense->lines()->sole();
         $lines->callTableAction('editLine', $line, data: ['amount' => '25.00'])->assertHasNoTableActionErrors();
         $this->assertEquals(25, $line->fresh()->amount);
+        $line->forceFill(['storage_reference' => 'fixture/private.pdf', 'suggested_amount' => 20, 'suggestion_accepted' => false])->save();
+        $lines->callTableAction('copyLine', $line->fresh())->assertHasNoTableActionErrors()->assertNoRedirect();
+        $copy = $expense->lines()->whereKeyNot($line->id)->sole();
+        $this->assertNull($copy->storage_reference);
+        $this->assertNull($copy->suggested_amount);
+        $this->assertEquals(25, $copy->amount);
+        $lines->callTableAction('deactivateRecord', $copy)->assertHasNoTableActionErrors();
+        $this->assertFalse($copy->fresh()->active);
+        $lines->filterTable('active', false)->callTableAction('restoreRecord', $copy->fresh())->assertHasNoTableActionErrors();
+        $this->assertTrue($copy->fresh()->active);
         $target = $this->db->table('clubora.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'F')->value('id');
         $this->manager(false)->callTableAction('transition', $expense->fresh(), data: ['status_id' => $target, 'reason' => 'Synthetic test approval'])->assertHasNoTableActionErrors();
         $this->assertSame('F', $expense->fresh()->status->code);

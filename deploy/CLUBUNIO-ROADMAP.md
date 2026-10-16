@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Untertabellen: restliche Aktionen (16.10.2026)
+
+Wiederherstellen fuer Zuordnungen, direkte Aktivstatusaktionen, sichere
+Positionskopien und Schluesselrueckgabe. Bestehende Fachservices und Sperren
+erhalten; keine DB-Migration. Details: CLUBUNIO-RELATION-ACTIONS.md.
+PHPMaker DEV/PROD unveraendert; API/SaaS/Betrieb nicht erweitert.
+
 ## Teamplanung- und Kalenderperformance (16.10.2026)
 
 Wiederholte Datumsumwandlungen fuer Konflikte/Tageszellen gebuendelt,

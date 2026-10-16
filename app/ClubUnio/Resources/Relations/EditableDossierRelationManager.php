@@ -71,6 +71,10 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
                         ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save($record->id,
                             array_replace($this->itemValues($record), ['revision' => $data['revision'], 'active' => $active])))), [false, true]),
                 ] : []),
+                ...(static::$kind === 'keys' ? ActiveRecordActions::make(
+                    fn ($record, $data, $active) => FormMutation::run($this, fn () => $save($record->id, array_replace($this->itemValues($record), ['revision' => $data['revision'], 'active' => $active]))),
+                    fn ($record) => $canEdit(), deactivateLabel: 'Rückgabe erfassen'
+                ) : []),
             ]);
     }
 }
