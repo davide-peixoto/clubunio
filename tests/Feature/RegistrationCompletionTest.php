@@ -5,8 +5,12 @@ namespace Tests\Feature;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Registration;
+use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\RegistrationResource\Pages\ListRegistrations;
+use App\ClubUnio\Resources\Relations\RegistrationsRelationManager;
+use App\ClubUnio\Resources\TeamSeasonResource\Pages\ViewTeamSeason;
 use App\ClubUnio\Services\MemberAccessService;
 use App\ClubUnio\Services\MemberService;
 use App\ClubUnio\Services\MessageTemplateService;
@@ -107,6 +111,23 @@ class RegistrationCompletionTest extends TestCase
     {
         return app(RegistrationReviewService::class)->review($this->actor, $this->tenant, $this->registration->id,
             $extra + ['revision' => $this->registration->fresh()->revision, 'status_id' => $this->statuses[$key], 'reason' => 'Synthetic reviewed decision', 'member_type_id' => $this->type]);
+    }
+
+    public function test_registration_review_is_available_in_team_and_member_dossiers(): void
+    {
+        $member = Member::findOrFail($this->insert('members', ['first_name' => 'Fixture']));
+        $this->registration->forceFill(['member_id' => $member->id, 'team_season_id' => $this->team])->save();
+        $manager = Livewire::test(RegistrationsRelationManager::class,
+            ['ownerRecord' => $member, 'pageClass' => ViewMember::class]);
+        $manager->mountTableAction('view', $this->registration)->assertHasNoTableActionErrors();
+        $manager = Livewire::test(RegistrationsRelationManager::class,
+            ['ownerRecord' => TeamSeason::findOrFail($this->team), 'pageClass' => ViewTeamSeason::class]);
+        $manager->callTableAction('review', $this->registration, data: ['status_id' => $this->statuses['pool'], 'reason' => 'Synthetic capacity decision'])->assertHasNoTableActionErrors()->assertNoRedirect();
+        $this->assertSame('pool', $this->registration->fresh()->status->workflow_key);
+        $this->assertTrue($this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->exists());
+        $other = Member::findOrFail($this->insert('members', ['first_name' => 'Other']));
+        Livewire::test(RegistrationsRelationManager::class, ['ownerRecord' => $other, 'pageClass' => ViewMember::class])
+            ->assertCanNotSeeTableRecords([$this->registration]);
     }
 
     public function test_acceptance_assigns_team_and_proposes_parent_without_granting_access(): void

@@ -8,8 +8,12 @@ use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Models\InvoiceLine;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\CreditNoteResource\Pages\ViewCreditNote;
+use App\ClubUnio\Resources\EmbeddedCreditNote;
+use App\ClubUnio\Resources\EmbeddedRefund;
 use App\ClubUnio\Resources\InvoiceResource\Pages\ViewInvoice;
 use App\ClubUnio\Resources\RefundResource\Pages\ViewRefund;
+use App\ClubUnio\Resources\Relations\InvoiceCreditsRelationManager;
+use App\ClubUnio\Resources\Relations\InvoiceRefundsRelationManager;
 use App\ClubUnio\Services\BexioBalanceService;
 use App\ClubUnio\Services\BexioInvoiceCashService;
 use App\ClubUnio\Services\BexioSandboxDispatchService;
@@ -101,6 +105,25 @@ class CreditNoteTest extends TestCase
     private function create(string $amount = '10.00'): CreditNote
     {
         return app(CreditNoteService::class)->create($this->actor, $this->tenant, $this->invoice->id, $this->input($amount));
+    }
+
+    public function test_embedded_credit_and_refund_workflows_do_not_leave_invoice(): void
+    {
+        $note = $this->create();
+        Livewire::test(InvoiceCreditsRelationManager::class, ['ownerRecord' => $this->invoice, 'pageClass' => ViewInvoice::class])
+            ->mountTableAction('view', $note)->assertSet('mountedActions.0.name', 'view');
+        $dialog = Livewire::test(EmbeddedCreditNote::class, ['record' => $note->id, 'dossierId' => $this->invoice->id]);
+        $dialog->callAction('release', data: ['revision' => $note->revision])->assertHasNoActionErrors()->assertNoRedirect()->assertDispatched('dossier-financial-updated');
+        $dialog->callAction('confirm', data: ['revision' => $note->fresh()->revision, 'external_reference' => 'GS-00004', 'attestation' => true])->assertHasNoActionErrors()->assertNoRedirect();
+        $dialog->assertDontSee('Intern freigeben')->assertDontSee('Stornieren');
+        $dialog->callAction('createRefund', data: ['amount' => 10, 'reason' => 'Synthetic refund'])->assertHasNoActionErrors()->assertNoRedirect();
+        $refund = $note->refunds()->sole();
+        Livewire::test(InvoiceRefundsRelationManager::class, ['ownerRecord' => $this->invoice, 'pageClass' => ViewInvoice::class])
+            ->mountTableAction('view', $refund)->assertSet('mountedActions.0.name', 'view');
+        Livewire::test(EmbeddedRefund::class, ['record' => $refund->id, 'dossierId' => $this->invoice->id])
+            ->callAction('confirm', data: ['proof_reference' => 'TEST-EMBEDDED', 'paid_on' => now('Europe/Zurich')->toDateString(), 'attestation' => true])->assertHasNoActionErrors()->assertNoRedirect();
+        $this->assertSame('confirmed', $refund->fresh()->status->code);
+        Livewire::test(EmbeddedRefund::class, ['record' => $refund->id, 'dossierId' => -1])->assertForbidden();
     }
 
     public function test_web_credit_release_confirm_and_refund_are_local_and_audited(): void

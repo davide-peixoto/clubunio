@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\ContributionPrice;
 use App\ClubUnio\Models\ContributionRule;
+use App\ClubUnio\Models\Family;
 use App\ClubUnio\Models\Gender;
+use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Team;
 use App\ClubUnio\Models\TeamSeason;
@@ -13,7 +15,11 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\NavigationStructure;
 use App\ClubUnio\Pages\SettingsOverview;
 use App\ClubUnio\Resources\ContributionPriceResource\Pages\ManagePrices;
+use App\ClubUnio\Resources\FamilyResource\Pages\ViewFamily;
+use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\ContributionRulesRelationManager;
+use App\ClubUnio\Resources\Relations\FamiliesRelationManager;
+use App\ClubUnio\Resources\Relations\FamilyMembersRelationManager;
 use App\ClubUnio\Resources\Relations\TeamSeasonsRelationManager;
 use App\ClubUnio\Resources\SeasonResource\Pages\ViewSeason;
 use App\ClubUnio\Resources\TeamSeasonResource\Pages\ListTeamSeasons;
@@ -98,6 +104,28 @@ class WorkspaceEditingTest extends TestCase
     private function manager()
     {
         return Livewire::test(TeamSeasonsRelationManager::class, ['ownerRecord' => $this->season, 'pageClass' => ViewSeason::class]);
+    }
+
+    public function test_family_assignments_are_editable_from_both_dossiers(): void
+    {
+        $member = new Member;
+        $member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Fixture'])->save();
+        $family = new Family;
+        $family->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Fixture family'])->save();
+        $members = Livewire::test(FamilyMembersRelationManager::class, ['ownerRecord' => $family, 'pageClass' => ViewFamily::class]);
+        $members->callTableAction('addAssignment', data: ['member_id' => $member->id, 'family_id' => -1, 'discount' => 10, 'active' => true])->assertHasNoTableActionErrors();
+        $link = $family->memberships()->sole();
+        $this->assertSame($family->id, $link->family_id);
+        $dossier = Livewire::test(FamiliesRelationManager::class, ['ownerRecord' => $member, 'pageClass' => ViewMember::class]);
+        $dossier->callTableAction('editAssignment', $link, data: ['discount' => 20])->assertHasNoTableActionErrors()->assertNoRedirect();
+        $this->assertEquals(20, $link->fresh()->discount);
+        $dossier->callTableAction('copyAssignment', $link->fresh())->assertHasTableActionErrors();
+        $members->callTableAction('deactivateAssignment', $link->fresh())->assertHasNoTableActionErrors();
+        $this->assertFalse($link->fresh()->active);
+        $other = new Family;
+        $other->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Other'])->save();
+        Livewire::test(FamilyMembersRelationManager::class, ['ownerRecord' => $other, 'pageClass' => ViewFamily::class])
+            ->call('saveAssignment', $link->id, [])->assertStatus(404);
     }
 
     public function test_season_assignments_are_created_and_deactivated_in_the_dossier(): void

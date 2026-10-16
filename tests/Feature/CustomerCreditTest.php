@@ -10,8 +10,13 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\CreditNoteResource\Pages\ViewCreditNote;
 use App\ClubUnio\Resources\CustomerCreditResource\Pages\ListCustomerCredits;
 use App\ClubUnio\Resources\CustomerCreditResource\Pages\ViewCustomerCredit;
+use App\ClubUnio\Resources\EmbeddedCreditNote;
+use App\ClubUnio\Resources\EmbeddedCustomerCredit;
+use App\ClubUnio\Resources\InvoiceResource\Pages\ViewInvoice;
 use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\CustomerCreditsRelationManager;
+use App\ClubUnio\Resources\Relations\InvoiceCustomerCreditAllocationsRelationManager;
+use App\ClubUnio\Resources\Relations\InvoicesRelationManager;
 use App\ClubUnio\Services\BexioSandboxFixtureService;
 use App\ClubUnio\Services\CreditNoteService;
 use App\ClubUnio\Services\CustomerCreditService;
@@ -92,6 +97,21 @@ class CustomerCreditTest extends TestCase
     private function payment(Invoice $invoice, int $cents, string $voucher = '8'): void
     {
         $this->remotes[$invoice->id]['credit_allocations'] = [['voucher_id' => $voucher, 'reference' => 'GS-00008', 'amount_cents' => $cents, 'payment_ids' => [(string) $invoice->id]]];
+    }
+
+    public function test_embedded_credit_dialog_keeps_context_and_checks_parent(): void
+    {
+        $credit = $this->register();
+        Livewire::test(CustomerCreditsRelationManager::class, ['ownerRecord' => $credit->member, 'pageClass' => ViewMember::class])
+            ->mountTableAction('view', $credit)->assertSet('mountedActions.0.name', 'view')->assertNoRedirect();
+        $dialog = Livewire::test(EmbeddedCustomerCredit::class, ['record' => $credit->id, 'dossierId' => $credit->member_id]);
+        $dialog->assertSuccessful()->callAction('correctReference', data: ['reference' => 'GS-00009'])->assertHasNoActionErrors()->assertNoRedirect()->assertDispatched('dossier-financial-updated');
+        $this->assertSame('GS-00009', $credit->fresh()->external_reference);
+        Livewire::test(EmbeddedCustomerCredit::class, ['record' => $credit->id, 'dossierId' => -1])->assertForbidden();
+        Livewire::test(EmbeddedCreditNote::class, ['record' => $this->note->id, 'dossierId' => $this->invoice->id])->assertSuccessful();
+        Livewire::test(EmbeddedCreditNote::class, ['record' => $this->note->id, 'dossierId' => $this->other->id])->assertForbidden();
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'trainer']);
+        $dialog->call('$refresh')->assertForbidden();
     }
 
     public function test_two_invoice_allocation_preserves_original_tax_and_confirms_only_when_fully_used(): void
@@ -240,25 +260,25 @@ class CustomerCreditTest extends TestCase
     {
         $credit = $this->register();
         Livewire::test(ListCustomerCredits::class)
-            ->assertSuccessful()->assertCanSeeTableRecords([$credit])->filterTable('remaining',true)->assertCanSeeTableRecords([$credit]);
+            ->assertSuccessful()->assertCanSeeTableRecords([$credit])->filterTable('remaining', true)->assertCanSeeTableRecords([$credit]);
         Livewire::test(CustomerCreditsRelationManager::class,
             ['ownerRecord' => $credit->member, 'pageClass' => ViewMember::class])->assertSuccessful()->assertCanSeeTableRecords([$credit]);
-        Livewire::test(\App\ClubUnio\Resources\Relations\InvoicesRelationManager::class,
+        Livewire::test(InvoicesRelationManager::class,
             ['ownerRecord' => $credit->member, 'pageClass' => ViewMember::class])->assertSuccessful()->assertCanSeeTableRecords([$this->invoice]);
-        $this->assertSame(0,$credit->allocations()->count());
+        $this->assertSame(0, $credit->allocations()->count());
     }
 
     public function test_web_registration_and_allocation_actions_use_domain_guards(): void
     {
-        Livewire::test(ViewCreditNote::class,['record'=>$this->note->id])->callAction('customerCredit',
-            ['revision'=>$this->note->revision,'external_reference'=>'GS-00008','attestation'=>true])->assertHasNoActionErrors();
-        $credit=CustomerCredit::where('tenant_id',$this->tenant->id)->sole();
-        $this->payment($this->other,600);
-        Livewire::test(ViewCustomerCredit::class,['record'=>$credit->id])->callAction('allocate',
-            ['revision'=>$credit->revision,'invoice_id'=>$this->other->id,'attestation'=>true])->assertHasNoActionErrors();
-        $this->assertSame(400,$credit->fresh()->remaining_cents);
-        Livewire::test(\App\ClubUnio\Resources\Relations\InvoiceCustomerCreditAllocationsRelationManager::class,
-            ['ownerRecord'=>$this->other,'pageClass'=>\App\ClubUnio\Resources\InvoiceResource\Pages\ViewInvoice::class])->assertSuccessful()
+        Livewire::test(ViewCreditNote::class, ['record' => $this->note->id])->callAction('customerCredit',
+            ['revision' => $this->note->revision, 'external_reference' => 'GS-00008', 'attestation' => true])->assertHasNoActionErrors();
+        $credit = CustomerCredit::where('tenant_id', $this->tenant->id)->sole();
+        $this->payment($this->other, 600);
+        Livewire::test(ViewCustomerCredit::class, ['record' => $credit->id])->callAction('allocate',
+            ['revision' => $credit->revision, 'invoice_id' => $this->other->id, 'attestation' => true])->assertHasNoActionErrors();
+        $this->assertSame(400, $credit->fresh()->remaining_cents);
+        Livewire::test(InvoiceCustomerCreditAllocationsRelationManager::class,
+            ['ownerRecord' => $this->other, 'pageClass' => ViewInvoice::class])->assertSuccessful()
             ->assertCanSeeTableRecords($credit->allocations()->get());
     }
 }

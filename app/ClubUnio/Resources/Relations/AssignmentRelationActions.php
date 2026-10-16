@@ -2,12 +2,14 @@
 
 namespace App\ClubUnio\Resources\Relations;
 
+use App\ClubUnio\Models\Family;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Team;
 use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\ContributionRuleResource;
+use App\ClubUnio\Resources\FamilyMemberResource;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\TeamPlayerResource;
 use App\ClubUnio\Resources\TeamSeasonResource;
@@ -37,6 +39,7 @@ trait AssignmentRelationActions
             'technicalLeads' => TechnicalLeadResource::class,
             'contributionRules' => ContributionRuleResource::class,
             'trainingSlots' => TrainingSlotResource::class,
+            'familyMemberships' => FamilyMemberResource::class,
             default => null,
         };
     }
@@ -48,6 +51,7 @@ trait AssignmentRelationActions
             $this->getOwnerRecord() instanceof Team => 'team_id',
             $this->getOwnerRecord() instanceof TeamSeason => 'team_season_id',
             $this->getOwnerRecord() instanceof Member => 'member_id',
+            $this->getOwnerRecord() instanceof Family => 'family_id',
             default => null,
         };
     }
@@ -100,8 +104,11 @@ trait AssignmentRelationActions
             }
             $data[$this->assignmentParentField()] = $this->getOwnerRecord()->id;
             $resource = $this->assignmentResource();
-            $service = in_array(static::$kind, ['contributionRules', 'trainingSlots'], true)
-                ? ContributionTrainingService::class : TeamAssignmentService::class;
+            $service = match (static::$kind) {
+                'familyMemberships' => FamilyService::class,
+                'contributionRules', 'trainingSlots' => ContributionTrainingService::class,
+                default => TeamAssignmentService::class,
+            };
 
             return app($service)->save($actor, $tenant, $resource::getModel(), $id, $data);
         });

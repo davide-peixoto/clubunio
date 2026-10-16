@@ -3,12 +3,15 @@
 namespace App\ClubUnio\Resources\Relations;
 
 use App\ClubUnio\Resources\CustomerCreditResource;
-use Filament\Actions\Action;
+use App\ClubUnio\Resources\EmbeddedCustomerCredit;
+use App\ClubUnio\Resources\FinancialDossierDialog;
 use Filament\Facades\Filament;
 use Filament\Tables\Table;
 
 class CustomerCreditsRelationManager extends DossierRelationManager
 {
+    use RefreshFinancialDossier;
+
     protected static string $relationship = 'customerCredits';
 
     protected static string $kind = 'customer_credits';
@@ -19,7 +22,6 @@ class CustomerCreditsRelationManager extends DossierRelationManager
     {
         return $table->modifyQueryUsing(fn ($query) => $query->where('tenant_id', Filament::getTenant()->id)->with(['member', 'creditNote'])->withSum('allocations', 'amount_cents'))
             ->columns(CustomerCreditResource::columns())->recordActions([
-                Action::make('view')->icon('heroicon-o-eye')->iconButton()->tooltip('Guthaben anzeigen')
-                    ->url(fn ($record) => CustomerCreditResource::getUrl('view', ['record' => $record->id]))]);
+                FinancialDossierDialog::make(EmbeddedCustomerCredit::class, fn () => $this->getOwnerRecord()->id)]);
     }
 }
