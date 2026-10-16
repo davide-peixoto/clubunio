@@ -15,6 +15,11 @@ Admin-Schreibservice vorbereitet. Noch KEINE Benutzerzuordnung oder
 wirksame Autorisierung; keine Migration dauerhaft ausgefuehrt, nicht deployt.
 Offene Integration und Freigabekriterien: CLUBUNIO-DYNAMIC-ROLES.md.
 Bestehende Rollen und PHPMaker DEV/PROD bleiben unveraendert.
+Editor-Resource mit Modulabschnitten und Profilkopie vorbereitet, noch nicht
+registriert. 6 Tests/49 Assertions bestanden. Freigabe weiterhin gesperrt:
+gemeinsame Lese-/Schreibpruefung aufloesen, Portal-/Livewire-Zugriffe absichern
+und Rollback ohne Rechteausweitung sicherstellen. Keine Benutzerzuordnung,
+keine dauerhafte Migration und kein Rollen-Deployment.
 
 ## Dossier-Auswahlaktionen (16.10.2026)
 

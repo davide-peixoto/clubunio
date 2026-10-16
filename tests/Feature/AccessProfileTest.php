@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Resources\AccessProfileResource;
 use App\ClubUnio\Services\AccessProfileService;
 use App\ClubUnio\Services\PermissionCatalog;
 use Illuminate\Support\Facades\DB;
@@ -89,5 +90,43 @@ class AccessProfileTest extends TestCase
         $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $this->expectException(HttpException::class);
         $service->save($this->actor, $this->tenant, $profile->id, $this->input([]) + ['revision' => 2]);
+    }
+
+    public function test_editor_round_trip_and_copy_keep_permissions_but_not_revision(): void
+    {
+        $profile = app(AccessProfileService::class)->save($this->actor, $this->tenant, null,
+            $this->input(['members.view', 'members.update', 'invoices.view']));
+        $values = AccessProfileResource::formValues($profile);
+        $this->assertSame(['view', 'update'], $values['modules']['members']);
+        $this->assertSame(1, $values['revision']);
+        $this->assertSame($profile->permissions, AccessProfileResource::input($values)['permissions']);
+
+        $copy = AccessProfileResource::formValues($profile, true);
+        $this->assertSame(0, $copy['revision']);
+        $this->assertNotSame($profile->name, $copy['name']);
+        $saved = app(AccessProfileService::class)->save($this->actor, $this->tenant, null,
+            AccessProfileResource::input($copy) + ['reason' => 'Synthetic profile copy']);
+        $this->assertNotSame($profile->id, $saved->id);
+        $this->assertSame($profile->permissions, $saved->permissions);
+        $this->assertSame(1, $saved->revision);
+    }
+
+    public function test_editor_does_not_silently_discard_tampered_module_functions(): void
+    {
+        $input = $this->input([]);
+        unset($input['permissions']);
+        $input['modules'] = ['members' => ['view', 'grant_admin']];
+        $this->expectException(ValidationException::class);
+        app(AccessProfileService::class)->save($this->actor, $this->tenant, null, AccessProfileResource::input($input));
+    }
+
+    public function test_foreign_profile_cannot_be_changed_even_by_local_admin(): void
+    {
+        $profile = app(AccessProfileService::class)->save($this->actor, $this->tenant, null, $this->input(['members.view']));
+        $other = Tenant::create(['slug' => 'other-'.Str::random(12), 'name' => 'Other fixture']);
+        $this->db->table('clubora.access_profiles')->where('id', $profile->id)->update(['tenant_id' => $other->id]);
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        app(AccessProfileService::class)->save($this->actor, $this->tenant, $profile->id,
+            $this->input(['members.view', 'members.update']) + ['revision' => 1]);
     }
 }

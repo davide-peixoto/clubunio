@@ -12,11 +12,38 @@ Stand 16.10.2026: IN ARBEIT, nicht deployt, nicht zuweisbar.
 - Migration ist vorbereitet, nicht dauerhaft ausgefuehrt.
 - Transaktionale Tests: Profil speichern/Audit, Nur-Lesen-Rechte,
   ungueltige Rechte, fehlende Abhaengigkeit, Revision und Adminentzug.
+- Filament-Editor als noch nicht registrierte Resource vorbereitet:
+  Modulabschnitte mit Funktionsauswahl, Ohne-Rechte-/Nur-Lesen-Vorlagen,
+  Kopieren, Suche, Aktivstatus, Revision und Pflichtbegruendung.
+- Editor-Datenkonvertierung und Kopie getestet; manipulierte Funktionen
+  werden nicht still verworfen, sondern vom Schreibservice abgelehnt.
+- Teststand: AccessProfileTest, 6 Tests / 49 Assertions, vollstaendig
+  transaktional mit Rollback. Keine dauerhaften Rollen- oder DB-Aenderungen.
+
+## Ergebnis der Integrationspruefung
+
+Die bestehende Methode Account::canAccessTenant wird sowohl fuer Lesezugriffe
+als auch von zahlreichen Schreibservices verwendet. Die blosse Erweiterung
+dieser Methode um neue Profile waere daher keine sichere Rollenverwaltung.
+Auch Portal-Fallbacks in MemberAccessService sowie direkte Livewire-Methoden,
+Downloads und Fachcontroller muessen in die explizite Pruefung aufgenommen
+werden. Sichtbare/ausgeblendete Buttons allein reichen nicht.
+
+Eine Zuordnung als office mit zusaetzlichem Profil ist ohne weiteren Schutz
+ebenfalls ungeeignet: Nach einem Rollback auf alten Code wuerde das Profil
+ignoriert und das Konto haette volle Office-Rechte. Die Aktivierung benoetigt
+eine eigene, auch fuer alte Releases gesperrte Systemrolle oder einen gleich
+starken getesteten Rollback-Schutz. Der experimentelle office-basierte
+Zuordnungsentwurf wurde deshalb verworfen; es gibt keine Migration70 und
+keine Profilzuordnung auf echten Konten.
+
+Die Resource bleibt absichtlich unregistriert. Keine halbfertige
+Rechteverwaltung wird als verwendbar auf ClubUnio ausgerollt.
 
 ## Vor Aktivierung zwingend
 
-1. Profilverwaltung als Filament-Modul (Vorlagen, Kopieren, Suche,
-   aufklappbare Module, Abhaengigkeiten, betroffene Benutzer).
+1. Vorbereiteten Filament-Editor integrieren und visuell pruefen;
+   betroffene Benutzer und wirksame Rechte zusammen anzeigen.
 2. Profilzuordnung getrennt von bisherigen Systemrollen; letzter Admin
    bleibt geschuetzt. Keine pauschale Gleichstellung mit office.
 3. Explizite Berechtigungen in Fachservices, Policies und Web-Endpunkten.
