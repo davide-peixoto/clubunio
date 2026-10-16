@@ -1,5 +1,15 @@
 # ClubUnio
 
+## Lokaler Projektordner
+
+Seit16.10.2026 eigenstaendig unter `C:\ClubUnio`, eigenes Git-Repository:
+https://github.com/davide-peixoto/clubunio.git. Der bisherige Ordner
+`C:\Projects\SVS\backend\laravel` ist nur noch eine Verknuepfung hierher.
+Lokaler Start: `powershell -ExecutionPolicy Bypass -File tools/start-local.ps1`.
+Adresse: http://127.0.0.1:8093/login. Lokale Konfiguration/APP_KEY bleiben erhalten.
+Keine Server-/Datenbankmigration durch den Verzeichniswechsel.
+Details und getrennte PHPMaker-Importquellen: [Lokaler Umzug](deploy/CLUBUNIO-LOCAL-WORKSPACE.md).
+
 Fachpaket69: Verwaltungs-Audit, Bexio-Verbindung in normaler Oberflaeche und
 PDF-/Anhang-URLs ohne Vereinskennung. Details und bewusste oeffentliche/Portal-
 Ausnahmen: [Workspace-Migrationsplan](deploy/CLUBUNIO-WORKSPACE.md).

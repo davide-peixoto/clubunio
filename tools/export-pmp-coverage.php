@@ -3,8 +3,9 @@
 use App\ClubUnio\Services\PmpInventory;
 
 require dirname(__DIR__).'/vendor/autoload.php';
+require_once __DIR__.'/legacy-source-paths.php';
 $root = dirname(__DIR__);
-$inventory = (new PmpInventory)->read(dirname($root).'/phpmaker/svs2026_prerelease_v3.pmp');
+$inventory = (new PmpInventory)->read(clubunioLegacyBackendPath('phpmaker/svs2026_prerelease_v3.pmp'));
 $groups = require $root.'/deploy/pmp-coverage-map.php';
 $mapping = [];
 foreach ($groups as $group) {

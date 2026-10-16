@@ -4,6 +4,7 @@ declare(strict_types=1);
 // Standalone CLI: never boot either application or execute source business logic.
 if (PHP_SAPI !== 'cli') exit(1);
 require dirname(__DIR__).'/vendor/autoload.php';
+require_once __DIR__.'/legacy-source-paths.php';
 
 function values(string $path): array {
     return Dotenv\Dotenv::parse(file_get_contents($path));
@@ -45,7 +46,7 @@ function normalized(array $row, array $columns): string {
     return json_encode($values, JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)."\n";
 }
 function source(): PDO {
-    $v = values(dirname(__DIR__, 2).'/application/.env.prod.local');
+    $v = values(clubunioLegacyBackendPath('application/.env.prod.local'));
     if (str_contains(strtolower($v['DB_DBNAME']), 'dev')) throw new RuntimeException('DEV source forbidden');
     return new PDO('sqlsrv:Server='.$v['DB_HOST'].','.($v['DB_PORT'] ?? '1433').';Database='.$v['DB_DBNAME'].';Encrypt=yes;TrustServerCertificate=no', $v['DB_USER'], $v['DB_PASSWORD'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 }
@@ -199,7 +200,7 @@ try {
     if (str_contains($e->getMessage(), '\\u0000')) fwrite(STDERR,"PostgreSQL rejected a zero byte.\n");
     if (in_array($mode ?? '', ['inspect','configure'], true)) {
         $message = $e->getMessage();
-        foreach ([dirname(__DIR__).'/.env.postgresql.local', dirname(__DIR__,2).'/application/.env.prod.local'] as $path) {
+        foreach ([dirname(__DIR__).'/.env.postgresql.local', clubunioLegacyBackendPath('application/.env.prod.local')] as $path) {
             foreach (values($path) as $key=>$value) {
                 if ($value !== '' && preg_match('/PASSWORD|USER|HOST|DATABASE|DBNAME/', $key)) $message = str_replace($value, '[redacted]', $message);
             }

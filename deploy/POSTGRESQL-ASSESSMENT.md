@@ -60,7 +60,7 @@ noch nicht. Hosting-TLS, Rollen, Backup/Restore und Kapazitaet bleiben zu pruefe
 
 ## Zugangsdaten
 
-Vorbereitet: `C:/Projects/SVS/backend/laravel/.env.postgresql.local`.
+Vorbereitet: `C:/ClubUnio/.env.postgresql.local` (lokaler Projektumzug16.10.2026).
 Git-Ausschluss mit git check-ignore bestaetigt. Nicht in Tickets/Chats kopieren.
 
 Felder: PGHOST, PGPORT (5432), PGDATABASE, PGUSER, PGPASSWORD,

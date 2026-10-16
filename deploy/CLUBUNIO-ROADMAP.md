@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Eigener lokaler Projektordner (16.10.2026)
+
+ClubUnio liegt jetzt physisch unter C:\ClubUnio mit unveraendertem eigenem
+Git-Repository. Alter SVS-Pfad bleibt Junction, PHPMaker-Quellpfade fuer reine
+CLI-Migration explizit getrennt. Kein DB-/Servermigrationsschritt, kein neues
+Deployment. Details: CLUBUNIO-LOCAL-WORKSPACE.md. Neue Arbeiten nur im eigenen
+Arbeitsordner, keine weiteren Projektkopien erstellen.
+
 ## Fachpaket72: Geschuetzte Dokumentuploads
 
 Additive eigene Migration68: verschluesselte Binaer-/Metadaten, SHA256 und

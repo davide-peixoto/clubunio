@@ -2,12 +2,13 @@
 
 // One-time local credential transfer; never prints or modifies source values.
 require dirname(__DIR__).'/vendor/autoload.php';
+require_once __DIR__.'/legacy-source-paths.php';
 $target = dirname(__DIR__).'/.env.clubora-integrations.local';
 if (is_file($target)) {
     fwrite(STDERR, "Integration configuration already exists; preserved.\n");
     exit(1);
 }
-$source = dirname(__DIR__, 2).'/application/.env.prod.local';
+$source = clubunioLegacyBackendPath('application/.env.prod.local');
 $v = \Dotenv\Dotenv::parse(file_get_contents($source));
 foreach (['SMTP_SERVER', 'SMTP_SERVER_USERNAME', 'SMTP_SERVER_PASSWORD', 'AZURE_BLOB_ACCOUNT_NAME', 'AZURE_BLOB_ACCOUNT_KEY'] as $key) {
     if (empty($v[$key])) {

@@ -1,7 +1,8 @@
 <?php
 
 // Export metadata only. Never export connections, event code or parameter values.
-$source = dirname(__DIR__, 2).'/phpmaker/svs2026_prerelease_v3.pmp';
+require_once __DIR__.'/legacy-source-paths.php';
+$source = clubunioLegacyBackendPath('phpmaker/svs2026_prerelease_v3.pmp');
 $xml = simplexml_load_file($source, options: LIBXML_NONET);
 if (! $xml) {
     throw new RuntimeException('Invalid PMP XML');
