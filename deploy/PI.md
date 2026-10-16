@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Rundnachrichten-Performance (16.10.2026)
+
+Gezieltes Delta 20261016-clubunio-announcement-performance-v2 auf verifiziertem
+Release. Nur Resource/AnnouncementChoices und lesende CLI-Pruefung/Doku,
+keine Rollen-/DB-Migration oder Legacy-Deployments. Messungen und Rollback:
+CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md.
+
 ## Formular-/Lookupperformance (16.10.2026)
 
 Gezieltes Delta 20261016-clubunio-form-performance auf verifiziertem Release.

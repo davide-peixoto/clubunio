@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Rundnachrichten-Performance (16.10.2026)
+
+Benutzer-/Mannschaftsauswahl mit Serversuche statt voller Listen,50 Treffer
+und separate Labels fuer bis500 gewaehlte IDs. Statuskatalog je Tabellenaufbau
+statt je Zeile; frische Empfaenger-/Versandpruefung und atomare Zustellung
+unveraendert. Keine Migration. CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md.
+
 ## Formular-/Lookupperformance (16.10.2026)
 
 Mitgliederauswahl mit begrenzten Anzeigespalten; Spesen-Bankkontoauswahl ohne

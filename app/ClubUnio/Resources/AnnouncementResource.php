@@ -2,10 +2,9 @@
 
 namespace App\ClubUnio\Resources;
 
-use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\AccountRole;
 use App\ClubUnio\Models\Announcement;
-use App\ClubUnio\Models\TeamSeason;
+use App\ClubUnio\Services\AnnouncementChoices;
 use App\ClubUnio\Services\AnnouncementService;
 use App\ClubUnio\Services\StatusAppearance;
 use Filament\Actions\Action;
@@ -70,13 +69,14 @@ class AnnouncementResource extends CatalogResource
             Select::make('target_type')->label('Empfängergruppe')->options(AnnouncementService::TARGETS)->default('all')->required()->live()
                 ->afterStateUpdated(fn (Set $set) => $set('target_ids', [])),
             Select::make('target_ids')->label('Auswahl')->multiple()->searchable()->default([])->required(fn (Get $get) => $get('target_type') !== 'all')
+                ->key(fn (Get $get) => 'announcement-target-'.($get('target_type') ?? 'all'))
                 ->visible(fn (Get $get) => $get('target_type') !== 'all')->dehydrated(true)
                 ->options(fn (Get $get) => match ($get('target_type')) {
                     'roles' => AccountRole::where('active', true)->orderBy('name')->pluck('name', 'code')->all(),
-                    'teams' => TeamSeason::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('label')->pluck('label', 'id')->all(),
-                    'accounts' => Account::whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', Filament::getTenant()->id))->where('active', true)->orderBy('display_name')->pluck('display_name', 'id')->all(),
                     default => [],
-                }),
+                })
+                ->getSearchResultsUsing(fn (Get $get, string $search) => app(AnnouncementChoices::class)->search(Filament::getTenant(), $get('target_type') ?? '', $search))
+                ->getOptionLabelsUsing(fn (Get $get, array $values) => app(AnnouncementChoices::class)->labels(Filament::getTenant(), $get('target_type') ?? '', $values)),
         ];
     }
 
@@ -84,17 +84,18 @@ class AnnouncementResource extends CatalogResource
     {
         $save = fn ($id, $data) => app(AnnouncementService::class)->save(Filament::auth()->user(), Filament::getTenant(), $id, $data + ['target_ids' => []]);
         $preview = fn (Announcement $record) => view('clubunio.messages.announcement-preview', app(AnnouncementService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $record->id));
+        $states = AnnouncementService::states(Filament::getTenant());
 
         return $table->columns([
             TextColumn::make('title')->label('Titel')->searchable()->wrap(),
-            TextColumn::make('state')->label('Status')->formatStateUsing(fn ($state) => AnnouncementService::states(Filament::getTenant())[$state] ?? $state)->badge()
-                ->color(fn ($state) => StatusAppearance::palette(AnnouncementService::states(Filament::getTenant())[$state] ?? $state)),
+            TextColumn::make('state')->label('Status')->formatStateUsing(fn ($state) => $states[$state] ?? $state)->badge()
+                ->color(fn ($state) => StatusAppearance::palette($states[$state] ?? $state)),
             TextColumn::make('target_type')->label('Empfängergruppe')->formatStateUsing(fn ($state) => AnnouncementService::TARGETS[$state] ?? $state)->wrap(),
             TextColumn::make('recipient_count')->label('Empfänger')->numeric(),
             TextColumn::make('read_count')->label('Als gelesen markiert')->numeric(),
             TextColumn::make('published_at')->label('Veröffentlicht')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             TextColumn::make('revision')->label('Version'),
-        ])->filters([SelectFilter::make('state')->label('Status')->options(fn () => AnnouncementService::states(Filament::getTenant()))])
+        ])->filters([SelectFilter::make('state')->label('Status')->options($states)])
             ->headerActions([Action::make('newAnnouncement')->label('Entwurf erstellen')->icon('heroicon-o-plus')->slideOver()->modalSubmitActionLabel('Entwurf speichern')->schema(self::fields())
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => $save(null, $data)))])
             ->recordActions([

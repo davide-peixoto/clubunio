@@ -1,5 +1,7 @@
 # ClubUnio
 
+Rundnachrichten: [Empfaengerauswahl und Listenperformance](deploy/CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md).
+
 Formulare: [Lookup- und Speicherperformance](deploy/CLUBUNIO-FORM-PERFORMANCE.md).
 
 PDF-Anzeige: [Performance und private Dokumentzugriffe](deploy/CLUBUNIO-PDF-PERFORMANCE.md).

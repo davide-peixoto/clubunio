@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Announcement choices now bounded server searches plus selected-ID
+labels; status catalog reused per table build only. Existing recipient IDs,
+snapshots, token/hash checks and transactional delivery unchanged. No schema,
+API/SaaS/operations or legacy DEV/PROD change. Deployment/rollback documented
+in CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md.
+
 16.10.2026: Form lookup projections bounded; member save reads selected
 catalog IDs once per table, reuses status/recipient metadata in transaction.
 No cross-request lookup/permission cache, schema change or import. Keep

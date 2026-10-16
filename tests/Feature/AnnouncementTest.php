@@ -8,6 +8,7 @@ use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\AnnouncementResource;
 use App\ClubUnio\Resources\AnnouncementResource\Pages\ListAnnouncements;
+use App\ClubUnio\Services\AnnouncementChoices;
 use App\ClubUnio\Services\AnnouncementService;
 use App\ClubUnio\Services\MessageTemplateService;
 use Filament\Facades\Filament;
@@ -103,6 +104,96 @@ class AnnouncementTest extends TestCase
         $preview = $service->prepare($this->office, $this->tenant, $r->id, $r->revision);
 
         return $service->publish($this->office, $this->tenant, $r->id, $r->revision, $preview['preview_token']);
+    }
+
+    public function test_recipient_search_is_bounded_and_selected_labels_are_not_truncated(): void
+    {
+        $prefix = 'choice-'.Str::random(10);
+        $accounts = [];
+        for ($i = 0; $i < 65; $i++) {
+            $accounts[] = ['username' => $prefix.'-'.$i, 'display_name' => sprintf('Choice %02d', $i), 'active' => true, 'password' => 'unusable-fixture'];
+        }
+        $this->db->table('clubora.accounts')->insert($accounts);
+        $ids = Account::where('username', 'like', $prefix.'-%')->orderBy('display_name')->pluck('id')->all();
+        $this->db->table('clubora.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'member'], $ids));
+        $choices = app(AnnouncementChoices::class);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $found = $choices->search($this->tenant, 'accounts', 'Choice');
+        $this->assertCount(50, $found);
+        $this->assertCount(1, $this->db->getQueryLog());
+        $sql = $this->db->getQueryLog()[0]['query'];
+        $this->assertStringStartsWith('select "display_name", "id" from', $sql);
+        $this->assertStringContainsString('limit 50', $sql);
+        $this->assertSame([$ids[64] => 'Choice 64'], $choices->labels($this->tenant, 'accounts', [$ids[64]]));
+        $this->assertCount(65, $choices->labels($this->tenant, 'accounts', $ids));
+        Account::whereKey($ids[64])->update(['active' => false]);
+        $this->assertSame([], $choices->labels($this->tenant, 'accounts', [$ids[64]]));
+        $this->db->disableQueryLog();
+    }
+
+    public function test_recipient_choices_preserve_tenant_and_active_filters_and_invalid_input_is_empty(): void
+    {
+        $choices = app(AnnouncementChoices::class);
+        $foreign = Tenant::create(['slug' => 'choice-foreign-'.Str::random(10), 'name' => 'Foreign']);
+        $this->assertSame([], $choices->search($foreign, 'accounts', 'Synthetic'));
+        $this->assertSame([], $choices->labels($foreign, 'accounts', [$this->office->id]));
+        $this->assertSame([$this->team => 'Synthetic team / season'], $choices->search($this->tenant, 'teams', 'Synthetic'));
+        $this->assertSame([], $choices->labels($foreign, 'teams', [$this->team]));
+        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $this->assertSame([], $choices->labels($this->tenant, 'teams', [$this->team]));
+        $this->assertSame([], $choices->labels($this->tenant, 'accounts', [['nested'], 'bad', -1]));
+        $this->assertSame([], $choices->labels($this->tenant, 'accounts', array_fill(0, 501, $this->office->id)));
+        $this->assertSame([], $choices->search($this->tenant, 'unknown', 'Synthetic'));
+    }
+
+    public function test_list_status_catalog_reads_do_not_grow_with_announcement_rows(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->draft();
+        }
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        Livewire::test(ListAnnouncements::class)->assertSuccessful()->assertSee('Synthetic title');
+        $reads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."announcement_statuses"'));
+        $this->assertNotEmpty($reads);
+        $this->assertLessThanOrEqual(3, count($reads));
+        $this->db->disableQueryLog();
+    }
+
+    public function test_async_account_and_team_choices_can_be_saved_through_web_forms(): void
+    {
+        foreach (['accounts' => [$this->player->id], 'teams' => [$this->team]] as $type => $ids) {
+            Livewire::test(ListAnnouncements::class)->callTableAction('newAnnouncement', data: [
+                'title' => 'Async '.$type, 'body' => 'Synthetic draft only', 'revision' => 0, 'target_type' => $type, 'target_ids' => $ids,
+            ])->assertHasNoActionErrors();
+            $r = Announcement::where('tenant_id', $this->tenant->id)->where('title', 'Async '.$type)->sole();
+            $this->assertSame($ids, $r->target_ids);
+        }
+        $this->assertSame(0, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+    }
+
+    public function test_large_internal_delivery_keeps_250_row_batches_and_complete_snapshot(): void
+    {
+        $prefix = 'batch-'.Str::random(10);
+        $accounts = [];
+        for ($i = 0; $i < 260; $i++) {
+            $accounts[] = ['username' => $prefix.'-'.$i, 'display_name' => 'Synthetic batch', 'active' => true, 'password' => 'unusable-fixture'];
+        }
+        $this->db->table('clubora.accounts')->insert($accounts);
+        $ids = Account::where('username', 'like', $prefix.'-%')->pluck('id')->all();
+        $this->db->table('clubora.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'office'], $ids));
+        $draft = $this->draft();
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $this->assertSame(263, $this->publish($draft));
+        $inserts = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'insert into "clubora"."notifications"'));
+        $this->assertCount(2, $inserts);
+        $this->assertSame(263, $this->db->table('clubora.announcement_recipients')->where('announcement_id', $draft->id)->distinct()->count('account_id'));
+        $this->assertSame(263, $this->db->table('clubora.notifications')->where('announcement_id', $draft->id)->count());
+        Mail::assertNothingSent();
+        Http::assertNothingSent();
+        $this->db->disableQueryLog();
     }
 
     public function test_all_targets_only_reachable_users_once_and_portal_reads_are_private(): void
