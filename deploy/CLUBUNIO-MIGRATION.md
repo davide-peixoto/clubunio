@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Report policy tenants eager-loaded in eight list resources;
+CSV exports load only required relations/member fields, finance CSV values
+prepared before headers. Authorization, filters, ordering, 5000-row guard and
+audit retained. No schema/data migration, API/SaaS/operations or legacy changes.
+See CLUBUNIO-REPORT-PERFORMANCE.md.
+
 16.10.2026: Expense line button rendering reuses checks only in the existing
 read context; registration rows eager-load tenants and attachment previews
 load on demand. Fresh write authorization and private Azure reads unchanged.

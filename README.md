@@ -1,5 +1,7 @@
 # ClubUnio
 
+Listen und CSV: [Performance und Zugriffsgrenzen](deploy/CLUBUNIO-REPORT-PERFORMANCE.md).
+
 Performance: [Spesen, Anmeldungen und private Dokumente](deploy/CLUBUNIO-EXPENSE-DOCUMENT-PERFORMANCE.md).
 Anmeldeliste ohne Mandantenabfrage pro Zeile, gebuendelte Positionsbutton-
 Lesechecks und bedarfsgesteuerte Anhangvorschau; Schreibrechte unveraendert.

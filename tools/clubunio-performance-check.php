@@ -26,7 +26,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $path = $argv[1] ?? '/members';
-abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/registrations', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
+abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/registrations', '/member-reports', '/player-reports', '/staff-reports', '/family-reports', '/bank-account-reports', '/open-invoices', '/payment-reports', '/unassigned-members', '/passive-members', '/key-reports', '/spots-recipients', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 config(['session.driver' => 'array']);

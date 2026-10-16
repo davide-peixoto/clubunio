@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Listen-/Exportperformance (16.10.2026)
+
+Delta-Release 20261016-clubunio-report-performance, auf verifiziertem aktuellem
+Release aufgebaut. Keine Schemaaenderung; Konfigurations-/Routen-/Viewcache
+erneuert, vorhandene Guards geprueft. Messergebnisse und Rollback:
+CLUBUNIO-REPORT-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Dossier-Komfortfunktionen (16.10.2026)
 
 Release `20261016-clubunio-dossier-comfort`, Dateidelta auf aktuellem Release.

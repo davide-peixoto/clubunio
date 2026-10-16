@@ -36,10 +36,14 @@ class ReportExportService
         abort_unless($model, 404);
         abort_unless($filtered->getModel() instanceof $model, 422);
         $query = clone $filtered;
+        // Keep filters/order, but do not hydrate display-only relations from the table.
+        $query->withoutEagerLoads();
         $query->where($query->getModel()->qualifyColumn('tenant_id'), $tenant->id);
         $membership = in_array($kind, ['unassigned', 'passive', 'member_reports'], true);
         $seasonName = null;
         if ($membership) {
+            $query->select(array_map($query->getModel()->qualifyColumn(...),
+                ['id', 'legacy_id', 'first_name', 'last_name', 'company', 'type_id', 'status_id']));
             $reports = app(MembershipReportService::class);
             $eligible = match ($kind) {
                 'member_reports' => Member::where('tenant_id', $tenant->id)->whereNull('archived_at'),
@@ -59,10 +63,23 @@ class ReportExportService
             if (in_array($kind, ['families', 'banks'], true)) {
                 $query->whereHas('member', fn ($q) => $q->whereNull('archived_at'));
             }
-            $relations = ['member.status', 'member.type'];
+            $memberColumns = ['id', 'legacy_id', 'first_name', 'last_name', 'company'];
+            if (in_array($kind, ['keys', 'banks', 'families'], true)) {
+                $memberColumns[] = 'status_id';
+            }
+            if ($kind === 'families') {
+                $memberColumns = [...$memberColumns, 'type_id', 'birth_date'];
+            } elseif ($kind === 'player_contacts') {
+                $memberColumns = [...$memberColumns, 'email', 'mobile', 'mother_name', 'mother_email', 'mother_mobile', 'father_name', 'father_email', 'father_mobile'];
+            }
+            $relations = ['member' => fn ($q) => $q->where('tenant_id', $tenant->id)->select($memberColumns)];
+            if (in_array($kind, ['keys', 'banks', 'families'], true)) {
+                $relations['member.status'] = fn ($q) => $q->where('tenant_id', $tenant->id);
+            }
             if ($kind === 'families') {
                 $query->whereHas('family', fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true));
                 $relations[] = 'family';
+                $relations['member.type'] = fn ($q) => $q->where('tenant_id', $tenant->id);
             } elseif ($kind === 'banks') {
                 $relations['bank'] = fn ($q) => $q->where('tenant_id', $tenant->id);
             } elseif ($kind !== 'keys') {

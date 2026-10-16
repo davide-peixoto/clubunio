@@ -37,7 +37,7 @@ class FamilyReportResource extends FamilyMemberResource
 
         return parent::getEloquentQuery()->whereHas('family', fn ($q) => $q->where('active', true))
             ->whereHas('member', fn ($q) => $q->whereNull('archived_at'))
-            ->with(['family', 'member.status', 'member.type']);
+            ->with(['tenant', 'family', 'member.status', 'member.type']);
     }
 
     public static function table(Table $table): Table

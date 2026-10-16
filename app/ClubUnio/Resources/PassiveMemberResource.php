@@ -19,7 +19,7 @@ class PassiveMemberResource extends MemberReportResource
 
     public static function getEloquentQuery(): Builder
     {
-        return app(MembershipReportService::class)->passive(Filament::auth()->user(), Filament::getTenant());
+        return app(MembershipReportService::class)->passive(Filament::auth()->user(), Filament::getTenant())->with('tenant');
     }
 
     public static function getPages(): array

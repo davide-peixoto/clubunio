@@ -17,7 +17,7 @@ class UnassignedMemberResource extends MemberReportResource
 
     public static function getEloquentQuery(): Builder
     {
-        return app(MembershipReportService::class)->teamCandidates(Filament::auth()->user(), Filament::getTenant());
+        return app(MembershipReportService::class)->teamCandidates(Filament::auth()->user(), Filament::getTenant())->with('tenant');
     }
 
     public static function table(Table $table): Table

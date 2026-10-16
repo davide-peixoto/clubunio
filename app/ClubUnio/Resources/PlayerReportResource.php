@@ -9,6 +9,7 @@ use Filament\Facades\Filament;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class PlayerReportResource extends TeamPlayerResource
@@ -23,6 +24,11 @@ class PlayerReportResource extends TeamPlayerResource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('tenant');
     }
 
     public static function canEdit(Model $record): bool

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Expense;
+use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Models\InvoiceLineStatus;
 use App\ClubUnio\Models\InvoiceStatus;
 use App\ClubUnio\Models\Tenant;
@@ -246,6 +247,24 @@ class BexioReconciliationTest extends TestCase
             $this->db->rollBack();
         }
         parent::tearDown();
+    }
+
+    public function test_finance_export_does_not_load_display_relations_or_query_while_streaming(): void
+    {
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $query = Invoice::whereKey($this->invoice)->with(['tenant', 'member.notes']);
+        $response = app(FinanceExportService::class)->download($this->actor, $this->tenant, 'invoices', $query);
+        $sql = implode("\n", array_column($this->db->getQueryLog(), 'query'));
+        $this->assertStringNotContainsString('member_notes', $sql);
+        $this->assertArrayHasKey('member.notes', $query->getEagerLoads());
+        $this->db->flushQueryLog();
+        ob_start();
+        $response->sendContent();
+        $csv = ob_get_clean();
+        $this->assertStringContainsString('50.00', $csv);
+        $this->assertCount(0, $this->db->getQueryLog());
+        $this->db->disableQueryLog();
     }
 
     public function test_finance_exports_preserve_selection_escape_formulas_and_scope_access(): void

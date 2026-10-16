@@ -23,7 +23,7 @@ class OpenInvoiceResource extends InvoiceResource
     public static function getEloquentQuery(): Builder
     {
         return app(DashboardService::class)->openInvoices(Filament::auth()->user(), Filament::getTenant())
-            ->withSum('activeLines', 'net_amount');
+            ->with('tenant')->withSum('activeLines', 'net_amount');
     }
 
     public static function table(Table $table): Table

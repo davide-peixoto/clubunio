@@ -5,6 +5,7 @@ namespace App\ClubUnio\Resources;
 use App\ClubUnio\Services\ReportExportService;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class StaffReportResource extends TeamStaffResource
@@ -19,6 +20,11 @@ class StaffReportResource extends TeamStaffResource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with('tenant');
     }
 
     public static function canEdit(Model $record): bool

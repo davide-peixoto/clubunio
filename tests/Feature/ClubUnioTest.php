@@ -64,7 +64,9 @@ use App\ClubUnio\Resources\MemberStatusResource\Pages\ManageMemberStatuses;
 use App\ClubUnio\Resources\MemberTypeResource\Pages\ManageMemberTypes;
 use App\ClubUnio\Resources\MessageTemplateResource\Pages\ListMessageTemplates;
 use App\ClubUnio\Resources\ObjectChangeResource;
+use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\OpenInvoiceResource\Pages\ListOpenInvoices;
+use App\ClubUnio\Resources\PassiveMemberResource;
 use App\ClubUnio\Resources\PassiveMemberResource\Pages\ListPassiveMembers;
 use App\ClubUnio\Resources\PaymentReportResource;
 use App\ClubUnio\Resources\PlayerReportResource;
@@ -85,6 +87,7 @@ use App\ClubUnio\Resources\TeamSeasonResource\Pages\ListTeamSeasons;
 use App\ClubUnio\Resources\TenantAccountResource\Pages\ManageAccounts;
 use App\ClubUnio\Resources\TrainingOptionResource\Pages\ManageOptions;
 use App\ClubUnio\Resources\TrainingSlotResource\Pages\ManageSlots;
+use App\ClubUnio\Resources\UnassignedMemberResource;
 use App\ClubUnio\Resources\UnassignedMemberResource\Pages\ListUnassignedMembers;
 use App\ClubUnio\Services\AccountAdministrationService;
 use App\ClubUnio\Services\AccountLinkService;
@@ -668,6 +671,53 @@ class ClubUnioTest extends TestCase
             ->assertHasNoActionErrors()->assertFileDownloaded('bankkontenliste-'.now('Europe/Zurich')->format('Y-m-d').'.csv');
         $latest = $this->db->table('object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'report_exports')->orderByDesc('id')->value('after_value');
         $this->assertSame(0, json_decode($latest, true)['row_count']);
+    }
+
+    public function test_report_export_discards_display_relations_and_streams_without_queries(): void
+    {
+        $this->contributionFixture();
+        $player = TeamPlayer::where('tenant_id', $this->own->id)->firstOrFail();
+        $query = TeamPlayer::whereKey($player->id)->with(['tenant', 'member.notes']);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $response = app(ReportExportService::class)->download($this->actor, $this->own, 'players', $query);
+        $queries = $this->db->getQueryLog();
+        $this->assertLessThanOrEqual(8, count($queries));
+        $sql = implode("\n", array_column($queries, 'query'));
+        $this->assertStringNotContainsString('member_notes', $sql);
+        $this->assertStringNotContainsString('member_statuses', $sql);
+        $this->assertStringNotContainsString('member_types', $sql);
+        $this->assertArrayHasKey('member.notes', $query->getEagerLoads());
+        $this->db->flushQueryLog();
+        ob_start();
+        $response->sendContent();
+        $csv = ob_get_clean();
+        $this->assertStringContainsString('OWN-MEMBER', $csv);
+        $this->assertCount(0, $this->db->getQueryLog());
+        $this->db->disableQueryLog();
+    }
+
+    public function test_report_resources_eager_load_the_policy_tenant(): void
+    {
+        [$member] = $this->contributionFixture();
+        $player = TeamPlayer::where('tenant_id', $this->own->id)->firstOrFail();
+        $this->db->table('team_staff')->insert(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'team_season_id' => $player->team_season_id]);
+        foreach ([PlayerReportResource::class, StaffReportResource::class,
+            FamilyReportResource::class, BankAccountReportResource::class, KeyReportResource::class,
+            OpenInvoiceResource::class, PassiveMemberResource::class,
+            UnassignedMemberResource::class] as $resource) {
+            $query = $resource::getEloquentQuery();
+            $this->assertArrayHasKey('tenant', $query->getEagerLoads(), $resource);
+            $rows = $query->limit(25)->get();
+            $this->db->enableQueryLog();
+            $this->db->flushQueryLog();
+            foreach ($rows as $row) {
+                $this->assertTrue($row->relationLoaded('tenant'));
+                $this->assertSame($this->own->id, $row->tenant->id);
+            }
+            $this->assertCount(0, $this->db->getQueryLog(), $resource);
+            $this->db->disableQueryLog();
+        }
     }
 
     public function test_player_and_staff_report_exports_preserve_filtered_assignment_rows(): void

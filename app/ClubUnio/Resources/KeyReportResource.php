@@ -48,7 +48,7 @@ class KeyReportResource extends CatalogResource
         abort_unless(static::canViewAny(), 403);
 
         return parent::getEloquentQuery()->whereHas('member', fn ($q) => $q->where('tenant_id', Filament::getTenant()->id))
-            ->with('member.status');
+            ->with(['tenant', 'member.status']);
     }
 
     public static function table(Table $table): Table

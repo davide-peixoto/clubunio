@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Listen-/Exportperformance (16.10.2026)
+
+Vereinsrelation fuer acht Auswertungsressourcen gesammelt laden; CSV-Exporte
+ohne reine Anzeige-Relationen und mit begrenzter Feldauswahl. Finanz-CSV vor
+Header-Versand aufbereitet. Rechte, Filter/Sortierung, 5000er-Grenze, Maskierung
+und Audit erhalten; keine Migration. Details: CLUBUNIO-REPORT-PERFORMANCE.md.
+
 ## Dossier-Komfortfunktionen (16.10.2026)
 
 Atomare Mehrfachaktionen fuer Zuordnungen, lesender Aenderungsverlauf und

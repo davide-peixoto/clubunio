@@ -44,7 +44,7 @@ class BankAccountReportResource extends CatalogResource
         abort_unless(static::canViewAny(), 403);
 
         return parent::getEloquentQuery()->whereHas('member', fn ($q) => $q->whereNull('archived_at'))
-            ->with(['member.status', 'bank']);
+            ->with(['tenant', 'member.status', 'bank']);
     }
 
     public static function table(Table $table): Table
