@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Menuesuche: Sichtpruefung (16.10.2026)
+
+Delta 20261016-clubunio-navigation-qa auf Basis des aktuellen Releases72:
+Filament-Gruppen bei Suchtreffern korrekt oeffnen, Assetversion3.
+Keine DB-Migration. Lokale Desktop-/Mobile-Pruefung und 11 Tests/117 Assertions.
+Releasearchiv enthaelt nur Navigationsassets, Brand-Head und Dokumentation.
+
 ## Nginx-Wiederanlauf abgesichert (16.10.2026)
 
 Explizit beauftragter Betriebsschutz nach dem heutigen Adressausfall:

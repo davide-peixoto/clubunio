@@ -21,10 +21,15 @@
                 const pixels = resize(width.value);
                 try { localStorage.setItem(key, String(pixels)); } catch { /* Storage may be disabled. */ }
             });
+            const collapsedBeforeSearch = new Map();
             search.addEventListener('input', () => {
                 const query = search.value.trim().toLocaleLowerCase();
                 let matches = 0;
                 sidebar.querySelectorAll('.fi-sidebar-group').forEach(group => {
+                    const toggle = group.querySelector('.fi-sidebar-group-collapse-btn');
+                    if (query && toggle && !collapsedBeforeSearch.has(group)) {
+                        collapsedBeforeSearch.set(group, toggle.getAttribute('aria-expanded') === 'false');
+                    }
                     let visible = 0;
                     const groupMatch = group.dataset.groupLabel?.toLocaleLowerCase().includes(query);
                     group.querySelectorAll('.fi-sidebar-item').forEach(item => {
@@ -34,7 +39,12 @@
                         if (show) visible++;
                     });
                     group.classList.toggle('cu-search-hidden', visible === 0);
-                    group.classList.toggle('cu-search-open', !!query && visible > 0);
+                    // Let Alpine manage visibility, hidden attributes and accessibility together.
+                    if (toggle && query && visible > 0 && toggle.getAttribute('aria-expanded') === 'false') toggle.click();
+                    if (!query && toggle && collapsedBeforeSearch.has(group)) {
+                        if ((toggle.getAttribute('aria-expanded') === 'false') !== collapsedBeforeSearch.get(group)) toggle.click();
+                        collapsedBeforeSearch.delete(group);
+                    }
                     matches += visible;
                 });
                 control.querySelector('.cu-nav-empty').hidden = matches > 0 || !query;

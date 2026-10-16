@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Navigation: angemeldete Sichtpruefung (16.10.2026)
+
+Desktop/Mobile-Stichprobe abgeschlossen, Suchtreffer in eingeklappten
+Menuegruppen korrigiert. Details: CLUBUNIO-NAVIGATION.md.
+Reines JS/CSS/View-Delta, keine Datenmigration oder Berechtigungsaenderung.
+PHPMaker DEV/PROD, API, SaaS und Betrieb unveraendert.
+
 ## Gezielter Betriebsschutz Nginx (16.10.2026)
 
 Auf ausdruecklichen Benutzerauftrag nach dem Adress-/Startausfall:

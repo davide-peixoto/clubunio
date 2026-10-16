@@ -3,5 +3,5 @@
 @endif
 <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('brand/blue-v1/apple-touch-icon.png') }}">
 <meta name="theme-color" content="#164B8A">
-<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=2">
-<script src="{{ asset('js/clubunio-navigation.js') }}?v=2" defer></script>
+<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=3">
+<script src="{{ asset('js/clubunio-navigation.js') }}?v=3" defer></script>

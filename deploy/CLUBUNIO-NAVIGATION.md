@@ -35,8 +35,17 @@ kein PHPMaker-/App-/API-/SaaS-Umbau. DEV/PROD bleiben unveraendert.
 
 WorkspaceEditingTest prueft Gruppenreihenfolge, Entfernung der Stammdaten aus
 der Sidebar, vollstaendige Erhaltung aller autorisierten Links, Rendering der
-Einstellungen und Sperre nach Rollenentzug. Browser-Sichtpruefung nach Anmeldung
-noch ausstehend.
+Einstellungen und Sperre nach Rollenentzug.
+
+Angemeldete lokale Browserpruefung am 16.10.2026: Desktop 1440x1000,
+Mobile 390x844. Menuesuche, Ruecksetzen geschlossener Gruppen, Breite
+280/290px, Einstellungssuche sowie Saison-Untertabellen geprueft.
+Hinzufuegen auf Mobile und Bearbeiten auf Desktop geoeffnet und abgebrochen;
+keine Fachdaten gespeichert. Die Suche oeffnet Treffergruppen jetzt ueber
+den vorhandenen Filament-Schalter statt per CSS, damit hidden/ARIA/Alpine
+konsistent bleiben. Leeren stellt den vorherigen Klappzustand wieder her.
+JS-Syntaxcheck und 11 Tests/117 Assertions erneut erfolgreich.
+Keine vollstaendige Sichtpruefung aller Ressourcen behauptet.
 
 Bereitgestellt: `20261016-clubunio-navigation`, Ruecksprung
 `20261016-clubunio-workspace-editing-v2`. Config-/Routen-/Viewcache und

@@ -14,6 +14,5 @@
 .cu-settings-section svg { width: 20px; height: 20px; flex-shrink: 0; }
 .cu-settings-section span { flex: 1; overflow-wrap: anywhere; }
 .fi-sidebar .cu-search-hidden { display: none !important; }
-.fi-sidebar .cu-search-open > .fi-sidebar-group-items { display: flex !important; height: auto !important; overflow: visible !important; }
 .fi-sidebar-item-label { white-space: normal; overflow-wrap: break-word; }
 @media (max-width: 1023px) { .cu-nav-width { display: none; } :root { --sidebar-width: min(280px, 85vw) !important; } }
