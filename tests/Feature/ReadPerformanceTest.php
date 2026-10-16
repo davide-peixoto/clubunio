@@ -3,11 +3,19 @@
 namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\Member;
+use App\ClubUnio\Models\MemberStatus;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Resources\MemberResource\Pages\ListMembers;
+use App\ClubUnio\Services\BackofficeHandleComponents;
 use App\ClubUnio\Services\BackofficeReadContext;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\Livewire;
+use Livewire\Mechanisms\HandleComponents\HandleComponents;
 use Tests\TestCase;
 
 class ReadPerformanceTest extends TestCase
@@ -116,5 +124,118 @@ class ReadPerformanceTest extends TestCase
         }
         $this->revoke();
         $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+    }
+
+    public function test_post_render_is_bounded_and_nested_mutations_remain_fresh(): void
+    {
+        $this->during('POST', function () {
+            $context = app(BackofficeReadContext::class);
+            $context->duringRender(function () use ($context) {
+                $this->db->enableQueryLog();
+                $this->db->flushQueryLog();
+                for ($i = 0; $i < 50; $i++) {
+                    $this->assertTrue($this->actor->canAccessTenant($this->tenant));
+                }
+                $this->assertCount(0, $this->db->getQueryLog());
+                $this->db->disableQueryLog();
+                $context->withoutSnapshot(function () {
+                    $this->revoke();
+                    $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+                });
+                try {
+                    $context->duringRender(function () {
+                        $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+                        throw new \RuntimeException('nested');
+                    });
+                } catch (\RuntimeException $error) {
+                    $this->assertSame('nested', $error->getMessage());
+                }
+            });
+            $this->assertFalse(request()->attributes->has(BackofficeReadContext::class));
+            $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+        });
+    }
+
+    public function test_livewire_render_exception_does_not_leak_snapshot(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('clubunio'));
+        $this->actingAs($this->actor, 'clubunio');
+        Filament::setTenant($this->tenant);
+        $handler = app(HandleComponents::class);
+        $this->assertInstanceOf(BackofficeHandleComponents::class, $handler);
+        $component = new class extends Component
+        {
+            public function render()
+            {
+                throw new \RuntimeException('render failure');
+            }
+        };
+        $this->during('POST', function () use ($handler, $component) {
+            try {
+                (new \ReflectionMethod($handler, 'render'))->invoke($handler, $component);
+                $this->fail('Expected render exception');
+            } catch (\RuntimeException $error) {
+                $this->assertSame('render failure', $error->getMessage());
+            }
+            $this->assertFalse(request()->attributes->has(BackofficeReadContext::class));
+            $this->revoke();
+            $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+        });
+    }
+
+    public function test_filter_and_search_keep_tenant_scope_and_reject_revoked_role(): void
+    {
+        $filament = Filament::class;
+        $filament::setCurrentPanel($filament::getPanel('clubunio'));
+        $this->actingAs($this->actor, 'clubunio');
+        $filament::setTenant($this->tenant);
+        $status = MemberStatus::forceCreate(['tenant_id' => $this->tenant->id, 'name' => 'Fixture', 'code' => 'fixture']);
+        $member = Member::forceCreate(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Search', 'status_id' => $status->id]);
+        $other = Member::forceCreate(['tenant_id' => $this->tenant->id, 'first_name' => 'Excluded', 'last_name' => 'Search']);
+        $foreign = Tenant::create(['slug' => 'search-'.Str::random(12), 'name' => 'Other']);
+        $foreignMember = Member::forceCreate(['tenant_id' => $foreign->id, 'first_name' => 'Synthetic', 'last_name' => 'Search']);
+        $page = Livewire::test(ListMembers::class)
+            ->filterTable('status_id', $status->id)
+            ->searchTable('Synthetic')
+            ->assertCanSeeTableRecords([$member])
+            ->assertCanNotSeeTableRecords([$other, $foreignMember]);
+        $this->assertEquals($status->id, $page->get('tableFilters')['status_id']['value']);
+        $this->assertFalse(request()->attributes->has(BackofficeReadContext::class));
+        $this->revoke();
+        $page->searchTable('Search')->assertForbidden();
+    }
+
+    public function test_livewire_action_runs_outside_render_context(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('clubunio'));
+        $this->actingAs($this->actor, 'clubunio');
+        Filament::setTenant($this->tenant);
+        Livewire::test(PermissionRenderProbe::class)
+            ->call('revokeAndCheck')
+            ->assertSet('freshlyDenied', true);
+        $this->assertFalse($this->actor->canAccessTenant($this->tenant));
+        $this->assertFalse(request()->attributes->has(BackofficeReadContext::class));
+    }
+}
+
+class PermissionRenderProbe extends Component
+{
+    public bool $freshlyDenied = false;
+
+    public function revokeAndCheck(): void
+    {
+        $actor = auth('clubunio')->user();
+        abort_if(request()->attributes->has(BackofficeReadContext::class), 409);
+        DB::connection('clubunio')->table('clubora.tenant_accounts')->where('account_id', $actor->id)->update(['role' => 'trainer']);
+        $this->freshlyDenied = ! $actor->canAccessTenant(Filament::getTenant());
+    }
+
+    public function render()
+    {
+        if (request()->isMethod('POST')) {
+            abort_unless(request()->attributes->has(BackofficeReadContext::class), 409);
+        }
+
+        return '<div>{{ auth("clubunio")->user()->hasBackofficeTenant() ? "allowed" : "denied" }}</div>';
     }
 }

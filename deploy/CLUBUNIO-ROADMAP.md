@@ -1,5 +1,22 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Filter-/Suchperformance mit frischen Aktionsrechten (16.10.2026)
+
+Livewire-Darstellung buendelt wiederholte Mandantenpruefungen nur waehrend
+des Renderns. Eingaben, Aktionen und verschachtelte Mounts bleiben frisch;
+kein Rechtecache zwischen Anfragen. Filter plus Suche, Mandantentrennung,
+Rollenentzug und Ausnahme-Cleanup getestet. Keine Datenmigration; bestehende
+Import-/Fachregeln bleiben unveraendert. Details: CLUBUNIO-PERFORMANCE.md.
+Nur ClubUnio; PHPMaker DEV/PROD, API und SaaS unveraendert.
+
+## Weitere Dossierdialoge (16.10.2026)
+
+Familienzuordnungen in beide Richtungen, Anmeldungspruefung im Dossier und
+eingebettete Guthaben-/Gutschrift-/Rueckerstattungsseiten ergaenzt.
+Bestehende Fachservices, Rechte und Nachweisregeln bleiben massgeblich.
+Keine Schema-/Datenmigration. Details: CLUBUNIO-DOSSIER-DIALOGS.md.
+PHPMaker DEV/PROD unveraendert; API, SaaS und Betrieb ausgeschlossen.
+
 ## Mitglieder-/Mannschaftsdossiers: Finanzdialoge (16.10.2026)
 
 Rechnungen und Spesen direkt bearbeiten, Positionen im rechten Dialog.

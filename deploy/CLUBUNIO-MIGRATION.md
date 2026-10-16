@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+16.10.2026: Filter/search rendering now uses a bounded Livewire permission
+snapshot; property changes, actions and nested mounts retain fresh checks.
+No schema/data migration or legacy deployment. Filter/search combination and
+tenant/role boundaries are regression tested. See CLUBUNIO-PERFORMANCE.md.
+
 Updated 11.10.2026. The user has approved migration of the existing backend,
 not just isolated screens. This is a staged implementation, not a completed
 replacement. Existing PHPMaker and mobile APIs remain authoritative in PROD.

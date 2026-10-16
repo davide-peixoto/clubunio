@@ -35,6 +35,7 @@ use App\ClubUnio\Policies\DossierMaintenancePolicy;
 use App\ClubUnio\Policies\MemberPolicy;
 use App\ClubUnio\Policies\ReadOnlyPolicy;
 use App\ClubUnio\Policies\TeamAssignmentPolicy;
+use App\ClubUnio\Services\BackofficeHandleComponents;
 use App\ClubUnio\Services\StatusAppearance;
 use App\ClubUnio\Services\StatusStyleService;
 use App\ClubUnio\Services\TestMailGuard;
@@ -46,6 +47,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Livewire\Mechanisms\HandleComponents\HandleComponents;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
     {
         config(['database.connections.clubunio' => config('clubunio.connection')]);
         $this->app->scoped(StatusStyleService::class);
+        $this->app->singleton(HandleComponents::class, BackofficeHandleComponents::class);
     }
 
     /**

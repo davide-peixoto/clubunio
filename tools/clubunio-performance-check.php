@@ -40,9 +40,38 @@ try {
     $request = Request::create('https://dev.clubunio.ch'.$path, 'GET');
     $start = microtime(true);
     $response = $app->make(Illuminate\Contracts\Http\Kernel::class)->handle($request);
+    $mode = $argv[2] ?? 'page';
+    if (in_array($mode, ['search', 'filter-search'], true)) {
+        abort_unless($response->getStatusCode() === 200, 409);
+        $dom = new DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $snapshot = null;
+        foreach ($dom->getElementsByTagName('*') as $node) {
+            if (! $node->hasAttribute('wire:snapshot')) {
+                continue;
+            }
+            $candidate = json_decode($node->getAttribute('wire:snapshot'), true, 512, JSON_THROW_ON_ERROR);
+            if (array_key_exists('tableSearch', $candidate['data'])) {
+                $snapshot = $candidate;
+                break;
+            }
+        }
+        abort_unless($snapshot, 409);
+        $request->setMethod('POST');
+        if ($mode === 'filter-search') {
+            abort_unless($path === '/members', 422);
+            $status = $db->table('clubora.members')->where('tenant_id', $tenant->id)->whereNotNull('status_id')->value('status_id');
+            abort_unless($status, 409);
+            [$snapshot] = app('livewire')->update($snapshot, ['tableFilters.status_id.value' => (string) $status], []);
+        }
+        $queries = [];
+        $start = microtime(true);
+        [$updated, $effects] = app('livewire')->update($snapshot, ['tableSearch' => 'a'], []);
+        abort_unless(isset($effects['html']), 409);
+    }
     $elapsed = round((microtime(true) - $start) * 1000);
     usort($queries, fn ($a, $b) => $b['ms'] <=> $a['ms']);
-    echo json_encode(['path' => $path, 'status' => $response->getStatusCode(), 'elapsed_ms' => $elapsed,
+    echo json_encode(['path' => $path, 'mode' => $mode, 'status' => $response->getStatusCode(), 'elapsed_ms' => $elapsed,
         'peak_mb' => round(memory_get_peak_usage(true) / 1048576, 1), 'query_count' => array_sum(array_column($queries, 'count')),
         'query_ms' => round(array_sum(array_column($queries, 'ms'))), 'top_queries' => array_slice($queries, 0, 12)], JSON_THROW_ON_ERROR).PHP_EOL;
 } finally {

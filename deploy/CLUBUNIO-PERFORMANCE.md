@@ -113,7 +113,63 @@ Outbound aus. Bestehender Nginx-Wiederanlaufschutz bleibt erhalten.
 Oeffentliche /login und /up HTTP200, sieben Runtime-Dateien lokal/Pi SHA256
 identisch. Keine Aenderung an Netzwerkfreigaben oder dem bestehenden Nginx-Drop-in.
 
-Bewusst noch nicht optimiert: Livewire-POST-Rendering (Filter/Suche und
-nachgeladene Widgets) nutzt weiterhin frische Berechtigungsabfragen. Ein
-spaeterer separater Renderphasen-Kontext muss zuerst gegen Schreibaktionen
-abgegrenzt und gemessen werden. Keine pauschale Freigabe eines POST-Rechtecaches.
+## Filter und Suche: begrenzte Renderphase (16.10.2026)
+
+Die Anschlussoptimierung erweitert den Kontext ausschliesslich auf die
+Livewire-Renderphase im ClubUnio-Panel mit ausgewaehltem Mandanten. Frischer
+aktiver Account und Admin-/Office-Zuordnungen werden pro Renderdurchlauf
+gelesen. Keine Ergebnis-, Session- oder requestuebergreifenden Rechtecaches.
+
+BackofficeHandleComponents erweitert den installierten Livewire-Handler,
+ohne Vendor-Code zu kopieren: parent::render laeuft innerhalb eines
+try/finally-Kontexts. parent::update und parent::mount suspendieren einen
+eventuellen aeusseren POST-Kontext. Damit bleiben Hydrierung, Property-Hooks,
+Aktionen, verschachtelte Mounts und Dehydrierung ausserhalb des Snapshots.
+Nach normaler Darstellung und Exceptions wird der vorige Kontext restauriert
+oder entfernt. GET-Verhalten aus Performance73 bleibt erhalten. Bestehende
+Policies, Fachservices, Mandantenfilter, Formrevisionen und CSRF unveraendert.
+Bei Livewire-Upgrades sind Handler-Signaturen und Lifecycle-Grenzen mit den
+Integrations-/Berechtigungstests erneut zu pruefen.
+Gepruefte installierte Version: Livewire4.4.7. Fehlerprotokollierung bleibt
+unveraendert; Diagnoseausgaben enthalten weiterhin nur aggregierte SQL-Metriken.
+
+Diagnose: `php tools/clubunio-performance-check.php /members search` bzw.
+`/members filter-search`, ausserdem `/invoices search` und `/expenses search`.
+Nach dem initialen GET wird ein signierter Snapshot durch den echten
+Livewire-update-Lifecycle verarbeitet; nur dessen Laufzeit/Queries werden
+gemessen. Suche nach `a`, bei filter-search zuerst ein vorhandener Status.
+Nur CLI, eigene DB, READ ONLY plus Rollback; kein HTML, Bindings, Token oder
+Identitaeten in der Ausgabe. Kein HTTP-/Proxy- oder Browser-End-to-End-Lasttest.
+
+Pi-Vergleich vor Deployment: Mitglieder-Suche4471ms/160 Queries,
+Statusfilter plus Suche4313ms/161, Rechnungen1138ms/42, Spesen1255ms/43.
+Lokal optimierte Mitgliedersuche328ms/11 Queries als erste Stichprobe.
+Finale Pi-Nachmessung und Release siehe folgenden Abschluss.
+
+### Bereitstellung und Nachmessung
+
+Release `20261016-clubunio-filter-performance`, Basis/Ruecksprung
+`20261016-clubunio-dossier-finance`. Vorhandene Dossier-Finanzdialoge erhalten;
+parallel bearbeitete andere Fachdateien nicht in das Delta aufgenommen.
+Keine DB-Migration, Netzwerk-/FPM-Poolaenderung oder PHPMaker-Bereitstellung.
+Config-/Route-/Viewcache erneuert, PHP-FPM graceful reload. Mandanten- und
+Dokumentchecker erfolgreich;195 verschluesselte Settings/46 Templates lesbar.
+
+| Livewire-Aktion | Vorher ms | Nachher ms | Queries vorher/nachher |
+| --- | ---: | ---: | ---: |
+| Mitglieder suchen | 4471 | 410 | 160 / 11 |
+| Mitglieder filtern, danach suchen | 4313 | 428 | 161 / 12 |
+| Rechnungen suchen | 1138 | 452 | 42 / 14 |
+| Spesen suchen | 1255 | 448 | 43 / 15 |
+
+Einzelne identische CLI-Lifecycle-Stichproben, ohne Netz-/Browserlaufzeit,
+kein Lasttest. GET-Mitglieder weiterhin1069ms/30 Queries. /login und /up
+oeffentlich HTTP200. PHP-Speicherspitze bei Suchprofilen58.5-62.5MiB.
+
+Neue Suite ReadPerformanceTest:8 Tests/197 Assertions erfolgreich. Prueft
+Render-Buendelung, frische POST-/Aktionsrechte, verschachtelten Cleanup,
+Renderausnahmen, echten Livewire-Lifecycle, Filter/Suche, Mandantentrennung
+und Rollenentzug. Zusaetzlich Navigation/Workspace und Saison-/Dossierfinanzen
+erfolgreich;6 Kernberechtigungstests/41 Assertions und Mitglieder-/Anmeldungs-
+dokumente25 Tests/199 Assertions (1 optionaler Azuretest ausgelassen).
+Alle DB-Testfixtures transaktional zurueckgerollt; kein Versand/Bankauftrag.

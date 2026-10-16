@@ -14,6 +14,39 @@ class BackofficeReadContext
         if (! $request->isMethod('GET')) {
             return $next($request);
         }
+
+        return $this->snapshot($request, $next);
+    }
+
+    public function duringRender(Closure $next): mixed
+    {
+        $request = request();
+        if (! $request->isMethod('POST') || ! $request->user('clubunio')) {
+            return $next();
+        }
+
+        return $this->snapshot($request, $next);
+    }
+
+    public function withoutSnapshot(Closure $next): mixed
+    {
+        $request = request();
+        if (! $request->isMethod('POST')) {
+            return $next();
+        }
+        $previous = $request->attributes->get(self::class);
+        $request->attributes->remove(self::class);
+        try {
+            return $next();
+        } finally {
+            if ($previous !== null) {
+                $request->attributes->set(self::class, $previous);
+            }
+        }
+    }
+
+    private function snapshot(Request $request, Closure $next): mixed
+    {
         $actor = $request->user('clubunio')?->fresh();
         abort_unless($actor?->active, 403);
         $previous = $request->attributes->get(self::class);
@@ -33,7 +66,7 @@ class BackofficeReadContext
 
     public function tenantsFor(Account $actor): ?Collection
     {
-        if (! app()->bound('request') || ! request()->isMethod('GET')) {
+        if (! app()->bound('request')) {
             return null;
         }
         $context = request()->attributes->get(self::class);

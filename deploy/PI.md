@@ -1,5 +1,24 @@
 # Pi staging: dev.clubunio.ch
 
+## Filter und Suche optimiert (16.10.2026)
+
+Release `20261016-clubunio-filter-performance`, Basis/Ruecksprung
+`20261016-clubunio-dossier-finance`. Rendering mit begrenztem Rollen-Snapshot,
+Aktionen/Eingaben weiterhin frisch. Mitglieder-Suche4471->410ms/160->11 Queries,
+Filter plus Suche4313->428ms/161->12; Rechnungen452ms, Spesen448ms.
+CLI-Lifecycle-Stichproben, keine Browser-/Lasttest-SLA. GET unveraendert schnell.
+Config-/Route-/Viewcache erneuert, graceful FPM reload, Guardchecker und
+HTTP200 fuer /login und /up erfolgreich. Keine DB-/Pool-/Netzwerkaenderung.
+Details, Tests und Upgradegrenzen: CLUBUNIO-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS unveraendert.
+
+## Familien-, Anmeldungs- und Finanz-Fachdialoge (16.10.2026)
+
+Release `20261016-clubunio-dossier-dialogs`, gezieltes Delta auf dem bei
+Deployment aktuellen Release. Keine DB-Migration, kein echter Finanzversand.
+Ruecksprungpfad wird vom Installer ausgegeben. Details und Testumfang:
+CLUBUNIO-DOSSIER-DIALOGS.md. PHPMaker DEV/PROD unveraendert.
+
 ## Dossier-Finanzdialoge (16.10.2026)
 
 Release `20261016-clubunio-dossier-finance`, Basis/Ruecksprung
