@@ -40,7 +40,7 @@ class BusReservationService
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'bus_reservations')->where('active', true);
         if (! $actor->canAccessTenant($tenant)) {
-            $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->pluck('id');
+            $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubora.members.id');
             $q->where(fn ($q) => $q->whereIn('member_id', $ids)->orWhereIn('team_season_id', $this->teams($actor, $tenant)->select('id')));
         }
 

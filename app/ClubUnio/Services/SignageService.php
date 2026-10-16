@@ -8,8 +8,10 @@ use App\ClubUnio\Models\FieldAvailability;
 use App\ClubUnio\Models\FootballClub;
 use App\ClubUnio\Models\SignageNotice;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Models\TrainingOption;
 use App\ClubUnio\Models\TrainingSlot;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -45,10 +47,11 @@ class SignageService
             $trainings = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $data['period_id'])
                 ->where($flag, true)->whereHas('weekday', fn ($q) => $q->where('active', true)->where('code', (string) ($date->dayOfWeek + 1)))
                 ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $data['date'])->where('ends_on', '>=', $data['date'])))
-                ->with(['teamSeason.team', 'field', 'room', 'side'])->orderBy('starts_at')->orderBy('id')->get();
+                ->with('teamSeason.team')->orderBy('starts_at')->orderBy('id')->get();
         }
 
-        $competitions = Competition::where('tenant_id', $tenant->id)->where('active', true)->where('show_on_signage', true)->where('plays_on', $data['date'])->with(['field', 'hostRoom', 'guestRoom', 'hostSide', 'guestSide'])->orderBy('starts_at')->orderBy('id')->get();
+        $competitions = Competition::where('tenant_id', $tenant->id)->where('active', true)->where('show_on_signage', true)->where('plays_on', $data['date'])->orderBy('starts_at')->orderBy('id')->get();
+        $this->loadDisplayOptions($tenant, $fields, $competitions, $trainings);
         $numbers = $competitions->pluck('host_club_number')->merge($competitions->pluck('guest_club_number'))->filter()->unique();
         $clubs = FootballClub::where('tenant_id', $tenant->id)->whereIn('club_number', $numbers)->get()->keyBy('club_number');
 
@@ -57,6 +60,31 @@ class SignageService
             'notices' => SignageNotice::where('tenant_id', $tenant->id)->where('active', true)->where('shows_on', $data['date'])->orderBy('id')->get(),
             'fields' => $fields, 'trainings' => $trainings, 'training_variant' => $flag,
         ];
+    }
+
+    private function loadDisplayOptions(Tenant $tenant, Collection $fields, Collection $competitions, Collection $trainings): void
+    {
+        $options = $fields->pluck('field')->filter()->keyBy('id');
+        $groups = [[$competitions, ['field' => 'field_id', 'hostRoom' => 'host_room_id', 'guestRoom' => 'guest_room_id', 'hostSide' => 'host_side_id', 'guestSide' => 'guest_side_id']],
+            [$trainings, ['field' => 'field_id', 'room' => 'room_id', 'side' => 'side_id']]];
+        $ids = collect();
+        foreach ($groups as [$rows, $relations]) {
+            foreach ($relations as $foreignKey) {
+                $ids = $ids->merge($rows->pluck($foreignKey));
+            }
+        }
+        $missing = $ids->filter()->unique()->diff($options->keys());
+        if ($missing->isNotEmpty()) {
+            $options = $options->union(TrainingOption::where('tenant_id', $tenant->id)->whereIn('id', $missing)->get()->keyBy('id'));
+        }
+        // One request-local lookup pool; no cross-request cache or permission snapshot.
+        foreach ($groups as [$rows, $relations]) {
+            foreach ($rows as $row) {
+                foreach ($relations as $relation => $foreignKey) {
+                    $row->setRelation($relation, $options->get($row->$foreignKey));
+                }
+            }
+        }
     }
 
     public static function roomLabel(?string $name): string

@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Signage-/Anlagen-/Busperformance (16.10.2026)
+
+Signage-Lookups innerhalb eines Requests gesammelt, Design-/Periodenwerte
+pro Aufbau wiederverwendet. Bus-Neuanlage ohne doppelte Teamliste und mit
+minimalen Mitgliederauswahlfeldern; Labels per ID statt wiederholter Suche.
+Frische Aktionsrechte, oeffentliche Freigaben und historische Garderoben
+erhalten. Keine Migration. Details: CLUBUNIO-SIGNAGE-BUS-PERFORMANCE.md.
+
 ## Dynamische Rollen (16.10.2026, begonnen)
 
 Profilmodell, Modul-/Funktionskatalog, Nur-Lesen-Vorlage und revisionierter

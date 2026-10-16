@@ -39,6 +39,7 @@ class SignagePreview extends Page
                     Hidden::make('version')->required()])
                 ->action(function (array $data) {
                     FormMutation::run($this, fn () => app(SignageBrandService::class)->save(Filament::auth()->user(), Filament::getTenant(), $data));
+                    $this->brandValues = null;
                     $this->periodId = $data['period_id'] ? (string) $data['period_id'] : null;
                     Notification::make()->title('Vereinsdesign gespeichert')->success()->send();
                 }),
@@ -66,6 +67,20 @@ class SignagePreview extends Page
     public ?string $periodId = null;
 
     public bool $followToday = true;
+
+    private ?array $periodChoices = null;
+
+    private ?array $brandValues = null;
+
+    private function periods(): array
+    {
+        return $this->periodChoices ??= TrainingSlotResource::choices('period');
+    }
+
+    private function brand(): array
+    {
+        return $this->brandValues ??= app(SignageBrandService::class)->read(Filament::getTenant());
+    }
 
     public function updatedDate(): void
     {
@@ -103,8 +118,8 @@ class SignagePreview extends Page
     public function mount(): void
     {
         $this->date = now('Europe/Zurich')->toDateString();
-        $period = app(SignageBrandService::class)->read(Filament::getTenant())['period_id'];
-        $this->periodId = isset(TrainingSlotResource::choices('period')[$period]) ? (string) $period : null;
+        $period = $this->brand()['period_id'];
+        $this->periodId = isset($this->periods()[$period]) ? (string) $period : null;
     }
 
     protected function getViewData(): array
@@ -117,6 +132,6 @@ class SignagePreview extends Page
             $data = ['competitions' => collect(), 'clubs' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => 'Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.'];
         }
 
-        return $data + ['periods' => TrainingSlotResource::choices('period'), 'tenant' => Filament::getTenant(), 'brand' => app(SignageBrandService::class)->read(Filament::getTenant())];
+        return $data + ['periods' => $this->periods(), 'tenant' => Filament::getTenant(), 'brand' => $this->brand()];
     }
 }

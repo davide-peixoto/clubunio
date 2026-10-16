@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Signage display lookups batched per request; bus choice fields
+and duplicate loads reduced. Existing read context only for feed presentation;
+fresh actions/public opt-in/locks and historical rooms preserved. No schema,
+index or data migration, no legacy/API/SaaS/operations change. See
+CLUBUNIO-SIGNAGE-BUS-PERFORMANCE.md.
+
 16.10.2026: Report policy tenants eager-loaded in eight list resources;
 CSV exports load only required relations/member fields, finance CSV values
 prepared before headers. Authorization, filters, ordering, 5000-row guard and

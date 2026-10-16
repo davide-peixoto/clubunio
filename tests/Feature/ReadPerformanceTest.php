@@ -15,6 +15,7 @@ use App\ClubUnio\Services\BackofficeHandleComponents;
 use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\MemberAccessService;
+use App\Livewire\ClubUnio\SignageFeeds;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\Livewire;
 use Livewire\Mechanisms\HandleComponents\HandleComponents;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ReadPerformanceTest extends TestCase
@@ -72,6 +74,28 @@ class ReadPerformanceTest extends TestCase
     private function revoke(): void
     {
         $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+    }
+
+    public function test_signage_feed_presentation_reuses_only_verified_read_tenant(): void
+    {
+        $this->actingAs($this->actor, 'clubunio');
+        $component = new SignageFeeds;
+        $this->during('GET', function () use ($component) {
+            $this->db->enableQueryLog();
+            $this->db->flushQueryLog();
+            $component->mount($this->tenant->id);
+            $component->render();
+            $component->render();
+            $this->assertCount(0, $this->db->getQueryLog());
+            $this->db->disableQueryLog();
+        });
+        $this->revoke();
+        try {
+            $component->render();
+            $this->fail('Revoked role rendered feed');
+        } catch (HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
     }
 
     public function test_read_page_and_backoffice_entry_reuse_existing_context_only(): void

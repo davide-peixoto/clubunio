@@ -59,7 +59,7 @@ class SignageDesignTest extends TestCase
 
     public function test_design_dialog_saves_scoped_colors_logo_period_and_audit(): void
     {
-        Livewire::test(SignagePreview::class)->callAction('design', data: $this->input())->assertHasNoActionErrors();
+        Livewire::test(SignagePreview::class)->callAction('design', data: $this->input())->assertHasNoActionErrors()->assertSeeHtml('--sg-brand:#ffffff');
         $data = app(SignageBrandService::class)->read($this->tenant);
         $this->assertSame('#ffffff', $data['color']);
         $this->assertSame('#16191e', $data['ink']);

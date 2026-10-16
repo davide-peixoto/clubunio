@@ -21,11 +21,12 @@ class BusReservationController
 
     public function __construct(private BusReservationService $service) {}
 
-    private function context(Request $request, Tenant $tenant): array
+    private function context(Request $request, Tenant $tenant, bool $reservable = false): array
     {
         $actor = $request->user();
-        $this->service->enter($actor, $tenant);
-        $teams = $this->service->teams($actor, $tenant)->orderByDesc('season_id')->orderBy('label')->get();
+        // Both queries perform enter() themselves before any context data is read.
+        $teams = ($reservable ? $this->service->reservableTeams($actor, $tenant) : $this->service->teams($actor, $tenant))
+            ->orderByDesc('season_id')->orderBy('label')->get();
         $buses = $this->service->table($tenant, 'buses')->orderBy('name')->get();
         $statuses = $this->service->table($tenant, 'bus_statuses')->orderBy('id')->get()->keyBy('code');
         $colors = $this->service->table($tenant, 'status_styles')->where('active', true)->pluck('color', 'value_key')->all();
@@ -64,17 +65,21 @@ class BusReservationController
             $q->where('status', $filters['status']);
         }
         $rows = $q->orderBy('starts_at')->orderBy('id')->paginate(25)->withQueryString();
-        $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->whereIn('id', $rows->pluck('team_season_id'))->get())->unique('id');
+        $missing = $rows->pluck('team_season_id')->filter()->unique()->diff($data['teams']->pluck('id'));
+        if ($missing->isNotEmpty()) {
+            $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->whereIn('id', $missing)->get())->unique('id');
+        }
+        $data['teamLabels'] = $data['teams']->pluck('label', 'id');
+        $data['busNames'] = $data['buses']->pluck('name', 'id');
 
         return $this->view('index', $data + compact('rows', 'filters', 'counts'));
     }
 
     public function create(Request $request, Tenant $tenant)
     {
-        $data = $this->context($request, $tenant);
-        $data['teams'] = $this->service->reservableTeams($data['actor'], $tenant)->orderByDesc('season_id')->orderBy('label')->get();
+        $data = $this->context($request, $tenant, reservable: true);
         abort_if($data['teams']->isEmpty(), 403);
-        $members = ($data['actor']->canAccessTenant($tenant) ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($data['actor'], $tenant, true))->orderBy('last_name')->orderBy('first_name')->get();
+        $members = ($data['actor']->canAccessTenant($tenant) ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($data['actor'], $tenant, true))->orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
         return $this->view('create', $data + compact('members'));
     }

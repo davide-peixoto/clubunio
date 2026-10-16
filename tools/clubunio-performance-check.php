@@ -26,7 +26,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $path = $argv[1] ?? '/members';
-abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/registrations', '/member-reports', '/player-reports', '/staff-reports', '/family-reports', '/bank-account-reports', '/open-invoices', '/payment-reports', '/unassigned-members', '/passive-members', '/key-reports', '/spots-recipients', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
+abort_unless(in_array($path, ['/', '/signage-preview', '/field-availabilities', '/competitions', '/signage-notices', '/bus', '/bus/create', '/members', '/invoices', '/expenses', '/registrations', '/member-reports', '/player-reports', '/staff-reports', '/family-reports', '/bank-account-reports', '/open-invoices', '/payment-reports', '/unassigned-members', '/passive-members', '/key-reports', '/spots-recipients', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 config(['session.driver' => 'array']);
@@ -38,6 +38,9 @@ try {
     Auth::guard('clubunio')->setUser($actor);
     $app['session']->driver()->put('clubunio_context.'.$actor->id, ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()]);
     $requestPath = $path;
+    if ($path === '/bus/create') {
+        $requestPath = '/bus/new';
+    }
     if (str_starts_with($path, '/documents/')) {
         $kind = basename($path);
         $table = ['member' => 'member_documents', 'registration' => 'registration_documents', 'expense' => 'expense_lines'][$kind];
@@ -73,7 +76,7 @@ try {
         $queries[$hash]['count']++;
         $queries[$hash]['ms'] += $query->time;
     });
-    $request = Request::create('https://dev.clubunio.ch'.$requestPath, 'GET');
+    $request = Request::create('https://dev.clubunio.ch'.$requestPath, 'GET', server: ['REMOTE_ADDR' => '127.0.0.1']);
     $start = microtime(true);
     $response = $app->make(Illuminate\Contracts\Http\Kernel::class)->handle($request);
     $mode = $argv[2] ?? 'page';

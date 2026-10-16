@@ -187,6 +187,19 @@ class BusReservationTest extends TestCase
         $this->get(route('clubunio.bus.index', $alien->slug))->assertForbidden();
     }
 
+    public function test_create_form_loads_only_member_choice_fields_and_one_team_list(): void
+    {
+        $this->officeWorkspace();
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $response = $this->get(route('clubunio.bus.create', $this->tenant->slug))->assertOk()->assertSee('Applicant');
+        $members = $response->viewData('members');
+        $this->assertSame(['id', 'first_name', 'last_name'], array_keys($members->first()->getAttributes()));
+        $teamQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubora"."team_seasons"'));
+        $this->assertCount(1, $teamQueries);
+        $this->db->disableQueryLog();
+    }
+
     public function test_office_web_forms_filters_details_and_notification_link(): void
     {
         $id = $this->service->create($this->office, $this->tenant, $this->input());

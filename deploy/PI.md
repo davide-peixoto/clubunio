@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Signage-/Busperformance (16.10.2026)
+
+Gezieltes Delta 20261016-clubunio-signage-bus-performance auf aktuellem Release.
+Keine Migration; bestehende Konflikt-/Revisions-/Freigabepruefungen erhalten.
+Messungen, Tests und Ruecksprung: CLUBUNIO-SIGNAGE-BUS-PERFORMANCE.md.
+Keine PHPMaker DEV/PROD- oder Betriebskonfiguration geaendert.
+
 ## Dossier-Auswahlaktionen (16.10.2026)
 
 Release `20261016-clubunio-dossier-selection`, Delta auf aktuellem Release.

@@ -1123,6 +1123,42 @@ class ClubUnioTest extends TestCase
         }
     }
 
+    public function test_signage_batches_display_options_and_keeps_historical_labels_scoped_and_fresh(): void
+    {
+        $ids = $this->facilityFixture();
+        $today = now('Europe/Zurich')->toDateString();
+        $foreign = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->other->id, 'category' => 'room', 'code' => 'foreign', 'name' => 'Private foreign room']);
+        $this->db->table('clubora.training_options')->where('id', $ids['room']['2'])->update(['active' => false]);
+        foreach (range(1, 20) as $i) {
+            $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => $today,
+                'host_name' => 'Batch host '.$i, 'guest_name' => 'Batch guest', 'show_on_signage' => true,
+                'field_id' => $ids['field']['H'], 'host_room_id' => $ids['room']['1'], 'guest_room_id' => $ids['room']['2'],
+                'host_side_id' => $ids['side']['L'], 'guest_side_id' => $i === 20 ? null : $ids['side']['R']]);
+        }
+        $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->other->id, 'plays_on' => $today,
+            'host_name' => 'Private foreign game', 'guest_name' => 'Foreign guest', 'show_on_signage' => true, 'host_room_id' => $foreign]);
+        $service = app(SignageService::class);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $data = $service->preview($this->actor, $this->own, ['date' => $today]);
+        $optionQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubora"."training_options"'));
+        $this->assertCount(2, $optionQueries);
+        $this->assertCount(20, $data['competitions']);
+        $this->db->flushQueryLog();
+        foreach ($data['competitions'] as $game) {
+            $this->assertSame('field H', $game->field->name);
+            $this->assertSame('room 1', $game->hostRoom->name);
+            $this->assertSame('room 2', $game->guestRoom->name);
+            $this->assertSame('side L', $game->hostSide->name);
+        }
+        $this->assertNull($data['competitions']->last()->guestSide);
+        $this->assertCount(0, $this->db->getQueryLog());
+        $this->db->disableQueryLog();
+        $this->db->table('clubora.training_options')->where('id', $ids['room']['1'])->update(['name' => 'Updated room']);
+        $updated = $service->preview($this->actor, $this->own, ['date' => $today]);
+        $this->assertSame('Updated room', $updated['competitions']->first()->hostRoom->name);
+    }
+
     public function test_signage_training_variants_follow_field_status_and_day(): void
     {
         $ids = $this->facilityFixture();
@@ -1130,7 +1166,7 @@ class ClubUnioTest extends TestCase
         $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Facilities team']);
         $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Facilities team / season']);
         foreach (['all_fields', 'without_main', 'synthetic_only'] as $flag) {
-            $this->db->table('clubora.training_slots')->insert(['tenant_id' => $this->own->id, 'team_season_id' => $ts, 'period_id' => $ids['period']['S'], 'weekday_id' => array_values($ids['weekday'])[0], 'starts_at' => '18:00:00', 'ends_at' => '19:00:00', 'hall' => $flag, $flag => true]);
+            $this->db->table('clubora.training_slots')->insert(['tenant_id' => $this->own->id, 'team_season_id' => $ts, 'period_id' => $ids['period']['S'], 'weekday_id' => array_values($ids['weekday'])[0], 'starts_at' => '18:00:00', 'ends_at' => '19:00:00', 'field_id' => $ids['field']['K'], 'room_id' => $ids['room']['1'], 'side_id' => $ids['side']['L'], 'hall' => $flag, $flag => true]);
         }
         $service = app(SignageService::class);
         $input = ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => $ids['period']['S']];
@@ -1141,6 +1177,9 @@ class ClubUnioTest extends TestCase
             $data = $service->preview($this->actor, $this->own, $input);
             $this->assertSame($expected, $data['training_variant']);
             $this->assertSame([$expected], $data['trainings']->pluck('hall')->all());
+            $this->assertSame($ids['field']['K'], $data['trainings']->first()->field->id);
+            $this->assertSame($ids['room']['1'], $data['trainings']->first()->room->id);
+            $this->assertSame($ids['side']['L'], $data['trainings']->first()->side->id);
         }
         $this->assertCount(0, $service->preview($this->actor, $this->own, array_replace($input, ['date' => now('Europe/Zurich')->addDay()->toDateString()]))['trainings']);
         $this->db->table('clubora.teams')->where('id', $team)->update(['active' => false]);

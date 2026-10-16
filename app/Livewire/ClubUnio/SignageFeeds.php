@@ -3,6 +3,7 @@
 namespace App\Livewire\ClubUnio;
 
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\PublicWebService;
 use App\ClubUnio\Services\SignageFeedService;
 use Illuminate\Support\Facades\Auth;
@@ -35,16 +36,28 @@ class SignageFeeds extends Component
         abort_unless($feed === null || in_array($feed, ['weather', 'instagram'], true), 404);
         $this->kiosk = $kiosk;
         $this->feed = $feed;
-        $this->authorizedTenant();
+        $this->authorizedTenant(readOnly: true);
     }
 
-    private function authorizedTenant(): Tenant
+    private function authorizedTenant(bool $readOnly = false): Tenant
     {
+        if ($readOnly && ! $this->publicDisplay && ($actor = Auth::guard('clubunio')->user())) {
+            $tenants = app(BackofficeReadContext::class)->tenantsFor($actor);
+            if ($tenants !== null) {
+                $tenant = $tenants->first(fn ($item) => (int) $item->id === $this->tenantId);
+                abort_unless($tenant, 403);
+
+                return $tenant;
+            }
+        }
         $tenant = Tenant::findOrFail($this->tenantId);
         if ($this->publicDisplay) {
             app(PublicWebService::class)->authorize($tenant, 'signage');
         } else {
-            abort_unless(Auth::guard('clubunio')->user()?->fresh()?->canAccessTenant($tenant), 403);
+            $actor = Auth::guard('clubunio')->user();
+            abort_unless($readOnly
+                ? app(BackofficeReadContext::class)->allowsReadPage($actor, $tenant)
+                : $actor?->fresh()?->canAccessTenant($tenant), 403);
         }
 
         return $tenant;
@@ -61,7 +74,7 @@ class SignageFeeds extends Component
 
     public function render()
     {
-        $this->authorizedTenant();
+        $this->authorizedTenant(readOnly: true);
 
         return view($this->kiosk ? 'livewire.clubunio.signage-kiosk-feed' : 'livewire.clubunio.signage-feeds');
     }
