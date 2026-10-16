@@ -8,6 +8,11 @@ class TenantAccount extends CatalogModel
 
     protected $casts = ['portal_enabled' => 'boolean'];
 
+    public function accessProfile()
+    {
+        return $this->belongsTo(AccessProfile::class);
+    }
+
     public function account()
     {
         return $this->belongsTo(Account::class);

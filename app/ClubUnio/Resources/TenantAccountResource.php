@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Resources;
 
 use App\ClubUnio\Models\AccountRole;
+use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\TenantAccount;
 use App\ClubUnio\Services\AccountAdministrationService;
 use Filament\Actions\Action;
@@ -12,6 +13,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -66,9 +69,21 @@ class TenantAccountResource extends CatalogResource
     {
         return [TextInput::make('username')->label('Benutzername')->required(! $edit)->disabled($edit)->dehydrated(! $edit)->maxLength(255),
             TextInput::make('display_name')->label('Anzeigename')->required()->maxLength(255),
-            Select::make('role')->label('Rolle')->options(self::roles())->default('member')->required(),
+            Select::make('role')->label('Systemrolle')->options(self::roles())->default('member')->required()->live()
+                ->afterStateUpdated(function (?string $state, Set $set) {
+                    $set('access_profile_id', null);
+                    if ($state === 'profile') {
+                        $set('portal_enabled', false);
+                    }
+                }),
+            Select::make('access_profile_id')->label('Berechtigungsprofil')->searchable()
+                ->visible(fn (Get $get) => $get('role') === 'profile')->required(fn (Get $get) => $get('role') === 'profile')
+                ->dehydrated(fn (Get $get) => $get('role') === 'profile')
+                ->options(fn (Get $get) => $get('role') === 'profile'
+                    ? AccessProfile::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->pluck('name', 'id')->all() : []),
             Toggle::make('active')->label('Konto aktiv')->default(false)->required(),
-            Toggle::make('portal_enabled')->label('Mitgliederportal freigegeben')->default(false)->required(),
+            Toggle::make('portal_enabled')->label('Mitgliederportal freigegeben')->default(false)->required()
+                ->disabled(fn (Get $get) => $get('role') === 'profile')->dehydrated(),
             TextInput::make('password')->label($edit ? 'Neues Passwort' : 'Passwort')->password()->autocomplete('new-password')->required(! $edit)->minLength(12)->maxLength(72)->confirmed(),
             TextInput::make('password_confirmation')->label('Passwort bestätigen')->password()->autocomplete('new-password'),
             Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500),
@@ -87,7 +102,7 @@ class TenantAccountResource extends CatalogResource
             ->headerActions([Action::make('newAccount')->label('Benutzer hinzufügen')->icon('heroicon-o-user-plus')->schema(self::fields(false))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
             ->recordActions([Action::make('manage')->label('Benutzer bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Benutzer und Rolle bearbeiten')->schema(self::fields(true))
-                ->fillForm(fn (TenantAccount $record) => ['username' => $record->account->username, 'display_name' => $record->account->display_name, 'active' => $record->account->active, 'role' => $record->role, 'portal_enabled' => $record->portal_enabled, 'revision' => $record->revision, 'account_revision' => $record->account->revision])
+                ->fillForm(fn (TenantAccount $record) => ['username' => $record->account->username, 'display_name' => $record->account->display_name, 'active' => $record->account->active, 'role' => $record->role, 'access_profile_id' => $record->access_profile_id, 'portal_enabled' => $record->portal_enabled, 'revision' => $record->revision, 'account_revision' => $record->account->revision])
                 ->action(fn (TenantAccount $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)))])
             ->defaultSort('id')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }

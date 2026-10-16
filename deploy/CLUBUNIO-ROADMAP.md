@@ -27,6 +27,12 @@ registriert. 6 Tests/49 Assertions bestanden. Freigabe weiterhin gesperrt:
 gemeinsame Lese-/Schreibpruefung aufloesen, Portal-/Livewire-Zugriffe absichern
 und Rollback ohne Rechteausweitung sicherstellen. Keine Benutzerzuordnung,
 keine dauerhafte Migration und kein Rollen-Deployment.
+Nachtrag: Zuordnungsservice/-formular und Migration70 mit eigener inaktiver
+Systemrolle profile vorbereitet. Frischer Modul-/Funktionspruefservice
+inklusive Entzug implementiert, aber noch nicht in Fachaktionen eingebunden.
+18 gezielte Tests/128 Assertions inklusive bestehender Benutzerverwaltung.
+Freischaltung und Deployment bleiben bis zur vollstaendigen Integration
+gesperrt. Keine echte Benutzerzuordnung oder dauerhafte DB-Aenderung.
 
 ## Dossier-Auswahlaktionen (16.10.2026)
 

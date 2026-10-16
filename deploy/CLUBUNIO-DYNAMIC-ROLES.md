@@ -1,6 +1,6 @@
 # Dynamische Rollen nach Modul und Funktion
 
-Stand 16.10.2026: IN ARBEIT, nicht deployt, nicht zuweisbar.
+Stand 16.10.2026: IN ARBEIT, nicht deployt, produktive Zuordnung gesperrt.
 
 ## Vorbereitet
 
@@ -17,8 +17,19 @@ Stand 16.10.2026: IN ARBEIT, nicht deployt, nicht zuweisbar.
   Kopieren, Suche, Aktivstatus, Revision und Pflichtbegruendung.
 - Editor-Datenkonvertierung und Kopie getestet; manipulierte Funktionen
   werden nicht still verworfen, sondern vom Schreibservice abgelehnt.
-- Teststand: AccessProfileTest, 6 Tests / 49 Assertions, vollstaendig
-  transaktional mit Rollback. Keine dauerhaften Rollen- oder DB-Aenderungen.
+- Benutzerzuordnung im Admin-Service und im Formular vorbereitet. Eigene
+  Systemrolle `profile`, keine Gleichstellung mit `office`, kein Portalzugang.
+  Zuordnung nur mit aktivem Profil desselben Vereins; Audit/Revision und
+  Schutz des letzten Administrators bleiben erhalten.
+- Migration70 vorbereitet: zusammengesetzter Vereins-/Profil-Fremdschluessel
+  und DB-Check fuer zulaessige Kombinationen. Die neue Systemrolle wird
+  ausdruecklich INAKTIV angelegt und ist daher nicht auswaehlbar.
+- ModulePermissionService prueft einzelne Modul-/Funktionsrechte frisch,
+  inklusive deaktivierter Konten/Profile, Entzug, Anzeigerecht-Abhaengigkeit
+  und unbekannter Rechte. Noch NICHT in die Fachservices eingebunden.
+- Teststand: AccessProfileTest und ModulePermissionTest 13 Tests/88 Assertions;
+  bestehende Benutzerverwaltung 5 Tests/40 Assertions. Alle transaktional mit
+  Rollback. Keine dauerhaften Rollen- oder DB-Aenderungen.
 
 ## Ergebnis der Integrationspruefung
 
@@ -33,9 +44,10 @@ Eine Zuordnung als office mit zusaetzlichem Profil ist ohne weiteren Schutz
 ebenfalls ungeeignet: Nach einem Rollback auf alten Code wuerde das Profil
 ignoriert und das Konto haette volle Office-Rechte. Die Aktivierung benoetigt
 eine eigene, auch fuer alte Releases gesperrte Systemrolle oder einen gleich
-starken getesteten Rollback-Schutz. Der experimentelle office-basierte
-Zuordnungsentwurf wurde deshalb verworfen; es gibt keine Migration70 und
-keine Profilzuordnung auf echten Konten.
+starken getesteten Rollback-Schutz. Der office-basierte Entwurf wurde durch
+Migration70 mit der eigenen Rolle `profile` ersetzt. Alte Zugangspruefungen
+lassen diese Rolle nicht hinein (negativ getestet). Es gibt weiterhin keine
+Profilzuordnung auf echten Konten und keine dauerhafte Anwendung von70.
 
 Die Resource bleibt absichtlich unregistriert. Keine halbfertige
 Rechteverwaltung wird als verwendbar auf ClubUnio ausgerollt.
@@ -44,8 +56,8 @@ Rechteverwaltung wird als verwendbar auf ClubUnio ausgerollt.
 
 1. Vorbereiteten Filament-Editor integrieren und visuell pruefen;
    betroffene Benutzer und wirksame Rechte zusammen anzeigen.
-2. Profilzuordnung getrennt von bisherigen Systemrollen; letzter Admin
-   bleibt geschuetzt. Keine pauschale Gleichstellung mit office.
+2. Vorbereitete Profilzuordnung erst nach vollstaendiger Fachintegration
+   freischalten; zusaetzlich angemeldete Formularpruefung erforderlich.
 3. Explizite Berechtigungen in Fachservices, Policies und Web-Endpunkten.
    canAccessTenant wird heute auch fuer Mutationen verwendet und darf
    nicht einfach fuer Nur-Lesen-Profile freigeschaltet werden.
@@ -59,3 +71,14 @@ Rechteverwaltung wird als verwendbar auf ClubUnio ausgerollt.
 
 PHPMaker DEV/PROD, API, SaaS und Betrieb bleiben unveraendert.
 Die vorbereiteten Profile sind noch KEINE wirksamen Zugriffsrechte.
+
+## Naechste zwingende Integrationsschritte
+
+- Workspace-Zugang von canAccessTenant als pauschalem Fachrecht trennen.
+- Resource-/Policy-/Untertabellenleserechte mit expliziter Modulzuordnung
+  ergaenzen, ohne schreibende Fachservices pauschal freizuschalten.
+- Jeden mutierenden Fachservice und Export/Download mit konkretem
+  Modul/Funktion verbinden; verbleibende Altpruefungen verweigern profile.
+- Direkte Livewire-/Webaufrufe und Portal-Fallbacks negativ testen, ebenso
+  erlaubte Aktionen positiv. Erst danach profile aktivieren, Editor
+  registrieren, Migrationen dauerhaft ausfuehren und ClubUnio deployen.
