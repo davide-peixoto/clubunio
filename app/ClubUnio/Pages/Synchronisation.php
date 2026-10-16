@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Pages;
 
-use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\SyncWorkService;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -37,7 +37,7 @@ class Synchronisation extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant());
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant(), adminOnly: true);
     }
 
     public function updatedState(): void

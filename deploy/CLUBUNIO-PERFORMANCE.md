@@ -1,5 +1,9 @@
 # ClubUnio: gemessene Seiten- und PHP-Optimierung
 
+Fortsetzung16.10.2026: verbleibende Menue-/Einstiegsabfragen auf bestehenden
+Requestkontext vereinheitlicht; frische Schreibpruefungen unveraendert.
+Messungen und Sicherheitsgrenzen: CLUBUNIO-DB-READ-PERFORMANCE.md.
+
 ## Befund16.10.2026
 
 Pi:15GiB RAM, ca.12GiB verfuegbar, CPU zu99-100% untaetig, Load0.05-0.08.

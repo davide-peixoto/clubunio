@@ -3,12 +3,30 @@
 namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class BackofficeReadContext
 {
+    // Page visibility only: actions must retain their own fresh authorization.
+    public function allowsReadPage(?Account $actor, ?Tenant $tenant, bool $adminOnly = false): bool
+    {
+        if (! $actor?->active || ! $tenant) {
+            return false;
+        }
+        $tenants = $this->tenantsFor($actor);
+        if ($tenants !== null) {
+            return $tenants->contains(fn ($item) => (int) $item->id === (int) $tenant->id
+                && (! $adminOnly || $item->pivot->role === 'admin'));
+        }
+        $fresh = $actor->fresh();
+
+        return $adminOnly ? BexioConnectionService::canManage($fresh, $tenant)
+            : ($fresh?->canAccessTenant($tenant) ?? false);
+    }
+
     public function during(Request $request, Closure $next): mixed
     {
         if (! $request->isMethod('GET')) {

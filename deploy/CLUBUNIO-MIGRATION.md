@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+16.10.2026: Remaining DB read roundtrips reduced through existing bounded
+backoffice context and SQL subqueries for represented planning members.
+Fresh write/portal authorization retained; no schema migration, data refresh
+or legacy DEV/PROD deployment. See CLUBUNIO-DB-READ-PERFORMANCE.md.
+
 16.10.2026: Planning/calendar CPU work consolidated with exact time-boundary
 reference tests; already authorized team labels reused without granting team
 management. No schema/data migration or legacy deployment. Existing deadline,

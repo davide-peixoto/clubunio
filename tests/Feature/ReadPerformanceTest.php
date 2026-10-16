@@ -6,9 +6,15 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\MemberStatus;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Pages\BexioSandbox;
+use App\ClubUnio\Pages\SettingsOverview;
+use App\ClubUnio\Pages\Synchronisation;
+use App\ClubUnio\Resources\BexioCatalogEntryResource;
 use App\ClubUnio\Resources\MemberResource\Pages\ListMembers;
 use App\ClubUnio\Services\BackofficeHandleComponents;
 use App\ClubUnio\Services\BackofficeReadContext;
+use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\MemberAccessService;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +74,50 @@ class ReadPerformanceTest extends TestCase
         $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
     }
 
+    public function test_read_page_and_backoffice_entry_reuse_existing_context_only(): void
+    {
+        $this->during('GET', function () {
+            $this->db->enableQueryLog();
+            $this->db->flushQueryLog();
+            for ($i = 0; $i < 20; $i++) {
+                $this->assertTrue(app(BackofficeReadContext::class)->allowsReadPage($this->actor, $this->tenant));
+                $this->assertFalse(app(BackofficeReadContext::class)->allowsReadPage($this->actor, $this->tenant, adminOnly: true));
+                $this->assertTrue(app(MemberAccessService::class)->canEnter($this->actor, $this->tenant));
+            }
+            $this->assertCount(0, $this->db->getQueryLog());
+            $this->db->disableQueryLog();
+        });
+        $this->revoke();
+        $this->assertFalse(app(BackofficeReadContext::class)->allowsReadPage($this->actor, $this->tenant));
+        $this->assertFalse(app(MemberAccessService::class)->canEnter($this->actor, $this->tenant));
+    }
+
+    public function test_admin_page_is_tenant_scoped_and_post_revocation_is_immediate(): void
+    {
+        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+        $foreign = Tenant::create(['slug' => 'read-admin-'.Str::random(10), 'name' => 'Other']);
+        $this->during('GET', function () use ($foreign) {
+            $context = app(BackofficeReadContext::class);
+            $this->assertTrue($context->allowsReadPage($this->actor, $this->tenant, adminOnly: true));
+            $this->assertFalse($context->allowsReadPage($this->actor, $foreign, adminOnly: true));
+            $disabled = clone $this->actor;
+            $disabled->active = false;
+            $this->assertFalse($context->allowsReadPage($disabled, $this->tenant));
+            $this->assertFalse($context->allowsReadPage(null, $this->tenant));
+        });
+        $this->during('POST', function () {
+            $context = app(BackofficeReadContext::class);
+            $this->assertTrue($context->allowsReadPage($this->actor, $this->tenant, adminOnly: true));
+            $this->revoke();
+            $this->assertFalse($context->allowsReadPage($this->actor, $this->tenant, adminOnly: true));
+            $this->assertFalse(app(BexioConnectionService::class)::canManage($this->actor->fresh(), $this->tenant));
+            $this->assertFalse(app(MemberAccessService::class)->canEnter($this->actor, $this->tenant));
+        });
+        $this->during('GET', function () {
+            $this->assertFalse(app(BackofficeReadContext::class)->allowsReadPage($this->actor, $this->tenant, adminOnly: true));
+        });
+    }
+
     public function test_repeated_get_checks_do_not_query_and_next_request_sees_revocation(): void
     {
         $this->during('GET', function () {
@@ -86,6 +136,31 @@ class ReadPerformanceTest extends TestCase
             $this->assertFalse($this->actor->canAccessTenant($this->tenant));
             $this->assertFalse($this->actor->hasBackofficeTenant());
         });
+    }
+
+    public function test_admin_in_another_tenant_does_not_unlock_current_office_pages(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('clubunio'));
+        $this->actingAs($this->actor, 'clubunio');
+        Filament::setTenant($this->tenant);
+        $foreign = Tenant::create(['slug' => 'read-other-admin-'.Str::random(8), 'name' => 'Other']);
+        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->during('GET', function () use ($foreign) {
+            $this->assertTrue(SettingsOverview::canAccess());
+            $this->assertFalse(Synchronisation::canAccess());
+            $this->assertFalse(BexioSandbox::canAccess());
+            $this->assertFalse(BexioCatalogEntryResource::canViewAny());
+            Filament::setTenant($foreign);
+            try {
+                $this->assertTrue(Synchronisation::canAccess());
+                $this->assertTrue(BexioCatalogEntryResource::canViewAny());
+            } finally {
+                Filament::setTenant($this->tenant);
+            }
+        });
+        $this->revoke();
+        $this->assertFalse(SettingsOverview::canAccess());
+        $this->assertFalse(Synchronisation::canAccess());
     }
 
     public function test_post_checks_stay_fresh_even_within_the_same_request(): void

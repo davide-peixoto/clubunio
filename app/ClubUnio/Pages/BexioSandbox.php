@@ -4,7 +4,7 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
-use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioDispatchTrialService;
 use App\ClubUnio\Services\BexioFinancialActionService;
 use App\ClubUnio\Services\BexioGeneralSandboxFixtureService;
@@ -36,7 +36,7 @@ class BexioSandbox extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant());
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant(), adminOnly: true);
     }
 
     public function prepare(string $kind): void

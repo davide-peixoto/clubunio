@@ -50,7 +50,7 @@ class TeamPlanningService
         }
         $access = app(MemberAccessService::class);
         $responsible = $access->responsibleTeams($actor, $tenant);
-        $own = $access->represented($actor, $tenant)->pluck('id');
+        $own = $manage ? null : $access->represented($actor, $tenant)->select('clubora.members.id');
 
         return $q->where(function ($q) use ($tenant, $responsible, $own, $manage) {
             $q->whereIn('id', $responsible);
@@ -74,7 +74,7 @@ class TeamPlanningService
 
     public function invitedEvents(Account $actor, Tenant $tenant)
     {
-        return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id'));
+        return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id'));
     }
 
     public function options(Tenant $tenant): array

@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\NavigationStructure;
+use App\ClubUnio\Services\BackofficeReadContext;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
 
@@ -23,7 +24,7 @@ class SettingsOverview extends Page
     {
         $tenant = Filament::getTenant();
 
-        return $tenant && (Filament::auth()->user()?->fresh()?->canAccessTenant($tenant) ?? false);
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), $tenant);
     }
 
     protected function getViewData(): array

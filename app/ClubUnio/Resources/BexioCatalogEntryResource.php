@@ -3,8 +3,8 @@
 namespace App\ClubUnio\Resources;
 
 use App\ClubUnio\Models\BexioCatalogEntry;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioCatalogService;
-use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioSandboxFixtureService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -43,7 +43,7 @@ class BexioCatalogEntryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Filament::getTenant() && BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant());
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant(), adminOnly: true);
     }
 
     public static function canCreate(): bool

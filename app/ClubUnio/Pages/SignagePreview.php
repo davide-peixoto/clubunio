@@ -4,6 +4,7 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\TrainingSlotResource;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\SignageBrandService;
 use App\ClubUnio\Services\SignageFeedService;
@@ -96,7 +97,7 @@ class SignagePreview extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && (Filament::auth()->user()?->fresh()?->canAccessTenant(Filament::getTenant()) ?? false);
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
     }
 
     public function mount(): void

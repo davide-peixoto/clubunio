@@ -52,6 +52,9 @@ class MemberAccessService
 
     public function canEnter(Account $actor, Tenant $tenant): bool
     {
+        if (app(BackofficeReadContext::class)->tenantsFor($actor)?->contains(fn ($item) => (int) $item->id === (int) $tenant->id)) {
+            return true;
+        }
         $membership = $this->membership($actor, $tenant);
         if (! $membership) {
             return false;

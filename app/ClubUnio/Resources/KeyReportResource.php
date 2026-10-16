@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Resources;
 
 use App\ClubUnio\Models\MemberKey;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\ReportExportService;
 use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
@@ -29,7 +30,7 @@ class KeyReportResource extends CatalogResource
 
     public static function canViewAny(): bool
     {
-        return Filament::getTenant() && (Filament::auth()->user()?->fresh()?->canAccessTenant(Filament::getTenant()) ?? false);
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
     }
 
     public static function canCreate(): bool

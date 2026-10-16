@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Verbleibende DB-Leseabfragen (16.10.2026)
+
+Menue-/Seitensichtbarkeit und bestaetigter Backoffice-Leseeinstieg nutzen den
+vorhandenen Requestkontext. Admin/Office und Mandanten weiterhin getrennt;
+Schreibaktionen und Portalrollen bleiben frisch. Team-/Einladungsfilter als
+SQL-Unterabfragen statt vorab geladener ID-Listen. Keine DB-Migration.
+Tests und Messungen: CLUBUNIO-DB-READ-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS unveraendert.
+
 ## Untertabellen: restliche Aktionen (16.10.2026)
 
 Wiederherstellen fuer Zuordnungen, direkte Aktivstatusaktionen, sichere

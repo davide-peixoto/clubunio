@@ -4,6 +4,7 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioDispatchTrialService;
 use App\ClubUnio\Services\BexioSandboxDispatchService;
@@ -44,7 +45,7 @@ class BexioDispatchTrials extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && (Filament::auth()->user()?->fresh()?->canAccessTenant(Filament::getTenant()) ?? false);
+        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
     }
 
     public function updatedType(): void

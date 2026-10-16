@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Weitere DB-Leseoptimierung (16.10.2026)
+
+Release `20261016-clubunio-db-read-performance`, Basis/Ruecksprung
+`20261016-clubunio-relation-actions`. Bestehenden Readkontext fuer Menue- und
+Leseeinstieg verwendet, eigene Mitglieder-/Einladungsfilter in SQL verschoben.
+Frische Schreib-/Portalrechte erhalten.49 Tests/683 Assertions erfolgreich.
+Pi: Mitglieder1154->833ms/30->19 Queries, Planung1065->650ms/32->17,
+Woche1098->662ms/35->17, Rechnungsdetail1199->961ms/37->26.
+CLI-Stichproben ohne Browser/Proxy, keine SLA. Keine DB-Migration;
+Caches/Guards erneuert, PHP-FPM graceful geladen, Login/Health HTTP200.
+Details: CLUBUNIO-DB-READ-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Untertabellen-Aktionen (16.10.2026)
 
 Delta-Release `20261016-clubunio-relation-actions`, auf aktuellem Release

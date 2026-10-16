@@ -4,7 +4,7 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
-use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\BexioReconciliationService;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -38,7 +38,7 @@ class BexioReconciliation extends Page
     public static function canAccess(): bool
     {
         if (Filament::getTenant() && app(BexioReconciliationService::class)->sandbox(Filament::getTenant())) {
-            return BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant());
+            return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant(), adminOnly: true);
         }
 
         return Filament::getTenant() && (Filament::auth()->user()?->canAccessTenant(Filament::getTenant()) ?? false);
