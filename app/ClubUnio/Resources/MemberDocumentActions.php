@@ -18,8 +18,10 @@ class MemberDocumentActions
     {
         return Action::make('uploadDocument')->label('Dokument hinzufügen')->icon('heroicon-o-arrow-up-tray')->slideOver()->schema([
             ...($member ? [] : [Select::make('member_id')->label('Mitglied')->searchable()->required()
-                ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')->find($value)?->display_name)
+                ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')
+                    ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])->find($value)?->display_name)
                 ->getSearchResultsUsing(fn ($search) => Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')
+                    ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])
                     ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%'))
                     ->orderBy('last_name')->limit(50)->get()->mapWithKeys(fn ($m) => [$m->id => $m->display_name.' · '.$m->member_number]))]),
             Select::make('document_type_id')->label('Dokumententyp')->required()->searchable()->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->pluck('name', 'id')),

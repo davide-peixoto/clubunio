@@ -54,9 +54,11 @@ class MaterialReceiptResource extends CatalogResource
         return [Hidden::make('revision')->default(0),
             Select::make('member_id')->label('Mitglied')->required()->default($member)->disabled($member !== null)->dehydrated()
                 ->searchable()->getSearchResultsUsing(fn (string $search) => Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')
+                ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])
                 ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%'))
                 ->orderBy('last_name')->limit(50)->get()->pluck('display_name', 'id')->all())
-                ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)->find($value)?->display_name),
+                ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)
+                    ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])->find($value)?->display_name),
             TextInput::make('title')->label('Bezeichnung')->required()->maxLength(200),
             DatePicker::make('handover_on')->label('Übergabedatum')->default(now('Europe/Zurich')->toDateString())->required(),
             Repeater::make('items')->label('Gegenstände')->minItems(1)->maxItems(100)->defaultItems(1)->schema([

@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Form lookup projections bounded; member save reads selected
+catalog IDs once per table, reuses status/recipient metadata in transaction.
+No cross-request lookup/permission cache, schema change or import. Keep
+historical field-specific lookup IDs; legacy DEV/PROD and API/SaaS/operations
+unchanged. Release and rollback: CLUBUNIO-FORM-PERFORMANCE.md.
+
 16.10.2026: Bexio PDF reads omit local display relations; inline PDF.js viewer
 replaces wrapper iframe and releases workers on close/change. Fresh document/
 sandbox authorization and downloads preserved; no document cache or DB change.

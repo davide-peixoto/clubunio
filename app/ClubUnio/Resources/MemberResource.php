@@ -175,9 +175,11 @@ class MemberResource extends Resource
     {
         return Select::make($field)->label('Mitglied')->searchable()
             ->getSearchResultsUsing(fn (string $search) => Member::where('tenant_id', Filament::getTenant()?->id ?? -1)->whereNull('archived_at')
+                ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])
                 ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%'))
                 ->orderBy('last_name')->limit(50)->get()->pluck('display_name', 'id'))
-            ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()?->id ?? -1)->find($value)?->display_name);
+            ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()?->id ?? -1)
+                ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])->find($value)?->display_name);
     }
 
     public static function table(Table $table): Table

@@ -14,6 +14,9 @@ use Illuminate\Validation\ValidationException;
 
 class MemberService
 {
+    private const LOOKUPS = ['status_id' => 'member_statuses', 'type_id' => 'member_types', 'country_id' => 'countries',
+        'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'];
+
     public const FIELDS = ['first_name', 'last_name', 'company', 'email', 'city', 'birth_date', 'status_id', 'type_id',
         'street', 'house_number', 'postal_code', 'country_id', 'nationality_id', 'gender_id', 'phone_private', 'phone_business',
         'mobile', 'website', 'pass_number', 'exit_date', 'mother_name', 'mother_email', 'mother_mobile',
@@ -109,12 +112,11 @@ class MemberService
             foreach (['honorary', 'free_membership', 'supporter', 'sponsor', 'spots'] as $field) {
                 $values[$field] ??= false;
             }
-            foreach (['status_id' => 'member_statuses', 'type_id' => 'member_types', 'country_id' => 'countries',
-                'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
+            $lookups = $this->lookupRows($tenant, $values);
+            foreach (self::LOOKUPS as $field => $table) {
                 $required = $id === null && in_array($field, ['status_id', 'type_id', 'billing_recipient_id'], true);
-                $rules[$field] = [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')
-                    ->where(fn ($q) => $q->where('tenant_id', $tenant->id)
-                        ->where(fn ($q) => $q->where('active', true)->orWhere('id', $member->$field ?? -1)))];
+                $allowed = $lookups[$table]->filter(fn ($row) => $row->active || (int) $row->id === (int) ($member->$field ?? -1))->keys()->all();
+                $rules[$field] = [$required ? 'required' : 'nullable', 'integer', Rule::in($allowed)];
             }
             $data = Validator::make($values, $rules, [], [
                 'first_name' => 'Vorname', 'last_name' => 'Nachname', 'company' => 'Firma', 'email' => 'E-Mail',
@@ -125,12 +127,12 @@ class MemberService
                 throw ValidationException::withMessages(['company' => 'Dieser Datensatz wurde inzwischen geändert. Bitte schliessen und erneut öffnen.']);
             }
             if ($data['billing_recipient_id'] ?? null) {
-                $field = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
+                $field = $lookups['billing_recipients']->get($data['billing_recipient_id'])->email_field;
                 if (empty($data[$field])) {
                     throw ValidationException::withMessages([$field => 'Für den gewählten Rechnungsempfänger wird eine E-Mail-Adresse benötigt.']);
                 }
             }
-            $status = MemberStatus::where('tenant_id', $tenant->id)->find($data['status_id'] ?? null);
+            $status = $lookups['member_statuses']->get($data['status_id'] ?? null);
             if ((string) $member->status_id !== (string) ($data['status_id'] ?? null)) {
                 if ($status?->restores_membership) {
                     $data['exit_date'] = null;
@@ -152,6 +154,30 @@ class MemberService
 
             return $member;
         });
+    }
+
+    private function lookupRows(Tenant $tenant, array $values): array
+    {
+        // Fresh, bounded lookup reads inside the write transaction; never cache form values.
+        $rows = [];
+        foreach (array_unique(self::LOOKUPS) as $table) {
+            $ids = [];
+            foreach (self::LOOKUPS as $field => $lookupTable) {
+                $value = $values[$field] ?? null;
+                if ($lookupTable === $table && $value !== null && filter_var($value, FILTER_VALIDATE_INT) !== false) {
+                    $ids[] = (int) $value;
+                }
+            }
+            $columns = match ($table) {
+                'member_statuses' => ['id', 'active', 'restores_membership', 'ends_membership'],
+                'billing_recipients' => ['id', 'active', 'email_field'],
+                default => ['id', 'active'],
+            };
+            $rows[$table] = $ids === [] ? collect() : DB::connection('clubunio')->table('clubora.'.$table)
+                ->where('tenant_id', $tenant->id)->whereIn('id', array_unique($ids))->get($columns)->keyBy('id');
+        }
+
+        return $rows;
     }
 
     public function archive(Account $actor, Tenant $tenant, int $id, string $version): void

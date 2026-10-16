@@ -28,9 +28,20 @@ class ExpenseFields
             MemberResource::memberSelect('member_id')->required()->live()->afterStateUpdated(fn (Set $set) => $set('bank_account_id', null)),
             Select::make('team_season_id')->label('Mannschaft / Saison')->required()->searchable()->options(fn () => TeamSeason::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('label')->pluck('label', 'id')),
             Select::make('round_id')->label('Runde')->required()->options(fn () => ExpenseRound::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
-            Select::make('bank_account_id')->label('Bankkonto')->required()->searchable()->options(fn (Get $get) => MemberBankAccount::where('tenant_id', Filament::getTenant()->id)->where('active', true)->where('member_id', $get('member_id'))->with('bank')->get()->mapWithKeys(fn ($b) => [$b->id => ($b->bank?->name ?? '').' '.$b->masked_iban])),
+            Select::make('bank_account_id')->label('Bankkonto')->required()->searchable()->options(fn (Get $get) => static::bankOptions($get('member_id'))),
             Textarea::make('notes')->label('Bemerkungen')->maxLength(4000),
         ];
+    }
+
+    public static function bankOptions($member): array
+    {
+        if (blank($member)) {
+            return [];
+        }
+
+        return MemberBankAccount::where('tenant_id', Filament::getTenant()->id)->where('active', true)->where('member_id', $member)
+            ->select(['id', 'bank_id', 'iban_encrypted'])->with('bank:id,name')->get()
+            ->mapWithKeys(fn ($b) => [$b->id => ($b->bank?->name ?? '').' '.$b->masked_iban])->all();
     }
 
     public static function transition(): Action

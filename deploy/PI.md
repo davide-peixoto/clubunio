@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Formular-/Lookupperformance (16.10.2026)
+
+Gezieltes Delta 20261016-clubunio-form-performance auf verifiziertem Release.
+Nur sechs Formular-/Fachdateien plus CLI-Pruefung/Doku; keine Rollen-Migration,
+keine DB-Aenderung. Syntax-, Routen- und Tenantchecks vor Aktivierung.
+Messung/Rollback: CLUBUNIO-FORM-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## PDF-/Vorschauperformance (16.10.2026)
 
 Gezieltes Delta 20261016-clubunio-pdf-performance auf verifiziertem Release.

@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Formular-/Lookupperformance (16.10.2026)
+
+Mitgliederauswahl mit begrenzten Anzeigespalten; Spesen-Bankkontoauswahl ohne
+Leerabfrage und mit schmaler Projektion. Lookuppruefung beim Mitgliedersave
+pro Tabelle gebuendelt, Status-/Empfaengerdaten im selben Save wiederverwendet.
+Frische Rechte, Feldabhaengigkeiten, Version/Audit erhalten; keine Migration.
+Details und Testgrenzen: CLUBUNIO-FORM-PERFORMANCE.md.
+
 ## PDF-/Vorschauperformance (16.10.2026)
 
 Bexio-PDF ohne unbenutzte lokale Relationen, PDF.js direkt im Vorschaufenster
