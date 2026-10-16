@@ -10,12 +10,16 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Livewire\Attributes\Locked;
 
 abstract class DossierRelationManager extends RelationManager
 {
     use AssignmentRelationActions;
 
     protected static string $kind;
+
+    #[Locked]
+    public ?int $seasonContextId = null;
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
@@ -37,6 +41,21 @@ abstract class DossierRelationManager extends RelationManager
     private function authorizeOwner(): void
     {
         abort_unless(static::canViewForRecord($this->getOwnerRecord(), $this->pageClass ?? ''), 403);
+        if ($this->seasonContextId !== null) {
+            $owner = $this->getOwnerRecord()->fresh();
+            abort_unless(in_array(static::$kind, ['invoiceLines', 'expenseLines'], true)
+                && $owner && (int) $owner->season_id === $this->seasonContextId
+                && (int) $owner->tenant_id === (int) Filament::getTenant()?->id
+                && Filament::auth()->user()?->fresh()?->canAccessTenant(Filament::getTenant()), 403);
+        }
+    }
+
+    protected function financeLinesChanged(): void
+    {
+        $this->getOwnerRecord()->refresh();
+        if ($this->seasonContextId !== null) {
+            $this->dispatch('season-finance-updated');
+        }
     }
 
     public function isReadOnly(): bool

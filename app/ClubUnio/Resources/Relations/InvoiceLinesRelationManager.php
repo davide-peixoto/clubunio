@@ -22,6 +22,14 @@ class InvoiceLinesRelationManager extends DossierRelationManager
 
     protected static ?string $title = 'Positionen';
 
+    private function afterInvoiceChange(): void
+    {
+        $this->financeLinesChanged();
+        if ($this->seasonContextId === null) {
+            $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getOwnerRecord()->id]));
+        }
+    }
+
     public function table(Table $table): Table
     {
         $editable = fn () => app(InvoiceWorkflowService::class)->editable(
@@ -40,7 +48,7 @@ class InvoiceLinesRelationManager extends DossierRelationManager
             FormMutation::run($this, fn () => app(InvoiceWorkflowService::class)->change(
                 Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id,
                 (int) $data['revision'], 'line', array_merge($data, ['line_id' => $lineId])));
-            $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getOwnerRecord()->id]));
+            $this->afterInvoiceChange();
         };
 
         return parent::table($table)->headerActions([
@@ -56,7 +64,7 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                     FormMutation::run($this, fn () => app(InvoiceWorkflowService::class)->change(
                         Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id,
                         (int) $data['revision'], 'restore_line', $data + ['line_id' => $record->id]));
-                    $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getOwnerRecord()->id]));
+                    $this->afterInvoiceChange();
                 }),
             Action::make('editLine')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')->visible(fn ($record) => $editable() && $record->active)
                 ->fillForm(fn ($record) => $record->only(['description', 'gross_amount', 'discount', 'notes', 'bexio_catalog_article_id', 'bexio_catalog_tax_id']) + ['revision' => $this->getOwnerRecord()->fresh()->revision])
@@ -69,7 +77,7 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                     FormMutation::run($this, fn () => app(InvoiceWorkflowService::class)->change(
                         Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id,
                         (int) $data['revision'], 'remove_line', $data + ['line_id' => $record->id]));
-                    $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getOwnerRecord()->id]));
+                    $this->afterInvoiceChange();
                 }),
         ]);
     }

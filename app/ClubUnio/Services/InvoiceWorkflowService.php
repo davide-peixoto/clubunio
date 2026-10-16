@@ -9,6 +9,7 @@ use App\ClubUnio\Models\InvoiceLine;
 use App\ClubUnio\Models\InvoiceLineStatus;
 use App\ClubUnio\Models\InvoiceWorkflowStatus;
 use App\ClubUnio\Models\Member;
+use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,13 +21,16 @@ class InvoiceWorkflowService
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
         $data = Validator::make($input, ['member_id' => 'required|integer|min:1', 'invoice_category_id' => 'required|integer|min:1',
-            'tax_mode' => 'required|in:exempt,inclusive', 'notes' => 'nullable|string|max:4000'])->validate();
+            'tax_mode' => 'required|in:exempt,inclusive', 'notes' => 'nullable|string|max:4000', 'season_id' => 'sometimes|required|integer|min:1'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->findOrFail($data['member_id']);
             InvoiceCategory::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($data['invoice_category_id']);
+            if (isset($data['season_id'])) {
+                Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($data['season_id']);
+            }
             $invoice = new Invoice;
             $invoice->forceFill($data + ['tenant_id' => $tenant->id, 'cash_rounding' => true, 'workflow_status_id' => $this->status($tenant, 'draft')])->save();
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,

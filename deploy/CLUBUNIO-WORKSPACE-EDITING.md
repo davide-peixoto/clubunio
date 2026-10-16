@@ -25,8 +25,9 @@ die Zugehoerigkeit zum konkreten Dossier. Zugehoerigkeitspruefung und Aenderung
 laufen unter der bestehenden Mandantensperre in derselben Transaktion.
 
 Rechnungen/Spesen werden NICHT pauschal kopier-/loeschbar. Deren bestehende
-Detailaktionen mit Freigabe-/Bexio-/Revisionsschutz bleiben bestehen. Eine vollstaendige
-Inline-Finanzbearbeitung aus der Saison ist noch offen; nicht als erledigt markieren.
+Detailaktionen mit Freigabe-/Bexio-/Revisionsschutz bleiben bestehen.
+Direkte Finanzbearbeitung aus der Saison ist separat ergaenzt:
+CLUBUNIO-SEASON-FINANCE.md (Belegkopf, Positionen, interne Statusaktionen).
 Ebenso keine globale CRUD-Freigabe fuer alle Stammdaten, Statuscodes oder Mitglieder.
 
 ## Migrationsplan

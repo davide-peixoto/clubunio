@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saison: Rechnungen und Spesen direkt bearbeiten (16.10.2026)
+
+Belegkopf/Neuanlage und wiederverwendete Positionsmanager im Saison-Dialog;
+interne Rechnungsfreigabe/Storno/PDF sowie Spesenstatus ohne Menuewechsel.
+Serverseitige Saisonbindung und unveraenderte Fach-/Revisionssperren.
+Keine DB-Migration. Details und Grenzen: CLUBUNIO-SEASON-FINANCE.md.
+PHPMaker DEV/PROD, API, SaaS und Betrieb unveraendert.
+
 ## Performance73: Abfragen statt mehr RAM (16.10.2026)
 
 Messungen zeigen wiederholte Mandanten-/Rollenpruefungen als Hauptanteil der
@@ -63,8 +71,8 @@ Menuesuche, benutzerbezogene Desktopbreite, Fachicons und gegliedertes
 Mitgliederdossier. Saison-/Mannschafts-/Mitgliederzuordnungen, Beitragsregeln
 und Trainingszeiten direkt im Dossier pflegen; passende Hauptlisten mit
 Kopieren/Deaktivieren. Historie und Fachvalidierung bleiben erhalten.
-Keine DB-Migration. Finanz-CRUD aus Saison bleibt bewusst ein gesonderter
-offener Schritt. Umfang und Testplan: CLUBUNIO-WORKSPACE-EDITING.md.
+Keine DB-Migration. Finanzbearbeitung aus Saison ist inzwischen separat
+ergänzt: CLUBUNIO-SEASON-FINANCE.md. Umfang: CLUBUNIO-WORKSPACE-EDITING.md.
 PHPMaker DEV/PROD und API/SaaS bleiben unveraendert.
 
 ## Fachpaket71: Synchronisation und normale Bexio-Bedienung

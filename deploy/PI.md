@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Saison-Finanzdialoge (16.10.2026)
+
+Release `20261016-clubunio-season-finance`, Basis/Ruecksprung
+`20261016-clubunio-73-performance`. Belegkopf, Neuanlage und eingebettete
+Rechnungs-/Spesenpositionen sowie interne Statusaktionen direkt in Saison.
+Keine DB-Migration, kein Finanzversand im Deployment. Die Performance73-
+Aenderungen bleiben erhalten. Details: CLUBUNIO-SEASON-FINANCE.md.
+PHPMaker DEV/PROD unveraendert.
+
 ## Performance73 bereitgestellt (16.10.2026)
 
 Gemessen: ca.12GiB RAM verfuegbar, CPU99% frei; FPM max_children4 erreicht.
