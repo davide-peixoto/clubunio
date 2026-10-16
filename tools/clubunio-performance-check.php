@@ -7,6 +7,7 @@ use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\DocumentsRelationManager;
 use App\ClubUnio\Resources\Relations\ExpensesRelationManager;
 use App\ClubUnio\Resources\Relations\InvoicesRelationManager;
+use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $path = $argv[1] ?? '/members';
-abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/configuration', '/planning', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
+abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 config(['session.driver' => 'array']);
@@ -34,7 +35,13 @@ try {
     Auth::guard('clubunio')->setUser($actor);
     $app['session']->driver()->put('clubunio_context.'.$actor->id, ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()]);
     $requestPath = $path;
-    if (str_ends_with($path, '/detail') || $path === '/members/dossier') {
+    if ($path === '/planning/detail' || $path === '/planning/calendar') {
+        $event = $db->table('clubora.team_events')->where('tenant_id', $tenant->id)->orderByDesc('starts_at')->first(['id', 'starts_at']);
+        abort_unless($event, 409);
+        $requestPath = $path === '/planning/detail' ? '/planning/events/'.$event->id
+            : '/planning/calendar?'.http_build_query(['date' => CarbonImmutable::parse($event->starts_at)->tz('Europe/Zurich')->toDateString(),
+                'view' => ($argv[2] ?? '') === 'calendar-week' ? 'week' : 'month']);
+    } elseif (str_ends_with($path, '/detail') || $path === '/members/dossier') {
         $table = explode('/', $path)[1];
         $id = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->orderByDesc('id')->value('id');
         if ($path === '/members/dossier') {

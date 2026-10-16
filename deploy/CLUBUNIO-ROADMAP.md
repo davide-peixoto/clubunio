@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Teamplanung- und Kalenderperformance (16.10.2026)
+
+Wiederholte Datumsumwandlungen fuer Konflikte/Tageszellen gebuendelt,
+bereits autorisierte Teamlabels wiederverwendet. Sichtbarkeits-, Rollen-,
+Einladungs- und Fristsperren unveraendert, kein Rechtecache. Referenztests
+einschliesslich Mikrosekunden und Zeitumstellung sowie Portal-Entzugstest.
+Keine Datenmigration. Details: CLUBUNIO-PLANNING-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS unveraendert.
+
 ## Dashboard- und Detailperformance (16.10.2026)
 
 Kennzahlen, Statusdiagramme und Rechnungsdetail-Summen mit gebuendelten

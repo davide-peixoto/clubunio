@@ -11,6 +11,7 @@ use App\ClubUnio\Services\SfvPlanningService;
 use App\ClubUnio\Services\TeamPlanningService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -20,12 +21,12 @@ class TeamPlanningController
 {
     public function __construct(private TeamPlanningService $service) {}
 
-    private function context(Request $request, Tenant $tenant): array
+    private function context(Request $request, Tenant $tenant, ?Collection $calendarTeams = null): array
     {
         $actor = $request->user();
         $this->service->enter($actor, $tenant);
         $options = $this->service->options($tenant);
-        $teams = $this->service->teams($actor, $tenant)->orderByDesc('season_id')->orderBy('label')->get();
+        $teams = $calendarTeams ?? $this->service->teams($actor, $tenant)->orderByDesc('season_id')->orderBy('label')->get();
         $managed = $this->service->teams($actor, $tenant, true)->pluck('id')->all();
         $own = app(MemberAccessService::class)->represented($actor, $tenant)->get();
         $colors = $this->service->table($tenant, 'status_styles')->where('active', true)->pluck('color', 'value_key')->all();
@@ -62,15 +63,18 @@ class TeamPlanningController
         }
         $events = $query->orderBy('starts_at')->paginate(25)->withQueryString();
         // Labels for invited events do not expand the authorization query above.
-        $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->whereIn('id', $events->pluck('team_season_id'))->get())->unique('id');
+        $missingTeams = $events->pluck('team_season_id')->diff($data['teams']->pluck('id'))->unique();
+        if ($missingTeams->isNotEmpty()) {
+            $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->whereIn('id', $missingTeams)->get())->unique('id');
+        }
 
         return $this->view('index', $data + compact('events', 'filters', 'counts'));
     }
 
     public function calendar(Request $request, Tenant $tenant)
     {
-        $context = $this->context($request, $tenant);
-        $data = app(PlanningCalendarService::class)->calendar($context['actor'], $tenant, $request->query());
+        $data = app(PlanningCalendarService::class)->calendar($request->user(), $tenant, $request->query());
+        $context = $this->context($request, $tenant, $data['teams']);
 
         return $this->view('calendar', array_replace($context, $data));
     }
@@ -105,7 +109,9 @@ class TeamPlanningController
     {
         $data = $this->context($request, $tenant);
         $record = $this->service->event($data['actor'], $tenant, $event);
-        $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->where('id', $record->team_season_id)->get())->unique('id');
+        if (! $data['teams']->contains('id', $record->team_season_id)) {
+            $data['teams'] = $data['teams']->merge($this->service->table($tenant, 'team_seasons')->where('id', $record->team_season_id)->get())->unique('id');
+        }
         $manager = in_array($record->team_season_id, $data['managed'], true);
         $roster = $this->service->roster($tenant, $record)->get();
         $parts = $this->service->table($tenant, 'team_participations')->where('event_id', $event)->get()->keyBy('member_id');

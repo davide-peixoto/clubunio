@@ -102,20 +102,9 @@ class PlanningCalendarService
             if ($candidates->count() > 5000) {
                 throw ValidationException::withMessages(['team' => 'Zu viele Vergleichstermine. Bitte den Zeitraum und die Mannschaft eingrenzen.']);
             }
-            $candidates = $candidates->groupBy('team_season_id');
-            foreach ($events->where('status', 'AKTIV') as $event) {
-                foreach ($candidates[$event->team_season_id] ?? [] as $other) {
-                    if ($event->id !== $other->id && Time::parse($event->starts_at)->lt(Time::parse($other->ends_at)) && Time::parse($other->starts_at)->lt(Time::parse($event->ends_at))) {
-                        $conflicts[$event->id][] = $other;
-                    }
-                }
-            }
+            $conflicts = app(PlanningCalendarTimeline::class)->conflicts($events, $candidates);
         }
-        $days = [];
-        for ($day = $start; $day->lt($end); $day = $day->addDay()) {
-            $days[] = ['date' => $day, 'events' => $events->filter(fn ($event) => Time::parse($event->starts_at)->lt($day->addDay()) && Time::parse($event->ends_at)->gt($day)),
-                'buses' => $busReservations->filter(fn ($reservation) => Time::parse($reservation->starts_at)->lt($day->addDay()) && Time::parse($reservation->ends_at)->gt($day))];
-        }
+        $days = app(PlanningCalendarTimeline::class)->days($start, $end, $events, $busReservations);
         $previous = $month ? $anchor->subMonthNoOverflow() : $anchor->subWeek();
         $next = $month ? $anchor->addMonthNoOverflow() : $anchor->addWeek();
 

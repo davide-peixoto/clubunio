@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+16.10.2026: Planning/calendar CPU work consolidated with exact time-boundary
+reference tests; already authorized team labels reused without granting team
+management. No schema/data migration or legacy deployment. Existing deadline,
+capacity, privacy and role rules retained. See CLUBUNIO-PLANNING-PERFORMANCE.md.
+
 16.10.2026: Dashboard and invoice detail reads consolidated without changing
 roles, mutation checks, balances or membership rules. Member/expense dossiers
 profiled as well. No schema migration or legacy DEV/PROD deployment.

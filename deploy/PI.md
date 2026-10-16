@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Teamplanung und Kalenderperformance (16.10.2026)
+
+Release `20261016-clubunio-planning-performance`, Basis/Ruecksprung
+`20261016-clubunio-dashboard-details-performance`. Datumsvergleiche gebuendelt,
+autorisierte Teamlabels wiederverwendet, keine Berechtigungs-/Fristaenderung.
+Pi: Liste941ms/32 Queries, Detail1103ms/38, Woche1175ms/35, Monat1087ms/35.
+Synthetische reine Kalenderberechnung860.97->32.75ms bei gleichen Ergebnissen;
+keine Browser-SLA.32 Tests/423 Assertions erfolgreich. Keine DB-Migration.
+Caches/Guards aktualisiert, PHP-FPM graceful geladen, Login/Health HTTP200.
+Details: CLUBUNIO-PLANNING-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Dashboard- und Detailperformance (16.10.2026)
 
 Release `20261016-clubunio-dashboard-details-performance`, Basis/Ruecksprung

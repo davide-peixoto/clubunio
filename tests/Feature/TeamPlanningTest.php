@@ -98,6 +98,28 @@ class TeamPlanningTest extends TestCase
         return $this->db->table('team_participations')->where('event_id', $event)->where('member_id', $this->member)->first();
     }
 
+    public function test_reused_calendar_team_labels_do_not_expand_invited_player_permissions(): void
+    {
+        $input = $this->input(['title' => 'Invited fixture']);
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $input);
+        $hidden = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['title' => 'Hidden fixture']));
+        $this->db->table('team_players')->where('member_id', $this->member)->delete();
+        app(PlanningGuestService::class)->invite($this->admin, $this->tenant, $event, $this->member);
+        auth('clubunio')->logout();
+        $this->actingAs($this->player, 'portal');
+        $base = '/planning/'.$this->tenant->slug;
+        $this->get($base.'/calendar?view=teams&date='.substr($input['starts_at'], 0, 10))
+            ->assertOk()->assertSee('Fixture team / season')->assertSee('Invited fixture')
+            ->assertDontSee('Hidden fixture')->assertDontSee('Termin erstellen');
+        $this->get($base.'/events/'.$event)->assertOk()->assertSee('Fixture team / season');
+        $this->get($base.'/events/'.$event.'/edit')->assertForbidden();
+        $this->get($base.'/events/'.$hidden)->assertNotFound();
+        $this->db->table('team_invitations')->where('event_id', $event)->where('member_id', $this->member)->delete();
+        $this->get($base.'/events/'.$event)->assertNotFound();
+        $this->get($base.'/calendar?view=teams&date='.substr($input['starts_at'], 0, 10))
+            ->assertOk()->assertDontSee('Invited fixture');
+    }
+
     public function test_calendar_views_filters_navigation_and_export(): void
     {
         $input = $this->input(['title' => 'Kalender Äöü, Test; Termin']);
