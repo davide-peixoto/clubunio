@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Erreichbarkeit wiederhergestellt (16.10.2026)
+
+Oeffentlicher Login meldete502 vom vorgeschalteten Proxy. Nginx war seit06:46
+CEST gestoppt: Neustart scheiterte beim Binden an192.168.3.157:8092 mit
+Cannot assign requested address. PHP8.3-FPM lief, Release72 und Speicherplatz
+waren unauffaellig. Adresse war bei Pruefung wieder auf wlan0 vorhanden.
+Konfiguration erfolgreich geprueft, Nginx um08:18 CEST gestartet. Oeffentliche
+GETs /login und /up danach HTTP200, Loginformular vorhanden. Keine Aenderung
+an Appcode, Proxyregeln, DB oder bestehendem PHPMaker DEV/PROD. Lokaler
+Ordnerwechsel war nicht die Ursache. Ausloeser der temporaer fehlenden Adresse
+nicht abschliessend untersucht; keine neue Restart-/Netzwerkautomation gesetzt.
+
 Aktuell: `20261016-clubunio-72-uploads`, Basis/Ruecksprung
 `20261016-clubunio-navigation`. Eigene additive Migration68; keine Altdateien
 geloescht.58Tests432Assertions inkl. echtem privaten Azuretest erfolgreich.
