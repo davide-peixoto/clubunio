@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## PDF-/Vorschauperformance (16.10.2026)
+
+Gezieltes Delta 20261016-clubunio-pdf-performance auf verifiziertem Release.
+Keine Migration; geschuetzte PDF-Reads und OIDC-/Sandboxpruefungen erhalten.
+Viewer-Assets und Blade-Teilansicht gemeinsam laden, Viewcache erneuern.
+Messungen und Rollback: CLUBUNIO-PDF-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Signage-/Busperformance (16.10.2026)
 
 Gezieltes Delta 20261016-clubunio-signage-bus-performance auf aktuellem Release.

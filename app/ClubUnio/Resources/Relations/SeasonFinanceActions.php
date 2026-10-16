@@ -115,7 +115,6 @@ trait SeasonFinanceActions
                 Action::make('pdf')->label('PDF-Vorschau')->icon('heroicon-o-document')->iconButton()->tooltip('PDF-Vorschau')->slideOver()->modalWidth('5xl')
                     ->visible(fn ($record) => $record->active && ($record->bexio_invoice_id || $record->workflow_status_id))
                     ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')->modalContent(fn ($record) => view('clubunio.invoices.preview', [
-                        'viewerUrl' => route('clubunio.invoices.preview', ['tenant' => Filament::getTenant()->slug, 'invoice' => $record->id, 'source' => $record->bexio_invoice_id ? 'bexio' : 'local']),
                         'url' => route('clubunio.invoices.pdf', ['tenant' => Filament::getTenant()->slug, 'invoice' => $record->id, 'source' => $record->bexio_invoice_id ? 'bexio' : 'local']),
                     ])),
             ] : [ExpenseFields::transition()->iconButton()->tooltip('Status ändern')

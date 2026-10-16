@@ -15,8 +15,11 @@ class InvoicePdfService
 {
     public function open(Account $actor, Tenant $tenant, int $id, bool $bexio, bool $download = false)
     {
-        $invoice = app(InvoiceAccessService::class)->visible($actor, $tenant)
-            ->with(['member', 'season', 'workflowStatus', 'activeLines'])->findOrFail($id);
+        $query = app(InvoiceAccessService::class)->visible($actor, $tenant);
+        if (! $bexio) {
+            $query->with(['member', 'season', 'workflowStatus', 'activeLines']);
+        }
+        $invoice = $query->findOrFail($id);
         if ($bexio) {
             abort_unless(preg_match('/^[1-9][0-9]{0,14}$/', (string) $invoice->bexio_invoice_id), 404, 'Keine Bexio-Rechnung zugeordnet.');
             try {

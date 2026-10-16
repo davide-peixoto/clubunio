@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Bexio PDF reads omit local display relations; inline PDF.js viewer
+replaces wrapper iframe and releases workers on close/change. Fresh document/
+sandbox authorization and downloads preserved; no document cache or DB change.
+Deploy Blade partial and versioned assets together; retain current OIDC rotation.
+See CLUBUNIO-PDF-PERFORMANCE.md. Legacy DEV/PROD, API/SaaS/operations unchanged.
+
 16.10.2026: Signage display lookups batched per request; bus choice fields
 and duplicate loads reduced. Existing read context only for feed presentation;
 fresh actions/public opt-in/locks and historical rooms preserved. No schema,

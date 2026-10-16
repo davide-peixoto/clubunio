@@ -1,5 +1,7 @@
 # ClubUnio
 
+PDF-Anzeige: [Performance und private Dokumentzugriffe](deploy/CLUBUNIO-PDF-PERFORMANCE.md).
+
 Anzeigen und Reservationen: [Signage-/Busperformance](deploy/CLUBUNIO-SIGNAGE-BUS-PERFORMANCE.md).
 
 Listen und CSV: [Performance und Zugriffsgrenzen](deploy/CLUBUNIO-REPORT-PERFORMANCE.md).

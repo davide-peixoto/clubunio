@@ -1,14 +1,16 @@
-* { box-sizing: border-box; }
-body { margin: 0; color: #252a30; background: #e8ebed; font: 14px system-ui, sans-serif; }
-nav { position: sticky; top: 0; z-index: 1; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; background: #fff; border-bottom: 1px solid #c8cdd2; }
-button, nav a { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 6px; border: 1px solid #c8cdd2; border-radius: 4px; background: #fff; color: inherit; cursor: pointer; }
-button:disabled { opacity: .4; cursor: default; }
-svg { width: 20px; height: 20px; }
-input { width: 54px; height: 34px; }
-select { height: 34px; max-width: 130px; }
-input, select { border: 1px solid #c8cdd2; border-radius: 4px; background: #fff; color: inherit; padding: 4px; font: inherit; }
-#status { margin: 12px; }
-main { padding: 12px; overflow: auto; }
-canvas { display: block; margin: 0 auto; background: #fff; box-shadow: 0 1px 4px #0002; }
-canvas[hidden] { display: none; }
-:focus-visible { outline: 2px solid #177ec1; outline-offset: 2px; }
+.cu-pdf-standalone { margin: 0; }
+.cu-pdf-viewer, .cu-pdf-viewer * { box-sizing: border-box; }
+.cu-pdf-viewer { height: 75vh; display: flex; flex-direction: column; min-width: 0; color: #252a30; background: #e8ebed; font: 14px system-ui, sans-serif; }
+.cu-pdf-standalone .cu-pdf-viewer { height: 100vh; height: 100dvh; }
+.cu-pdf-viewer nav { flex: none; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; background: #fff; border-bottom: 1px solid #c8cdd2; }
+.cu-pdf-viewer button, .cu-pdf-viewer nav a { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 6px; border: 1px solid #c8cdd2; border-radius: 4px; background: #fff; color: inherit; cursor: pointer; }
+.cu-pdf-viewer button:disabled { opacity: .4; cursor: default; }
+.cu-pdf-viewer svg { width: 20px; height: 20px; }
+.cu-pdf-viewer input { width: 54px; height: 34px; }
+.cu-pdf-viewer select { height: 34px; max-width: 130px; }
+.cu-pdf-viewer input, .cu-pdf-viewer select { border: 1px solid #c8cdd2; border-radius: 4px; background: #fff; color: inherit; padding: 4px; font: inherit; }
+.cu-pdf-viewer [data-pdf-control="status"] { margin: 12px; flex: none; }
+.cu-pdf-pages { flex: 1; min-height: 0; padding: 12px; overflow: auto; }
+.cu-pdf-viewer canvas { display: block; margin: 0 auto; background: #fff; box-shadow: 0 1px 4px #0002; }
+.cu-pdf-viewer canvas[hidden], .cu-pdf-viewer [hidden] { display: none; }
+.cu-pdf-viewer :focus-visible { outline: 2px solid #177ec1; outline-offset: 2px; }

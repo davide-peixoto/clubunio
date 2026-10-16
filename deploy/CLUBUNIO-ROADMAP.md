@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## PDF-/Vorschauperformance (16.10.2026)
+
+Bexio-PDF ohne unbenutzte lokale Relationen, PDF.js direkt im Vorschaufenster
+statt zusaetzlicher Viewer-HTML-Anfrage. Worker-/Canvas-Cleanup bei Schliessen
+und Dokumentwechsel. Frische Dokument-/Sandboxpruefung und Downloads erhalten,
+kein Dokumentcache, keine Migration. Details: CLUBUNIO-PDF-PERFORMANCE.md.
+
 ## Signage-/Anlagen-/Busperformance (16.10.2026)
 
 Signage-Lookups innerhalb eines Requests gesammelt, Design-/Periodenwerte

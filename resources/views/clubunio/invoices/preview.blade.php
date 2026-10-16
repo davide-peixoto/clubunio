@@ -1,2 +1,5 @@
-<div><a href="{{ $url }}?download=1" target="_blank" rel="noopener">PDF herunterladen</a></div>
-<iframe src="{{ $viewerUrl }}" title="Rechnung PDF" style="width:100%;height:75vh;border:0"></iframe>
+@assets
+    <link rel="stylesheet" href="{{ asset('clubunio/pdf-viewer.css') }}?v=2">
+    <script type="module" src="{{ asset('clubunio/pdf-viewer.js') }}?v=2"></script>
+@endassets
+@include('clubunio.invoices.viewer-content')

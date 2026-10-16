@@ -86,8 +86,6 @@ class ViewInvoice extends ViewRecord
             Action::make('pdf')->label('PDF-Vorschau')->icon('heroicon-o-document')->slideOver()->modalWidth('5xl')
                 ->visible(fn () => $this->getRecord()->active && (bool) ($this->getRecord()->bexio_invoice_id || $this->getRecord()->workflow_status_id))
                 ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')->modalContent(fn () => view('clubunio.invoices.preview', [
-                    'viewerUrl' => route('clubunio.invoices.preview', ['tenant' => $tenant()->slug, 'invoice' => $this->getRecord()->id,
-                        'source' => $this->getRecord()->bexio_invoice_id ? 'bexio' : 'local']),
                     'url' => route('clubunio.invoices.pdf', ['tenant' => $tenant()->slug, 'invoice' => $this->getRecord()->id,
                         'source' => $this->getRecord()->bexio_invoice_id ? 'bexio' : 'local'])])),
             Action::make('editHeader')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->visible($editable)
