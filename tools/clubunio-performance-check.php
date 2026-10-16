@@ -1,10 +1,13 @@
 <?php
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Resources\ExpenseResource\Pages\ViewExpense;
 use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\DocumentsRelationManager;
+use App\ClubUnio\Resources\Relations\ExpenseLinesRelationManager;
 use App\ClubUnio\Resources\Relations\ExpensesRelationManager;
 use App\ClubUnio\Resources\Relations\InvoicesRelationManager;
 use Carbon\CarbonImmutable;
@@ -23,7 +26,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $path = $argv[1] ?? '/members';
-abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
+abort_unless(in_array($path, ['/', '/members', '/invoices', '/expenses', '/registrations', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 config(['session.driver' => 'array']);
@@ -35,7 +38,16 @@ try {
     Auth::guard('clubunio')->setUser($actor);
     $app['session']->driver()->put('clubunio_context.'.$actor->id, ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()]);
     $requestPath = $path;
-    if ($path === '/planning/detail' || $path === '/planning/calendar') {
+    if (str_starts_with($path, '/documents/')) {
+        $kind = basename($path);
+        $table = ['member' => 'member_documents', 'registration' => 'registration_documents', 'expense' => 'expense_lines'][$kind];
+        $query = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true);
+        $query = $kind === 'expense' ? $query->whereNotNull('storage_reference')->where('storage_reference', '<>', '') : $query->where(fn ($q) => $q->whereNull('file_size')->orWhere('file_size', '<', 1048576));
+        $id = $query->orderByDesc('id')->value('id');
+        abort_unless($id, 409);
+        $prefix = ['member' => '/documents/members/', 'registration' => '/documents/registrations/', 'expense' => '/documents/expenses/'][$kind];
+        $requestPath = $prefix.$id;
+    } elseif ($path === '/planning/detail' || $path === '/planning/calendar') {
         $event = $db->table('clubora.team_events')->where('tenant_id', $tenant->id)->orderByDesc('starts_at')->first(['id', 'starts_at']);
         abort_unless($event, 409);
         $requestPath = $path === '/planning/detail' ? '/planning/events/'.$event->id
@@ -66,6 +78,15 @@ try {
     $response = $app->make(Illuminate\Contracts\Http\Kernel::class)->handle($request);
     $mode = $argv[2] ?? 'page';
     $widgets = [];
+    if ($mode === 'expense-lines') {
+        abort_unless($path === '/expenses/detail' && $response->getStatusCode() === 200, 409);
+        $owner = Expense::findOrFail($id);
+        $request->setMethod('POST');
+        $queries = [];
+        $start = microtime(true);
+        app('livewire')->mount(ExpenseLinesRelationManager::class,
+            ['ownerRecord' => $owner, 'pageClass' => ViewExpense::class, 'lazy' => false]);
+    }
     if ($mode === 'relations') {
         abort_unless($path === '/members/dossier' && $response->getStatusCode() === 200, 409);
         $owner = Member::findOrFail($id);

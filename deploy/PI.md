@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Spesen-/Dokumentperformance (16.10.2026)
+
+Gezieltes Delta fuer Anmeldeliste, Spesenpositionsbuttons und bedarfsgesteuerte
+Anhangvorschau. Keine DB-Migration; frische Schreibberechtigungen und private
+Azure-Zugriffe erhalten. Messungen und Release:
+CLUBUNIO-EXPENSE-DOCUMENT-PERFORMANCE.md.
+
 ## Weitere DB-Leseoptimierung (16.10.2026)
 
 Release `20261016-clubunio-db-read-performance`, Basis/Ruecksprung

@@ -4,6 +4,7 @@ namespace App\ClubUnio\Resources\Relations;
 
 use App\ClubUnio\Resources\ExpenseFields;
 use App\ClubUnio\Resources\FormMutation;
+use App\ClubUnio\Services\BackofficeReadContext;
 use App\ClubUnio\Services\ExpenseDocumentService;
 use App\ClubUnio\Services\ExpenseService;
 use Filament\Actions\Action;
@@ -22,7 +23,21 @@ class ExpenseLinesRelationManager extends DossierRelationManager
 
     public function table(Table $table): Table
     {
-        $editable = fn () => app(ExpenseService::class)->editable(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->fresh());
+        $renderEditable = null;
+        $editable = function () use (&$renderEditable): bool {
+            $actor = Filament::auth()->user();
+            $readContext = app(BackofficeReadContext::class)->tenantsFor($actor);
+            // Only button rendering shares this result; mutations still authorize fresh.
+            if ($readContext !== null && $renderEditable !== null) {
+                return $renderEditable;
+            }
+            $allowed = app(ExpenseService::class)->editable($actor, Filament::getTenant(), $this->getOwnerRecord()->fresh());
+            if ($readContext !== null) {
+                $renderEditable = $allowed;
+            }
+
+            return $allowed;
+        };
 
         return parent::table($table)->headerActions([
             Action::make('newLine')->label('Position erfassen')->icon('heroicon-o-plus')->slideOver()->visible($editable)

@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+16.10.2026: Expense line button rendering reuses checks only in the existing
+read context; registration rows eager-load tenants and attachment previews
+load on demand. Fresh write authorization and private Azure reads unchanged.
+No schema/data migration or legacy DEV/PROD changes. See
+CLUBUNIO-EXPENSE-DOCUMENT-PERFORMANCE.md.
+
 16.10.2026: Remaining DB read roundtrips reduced through existing bounded
 backoffice context and SQL subqueries for represented planning members.
 Fresh write/portal authorization retained; no schema migration, data refresh

@@ -8,6 +8,7 @@ use App\ClubUnio\Models\Registration;
 use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
+use App\ClubUnio\Resources\RegistrationResource;
 use App\ClubUnio\Resources\RegistrationResource\Pages\ListRegistrations;
 use App\ClubUnio\Resources\Relations\RegistrationsRelationManager;
 use App\ClubUnio\Resources\TeamSeasonResource\Pages\ViewTeamSeason;
@@ -111,6 +112,29 @@ class RegistrationCompletionTest extends TestCase
     {
         return app(RegistrationReviewService::class)->review($this->actor, $this->tenant, $this->registration->id,
             $extra + ['revision' => $this->registration->fresh()->revision, 'status_id' => $this->statuses[$key], 'reason' => 'Synthetic reviewed decision', 'member_type_id' => $this->type]);
+    }
+
+    public function test_registration_rows_eager_load_tenant_and_previews_are_opt_in(): void
+    {
+        $rows = RegistrationResource::getEloquentQuery()->get();
+        $this->assertNotEmpty($rows);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        foreach ($rows as $row) {
+            $this->assertTrue($row->relationLoaded('tenant'));
+            $this->assertSame($this->tenant->id, $row->tenant->id);
+        }
+        $this->assertCount(0, $this->db->getQueryLog());
+        $this->db->disableQueryLog();
+        $html = view('clubunio.registration-documents', ['tenant' => $this->tenant,
+            'documents' => collect([(object) ['id' => 123, 'kind' => 'portrait', 'original_filename' => 'fixture.png', 'filename' => 'fixture.png']])])->render();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
+        $xpath = new \DOMXPath($dom);
+        $this->assertSame(0, $xpath->query('//iframe[not(ancestor::template)]')->length);
+        $this->assertSame(1, $xpath->query('//template[@x-if="previewOpen"]//iframe')->length);
+        $this->assertStringContainsString('previewOpen: false', $html);
+        $this->assertStringContainsString('download=1', $html);
     }
 
     public function test_registration_review_is_available_in_team_and_member_dossiers(): void

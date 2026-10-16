@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Spesen-/Dokumentperformance (16.10.2026)
+
+Anmeldeliste ohne Mandantenabfrage pro Zeile, Spesenpositionsbuttons mit
+begrenztem Render-Lesecheck und Anhangvorschau erst auf Abruf. Fachaktionen,
+Azure-Sicherheitsgrenzen und Fehlerreferenzen unveraendert. Keine Migration
+und kein PHPMaker DEV/PROD-Eingriff. Details:
+[Spesen und Dokumente](CLUBUNIO-EXPENSE-DOCUMENT-PERFORMANCE.md).
+
 ## Verbleibende DB-Leseabfragen (16.10.2026)
 
 Menue-/Seitensichtbarkeit und bestaetigter Backoffice-Leseeinstieg nutzen den

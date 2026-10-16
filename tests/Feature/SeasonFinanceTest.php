@@ -20,6 +20,8 @@ use App\ClubUnio\Resources\Relations\InvoicesRelationManager;
 use App\ClubUnio\Resources\SeasonResource\Pages\ViewSeason;
 use App\ClubUnio\Resources\TeamResource\Pages\ViewTeam;
 use App\ClubUnio\Resources\TeamSeasonResource\Pages\ViewTeamSeason;
+use App\ClubUnio\Services\BackofficeReadContext;
+use App\ClubUnio\Services\ExpenseService;
 use App\ClubUnio\Services\InvoiceWorkflowService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Crypt;
@@ -95,6 +97,37 @@ class SeasonFinanceTest extends TestCase
     private function insert(string $table, array $data): int
     {
         return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+    }
+
+    public function test_expense_button_checks_are_shared_only_inside_read_context(): void
+    {
+        $service = app(ExpenseService::class);
+        $expense = $service->save($this->actor, $this->tenant, null, $this->expenseData);
+        $manager = Livewire::test(ExpenseLinesRelationManager::class,
+            ['ownerRecord' => $expense, 'pageClass' => ViewExpense::class]);
+        $action = $manager->instance()->getTable()->getAction('editLine');
+        $request = request();
+        $method = $request->method();
+        $request->setMethod('GET');
+        $request->setUserResolver(fn ($guard = null) => $this->actor);
+        try {
+            app(BackofficeReadContext::class)->during($request, function () use ($action) {
+                $this->db->enableQueryLog();
+                $this->db->flushQueryLog();
+                for ($i = 0; $i < 15; $i++) {
+                    $action->clearVisibilityCache();
+                    $this->assertTrue($action->isVisible());
+                }
+                $this->assertLessThanOrEqual(3, count($this->db->getQueryLog()));
+                $this->db->disableQueryLog();
+            });
+        } finally {
+            $request->setMethod($method);
+        }
+        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $action->clearVisibilityCache();
+        $this->assertFalse($action->isVisible());
+        $this->assertFalse($service->editable($this->actor, $this->tenant, $expense->fresh()));
     }
 
     private function manager(bool $invoice = true)

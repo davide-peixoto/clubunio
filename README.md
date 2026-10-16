@@ -1,5 +1,9 @@
 # ClubUnio
 
+Performance: [Spesen, Anmeldungen und private Dokumente](deploy/CLUBUNIO-EXPENSE-DOCUMENT-PERFORMANCE.md).
+Anmeldeliste ohne Mandantenabfrage pro Zeile, gebuendelte Positionsbutton-
+Lesechecks und bedarfsgesteuerte Anhangvorschau; Schreibrechte unveraendert.
+
 ## Lokaler Projektordner
 
 Seit16.10.2026 eigenstaendig unter `C:\ClubUnio`, eigenes Git-Repository:
