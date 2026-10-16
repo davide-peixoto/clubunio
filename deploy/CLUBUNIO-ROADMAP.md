@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Gezielter Betriebsschutz Nginx (16.10.2026)
+
+Auf ausdruecklichen Benutzerauftrag nach dem Adress-/Startausfall:
+Systemd-Wiederanlaufregel fuer bestehenden Pi-Nginx, zehn Sekunden Pause,
+keine dauerhafte Startversuchssperre. Keine neue Netzwerk-/Proxyfreigabe und
+keine DB-/Appmigration. Isolierter Nginx-Test statt echter Netzunterbrechung.
+Versionierte Quelle, Installer, Tests und Ruecknahme:
+CLUBUNIO-NGINX-RECOVERY.md. Andere Betriebs-/API-/SaaS-Pakete bleiben geparkt;
+PHPMaker DEV/PROD und aktueller ClubUnio-Anwendungsrelease unveraendert.
+
 ## Eigener lokaler Projektordner (16.10.2026)
 
 ClubUnio liegt jetzt physisch unter C:\ClubUnio mit unveraendertem eigenem

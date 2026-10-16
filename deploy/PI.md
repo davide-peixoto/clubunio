@@ -1,5 +1,20 @@
 # Pi staging: dev.clubunio.ch
 
+## Nginx-Wiederanlauf abgesichert (16.10.2026)
+
+Explizit beauftragter Betriebsschutz nach dem heutigen Adressausfall:
+Systemd-Drop-in Restart=on-failure, RestartSec=10s, StartLimitIntervalSec=0.
+Automatische erneute Starts auch nach fehlgeschlagenem ExecStartPre/nginx -t;
+manueller Stop bleibt respektiert. Installiert ohne Nginx-Neustart, vorhandene
+listen-/Proxy-/Firewallregeln unveraendert. Backup unter
+/var/backups/clubunio-nginx-recovery/20261016T062439-4075122.
+Details, Testverfahren und Ruecknahme: CLUBUNIO-NGINX-RECOVERY.md.
+Isolierter echter Bind-/ExecStartPre-Fehler automatisch wiederholt; nach
+Testadresswechsel selbstheilend HTTP200. Bewusster Stop bleibt gestoppt,
+Testunit aufgeraeumt. Drop-in-Hash identisch, bash -n/systemd-Verify/nginx -t OK.
+Oeffentliche /login und /up abschliessend HTTP200, Nginx seit08:18:56 unveraendert
+aktiv. Keine Appdateien deployt oder Datenbanken angefasst.
+
 ## Erreichbarkeit wiederhergestellt (16.10.2026)
 
 Oeffentlicher Login meldete502 vom vorgeschalteten Proxy. Nginx war seit06:46
