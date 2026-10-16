@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 final class SeasonAssignmentTransferService
 {
-    public function preview(Account $actor, Tenant $tenant, int $source, int $target): array
+    public function preview(Account $actor, Tenant $tenant, int $source, int $target, ?array $teamSeasonIds = null): array
     {
         abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
         Season::where('tenant_id', $tenant->id)->findOrFail($source);
@@ -23,6 +23,13 @@ final class SeasonAssignmentTransferService
             throw ValidationException::withMessages(['target_season_id' => 'Bitte eine andere Zielsaison wählen.']);
         }
         $sources = TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->with('team')->orderBy('id')->get();
+        if ($teamSeasonIds !== null) {
+            $teamSeasonIds = array_values(array_unique(array_map('intval', $teamSeasonIds)));
+            if (! $teamSeasonIds || array_diff($teamSeasonIds, $sources->pluck('id')->all())) {
+                throw ValidationException::withMessages(['team_season_ids' => 'Bitte gültige Mannschaften dieser Quellsaison auswählen.']);
+            }
+            $sources = $sources->whereIn('id', $teamSeasonIds)->values();
+        }
         $targets = TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $target)->orderBy('id')->get();
         $models = [TeamPlayer::class => 'Spieler', TeamStaff::class => 'Staff', TechnicalLead::class => 'Technische Leitung'];
         $assignmentsByModel = [];
@@ -71,11 +78,11 @@ final class SeasonAssignmentTransferService
         return ['rows' => $rows, 'token' => hash_hmac('sha256', json_encode([$fingerprint, $rows], JSON_THROW_ON_ERROR), config('app.key'))];
     }
 
-    public function apply(Account $actor, Tenant $tenant, int $source, int $target, string $token): int
+    public function apply(Account $actor, Tenant $tenant, int $source, int $target, string $token, ?array $teamSeasonIds = null): int
     {
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $source, $target, $token) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $source, $target, $token, $teamSeasonIds) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $plan = $this->preview($actor, $tenant, $source, $target);
+            $plan = $this->preview($actor, $tenant, $source, $target, $teamSeasonIds);
             if (! hash_equals($plan['token'], $token)) {
                 throw ValidationException::withMessages(['target_season_id' => 'Die Daten haben sich geändert. Bitte Vorschau erneut erstellen.']);
             }

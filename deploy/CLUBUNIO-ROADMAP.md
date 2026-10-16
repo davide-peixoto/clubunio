@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dossier-Auswahlaktionen (16.10.2026)
+
+Mehrfachstatus fuer Funktionen/Sponsoring/Veranstaltungen im Mitgliederdossier;
+gezielte Mannschaftsauswahl bei Saisonuebernahme. Gleiche Fachservices,
+Mandantenbindung, Revisionen, Audit und atomare Konfliktbehandlung. Keine
+Schema-/Datenmigration; PHPMaker DEV/PROD unveraendert. Details in
+CLUBUNIO-DOSSIER-COMFORT.md.
+
 ## Listen-/Exportperformance (16.10.2026)
 
 Vereinsrelation fuer acht Auswertungsressourcen gesammelt laden; CSV-Exporte

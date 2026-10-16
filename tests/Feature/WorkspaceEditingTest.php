@@ -129,6 +129,35 @@ class WorkspaceEditingTest extends TestCase
         $this->assertSame(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
     }
 
+    public function test_season_transfer_only_selected_teams_and_rejects_invalid_selection(): void
+    {
+        $target = new Season;
+        $target->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Target', 'active' => true])->save();
+        $other = new Team;
+        $other->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Blocked team', 'active' => true])->save();
+        $save = app(TeamAssignmentService::class);
+        $a = $save->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $b = $save->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $other->id, 'season_id' => $this->season->id, 'active' => true]);
+        $other->forceFill(['active' => false])->save();
+        $service = app(SeasonAssignmentTransferService::class);
+        $this->assertTrue(collect($service->preview($this->actor, $this->tenant, $this->season->id, $target->id)['rows'])->contains('state', 'blockiert'));
+        $plan = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id, [$a->id]);
+        $this->assertCount(1, $plan['rows']);
+        foreach ([[], [$target->id + 999999], [$b->id]] as $invalid) {
+            try {
+                $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $plan['token'], $invalid);
+                $this->fail('Invalid or changed selection accepted');
+            } catch (ValidationException) {
+                $this->assertSame(0, TeamSeason::where('tenant_id', $this->tenant->id)->where('season_id', $target->id)->count());
+            }
+        }
+        $component = $this->manager()->mountTableAction('transferSeason');
+        $component->set('mountedActions.0.data.target_season_id', $target->id);
+        $component->set('mountedActions.0.data.confirmed', true)->set('mountedActions.0.data.team_season_ids', [$a->id])->assertSet('mountedActions.0.data.confirmed', false);
+        $component->set('mountedActions.0.data.confirmed', true)->callMountedTableAction()->assertHasNoTableActionErrors();
+        $this->assertSame($this->team->id, TeamSeason::where('tenant_id', $this->tenant->id)->where('season_id', $target->id)->sole()->team_id);
+    }
+
     public function test_history_redacts_unknown_fields_and_rechecks_permissions(): void
     {
         $record = app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);

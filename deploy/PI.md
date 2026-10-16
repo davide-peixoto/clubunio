@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Dossier-Auswahlaktionen (16.10.2026)
+
+Release `20261016-clubunio-dossier-selection`, Delta auf aktuellem Release.
+Bulk-Status fuer Funktionen/Sponsoring/Veranstaltungen und gezielte
+Saisonuebernahme. Keine Migration, keine PHPMaker-Deployments. Installer
+meldet Rollback-Release. Details: CLUBUNIO-DOSSIER-COMFORT.md.
+
 ## Listen-/Exportperformance (16.10.2026)
 
 Delta-Release 20261016-clubunio-report-performance, auf verifiziertem aktuellem

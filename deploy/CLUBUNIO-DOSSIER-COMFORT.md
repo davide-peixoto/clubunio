@@ -5,6 +5,11 @@ kein DB-Refresh und keine PHPMaker-DEV/PROD-Aenderungen.
 
 ## Mehrfachaktionen
 
+Ergaenzung 16.10.2026: Auch Funktionen, Sponsoring und Veranstaltungen im
+Mitgliederdossier bieten Auswahl deaktivieren/wiederherstellen. Maximal 100,
+gesperrter Snapshot, Eltern-/Mandantenbindung und atomarer Rollback. Keine
+Mehrfachkopie oder physische Loeschung. Qualifikationen bleiben erhalten.
+
 In Zuordnungs-Untertabellen (Mannschaft/Saison, Spieler, Staff, TL, Familie,
 Beitragsregeln, Trainingszeiten) Auswahl deaktivieren/wiederherstellen.
 Maximal 100 Eintraege, bestaetigter Snapshot beim Oeffnen. Jede Zeile bleibt
@@ -24,12 +29,17 @@ sein. Vor jedem Lesen werden Dossierzugriff und aktuelle Rolle geprueft.
 ## Saisonuebernahme
 
 Saison > Mannschaften pro Saison > In andere Saison uebernehmen.
+Die aktive Quellmannschaftsauswahl ist vorbelegt und kann reduziert werden.
+Nur ausgewaehlte Mannschaften samt Spieler/Staff/TL werden uebernommen.
+Abgewaehlte Konflikte blockieren nicht. Aendern der Auswahl setzt die
+Bestaetigung zurueck und berechnet die signierte Vorschau neu. Leere,
+fremde oder nachtraeglich manipulierte Auswahlen werden abgewiesen.
 Nach Auswahl der Zielsaison zeigt die Vorschau neue, vorhandene und
 blockierte Mannschafts-/Spieler-/Staff-/TL-Zuordnungen samt Grund.
 Explizite Bestaetigung erforderlich. Nur aktive Quellzuordnungen; ausgetretene
 oder archivierte Mitglieder und ungueltige Staff-Funktionen blockieren.
 Vorhandene Zielzuordnungen werden nicht ueberschrieben oder reaktiviert.
-Inaktive/mehrdeutige Zielmannschaften blockieren die gesamte Uebernahme.
+Inaktive/mehrdeutige ausgewaehlte Zielmannschaften blockieren die Uebernahme.
 Keine Uebernahme von Rechnungsreferenzen, Spesen, Terminen, Trainingszeiten,
 Anmeldungen, Beitraegen oder historischen IDs. Maximal 1000 Vorschauzeilen.
 
@@ -39,6 +49,13 @@ mit Mandantensperre, frischen Rechten und Audit durch TeamAssignmentService.
 Wiederholung erzeugt keine weiteren vorhandenen Zuordnungen.
 
 ## Pruefung und Rollout
+
+Auswahlerweiterung: 29 Tests / 462 Assertions erfolgreich
+(WorkspaceEditingTest und DossierMaintenanceTest). Enthalten: drei Bulk-
+Objekttypen, Wiederherstellung, kompletter Rollback bei veralteter Revision,
+Teiluebernahme, manipulierte/leere Auswahl und neue Bestaetigung nach Auswahl.
+Browser: Mannschaft abwaehlen und reduzierte Vorschau geprueft; keine
+echten Zuordnungen gespeichert. Release: 20261016-clubunio-dossier-selection.
 
 Transaktionale Livewire-/Service-Tests: Bulk-Aktivstatus, veraltete Auswahl
 und kompletter Rollback, Verlauf/Redaktion/Rollenentzug, Vorschau und

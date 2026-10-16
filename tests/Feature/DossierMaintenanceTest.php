@@ -115,6 +115,18 @@ class DossierMaintenanceTest extends TestCase
             $this->assertFalse($source->fresh()->active);
             $component->filterTable('active', false)->callTableAction('restoreItem', $source->fresh())->assertHasNoTableActionErrors();
             $this->assertTrue($source->fresh()->active);
+            $component = Livewire::test($manager, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+            $component->filterTable('active', true)->callTableBulkAction('deactivateItems', [$source->fresh(), $copy->fresh()])->assertHasNoTableActionErrors();
+            $this->assertFalse($source->fresh()->active);
+            $this->assertFalse($copy->fresh()->active);
+            $component->filterTable('active', false)->callTableBulkAction('restoreItems', [$source->fresh(), $copy->fresh()])->assertHasNoTableActionErrors();
+            $this->assertTrue($source->fresh()->active);
+            $component->filterTable('active', true)->mountTableBulkAction('deactivateItems', [$source->fresh(), $copy->fresh()]);
+            $copy->refresh()->increment('revision');
+            $component->callMountedTableAction()->assertHasTableActionErrors();
+            $this->assertTrue($source->fresh()->active);
+            $this->assertTrue($copy->fresh()->active);
+            $component = Livewire::test($manager, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
             $component->filterTable('active', true)->mountTableAction('deactivateItem', $source->fresh());
             $source->refresh()->forceFill(['revision' => $source->revision + 1])->save();
             $component->callMountedTableAction()->assertHasTableActionErrors();
