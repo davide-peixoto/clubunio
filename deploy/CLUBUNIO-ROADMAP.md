@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dynamische Rollen (16.10.2026, begonnen)
+
+Profilmodell, Modul-/Funktionskatalog, Nur-Lesen-Vorlage und revisionierter
+Admin-Schreibservice vorbereitet. Noch KEINE Benutzerzuordnung oder
+wirksame Autorisierung; keine Migration dauerhaft ausgefuehrt, nicht deployt.
+Offene Integration und Freigabekriterien: CLUBUNIO-DYNAMIC-ROLES.md.
+Bestehende Rollen und PHPMaker DEV/PROD bleiben unveraendert.
+
 ## Dossier-Auswahlaktionen (16.10.2026)
 
 Mehrfachstatus fuer Funktionen/Sponsoring/Veranstaltungen im Mitgliederdossier;
