@@ -82,3 +82,20 @@ anschliessend Spesensuite erneut vollstaendig erfolgreich: 10 Tests,
 echter Azure-Uploadtest ohne Opt-in uebersprungen. Insgesamt 48 unterschiedliche
 Tests erfolgreich, ein optionaler Test uebersprungen. Keine echten Uploads,
 E-Mails, Buchungen oder Bankzahlungen. Runtime-Hashes lokal/Pi identisch.
+
+## Angemeldete Sichtpruefung und Korrektur
+
+Nach erneuter Benutzeranmeldung auf ClubUnio geprueft. Dabei wurden zwei
+Darstellungsprobleme korrigiert: nicht erzeugte Tailwind-Groessenklassen
+fuehrten zu riesigen Icons; Download/Auge haben nun explizite 20px-SVGs in
+36px-Bedienflaechen. Rasterbilder (nur jpg/jpeg/png/gif/webp) verwenden ein
+img-Element statt einer leer bleibenden iframe-Bildansicht. PDFs und sonstige
+Dateitypen behalten die bestehende iframe-Ansicht. Keine Freigabe von SVG/HTML
+als Bild und keine Aenderung der Dokumentautorisierung oder Sicherheitsheader.
+
+Browsernachweis: vor Klick kein Bild, nach Klick genau ein geladenes Bild
+mit positiven Originalabmessungen, nach Schliessen wieder kein Bild. Beide
+Vorschauicons 20x20px. Keine Bestandsdaten veraendert oder Dateien hochgeladen.
+Template-Test fuer on-demand Bild/PDF und SVG-Abmessungen: 1 Test/13 Assertions
+erfolgreich. Gezielt im bestehenden Performance-Release nachgezogen und
+Blade-Viewcache erneuert. Kein neues Schema oder Migrationsschritt erforderlich.
