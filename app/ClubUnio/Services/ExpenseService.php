@@ -18,14 +18,24 @@ use Illuminate\Validation\ValidationException;
 
 class ExpenseService
 {
+    public function portalAllowed(Account $actor, Tenant $tenant): bool
+    {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+            return false;
+        }
+        $fresh = $actor->fresh();
+
+        return $fresh && $fresh->active && app(MemberAccessService::class)->canEnter($fresh, $tenant);
+    }
+
     public function visible(Account $actor, Tenant $tenant): Builder
     {
         $q = Expense::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
-        if ($actor->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'view')) {
             return $q;
         }
         $access = app(MemberAccessService::class);
-        if (! $access->canEnter($actor, $tenant)) {
+        if (! $this->portalAllowed($actor, $tenant)) {
             return $q->whereRaw('1=0');
         }
 
@@ -43,11 +53,16 @@ class ExpenseService
             return [];
         }
         $old = $expense->status?->code;
-        $office = $actor->canAccessTenant($tenant);
+        $office = app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'view');
         if ($office) {
-            return match ($old) {
+            $targets = match ($old) {
                 'O' => ['F', 'R'], 'F' => ['O', 'Z', 'R'], 'Z' => ['B'], 'R' => ['O'], default => [],
             };
+            return array_values(array_filter($targets, fn ($code) => app(ModulePermissionService::class)
+                ->allows($actor, $tenant, 'expenses', $this->transitionFunction($code))));
+        }
+        if (! $this->portalAllowed($actor, $tenant)) {
+            return [];
         }
         $access = app(MemberAccessService::class);
         if ($old === 'O' && $access->represented($actor, $tenant, true)->whereKey($expense->member_id)->exists()) {
@@ -111,13 +126,21 @@ class ExpenseService
         });
     }
 
-    public function editable(Account $actor, Tenant $tenant, Expense $expense): bool
+    private function transitionFunction(string $code): string
+    {
+        return match ($code) {
+            'F' => 'send', 'Z', 'B' => 'approve', 'R' => 'cancel', 'O' => 'update', default => abort(403),
+        };
+    }
+
+    public function editable(Account $actor, Tenant $tenant, Expense $expense, string $function = 'update'): bool
     {
         if ($expense->status?->code !== 'O' || ! $this->visible($actor, $tenant)->whereKey($expense->id)->exists()) {
             return false;
         }
 
-        return $actor->canAccessTenant($tenant) || app(MemberAccessService::class)->represented($actor, $tenant, true)->whereKey($expense->member_id)->exists();
+        return app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', $function)
+            || ($this->portalAllowed($actor, $tenant) && app(MemberAccessService::class)->represented($actor, $tenant, true)->whereKey($expense->member_id)->exists());
     }
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Expense
@@ -130,7 +153,7 @@ class ExpenseService
                 abort_unless($this->editable($actor, $tenant, $e), 403);
                 $this->revision($e, $input['revision'] ?? 0);
             } else {
-                abort_unless($actor->canAccessTenant($tenant) || app(MemberAccessService::class)->canEnter($actor, $tenant), 403);
+                abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'create') || $this->portalAllowed($actor, $tenant), 403);
             }
             $values = array_replace($id ? $e->only(['member_id', 'team_season_id', 'bank_account_id', 'round_id', 'notes']) : [], $input);
             $data = Validator::make($values, [
@@ -139,7 +162,8 @@ class ExpenseService
                 'notes' => 'nullable|string|max:4000',
             ])->validate();
             $access = app(MemberAccessService::class);
-            if (! $actor->canAccessTenant($tenant)) {
+            if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', $id ? 'update' : 'create')) {
+                abort_unless($this->portalAllowed($actor, $tenant), 403);
                 abort_unless($access->represented($actor, $tenant, true)->whereKey($data['member_id'])->exists(), 403);
                 // Personal claims only for a team on which the member is active staff.
                 abort_unless(DB::connection('clubunio')->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $data['member_id'])->where('team_season_id', $data['team_season_id'])->exists(), 403);
@@ -182,7 +206,7 @@ class ExpenseService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $expenseId, $id, $input) {
             $e = $this->visible($actor, $tenant)->lockForUpdate()->findOrFail($expenseId);
-            abort_unless($this->editable($actor, $tenant, $e), 403);
+            abort_unless($this->editable($actor, $tenant, $e, $id ? 'update' : 'create'), 403);
             $this->revision($e, $input['expense_revision'] ?? 0);
             $line = $id ? ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('expense_id', $e->id)->lockForUpdate()->findOrFail($id) : new ExpenseLine;
             if ($id) {
@@ -194,6 +218,9 @@ class ExpenseService
                 'game_type_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.game_types', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
                 'amount' => ['nullable', 'regex:/^\d{1,9}(\.\d{1,4})?$/'], 'opponent' => 'nullable|string|max:255', 'notes' => 'nullable|string|max:4000', 'active' => 'required|boolean'];
             $data = Validator::make($values, $rules)->validate();
+            if ($id && (bool) $line->active !== (bool) $data['active']) {
+                abort_unless($this->editable($actor, $tenant, $e, $data['active'] ? 'restore' : 'deactivate'), 403);
+            }
             $changed = ! $id || (int) $line->expense_type_id !== (int) $data['expense_type_id'];
             $suggested = $changed ? $this->suggestion($tenant, $e, $data['expense_type_id']) : $line->suggested_amount;
             if (($data['amount'] ?? null) === null && $suggested !== null) {

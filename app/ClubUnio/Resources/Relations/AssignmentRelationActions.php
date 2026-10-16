@@ -136,12 +136,17 @@ trait AssignmentRelationActions
         return DB::connection('clubunio')->transaction(function () use ($tenant, $id, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $actor = Filament::auth()->user()?->fresh();
-            abort_unless($actor && $tenant && $actor->canAccessTenant($tenant)
+            abort_unless($actor && $tenant && $actor->can('view', $this->getOwnerRecord())
+                && \App\ClubUnio\Resources\ProfileUi::model($this->getRelationship()->getRelated())
                 && (int) $this->getOwnerRecord()->tenant_id === (int) $tenant->id, 403);
             // A submitted identifier must still belong to this exact dossier, not just the tenant.
+            $function = 'create';
             if ($id !== null) {
-                $this->getRelationship()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
+                $record = $this->getRelationship()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
+                $function = array_key_exists('active', $data) && (bool) $data['active'] !== (bool) $record->active
+                    ? ((bool) $data['active'] ? 'restore' : 'deactivate') : 'update';
             }
+            abort_unless(\App\ClubUnio\Resources\ProfileUi::model($this->getRelationship()->getRelated(), $function), 403);
             $data[$this->assignmentParentField()] = $this->getOwnerRecord()->id;
             $resource = $this->assignmentResource();
             $service = match (static::$kind) {

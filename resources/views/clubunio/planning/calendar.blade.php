@@ -1,8 +1,9 @@
 @extends('clubunio.planning.layout')
 @section('content')
+@php($profileAllows = fn (string $function) => \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'planning', $function))
 <div class="page-heading"><h1>Kalender</h1><div class="actions">
-<a class="icon-button" title="Kalender exportieren" aria-label="Kalender exportieren" href="{{ route('clubunio.planning.calendar.export',[$tenant->slug]+$filters) }}">@svg('heroicon-o-arrow-down-tray')</a>
-@if(count($managed))<a class="primary" href="{{ route('clubunio.planning.create',$tenant->slug) }}">@svg('heroicon-o-plus') Termin erstellen</a>@endif
+@if($profileAllows('export') && (empty($filters['buses']) || \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'bus', 'export')))<a class="icon-button" title="Kalender exportieren" aria-label="Kalender exportieren" href="{{ route('clubunio.planning.calendar.export',[$tenant->slug]+$filters) }}">@svg('heroicon-o-arrow-down-tray')</a>@endif
+@if(count($managed) && $profileAllows('create'))<a class="primary" href="{{ route('clubunio.planning.create',$tenant->slug) }}">@svg('heroicon-o-plus') Termin erstellen</a>@endif
 </div></div>
 <form method="get" class="toolbar calendar-filters">
 <input type="hidden" name="view" value="{{ $filters['view'] }}">
@@ -11,7 +12,7 @@
 <label>Mannschaft<select name="team"><option value="">Alle Mannschaften</option>@foreach($teams as $team)@if(empty($filters['season']) || $team->season_id==$filters['season'])<option value="{{ $team->id }}" @selected(($filters['team']??'')==$team->id)>{{ $team->label }}</option>@endif @endforeach</select></label>
 @foreach(['kind'=>'Terminart','status'=>'Status'] as $field=>$label)<label>{{ $label }}<select name="{{ $field }}"><option value="">Alle</option>@foreach($options[$field]??[] as $option)<option value="{{ $option->code }}" @selected(($filters[$field]??'')===$option->code)>{{ $option->name }}</option>@endforeach</select></label>@endforeach
 <label>Suche<input type="search" name="q" value="{{ $filters['q']??'' }}" maxlength="100"></label>
-<label><input type="checkbox" name="buses" value="1" @checked(!empty($filters['buses']))> Busreservierungen</label>
+@if(\App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'bus', 'view'))<label><input type="checkbox" name="buses" value="1" @checked(!empty($filters['buses']))> Busreservierungen</label>@endif
 <button class="icon-button" title="Filtern" aria-label="Filtern">@svg('heroicon-o-funnel')</button><a href="{{ route('clubunio.planning.calendar',$tenant->slug) }}">Zurücksetzen</a>
 </form>
 <div class="calendar-navigation"><div class="actions">

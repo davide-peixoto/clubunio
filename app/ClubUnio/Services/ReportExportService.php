@@ -31,7 +31,7 @@ class ReportExportService
 
     public function download(Account $actor, Tenant $tenant, string $kind, Builder $filtered, mixed $season = null): StreamedResponse
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'reports', 'export');
         $model = self::MODELS[$kind] ?? null;
         abort_unless($model, 404);
         abort_unless($filtered->getModel() instanceof $model, 422);

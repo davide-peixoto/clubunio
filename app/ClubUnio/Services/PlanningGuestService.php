@@ -16,10 +16,13 @@ class PlanningGuestService
 
     public function save(Account $actor, Tenant $tenant, int $eventId, ?int $id, array $input, bool $delete = false): void
     {
-        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $eventId, $id, $input, $delete) {
+        $function = $delete ? 'deactivate' : ($id ? 'update' : 'create');
+        $this->planning->authorizeOperation($actor, $tenant, $function);
+        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $eventId, $id, $input, $delete, $function) {
             $p = $this->planning;
             $p->lock($tenant);
-            $event = $p->event($actor, $tenant, $eventId, true);
+            $p->authorizeOperation($actor, $tenant, $function);
+            $event = $p->event($actor, $tenant, $eventId, true, $function);
             abort_unless($event->status === 'AKTIV', 409);
             $query = $p->table($tenant, 'team_guests')->where('event_id', $eventId)->whereNull('deleted_at');
             $old = $id ? (clone $query)->where('id', $id)->first() : null;
@@ -54,10 +57,13 @@ class PlanningGuestService
 
     public function invite(Account $actor, Tenant $tenant, int $eventId, int $member, bool $remove = false): void
     {
-        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $eventId, $member, $remove) {
+        $function = $remove ? 'cancel' : 'send';
+        $this->planning->authorizeOperation($actor, $tenant, $function);
+        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $eventId, $member, $remove, $function) {
             $p = $this->planning;
             $p->lock($tenant);
-            $event = $p->event($actor, $tenant, $eventId, true);
+            $p->authorizeOperation($actor, $tenant, $function);
+            $event = $p->event($actor, $tenant, $eventId, true, $function);
             abort_unless($event->status === 'AKTIV', 409);
             abort_unless(app(MemberAccessService::class)->activeMembers($tenant)->whereKey($member)->exists(), 404);
             $query = $p->table($tenant, 'team_invitations')->where('event_id', $eventId)->where('member_id', $member);

@@ -37,7 +37,7 @@ class CatalogPolicy
 
     public function view(Account $actor, Model $record): bool
     {
-        return $record->tenant && $actor->canAccessTenant($record->tenant);
+        return $record->tenant && $actor->hasUnrestrictedBackofficeAccess($record->tenant);
     }
 
     public function create(Account $actor): bool

@@ -17,12 +17,16 @@ class ContributionTrainingService
 {
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input)
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        $module = match ($model) {
+            ContributionPrice::class, ContributionRule::class => 'contributions',
+            TrainingSlot::class => 'training_slots', TrainingOption::class => 'catalogs', default => abort(403),
+        };
+        app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
         if (! in_array($model, [ContributionPrice::class, ContributionRule::class, TrainingSlot::class, TrainingOption::class], true)) {
             throw new \InvalidArgumentException('Unsupported model');
         }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input, $module) {
             // Serialize catalog edits so overlapping rule inserts cannot race.
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
@@ -59,6 +63,10 @@ class ContributionTrainingService
                 throw ValidationException::withMessages(['form' => 'Unbekannte oder geschützte Felder.']);
             }
             $data = Validator::make($input, $rules)->validate();
+            app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
+            if ($id && (bool) $record->active !== (bool) $data['active']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $data['active'] ? 'restore' : 'deactivate');
+            }
             if ($model === TrainingSlot::class && empty($data['field_id']) && empty($data['hall'])) {
                 throw ValidationException::withMessages(['field_id' => 'Bitte Spielfeld oder Halle angeben.']);
             }

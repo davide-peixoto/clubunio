@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    @php($canCreateDraft = \App\ClubUnio\Resources\ProfileUi::allows('contributions', 'create') && \App\ClubUnio\Resources\ProfileUi::allows('invoices', 'create'))
     @error('contribution')
         <p role="alert">{{ $message }}</p>
     @enderror
@@ -13,8 +14,10 @@
         </dl>
         @if ($calculation['existing_invoice_id'])
             <p>Für dieses Mitglied besteht bereits ein Saisonbeitrag. Es wird keine neue Rechnung erstellt.</p>
+            @if(\App\ClubUnio\Resources\ProfileUi::allows('invoices'))
             <div><x-filament::button tag="a" :href="\App\ClubUnio\Resources\InvoiceResource::getUrl('view', ['record' => $calculation['existing_invoice_id']])" icon="heroicon-o-document-text">Bestehende Rechnung öffnen</x-filament::button></div>
-        @else
+            @endif
+        @elseif($canCreateDraft)
             <div><x-filament::button wire:click="createDraft" wire:confirm="Beitragsrechnung als pendenten Entwurf erstellen? Es erfolgt kein Versand." wire:loading.attr="disabled" icon="heroicon-o-document-plus">Rechnungsentwurf erstellen</x-filament::button></div>
         @endif
     @endif
@@ -25,7 +28,7 @@
         <tr><td>{{ $row['member'] }}</td><td>{{ isset($row['net_cents']) ? number_format($row['net_cents']/100,2,'.',"'") : '–' }}</td><td>{{ $row['error'] ?? (!empty($row['existing_invoice_id']) ? 'Bereits vorhanden' : 'Entwurf möglich') }}</td></tr>
         @endforeach
         </tbody></table></div>
-        @if(!$batchResults && count($batch['rows']))
+        @if($canCreateDraft && !$batchResults && count($batch['rows']))
         <x-filament::button wire:click="createBatch" wire:loading.attr="disabled" wire:confirm="Geprüfte Beiträge dieses Pakets als Entwürfe erstellen? Keine Freigabe und kein Versand.">Entwürfe erstellen</x-filament::button>
         @endif
         @foreach($batchResults as $result)<p>{{ $result['member'] }}: {{ $result['result'] }}</p>@endforeach

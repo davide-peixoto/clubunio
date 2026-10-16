@@ -17,19 +17,21 @@
 <div class="clubunio-bexio">
 @if($sandbox)<p role="status">Bexio-Verbindung: SVS Api Test</p>@endif
 @unless($enabled)<p role="status">Bexio kein Update - Deaktiviert</p>@endunless
+@if($documentTypes)
 <div class="clubunio-bexio-filters">
-<label class="grid gap-1">Dokument<select wire:model.live="type" class="rounded border p-2"><option value="invoice">Rechnungen</option><option value="expense">Spesen</option></select></label>
+<label class="grid gap-1">Dokument<select wire:model.live="type" class="rounded border p-2">@foreach($documentTypes as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select></label>
 <label class="grid gap-1">Mitglied / Bexio-Referenz<input wire:model.live.debounce.400ms="search" maxlength="100" class="rounded border p-2"></label>
 </div>
+@endif
 <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="border-b"><th class="p-3">Dokument</th><th class="p-3">Mitglied</th><th class="p-3">ClubUnio-Status</th><th class="p-3">Bexio-Referenz</th><th class="p-3">Prüfung</th></tr></thead><tbody>
-@forelse($documents as $document)<tr class="border-b"><td class="p-3"><a href="{{ $type === 'invoice' ? \App\ClubUnio\Resources\InvoiceResource::getUrl('view',['record'=>$document->id]) : \App\ClubUnio\Resources\ExpenseResource::getUrl('view',['record'=>$document->id]) }}">{{ $document->legacy_id ?? $document->id }}</a></td><td class="p-3">{{ $document->member?->display_name }}</td><td class="p-3">{{ $document->status?->name }}</td><td class="p-3 break-all">{{ $document->{$field} }}</td><td class="p-3"><x-filament::button wire:click="check({{ $document->id }})" wire:loading.attr="disabled" icon="heroicon-o-arrow-path" size="sm">Status prüfen</x-filament::button></td></tr>
+@forelse($documents as $document)<tr class="border-b"><td class="p-3"><a href="{{ $type === 'invoice' ? \App\ClubUnio\Resources\InvoiceResource::getUrl('view',['record'=>$document->id]) : \App\ClubUnio\Resources\ExpenseResource::getUrl('view',['record'=>$document->id]) }}">{{ $document->legacy_id ?? $document->id }}</a></td><td class="p-3">{{ $document->member?->display_name }}</td><td class="p-3">{{ $document->status?->name }}</td><td class="p-3 break-all">{{ $document->{$field} }}</td><td class="p-3">@if(\App\ClubUnio\Pages\BexioReconciliation::canSync($type))<x-filament::button wire:click="check({{ $document->id }})" wire:loading.attr="disabled" icon="heroicon-o-arrow-path" size="sm">Status prüfen</x-filament::button>@endif</td></tr>
 @empty<tr><td colspan="5" class="p-3">Keine verknüpften Dokumente gefunden.</td></tr>@endforelse
 </tbody></table></div>
 <x-filament::pagination :paginator="$documents" />
 <h2 class="text-lg font-semibold">Letzte Prüfungen</h2>
 <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="border-b"><th class="p-3">Zeit</th><th class="p-3">Dokument</th><th class="p-3">Bexio</th><th class="p-3">Ergebnis</th><th class="p-3">Übernahme</th></tr></thead><tbody>
 @forelse($checks as $check)<tr class="border-b"><td class="p-3 whitespace-nowrap">{{ \Carbon\CarbonImmutable::parse($check->created_at)->setTimezone('Europe/Zurich')->format('d.m.Y H:i') }}</td><td class="p-3">{{ $check->object_type === 'invoice' ? 'Rechnung' : 'Spesen' }} #{{ $check->object_id }}</td><td class="p-3">{{ $check->remote_status ?? '–' }}</td><td class="p-3">{{ $check->message }}<small class="block">{{ ['ready'=>'Bereit','applied'=>'Übernommen','unchanged'=>'Unverändert','failed'=>'Fehler'][$check->state] ?? $check->state }}</small></td><td class="p-3">
-@if($check->state === 'ready' && $check->actor_id === \Filament\Facades\Filament::auth()->id() && \Carbon\CarbonImmutable::parse($check->created_at)->gt(now()->subMinutes(10)))
+@if(\App\ClubUnio\Pages\BexioReconciliation::canSync($check->object_type) && $check->state === 'ready' && $check->actor_id === \Filament\Facades\Filament::auth()->id() && \Carbon\CarbonImmutable::parse($check->created_at)->gt(now()->subMinutes(10)))
 <x-filament::button wire:click="apply({{ $check->id }})" wire:confirm="Den geprüften Status in ClubUnio übernehmen? Bexio wird nicht verändert." wire:loading.attr="disabled" icon="heroicon-o-check" size="sm">Übernehmen</x-filament::button>
 @else <span>–</span> @endif
 </td></tr>@empty<tr><td colspan="5" class="p-3">Noch keine Prüfungen.</td></tr>@endforelse

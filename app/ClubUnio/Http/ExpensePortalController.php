@@ -19,7 +19,7 @@ class ExpensePortalController
 {
     private function authorize(Request $request, Tenant $tenant): void
     {
-        abort_unless(app(MemberAccessService::class)->canEnter($request->user('portal'), $tenant), 403);
+        abort_unless(app(ExpenseService::class)->portalAllowed($request->user('portal'), $tenant), 403);
     }
 
     public function index(Request $request, Tenant $tenant, ExpenseService $service)

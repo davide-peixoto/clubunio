@@ -3,6 +3,9 @@
 namespace App\ClubUnio;
 
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
+use Filament\Facades\Filament;
+use App\ClubUnio\Resources\ProfileUi;
 use Filament\Panel;
 
 class NavigationStructure
@@ -18,11 +21,11 @@ class NavigationStructure
     private const SETTINGS = [
         'Mitglieder & Verein' => ['MemberStatusResource', 'MemberTypeResource', 'RegistrationStatusResource', 'CountryResource', 'GenderResource', 'BillingRecipientResource', 'DocumentTypeResource', 'ClubFunctionResource', 'QualificationResource'],
         'Sport & Anlagen' => ['TeamResource', 'StaffFunctionResource', 'GameTypeResource', 'TrainingOptionResource', 'FootballClubResource', 'FacilityStatusResource', 'BusKeyboxResource'],
-        'Finanzen' => ['ContributionPriceResource', 'ContributionRuleResource', 'BankResource', 'ExpenseTypeResource', 'ExpenseRoundResource', 'ExpenseStatusResource', 'InvoiceCategoryResource', 'InvoiceStatusResource', 'InvoiceLineStatusResource', 'InvoiceWorkflowStatusResource', 'FinancialAdjustmentStatusResource', 'BexioCatalogEntryResource'],
-        'Zugänge & System' => ['TenantAccountResource', 'AccountMemberLinkResource', 'SettingResource', 'MessageTemplateResource', 'StatusStyleResource', 'Synchronisation', 'ObjectChangeResource'],
+        'Finanzen' => ['ContributionPriceResource', 'ContributionRuleResource', 'BankResource', 'ExpenseTypeResource', 'ExpenseRoundResource', 'ExpenseStatusResource', 'InvoiceCategoryResource', 'InvoiceStatusResource', 'InvoiceLineStatusResource', 'InvoiceWorkflowStatusResource', 'FinancialAdjustmentStatusResource', 'BexioCatalogEntryResource', 'BexioDispatchTrials'],
+        'Zugänge & System' => ['TenantAccountResource', 'AccessProfileResource', 'AccountMemberLinkResource', 'SettingResource', 'MessageTemplateResource', 'StatusStyleResource', 'Synchronisation', 'ObjectChangeResource'],
     ];
 
-    /** Reorganize only links Filament has already authorized; never create resource links here. */
+    /** Reorganize authorized links and add the separately authorized training workspace. */
     public static function partition(Panel $panel, array $groups): array
     {
         $classes = [];
@@ -66,6 +69,12 @@ class NavigationStructure
                 }
                 $settings[$category][] = $item;
             }
+        }
+        if (ProfileUi::allows('training')) {
+            $main['Sport'][] = NavigationItem::make('Trainingspläne')
+                ->icon('heroicon-o-academic-cap')
+                ->url(route('clubunio.training.index', Filament::getTenant()->slug))
+                ->isActiveWhen(fn () => request()->routeIs('clubunio.training.*', 'clubunio.workspace.training.*'));
         }
         $navigation = [];
         foreach (['', ...array_keys(self::PRIMARY), 'Einstellungen'] as $label) {

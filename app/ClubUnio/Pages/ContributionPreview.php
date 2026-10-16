@@ -37,6 +37,8 @@ class ContributionPreview extends Page
 
     public function createBatch(): void
     {
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('contributions', 'create'), 403);
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('invoices', 'create'), 403);
         abort_unless(static::canAccess() && $this->batch && ! $this->batchResults, 403);
         $this->batchResults = app(ContributionBatchService::class)->create(Filament::auth()->user(), Filament::getTenant(), $this->batch);
     }
@@ -53,7 +55,7 @@ class ContributionPreview extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && (Filament::auth()->user()?->canAccessTenant(Filament::getTenant()) ?? false);
+        return \App\ClubUnio\Resources\ProfileUi::allows('contributions');
     }
 
     protected function getHeaderActions(): array
@@ -74,6 +76,8 @@ class ContributionPreview extends Page
 
     public function createDraft(): void
     {
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('contributions', 'create'), 403);
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('invoices', 'create'), 403);
         abort_unless(static::canAccess() && $this->calculation, 403);
         $invoice = app(ContributionInvoiceService::class)->create(Filament::auth()->user(), Filament::getTenant(),
             $this->calculation['member_id'], $this->calculation['season_id'], $this->calculation['fingerprint']);

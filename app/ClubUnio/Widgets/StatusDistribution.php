@@ -22,8 +22,9 @@ abstract class StatusDistribution extends ChartWidget
 
     protected function getData(): array
     {
+        abort_unless(static::canView(), 403);
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(static::canView(), 403);
         $model = $this->modelClass();
         $record = new $model;
         $query = $model::where($record->qualifyColumn('tenant_id'), $tenant->id);

@@ -23,7 +23,7 @@
     @if($notification->object_type === 'registration' && app(\App\ClubUnio\Services\RegistrationReviewService::class)->visible(auth('portal')->user(), $tenant)->whereKey($notification->object_id)->exists())
         <a href="{{ route('clubunio.portal.registration', ['tenant'=>$tenant->slug, 'registration'=>$notification->object_id]) }}">Anmeldung öffnen</a>
     @endif
-    @if($notification->object_type === 'expense' && app(\App\ClubUnio\Services\ExpenseService::class)->visible(auth('portal')->user(), $tenant)->whereKey($notification->object_id)->exists())
+    @if($notification->object_type === 'expense' && \App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'expenses', 'view') && app(\App\ClubUnio\Services\ExpenseService::class)->visible(auth('portal')->user(), $tenant)->whereKey($notification->object_id)->exists())
         <a href="{{ route('clubunio.portal.expense', ['tenant'=>$tenant->slug, 'expense'=>$notification->object_id]) }}">Spesenbeleg öffnen</a>
     @endif
 </article>

@@ -1,5 +1,27 @@
 # Pi staging: dev.clubunio.ch
 
+## Dynamische Rollen (16.10.2026)
+
+Release `20261016-clubunio-access-profiles`, aktiviert als gezieltes Delta
+auf `20261016-clubunio-announcement-performance-v2`. Migrationen69/70 sind
+angewendet; Aktivierung71 erfolgte nach Umschaltung auf geschuetzten Code.
+Keine automatische Benutzerzuordnung. Nur-Lesen-Vorlage, Modul-/Funktionsrechte,
+Untertabellen, Webaktionen und Dateizugriffe gemeinsam ausrollen.
+
+Pruefung: 156 Bestands-Tests/1720 Assertions, 73 Profiltests/1059 Assertions,
+22 Lese-/Navigationstests/441 Assertions; weitere gezielte Blade-Render-Tests.
+Profil-Editor Desktop/Mobil und Benutzerliste lokal visuell geprueft.
+Aktivierungscheck: `php deploy/check-access-profiles.php` erfolgreich; genau
+ein Nur-Lesen-Profil angelegt. PHP-Syntax:164 geaenderte PHP-/Blade-Dateien
+geprueft, Blade-Cache lokal und auf Server erfolgreich aufgebaut.
+Login HTTP200, Profilverwaltung ohne Sitzung HTTP302 auf /login.
+Routen-/Mandantenschutz,195 verschluesselte Parameter und46 Templates geprueft.
+
+Ruecksprungbasis ist der obige Performance-Release. Keine Datenbankmigration
+zurueckrollen: neue Profilkonten bleiben mit altem Code gesperrt statt zu Office
+zu werden. Keine Secrets, Uploads oder Laufzeitdaten im Delta. PHPMaker DEV/PROD,
+API, SaaS und Betrieb unveraendert. Details: CLUBUNIO-DYNAMIC-ROLES.md.
+
 ## Rundnachrichten-Performance (16.10.2026)
 
 Gezieltes Delta 20261016-clubunio-announcement-performance-v2 auf verifiziertem

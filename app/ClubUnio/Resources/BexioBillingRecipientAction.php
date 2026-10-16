@@ -17,7 +17,9 @@ class BexioBillingRecipientAction
     public static function make(): Action
     {
         return Action::make('bexioBillingRecipient')->label('Bexio-Rechnungsempfänger')->icon('heroicon-o-link')
-            ->visible(fn (Member $record) => MemberResource::canEdit($record))
+            ->visible(fn (Member $record) => ProfileUi::allows('bexio', 'update')
+                && $record->archived_at === null && (int) $record->tenant_id === (int) Filament::getTenant()?->id
+                && (Filament::auth()->user()?->can('view', $record) ?? false))
             ->modalHeading('Bexio-Rechnungsempfänger zuordnen')
             ->schema([
                 Hidden::make('version'),

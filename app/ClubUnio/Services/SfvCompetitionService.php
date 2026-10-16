@@ -32,7 +32,7 @@ class SfvCompetitionService
 
     public function previewWithdrawal(Account $actor, Tenant $tenant, int $matchId): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         $match = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
         abort_unless($match, 404);
         $records = Competition::where('tenant_id', $tenant->id)->where('association_match_id', $match->match_id)->get();
@@ -59,7 +59,7 @@ class SfvCompetitionService
 
     public function previewBatch(Account $actor, Tenant $tenant, string $from, string $to): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         Validator::make(compact('from', 'to'), ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
         $matches = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)
             ->whereRaw("(starts_at AT TIME ZONE 'Europe/Zurich')::date BETWEEN ? AND ?", [$from, $to])->orderBy('starts_at')->orderBy('id')->limit(101)->get();
@@ -87,7 +87,7 @@ class SfvCompetitionService
 
     public function applyBatch(Account $actor, Tenant $tenant, array $entries): int
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
         abort_if(count($entries) > 100, 422);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $entries) {
@@ -102,7 +102,7 @@ class SfvCompetitionService
 
     public function preview(Account $actor, Tenant $tenant, int $matchId, ?int $target = null, bool $separate = false): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         $db = DB::connection('clubunio');
         $match = $db->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
         abort_unless($match, 404);
@@ -156,10 +156,12 @@ class SfvCompetitionService
 
     public function apply(Account $actor, Tenant $tenant, array $preview): int
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
             $fresh = ($preview['kind'] ?? '') === 'withdrawal'
                 ? $this->previewWithdrawal($actor, $tenant, (int) $preview['match_id'])
                 : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false);

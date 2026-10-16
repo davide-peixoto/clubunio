@@ -18,6 +18,16 @@ class SfvPlanningService
 {
     public function __construct(private TeamPlanningService $planning) {}
 
+    private function authorizeSync(Account $actor, Tenant $tenant): void
+    {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'competitions', 'sync')) {
+            abort_unless($this->planning->table($tenant, 'team_seasons')->where('active', true)->exists(), 403);
+            return;
+        }
+        $this->planning->authorizeOperation($actor, $tenant, 'sync');
+        abort_unless($this->planning->teams($actor, $tenant, true, 'sync')->exists(), 403);
+    }
+
     private function setting(Tenant $tenant, string $key, string $default = ''): string
     {
         $row = Setting::where('tenant_id', $tenant->id)->where('key', $key)->where('enabled', true)->first();
@@ -27,8 +37,7 @@ class SfvPlanningService
 
     public function refresh(Account $actor, Tenant $tenant, array $input): int
     {
-        $this->planning->enter($actor, $tenant);
-        abort_unless($this->planning->teams($actor, $tenant, true)->exists(), 403);
+        $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
 
         return app(SyncWorkService::class)->run($actor, $tenant, 'sfv_schedule', $tenant->id, $data);
@@ -36,8 +45,7 @@ class SfvPlanningService
 
     public function refreshNow(Account $actor, Tenant $tenant, array $input): int
     {
-        $this->planning->enter($actor, $tenant);
-        abort_unless($this->planning->teams($actor, $tenant, true)->exists(), 403);
+        $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
         if (Time::parse($data['from'])->diffInDays(Time::parse($data['to'])) > 186) {
             throw ValidationException::withMessages(['to' => 'Maximal 186 Tage pro Abruf.']);
@@ -99,6 +107,7 @@ class SfvPlanningService
             return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $rows) {
                 $p = $this->planning;
                 $p->lock($tenant);
+                $this->authorizeSync($actor, $tenant);
                 foreach ($rows as $row) {
                     $q = $p->table($tenant, 'sfv_schedule')->where('match_id', $row['match_id']);
                     $old = (clone $q)->first();
@@ -115,6 +124,9 @@ class SfvPlanningService
                 return count($rows);
             });
         } catch (\Throwable $error) {
+            if ($error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $error;
+            }
             $reference = (string) Str::uuid();
             Log::warning('clubunio.sfv.refresh_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'provider_status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['sfv' => 'SFV-Abruf fehlgeschlagen. Bestehende Termine bleiben unverändert. Referenz: '.$reference]);
@@ -123,9 +135,11 @@ class SfvPlanningService
 
     public function import(Account $actor, Tenant $tenant, int $id, array $input): int
     {
+        $this->planning->authorizeOperation($actor, $tenant, 'sync');
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             $p = $this->planning;
             $p->lock($tenant);
+            $p->authorizeOperation($actor, $tenant, 'sync');
             $p->enter($actor, $tenant);
             $match = $p->table($tenant, 'sfv_schedule')->where('id', $id)->first();
             abort_unless($match, 404);

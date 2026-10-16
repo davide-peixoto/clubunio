@@ -34,6 +34,7 @@ class ManageRecords extends \Filament\Resources\Pages\ManageRecords
 
     private function runCatalog(bool $fixture, bool $invoice = false): void
     {
+        abort_unless(BexioCatalogEntryResource::canManageCatalog($fixture || $invoice ? 'create' : 'sync'), 403);
         try {
             if ($invoice) {
                 $count = app(BexioCatalogFixtureService::class)->prepareInvoice(Filament::auth()->user(), Filament::getTenant());

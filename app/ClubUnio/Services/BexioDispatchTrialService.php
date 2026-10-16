@@ -30,7 +30,15 @@ class BexioDispatchTrialService
 
     public function authorize(Account $actor, Tenant $tenant): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'view');
+    }
+
+    private function authorizeDocument(Account $actor, Tenant $tenant, string $type, string $function): void
+    {
+        $this->authorize($actor, $tenant);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, match ($type) {
+            'invoice' => 'invoices', 'expense' => 'expenses', default => abort(403),
+        }, $function);
     }
 
     private function invalid(string $message): never
@@ -40,7 +48,7 @@ class BexioDispatchTrialService
 
     private function snapshot(Account $actor, Tenant $tenant, string $type, int $id, bool $lock = true, ?array $attachments = null, ?int $sandboxRecipientId = null): array
     {
-        $this->authorize($actor, $tenant);
+        $this->authorizeDocument($actor, $tenant, $type, 'send');
         $class = match ($type) {
             'invoice' => Invoice::class, 'expense' => Expense::class, default => abort(422)
         };
@@ -175,6 +183,7 @@ class BexioDispatchTrialService
         abort_unless(in_array($outcome, ['simulated', 'rejected', 'uncertain'], true), 422);
         $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
         abort_unless($trial, 404);
+        $this->authorizeDocument($actor, $tenant, $trial->object_type, 'send');
         if ($trial->state !== 'ready') {
             return;
         }
@@ -189,6 +198,7 @@ class BexioDispatchTrialService
             $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
             $trial = (clone $query)->lockForUpdate()->first();
             abort_unless($trial, 404);
+            $this->authorizeDocument($actor, $tenant, $trial->object_type, 'send');
             if ($trial->state !== 'ready') {
                 return false;
             }
@@ -292,6 +302,7 @@ class BexioDispatchTrialService
             $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
             $trial = (clone $query)->lockForUpdate()->first();
             abort_unless($trial, 404);
+            $this->authorizeDocument($actor, $tenant, $trial->object_type, 'sync');
             if (! in_array($trial->state, ['uncertain', 'rejected', 'running'], true)) {
                 $this->invalid('Nur fehlgeschlagene Testläufe können geklärt werden.');
             }

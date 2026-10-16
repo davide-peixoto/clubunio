@@ -12,7 +12,7 @@ class MemberAccessService
 {
     public function membership(Account $actor, Tenant $tenant): ?object
     {
-        if (! $actor->active) {
+        if (! $actor->fresh()?->active) {
             return null;
         }
 
@@ -31,7 +31,7 @@ class MemberAccessService
     public function represented(Account $actor, Tenant $tenant, bool $ownOnly = false): Builder
     {
         $query = $this->activeMembers($tenant);
-        if (! $this->membership($actor, $tenant)) {
+        if (! ($membership = $this->membership($actor, $tenant)) || $membership->role === 'profile') {
             return $query->whereRaw('1=0');
         }
         $today = now('Europe/Zurich')->toDateString();
@@ -56,10 +56,9 @@ class MemberAccessService
             return true;
         }
         $membership = $this->membership($actor, $tenant);
-        if (! $membership) {
+        if (! $membership || $membership->role === 'profile') {
             return false;
         }
-
         return in_array($membership->role, ['admin', 'office'], true)
             || ($membership->portal_enabled && $this->represented($actor, $tenant)->exists());
     }

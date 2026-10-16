@@ -24,11 +24,12 @@ class SettingsOverview extends Page
     {
         $tenant = Filament::getTenant();
 
-        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), $tenant);
+        return $tenant && (Filament::auth()->user()?->canAccessTenant($tenant) ?? false);
     }
 
     protected function getViewData(): array
     {
+        abort_unless(static::canAccess(), 403);
         $panel = Filament::getCurrentPanel();
 
         return ['sections' => NavigationStructure::partition($panel, $panel->getAuthorizedNavigation())['settings']];

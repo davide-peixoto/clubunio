@@ -35,6 +35,7 @@ abstract class DossierRelationManager extends RelationManager
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return (int) $ownerRecord->tenant_id === (int) (Filament::getTenant()?->id ?? -1)
+            && \App\ClubUnio\Resources\ProfileUi::model($ownerRecord->{static::$relationship}()->getRelated())
             && (Filament::auth()->user()?->can('view', $ownerRecord) ?? false);
     }
 
@@ -65,7 +66,8 @@ abstract class DossierRelationManager extends RelationManager
             abort_unless(in_array(static::$kind, ['invoiceLines', 'expenseLines'], true)
                 && $owner && (int) $owner->season_id === $this->seasonContextId
                 && (int) $owner->tenant_id === (int) Filament::getTenant()?->id
-                && Filament::auth()->user()?->fresh()?->canAccessTenant(Filament::getTenant()), 403);
+                && ($season = Season::where('tenant_id', Filament::getTenant()->id)->find($this->seasonContextId))
+                && Filament::auth()->user()?->fresh()?->can('view', $season), 403);
         }
     }
 

@@ -34,7 +34,7 @@ class RegistrationDataService
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Registration
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', $id ? 'update' : 'create');
 
         return $this->persist($actor, $tenant, $id, $input);
     }
@@ -67,7 +67,7 @@ class RegistrationDataService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             if ($actor) {
-                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', $id ? 'update' : 'create');
             } else {
                 app(PublicWebService::class)->authorize($tenant, 'registration');
                 abort_unless($id === null, 403);

@@ -67,8 +67,9 @@ class BexioBillingRecipientService
 
     public function save(Account $actor, Tenant $tenant, int $id, array $input): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $member = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($id);
             Validator::make($input, ['version' => 'required|string|size:64', 'contact_id' => 'present|nullable|integer|min:1|max:2147483647', 'confirmed' => 'accepted'])->validate();

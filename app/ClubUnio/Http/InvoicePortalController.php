@@ -13,7 +13,7 @@ class InvoicePortalController
 {
     public function index(Request $request, Tenant $tenant, InvoiceAccessService $access)
     {
-        abort_unless(app(MemberAccessService::class)->canEnter($request->user('portal'), $tenant), 403);
+        abort_unless(app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($request->user('portal'), $tenant), 403);
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|integer|min:1', 'season' => 'nullable|integer|min:1', 'member' => 'nullable|integer|min:1']);
         $q = trim($data['q'] ?? '');
         $invoices = $access->visible($request->user('portal'), $tenant)
@@ -36,7 +36,7 @@ class InvoicePortalController
 
     public function show(Request $request, Tenant $tenant, int $invoice, InvoiceAccessService $access)
     {
-        abort_unless(app(MemberAccessService::class)->canEnter($request->user('portal'), $tenant), 403);
+        abort_unless(app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($request->user('portal'), $tenant), 403);
         $record = $access->visible($request->user('portal'), $tenant)
             ->with(['member', 'status', 'season', 'activeLines.status'])->withSum('activeLines', 'net_amount')->findOrFail($invoice);
 

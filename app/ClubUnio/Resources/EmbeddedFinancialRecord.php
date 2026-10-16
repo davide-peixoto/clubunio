@@ -24,7 +24,7 @@ trait EmbeddedFinancialRecord
         $actor = Filament::auth()->user()?->fresh();
         $parent = static::DOSSIER_MODEL::where('tenant_id', $tenant->id)->find($this->dossierId);
         $record = $this->getRecord()->fresh();
-        abort_unless($actor?->canAccessTenant($tenant) && $parent && $actor->can('view', $parent)
+        abort_unless($actor && $parent && $actor->can('view', $parent)
             && $record && (int) $record->tenant_id === (int) $tenant->id
             && (int) $record->{static::DOSSIER_FIELD} === (int) $parent->id, 403);
         $this->record = $record;

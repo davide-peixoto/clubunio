@@ -25,7 +25,7 @@ class RegistrationAcceptanceService
         if (! $r->details_complete) {
             throw ValidationException::withMessages(['status_id' => 'Die vollständigen Anmeldedaten fehlen.']);
         }
-        $office = $actor->canAccessTenant($tenant);
+        $office = app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'approve');
         if (! $office && array_key_exists('member_id', $input) && (string) $input['member_id'] !== (string) $r->member_id) {
             abort(403);
         }

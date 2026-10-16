@@ -68,6 +68,9 @@ class BexioFinancialActionService
 
     public function execute(Account $actor, Tenant $tenant, string $kind, int $objectId, string $operation): void
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, match ($kind) {
+            'invoice' => 'invoices', 'expense' => 'expenses', default => abort(403),
+        }, 'approve');
         abort_unless(($kind === 'invoice' && in_array($operation, ['payment_partial', 'payment_full', 'payment_overpaid'], true))
             || ($kind === 'expense' && in_array($operation, ['bill_book', 'bill_pay'], true)), 422);
         $guard = app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, $kind, $objectId);
@@ -137,6 +140,9 @@ class BexioFinancialActionService
 
     public function reconcile(Account $actor, Tenant $tenant, string $kind, int $objectId): void
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, match ($kind) {
+            'invoice' => 'invoices', 'expense' => 'expenses', default => abort(403),
+        }, 'sync');
         [$row, $remote, $balance] = $this->remote($actor, $tenant, $kind, $objectId);
         $actions = $this->table()->where('dispatch_id', $row->id)->whereIn('state', ['running', 'uncertain'])->get();
         $payments = $actions->contains(fn ($a) => $a->operation !== 'bill_book') ? $this->payments($tenant, $row) : [];

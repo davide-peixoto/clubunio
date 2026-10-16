@@ -22,18 +22,33 @@ class DossierMaintenanceService
 {
     public const MEMBER_MODELS = ['functions' => MemberFunction::class, 'keys' => MemberKey::class, 'sponsorships' => Sponsorship::class, 'eventGuests' => EventGuest::class];
 
-    public function save(Account $actor, Tenant $tenant, string $model, ?int $memberId, ?int $id, array $input): CatalogModel
+    public static function module(string $model): string
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        return match ($model) {
+            MemberFunction::class, MemberKey::class, Sponsorship::class => 'members',
+            EventGuest::class, ClubEvent::class => 'events',
+            ClubFunction::class, Qualification::class => 'catalogs',
+            default => throw new \InvalidArgumentException('Unsupported dossier object'),
+        };
+    }
+
+    public function save(Account $actor, Tenant $tenant, string $model, ?int $memberId, ?int $id, array $input, ?int $copyFrom = null): CatalogModel
+    {
+        $module = self::module($model);
+        abort_if($id !== null && $copyFrom !== null, 422);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $copyFrom !== null ? 'copy' : ($id ? 'view' : 'create'));
         if (! in_array($model, [...array_values(self::MEMBER_MODELS), ClubEvent::class, ClubFunction::class, Qualification::class], true)) {
             throw new \InvalidArgumentException('Unsupported dossier object');
         }
         $memberObject = in_array($model, self::MEMBER_MODELS, true);
         abort_unless($memberObject === ($memberId !== null), 422);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $memberObject, $memberId, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $module, $memberObject, $memberId, $id, $input, $copyFrom) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $copyFrom !== null ? 'copy' : ($id ? 'view' : 'create'));
+            if ($copyFrom !== null) {
+                $model::where('tenant_id', $tenant->id)->when($memberObject, fn ($q) => $q->where('member_id', $memberId))->lockForUpdate()->findOrFail($copyFrom);
+            }
             if ($memberObject) {
                 Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($memberId);
             }
@@ -65,6 +80,20 @@ class DossierMaintenanceService
                 }
             }
             $data = Validator::make($input, $rules)->validate();
+            if ($id) {
+                $statusChanged = (bool) $row->active !== (bool) $data['active'];
+                if ($statusChanged) {
+                    app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $data['active'] ? 'restore' : 'deactivate');
+                }
+                $candidate = clone $row;
+                $candidate->forceFill(array_diff_key($data, array_flip(['revision', 'active', 'qualification_ids'])));
+                $qualificationChanged = $model === MemberFunction::class
+                    && collect($data['qualification_ids'])->map(fn ($id) => (int) $id)->sort()->values()->all()
+                        !== $row->qualifications()->pluck('clubora.qualifications.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+                if (! $statusChanged || $candidate->isDirty() || $qualificationChanged) {
+                    app(ModulePermissionService::class)->authorize($actor, $tenant, $module, 'update');
+                }
+            }
             if ($id && (int) $row->revision !== (int) $data['revision']) {
                 throw ValidationException::withMessages(['revision' => 'Datensatz wurde geändert. Bitte erneut öffnen.']);
             }

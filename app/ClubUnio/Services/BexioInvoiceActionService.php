@@ -36,6 +36,9 @@ class BexioInvoiceActionService
 
     public function execute(Account $actor, Tenant $tenant, int $invoiceId, string $operation): void
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', match ($operation) {
+            'issue' => 'send', 'cancel' => 'cancel', default => abort(403),
+        });
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
         abort_unless(in_array($operation, ['issue', 'cancel'], true), 422);
         app(SyncWorkService::class)->run($actor, $tenant, 'invoice_action', $invoiceId, compact('operation'));
@@ -43,6 +46,9 @@ class BexioInvoiceActionService
 
     public function executeNow(Account $actor, Tenant $tenant, int $invoiceId, string $operation): void
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', match ($operation) {
+            'issue' => 'send', 'cancel' => 'cancel', default => abort(403),
+        });
         abort_unless(in_array($operation, ['issue', 'cancel'], true), 422);
         [$row, $remote] = $this->remote($actor, $tenant, $invoiceId);
         $existing = $this->table()->where('dispatch_id', $row->id)->where('operation', $operation)->first();
@@ -80,6 +86,7 @@ class BexioInvoiceActionService
 
     public function reconcile(Account $actor, Tenant $tenant, int $invoiceId): void
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'sync');
         [$row, $remote] = $this->remote($actor, $tenant, $invoiceId);
         $status = (int) ($remote['kb_item_status_id'] ?? 0);
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $row, $status, $invoiceId) {

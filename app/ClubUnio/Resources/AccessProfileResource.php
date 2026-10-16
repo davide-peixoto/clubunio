@@ -21,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class AccessProfileResource extends CatalogResource
 {
@@ -46,12 +47,18 @@ class AccessProfileResource extends CatalogResource
     public static function canCreate(): bool { return false; }
     public static function canEdit(Model $record): bool { return false; }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount(['tenantAccounts' => fn (Builder $query) => $query
+            ->where('tenant_id', Filament::getTenant()?->id ?? -1)->where('role', 'profile')]);
+    }
+
     public static function fields(): array
     {
         $fields = [
             TextInput::make('name')->label('Profilname')->required()->maxLength(120),
             Textarea::make('description')->label('Beschreibung')->maxLength(2000),
-            Toggle::make('active')->label('Aktiv')->default(true)->required(),
+            Toggle::make('active')->label('Profil aktiviert')->default(true)->required(),
             Select::make('preset')->label('Vorlage')->options(['empty' => 'Ohne Rechte', 'read' => 'Nur Lesen'])
                 ->live()->dehydrated(false)->afterStateUpdated(function (?string $state, Set $set) {
                     if (! in_array($state, ['empty', 'read'], true)) {
@@ -109,10 +116,11 @@ class AccessProfileResource extends CatalogResource
         return $table->columns([
             TextColumn::make('name')->label('Profil')->searchable()->sortable(),
             TextColumn::make('description')->label('Beschreibung')->limit(80),
+            TextColumn::make('tenant_accounts_count')->label('Zugeordnete Benutzer')->numeric()->sortable(),
             TextColumn::make('permission_count')->label('Rechte')->getStateUsing(fn (AccessProfile $record) => count($record->permissions)),
-            IconColumn::make('active')->label('Aktiv')->boolean(),
+            IconColumn::make('active')->label('Profil aktiviert')->boolean(),
             TextColumn::make('revision')->label('Version'),
-        ])->filters([TernaryFilter::make('active')->label('Aktiv')])
+        ])->filters([TernaryFilter::make('active')->label('Profil aktiviert')])
             ->headerActions([Action::make('newProfile')->label('Profil erstellen')->icon('heroicon-o-plus')
                 ->schema(self::fields())->action(fn (array $data, $livewire) => FormMutation::run($livewire,
                     fn () => app(AccessProfileService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, self::input($data))))])

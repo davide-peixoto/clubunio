@@ -31,10 +31,15 @@ class BusReservations extends Page
         return 'heroicon-o-truck';
     }
 
+    public static function canAccess(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('bus');
+    }
+
     public function mount(): void
     {
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(static::canAccess(), 403);
         $this->redirect(route('clubunio.workspace.bus.index'));
     }
 }

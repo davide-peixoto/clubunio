@@ -9,6 +9,11 @@ use Filament\Widgets\ChartWidget;
 
 class InvoicesBySeason extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('invoices');
+    }
+
     protected ?string $heading = 'Rechnungsbeträge nach Saison';
 
     protected ?string $pollingInterval = null;
@@ -22,6 +27,7 @@ class InvoicesBySeason extends ChartWidget
 
     protected function getData(): array
     {
+        abort_unless(static::canView(), 403);
         $rows = app(DashboardService::class)->invoicesBySeason(Filament::auth()->user(), Filament::getTenant());
 
         return ['labels' => array_column($rows, 'season'), 'datasets' => [

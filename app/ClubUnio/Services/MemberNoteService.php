@@ -14,7 +14,7 @@ class MemberNoteService
 {
     public function save(Account $actor, Tenant $tenant, int $memberId, ?int $id, array $data): MemberNote
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $id ? 'view' : 'create');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $memberId, $id, $data) {
             Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')->whereKey($memberId)->lockForUpdate()->firstOrFail();
@@ -25,6 +25,13 @@ class MemberNoteService
             $values = ['body' => $data['body'] ?? '', 'active' => $data['active'] ?? ($id ? $note->active : true)];
             Validator::make($values, ['body' => ['required', 'string', 'max:10000'], 'active' => ['required', 'boolean']])->validate();
             $values['body'] = trim($values['body']);
+            $statusChanged = $id && (bool) $note->active !== (bool) $values['active'];
+            if ($statusChanged) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $values['active'] ? 'restore' : 'deactivate');
+            }
+            if (! $statusChanged || $note->body !== $values['body']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $id ? 'update' : 'create');
+            }
             Validator::make($values, ['body' => ['required']])->validate();
             $before = $id ? $note->only(['body', 'active', 'revision']) : null;
             $note->forceFill($values);

@@ -18,7 +18,7 @@ class TeamAssignmentService
 {
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input): CatalogModel
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', $id ? 'update' : 'create');
         if (! in_array($model, [TeamSeason::class, TeamPlayer::class, TeamStaff::class, TechnicalLead::class], true)) {
             throw new \InvalidArgumentException('Unsupported team object');
         }
@@ -26,6 +26,10 @@ class TeamAssignmentService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $record = $id ? $model::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail() : new $model;
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', $id ? 'update' : 'create');
+            if ($id && array_key_exists('active', $input) && (bool) $record->active !== (bool) $input['active']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', $input['active'] ? 'restore' : 'deactivate');
+            }
             $rules = ['active' => 'required|boolean', '_version' => $id ? 'required|string|size:64' : 'prohibited',
                 'tenant_id' => 'prohibited', 'id' => 'prohibited', 'legacy_id' => 'prohibited', 'legacy_invoice_position_id' => 'prohibited'];
             $references = $model === TeamSeason::class ? ['team_id' => 'teams', 'season_id' => 'seasons'] : ['member_id' => 'members', 'team_season_id' => 'team_seasons'];

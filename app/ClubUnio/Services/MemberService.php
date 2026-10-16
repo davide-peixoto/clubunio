@@ -58,9 +58,10 @@ class MemberService
 
     private function save(Account $actor, Tenant $tenant, ?int $id, array $input, ?Registration $registration = null): Member
     {
-        abort_unless($actor->canAccessTenant($tenant) || ($registration && app(RegistrationReviewService::class)->canReview($actor, $tenant, $registration)), 403);
+        abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'members', $id ? 'update' : 'create') || ($registration && app(RegistrationReviewService::class)->canReview($actor, $tenant, $registration)), 403);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $registration) {
+            abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'members', $id ? 'update' : 'create') || ($registration && app(RegistrationReviewService::class)->canReview($actor, $tenant, $registration)), 403);
             if ($id === null) {
                 // Serialize per-club number allocation, never reuse a legacy ID.
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -145,6 +146,13 @@ class MemberService
                 throw ValidationException::withMessages(['exit_date' => 'Für diesen Status ist ein Austrittsdatum erforderlich.']);
             }
             $data = array_intersect_key($data, array_flip(self::FIELDS));
+            if ($id && ! $registration) {
+                $oldExit = $member->exit_date?->format('Y-m-d');
+                $newExit = $data['exit_date'] ?? null;
+                if ($oldExit !== $newExit) {
+                    app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $newExit ? 'deactivate' : 'restore');
+                }
+            }
             $before = $member->exists ? $member->only(self::FIELDS) : null;
             $member->forceFill($data);
             if (! $member->exists || $member->isDirty()) {
@@ -182,8 +190,9 @@ class MemberService
 
     public function archive(Account $actor, Tenant $tenant, int $id, string $version): void
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', 'deactivate');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $version) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', 'deactivate');
             $member = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->whereKey($id)->lockForUpdate()->firstOrFail();
             if (! hash_equals(self::version($member), $version)) {
                 throw ValidationException::withMessages(['version' => 'Datensatz geändert. Bitte neu laden.']);

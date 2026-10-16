@@ -13,7 +13,7 @@
 <div class="table-scroll"><table><thead><tr><th>Name</th><th>Status</th><th>Ort</th><th>E-Mail</th><th>Mobile</th><th>Rechnungen</th></tr></thead><tbody>
 @forelse($members as $member)
     <tr><td>{{ $member->company ?: trim($member->first_name.' '.$member->last_name) }}</td><td>{{ $member->status?->name }}</td>
-        <td>{{ $member->city }}</td><td>{{ $member->email }}</td><td>{{ $member->mobile }}</td><td><a class="icon-button" href="{{ route('clubunio.portal.invoices',['tenant'=>$tenant->slug,'member'=>$member->id]) }}" title="Rechnungen" aria-label="Rechnungen">@svg('heroicon-o-document-text')</a>
+        <td>{{ $member->city }}</td><td>{{ $member->email }}</td><td>{{ $member->mobile }}</td><td>@if(\App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'invoices', 'view'))<a class="icon-button" href="{{ route('clubunio.portal.invoices',['tenant'=>$tenant->slug,'member'=>$member->id]) }}" title="Rechnungen" aria-label="Rechnungen">@svg('heroicon-o-document-text')</a>@endif
         @if(in_array($member->id,$editableMemberIds))<a class="icon-button" href="{{ route('clubunio.portal.member.edit',['tenant'=>$tenant->slug,'member'=>$member->id]) }}" title="Mitgliederdaten und Dokumente" aria-label="Mitgliederdaten und Dokumente">@svg('heroicon-o-pencil-square')</a>@endif</td></tr>
 @empty
     <tr><td colspan="6">Keine Mitglieder gefunden.</td></tr>

@@ -24,6 +24,7 @@ class BexioSandboxDispatchService
     public function authorize(Account $actor, Tenant $tenant): void
     {
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'view');
     }
 
     private function binding(Tenant $tenant)

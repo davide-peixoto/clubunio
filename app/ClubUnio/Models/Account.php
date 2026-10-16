@@ -4,6 +4,7 @@ namespace App\ClubUnio\Models;
 
 use App\ClubUnio\Models\Concerns\UsesClubUnioSchema;
 use App\ClubUnio\Services\BackofficeReadContext;
+use App\ClubUnio\Services\ModulePermissionService;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Models\Contracts\HasTenants;
@@ -41,11 +42,22 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
 
     public function getTenants(Panel $panel): array|Collection
     {
-        return $this->active ? (app(BackofficeReadContext::class)->tenantsFor($this)
-            ?? $this->tenants()->wherePivotIn('role', ['admin', 'office'])->get()) : collect();
+        if (! $this->active) {
+            return collect();
+        }
+        $legacy = app(BackofficeReadContext::class)->tenantsFor($this)
+            ?? $this->tenants()->wherePivotIn('role', ['admin', 'office'])->get();
+        $profiles = $this->tenants()->wherePivot('role', 'profile')->get()
+            ->filter(fn ($tenant) => app(ModulePermissionService::class)->canEnter($this, $tenant));
+        return $legacy->merge($profiles)->unique('id');
     }
 
     public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->active && $tenant instanceof Tenant && app(ModulePermissionService::class)->canEnter($this, $tenant);
+    }
+
+    public function hasUnrestrictedBackofficeAccess(Model $tenant): bool
     {
         if (! $this->active || ! $tenant instanceof Tenant) {
             return false;
@@ -68,6 +80,10 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
         }
         $snapshot = app(BackofficeReadContext::class)->tenantsFor($this);
 
-        return $snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ['admin', 'office'])->exists();
+        if ($snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ['admin', 'office'])->exists()) {
+            return true;
+        }
+        return $this->tenants()->wherePivot('role', 'profile')->get()
+            ->contains(fn ($tenant) => app(ModulePermissionService::class)->canEnter($this, $tenant));
     }
 }

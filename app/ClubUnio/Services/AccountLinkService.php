@@ -14,7 +14,7 @@ class AccountLinkService
 {
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): AccountMemberLink
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        abort_unless($actor->hasUnrestrictedBackofficeAccess($tenant), 403);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();

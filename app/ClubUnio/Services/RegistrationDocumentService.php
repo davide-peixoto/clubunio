@@ -13,7 +13,7 @@ class RegistrationDocumentService
 {
     public function add(Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
 
         $this->store($actor, $tenant, $id, $revision, $kind, $file);
     }
@@ -42,6 +42,9 @@ class RegistrationDocumentService
 
     public function publishUpload(?Account $actor, Tenant $tenant, object $upload, array $metadata): int
     {
+        if ($actor) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
+        }
         abort_unless(DB::connection('clubunio')->transactionLevel() > 0, 409);
         $db = DB::connection('clubunio');
         $query = $db->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $upload->object_id)->where('active', true)
@@ -63,10 +66,10 @@ class RegistrationDocumentService
 
     public function remove(Account $actor, Tenant $tenant, int $id, int $document, int $revision): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'deactivate');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $document, $revision) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'deactivate');
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
                 throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen.']);

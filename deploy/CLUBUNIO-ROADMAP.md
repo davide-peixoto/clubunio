@@ -30,24 +30,17 @@ minimalen Mitgliederauswahlfeldern; Labels per ID statt wiederholter Suche.
 Frische Aktionsrechte, oeffentliche Freigaben und historische Garderoben
 erhalten. Keine Migration. Details: CLUBUNIO-SIGNAGE-BUS-PERFORMANCE.md.
 
-## Dynamische Rollen (16.10.2026, begonnen)
+## Dynamische Rollen (16.10.2026)
 
-Profilmodell, Modul-/Funktionskatalog, Nur-Lesen-Vorlage und revisionierter
-Admin-Schreibservice vorbereitet. Noch KEINE Benutzerzuordnung oder
-wirksame Autorisierung; keine Migration dauerhaft ausgefuehrt, nicht deployt.
-Offene Integration und Freigabekriterien: CLUBUNIO-DYNAMIC-ROLES.md.
-Bestehende Rollen und PHPMaker DEV/PROD bleiben unveraendert.
-Editor-Resource mit Modulabschnitten und Profilkopie vorbereitet, noch nicht
-registriert. 6 Tests/49 Assertions bestanden. Freigabe weiterhin gesperrt:
-gemeinsame Lese-/Schreibpruefung aufloesen, Portal-/Livewire-Zugriffe absichern
-und Rollback ohne Rechteausweitung sicherstellen. Keine Benutzerzuordnung,
-keine dauerhafte Migration und kein Rollen-Deployment.
-Nachtrag: Zuordnungsservice/-formular und Migration70 mit eigener inaktiver
-Systemrolle profile vorbereitet. Frischer Modul-/Funktionspruefservice
-inklusive Entzug implementiert, aber noch nicht in Fachaktionen eingebunden.
-18 gezielte Tests/128 Assertions inklusive bestehender Benutzerverwaltung.
-Freischaltung und Deployment bleiben bis zur vollstaendigen Integration
-gesperrt. Keine echte Benutzerzuordnung oder dauerhafte DB-Aenderung.
+Modul-/Funktionsprofile mit Nur-Lesen-Vorlage, Admin-Editor, Benutzerzuordnung,
+Revision und Audit. Arbeitsbereichszugang getrennt von konkreten Fachrechten.
+Explizite Pruefungen in Fachservices, Policies, Webaufrufen, Untertabellen,
+Livewire-Aktionen, Downloads, Exporten und Versand. Bestehende Portalfilter
+bleiben erhalten; Profile erhalten keine Portalrolle und keine impliziten
+Office-Rechte. Ein Rechteentzug gilt auch fuer bereits geoeffnete Dialoge.
+Migrationen69/70 plus Aktivierung71; keine bestehenden Konten umstellen.
+Gesamtpruefung bestanden und auf ClubUnio bereitgestellt; Abschlussstand in PI.md. Details und
+Zugriffsgrenzen: CLUBUNIO-DYNAMIC-ROLES.md. PHPMaker DEV/PROD unveraendert.
 
 ## Dossier-Auswahlaktionen (16.10.2026)
 

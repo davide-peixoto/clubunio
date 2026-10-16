@@ -12,8 +12,12 @@ class InvoiceAccessService
     public function visible(Account $actor, Tenant $tenant): Builder
     {
         $query = Invoice::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
-        if ($actor->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'invoices', 'view')) {
             return $query;
+        }
+
+        if (! app(ExpenseService::class)->portalAllowed($actor, $tenant)) {
+            return $query->whereRaw('1=0');
         }
 
         return $query->where(fn ($q) => $q->whereNull('workflow_status_id')->orWhereHas('workflowStatus', fn ($q) => $q->where('code', 'released')))

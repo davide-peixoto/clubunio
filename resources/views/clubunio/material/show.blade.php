@@ -1,5 +1,13 @@
 @extends('clubunio.portal.layout')
 @section('content')
+@php
+    $materialActor = auth('portal')->user();
+    $materialAccess = app(\App\ClubUnio\Services\MemberAccessService::class);
+    $materialOwned = $materialActor && $materialAccess->canEnter($materialActor, $tenant)
+        && (int) $receipt->tenant_id === (int) $tenant->id && $receipt->state !== 'draft'
+        && $materialAccess->represented($materialActor, $tenant)->whereKey($receipt->member_id)->exists();
+    $materialDownload = $materialOwned && \App\ClubUnio\Resources\ProfileUi::profileAllows($materialActor, $tenant, 'documents', 'download');
+@endphp
 <a href="{{ route('clubunio.portal.material.index', $tenant->slug) }}">Zurück</a>
 <h1>{{ $receipt->title }}</h1>
 @if(session('status'))<p role="status">{{ session('status') }}</p>@endif
@@ -9,7 +17,7 @@
 @foreach($receipt->items as $item)<tr><td>{{ $item['description'] }}</td><td>{{ $item['quantity'] }}</td><td>{{ $item['reference'] ?? '' }}</td><td>{{ $item['condition'] ?? '' }}</td></tr>@endforeach
 </tbody></table></section>
 <p style="white-space:pre-wrap">{{ $receipt->note }}</p>
-@if($receipt->state === 'issued')
+@if($receipt->state === 'issued' && $receipt->snapshot && $materialOwned)
 <form method="post" action="{{ route('clubunio.portal.material.confirm', [$tenant->slug, $receipt->id]) }}">@csrf
 <input type="hidden" name="revision" value="{{ $receipt->revision }}">
 <label><input type="checkbox" name="accepted" value="1" required> {{ $receipt->snapshot['confirmation'] }}</label>
@@ -18,5 +26,5 @@
 @elseif($receipt->confirmed_at)
 <p>Bestätigt durch {{ $receipt->confirmation_name }} ({{ $receipt->confirmation_kind === 'parent' ? 'Elternvertretung' : 'Mitglied' }}) am {{ $receipt->confirmed_at->timezone('Europe/Zurich')->format('d.m.Y H:i') }}.</p>
 @elseif($receipt->state === 'cancelled')<p>Storniert: {{ $receipt->cancellation_reason }}</p>@endif
-@if($receipt->snapshot)<p><a href="{{ route('clubunio.portal.material.pdf', [$tenant->slug, $receipt->id]) }}" target="_blank" rel="noopener">PDF-Quittung</a></p>@endif
+@if($receipt->snapshot && $materialDownload)<p><a href="{{ route('clubunio.portal.material.pdf', [$tenant->slug, $receipt->id]) }}" target="_blank" rel="noopener">PDF-Quittung</a></p>@endif
 @endsection

@@ -38,15 +38,32 @@ class TeamPlanningService
 
     public function enter(Account $actor, Tenant $tenant): void
     {
-        abort_unless(app(MemberAccessService::class)->canEnter($actor, $tenant), 403);
+        $this->authorizeOperation($actor, $tenant, 'view');
     }
 
-    public function teams(Account $actor, Tenant $tenant, bool $manage = false)
+    public function authorizeOperation(Account $actor, Tenant $tenant, string $function): void
+    {
+        abort_unless(array_key_exists($function, PermissionCatalog::functions('planning')), 403);
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $function)) {
+            return;
+        }
+        abort_if(app(ModulePermissionService::class)->isProfile($actor, $tenant), 403);
+        $fresh = $actor->fresh();
+        $access = app(MemberAccessService::class);
+        abort_unless($fresh?->active
+            && in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true)
+            && $access->canEnter($fresh, $tenant), 403);
+    }
+
+    public function teams(Account $actor, Tenant $tenant, bool $manage = false, string $function = 'update')
     {
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'team_seasons')->where('active', true);
-        if ($actor->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $manage ? $function : 'view')) {
             return $q;
+        }
+        if (app(MemberAccessService::class)->membership($actor->fresh(), $tenant)?->role === 'profile') {
+            return $q->whereRaw('1=0');
         }
         $access = app(MemberAccessService::class);
         $responsible = $access->responsibleTeams($actor, $tenant);
@@ -62,18 +79,22 @@ class TeamPlanningService
         });
     }
 
-    public function event(Account $actor, Tenant $tenant, int $id, bool $manage = false): object
+    public function event(Account $actor, Tenant $tenant, int $id, bool $manage = false, string $function = 'update'): object
     {
         $this->enter($actor, $tenant);
         $row = $this->table($tenant, 'team_events')->where('id', $id)->first();
         $invited = ! $manage && $this->invitedEvents($actor, $tenant)->where('event_id', $id)->exists();
-        abort_unless($row && ($invited || $this->teams($actor, $tenant, $manage)->where('id', $row->team_season_id)->exists()), 404);
+        abort_unless($row && ($invited || $this->teams($actor, $tenant, $manage, $function)->where('id', $row->team_season_id)->exists()), 404);
 
         return $row;
     }
 
     public function invitedEvents(Account $actor, Tenant $tenant)
     {
+        $this->enter($actor, $tenant);
+        if (app(MemberAccessService::class)->membership($actor->fresh(), $tenant)?->role === 'profile') {
+            return $this->table($tenant, 'team_invitations')->whereRaw('1=0');
+        }
         return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id'));
     }
 
@@ -102,14 +123,21 @@ class TeamPlanningService
 
     public function saveEvent(Account $actor, Tenant $tenant, ?int $id, array $input, bool $seriesWrite = false): int
     {
-        $this->enter($actor, $tenant);
+        $this->authorizeOperation($actor, $tenant, $id ? 'update' : 'create');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $seriesWrite) {
             $this->lock($tenant);
+            $this->authorizeOperation($actor, $tenant, $id ? 'update' : 'create');
             $old = $id ? $this->event($actor, $tenant, $id, true) : null;
+            if (($input['status'] ?? null) === 'ABGESAGT' && $old?->status !== 'ABGESAGT') {
+                $this->authorizeOperation($actor, $tenant, 'cancel');
+            }
+            if ($old?->status === 'ABGESAGT' && ($input['status'] ?? null) === 'AKTIV') {
+                $this->authorizeOperation($actor, $tenant, 'restore');
+            }
             $this->conflict($old, $input);
             $data = Validator::make($input, [
-                'team_season_id' => ['required', 'integer', Rule::in($this->teams($actor, $tenant, true)->pluck('id')->all())],
+                'team_season_id' => ['required', 'integer', Rule::in($this->teams($actor, $tenant, true, $id ? 'update' : 'create')->pluck('id')->all())],
                 'title' => 'required|string|max:255', 'kind' => $this->optionRule($tenant, 'kind'),
                 'starts_at' => 'required|date_format:Y-m-d\TH:i', 'ends_at' => 'required|date_format:Y-m-d\TH:i|after:starts_at',
                 'deadline_at' => 'required|date_format:Y-m-d\TH:i|before_or_equal:starts_at',
@@ -144,6 +172,7 @@ class TeamPlanningService
 
     public function createSeries(Account $actor, Tenant $tenant, array $input): array
     {
+        $this->authorizeOperation($actor, $tenant, 'create');
         $count = Validator::make($input, ['repeat_count' => 'nullable|integer|min:1|max:26'])->validate()['repeat_count'] ?? 1;
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $input, $count) {
@@ -183,8 +212,10 @@ class TeamPlanningService
 
     public function participate(Account $actor, Tenant $tenant, int $id, int $member, array $input): void
     {
+        $this->authorizeOperation($actor, $tenant, 'update');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $member, $input) {
             $this->lock($tenant);
+            $this->authorizeOperation($actor, $tenant, 'update');
             $event = $this->event($actor, $tenant, $id);
             $manager = $this->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
             abort_unless($this->roster($tenant, $event)->whereKey($member)->exists(), 404);
@@ -239,8 +270,8 @@ class TeamPlanningService
     {
         $this->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
-        $own = $access->represented($actor, $tenant)->pluck('id');
-        $teams = $this->teams($actor, $tenant, true)->pluck('id');
+        $own = $access->membership($actor->fresh(), $tenant)?->role === 'profile' ? collect() : $access->represented($actor, $tenant)->pluck('id');
+        $teams = $this->teams($actor, $tenant, true, 'view')->pluck('id');
 
         return $this->table($tenant, 'team_absences')->whereNull('deleted_at')->where(function ($q) use ($tenant, $own, $teams) {
             $q->whereIn('member_id', $own);
@@ -252,17 +283,21 @@ class TeamPlanningService
 
     public function saveAbsence(Account $actor, Tenant $tenant, ?int $id, array $input, bool $delete = false): array
     {
-        $this->enter($actor, $tenant);
+        $this->authorizeOperation($actor, $tenant, $delete ? 'deactivate' : ($id ? 'update' : 'create'));
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $delete) {
             $this->lock($tenant);
+            $this->authorizeOperation($actor, $tenant, $delete ? 'deactivate' : ($id ? 'update' : 'create'));
             $old = $id ? $this->table($tenant, 'team_absences')->where('id', $id)->whereNull('deleted_at')->first() : null;
             if ($id) {
                 abort_unless($old, 404);
             }
             $this->conflict($old, $input);
             $member = (int) ($old->member_id ?? $input['member_id'] ?? 0);
-            abort_unless(app(MemberAccessService::class)->represented($actor, $tenant)->whereKey($member)->exists(), 403);
+            $members = app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $delete ? 'deactivate' : ($id ? 'update' : 'create'))
+                ? app(MemberAccessService::class)->activeMembers($tenant)
+                : app(MemberAccessService::class)->represented($actor, $tenant);
+            abort_unless($members->whereKey($member)->exists(), 403);
             if ($delete) {
                 $data = ['deleted_at' => now()->toIso8601String()];
             } else {

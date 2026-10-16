@@ -8,6 +8,11 @@ use Filament\Widgets\ChartWidget;
 
 class ExpensesBySeason extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('expenses');
+    }
+
     protected ?string $heading = 'Spesenbeträge nach Saison';
 
     protected ?string $pollingInterval = null;
@@ -21,8 +26,9 @@ class ExpensesBySeason extends ChartWidget
 
     protected function getData(): array
     {
+        abort_unless(static::canView(), 403);
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(static::canView(), 403);
         $rows = ExpenseLine::query()->join('clubora.expenses as e', 'e.id', '=', 'clubora.expense_lines.expense_id')
             ->leftJoin('clubora.seasons as s', 's.id', '=', 'e.season_id')
             ->where('clubora.expense_lines.tenant_id', $tenant->id)->where('e.tenant_id', $tenant->id)

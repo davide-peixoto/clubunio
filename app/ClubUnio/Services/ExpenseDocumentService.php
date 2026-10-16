@@ -13,6 +13,8 @@ class ExpenseDocumentService
 {
     public function add(Account $actor, Tenant $tenant, int $lineId, int $revision, int $expenseRevision, UploadedFile $file): int
     {
+        $line = ExpenseLine::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($lineId);
+        abort_unless(app(ExpenseService::class)->editable($actor, $tenant, $line->expense, 'upload'), 403);
         Validator::make(['file' => $file], ['file' => 'required|file|max:10240|mimetypes:application/pdf,image/jpeg,image/png'])->validate();
         $uploads = app(DocumentUploadService::class);
         $id = $uploads->stage($actor, $tenant, 'expense', $lineId, ['revision' => $revision, 'expense_revision' => $expenseRevision], $file);
@@ -24,6 +26,7 @@ class ExpenseDocumentService
     {
         abort_unless(DB::connection('clubunio')->transactionLevel() > 0, 409);
         $line = ExpenseLine::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($upload->object_id);
+        abort_unless(app(ExpenseService::class)->editable($actor, $tenant, $line->expense, 'upload'), 403);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         $reference = $upload->folder.$upload->filename;
         if (! in_array($reference, $files, true)) {

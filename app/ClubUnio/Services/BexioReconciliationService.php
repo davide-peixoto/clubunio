@@ -42,7 +42,7 @@ class BexioReconciliationService
 
     public function authorize(Account $actor, Tenant $tenant): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'sync');
         if ($this->sandbox($tenant)) {
             app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
         }
@@ -51,6 +51,9 @@ class BexioReconciliationService
     public function document(Account $actor, Tenant $tenant, string $type, int $id, bool $lock = false)
     {
         $this->authorize($actor, $tenant);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, match ($type) {
+            'invoice' => 'invoices', 'expense' => 'expenses', default => abort(403),
+        }, 'sync');
         if ($this->sandbox($tenant)) {
             app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, $type, $id);
         }
@@ -64,6 +67,7 @@ class BexioReconciliationService
     public function preview(Account $actor, Tenant $tenant, string $type, int $id): int
     {
         $this->authorize($actor, $tenant);
+        $this->document($actor, $tenant, $type, $id);
         abort_unless(in_array($type, ['invoice', 'expense'], true), 422);
 
         return app(SyncWorkService::class)->run($actor, $tenant, $type.'_status', $id);

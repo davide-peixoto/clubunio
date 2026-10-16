@@ -12,7 +12,7 @@ class ExpenseNotificationService
 {
     public function preview(Account $actor, Tenant $tenant, int $expenseId): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'expenses', 'view');
         $expense = Expense::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($expenseId)
             ->with(['member', 'status', 'season', 'round', 'teamSeason.team'])->withSum('activeLines', 'amount')->firstOrFail();
         $event = match ($expense->status?->code) {

@@ -60,12 +60,12 @@ class MemberResource extends Resource
     {
         $tenant = Filament::getTenant();
 
-        return $tenant && (Filament::auth()->user()?->canAccessTenant($tenant) ?? false);
+        return ProfileUi::model(static::getModel(), 'create');
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canCreate() && ! $record->archived_at && (int) $record->tenant_id === (int) Filament::getTenant()->id;
+        return ProfileUi::model($record, 'update') && ! $record->archived_at && (int) $record->tenant_id === (int) Filament::getTenant()->id;
     }
 
     public static function canDelete(Model $record): bool

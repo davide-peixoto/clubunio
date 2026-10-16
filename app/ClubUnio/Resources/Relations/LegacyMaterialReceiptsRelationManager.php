@@ -15,6 +15,6 @@ class LegacyMaterialReceiptsRelationManager extends DossierRelationManager
 
     public function table(Table $table): Table
     {
-        return LegacyMaterialReceiptResource::table($table)->modifyQueryUsing(fn ($q) => $q->where('tenant_id', $this->getOwnerRecord()->tenant_id));
+        return LegacyMaterialReceiptResource::table($table)->modifyQueryUsing(fn ($query) => $query->where('tenant_id', $this->getOwnerRecord()->tenant_id));
     }
 }

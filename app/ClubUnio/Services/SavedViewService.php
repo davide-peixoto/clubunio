@@ -15,14 +15,20 @@ class SavedViewService
 
     public function query(Account $actor, Tenant $tenant, string $list)
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant) && in_array($list, self::LISTS, true), 403);
+        $module = match ($list) {
+            'customer-credits', 'credit-notes', 'refunds' => 'credits',
+            'members' => 'members', 'registrations' => 'registrations', 'expenses' => 'expenses', 'invoices' => 'invoices',
+            'training-slots' => 'training_slots', 'competitions' => 'competitions', 'signage-notices' => 'signage',
+            'football-clubs' => 'catalogs', default => 'reports',
+        };
+        abort_unless(in_array($list, self::LISTS, true) && app(ModulePermissionService::class)->allows($actor, $tenant, $module, 'view'), 403);
 
         return SavedView::where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('list_key', $list);
     }
 
     public function save(Account $actor, Tenant $tenant, string $list, ?int $id, array $input, array $state): SavedView
     {
-        $query = $this->query($actor, $tenant, $list);
+        $this->query($actor, $tenant, $list);
         $input['name'] = trim($input['name'] ?? '');
         $data = Validator::make($input, ['name' => 'required|string|max:80', 'is_default' => 'required|boolean', 'revision' => 'nullable|integer|min:1'])->validate();
         Validator::make($state, ['version' => 'required|in:1', 'filters' => 'present|array', 'search' => 'present|nullable|string|max:200', 'sort' => 'nullable|string|max:160', 'tab' => 'nullable|string|max:160', 'columns' => 'present|array'])->validate();
@@ -30,9 +36,10 @@ class SavedViewService
             throw ValidationException::withMessages(['name' => 'Diese Ansicht ist zu umfangreich oder ungültig.']);
         }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $list, $id, $query, $data, $state) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $list, $id, $data, $state) {
             // Serializes default switches and uniqueness checks for one account.
             Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
+            $query = $this->query($actor, $tenant, $list);
             $record = $id ? (clone $query)->lockForUpdate()->findOrFail($id) : new SavedView;
             if ($id && $record->revision !== (int) ($data['revision'] ?? 0)) {
                 throw ValidationException::withMessages(['revision' => 'Ansicht wurde geändert. Bitte neu öffnen.']);

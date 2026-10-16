@@ -35,7 +35,7 @@ class LegacyTrainingPlanImporter
 
     public function importHistorical(Account $actor, Tenant $tenant, bool $apply = false): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', $apply ? 'sync' : 'view');
         $sources = app(LegacyTrainingPlanSource::class)->rows($tenant)->keyBy('TrainingPlannerAuditLogID');
         $result = ['eligible' => [], 'imported' => [], 'unresolved' => []];
         foreach (LegacyTrainingPlan::where('tenant_id', $tenant->id)->where('state', 'review')->get() as $row) {
@@ -96,13 +96,13 @@ class LegacyTrainingPlanImporter
 
     public function stage(Account $actor, Tenant $tenant): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'sync');
         $source = app(LegacyTrainingPlanSource::class);
         $rows = $source->rows($tenant);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $source, $rows) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'sync');
             $counts = ['added' => 0, 'unchanged' => 0, 'changed' => 0, 'reclassified' => 0];
             foreach ($rows as $row) {
                 $old = LegacyTrainingPlan::where('tenant_id', $tenant->id)->where('source_id', $row->TrainingPlannerAuditLogID)->first();
@@ -141,7 +141,7 @@ class LegacyTrainingPlanImporter
 
     public function owners(Account $actor, Tenant $tenant): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'view');
 
         return Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)->whereIn('role', ['admin', 'office', 'trainer', 'technical_lead']))->orderBy('display_name')->pluck('display_name', 'id')->all();
     }
@@ -159,13 +159,13 @@ class LegacyTrainingPlanImporter
 
     public function import(Account $actor, Tenant $tenant, int $id, array $input): int
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'sync');
         $data = Validator::make($input, ['revision' => 'required|integer|min:1', 'owner_id' => 'required|integer|min:1', 'team_season_id' => 'required|integer|min:1',
             'decision_note' => 'required|string|min:3|max:1000', 'schematic_confirmed' => 'accepted'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'sync');
             $row = LegacyTrainingPlan::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ($row->state === 'imported') {
                 abort_unless((int) $row->owner_id === (int) $data['owner_id'] && (int) $row->team_season_id === (int) $data['team_season_id'], 409);

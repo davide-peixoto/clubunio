@@ -1,3 +1,4 @@
+@if($editable && \App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'expenses', $line ? 'update' : 'create'))
 <form method="post" action="{{ route('clubunio.portal.expense.line',['tenant'=>$tenant->slug,'expense'=>$e->id,'line'=>$line?->id]) }}" class="registration-form expense-line-form">@csrf
 <input type="hidden" name="expense_revision" value="{{ $e->revision }}">
 @if($line)<input type="hidden" name="revision" value="{{ $line->revision }}">@endif
@@ -6,4 +7,10 @@
 <label>Gegner<input name="opponent" value="{{ $line?->opponent }}" maxlength="255"></label>
 <label>Betrag CHF<input name="amount" type="number" step="0.01" min="0.01" max="999999999" required value="{{ $line?->amount }}"></label>
 <label>Bemerkungen<textarea name="notes" maxlength="4000">{{ $line?->notes }}</textarea></label>
-<input type="hidden" name="active" value="0"><label><input type="checkbox" name="active" value="1" checked> Aktiv</label><button>Speichern</button></form>
+@if(! $line || \App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'expenses', $line->active ? 'deactivate' : 'restore'))
+<input type="hidden" name="active" value="0"><label><input type="checkbox" name="active" value="1" @checked($line?->active ?? true)> Aktiv</label>
+@else
+<input type="hidden" name="active" value="{{ (int) $line->active }}">
+@endif
+<button>Speichern</button></form>
+@endif

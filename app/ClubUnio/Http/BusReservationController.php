@@ -77,9 +77,10 @@ class BusReservationController
 
     public function create(Request $request, Tenant $tenant)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, 'create');
         $data = $this->context($request, $tenant, reservable: true);
         abort_if($data['teams']->isEmpty(), 403);
-        $members = ($data['actor']->canAccessTenant($tenant) ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($data['actor'], $tenant, true))->orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        $members = (app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($data['actor'], $tenant, 'bus', 'create') ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($data['actor'], $tenant, true))->orderBy('last_name')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
         return $this->view('create', $data + compact('members'));
     }
@@ -98,7 +99,9 @@ class BusReservationController
         abort_unless($row, 404);
         $team = $this->service->table($tenant, 'team_seasons')->where('id', $row->team_season_id)->value('label');
         $member = $this->service->table($tenant, 'members')->where('id', $row->member_id)->first();
-        $canCancel = app(MemberAccessService::class)->represented($data['actor'], $tenant, true)->where('id', $row->member_id)->exists();
+        $permissions = app(\App\ClubUnio\Services\ModulePermissionService::class);
+        $canCancel = $permissions->allows($data['actor'], $tenant, 'bus', 'cancel')
+            || (! $permissions->isProfile($data['actor'], $tenant) && app(MemberAccessService::class)->represented($data['actor'], $tenant, true)->where('id', $row->member_id)->exists());
 
         $canReschedule = $this->service->canReschedule($data['actor'], $tenant, $row);
         $keybox = app(BusKeyboxAccessService::class)->inspect($data['actor'], $tenant, $reservation);
@@ -125,14 +128,14 @@ class BusReservationController
 
     public function options(Request $request, Tenant $tenant)
     {
-        abort_unless($request->user()->canAccessTenant($tenant), 403);
+        app(\App\ClubUnio\Services\ModulePermissionService::class)->authorize($request->user(), $tenant, 'bus', 'view');
 
         return $this->view('options', $this->context($request, $tenant));
     }
 
     public function assignment(Request $request, Tenant $tenant, int $reservation)
     {
-        abort_unless($request->user()->fresh()?->canAccessTenant($tenant), 403);
+        app(\App\ClubUnio\Services\ModulePermissionService::class)->authorize($request->user(), $tenant, 'bus', 'update');
         $data = $this->context($request, $tenant);
         $row = $this->service->visible($data['actor'], $tenant)->where('id', $reservation)->first();
         abort_unless($row && $row->legacy_id && (! $row->member_id || ! $row->team_season_id), 404);

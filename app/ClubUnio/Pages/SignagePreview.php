@@ -112,11 +112,12 @@ class SignagePreview extends Page
 
     public static function canAccess(): bool
     {
-        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
+        return \App\ClubUnio\Resources\ProfileUi::allows('signage');
     }
 
     public function mount(): void
     {
+        abort_unless(static::canAccess(), 403);
         $this->date = now('Europe/Zurich')->toDateString();
         $period = $this->brand()['period_id'];
         $this->periodId = isset($this->periods()[$period]) ? (string) $period : null;

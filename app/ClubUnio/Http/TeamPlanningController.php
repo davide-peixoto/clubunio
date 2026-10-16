@@ -28,7 +28,8 @@ class TeamPlanningController
         $options = $this->service->options($tenant);
         $teams = $calendarTeams ?? $this->service->teams($actor, $tenant)->orderByDesc('season_id')->orderBy('label')->get();
         $managed = $this->service->teams($actor, $tenant, true)->pluck('id')->all();
-        $own = app(MemberAccessService::class)->represented($actor, $tenant)->get();
+        $own = app(\App\ClubUnio\Services\ModulePermissionService::class)->isProfile($actor, $tenant)
+            ? collect() : app(MemberAccessService::class)->represented($actor, $tenant)->get();
         $colors = $this->service->table($tenant, 'status_styles')->where('active', true)->pluck('color', 'value_key')->all();
 
         return compact('actor', 'tenant', 'options', 'teams', 'managed', 'own', 'colors');
@@ -81,6 +82,7 @@ class TeamPlanningController
 
     public function calendarExport(Request $request, Tenant $tenant)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, 'export');
         $bytes = app(PlanningCalendarService::class)->export($request->user(), $tenant, $request->query());
 
         return response($bytes, 200, ['Content-Type' => 'text/calendar; charset=UTF-8',
@@ -90,7 +92,9 @@ class TeamPlanningController
 
     public function form(Request $request, Tenant $tenant, ?int $event = null)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, $event ? 'update' : 'create');
         $data = $this->context($request, $tenant);
+        $data['managed'] = $this->service->teams($data['actor'], $tenant, true, $event ? 'update' : 'create')->pluck('id')->all();
         abort_unless(count($data['managed']), 403);
         $record = $event ? $this->service->event($data['actor'], $tenant, $event, true) : null;
 
@@ -140,6 +144,7 @@ class TeamPlanningController
 
     public function guest(Request $request, Tenant $tenant, int $event, ?int $guest = null)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, $request->isMethod('DELETE') ? 'deactivate' : ($guest ? 'update' : 'create'));
         app(PlanningGuestService::class)->save($request->user(), $tenant, $event, $guest, $request->all(), $request->isMethod('DELETE'));
 
         return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', 'Gastspieler gespeichert.');
@@ -147,6 +152,7 @@ class TeamPlanningController
 
     public function invite(Request $request, Tenant $tenant, int $event, int $member)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, $request->isMethod('DELETE') ? 'cancel' : 'send');
         app(PlanningGuestService::class)->invite($request->user(), $tenant, $event, $member, $request->isMethod('DELETE'));
 
         return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', 'Einladung aktualisiert.');
@@ -168,6 +174,10 @@ class TeamPlanningController
 
     public function seriesApply(Request $request, Tenant $tenant, int $event)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, 'update');
+        if ($request->boolean('cancel')) {
+            $this->service->authorizeOperation($request->user(), $tenant, 'cancel');
+        }
         $fingerprint = $request->session()->pull('planning.series.'.$tenant->id.'.'.$event);
         abort_unless(is_string($fingerprint), 409);
         $count = app(PlanningSeriesService::class)->apply($request->user(), $tenant, $event, $request->all(), $fingerprint);
@@ -201,6 +211,7 @@ class TeamPlanningController
 
     public function sfvForm(Request $request, Tenant $tenant, int $match)
     {
+        $this->service->authorizeOperation($request->user(), $tenant, 'sync');
         $data = $this->context($request, $tenant);
         $sfv = $this->service->table($tenant, 'sfv_schedule')->where('id', $match)->first();
         abort_unless($sfv, 404);
@@ -269,14 +280,14 @@ class TeamPlanningController
     public function options(Request $request, Tenant $tenant)
     {
         $data = $this->context($request, $tenant);
-        abort_unless($data['actor']->canAccessTenant($tenant), 403);
+        app(\App\ClubUnio\Services\ModulePermissionService::class)->authorize($data['actor'], $tenant, 'planning', 'view');
 
         return $this->view('options', $data);
     }
 
     public function saveOption(Request $request, Tenant $tenant)
     {
-        abort_unless($request->user()->canAccessTenant($tenant), 403);
+        app(\App\ClubUnio\Services\ModulePermissionService::class)->authorize($request->user(), $tenant, 'planning', $request->filled('id') ? 'update' : 'create');
         $data = $request->validate(['id' => 'nullable|integer', 'name' => 'required|string|max:100', 'category' => ['required', Rule::in(['kind', 'mode', 'status', 'participation', 'attendance', 'absence'])],
             'code' => 'required|regex:/^[A-Z_]{2,40}$/', 'active' => 'required|boolean', 'sort_order' => 'required|integer|min:0|max:10000']);
         DB::connection('clubunio')->transaction(function () use ($request, $tenant, $data) {
@@ -284,6 +295,9 @@ class TeamPlanningController
             if (! empty($data['id'])) {
                 $old = (clone $q)->where('id', $data['id'])->first();
                 abort_unless($old && $old->category === $data['category'] && $old->code === $data['code'], 404);
+                if ((bool) $old->active !== (bool) $data['active']) {
+                    app(\App\ClubUnio\Services\ModulePermissionService::class)->authorize($request->user(), $tenant, 'planning', $data['active'] ? 'restore' : 'deactivate');
+                }
                 $q->where('id', $data['id'])->update(collect($data)->only('name', 'active', 'sort_order')->all());
                 $id = $data['id'];
             } else {

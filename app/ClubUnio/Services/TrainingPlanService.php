@@ -12,11 +12,29 @@ use Illuminate\Validation\ValidationException;
 
 class TrainingPlanService
 {
+    public function authorizeOperation(Account $actor, Tenant $tenant, string $function): void
+    {
+        abort_unless(array_key_exists($function, PermissionCatalog::functions('training')), 403);
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'training', $function)) {
+            return;
+        }
+        abort_if(app(ModulePermissionService::class)->isProfile($actor, $tenant), 403);
+        $fresh = $actor->fresh();
+        $access = app(MemberAccessService::class);
+        abort_unless($fresh?->active
+            && in_array($access->membership($fresh, $tenant)?->role, ['trainer', 'technical_lead'], true)
+            && $access->responsibleTeams($fresh, $tenant), 403);
+    }
+
     public function teams(Account $actor, Tenant $tenant)
     {
+        $this->authorizeOperation($actor, $tenant, 'view');
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
+            return DB::connection('clubunio')->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('label')->get();
+        }
         abort_unless($actor->fresh()?->active, 403);
         $teams = app(TeamPlanningService::class)->teams($actor, $tenant, true)->orderBy('label')->get();
-        abort_unless($teams->isNotEmpty() || $actor->canAccessTenant($tenant), 403);
+        abort_unless($teams->isNotEmpty() || $actor->hasUnrestrictedBackofficeAccess($tenant), 403);
 
         return $teams;
     }
@@ -25,18 +43,22 @@ class TrainingPlanService
     {
         $teams = $this->teams($actor, $tenant)->pluck('id');
         $q = DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id);
-        if (! $actor->canAccessTenant($tenant)) {
+        if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
             $q->whereIn('team_season_id', $teams)->where(fn ($q) => $q->where('owner_id', $actor->id)->orWhere('shared', true));
         }
 
         return $q;
     }
 
-    public function get(Account $actor, Tenant $tenant, int $id, bool $edit = false): object
+    public function get(Account $actor, Tenant $tenant, int $id, bool $edit = false, string $function = 'update'): object
     {
+        if ($edit) {
+            abort_unless(in_array($function, ['update', 'approve'], true), 403);
+            $this->authorizeOperation($actor, $tenant, $function);
+        }
         $row = $this->visible($actor, $tenant)->where('id', $id)->first();
         abort_unless($row, 404);
-        abort_if($edit && ! $actor->canAccessTenant($tenant) && $row->owner_id !== $actor->id, 403);
+        abort_if($edit && ! app(ModulePermissionService::class)->allows($actor, $tenant, 'training', $function) && $row->owner_id !== $actor->id, 403);
         abort_if($edit && $row->archived_at !== null, 409);
         $row->input = json_decode($row->input_json, true, 64, JSON_THROW_ON_ERROR);
         $row->plan = json_decode($row->plan_json, true, 64, JSON_THROW_ON_ERROR);
@@ -60,6 +82,7 @@ class TrainingPlanService
 
     public function generate(Account $actor, Tenant $tenant, array $input, string $key): int
     {
+        $this->authorizeOperation($actor, $tenant, 'create');
         $input = $this->input($actor, $tenant, $input);
         $attempt = $this->reserve($actor, $tenant, $key, 'generate');
         if ($attempt->state === 'completed' && $attempt->plan_id) {
@@ -69,6 +92,7 @@ class TrainingPlanService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $input, $plan, $attempt) {
             // Permission may have changed during the provider request.
+            $this->authorizeOperation($actor, $tenant, 'create');
             $this->input($actor, $tenant, $input);
             $id = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId([
                 'tenant_id' => $tenant->id, 'owner_id' => $actor->id, 'team_season_id' => $input['team_season_id'],
@@ -83,10 +107,13 @@ class TrainingPlanService
 
     public function review(Account $actor, Tenant $tenant, int $id, int $revision, string $key): array
     {
-        $row = $this->get($actor, $tenant, $id, true);
+        $this->authorizeOperation($actor, $tenant, 'approve');
+        $row = $this->get($actor, $tenant, $id, true, 'approve');
         $this->revision($row, $revision);
         $attempt = $this->reserve($actor, $tenant, $key, 'review');
         $plan = $this->call($actor, $tenant, $attempt, $row->input, $row->plan);
+        $this->authorizeOperation($actor, $tenant, 'approve');
+        $this->get($actor, $tenant, $id, true, 'approve');
         $this->finish($attempt, 'completed', $id);
 
         return ['plan' => $plan, 'revision' => $row->revision, 'actor' => $actor->id, 'expires' => time() + 1800];
@@ -94,9 +121,13 @@ class TrainingPlanService
 
     public function save(Account $actor, Tenant $tenant, int $id, int $revision, array $plan, bool $shared): void
     {
+        $this->authorizeOperation($actor, $tenant, 'update');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $shared) {
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id, true);
+            if ($shared !== (bool) $row->shared) {
+                $this->authorizeOperation($actor, $tenant, 'send');
+            }
             $this->revision($row, $revision);
             foreach ($plan['exercises'] ?? [] as $i => $exercise) {
                 $plan['exercises'][$i]['markers'] ??= $row->plan['exercises'][$i]['markers'] ?? [];
@@ -120,10 +151,12 @@ class TrainingPlanService
 
     public function archive(Account $actor, Tenant $tenant, int $id, int $revision, bool $archived): void
     {
+        $this->authorizeOperation($actor, $tenant, $archived ? 'deactivate' : 'restore');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $archived) {
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id);
-            abort_unless($actor->canAccessTenant($tenant) || $row->owner_id === $actor->id, 403);
+            $this->authorizeOperation($actor, $tenant, $archived ? 'deactivate' : 'restore');
+            abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'training', $archived ? 'deactivate' : 'restore') || $row->owner_id === $actor->id, 403);
             $this->revision($row, $revision);
             if (($row->archived_at !== null) === $archived) {
                 return;
@@ -139,8 +172,10 @@ class TrainingPlanService
 
     public function copy(Account $actor, Tenant $tenant, int $id, int $revision, string $key): int
     {
+        $this->authorizeOperation($actor, $tenant, 'copy');
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $key) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $this->authorizeOperation($actor, $tenant, 'copy');
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id);
             $this->revision($row, $revision);

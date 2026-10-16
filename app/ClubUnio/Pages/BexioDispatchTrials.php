@@ -23,7 +23,7 @@ class BexioDispatchTrials extends Page
 
     protected static ?string $title = 'Bexio-Versandprüfung';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     public string $type = 'invoice';
 
@@ -45,7 +45,23 @@ class BexioDispatchTrials extends Page
 
     public static function canAccess(): bool
     {
-        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
+        return \App\ClubUnio\Resources\ProfileUi::allows('bexio');
+    }
+
+    public static function canDocumentOperation(string $type, string $function): bool
+    {
+        $module = match ($type) { 'invoice' => 'invoices', 'expense' => 'expenses', default => null };
+
+        return static::canAccess() && $module !== null
+            && \App\ClubUnio\Resources\ProfileUi::allows($module, $function);
+    }
+
+    private function authorizeTrial(int $id, string $function): void
+    {
+        abort_unless(static::canAccess(), 403);
+        $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+            ->where('tenant_id', Filament::getTenant()->id)->where('actor_id', Filament::auth()->id())->find($id);
+        abort_unless($trial && static::canDocumentOperation($trial->object_type, $function), 403);
     }
 
     public function updatedType(): void
@@ -62,6 +78,7 @@ class BexioDispatchTrials extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->validate(['type' => 'required|in:invoice,expense']);
+        abort_unless(static::canDocumentOperation($this->type, 'send'), 403);
         try {
             app(BexioDispatchTrialService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $this->type, $id);
             Notification::make()->title('Vorschau geprüft')->success()->send();
@@ -72,6 +89,7 @@ class BexioDispatchTrials extends Page
 
     public function simulate(int $id): void
     {
+        $this->authorizeTrial($id, 'send');
         abort_unless(static::canAccess(), 403);
         $this->validate(['outcome' => 'required|in:simulated,rejected,uncertain']);
         try {
@@ -84,6 +102,8 @@ class BexioDispatchTrials extends Page
 
     public function sendSandbox(int $id): void
     {
+        $this->authorizeTrial($id, 'send');
+        abort_unless(BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()), 403);
         abort_unless(static::canAccess(), 403);
         $service = app(BexioSandboxDispatchService::class);
         $dispatch = $service->prepareTrial(Filament::auth()->user(), Filament::getTenant(), $id);
@@ -95,11 +115,18 @@ class BexioDispatchTrials extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->validate(['type' => 'required|in:invoice,expense', 'search' => 'string|max:100']);
+        $documentTypes = array_filter(['invoice' => 'Rechnungen', 'expense' => 'Spesen'],
+            fn ($type) => static::canDocumentOperation($type, 'view'), ARRAY_FILTER_USE_KEY);
+        if ($documentTypes && ! isset($documentTypes[$this->type])) {
+            $this->type = array_key_first($documentTypes);
+            $this->resetPage();
+        }
         $tenant = Filament::getTenant();
         $class = $this->type === 'invoice' ? Invoice::class : Expense::class;
         $field = $this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id';
         $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         $documents = $class::where('tenant_id', $tenant->id)->where('active', true)
+            ->when(! static::canDocumentOperation($this->type, 'view'), fn ($q) => $q->whereRaw('1 = 0'))
             ->when($binding, fn ($q) => $q->whereNull('legacy_id')->where('member_id', $this->type === 'invoice' ? $binding->member_id : $binding->supplier_id))
             ->whereHas('member', fn ($q) => $q->where('tenant_id', $tenant->id))
             ->where(fn ($q) => $q->whereNull($field)->orWhere($field, ''))
@@ -110,9 +137,11 @@ class BexioDispatchTrials extends Page
             $documents->whereHas('status', fn ($q) => $q->where('code', 'Z'));
         }
 
-        $trials = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', Filament::auth()->id())->orderByDesc('id')->limit(30)->get();
+        $visibleTypes = array_values(array_filter(['invoice', 'expense'], fn ($type) => static::canDocumentOperation($type, 'view')));
+        $trials = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', Filament::auth()->id())
+            ->whereIn('object_type', $visibleTypes)->orderByDesc('id')->limit(30)->get();
 
-        return ['documents' => $documents->orderByDesc('id')->paginate(15), 'trials' => $trials,
+        return ['documentTypes' => $documentTypes, 'documents' => $documents->orderByDesc('id')->paginate(15), 'trials' => $trials,
             'sandboxAdmin' => BexioConnectionService::canManage(Filament::auth()->user()->fresh(), $tenant)
                 && DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists(),
             'sandboxTrials' => DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('source_trial_id')->pluck('state', 'source_trial_id'),
@@ -121,6 +150,7 @@ class BexioDispatchTrials extends Page
 
     public function resolve(int $id): void
     {
+        $this->authorizeTrial($id, 'sync');
         abort_unless(static::canAccess(), 403);
         $this->validate(['resolution' => 'required|in:found,not_created']);
         try {

@@ -11,12 +11,18 @@ use Filament\Widgets\TableWidget;
 
 class PendingExpensesTable extends TableWidget
 {
+    public static function canView(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('expenses');
+    }
+
     protected static ?string $heading = 'Spesen in Bearbeitung';
 
     public function table(Table $table): Table
     {
+        abort_unless(static::canView(), 403);
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(static::canView(), 403);
 
         return $table->query(Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->whereIn('code', ['F', 'Z']))->with(['member', 'status', 'season', 'round'])->withSum('activeLines', 'amount'))
             ->columns([TextColumn::make('member.display_name')->label('Mitglied'), TextColumn::make('season.name')->label('Saison'), TextColumn::make('round.name')->label('Runde'), TextColumn::make('status.name')->label('Status')->badge(), TextColumn::make('active_lines_sum_amount')->label('Betrag')->money('CHF')])

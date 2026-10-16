@@ -86,7 +86,7 @@ class RegistrationMessageService
 
     public function dispatchOne(Account $actor, Tenant $tenant, int $registration, int $event): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'send');
         abort_unless(DB::connection('clubunio')->table('clubora.registration_events')->where('tenant_id', $tenant->id)
             ->where('registration_id', $registration)->where('id', $event)->where('delivery_state', 'ready')->exists(), 404);
         DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,

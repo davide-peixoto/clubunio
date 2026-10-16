@@ -34,13 +34,13 @@ final class PermissionCatalog
         $extra = match ($module) {
             'invoices', 'expenses', 'credits' => ['download', 'upload', 'export', 'approve', 'send', 'cancel', 'sync'],
             'registrations', 'member_changes' => ['download', 'upload', 'approve', 'send'],
-            'documents' => ['download', 'upload'],
+            'documents' => ['download', 'upload', 'send', 'cancel', 'sync'],
             'seasons', 'teams' => ['transfer', 'export'],
-            'planning', 'training' => ['download', 'approve', 'send', 'cancel', 'sync'],
+            'planning', 'training' => ['download', 'export', 'approve', 'send', 'cancel', 'sync'],
             'competitions', 'bexio' => ['sync', 'download', 'export'],
             'reports' => ['export', 'download'],
             'announcements', 'templates', 'signage' => ['send'],
-            'bus' => ['approve', 'cancel'],
+            'bus' => ['approve', 'cancel', 'export'],
             default => ['export'],
         };
         $keys = $module === 'reports' ? ['view', ...$extra] : ['view', 'create', 'update', 'copy', 'deactivate', 'restore', ...$extra];

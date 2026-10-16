@@ -24,7 +24,7 @@ class BackofficeReadContext
         $fresh = $actor->fresh();
 
         return $adminOnly ? BexioConnectionService::canManage($fresh, $tenant)
-            : ($fresh?->canAccessTenant($tenant) ?? false);
+            : ($fresh?->hasUnrestrictedBackofficeAccess($tenant) ?? false);
     }
 
     public function during(Request $request, Closure $next): mixed
@@ -69,6 +69,7 @@ class BackofficeReadContext
         abort_unless($actor?->active, 403);
         $previous = $request->attributes->get(self::class);
         $request->attributes->set(self::class, ['account' => $actor->id,
+            'permissionCache' => [],
             'tenants' => $actor->tenants()->wherePivotIn('role', ['admin', 'office'])->get()]);
         try {
             return $next($request);
@@ -90,5 +91,18 @@ class BackofficeReadContext
         $context = request()->attributes->get(self::class);
 
         return $actor->active && $context && (int) $context['account'] === (int) $actor->id ? $context['tenants'] : null;
+    }
+
+    public function permissionCache(Account $actor, string $key, ?array $value = null): ?array
+    {
+        if ($this->tenantsFor($actor) === null) {
+            return null;
+        }
+        $context = request()->attributes->get(self::class);
+        if ($value !== null) {
+            $context['permissionCache'][$key] = $value;
+            request()->attributes->set(self::class, $context);
+        }
+        return $context['permissionCache'][$key] ?? null;
     }
 }

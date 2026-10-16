@@ -285,7 +285,9 @@ class ClubUnioTest extends TestCase
         $this->get('/invoices/'.$invoice->id)->assertOk()->assertSee('PDF-Vorschau');
         Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $invoice->fresh(), 'pageClass' => ViewInvoice::class])
             ->assertSee('Adjusted contribution');
-        $response = $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/local');
+        $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/local')
+            ->assertRedirect('/documents/invoices/'.$invoice->id.'/local/pdf');
+        $response = $this->get('/documents/invoices/'.$invoice->id.'/local/pdf');
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
         if ($path = getenv('CLUBUNIO_PDF_TEST_OUTPUT')) {
@@ -2663,10 +2665,11 @@ class ClubUnioTest extends TestCase
         $reader->shouldReceive('read')->once()->with('var/member-documents/', 'fixture.pdf')->andReturn("%PDF-1.4\nfixture");
         $this->app->instance(AzureDocumentReader::class, $reader);
         $this->get('/clubora-documents/'.$this->other->slug.'/'.$id)->assertForbidden();
-        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertOk()->assertHeader('Content-Type', 'application/pdf')
+        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/documents/members/'.$id);
+        $this->get('/documents/members/'.$id)->assertOk()->assertHeader('Content-Type', 'application/pdf')
             ->assertHeader('X-Content-Type-Options', 'nosniff')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $this->db->table('clubora.member_documents')->where('id', $id)->update(['active' => false]);
-        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertNotFound();
+        $this->get('/documents/members/'.$id)->assertNotFound();
         auth('clubunio')->logout();
         $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/login');
     }

@@ -1,5 +1,9 @@
 @extends('clubunio.portal.layout')
 @section('content')
+@php
+    $financeActor = auth('portal')->user();
+@endphp
+@if(\App\ClubUnio\Resources\ProfileUi::profileAllows($financeActor, $tenant, 'invoices', 'view'))
 <div class="page-heading"><h1>Rechnungen</h1><span>{{ $invoices->total() }} Einträge</span></div>
 <form method="get" class="toolbar">
     <div><label for="q">Name / Rechnungsnummer</label><input type="search" id="q" name="q" value="{{ $q }}" maxlength="120"></div>
@@ -15,4 +19,5 @@
 @empty<tr><td colspan="5">Keine Rechnungen gefunden.</td></tr>@endforelse
 </tbody></table></div>
 <div class="pagination">{{ $invoices->links('pagination::simple-default') }}</div>
+@endif
 @endsection

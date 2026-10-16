@@ -20,7 +20,7 @@ class MaterialReceiptsRelationManager extends DossierRelationManager
 
     public function table(Table $table): Table
     {
-        return MaterialReceiptResource::table($table)->modifyQueryUsing(fn ($q) => $q->where('tenant_id', $this->getOwnerRecord()->tenant_id))
+        return MaterialReceiptResource::table($table)->modifyQueryUsing(fn ($query) => $query->where('tenant_id', $this->getOwnerRecord()->tenant_id))
             ->headerActions([MaterialReceiptResource::createReceipt($this->getOwnerRecord()->id)->visible(! $this->getOwnerRecord()->archived_at)]);
     }
 }

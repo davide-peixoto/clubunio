@@ -19,13 +19,13 @@ class InvoiceWorkflowService
 {
     public function create(Account $actor, Tenant $tenant, array $input): Invoice
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'create');
         $data = Validator::make($input, ['member_id' => 'required|integer|min:1', 'invoice_category_id' => 'required|integer|min:1',
             'tax_mode' => 'required|in:exempt,inclusive', 'notes' => 'nullable|string|max:4000', 'season_id' => 'sometimes|required|integer|min:1'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'create');
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->findOrFail($data['member_id']);
             InvoiceCategory::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($data['invoice_category_id']);
             if (isset($data['season_id'])) {
@@ -40,9 +40,9 @@ class InvoiceWorkflowService
         });
     }
 
-    public function editable(Account $actor, Tenant $tenant, Invoice $invoice): bool
+    public function editable(Account $actor, Tenant $tenant, Invoice $invoice, string $function = 'update'): bool
     {
-        return $actor->canAccessTenant($tenant) && (int) $invoice->tenant_id === (int) $tenant->id
+        return app(ModulePermissionService::class)->allows($actor, $tenant, 'invoices', $function) && (int) $invoice->tenant_id === (int) $tenant->id
             && $invoice->active && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id
             && $invoice->workflowStatus?->code === 'draft';
     }
@@ -74,11 +74,16 @@ class InvoiceWorkflowService
 
     public function change(Account $actor, Tenant $tenant, int $id, int $revision, string $operation, array $input = []): Invoice
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        $function = match ($operation) {
+            'header' => 'update', 'line' => empty($input['line_id']) ? 'create' : 'update',
+            'remove_line', 'archive' => 'deactivate', 'restore_line', 'restore' => 'restore',
+            'release' => 'approve', 'cancel' => 'cancel', default => abort(403),
+        };
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', $function);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $operation, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $operation, $input, $function) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', $function);
             $invoice = Invoice::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $invoice->revision !== $revision) {
                 throw ValidationException::withMessages(['revision' => 'Rechnung wurde geändert. Bitte neu laden.']);
@@ -89,7 +94,7 @@ class InvoiceWorkflowService
                 && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id
                 && $invoice->workflowStatus?->code === 'cancelled'
                 && (bool) $invoice->active === ($operation === 'archive');
-            abort_unless($this->editable($actor, $tenant, $invoice) || $cancellable || $archivable, 403);
+            abort_unless($this->editable($actor, $tenant, $invoice, $function) || $cancellable || $archivable, 403);
             $before = $invoice->only(['notes', 'revision', 'workflow_status_id', 'active', 'tax_mode', 'rounding_cents', 'invoice_category_id']);
             $detail = [];
             if ($operation === 'header') {

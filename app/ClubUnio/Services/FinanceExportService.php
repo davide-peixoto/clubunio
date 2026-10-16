@@ -15,7 +15,9 @@ class FinanceExportService
 {
     public function download(Account $actor, Tenant $tenant, string $kind, Builder $filtered): StreamedResponse
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, match ($kind) {
+            'invoices' => 'invoices', 'payments' => 'expenses', default => abort(403),
+        }, 'export');
         abort_unless(in_array($kind, ['invoices', 'payments'], true), 404);
         $model = $kind === 'invoices' ? Invoice::class : Expense::class;
         abort_unless($filtered->getModel() instanceof $model, 422);

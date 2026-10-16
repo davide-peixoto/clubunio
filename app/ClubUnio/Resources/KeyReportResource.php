@@ -30,7 +30,7 @@ class KeyReportResource extends CatalogResource
 
     public static function canViewAny(): bool
     {
-        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant());
+        return ProfileUi::allows('reports');
     }
 
     public static function canCreate(): bool

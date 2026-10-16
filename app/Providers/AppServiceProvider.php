@@ -66,6 +66,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Livewire\on('call', function ($component, string $method) {
+            if ($method !== 'callMountedAction' || ! method_exists($component, 'getMountedActions')
+                || ! str_starts_with($component::class, 'App\\ClubUnio\\')) {
+                return;
+            }
+            foreach ($component->getMountedActions() as $action) {
+                abort_unless(\App\ClubUnio\Resources\ProfileUi::actionAllowed($action), 403);
+            }
+        });
+        Gate::before(function ($actor, string $ability, array $arguments) {
+            return $actor instanceof \App\ClubUnio\Models\Account
+                ? app(\App\ClubUnio\Policies\ProfilePolicyBridge::class)->check($actor, $ability, $arguments) : null;
+        });
         Livewire::component('clubunio.signage-feeds', SignageFeeds::class);
         // Shared display semantics for status/lookup values in every ClubUnio table and detail.
         foreach ([TextColumn::class, TextEntry::class] as $component) {

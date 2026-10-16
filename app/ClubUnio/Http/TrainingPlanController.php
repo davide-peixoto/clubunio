@@ -36,6 +36,7 @@ class TrainingPlanController
 
     public function create(Request $request, Tenant $tenant)
     {
+        app(TrainingPlanService::class)->authorizeOperation($request->user(), $tenant, 'create');
         $context = $this->context($request, $tenant);
         $request->validate(['season' => 'nullable|integer']);
         $seasons = DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)
@@ -57,7 +58,8 @@ class TrainingPlanController
     {
         $context = $this->context($request, $tenant);
         $row = app(TrainingPlanService::class)->get($context['actor'], $tenant, $plan);
-        $canManage = $context['actor']->canAccessTenant($tenant) || $row->owner_id === $context['actor']->id;
+        $canManage = app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($context['actor'], $tenant, 'training', 'update')
+            || (in_array(app(\App\ClubUnio\Services\MemberAccessService::class)->membership($context['actor']->fresh(), $tenant)?->role, ['trainer', 'technical_lead'], true) && $row->owner_id === $context['actor']->id);
         $editable = $canManage && $row->archived_at === null;
         $review = $request->session()->get($this->key($tenant, $plan));
         if ($review && ($review['expires'] < time() || $review['actor'] !== $context['actor']->id || $review['revision'] !== $row->revision)) {
@@ -114,6 +116,7 @@ class TrainingPlanController
 
     public function apply(Request $request, Tenant $tenant, int $plan)
     {
+        app(TrainingPlanService::class)->authorizeOperation($request->user(), $tenant, 'approve');
         $review = $request->session()->get($this->key($tenant, $plan));
         abort_unless($review && $review['expires'] >= time() && $review['actor'] === $request->user()->id, 409);
         $service = app(TrainingPlanService::class);
@@ -126,6 +129,7 @@ class TrainingPlanController
 
     public function pdf(Request $request, Tenant $tenant, int $plan)
     {
+        app(TrainingPlanService::class)->authorizeOperation($request->user(), $tenant, 'download');
         $row = app(TrainingPlanService::class)->get($request->user(), $tenant, $plan);
         $options = new Options(['isRemoteEnabled' => false, 'isPhpEnabled' => false, 'isJavascriptEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
         $pdf = new Dompdf($options);

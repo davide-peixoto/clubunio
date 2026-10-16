@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class TenantAccountResource extends CatalogResource
 {
@@ -65,6 +66,11 @@ class TenantAccountResource extends CatalogResource
         return AccountRole::where('active', true)->orderBy('sort_order')->pluck('name', 'code')->all();
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['account', 'roleDefinition', 'accessProfile']);
+    }
+
     public static function fields(bool $edit): array
     {
         return [TextInput::make('username')->label('Benutzername')->required(! $edit)->disabled($edit)->dehydrated(! $edit)->maxLength(255),
@@ -95,9 +101,12 @@ class TenantAccountResource extends CatalogResource
         return $table->columns([TextColumn::make('account.username')->label('Benutzername')->searchable()->sortable(),
             TextColumn::make('account.display_name')->label('Name')->searchable()->sortable(),
             TextColumn::make('roleDefinition.name')->label('Rolle')->badge(),
+            TextColumn::make('accessProfile.name')->label('Berechtigungsprofil')->searchable()->sortable()->placeholder('-'),
             IconColumn::make('account.active')->label('Aktiv')->boolean(), IconColumn::make('portal_enabled')->label('Portal')->boolean(),
             TextColumn::make('legacy_user_level')->label('Bisheriger Userlevel')->toggleable(isToggledHiddenByDefault: true)])
             ->filters([SelectFilter::make('role')->label('Rolle')->options(self::roles()), TernaryFilter::make('portal_enabled')->label('Portal'),
+                SelectFilter::make('access_profile_id')->label('Berechtigungsprofil')->searchable()
+                    ->options(fn () => AccessProfile::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')->all()),
                 TernaryFilter::make('enabled')->label('Konto aktiv')->queries(true: fn ($q) => $q->whereHas('account', fn ($a) => $a->where('active', true)), false: fn ($q) => $q->whereHas('account', fn ($a) => $a->where('active', false)))])
             ->headerActions([Action::make('newAccount')->label('Benutzer hinzufügen')->icon('heroicon-o-user-plus')->schema(self::fields(false))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])

@@ -24,10 +24,15 @@ class AnnouncementService
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Announcement
     {
-        $this->authorize($actor, $tenant);
+        return $this->persist($actor, $tenant, $id, $input, $id ? 'update' : 'create');
+    }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
-            $this->lock($actor, $tenant);
+    private function persist(Account $actor, Tenant $tenant, ?int $id, array $input, string $function): Announcement
+    {
+        $this->authorize($actor, $tenant, $function);
+
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $function) {
+            $this->lock($actor, $tenant, $function);
             $r = $id ? Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new Announcement;
             $this->draft($r, (int) ($input['revision'] ?? 0));
             $rules = ['title' => ['required', 'string', 'max:200', 'not_regex:/[\r\n]|<[^>]*>/'],
@@ -74,10 +79,10 @@ class AnnouncementService
 
     public function prepare(Account $actor, Tenant $tenant, int $id, int $revision): array
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'send');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision) {
-            $this->lock($actor, $tenant);
+            $this->lock($actor, $tenant, 'send');
             $r = Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->draft($r, $revision);
             $plan = $this->plan($tenant, $r);
@@ -89,15 +94,15 @@ class AnnouncementService
 
     public function duplicate(Account $actor, Tenant $tenant, int $id): Announcement
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'copy');
         $r = Announcement::where('tenant_id', $tenant->id)->findOrFail($id);
 
-        return $this->save($actor, $tenant, null, $r->only(['title', 'body', 'target_type', 'target_ids']));
+        return $this->persist($actor, $tenant, null, $r->only(['title', 'body', 'target_type', 'target_ids']), 'copy');
     }
 
     public function preview(Account $actor, Tenant $tenant, int $id): array
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'view');
         $r = Announcement::where('tenant_id', $tenant->id)->findOrFail($id);
         if ($r->state === 'draft') {
             $plan = $this->plan($tenant, $r);
@@ -112,10 +117,10 @@ class AnnouncementService
 
     public function publish(Account $actor, Tenant $tenant, int $id, int $revision, string $token): int
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'send');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $token) {
-            $this->lock($actor, $tenant);
+            $this->lock($actor, $tenant, 'send');
             $r = Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->draft($r, $revision);
             if ($r->preview_by !== $actor->id || ! $r->preview_expires_at?->isFuture() || ! hash_equals((string) $r->preview_token, $token)) {
@@ -142,9 +147,9 @@ class AnnouncementService
 
     public function withdraw(Account $actor, Tenant $tenant, int $id, int $revision): void
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'deactivate');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision) {
-            $this->lock($actor, $tenant);
+            $this->lock($actor, $tenant, 'deactivate');
             $r = Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ($r->state === 'withdrawn' || $r->revision !== $revision) {
                 $this->error('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.');
@@ -211,15 +216,15 @@ class AnnouncementService
         return $query;
     }
 
-    private function authorize(Account $actor, Tenant $tenant): void
+    private function authorize(Account $actor, Tenant $tenant, string $function): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'announcements', $function);
     }
 
-    private function lock(Account $actor, Tenant $tenant): void
+    private function lock(Account $actor, Tenant $tenant, string $function): void
     {
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, $function);
     }
 
     private function draft(Announcement $r, int $revision): void

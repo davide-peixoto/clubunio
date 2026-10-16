@@ -124,11 +124,22 @@ trait SeasonFinanceActions
 
     public function saveSeasonFinance(?int $id, array $data, string $operation = 'header'): void
     {
+        $function = match ($operation) {
+            'header' => $id === null ? 'create' : 'update',
+            'release' => 'approve',
+            'transition' => match (\App\ClubUnio\Models\ExpenseStatus::where('tenant_id', Filament::getTenant()?->id)
+                ->whereKey($data['status_id'] ?? null)->value('code')) {
+                'F' => 'send', 'Z', 'B' => 'approve', 'R' => 'cancel', 'O' => 'update', default => null,
+            },
+            'cancel' => 'cancel',
+            default => null,
+        };
+        abort_unless($function && \App\ClubUnio\Resources\ProfileUi::allows(static::$kind, $function), 403);
         DB::connection('clubunio')->transaction(function () use ($id, $data, $operation) {
             $tenant = Filament::getTenant();
             $actor = Filament::auth()->user()->fresh();
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor?->canAccessTenant($tenant) && ! $this->isReadOnly(), 403);
+            abort_unless($actor && $actor->can('view', $this->getOwnerRecord()) && ! $this->isReadOnly(), 403);
             $owner = $this->getOwnerRecord()::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($this->getOwnerRecord()->id);
             $relation = $owner->{static::$kind}();
             $row = $id ? $relation->where($relation->getRelated()->qualifyColumn('tenant_id'), $tenant->id)->lockForUpdate()->findOrFail($id) : null;

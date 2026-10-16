@@ -16,6 +16,7 @@ class ListMemberReports extends ListRecords
 
     public function getTabs(): array
     {
+        abort_unless(MemberReportResource::canViewAny(), 403);
         $fields = ['honorary' => 'Ehrenmitglieder', 'free_membership' => 'Freimitglieder', 'supporter' => 'Supporter', 'sponsor' => 'Sponsoren', 'spots' => 'Spots'];
         $select = ['count(*) as total'];
         foreach (array_keys($fields) as $field) {

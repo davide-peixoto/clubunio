@@ -1,6 +1,6 @@
 @extends('clubunio.bus.layout')
 @section('content')
-<div class="page-heading"><h1>Busreservierungen</h1>@if($teams->isNotEmpty())<a class="primary" href="{{ route('clubunio.bus.create',$tenant->slug) }}">@svg('heroicon-o-plus') Reservation erfassen</a>@endif</div>
+<div class="page-heading"><h1>Busreservierungen</h1>@if($teams->isNotEmpty() && \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'bus', 'create'))<a class="primary" href="{{ route('clubunio.bus.create',$tenant->slug) }}">@svg('heroicon-o-plus') Reservation erfassen</a>@endif</div>
 <form method="get" class="toolbar">
 <label>Bus<select name="bus"><option value="">Alle Busse</option>@foreach($buses as $bus)<option value="{{ $bus->id }}" @selected(($filters['bus']??'')==$bus->id)>{{ $bus->name }}</option>@endforeach</select></label>
 <label>Mannschaft<select name="team"><option value="">Alle Mannschaften</option>@foreach($teams as $team)<option value="{{ $team->id }}" @selected(($filters['team']??'')==$team->id)>{{ $team->label }}</option>@endforeach</select></label>

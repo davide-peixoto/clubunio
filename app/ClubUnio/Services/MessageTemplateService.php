@@ -34,9 +34,14 @@ class MessageTemplateService
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $data): MessageTemplate
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        return $this->persist($actor, $tenant, $id, $data, $id ? 'update' : 'create');
+    }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data) {
+    private function persist(Account $actor, Tenant $tenant, ?int $id, array $data, string $function): MessageTemplate
+    {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', $function);
+
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data, $function) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $template = $id ? MessageTemplate::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail() : new MessageTemplate;
             if ($id && (int) ($data['revision'] ?? 0) !== $template->revision) {
@@ -61,6 +66,10 @@ class MessageTemplateService
                 throw ValidationException::withMessages(['locale' => 'Für dieses Ereignis, diesen Kanal und diese Sprache besteht bereits eine Vorlage.']);
             }
             $template->forceFill(array_intersect_key($values, array_flip(['event_key', 'channel', 'locale', 'title', 'body', 'active'])));
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', $function);
+            if ($id && $template->isDirty('active')) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', $template->active ? 'restore' : 'deactivate');
+            }
             if ($id && ! $template->isDirty()) {
                 return $template;
             }
@@ -73,11 +82,11 @@ class MessageTemplateService
 
     public function restore(Account $actor, Tenant $tenant, int $id, int $revision, int $expectedRevision): MessageTemplate
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', 'restore');
         $old = DB::connection('clubunio')->table('clubora.message_template_revisions')->where('tenant_id', $tenant->id)->where('template_id', $id)->where('revision', $revision)->first();
         abort_unless($old, 404);
 
-        return $this->save($actor, $tenant, $id, ['revision' => $expectedRevision, 'title' => $old->title, 'body' => $old->body, 'active' => $old->active]);
+        return $this->persist($actor, $tenant, $id, ['revision' => $expectedRevision, 'title' => $old->title, 'body' => $old->body, 'active' => $old->active], 'restore');
     }
 
     public function render(Tenant $tenant, string $event, string $channel, array $values, string $locale = 'de-CH'): ?array

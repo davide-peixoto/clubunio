@@ -18,15 +18,24 @@ class FacilityService
 {
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input)
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        $module = ModulePermissionService::modelModule($model);
+        abort_unless($module, 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
         if (! in_array($model, [Competition::class, FacilityStatus::class, FieldAvailability::class, SignageNotice::class, FootballClub::class], true)) {
             throw new \InvalidArgumentException('Unsupported facility object');
         }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input, $module) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
+            if ($id && array_key_exists('active', $input) && (bool) $record->active !== (bool) $input['active']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $input['active'] ? 'restore' : 'deactivate');
+            }
+            if ($model === SignageNotice::class || ($model === Competition::class && ! app(ModulePermissionService::class)->isProfile($actor, $tenant) && array_key_exists('show_on_signage', $input)
+                && (! $id || (bool) $record->show_on_signage !== (bool) $input['show_on_signage']))) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
+            }
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $record->revision) {
                 throw ValidationException::withMessages(['revision' => 'Der Datensatz wurde geändert. Bitte neu laden.']);
             }
@@ -75,6 +84,11 @@ class FacilityService
                 throw ValidationException::withMessages(['field_id' => 'Für diesen Platz ist bereits ein Anlagenstatus vorhanden.']);
             }
             unset($data['revision']);
+            if ($model === Competition::class && app(ModulePermissionService::class)->isProfile($actor, $tenant)
+                && (($id && $record->show_on_signage) || $data['show_on_signage'])
+                && (clone $record)->forceFill($data)->isDirty(array_keys($data))) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
+            }
             $before = $id ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id, 'revision' => $id ? $record->revision + 1 : 1])->save();
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);

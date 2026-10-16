@@ -12,7 +12,7 @@ trait HasStatusTabs
     public function getTabs(): array
     {
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::resource(static::getResource()), 403);
         $model = static::getResource()::getModel();
         $query = $model::where('tenant_id', $tenant->id);
         $counts = (clone $query)->selectRaw('status_id, count(*) as total')->groupBy('status_id')->pluck('total', 'status_id');

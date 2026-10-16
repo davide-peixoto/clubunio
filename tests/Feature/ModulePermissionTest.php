@@ -70,8 +70,9 @@ class ModulePermissionTest extends TestCase
         $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
         $this->assertSame('profile', $link->role);
         $this->assertSame($profile->id, (int) $link->access_profile_id);
-        $this->assertFalse($link->account->canAccessTenant($this->tenant));
-        $this->assertFalse($link->account->hasBackofficeTenant());
+        $this->assertFalse($link->account->hasUnrestrictedBackofficeAccess($this->tenant));
+        $this->assertTrue($link->account->canAccessTenant($this->tenant));
+        $this->assertTrue($link->account->hasBackofficeTenant());
         $this->assertFalse(app(AccountAdministrationService::class)->allowed($link->account, $this->tenant));
         $after = $this->db->table('clubora.object_changes')->where('object_type', 'tenant_accounts')->where('object_id', $link->id)->value('after_value');
         $this->assertSame($profile->id, json_decode($after, true)['access_profile_id']);
@@ -173,5 +174,95 @@ class ModulePermissionTest extends TestCase
         $service->save($this->admin, $this->tenant, $link->id, $input);
         $this->expectException(ValidationException::class);
         $service->save($this->admin, $this->tenant, $link->id, $input);
+    }
+
+    public function test_profile_without_view_permissions_cannot_enter_workspace(): void
+    {
+        $profile = $this->profile();
+        $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
+        $profile->forceFill(['permissions' => []])->save();
+        $this->assertFalse($link->account->canAccessTenant($this->tenant));
+        $this->assertFalse($link->account->hasBackofficeTenant());
+        $this->assertFalse($link->account->hasUnrestrictedBackofficeAccess($this->tenant));
+    }
+
+    public function test_model_gate_respects_function_and_tenant_boundaries(): void
+    {
+        $profile = $this->profile();
+        $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
+        $this->actingAs($link->account, 'clubunio');
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        \Filament\Facades\Filament::setTenant($this->tenant);
+        $this->assertTrue($link->account->can('viewAny', \App\ClubUnio\Models\Member::class));
+        $this->assertFalse($link->account->can('create', \App\ClubUnio\Models\Member::class));
+        $this->assertFalse($link->account->can('viewAny', \App\ClubUnio\Models\Invoice::class));
+        $this->assertFalse($link->account->can('viewAny', \App\ClubUnio\Models\Setting::class));
+        $profile->forceFill(['permissions' => ['members.view', 'members.create']])->save();
+        $this->assertTrue($link->account->can('create', \App\ClubUnio\Models\Member::class));
+        $this->assertFalse($link->account->can('deleteAny', \App\ClubUnio\Models\Member::class));
+        $profile->forceFill(['active' => false])->save();
+        $this->assertFalse($link->account->can('viewAny', \App\ClubUnio\Models\Member::class));
+    }
+
+    public function test_catalog_write_and_status_changes_require_separate_capabilities(): void
+    {
+        $profile = $this->profile();
+        $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
+        $catalog = app(\App\ClubUnio\Services\CatalogService::class);
+        $values = ['name' => 'Permission fixture', 'code' => 'ZZ', 'iso3' => 'ZZZ', 'sort_order' => 0, 'active' => true];
+        try {
+            $catalog->save($link->account, $this->tenant, \App\ClubUnio\Models\Country::class, null, $values);
+            $this->fail('Read-only profile created catalog row');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertSame(403, $e->getStatusCode());
+        }
+        $profile->forceFill(['permissions' => ['catalogs.view', 'catalogs.create', 'catalogs.update']])->save();
+        $record = $catalog->save($link->account, $this->tenant, \App\ClubUnio\Models\Country::class, null, $values);
+        $this->assertTrue($record->exists);
+        $edit = ['name' => 'Changed fixture', 'sort_order' => 0, 'active' => false];
+        try {
+            $catalog->save($link->account, $this->tenant, $record::class, $record->id, $edit);
+            $this->fail('Update permission deactivated catalog row');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertSame(403, $e->getStatusCode());
+            $this->assertTrue($record->fresh()->active);
+        }
+        $profile->forceFill(['permissions' => ['catalogs.view', 'catalogs.create', 'catalogs.update', 'catalogs.deactivate']])->save();
+        $catalog->save($link->account, $this->tenant, $record::class, $record->id, $edit);
+        $this->assertFalse($record->fresh()->active);
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $catalog->save($link->account, $this->tenant, $record::class, $record->id, array_replace($edit, ['active' => true]));
+    }
+
+    public function test_render_cache_is_not_used_by_subsequent_actions(): void
+    {
+        $profile = $this->profile();
+        $profile->forceFill(['permissions' => ['members.view', 'members.update']])->save();
+        $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
+        $this->actingAs($link->account, 'clubunio');
+        request()->setMethod('POST');
+        $reads = app(\App\ClubUnio\Services\BackofficeReadContext::class);
+        $gate = app(ModulePermissionService::class);
+        $reads->duringRender(function () use ($reads, $gate, $profile, $link) {
+            $this->assertTrue($gate->allows($link->account, $this->tenant, 'members', 'update'));
+            $profile->forceFill(['permissions' => ['members.view']])->save();
+            $reads->withoutSnapshot(function () use ($gate, $link) {
+                $this->assertFalse($gate->allows($link->account, $this->tenant, 'members', 'update'));
+            });
+        });
+        $this->assertNull($reads->tenantsFor($link->account));
+        $this->assertFalse($gate->allows($link->account, $this->tenant, 'members', 'update'));
+    }
+
+    public function test_activation_seeds_read_only_without_assigning_accounts(): void
+    {
+        $before = $this->db->table('clubora.tenant_accounts')->orderBy('id')->get()->toJson();
+        $migration = require database_path('clubunio/2026_10_16_000071_enable_access_profiles.php');
+        $migration->up();
+        $migration->up();
+        $rows = $this->db->table('clubora.access_profiles')->where('tenant_id', $this->tenant->id)->where('name', 'Nur Lesen')->get();
+        $this->assertCount(1, $rows);
+        $this->assertSame(\App\ClubUnio\Services\PermissionCatalog::readOnly(), json_decode($rows->first()->permissions, true));
+        $this->assertSame($before, $this->db->table('clubora.tenant_accounts')->orderBy('id')->get()->toJson());
     }
 }

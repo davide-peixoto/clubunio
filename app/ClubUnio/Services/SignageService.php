@@ -19,7 +19,7 @@ class SignageService
 {
     public function preview(Account $actor, Tenant $tenant, array $input): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'view');
 
         return $this->display($tenant, $input);
     }

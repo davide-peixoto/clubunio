@@ -33,17 +33,18 @@ abstract class CatalogResource extends Resource
     {
         $tenant = Filament::getTenant();
 
-        return $tenant && (Filament::auth()->user()?->canAccessTenant($tenant) ?? false);
+        return ProfileUi::resource(static::class);
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return static::canViewAny() && ProfileUi::resource(static::class, 'create');
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canViewAny() && (int) $record->tenant_id === (int) Filament::getTenant()->id;
+        return static::canViewAny() && ProfileUi::resource(static::class, 'update')
+            && (int) $record->tenant_id === (int) Filament::getTenant()->id;
     }
 
     public static function canDelete(Model $record): bool

@@ -19,7 +19,7 @@ class RegistrationReviewService
     public function visible(Account $actor, Tenant $tenant): Builder
     {
         $q = Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
-        if ($actor->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'view')) {
             return $q;
         }
         $access = app(MemberAccessService::class);
@@ -33,13 +33,18 @@ class RegistrationReviewService
 
     public function canReview(Account $actor, Tenant $tenant, Registration $registration): bool
     {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)
+            && ! app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'approve')) {
+            return false;
+        }
+
         return (int) $registration->tenant_id === (int) $tenant->id && $this->visible($actor, $tenant)->whereKey($registration->id)->exists();
     }
 
     public function assignableTeams(Account $actor, Tenant $tenant): Builder
     {
         $q = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true));
-        if (! $actor->canAccessTenant($tenant)) {
+        if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'view')) {
             $today = now('Europe/Zurich')->toDateString();
             $q->whereIn('id', app(MemberAccessService::class)->responsibleTeams($actor, $tenant))
                 ->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $today)->where('ends_on', '>=', $today));
@@ -76,7 +81,7 @@ class RegistrationReviewService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $actor = $actor->fresh();
             abort_unless($actor?->active, 403);
-            $office = $actor->canAccessTenant($tenant);
+            $office = app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'approve');
             $r = Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($this->canReview($actor, $tenant, $r), 403);
             if ((int) $r->revision !== (int) $data['revision']) {

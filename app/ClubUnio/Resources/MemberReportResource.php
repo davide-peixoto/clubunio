@@ -20,6 +20,16 @@ class MemberReportResource extends MemberResource
         return false;
     }
 
+    public static function canViewAny(): bool
+    {
+        return ProfileUi::allows('reports');
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
+
     public static function table(Table $table): Table
     {
         return parent::table($table)->headerActions([ReportExportService::action('member_reports')])->recordActions([

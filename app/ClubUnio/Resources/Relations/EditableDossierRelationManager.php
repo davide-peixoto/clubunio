@@ -85,7 +85,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
     public function table(Table $table): Table
     {
         $canEdit = fn () => $this->getOwnerRecord() instanceof Member && $this->getOwnerRecord()->archived_at === null;
-        $save = fn ($id, $data) => app(DossierMaintenanceService::class)->save(Filament::auth()->user(), Filament::getTenant(), DossierMaintenanceService::MEMBER_MODELS[static::$kind], $this->getOwnerRecord()->id, $id, $data);
+        $save = fn ($id, $data, $copyFrom = null) => app(DossierMaintenanceService::class)->save(Filament::auth()->user(), Filament::getTenant(), DossierMaintenanceService::MEMBER_MODELS[static::$kind], $this->getOwnerRecord()->id, $id, $data, $copyFrom);
 
         return parent::table($table)->toolbarActions($this->bulkItemActions($save, $canEdit))->headerActions([Action::make('addItem')->label('Hinzufügen')->icon('heroicon-o-plus')->visible($canEdit)->slideOver()->schema(fn () => DossierMaintenanceFields::make(static::$kind))->action(fn (array $data) => FormMutation::run($this, fn () => $save(null, $data)))])
             ->recordActions([Action::make('editItem')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')->visible($canEdit)->slideOver()
@@ -106,7 +106,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
 
                             return $data;
                         })->schema(fn () => DossierMaintenanceFields::make(static::$kind))
-                        ->action(fn (array $data) => FormMutation::run($this, fn () => $save(null, array_replace($data, ['revision' => 0, 'active' => true])))),
+                        ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save(null, array_replace($data, ['revision' => 0, 'active' => true]), $record->id))),
                     ...array_map(fn (bool $active) => Action::make($active ? 'restoreItem' : 'deactivateItem')
                         ->label($active ? 'Wiederherstellen' : 'Deaktivieren')->icon($active ? 'heroicon-o-arrow-path' : 'heroicon-o-archive-box')
                         ->iconButton()->tooltip($active ? 'Wiederherstellen' : 'Deaktivieren')->color($active ? 'primary' : 'danger')

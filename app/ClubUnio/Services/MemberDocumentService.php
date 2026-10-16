@@ -15,7 +15,7 @@ class MemberDocumentService
 {
     public function open(Account $actor, Tenant $tenant, int $id, bool $download = false)
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'download');
         $document = MemberDocument::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)
             ->whereHas('member', fn ($q) => $q->where('tenant_id', $tenant->id)->whereNull('archived_at'))->findOrFail($id);
 
@@ -24,6 +24,9 @@ class MemberDocumentService
 
     public function openRegistration(Account $actor, Tenant $tenant, int $id, bool $download = false)
     {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'download');
+        }
         $document = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('active', true)
             ->whereIn('registration_id', app(RegistrationReviewService::class)->visible($actor, $tenant)->select('clubora.registrations.id'))->where('id', $id)->first();
         abort_unless($document, 404);
@@ -69,6 +72,9 @@ class MemberDocumentService
 
     public function openExpense(Account $actor, Tenant $tenant, int $id, bool $download = false, int $index = 0)
     {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'expenses', 'download');
+        }
         $line = ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)
             ->whereIn('expense_id', app(ExpenseService::class)->visible($actor, $tenant)->select('clubora.expenses.id'))->findOrFail($id);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));

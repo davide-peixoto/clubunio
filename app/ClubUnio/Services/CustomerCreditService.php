@@ -14,9 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerCreditService
 {
-    private function authorize(Account $actor, Tenant $tenant): void
+    private function authorize(Account $actor, Tenant $tenant, string $function): void
     {
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'credits', $function);
     }
 
     private function fail(string $message): never
@@ -35,7 +36,7 @@ class CustomerCreditService
 
     public function register(Account $actor, Tenant $tenant, int $noteId, array $input): CustomerCredit
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'create');
         $data = Validator::make($input, ['revision' => 'required|integer|min:1',
             'external_reference' => 'required|string|regex:/^GS-[0-9]{1,20}$/iD', 'attestation' => 'accepted'])->validate();
         $note = CreditNote::where('tenant_id', $tenant->id)->findOrFail($noteId);
@@ -43,7 +44,7 @@ class CustomerCreditService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $noteId, $data, $remote) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->authorize($actor, $tenant);
+            $this->authorize($actor, $tenant, 'create');
             abort_unless(hash_equals($remote['connection_hash'], app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
             $note = CreditNote::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($noteId);
             abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $noteId)->exists(), 409, 'Kundenguthaben bereits erfasst.');
@@ -70,7 +71,7 @@ class CustomerCreditService
 
     public function allocate(Account $actor, Tenant $tenant, int $creditId, int $revision, int $invoiceId): CustomerCredit
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'sync');
         $credit = CustomerCredit::where('tenant_id', $tenant->id)->findOrFail($creditId);
         abort_if($credit->allocations()->count() >= 50, 409, 'Mehr als 50 Verrechnungen erfordern eine gesonderte Prüfung.');
         $remote = app(CreditNoteService::class)->remote($actor, $tenant, $invoiceId);
@@ -83,7 +84,7 @@ class CustomerCreditService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $creditId, $revision, $invoiceId, $remote, $observations) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->authorize($actor, $tenant);
+            $this->authorize($actor, $tenant, 'sync');
             $credit = CustomerCredit::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($creditId);
             abort_unless(hash_equals($credit->connection_hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
             abort_unless((int) $credit->revision === $revision, 409, 'Guthaben wurde geändert. Bitte neu laden.');
@@ -142,12 +143,12 @@ class CustomerCreditService
 
     public function correctReference(Account $actor, Tenant $tenant, int $id, int $revision, string $reference): CustomerCredit
     {
-        $this->authorize($actor, $tenant);
+        $this->authorize($actor, $tenant, 'update');
         Validator::make(['reference' => $reference], ['reference' => 'required|regex:/^GS-[0-9]{1,20}$/iD'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $reference) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->authorize($actor, $tenant);
+            $this->authorize($actor, $tenant, 'update');
             $credit = CustomerCredit::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             abort_unless((int) $credit->revision === $revision && ! $credit->allocations()->exists(), 409, 'Bereits verrechnete Guthaben sind unveränderlich.');
             $reference = strtoupper($reference);

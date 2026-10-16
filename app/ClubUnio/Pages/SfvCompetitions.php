@@ -46,7 +46,7 @@ class SfvCompetitions extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::getTenant() && (Filament::auth()->user()?->canAccessTenant(Filament::getTenant()) ?? false);
+        return \App\ClubUnio\Resources\ProfileUi::allows('competitions');
     }
 
     public function mount(): void
@@ -71,6 +71,7 @@ class SfvCompetitions extends Page
 
     public function refreshSchedule(): void
     {
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('competitions', 'sync'), 403);
         $this->validateRange();
         $this->preview = null;
         $this->batchPreview = null;
@@ -89,6 +90,7 @@ class SfvCompetitions extends Page
 
     public function apply(): void
     {
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('competitions', 'sync'), 403);
         abort_unless(static::canAccess(), 403);
         abort_unless($this->preview, 422);
         app(SfvCompetitionService::class)->apply(Filament::auth()->user(), Filament::getTenant(), $this->preview);
@@ -109,6 +111,7 @@ class SfvCompetitions extends Page
 
     public function applyBatch(): void
     {
+        abort_unless(\App\ClubUnio\Resources\ProfileUi::allows('competitions', 'sync'), 403);
         abort_unless(static::canAccess(), 403);
         abort_unless($this->batchPreview, 422);
         $count = app(SfvCompetitionService::class)->applyBatch(Filament::auth()->user(), Filament::getTenant(), $this->batchPreview['entries']);

@@ -11,7 +11,13 @@ final class DossierHistoryService
 {
     public function entries(Account $actor, Tenant $tenant, Model $record): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant) && (int) $record->tenant_id === (int) $tenant->id, 403);
+        abort_unless((int) $record->tenant_id === (int) $tenant->id, 403);
+        $module = ModulePermissionService::modelModule($record);
+        if ($module === null) {
+            abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant), 403);
+        } else {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, $module, 'view');
+        }
         // Only audited business fields, never raw storage paths, credentials or banking secrets.
         $fields = ['active', 'revision', 'name', 'number', 'color', 'body', 'notes', 'amount', 'expires_on', 'description', 'gross_amount', 'discount', 'net_amount', 'status_id', 'workflow_status_id', 'member_id', 'family_id', 'team_id', 'season_id', 'team_season_id', 'staff_function_id', 'club_function_id', 'club_event_id', 'qualification_ids', 'bank_id', 'iban_last4', 'portal_visible', 'document_type_id', 'expense_type_id', 'game_type_id', 'opponent', 'suggested_amount', 'suggestion_accepted'];
 

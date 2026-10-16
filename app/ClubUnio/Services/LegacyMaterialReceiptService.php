@@ -16,7 +16,7 @@ class LegacyMaterialReceiptService
         $actor = $actor->fresh();
         $query = LegacyMaterialReceipt::where('tenant_id', $tenant->id);
         if ($administration) {
-            abort_unless($actor?->canAccessTenant($tenant), 403);
+            abort_unless($actor && ($actor->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view')), 403);
 
             return $query;
         }
@@ -28,7 +28,7 @@ class LegacyMaterialReceiptService
 
     public function import(Account $actor, Tenant $tenant): array
     {
-        abort_unless($tenant->slug === 'sv-sissach' && $actor->fresh()?->canAccessTenant($tenant), 403);
+        abort_unless($tenant->slug === 'sv-sissach' && ($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'sync')), 403);
         $db = DB::connection('clubunio');
         abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
         $counts = ['imported' => 0, 'unchanged' => 0, 'blocked' => 0];
@@ -55,7 +55,7 @@ class LegacyMaterialReceiptService
             abort_if($source->Status === 'UNTERSCHRIEBEN' && (! isset($documents['signed']) || ! $source->SigniertAm || ! $source->SigniertName), 409);
             $db->transaction(function () use ($db, $actor, $tenant, $source, $hash, $member, $documents, &$counts) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+                abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'sync'), 403);
                 $current = $db->table('legacy_prod.MitgliederQuittungen')->where('QuittungID', $source->QuittungID)->first();
                 abort_unless($current && hash_equals($hash, hash('sha256', json_encode((array) $current, JSON_THROW_ON_ERROR))), 409);
                 if (LegacyMaterialReceipt::where('tenant_id', $tenant->id)->where('source_id', $source->QuittungID)->exists()) {
@@ -79,6 +79,9 @@ class LegacyMaterialReceiptService
 
     public function pdf(Account $actor, Tenant $tenant, int $id, bool $administration = false, bool $original = false)
     {
+        if ($administration) {
+            abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'download'), 403);
+        }
         $record = $this->visible($actor, $tenant, $administration)->findOrFail($id);
         $documentId = $original ? $record->original_document_id : ($record->signed_document_id ?: $record->original_document_id);
         $sha = $original ? $record->original_sha256 : ($record->signed_sha256 ?: $record->original_sha256);

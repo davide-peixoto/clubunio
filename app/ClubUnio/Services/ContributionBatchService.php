@@ -11,7 +11,7 @@ class ContributionBatchService
 {
     public function preview(Account $actor, Tenant $tenant, int $seasonId, int $after = 0): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'view');
         Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
         $members = app(MemberAccessService::class)->activeMembers($tenant)->where('id', '>', $after)
             ->whereHas('teamPlayers', fn ($q) => $q->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId)))
@@ -30,7 +30,8 @@ class ContributionBatchService
 
     public function create(Account $actor, Tenant $tenant, array $batch): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'create');
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'create');
         abort_if(count($batch['rows'] ?? []) > 25, 422);
         $results = [];
         foreach ($batch['rows'] as $row) {

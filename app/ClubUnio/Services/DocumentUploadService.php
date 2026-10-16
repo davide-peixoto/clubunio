@@ -87,7 +87,7 @@ class DocumentUploadService
     {
         if ($kind === 'registration') {
             if ($actor) {
-                abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
             } else {
                 abort_unless($publicRequest && DB::connection('clubunio')->table('clubora.public_registration_submissions')
                     ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('request_id', $publicRequest)->exists(), 403);
@@ -100,14 +100,18 @@ class DocumentUploadService
                 throw ValidationException::withMessages(['file' => 'Vor dem Ersetzen das bestehende Passfoto entfernen.']);
             }
         } elseif ($kind === 'member') {
-            abort_unless($actor?->fresh()?->canAccessTenant($tenant), 403);
+            abort_unless($actor, 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'upload');
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->findOrFail($id);
             DocumentType::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($metadata['type']);
         } elseif ($kind === 'expense') {
             abort_unless($actor?->fresh()?->active, 403);
+            if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'expenses', 'upload');
+            }
             $line = ExpenseLine::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($id);
             $expense = app(ExpenseService::class)->visible($actor->fresh(), $tenant)->findOrFail($line->expense_id);
-            abort_unless(app(ExpenseService::class)->editable($actor->fresh(), $tenant, $expense), 403);
+            abort_unless(app(ExpenseService::class)->editable($actor->fresh(), $tenant, $expense, 'upload'), 403);
             abort_unless((int) $line->revision === (int) $metadata['revision'] && (int) $expense->revision === (int) $metadata['expense_revision'], 409, 'Spesenposition wurde geändert. Upload zuerst prüfen.');
         } else {
             abort(422);

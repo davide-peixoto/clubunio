@@ -15,7 +15,7 @@ class BexioConnectionService
 
     public static function canManage(?Account $actor, Tenant $tenant): bool
     {
-        return $actor && $actor->active && $actor->tenants()->whereKey($tenant->id)->wherePivot('role', 'admin')->exists();
+        return $actor && $actor->fresh()?->active && $actor->tenants()->whereKey($tenant->id)->wherePivot('role', 'admin')->exists();
     }
 
     public function configuration(Tenant $tenant): array
@@ -48,6 +48,7 @@ class BexioConnectionService
     {
         DB::connection('clubunio')->transaction(function () use ($tenant, $tokens, $fingerprint, $actorId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            abort_unless(self::canManage(Account::find($actorId), $tenant), 403);
             if (! hash_equals($this->configuration($tenant)['fingerprint'], $fingerprint)) {
                 throw new \RuntimeException('Configuration changed', 409);
             }

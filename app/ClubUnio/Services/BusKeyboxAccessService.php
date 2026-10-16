@@ -49,8 +49,15 @@ class BusKeyboxAccessService
             'after_value' => json_encode(['action' => $action, 'mode' => 'SIMULATION'], JSON_THROW_ON_ERROR)]);
     }
 
-    public function invalidate(Account $actor, Tenant $tenant, int $reservation): void
+    public function invalidate(Account $actor, Tenant $tenant, int $reservation, string $function = 'cancel'): void
     {
+        abort_unless(in_array($function, ['cancel', 'approve', 'update'], true), 403);
+        $bus = app(BusReservationService::class);
+        $bus->authorizeOperation($actor, $tenant, $function);
+        $row = $bus->visible($actor, $tenant)->where('id', $reservation)->first();
+        abort_unless($row, 404);
+        abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', $function)
+            || app(MemberAccessService::class)->represented($actor, $tenant, true)->whereKey($row->member_id)->exists(), 403);
         $count = $this->codes($tenant)->where('reservation_id', $reservation)->where('state', 'issued')->update(['state' => 'invalidated', 'invalidated_at' => now()->toIso8601String()]);
         if ($count) {
             $this->audit($actor, $tenant, $reservation, 'invalidate_simulation');
@@ -62,8 +69,14 @@ class BusKeyboxAccessService
         if (! $actor->fresh()?->active) {
             return false;
         }
-        if ($actor->fresh()?->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'update')) {
             return true;
+        }
+        $fresh = $actor->fresh();
+        $access = app(MemberAccessService::class);
+        if (! in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true)
+            || ! $access->canEnter($fresh, $tenant)) {
+            return false;
         }
         $members = DB::connection('clubunio')->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('state', 'approved')->where('kind', 'self')
             ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('id'))->pluck('member_id');

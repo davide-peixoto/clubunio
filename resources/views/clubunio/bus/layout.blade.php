@@ -7,7 +7,7 @@
 <body><header class="portal-header">@include('clubunio.brand.logo')<nav aria-label="Busreservierungen">
 <a class="icon-button" title="Zur Übersicht" aria-label="Zur Übersicht" href="{{ $actor->canAccessTenant($tenant) && auth('clubunio')->check() ? '/' : route('clubunio.portal.members',$tenant->slug) }}">@svg('heroicon-o-arrow-left')</a>
 <a href="{{ route('clubunio.bus.index',$tenant->slug) }}">Busreservierungen</a>
-@if($actor->canAccessTenant($tenant))<a href="{{ route('clubunio.bus.options',$tenant->slug) }}">Busse und Status</a>@endif
+@if($actor->canAccessTenant($tenant) && \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'bus', 'view'))<a href="{{ route('clubunio.bus.options',$tenant->slug) }}">Busse und Status</a>@endif
 </nav><span>{{ $actor->display_name }}</span></header><main>
 @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
 @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif

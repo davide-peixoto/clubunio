@@ -9,6 +9,11 @@ use Filament\Widgets\ChartWidget;
 
 class InvoicesByStatus extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('invoices');
+    }
+
     protected ?string $heading = 'Rechnungen nach Positionsstatus';
 
     protected ?string $pollingInterval = null;
@@ -22,6 +27,7 @@ class InvoicesByStatus extends ChartWidget
 
     protected function getData(): array
     {
+        abort_unless(static::canView(), 403);
         $rows = app(DashboardService::class)->invoicesByStatus(Filament::auth()->user(), Filament::getTenant());
         $labels = array_column($rows, 'status');
 

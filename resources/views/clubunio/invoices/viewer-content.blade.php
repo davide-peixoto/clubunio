@@ -1,3 +1,10 @@
+@php
+    $pdfActor = auth('clubunio')->user();
+    $pdfTenant = $tenant ?? request()->route('tenant') ?? \Filament\Facades\Filament::getTenant();
+    $canReadPdf = ! $pdfActor || ($pdfTenant instanceof \App\ClubUnio\Models\Tenant
+        && \App\ClubUnio\Resources\ProfileUi::profileAllows($pdfActor, $pdfTenant, 'invoices', 'download'));
+@endphp
+@if($canReadPdf)
 <div class="cu-pdf-viewer" wire:ignore wire:key="pdf-viewer-{{ hash('sha256', $url) }}" data-clubunio-pdf-viewer data-pdf-url="{{ $url }}">
     <nav aria-label="PDF-Werkzeuge">
         <button type="button" data-pdf-control="previous" title="Vorherige Seite" aria-label="Vorherige Seite" disabled>@svg('heroicon-o-chevron-left')</button>
@@ -16,3 +23,4 @@
     <p data-pdf-control="status" role="status" aria-live="polite">PDF wird geladen…</p>
     <div class="cu-pdf-pages" data-pdf-control="document"><canvas data-pdf-control="pdf" aria-label="PDF-Seite" hidden></canvas></div>
 </div>
+@endif

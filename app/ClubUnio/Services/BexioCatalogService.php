@@ -63,6 +63,7 @@ class BexioCatalogService
 
     public function sync(Account $actor, Tenant $tenant): int
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'sync');
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
 
         return app(SyncWorkService::class)->run($actor, $tenant, 'catalog', $tenant->id);
@@ -70,6 +71,7 @@ class BexioCatalogService
 
     public function syncNow(Account $actor, Tenant $tenant): int
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'sync');
         $hash = $this->binding($actor, $tenant);
         $token = app(BexioConnectionService::class)->accessToken($tenant);
         $client = app(BexioSandboxClient::class);
@@ -169,6 +171,7 @@ class BexioCatalogService
 
     public function edit(Account $actor, Tenant $tenant, int $id, array $input): BexioCatalogEntry
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');
         $hash = $this->binding($actor, $tenant);
         abort_unless(array_diff(array_keys($input), ['name', 'active', 'revision']) === [], 422, 'Providerwerte sind nicht manuell änderbar.');
         $data = Validator::make($input, ['name' => 'required|string|max:160', 'active' => 'required|boolean', 'revision' => 'required|integer|min:1'])->validate();
@@ -181,6 +184,10 @@ class BexioCatalogService
                 throw ValidationException::withMessages(['revision' => 'Katalog wurde geändert. Bitte neu laden.']);
             }
             $before = $record->only(['name', 'active', 'revision']);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');
+            if ((bool) $record->active !== (bool) $data['active']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', $data['active'] ? 'restore' : 'deactivate');
+            }
             $record->forceFill(['name' => $data['name'], 'active' => $data['active'], 'revision' => $record->revision + 1])->save();
             $this->audit($actor, $tenant, $id, $before, $record->only(['name', 'active', 'revision']));
 

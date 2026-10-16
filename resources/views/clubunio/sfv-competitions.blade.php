@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+@php($canSync = \App\ClubUnio\Resources\ProfileUi::allows('competitions', 'sync'))
 <style>
 .sfv-import { min-width:0; } .sfv-import .fields { display:flex; flex-wrap:wrap; gap:16px; align-items:end; margin-bottom:20px; }
 .sfv-import label { display:grid; gap:6px; margin-bottom:12px; min-width:0; }
@@ -12,7 +13,7 @@
 <div class="sfv-import">
 <div class="fields">
 <label>Von<input type="date" wire:model.live="from"></label><label>Bis<input type="date" wire:model.live="to"></label>
-<x-filament::button wire:click="refreshSchedule" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">SFV abrufen</x-filament::button>
+@if($canSync)<x-filament::button wire:click="refreshSchedule" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">SFV abrufen</x-filament::button>@endif
 <x-filament::button wire:click="inspectBatch" wire:loading.attr="disabled" icon="heroicon-o-queue-list">Zeitraum prüfen</x-filament::button>
 <x-filament::button tag="a" :href="\App\ClubUnio\Resources\CompetitionResource::getUrl()" color="gray" icon="heroicon-o-list-bullet">Wettkämpfe</x-filament::button>
 </div>
@@ -30,7 +31,7 @@
 @endforeach</tbody></table></details>
 @endforeach
 @if(count($batchPreview['issues']))<details><summary>Nicht übernommene Spiele ({{ count($batchPreview['issues']) }})</summary>@foreach($batchPreview['issues'] as $issue)<p>{{ $issue['title'] }}: {{ $issue['message'] }}</p>@endforeach</details>@endif
-@if(count($batchPreview['entries']))<x-filament::button wire:click="applyBatch" wire:confirm="Alle geprüften Änderungen und aufgeführten Signage-Ausblendungen gemeinsam übernehmen? Manuelle Garderoben bleiben erhalten." wire:loading.attr="disabled" icon="heroicon-o-check">Geprüfte Änderungen übernehmen</x-filament::button>@endif
+@if($canSync && count($batchPreview['entries']))<x-filament::button wire:click="applyBatch" wire:confirm="Alle geprüften Änderungen und aufgeführten Signage-Ausblendungen gemeinsam übernehmen? Manuelle Garderoben bleiben erhalten." wire:loading.attr="disabled" icon="heroicon-o-check">Geprüfte Änderungen übernehmen</x-filament::button>@endif
 </section>
 @endif
 @if($matches->count() > 500 || $targets->count() > 500)<p role="status">Mehr als 500 Einträge. Bitte den Zeitraum eingrenzen.</p>@endif
@@ -45,7 +46,7 @@
 <tr><th>{{ $label }}</th><td>{{ ($key === 'field_id' ? $preview['previous_field'] : ($preview['before'][$key] ?? null)) ?? '–' }}</td><td>{{ $key === 'field_id' ? $preview['field'] : $preview['after'][$key] }}</td></tr>
 @endforeach</tbody></table>
 <p>{{ $preview['target_id'] ? 'Wettkampf #'.$preview['target_id'].' wird aktualisiert.' : 'Neuer Wettkampf wird erstellt.' }} Garderoben, Seiten, Kategorien, Vereinsnummern und Bemerkungen bleiben unverändert. {{ ($preview['kind'] ?? '')==='withdrawal' ? 'Signage-Sichtbarkeit wird ausgeschaltet.' : 'Bestehende Sichtbarkeit bleibt unverändert.' }}</p>
-<x-filament::button wire:click="apply" wire:confirm="Geprüfte SFV-Daten in diesen Wettkampf übernehmen?" wire:loading.attr="disabled" icon="heroicon-o-check">Übernehmen</x-filament::button>
+@if($canSync)<x-filament::button wire:click="apply" wire:confirm="Geprüfte SFV-Daten in diesen Wettkampf übernehmen?" wire:loading.attr="disabled" icon="heroicon-o-check">Übernehmen</x-filament::button>@endif
 @endif
 </div>
 </x-filament-panels::page>

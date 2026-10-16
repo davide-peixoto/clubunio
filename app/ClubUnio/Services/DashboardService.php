@@ -18,7 +18,7 @@ class DashboardService
 {
     public function overview(Account $actor, Tenant $tenant): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant), 403);
         $counts = [
             'members' => app(MemberAccessService::class)->activeMembers($tenant),
             'changes' => MemberChangeRequest::where('tenant_id', $tenant->id)->where('state', 'pending'),
@@ -44,7 +44,7 @@ class DashboardService
 
     public function refundableCash(Account $actor, Tenant $tenant): int
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'credits', 'view');
 
         return (int) $this->refundableCashQuery($tenant)->value('amount');
     }
@@ -59,7 +59,7 @@ class DashboardService
 
     public function newMembersMonthly(Account $actor, Tenant $tenant): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', 'view');
         $first = now('Europe/Zurich')->startOfMonth()->subMonths(11);
         $months = [];
         for ($i = 0; $i < 12; $i++) {
@@ -74,7 +74,7 @@ class DashboardService
 
     private function invoiceTotals(Account $actor, Tenant $tenant): \Illuminate\Database\Query\Builder
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'view');
 
         return DB::connection('clubunio')->table('clubora.invoices as i')
             ->leftJoin('clubora.invoice_lines as p', fn ($join) => $join->on('p.invoice_id', '=', 'i.id')->on('p.tenant_id', '=', 'i.tenant_id')->where('p.active', true))
@@ -104,7 +104,8 @@ class DashboardService
 
     public function openInvoices(Account $actor, Tenant $tenant): Builder
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'invoices', 'view')
+            || app(ModulePermissionService::class)->allows($actor, $tenant, 'reports', 'view'), 403);
 
         return $this->scopeOpenInvoices(Invoice::where('tenant_id', $tenant->id)->where('active', true), $tenant);
     }
@@ -137,7 +138,7 @@ class DashboardService
 
     public function ages(Account $actor, Tenant $tenant): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', 'view');
         $today = now('Europe/Zurich')->toDateString();
         $age = 'extract(year from age(CAST(? AS date), birth_date))';
         $rows = app(MemberAccessService::class)->activeMembers($tenant)

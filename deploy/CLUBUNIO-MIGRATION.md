@@ -6,6 +6,15 @@ snapshots, token/hash checks and transactional delivery unchanged. No schema,
 API/SaaS/operations or legacy DEV/PROD change. Deployment/rollback documented
 in CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md.
 
+16.10.2026: Dynamic access profiles integrated across domain operations and
+web actions. Migrations69/70 and activation71 applied on ClubUnio, with71
+activated only after the guarded release was live. The
+new profile role never inherits office rights; rollback to old code denies
+profile access. Seed read-only definitions without assigning existing users.
+Permission cache is render-only; mutations always recheck current rights.
+No PHPMaker DEV/PROD changes, API/SaaS/operations remain excluded. Details and
+verification: CLUBUNIO-DYNAMIC-ROLES.md and PI.md.
+
 16.10.2026: Form lookup projections bounded; member save reads selected
 catalog IDs once per table, reuses status/recipient metadata in transaction.
 No cross-request lookup/permission cache, schema change or import. Keep

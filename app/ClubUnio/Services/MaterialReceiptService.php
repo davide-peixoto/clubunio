@@ -27,7 +27,7 @@ class MaterialReceiptService
         $actor = $actor->fresh();
         $query = MaterialReceipt::where('tenant_id', $tenant->id);
         if ($administration) {
-            abort_unless($actor?->canAccessTenant($tenant), 403);
+            abort_unless($actor && ($actor->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view')), 403);
 
             return $query;
         }
@@ -39,7 +39,7 @@ class MaterialReceiptService
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): MaterialReceipt
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', $id ? 'update' : 'create'), 403);
         $data = Validator::make($input, ['revision' => 'required|integer|min:0', 'member_id' => 'required|integer|min:1',
             'title' => 'required|string|max:200', 'handover_on' => 'required|date_format:Y-m-d', 'note' => 'nullable|string|max:3000',
             'items' => 'required|array|min:1|max:100', 'items.*' => 'array:description,quantity,reference,condition',
@@ -48,7 +48,7 @@ class MaterialReceiptService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', $id ? 'update' : 'create'), 403);
             $record = $id ? MaterialReceipt::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new MaterialReceipt;
             if ($id) {
                 $this->version($record, $data['revision']);
@@ -79,6 +79,9 @@ class MaterialReceiptService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $actor = $actor->fresh();
             abort_unless($actor, 403);
+            if ($operation !== 'confirm') {
+                abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', $operation === 'issue' ? 'send' : 'cancel'), 403);
+            }
             $record = $this->visible($actor, $tenant, $operation !== 'confirm')->lockForUpdate()->findOrFail($id);
             $this->version($record, $revision);
             if ($operation === 'issue') {
@@ -146,6 +149,9 @@ class MaterialReceiptService
 
     public function pdf(Account $actor, Tenant $tenant, int $id, bool $administration = false)
     {
+        if ($administration) {
+            abort_unless($actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant) || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'download'), 403);
+        }
         $receipt = $this->visible($actor, $tenant, $administration)->findOrFail($id);
         abort_unless($receipt->snapshot, 404);
         abort_unless(hash_equals($receipt->snapshot_hash, $this->snapshotHash($receipt->snapshot)), 409);

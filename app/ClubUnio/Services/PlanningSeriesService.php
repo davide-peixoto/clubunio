@@ -16,12 +16,16 @@ class PlanningSeriesService
     public function preview(Account $actor, Tenant $tenant, int $id, array $input): array
     {
         $p = $this->planning;
+        $p->authorizeOperation($actor, $tenant, 'update');
         $event = $p->event($actor, $tenant, $id, true);
         abort_unless($event->series_key, 404);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'shift_minutes' => 'required|integer|min:-1440|max:1440',
             'location' => 'nullable|string|max:255', 'change_location' => 'nullable|boolean', 'cancel' => 'nullable|boolean',
             'change_title' => 'nullable|boolean', 'title' => 'required_if:change_title,1|nullable|string|max:255',
             'change_capacity' => 'nullable|boolean', 'capacity' => 'nullable|integer|min:1|max:1000'])->validate();
+        if ($data['cancel'] ?? false) {
+            $p->authorizeOperation($actor, $tenant, 'cancel');
+        }
         $rows = $p->table($tenant, 'team_events')->where('series_key', $event->series_key)->where('team_season_id', $event->team_season_id)->orderBy('starts_at')->get();
         $changes = [];
         $skipped = 0;
@@ -76,6 +80,7 @@ class PlanningSeriesService
 
     public function apply(Account $actor, Tenant $tenant, int $id, array $input, string $fingerprint): int
     {
+        $this->planning->authorizeOperation($actor, $tenant, 'update');
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $fingerprint) {
             $this->planning->lock($tenant);
             $preview = $this->preview($actor, $tenant, $id, $input);

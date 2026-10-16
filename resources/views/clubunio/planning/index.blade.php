@@ -1,6 +1,7 @@
 @extends('clubunio.planning.layout')
 @section('content')
-<div class="page-heading"><h1>Teamplanung</h1>@if(count($managed))<a class="primary" href="{{ route('clubunio.planning.create',$tenant->slug) }}">@svg('heroicon-o-plus') Termin erstellen</a>@endif</div>
+@php($profileAllows = fn (string $function) => \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'planning', $function))
+<div class="page-heading"><h1>Teamplanung</h1>@if(count($managed) && $profileAllows('create'))<a class="primary" href="{{ route('clubunio.planning.create',$tenant->slug) }}">@svg('heroicon-o-plus') Termin erstellen</a>@endif</div>
 <form method="get" class="toolbar">
 <label>Mannschaft<select name="team"><option value="">Alle Mannschaften</option>@foreach($teams as $team)<option value="{{ $team->id }}" @selected(($filters['team']??'')==$team->id)>{{ $team->label }}</option>@endforeach</select></label>
 <label>Suche<input name="q" value="{{ $filters['q']??'' }}" type="search"></label>

@@ -35,7 +35,7 @@ class ContributionInvoiceService
 
     public function preview(Account $actor, Tenant $tenant, int $memberId, int $seasonId): array
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'view');
         $member = app(MemberAccessService::class)->activeMembers($tenant)->findOrFail($memberId);
         $season = Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
         if (! $member->teamPlayers()->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->exists()) {
@@ -82,11 +82,14 @@ class ContributionInvoiceService
 
     public function create(Account $actor, Tenant $tenant, int $memberId, int $seasonId, string $fingerprint): Invoice
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'create');
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'create');
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $memberId, $seasonId, $fingerprint) {
             // Catalog writers lock the tenant; member edits also need the member lock.
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'create');
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'create');
             Member::where('tenant_id', $tenant->id)->whereKey($memberId)->lockForUpdate()->firstOrFail();
             $preview = $this->preview($actor, $tenant, $memberId, $seasonId);
             if ($preview['existing_invoice_id']) {

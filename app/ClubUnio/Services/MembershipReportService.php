@@ -11,7 +11,7 @@ class MembershipReportService
 {
     public function members(Account $actor, Tenant $tenant): Builder
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'reports', 'view');
 
         return app(MemberAccessService::class)->activeMembers($tenant)
             ->whereHas('status', fn ($q) => $q->where('restores_membership', true));

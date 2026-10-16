@@ -14,7 +14,7 @@ class TestMailService
 {
     public function sendPreview(Account $actor, Tenant $tenant, int $templateId, string $requestId): string
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', 'send');
         Validator::make(['request_id' => $requestId], ['request_id' => ['required', 'uuid']])->validate();
         if (! config('clubunio-integrations.test_mail_enabled') || ! config('clubunio-integrations.smtp.host') || ! filter_var(config('clubunio-integrations.from'), FILTER_VALIDATE_EMAIL)) {
             throw ValidationException::withMessages(['request_id' => 'Der Testversand ist noch nicht konfiguriert.']);
@@ -22,6 +22,7 @@ class TestMailService
         $db = DB::connection('clubunio');
         $attempt = $db->transaction(function () use ($db, $actor, $tenant, $templateId, $requestId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', 'send');
             $template = MessageTemplate::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($templateId)->firstOrFail();
             if ($template->channel !== 'email' || ! $template->active) {
                 throw ValidationException::withMessages(['request_id' => 'Nur aktive E-Mail-Vorlagen können getestet werden.']);

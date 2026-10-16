@@ -20,6 +20,9 @@ class InvoicePdfService
             $query->with(['member', 'season', 'workflowStatus', 'activeLines']);
         }
         $invoice = $query->findOrFail($id);
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'download');
+        }
         if ($bexio) {
             abort_unless(preg_match('/^[1-9][0-9]{0,14}$/', (string) $invoice->bexio_invoice_id), 404, 'Keine Bexio-Rechnung zugeordnet.');
             try {
@@ -40,7 +43,7 @@ class InvoicePdfService
                 ], 503)->header('Cache-Control', 'private, no-store')->header('X-Frame-Options', 'SAMEORIGIN');
             }
         } else {
-            abort_unless($actor->canAccessTenant($tenant) && $invoice->workflow_status_id, 403);
+            abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'invoices', 'download') && $invoice->workflow_status_id, 403);
             $options = new Options;
             $options->set('isRemoteEnabled', false);
             $options->set('isPhpEnabled', false);

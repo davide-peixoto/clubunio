@@ -34,18 +34,21 @@ class CatalogService
 {
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input): CatalogModel
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        abort_unless(app(ModulePermissionService::class)->allowsModel($actor, $tenant, $model, $id ? 'update' : 'create'), 403);
         if (! in_array($model, [FinancialAdjustmentStatus::class, InvoiceCategory::class, InvoiceStatus::class, InvoiceLineStatus::class, InvoiceWorkflowStatus::class, Team::class, Season::class, MemberStatus::class, MemberType::class, RegistrationStatus::class, StaffFunction::class, Country::class, Gender::class, BillingRecipient::class, DocumentType::class, Bank::class, ExpenseType::class, ExpenseRound::class, ExpenseStatus::class, GameType::class], true)) {
             throw new \InvalidArgumentException('Unsupported catalog');
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            abort_unless(app(ModulePermissionService::class)->allowsModel($actor, $tenant, $model, $id ? 'update' : 'create'), 403);
             // Serialize mapping changes with invoice status reconciliation.
             if (in_array($model, [InvoiceStatus::class, InvoiceLineStatus::class], true)) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             }
             $record = $id ? $model::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail() : new $model;
+            if ($id && array_key_exists('active', $input) && (bool) $input['active'] !== (bool) $record->active) {
+                abort_unless(app(ModulePermissionService::class)->allowsModel($actor, $tenant, $record, $input['active'] ? 'restore' : 'deactivate'), 403);
+            }
             $rules = ['name' => 'required|string|max:160', 'active' => 'required|boolean', 'tenant_id' => 'prohibited', 'legacy_id' => 'prohibited'];
             if ($model === Team::class) {
                 $rules += ['description' => 'nullable|string|max:4000', 'sfv_team_id' => 'nullable|integer|min:1', 'laundry_allowance' => 'nullable|numeric|min:0|max:9999999999.99|decimal:0,2'];

@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class SessionPanel extends Panel
 {
+    public function boot(): void
+    {
+        parent::boot();
+        \Filament\Actions\Action::configureUsing(function (\Filament\Actions\Action $action): void {
+            $action->hidden(fn () => ! \App\ClubUnio\Resources\ProfileUi::actionAllowed($action));
+        });
+    }
+
     public function getNavigation(): array
     {
         return NavigationStructure::partition($this, $this->getAuthorizedNavigation())['navigation'];

@@ -21,7 +21,7 @@ class FamilyService
 
     public function save(Account $actor, Tenant $tenant, string $model, ?int $id, array $input): CatalogModel
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'families', $id ? 'view' : 'create');
         if (! in_array($model, [Family::class, FamilyMember::class], true)) {
             throw new \InvalidArgumentException('Unsupported family object');
         }
@@ -46,6 +46,15 @@ class FamilyService
                 $rules += ['discount' => 'required|numeric|min:0|max:9999999999.99|decimal:0,2', 'notes' => 'nullable|string|max:4000'];
             }
             $data = Validator::make($input, $rules)->validate();
+            $statusChanged = $id && (bool) $record->active !== (bool) $data['active'];
+            if ($statusChanged) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'families', $data['active'] ? 'restore' : 'deactivate');
+            }
+            $candidate = clone $record;
+            $candidate->forceFill(array_diff_key($data, array_flip(['_version', 'active', 'tenant_id', 'id', 'legacy_id'])));
+            if (! $statusChanged || $candidate->isDirty()) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'families', $id ? 'update' : 'create');
+            }
             if ($id && ! hash_equals(self::version($record), $data['_version'])) {
                 throw ValidationException::withMessages([$model === Family::class ? 'name' : 'notes' => 'Datensatz wurde inzwischen geändert. Bitte erneut öffnen.']);
             }

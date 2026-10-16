@@ -17,11 +17,11 @@ class BankAccountService
     public function visible(Account $actor, Tenant $tenant)
     {
         $q = MemberBankAccount::withoutGlobalScopes()->where('tenant_id', $tenant->id);
-        if ($actor->canAccessTenant($tenant)) {
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view')) {
             return $q;
         }
         $access = app(MemberAccessService::class);
-        if (! $access->canEnter($actor, $tenant)) {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant) || ! $access->canEnter($actor, $tenant)) {
             return $q->whereRaw('1=0');
         }
 
@@ -31,11 +31,14 @@ class BankAccountService
 
     public function save(Account $actor, Tenant $tenant, int $memberId, ?int $id, array $input): MemberBankAccount
     {
+        if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $id ? 'view' : 'create');
+        }
         if (array_diff(array_keys($input), ['revision', 'bank_id', 'iban', 'active'])) {
             throw ValidationException::withMessages(['iban' => 'Nicht erlaubte Eingabefelder.']);
         }
         $access = app(MemberAccessService::class);
-        abort_unless($actor->canAccessTenant($tenant) || ($access->canEnter($actor, $tenant) && $access->represented($actor, $tenant, true)->whereKey($memberId)->exists()), 403);
+        abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'members', $id ? 'view' : 'create') || ($access->canEnter($actor, $tenant) && $access->represented($actor, $tenant, true)->whereKey($memberId)->exists()), 403);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $memberId, $id, $input) {
             Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($memberId);
@@ -47,7 +50,18 @@ class BankAccountService
                 'bank_id' => ['required', 'integer', Rule::exists('clubunio.clubora.banks', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
                 'iban' => [$id ? 'nullable' : 'required', 'string', 'max:60'], 'active' => 'required|boolean',
             ])->validate();
+            $access = app(MemberAccessService::class);
+            $own = $access->canEnter($actor, $tenant) && $access->represented($actor, $tenant, true)->whereKey($memberId)->exists();
             $iban = isset($data['iban']) && trim($data['iban']) !== '' ? $this->normalize($data['iban']) : ($id ? Crypt::decryptString($bank->iban_encrypted) : '');
+            if (! $own) {
+                $statusChanged = $id && (bool) $bank->active !== (bool) $data['active'];
+                if ($statusChanged) {
+                    app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $data['active'] ? 'restore' : 'deactivate');
+                }
+                if (! $statusChanged || (int) $bank->bank_id !== (int) $data['bank_id'] || $iban !== Crypt::decryptString($bank->iban_encrypted)) {
+                    app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $id ? 'update' : 'create');
+                }
+            }
             if (! $id || $iban !== Crypt::decryptString($bank->iban_encrypted)) {
                 $this->validateIban($iban);
             }

@@ -113,6 +113,10 @@ class PlanningCalendarService
 
     public function export(Account $actor, Tenant $tenant, array $input): string
     {
+        $this->planning->authorizeOperation($actor, $tenant, 'export');
+        if (! empty($input['buses'])) {
+            app(BusReservationService::class)->authorizeOperation($actor, $tenant, 'export');
+        }
         $data = $this->calendar($actor, $tenant, $input);
         $calendar = new VCalendar(['PRODID' => '-//Clubora//Teamplanung//DE', 'CALSCALE' => 'GREGORIAN']);
         foreach ($data['events'] as $event) {

@@ -43,7 +43,16 @@ class BexioCatalogEntryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return app(BackofficeReadContext::class)->allowsReadPage(Filament::auth()->user(), Filament::getTenant(), adminOnly: true);
+        $actor = Filament::auth()->user();
+        $tenant = Filament::getTenant();
+        if (app(BackofficeReadContext::class)->allowsReadPage($actor, $tenant, adminOnly: true)) {
+            return true;
+        }
+
+        $permissions = app(\App\ClubUnio\Services\ModulePermissionService::class);
+
+        return $actor && $tenant && $permissions->isProfile($actor, $tenant)
+            && $permissions->allows($actor, $tenant, 'bexio', 'view');
     }
 
     public static function canCreate(): bool
@@ -63,8 +72,14 @@ class BexioCatalogEntryResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return static::canViewAny() && (int) $record->tenant_id === (int) Filament::getTenant()->id
+        return static::canManageCatalog('update') && (int) $record->tenant_id === (int) Filament::getTenant()->id
             && hash_equals($record->connection_hash, app(BexioSandboxFixtureService::class)->optionalConnectionHash(Filament::getTenant()) ?? '');
+    }
+
+    public static function canManageCatalog(string $function): bool
+    {
+        return ProfileUi::allows('bexio', $function)
+            && \App\ClubUnio\Services\BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant());
     }
 
     public static function getEloquentQuery(): Builder
@@ -102,6 +117,7 @@ class BexioCatalogEntryResource extends Resource
             TernaryFilter::make('provider_active')->label('In Bexio aktiv'),
         ])->headerActions([
             Action::make('sync')->label('Aus Bexio aktualisieren')->icon('heroicon-o-arrow-path')->requiresConfirmation()
+                ->visible(fn () => static::canManageCatalog('sync'))
                 ->action(fn ($livewire) => $livewire->syncCatalog()),
         ])->recordActions([
             EditAction::make()->iconButton()->tooltip('Bezeichnung und Aktivierung bearbeiten')

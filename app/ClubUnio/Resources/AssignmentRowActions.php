@@ -28,7 +28,7 @@ trait AssignmentRowActions
     {
         return FormMutation::run($livewire, function () use ($record, $data) {
             $actor = Filament::auth()->user()?->fresh();
-            abort_unless($actor && $actor->canAccessTenant(Filament::getTenant()), 403);
+            abort_unless($actor && ProfileUi::model(static::getModel(), $record ? 'deactivate' : 'copy'), 403);
             if ($record) {
                 static::getEloquentQuery()->findOrFail($record->id);
             }

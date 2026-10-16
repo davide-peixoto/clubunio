@@ -19,8 +19,21 @@ class BusReservationService
 
     public function enter(Account $actor, Tenant $tenant): void
     {
-        abort_unless($actor->fresh()?->active, 403);
-        abort_unless(app(MemberAccessService::class)->canEnter($actor, $tenant), 403);
+        $this->authorizeOperation($actor, $tenant, 'view');
+    }
+
+    public function authorizeOperation(Account $actor, Tenant $tenant, string $function): void
+    {
+        abort_unless(array_key_exists($function, PermissionCatalog::functions('bus')), 403);
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', $function)) {
+            return;
+        }
+        abort_if(app(ModulePermissionService::class)->isProfile($actor, $tenant), 403);
+        $fresh = $actor->fresh();
+        $access = app(MemberAccessService::class);
+        abort_unless($fresh?->active
+            && in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true)
+            && $access->canEnter($fresh, $tenant), 403);
     }
 
     public function teams(Account $actor, Tenant $tenant)
@@ -28,7 +41,7 @@ class BusReservationService
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'team_seasons')->where('active', true)
             ->whereIn('team_id', $this->table($tenant, 'teams')->where('active', true)->select('id'));
-        if (! $actor->canAccessTenant($tenant)) {
+        if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'view')) {
             $q->whereIn('id', app(MemberAccessService::class)->responsibleTeams($actor, $tenant));
         }
 
@@ -39,7 +52,7 @@ class BusReservationService
     {
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'bus_reservations')->where('active', true);
-        if (! $actor->canAccessTenant($tenant)) {
+        if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'view')) {
             $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubora.members.id');
             $q->where(fn ($q) => $q->whereIn('member_id', $ids)->orWhereIn('team_season_id', $this->teams($actor, $tenant)->select('id')));
         }
@@ -49,7 +62,7 @@ class BusReservationService
 
     public function create(Account $actor, Tenant $tenant, array $input): int
     {
-        $this->enter($actor, $tenant);
+        $this->authorizeOperation($actor, $tenant, 'create');
         $data = Validator::make($input, [
             'bus_id' => 'required|integer|min:1', 'team_season_id' => 'required|integer|min:1', 'member_id' => 'required|integer|min:1',
             'starts_at' => 'required|date_format:Y-m-d\TH:i', 'ends_at' => 'required|date_format:Y-m-d\TH:i|after:starts_at',
@@ -59,12 +72,16 @@ class BusReservationService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $this->authorizeOperation($actor, $tenant, 'create');
             abort_unless($this->table($tenant, 'buses')->where('id', $data['bus_id'])->where('active', true)->exists(), 422);
             abort_unless($this->teams($actor, $tenant)->where('id', $data['team_season_id'])->exists(), 403);
             $this->reservableTeam($tenant, (int) $data['team_season_id']);
-            $members = $actor->canAccessTenant($tenant) ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($actor, $tenant, true);
+            $members = app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'create') ? app(MemberAccessService::class)->activeMembers($tenant) : app(MemberAccessService::class)->represented($actor, $tenant, true);
             abort_unless($members->where('id', $data['member_id'])->exists(), 403);
-            $status = $actor->canAccessTenant($tenant) ? $data['status'] : 'ANGEFRAGT';
+            if ($data['status'] === 'GENEHMIGT' && app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', 'approve');
+            }
+            $status = app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'approve') ? $data['status'] : 'ANGEFRAGT';
             $this->status($tenant, $status);
             $from = Time::createFromFormat('!Y-m-d\TH:i', $data['starts_at'], 'Europe/Zurich');
             $to = Time::createFromFormat('!Y-m-d\TH:i', $data['ends_at'], 'Europe/Zurich');
@@ -114,7 +131,7 @@ class BusReservationService
 
     public function decide(Account $actor, Tenant $tenant, int $id, int $revision, string $status, ?string $note): void
     {
-        $this->enter($actor, $tenant);
+        $this->authorizeOperation($actor, $tenant, $status === 'STORNIERT' ? 'cancel' : 'approve');
         Validator::make(['status' => $status, 'note' => $note], ['status' => 'required|in:GENEHMIGT,ABGELEHNT,STORNIERT', 'note' => 'nullable|string|max:1000'])->validate();
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $status, $note) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -123,7 +140,8 @@ class BusReservationService
             if ($row->revision !== $revision) {
                 throw ValidationException::withMessages(['revision' => 'Die Reservation wurde geändert. Bitte neu laden.']);
             }
-            $office = $actor->canAccessTenant($tenant);
+            $this->authorizeOperation($actor, $tenant, $status === 'STORNIERT' ? 'cancel' : 'approve');
+            $office = app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', $status === 'STORNIERT' ? 'cancel' : 'approve');
             if (! $office) {
                 abort_unless($status === 'STORNIERT' && $row->status === 'ANGEFRAGT' && app(MemberAccessService::class)->represented($actor, $tenant, true)->where('id', $row->member_id)->exists(), 403);
             }
@@ -149,7 +167,7 @@ class BusReservationService
             $change = ['status' => $status, 'decision_note' => $note, 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String(), 'decided_at' => now()->toIso8601String(), 'decided_by' => $actor->id];
             $this->table($tenant, 'bus_reservations')->where('id', $id)->update($change);
             if ($status !== 'GENEHMIGT') {
-                app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id);
+                app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id, $status === 'STORNIERT' ? 'cancel' : 'approve');
             }
             $this->audit($actor, $tenant, $id, ['status' => $row->status, 'revision' => $revision], $change);
             $this->notify($tenant, $id, $status);
@@ -158,13 +176,16 @@ class BusReservationService
 
     public function canReschedule(Account $actor, Tenant $tenant, object $row): bool
     {
+        $fresh = $actor->fresh();
+        $access = app(MemberAccessService::class);
+        $portal = $fresh?->active && in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true) && $access->canEnter($fresh, $tenant);
         return Time::parse($row->starts_at)->isFuture() && in_array($row->status, ['ANGEFRAGT', 'GENEHMIGT'], true)
-            && ($actor->canAccessTenant($tenant) || ($row->status === 'ANGEFRAGT' && app(MemberAccessService::class)->represented($actor, $tenant, true)->where('id', $row->member_id)->exists()));
+            && (app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'update') || ($portal && $row->status === 'ANGEFRAGT' && $access->represented($fresh, $tenant, true)->where('id', $row->member_id)->exists()));
     }
 
     public function reschedule(Account $actor, Tenant $tenant, int $id, array $input): void
     {
-        $this->enter($actor, $tenant);
+        $this->authorizeOperation($actor, $tenant, 'update');
         $data = Validator::make($input, [
             'revision' => 'required|integer|min:1', 'bus_id' => 'required|integer|min:1',
             'starts_at' => 'required|date_format:Y-m-d\TH:i', 'ends_at' => 'required|date_format:Y-m-d\TH:i|after:starts_at',
@@ -199,7 +220,7 @@ class BusReservationService
             }
             $this->conflict($tenant, $change['bus_id'], $change['starts_at'], $change['ends_at'], $id);
             $this->table($tenant, 'bus_reservations')->where('id', $id)->update($change + ['revision' => $row->revision + 1, 'updated_at' => now()->toIso8601String()]);
-            app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id);
+            app(BusKeyboxAccessService::class)->invalidate($actor, $tenant, $id, 'update');
             $this->audit($actor, $tenant, $id, $before + ['revision' => $row->revision], $change + ['revision' => $row->revision + 1, 'reason' => $data['reason'], 'action' => 'reschedule']);
             $this->notify($tenant, $id, $row->status, 'bus.changed');
         });
@@ -212,12 +233,12 @@ class BusReservationService
 
     public function assignImported(Account $actor, Tenant $tenant, int $id, array $input): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', 'update');
         $data = Validator::make($input, ['revision' => 'required|integer|min:1', 'member_id' => 'required|integer|min:1',
             'team_season_id' => 'required|integer|min:1', 'reason' => 'required|string|min:3|max:1000'])->validate();
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', 'update');
             $row = $this->table($tenant, 'bus_reservations')->where('id', $id)->where('active', true)->lockForUpdate()->first();
             abort_unless($row && $row->legacy_id && (! $row->member_id || ! $row->team_season_id), 404);
             if ((int) $row->revision !== (int) $data['revision']) {
@@ -238,7 +259,7 @@ class BusReservationService
 
     public function saveOption(Account $actor, Tenant $tenant, array $input): void
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', empty($input['id']) ? 'create' : 'update');
         $data = Validator::make($input, ['kind' => 'required|in:bus,status', 'id' => 'nullable|integer|min:1', 'name' => 'required|string|max:160', 'active' => 'required|boolean', 'version' => 'nullable|string|size:64'])->validate();
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -247,6 +268,10 @@ class BusReservationService
             abort_if(! $id && $data['kind'] === 'status', 422);
             $row = $id ? $this->table($tenant, $table)->where('id', $id)->lockForUpdate()->first() : null;
             abort_if($id && ! $row, 404);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', $id ? 'update' : 'create');
+            if ($row && (bool) $row->active !== (bool) $data['active']) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', $data['active'] ? 'restore' : 'deactivate');
+            }
             if ($row && ! hash_equals(self::optionVersion($row), $data['version'] ?? '')) {
                 throw ValidationException::withMessages(['version' => 'Die Auswahl wurde geändert. Bitte neu laden.']);
             }

@@ -31,10 +31,15 @@ class TeamPlanning extends Page
         return 'heroicon-o-calendar-days';
     }
 
+    public static function canAccess(): bool
+    {
+        return \App\ClubUnio\Resources\ProfileUi::allows('planning');
+    }
+
     public function mount(): void
     {
         $tenant = Filament::getTenant();
-        abort_unless($tenant && Filament::auth()->user()?->canAccessTenant($tenant), 403);
+        abort_unless(static::canAccess(), 403);
         $this->redirect(route('clubunio.workspace.planning.index'));
     }
 }

@@ -47,7 +47,7 @@ class CreditNoteService
 
     public function availableLines(Account $actor, Tenant $tenant, int $invoiceId): array
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, 'view');
         $invoice = Invoice::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($invoiceId);
         $summary = app(InvoiceTaxService::class)->summary($invoice, true);
         if ($summary['unrounded_cents'] <= 0) {
@@ -63,9 +63,9 @@ class CreditNoteService
             ->filter(fn ($row) => $row['amount_cents'] > 0)->map(fn ($row) => ['invoice_line_id' => $row['invoice_line_id'], 'amount' => app(InvoiceWorkflowService::class)->decimal($row['amount_cents'])])->values()->all();
     }
 
-    private function assertActor(Account $actor, Tenant $tenant): void
+    private function assertActor(Account $actor, Tenant $tenant, string $function): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'credits', $function);
     }
 
     private function status(Tenant $tenant, string $code): int
@@ -98,7 +98,7 @@ class CreditNoteService
 
     public function create(Account $actor, Tenant $tenant, int $invoiceId, array $input): CreditNote
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, 'create');
         $data = Validator::make($input, ['request_id' => 'required|uuid', 'revision' => 'required|integer|min:1', 'reason' => 'required|string|min:3|max:1000',
             'lines' => 'required|array|min:1|max:100', 'lines.*.invoice_line_id' => 'required|integer|min:1|distinct',
             'lines.*.amount' => 'required|numeric|min:0.01|max:999999999.99|decimal:0,2'])->validate();
@@ -106,7 +106,7 @@ class CreditNoteService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoiceId, $data, $hash) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->assertActor($actor, $tenant);
+            $this->assertActor($actor, $tenant, 'create');
             $existing = CreditNote::where('tenant_id', $tenant->id)->where('request_id', $data['request_id'])->first();
             if ($existing) {
                 abort_unless(hash_equals($existing->request_hash, $hash), 409);
@@ -178,7 +178,9 @@ class CreditNoteService
 
     public function change(Account $actor, Tenant $tenant, int $id, int $revision, string $operation, array $input = []): CreditNote
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, match ($operation) {
+            'release' => 'approve', 'cancel' => 'cancel', 'confirm' => 'sync', default => abort(403),
+        });
         abort_unless(in_array($operation, ['release', 'cancel', 'confirm'], true), 422);
         $remote = null;
         if ($operation === 'confirm') {
@@ -190,7 +192,9 @@ class CreditNoteService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $operation, $input, $remote) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->assertActor($actor, $tenant);
+            $this->assertActor($actor, $tenant, match ($operation) {
+                'release' => 'approve', 'cancel' => 'cancel', 'confirm' => 'sync', default => abort(403),
+            });
             $note = CreditNote::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $note->revision !== $revision) {
                 $this->fail('Gutschrift wurde geändert. Bitte neu laden.');
@@ -243,7 +247,7 @@ class CreditNoteService
 
     public function remote(Account $actor, Tenant $tenant, int $invoiceId): array
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, 'sync');
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
         try {
             return $this->readRemote($actor, $tenant, $invoiceId);
@@ -279,7 +283,7 @@ class CreditNoteService
 
     public function createRefund(Account $actor, Tenant $tenant, int $invoiceId, array $input): Refund
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, 'create');
         $data = Validator::make($input, ['request_id' => 'required|uuid', 'credit_note_id' => 'nullable|integer|min:1', 'amount' => 'required|numeric|min:0.01|max:999999999.99|decimal:0,2',
             'reason' => 'required|string|min:3|max:1000'])->validate();
         $hash = hash('sha256', json_encode([$invoiceId, $data], JSON_THROW_ON_ERROR));
@@ -293,7 +297,7 @@ class CreditNoteService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoiceId, $data, $hash, $remote) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->assertActor($actor, $tenant);
+            $this->assertActor($actor, $tenant, 'create');
             $this->invoice($tenant, $invoiceId);
             $existing = Refund::where('tenant_id', $tenant->id)->where('request_id', $data['request_id'])->first();
             if ($existing) {
@@ -326,12 +330,16 @@ class CreditNoteService
 
     public function changeRefund(Account $actor, Tenant $tenant, int $id, int $revision, string $operation, array $input): Refund
     {
-        $this->assertActor($actor, $tenant);
+        $this->assertActor($actor, $tenant, match ($operation) {
+            'confirm' => 'approve', 'cancel' => 'cancel', default => abort(403),
+        });
         abort_unless(in_array($operation, ['confirm', 'cancel'], true), 422);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $operation, $input) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $this->assertActor($actor, $tenant);
+            $this->assertActor($actor, $tenant, match ($operation) {
+                'confirm' => 'approve', 'cancel' => 'cancel', default => abort(403),
+            });
             $refund = Refund::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $refund->revision !== $revision) {
                 $this->fail('Rückerstattung wurde geändert. Bitte neu laden.');

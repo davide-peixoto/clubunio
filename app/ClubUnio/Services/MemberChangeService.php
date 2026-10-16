@@ -114,12 +114,12 @@ class MemberChangeService
 
     public function review(Account $actor, Tenant $tenant, int $id, int $revision, bool $approve, ?string $note): MemberChangeRequest
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'member_changes', 'approve');
         Validator::make(['note' => $note], ['note' => ($approve ? 'nullable' : 'required').'|string|max:2000'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $approve, $note) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'member_changes', 'approve');
             $r = MemberChangeRequest::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->pending($r, $revision);
             // Revoked parent/self links and departed members cannot be approved retrospectively.

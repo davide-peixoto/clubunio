@@ -45,9 +45,11 @@ class SignageFeeds extends Component
             $tenants = app(BackofficeReadContext::class)->tenantsFor($actor);
             if ($tenants !== null) {
                 $tenant = $tenants->first(fn ($item) => (int) $item->id === $this->tenantId);
-                abort_unless($tenant, 403);
+                if ($tenant) {
+                    abort_unless(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'signage', 'view'), 403);
 
-                return $tenant;
+                    return $tenant;
+                }
             }
         }
         $tenant = Tenant::findOrFail($this->tenantId);
@@ -55,9 +57,7 @@ class SignageFeeds extends Component
             app(PublicWebService::class)->authorize($tenant, 'signage');
         } else {
             $actor = Auth::guard('clubunio')->user();
-            abort_unless($readOnly
-                ? app(BackofficeReadContext::class)->allowsReadPage($actor, $tenant)
-                : $actor?->fresh()?->canAccessTenant($tenant), 403);
+            abort_unless($actor && app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'signage', 'view'), 403);
         }
 
         return $tenant;

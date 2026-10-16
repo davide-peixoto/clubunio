@@ -16,7 +16,8 @@ final class SeasonAssignmentTransferService
 {
     public function preview(Account $actor, Tenant $tenant, int $source, int $target, ?array $teamSeasonIds = null): array
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'view');
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'seasons', 'view');
         Season::where('tenant_id', $tenant->id)->findOrFail($source);
         Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($target);
         if ($source === $target) {
@@ -80,8 +81,12 @@ final class SeasonAssignmentTransferService
 
     public function apply(Account $actor, Tenant $tenant, int $source, int $target, string $token, ?array $teamSeasonIds = null): int
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'transfer');
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'seasons', 'transfer');
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $source, $target, $token, $teamSeasonIds) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'transfer');
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'seasons', 'transfer');
             $plan = $this->preview($actor, $tenant, $source, $target, $teamSeasonIds);
             if (! hash_equals($plan['token'], $token)) {
                 throw ValidationException::withMessages(['target_season_id' => 'Die Daten haben sich geändert. Bitte Vorschau erneut erstellen.']);

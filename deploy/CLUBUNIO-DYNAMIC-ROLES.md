@@ -1,84 +1,80 @@
 # Dynamische Rollen nach Modul und Funktion
 
-Stand 16.10.2026: IN ARBEIT, nicht deployt, produktive Zuordnung gesperrt.
+Stand 16.10.2026: Fachintegration getestet und auf dev.clubunio.ch bereitgestellt.
 
-## Vorbereitet
+## Bedienung
 
-- Separate vereinsgebundene Profildefinitionen in access_profiles.
-- Stabiler, expliziter Katalog mit Modul- und Funktionsschluesseln.
-- Nur-Lesen-Vorlage enthaelt ausschliesslich view, keine Downloads/Exporte.
-- Schreibfunktionen setzen das Anzeigerecht voraus.
-- Speichern nur durch frischen Admin, mit Revision, Audit und Vereinsbindung.
-- Migration ist vorbereitet, nicht dauerhaft ausgefuehrt.
-- Transaktionale Tests: Profil speichern/Audit, Nur-Lesen-Rechte,
-  ungueltige Rechte, fehlende Abhaengigkeit, Revision und Adminentzug.
-- Filament-Editor als noch nicht registrierte Resource vorbereitet:
-  Modulabschnitte mit Funktionsauswahl, Ohne-Rechte-/Nur-Lesen-Vorlagen,
-  Kopieren, Suche, Aktivstatus, Revision und Pflichtbegruendung.
-- Editor-Datenkonvertierung und Kopie getestet; manipulierte Funktionen
-  werden nicht still verworfen, sondern vom Schreibservice abgelehnt.
-- Benutzerzuordnung im Admin-Service und im Formular vorbereitet. Eigene
-  Systemrolle `profile`, keine Gleichstellung mit `office`, kein Portalzugang.
-  Zuordnung nur mit aktivem Profil desselben Vereins; Audit/Revision und
-  Schutz des letzten Administrators bleiben erhalten.
-- Migration70 vorbereitet: zusammengesetzter Vereins-/Profil-Fremdschluessel
-  und DB-Check fuer zulaessige Kombinationen. Die neue Systemrolle wird
-  ausdruecklich INAKTIV angelegt und ist daher nicht auswaehlbar.
-- ModulePermissionService prueft einzelne Modul-/Funktionsrechte frisch,
-  inklusive deaktivierter Konten/Profile, Entzug, Anzeigerecht-Abhaengigkeit
-  und unbekannter Rechte. Noch NICHT in die Fachservices eingebunden.
-- Teststand: AccessProfileTest und ModulePermissionTest 13 Tests/88 Assertions;
-  bestehende Benutzerverwaltung 5 Tests/40 Assertions. Alle transaktional mit
-  Rollback. Keine dauerhaften Rollen- oder DB-Aenderungen.
+Unter Einstellungen > Rollen & Berechtigungen legen Administratoren eigene Profile
+an, kopieren bestehende Profile oder verwenden die Vorlage Nur Lesen. Die
+Funktionen sind nach Modul gruppiert. Jede Funktion braucht das Anzeigerecht
+des Moduls. Neue oder unbekannte Funktionen werden niemals automatisch erlaubt.
 
-## Ergebnis der Integrationspruefung
+Unter Benutzer und Rollen wird die Systemrolle Berechtigungsprofil gewaehlt
+und ein aktives Profil desselben Vereins zugeordnet. Bestehende Benutzer werden
+nicht automatisch umgestellt. Die Zuordnung, Profildefinitionen und Aenderungen
+werden mit Revision, Bearbeiter und Begruendung protokolliert. Der letzte Admin
+kann nicht durch ein eingeschraenktes Profil ersetzt werden.
 
-Die bestehende Methode Account::canAccessTenant wird sowohl fuer Lesezugriffe
-als auch von zahlreichen Schreibservices verwendet. Die blosse Erweiterung
-dieser Methode um neue Profile waere daher keine sichere Rollenverwaltung.
-Auch Portal-Fallbacks in MemberAccessService sowie direkte Livewire-Methoden,
-Downloads und Fachcontroller muessen in die explizite Pruefung aufgenommen
-werden. Sichtbare/ausgeblendete Buttons allein reichen nicht.
+Nur Lesen erlaubt Listen und Details, aber keine Mutationen, Uploads, Downloads,
+Exporte, Freigaben, Synchronisation oder Versand. PDF/Anhaenge und Exporte
+koennen getrennt freigeschaltet werden. Eigene gespeicherte Ansichtsfilter
+bleiben mit dem jeweiligen Anzeigerecht bearbeitbar; sie aendern keine Fachdaten.
 
-Eine Zuordnung als office mit zusaetzlichem Profil ist ohne weiteren Schutz
-ebenfalls ungeeignet: Nach einem Rollback auf alten Code wuerde das Profil
-ignoriert und das Konto haette volle Office-Rechte. Die Aktivierung benoetigt
-eine eigene, auch fuer alte Releases gesperrte Systemrolle oder einen gleich
-starken getesteten Rollback-Schutz. Der office-basierte Entwurf wurde durch
-Migration70 mit der eigenen Rolle `profile` ersetzt. Alte Zugangspruefungen
-lassen diese Rolle nicht hinein (negativ getestet). Es gibt weiterhin keine
-Profilzuordnung auf echten Konten und keine dauerhafte Anwendung von70.
+## Zugriffsgrenzen
 
-Die Resource bleibt absichtlich unregistriert. Keine halbfertige
-Rechteverwaltung wird als verwendbar auf ClubUnio ausgerollt.
+- Die eigene Systemrolle `profile` ist keine Office-Rolle. Alte Releases
+  verweigern ihr den Zugang, statt sie nach einem Rollback zu privilegieren.
+- `canAccessTenant` bedeutet nur Arbeitsbereich betreten. Fachoperationen
+  verwenden explizite Modul-/Funktionsrechte in `ModulePermissionService`.
+- `hasUnrestrictedBackofficeAccess` behaelt die bisherigen Admin-/Office-
+  Grenzen. Trainer-, Spieler-, Eltern- und TL-Portalfilter bleiben unveraendert.
+- Profile erlauben die ausgewaehlten Verwaltungsfunktionen innerhalb ihres
+  Vereins. Sie sind keine Kombination mit Portalrollen oder Teamfiltern.
+- Unbekannte Modelle, Funktionen und Aktionen sind fuer Profile gesperrt.
+  Fremde Vereins-/Datensatz-IDs bleiben unzulaessig.
+- Untertabellen brauchen das Leserecht des Elternobjekts und des Untermoduls;
+  jede Mutation prueft zusaetzlich ihre konkrete Funktion im Fachservice.
+- Anzeigen und Buttons sind eingeschraenkt, direkte Livewire-Aktionen werden
+  erneut geprueft. Eine bereits geoeffnete Maske behaelt keine Schreibrechte.
+- Rechte werden fuer Aktionen frisch gelesen. Nur innerhalb eines einzelnen
+  Seitenaufbaus darf ein begrenzter Lesesnapshot wiederverwendet werden.
+- Benutzer-/Profilverwaltung, Verbindungsgeheimnisse, Sandbox-Konfiguration,
+  zentrale Einstellungen und vollstaendiges Verwaltungs-Audit bleiben ausserhalb
+  delegierter Fachprofile. Fachbezogene Verlaufdialoge folgen dem Objektleserecht.
+- Das moduluebergreifende Gesamt-Dashboard bleibt Admin/Office vorbehalten;
+  einzelne Kennzahlen und Listen folgen ihrem jeweiligen Modul.
+- Testmail-Umleitung, Sandbox-Schutz, keine echten Bankzahlungen sowie bestehende
+  Revisions-, Status- und Datenschutzregeln werden nicht durch Rechte aufgehoben.
 
-## Vor Aktivierung zwingend
+## Migration und Rollout
 
-1. Vorbereiteten Filament-Editor integrieren und visuell pruefen;
-   betroffene Benutzer und wirksame Rechte zusammen anzeigen.
-2. Vorbereitete Profilzuordnung erst nach vollstaendiger Fachintegration
-   freischalten; zusaetzlich angemeldete Formularpruefung erforderlich.
-3. Explizite Berechtigungen in Fachservices, Policies und Web-Endpunkten.
-   canAccessTenant wird heute auch fuer Mutationen verwendet und darf
-   nicht einfach fuer Nur-Lesen-Profile freigeschaltet werden.
-4. Untertabellen, Livewire-Methoden, Uploads, Downloads, Exporte,
-   Bexio-/Mail-/Push-Aktionen und Dashboard auf Umgehungen pruefen.
-5. Datenumfang separat behandeln. Keine Erweiterung vorhandener
-   Mitglieds-/Mannschaftsfilter durch ein neues Profil.
-6. Negative Tests mit direktem Aufruf, manipulierten IDs, Rollenentzug,
-   veralteten Browser-Tabs und fremden Vereinen; visuelle Abnahme.
-7. Erst danach Migration, ClubUnio-Deployment, Commit und Sync.
+1. `000069_access_profiles`: vereinsgebundene Profile und Rechte-JSON.
+2. `000070_account_access_profiles`: eigene zunaechst inaktive Systemrolle,
+   zusammengesetzter Vereins-/Profil-Fremdschluessel, kein Portal fuer Profile.
+3. Geschuetzten Code und Oberflaeche gemeinsam bereitstellen.
+4. `000071_enable_access_profiles`: Nur-Lesen-Profil fuer bestehende Vereine
+   anlegen, sofern nicht vorhanden, und Systemrolle aktivieren. Keine Konten
+   zuweisen und keine bestehenden Profile ueberschreiben.
 
+Die Migrationen70/71 haben bewusst keinen automatischen Rueckbau, der Konten
+zu Office konvertiert oder Rechte vernichtet. Bei Code-Rollback bleiben neue
+Profilkonten gesperrt; Administratoren koennen weiterhin zugreifen.
+
+Deployment erfolgt nur als ClubUnio-Delta auf dem unmittelbar zuvor geprueften
+Serverrelease. Keine `.env`, Secrets, Uploads oder Laufzeitdaten im Git/Archiv.
 PHPMaker DEV/PROD, API, SaaS und Betrieb bleiben unveraendert.
-Die vorbereiteten Profile sind noch KEINE wirksamen Zugriffsrechte.
 
-## Naechste zwingende Integrationsschritte
+## Pruefung
 
-- Workspace-Zugang von canAccessTenant als pauschalem Fachrecht trennen.
-- Resource-/Policy-/Untertabellenleserechte mit expliziter Modulzuordnung
-  ergaenzen, ohne schreibende Fachservices pauschal freizuschalten.
-- Jeden mutierenden Fachservice und Export/Download mit konkretem
-  Modul/Funktion verbinden; verbleibende Altpruefungen verweigern profile.
-- Direkte Livewire-/Webaufrufe und Portal-Fallbacks negativ testen, ebenso
-  erlaubte Aktionen positiv. Erst danach profile aktivieren, Editor
-  registrieren, Migrationen dauerhaft ausfuehren und ClubUnio deployen.
+Transaktionale Testdaten werden zurueckgerollt. Abgedeckt werden Profilpflege,
+Benutzerzuordnung, letzter Admin, Vereinsbindung, deaktivierte Konten/Profile,
+unbekannte Funktionen, Entzug nach Modaloeffnung, getrennte Datei-/Exportrechte,
+Untertabellen sowie positive und negative Fachaktionen in Finanzen, Mitgliedern,
+Teamplanung, Bus und Anlagen. Abschlussresultate und Release stehen in PI.md.
+
+Abschlusspruefung vor dem Release: 156 Bestandspruefungen mit 1720 Assertions,
+73 gezielte Profiltests mit 1059 Assertions und 22 Lese-/Navigationsregressionen
+mit 441 Assertions bestanden. Zusaetzliche Renderpruefungen sichern die
+Schaltflaechen in den Portal-/Workspace-Ansichten ab. Der Profil-Editor wurde
+auf Desktop und Mobilbreite, die Benutzerzuordnung lokal visuell geprueft;
+dabei wurden keine echten Benutzerrechte geaendert.

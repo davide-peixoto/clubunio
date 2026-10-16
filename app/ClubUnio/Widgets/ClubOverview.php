@@ -13,12 +13,17 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class ClubOverview extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return ($tenant = \Filament\Facades\Filament::getTenant()) && (\Filament\Facades\Filament::auth()->user()?->hasUnrestrictedBackofficeAccess($tenant) ?? false);
+    }
+
     protected ?string $pollingInterval = null;
 
     protected function getStats(): array
     {
         $tenant = Filament::getTenant();
-        if (! $tenant || ! Filament::auth()->user()?->canAccessTenant($tenant)) {
+        if (! $tenant || ! Filament::auth()->user()?->hasUnrestrictedBackofficeAccess($tenant)) {
             return [];
         }
 

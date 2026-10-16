@@ -15,7 +15,7 @@ class MemberDocumentMaintenanceService
 {
     public function add(Account $actor, Tenant $tenant, int $member, int $type, bool $portalVisible, UploadedFile $file): MemberDocument
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'upload');
         Validator::make(['file' => $file], ['file' => 'required|file|max:20480|mimetypes:application/pdf,image/jpeg,image/png,image/webp'])->validate();
         if (MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member)->where('document_type_id', $type)->where('active', true)->where('sha256', hash('sha256', $file->get()))->exists()) {
             throw ValidationException::withMessages(['file' => 'Dieses Dokument ist bereits vorhanden.']);
@@ -29,6 +29,7 @@ class MemberDocumentMaintenanceService
 
     public function publishUpload(Account $actor, Tenant $tenant, object $upload, array $metadata): MemberDocument
     {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'upload');
         abort_unless(DB::connection('clubunio')->transactionLevel() > 0, 409);
         $existing = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $upload->object_id)
             ->where('document_type_id', $metadata['type'])->where('active', true)->where('sha256', $upload->sha256)->first();
@@ -50,14 +51,20 @@ class MemberDocumentMaintenanceService
 
     public function update(Account $actor, Tenant $tenant, int $id, int $member, int $revision, bool $active, bool $portalVisible): void
     {
-        abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'view');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $member, $revision, $active, $portalVisible) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor->fresh()?->canAccessTenant($tenant), 403);
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'view');
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($member);
             $document = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member)->lockForUpdate()->findOrFail($id);
             if ($document->revision !== $revision) {
                 throw ValidationException::withMessages(['revision' => 'Dokument wurde inzwischen geändert. Bitte neu öffnen.']);
+            }
+            if ((bool) $document->active !== $active) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', $active ? 'restore' : 'deactivate');
+            }
+            if ((bool) $document->active === $active || (bool) $document->portal_visible !== $portalVisible) {
+                app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'update');
             }
             $newlyVisible = $active && $portalVisible && (! $document->active || ! $document->portal_visible);
             $document->forceFill(['active' => $active, 'portal_visible' => $portalVisible, 'revision' => $revision + 1])->save();

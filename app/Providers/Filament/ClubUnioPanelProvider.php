@@ -82,6 +82,7 @@ use App\ClubUnio\Resources\TeamSeasonResource;
 use App\ClubUnio\Resources\TeamStaffResource;
 use App\ClubUnio\Resources\TechnicalLeadResource;
 use App\ClubUnio\Resources\TenantAccountResource;
+use App\ClubUnio\Resources\AccessProfileResource;
 use App\ClubUnio\Resources\TrainingOptionResource;
 use App\ClubUnio\Resources\TrainingSlotResource;
 use App\ClubUnio\Resources\UnassignedMemberResource;
@@ -173,6 +174,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 TrainingOptionResource::class,
                 AccountMemberLinkResource::class,
                 TenantAccountResource::class,
+                AccessProfileResource::class,
                 MessageTemplateResource::class,
                 InvoiceResource::class, ExpenseResource::class,
                 InvoiceWorkflowStatusResource::class,

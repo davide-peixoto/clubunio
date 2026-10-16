@@ -32,7 +32,7 @@ class SettingsService
 
     public function update(Account $actor, Tenant $tenant, int $id, string $value): void
     {
-        abort_unless($actor->canAccessTenant($tenant), 403);
+        abort_unless($actor->hasUnrestrictedBackofficeAccess($tenant), 403);
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $value) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $setting = Setting::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail();
