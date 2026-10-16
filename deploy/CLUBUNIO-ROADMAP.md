@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Performance73: Abfragen statt mehr RAM (16.10.2026)
+
+Messungen zeigen wiederholte Mandanten-/Rollenpruefungen als Hauptanteil der
+Seitenwartezeit. Rechtekontext nur waehrend eines GET, erneute Pruefung bei
+jedem Request/Write, Tenant-Beziehungen gebuendelt. Keine Ergebnis-/Rechtecaches
+ueber Requests hinweg und keine DB-Migration. ClubUnio-FPM-Pool mit zwei warmen
+Prozessen, maximal acht parallelen Anfragen statt vier; Speicher pro Request
+bleibt256M. Pruefungen, Vergleichswerte und Ruecknahme: CLUBUNIO-PERFORMANCE.md.
+PHPMaker DEV/PROD, API und SaaS bleiben unveraendert.
+
 ## Navigation: angemeldete Sichtpruefung (16.10.2026)
 
 Desktop/Mobile-Stichprobe abgeschlossen, Suchtreffer in eingeklappten

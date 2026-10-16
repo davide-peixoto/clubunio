@@ -32,7 +32,7 @@ class CatalogPolicy
 {
     public function viewAny(Account $actor): bool
     {
-        return $actor->active && $actor->tenants()->wherePivotIn('role', ['admin', 'office'])->exists();
+        return $actor->hasBackofficeTenant();
     }
 
     public function view(Account $actor, Model $record): bool

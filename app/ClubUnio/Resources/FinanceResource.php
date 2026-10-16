@@ -32,7 +32,7 @@ abstract class FinanceResource extends CatalogResource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withSum('activeLines', static::$kind === 'invoices' ? 'net_amount' : 'amount');
+        return parent::getEloquentQuery()->with('tenant')->withSum('activeLines', static::$kind === 'invoices' ? 'net_amount' : 'amount');
     }
 
     public static function table(Table $table): Table

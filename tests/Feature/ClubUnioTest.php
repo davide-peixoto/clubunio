@@ -422,7 +422,8 @@ class ClubUnioTest extends TestCase
         $bexio->connect($this->own, ['access_token' => 'fixture-token', 'refresh_token' => 'fixture-refresh', 'expires_in' => 3600, 'token_type' => 'Bearer'], $bexio->configuration($this->own)['fingerprint'], $this->actor->id);
         Http::preventStrayRequests();
         Http::fake(['api.bexio.com/*' => Http::response(['content' => base64_encode('%PDF-1.7 fixture')])]);
-        $url = '/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/bexio';
+        $url = route('clubunio.workspace.invoices.pdf', ['invoice' => $invoice->id, 'source' => 'bexio']);
+        $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/bexio')->assertRedirect($url);
         $this->get($url)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
         Http::assertSent(fn ($request) => $request->method() === 'GET' && $request->hasHeader('Accept', 'application/json') && $request->hasHeader('Authorization', 'Bearer fixture-token'));
         $this->get('/clubora-invoice-pdf/'.$this->other->slug.'/'.$invoice->id.'/bexio')->assertForbidden();

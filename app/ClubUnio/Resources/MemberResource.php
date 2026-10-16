@@ -53,7 +53,7 @@ class MemberResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('tenant_id', Filament::getTenant()?->id ?? -1)->whereNull('archived_at');
+        return parent::getEloquentQuery()->with('tenant')->where('tenant_id', Filament::getTenant()?->id ?? -1)->whereNull('archived_at');
     }
 
     public static function canCreate(): bool

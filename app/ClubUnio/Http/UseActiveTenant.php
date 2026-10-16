@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Services\ActiveTenant;
+use App\ClubUnio\Services\BackofficeReadContext;
 use Closure;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
@@ -13,6 +14,6 @@ class UseActiveTenant
     {
         Filament::setTenant(app(ActiveTenant::class)->resolve($request));
 
-        return $next($request);
+        return app(BackofficeReadContext::class)->during($request, $next);
     }
 }

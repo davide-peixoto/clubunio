@@ -1,5 +1,22 @@
 # Pi staging: dev.clubunio.ch
 
+## Performance73 bereitgestellt (16.10.2026)
+
+Gemessen: ca.12GiB RAM verfuegbar, CPU99% frei; FPM max_children4 erreicht.
+Hauptengpass wiederholte Rollenabfragen: Mitglieder278 Queries/7.9s, Rechnungen
+145/4.2s und Spesen146/4.3s im lesenden Pi-CLI-Profil. GET-Requestkontext und
+gebuendeltes Tenant-Laden lokal Mitglieder30 Queries/1.2s, Rechnungen33/1.1s.
+Schreibrechte bleiben frisch, Snapshot wird nach jedem GET verworfen.
+46 Tests485 Assertions erfolgreich,1 optionaler Azuretest ausgelassen.
+Aktuell20261016-clubunio-73-performance, Ruecksprung Navigation-QA. Fremde
+Finanzdateien unveraendert. Pi-Nachmessung: Mitglieder1.07s/30 Queries,
+Rechnungen1.20s/33 und Spesen1.17s/33, zuvor7.92s/278,4.20s/145,4.28s/146.
+FPM-Pool dynamic2-8 statt ondemand4;256M je Anfrage unveraendert. Validiert,
+graceful geladen; Backup20261016T064300-4082078 unter
+/var/backups/clubunio-fpm-performance. Caches/Guards195Settings46Vorlagen OK.
+Livewire-POST-Rendering bewusst weiter mit frischen Rechten, separat zu messen.
+Details und Ruecknahme: CLUBUNIO-PERFORMANCE.md.
+
 ## Menuesuche: Sichtpruefung (16.10.2026)
 
 Delta 20261016-clubunio-navigation-qa auf Basis des aktuellen Releases72:
