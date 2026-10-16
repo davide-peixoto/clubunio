@@ -12,13 +12,6 @@ HTTP200 fuer /login und /up erfolgreich. Keine DB-/Pool-/Netzwerkaenderung.
 Details, Tests und Upgradegrenzen: CLUBUNIO-PERFORMANCE.md.
 PHPMaker DEV/PROD, API und SaaS unveraendert.
 
-## Familien-, Anmeldungs- und Finanz-Fachdialoge (16.10.2026)
-
-Release `20261016-clubunio-dossier-dialogs`, gezieltes Delta auf dem bei
-Deployment aktuellen Release. Keine DB-Migration, kein echter Finanzversand.
-Ruecksprungpfad wird vom Installer ausgegeben. Details und Testumfang:
-CLUBUNIO-DOSSIER-DIALOGS.md. PHPMaker DEV/PROD unveraendert.
-
 ## Dossier-Finanzdialoge (16.10.2026)
 
 Release `20261016-clubunio-dossier-finance`, Basis/Ruecksprung
