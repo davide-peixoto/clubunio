@@ -10,7 +10,10 @@ use App\ClubUnio\Models\Gender;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Team;
+use App\ClubUnio\Models\TeamPlayer;
 use App\ClubUnio\Models\TeamSeason;
+use App\ClubUnio\Models\TeamStaff;
+use App\ClubUnio\Models\TechnicalLead;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\NavigationStructure;
 use App\ClubUnio\Pages\SettingsOverview;
@@ -24,13 +27,17 @@ use App\ClubUnio\Resources\Relations\TeamSeasonsRelationManager;
 use App\ClubUnio\Resources\SeasonResource\Pages\ViewSeason;
 use App\ClubUnio\Resources\TeamSeasonResource\Pages\ListTeamSeasons;
 use App\ClubUnio\Services\ContributionTrainingService;
+use App\ClubUnio\Services\DossierHistoryService;
+use App\ClubUnio\Services\SeasonAssignmentTransferService;
 use App\ClubUnio\Services\TeamAssignmentService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class WorkspaceEditingTest extends TestCase
@@ -60,6 +67,99 @@ class WorkspaceEditingTest extends TestCase
     }
 
     private $db;
+
+    public function test_bulk_assignment_actions_and_history_dialog(): void
+    {
+        $component = $this->manager();
+        $component->callTableAction('addAssignment', data: ['team_id' => $this->team->id, 'active' => true])->assertHasNoTableActionErrors();
+        $record = TeamSeason::where('tenant_id', $this->tenant->id)->sole();
+        $component->callTableBulkAction('deactivateAssignments', [$record])->assertHasNoTableActionErrors();
+        $this->assertFalse($record->fresh()->active);
+        $component->filterTable('active', false)->callTableBulkAction('restoreAssignments', [$record->fresh()])->assertHasNoTableActionErrors();
+        $this->assertTrue($record->fresh()->active);
+        $component->filterTable('active', true)->mountTableAction('dossierHistory', $record->fresh())->assertSee('Änderungsverlauf')->assertSee('Fixture');
+        $component = $this->manager();
+        $component->mountTableBulkAction('deactivateAssignments', [$record->fresh()]);
+        $record->refresh()->forceFill(['label' => 'Concurrent change'])->save();
+        $component->callMountedTableAction()->assertHasTableActionErrors();
+        $this->assertTrue($record->fresh()->active);
+    }
+
+    public function test_season_transfer_preview_duplicates_and_stale_snapshot(): void
+    {
+        $service = app(SeasonAssignmentTransferService::class);
+        $target = new Season;
+        $target->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Next fixture', 'active' => true])->save();
+        $team = app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $member = new Member;
+        $member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Fixture', 'last_name' => 'Player'])->save();
+        app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamPlayer::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'active' => true]);
+        $function = $this->db->table('clubora.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'fixture-coach', 'name' => 'Fixture coach', 'active' => true]);
+        app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamStaff::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'staff_function_id' => $function, 'active' => true]);
+        app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TechnicalLead::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'active' => true]);
+        $plan = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id);
+        $this->assertCount(4, $plan['rows']);
+        $this->assertSame(4, $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $plan['token']));
+        $again = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id);
+        $this->assertSame(0, $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $again['token']));
+        $this->assertCount(4, array_filter($again['rows'], fn ($r) => $r['state'] === 'vorhanden'));
+        $component = $this->manager();
+        $component->mountTableAction('transferSeason')->assertSet('mountedActions.0.name', 'transferSeason');
+        $component->set('mountedActions.0.data.target_season_id', $target->id)->assertSet('seasonTransferPreview.target', $target->id);
+        $component->set('mountedActions.0.data.confirmed', true)->callMountedTableAction()->assertHasNoTableActionErrors();
+        $member->forceFill(['exit_date' => now()->toDateString()])->save();
+        $blocked = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id);
+        $this->assertTrue(collect($blocked['rows'])->contains('state', 'blockiert'));
+        $this->expectException(ValidationException::class);
+        $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $again['token']);
+    }
+
+    public function test_bulk_changes_roll_back_when_any_selected_row_is_stale(): void
+    {
+        $otherTeam = new Team;
+        $otherTeam->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Other fixture', 'active' => true])->save();
+        $service = app(TeamAssignmentService::class);
+        $a = $service->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $b = $service->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $otherTeam->id, 'season_id' => $this->season->id, 'active' => true]);
+        $component = $this->manager()->mountTableBulkAction('deactivateAssignments', [$a, $b]);
+        $b->forceFill(['label' => 'Concurrent change'])->save();
+        $component->callMountedTableAction()->assertHasTableActionErrors();
+        $this->assertTrue($a->fresh()->active);
+        $this->assertTrue($b->fresh()->active);
+        $this->assertSame(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+    }
+
+    public function test_history_redacts_unknown_fields_and_rechecks_permissions(): void
+    {
+        $record = app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $this->db->table('clubora.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'team_seasons', 'object_id' => $record->id, 'after_value' => json_encode(['active' => false, 'api_key' => 'NEVER_SHOW', 'iban_encrypted' => 'NEVER_SHOW'])]);
+        $service = app(DossierHistoryService::class);
+        $this->assertStringNotContainsString('NEVER_SHOW', json_encode($service->entries($this->actor, $this->tenant, $record)));
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->expectException(HttpException::class);
+        $service->entries($this->actor, $this->tenant, $record);
+    }
+
+    public function test_transfer_blocks_inactive_targets_and_rechecks_role(): void
+    {
+        $target = new Season;
+        $target->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Target', 'active' => true])->save();
+        $assign = app(TeamAssignmentService::class);
+        $assign->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $destination = $assign->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $target->id, 'active' => false]);
+        $service = app(SeasonAssignmentTransferService::class);
+        $plan = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id);
+        $this->assertSame('blockiert', $plan['rows'][0]['state']);
+        try {
+            $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $plan['token']);
+            $this->fail('Inactive target must block transfer');
+        } catch (ValidationException $e) {
+            $this->assertFalse($destination->fresh()->active);
+        }
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->expectException(HttpException::class);
+        $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $plan['token']);
+    }
 
     private Tenant $tenant;
 

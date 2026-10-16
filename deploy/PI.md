@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+## Dossier-Komfortfunktionen (16.10.2026)
+
+Release `20261016-clubunio-dossier-comfort`, Dateidelta auf aktuellem Release.
+Installer nennt konkrete Rollback-Basis. Keine DB-Migration oder Legacy-
+Deployments. Details: CLUBUNIO-DOSSIER-COMFORT.md.
+
 ## Spesen-/Dokumentperformance (16.10.2026)
 
 Gezieltes Delta fuer Anmeldeliste, Spesenpositionsbuttons und bedarfsgesteuerte

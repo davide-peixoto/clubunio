@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dossier-Komfortfunktionen (16.10.2026)
+
+Atomare Mehrfachaktionen fuer Zuordnungen, lesender Aenderungsverlauf und
+Saisonuebernahme mit signierter Vorschau/Dublettenpruefung. Keine DB-Migration;
+vorhandene Objekt-IDs/Auditdaten bleiben bei spaeterer Migration erhalten.
+Details und Grenzen: CLUBUNIO-DOSSIER-COMFORT.md. PHPMaker DEV/PROD unveraendert.
+
 ## Spesen-/Dokumentperformance (16.10.2026)
 
 Anmeldeliste ohne Mandantenabfrage pro Zeile, Spesenpositionsbuttons mit

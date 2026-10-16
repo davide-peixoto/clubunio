@@ -8,6 +8,8 @@ use App\ClubUnio\Models\Team;
 use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Resources\DossierTables;
 use App\ClubUnio\Resources\MemberResource;
+use App\ClubUnio\Services\DossierHistoryService;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -78,6 +80,24 @@ abstract class DossierRelationManager extends RelationManager
     public function isReadOnly(): bool
     {
         return ! $this->assignmentResource() || ! $this->assignmentParentField();
+    }
+
+    public function getTable(): Table
+    {
+        $table = parent::getTable();
+        if (! array_key_exists('dossierHistory', $table->getFlatRecordActions())) {
+            $table->recordActions([...$table->getRecordActions(), Action::make('dossierHistory')
+                ->label('Änderungsverlauf')->icon('heroicon-o-clock')->iconButton()->tooltip('Änderungsverlauf')->slideOver()
+                ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')
+                ->modalContent(function ($record) {
+                    $this->authorizeOwner();
+                    $scoped = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)->findOrFail($record->id);
+
+                    return view('clubunio.dossier-history', ['entries' => app(DossierHistoryService::class)->entries(Filament::auth()->user(), Filament::getTenant(), $scoped)]);
+                })]);
+        }
+
+        return $table;
     }
 
     public function table(Table $table): Table
