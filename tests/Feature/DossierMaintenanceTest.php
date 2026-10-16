@@ -18,8 +18,10 @@ use App\ClubUnio\Resources\ClubFunctionResource\Pages\ManageFunctions;
 use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\ContributionRulesRelationManager;
 use App\ClubUnio\Resources\Relations\EventAttendeesRelationManager;
+use App\ClubUnio\Resources\Relations\EventGuestsRelationManager;
 use App\ClubUnio\Resources\Relations\FunctionsRelationManager;
 use App\ClubUnio\Resources\Relations\KeysRelationManager;
+use App\ClubUnio\Resources\Relations\SponsorshipsRelationManager;
 use App\ClubUnio\Resources\SeasonResource;
 use App\ClubUnio\Services\DossierMaintenanceService;
 use Filament\Facades\Filament;
@@ -78,6 +80,43 @@ class DossierMaintenanceTest extends TestCase
     private function save(string $model, array $data, ?int $id = null, ?int $member = null)
     {
         return app(DossierMaintenanceService::class)->save($this->actor, $this->tenant, $model, $member, $id, $data);
+    }
+
+    public function test_dossier_copy_deactivate_restore_preserves_sources_and_checks_duplicates(): void
+    {
+        $function = $this->save(ClubFunction::class, ['name' => 'Fixture A', 'active' => true]);
+        $otherFunction = $this->save(ClubFunction::class, ['name' => 'Fixture B', 'active' => true]);
+        $qualification = $this->save(Qualification::class, ['name' => 'Fixture licence', 'active' => true]);
+        $event = $this->save(ClubEvent::class, ['name' => 'Fixture A', 'location' => 'Here', 'season_id' => $this->season, 'active' => true]);
+        $otherEvent = $this->save(ClubEvent::class, ['name' => 'Fixture B', 'location' => 'Here', 'season_id' => $this->season, 'active' => true]);
+        $cases = [
+            [FunctionsRelationManager::class, MemberFunction::class, ['club_function_id' => $function->id, 'qualification_ids' => [$qualification->id]], ['club_function_id' => $otherFunction->id]],
+            [SponsorshipsRelationManager::class, Sponsorship::class, ['name' => 'Fixture', 'amount' => 100, 'expires_on' => '2027-12-31', 'notes' => 'Fixture'], ['expires_on' => '2028-12-31']],
+            [EventGuestsRelationManager::class, EventGuest::class, ['club_event_id' => $event->id], ['club_event_id' => $otherEvent->id]],
+        ];
+        foreach ($cases as [$manager, $model, $data, $copyData]) {
+            $source = $this->save($model, $data + ['active' => true], null, $this->member->id);
+            $component = Livewire::test($manager, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+            $component->callTableAction('copyItem', $source)->assertHasTableActionErrors();
+            $component = Livewire::test($manager, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+            $component->callTableAction('copyItem', $source, data: $copyData)->assertHasNoTableActionErrors()->assertNoRedirect();
+            $copy = $model::where('tenant_id', $this->tenant->id)->whereKeyNot($source->id)->sole();
+            $this->assertSame($this->member->id, $copy->member_id);
+            $this->assertSame(1, (int) $source->fresh()->revision);
+            if ($model === MemberFunction::class) {
+                $this->assertSame([$qualification->id], $copy->qualifications()->pluck('clubora.qualifications.id')->all());
+            }
+            $component->callTableAction('deactivateItem', $source)->assertHasNoTableActionErrors();
+            $this->assertFalse($source->fresh()->active);
+            $component->filterTable('active', false)->callTableAction('restoreItem', $source->fresh())->assertHasNoTableActionErrors();
+            $this->assertTrue($source->fresh()->active);
+            $component->filterTable('active', true)->mountTableAction('deactivateItem', $source->fresh());
+            $source->refresh()->forceFill(['revision' => $source->revision + 1])->save();
+            $component->callMountedTableAction()->assertHasTableActionErrors();
+            $this->assertTrue($source->fresh()->active);
+        }
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
     }
 
     public function test_function_and_multiple_qualifications_are_editable_audited_and_revision_protected(): void
@@ -177,8 +216,8 @@ class DossierMaintenanceTest extends TestCase
 
     public function test_inactive_or_non_office_actor_cannot_mutate(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id',$this->tenant->id)->where('account_id',$this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
-        $this->save(Qualification::class,['name' => 'Denied', 'active' => true]);
+        $this->save(Qualification::class, ['name' => 'Denied', 'active' => true]);
     }
 }

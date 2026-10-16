@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dossier-Kopien und Aktivstatus (16.10.2026)
+
+Funktionen, Sponsoring und Veranstaltungszuordnungen: direkte Kopier-,
+Deaktivierungs- und Wiederherstellungsaktionen. Versionsschutz und Audit
+ueber bestehenden Fachservice. Keine DB-Migration. Details:
+CLUBUNIO-DOSSIER-LIFECYCLE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Filter-/Suchperformance mit frischen Aktionsrechten (16.10.2026)
 
 Livewire-Darstellung buendelt wiederholte Mandantenpruefungen nur waehrend

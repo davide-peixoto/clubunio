@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+## Dossier-Aktivstatus und Kopien (16.10.2026)
+
+Release `20261016-clubunio-dossier-lifecycle`, Delta auf aktuellem Release.
+Nur Funktionen, Sponsoring und Veranstaltungszuordnungen; keine DB-Migration.
+Details: CLUBUNIO-DOSSIER-LIFECYCLE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Filter und Suche optimiert (16.10.2026)
 
 Release `20261016-clubunio-filter-performance`, Basis/Ruecksprung
