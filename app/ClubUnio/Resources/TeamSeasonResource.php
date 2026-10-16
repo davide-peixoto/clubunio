@@ -65,7 +65,7 @@ class TeamSeasonResource extends TeamAssignmentResource
 
     public static function getRelations(): array
     {
-        return [Relations\TeamPlayersRelationManager::class, Relations\TeamStaffRelationManager::class, Relations\TechnicalLeadsRelationManager::class, Relations\TrainingSlotsRelationManager::class, Relations\RegistrationsRelationManager::class, Relations\ExpensesRelationManager::class];
+        return [Relations\TeamPlayersRelationManager::class, Relations\TeamStaffRelationManager::class, Relations\TechnicalLeadsRelationManager::class, Relations\TrainingSlotsRelationManager::class, Relations\RegistrationsRelationManager::class, Relations\InvoicesRelationManager::class, Relations\ExpensesRelationManager::class];
     }
 
     public static function infolist(Schema $schema): Schema

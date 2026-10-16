@@ -7,14 +7,20 @@ use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
+use App\ClubUnio\Models\Team;
+use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\ExpenseResource\Pages\ViewExpense;
 use App\ClubUnio\Resources\InvoiceResource\Pages\ViewInvoice;
+use App\ClubUnio\Resources\MemberResource\Pages\ViewMember;
 use App\ClubUnio\Resources\Relations\ExpenseLinesRelationManager;
 use App\ClubUnio\Resources\Relations\ExpensesRelationManager;
 use App\ClubUnio\Resources\Relations\InvoiceLinesRelationManager;
 use App\ClubUnio\Resources\Relations\InvoicesRelationManager;
 use App\ClubUnio\Resources\SeasonResource\Pages\ViewSeason;
+use App\ClubUnio\Resources\TeamResource\Pages\ViewTeam;
+use App\ClubUnio\Resources\TeamSeasonResource\Pages\ViewTeamSeason;
+use App\ClubUnio\Services\InvoiceWorkflowService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +109,53 @@ class SeasonFinanceTest extends TestCase
             'invoice_category_id' => $this->category, 'tax_mode' => 'exempt', 'notes' => 'Fixture'])->assertHasNoTableActionErrors();
 
         return Invoice::where('tenant_id', $this->tenant->id)->sole();
+    }
+
+    public function test_member_finance_is_pinned_and_positions_stay_in_dossier(): void
+    {
+        $manager = Livewire::test(InvoicesRelationManager::class, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+        $manager->callTableAction('createFinance', data: ['invoice_category_id' => $this->category, 'tax_mode' => 'exempt', 'season_id' => $this->season->id])->assertHasNoTableActionErrors();
+        $invoice = Invoice::where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame($this->member->id, $invoice->member_id);
+        $manager->callTableAction('editFinance', $invoice, data: ['notes' => 'Member changed'])->assertHasNoTableActionErrors()->assertNoRedirect();
+        $lines = Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $invoice->fresh(), 'pageClass' => ViewInvoice::class, 'financeContextType' => Member::class, 'financeContextId' => $this->member->id]);
+        $lines->callTableAction('addLine', data: ['description' => 'Fixture', 'gross_amount' => '20', 'discount' => '0'])->assertHasNoTableActionErrors()->assertNoRedirect()->assertDispatched('season-finance-updated');
+        $other = $this->insert('members', ['first_name' => 'Other']);
+        $invoice->forceFill(['member_id' => $other])->save();
+        $lines->call('$refresh')->assertForbidden();
+        $manager->call('saveSeasonFinance', $invoice->id, ['revision' => $invoice->fresh()->revision])->assertStatus(404);
+        $expenses = Livewire::test(ExpensesRelationManager::class, ['ownerRecord' => $this->member, 'pageClass' => ViewMember::class]);
+        $expenses->call('saveSeasonFinance', null, array_replace($this->expenseData, ['member_id' => $other]))->assertSuccessful();
+        $this->assertSame($this->member->id, Expense::where('tenant_id', $this->tenant->id)->sole()->member_id);
+    }
+
+    public function test_team_finance_uses_explicit_invoice_links_and_scoped_expenses(): void
+    {
+        $invoice = $this->invoice();
+        app(InvoiceWorkflowService::class)->change($this->actor, $this->tenant, $invoice->id, $invoice->revision, 'line', ['description' => 'Fixture', 'gross_amount' => 20, 'discount' => 0]);
+        $teamSeason = TeamSeason::findOrFail($this->expenseData['team_season_id']);
+        $this->assertFalse($teamSeason->invoices()->exists());
+        $this->insert('team_players', ['team_season_id' => $teamSeason->id, 'member_id' => $this->member->id, 'invoice_line_id' => $invoice->lines()->sole()->id]);
+        foreach ([$teamSeason, $teamSeason->team] as $owner) {
+            $this->assertSame($invoice->id, $owner->invoices()->sole()->id);
+            $page = $owner instanceof TeamSeason ? ViewTeamSeason::class : ViewTeam::class;
+            $manager = Livewire::test(InvoicesRelationManager::class, ['ownerRecord' => $owner, 'pageClass' => $page]);
+            $manager->assertTableActionHidden('createFinance')->callTableAction('editFinance', $invoice->fresh(), data: ['notes' => 'Team changed'])->assertHasNoTableActionErrors()->assertNoRedirect();
+            $expenses = Livewire::test(ExpensesRelationManager::class, ['ownerRecord' => $owner, 'pageClass' => $page]);
+            $expenses->callTableAction('createFinance', data: $this->expenseData)->assertHasNoTableActionErrors();
+            $expense = $owner->expenses()->latest('id')->firstOrFail();
+            $expenses->callTableAction('editFinance', $expense, data: ['notes' => 'Team expense changed'])->assertHasNoTableActionErrors();
+            $lines = Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $invoice->fresh(), 'pageClass' => ViewInvoice::class, 'financeContextType' => $owner::class, 'financeContextId' => $owner->id]);
+            $lines->assertSuccessful();
+        }
+        $otherTeam = Team::findOrFail($this->insert('teams', ['name' => 'Other Team']));
+        $otherSeasonTeam = $this->insert('team_seasons', ['team_id' => $otherTeam->id, 'season_id' => $this->season->id, 'label' => 'Other Team']);
+        Livewire::test(ExpensesRelationManager::class, ['ownerRecord' => $teamSeason->team, 'pageClass' => ViewTeam::class])
+            ->call('saveSeasonFinance', null, array_replace($this->expenseData, ['team_season_id' => $otherSeasonTeam]))->assertStatus(404);
+        Livewire::test(InvoicesRelationManager::class, ['ownerRecord' => $teamSeason, 'pageClass' => ViewTeamSeason::class])
+            ->call('saveSeasonFinance', null, ['member_id' => $this->member->id])->assertForbidden();
+        $this->db->table('clubora.team_players')->where('tenant_id', $this->tenant->id)->update(['invoice_line_id' => null]);
+        $lines->call('$refresh')->assertForbidden();
     }
 
     public function test_invoice_header_and_positions_remain_inside_season(): void

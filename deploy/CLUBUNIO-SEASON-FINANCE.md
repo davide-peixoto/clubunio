@@ -24,8 +24,8 @@ ClubUnio-ID an, wenn keine importierte Nummer vorhanden ist.
 
 Nach Positionsaenderungen werden Summen aktualisiert, ohne Suche, Filter oder
 Seite zurueckzusetzen. Die normalen Rechnungsdetailseiten behalten ihren
-bisherigen Aktualisierungsweg. Mitglieder-/Mannschaftsdossiers bleiben in
-diesem Paket unveraendert; die neuen Belegaktionen gelten fuer Saisons.
+bisherigen Aktualisierungsweg. Die nachfolgende Erweiterung auf Mitglieder
+und Mannschaften ist in CLUBUNIO-DOSSIER-FINANCE.md dokumentiert.
 
 ## Schutz und bewusste Grenzen
 

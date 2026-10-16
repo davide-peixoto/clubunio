@@ -3,7 +3,9 @@
 namespace App\ClubUnio\Resources\Relations;
 
 use App\ClubUnio\Models\InvoiceCategory;
+use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
+use App\ClubUnio\Models\Team;
 use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\ExpenseFields;
@@ -26,7 +28,15 @@ trait SeasonFinanceActions
 {
     public function isReadOnly(): bool
     {
-        return ! $this->getOwnerRecord() instanceof Season;
+        return ! in_array($this->getOwnerRecord()::class, [Season::class, Member::class, Team::class, TeamSeason::class], true);
+    }
+
+    private function financeTeams($owner)
+    {
+        return TeamSeason::where('tenant_id', Filament::getTenant()->id)
+            ->when($owner instanceof Season, fn ($q) => $q->where('season_id', $owner->id))
+            ->when($owner instanceof Team, fn ($q) => $q->where('team_id', $owner->id))
+            ->when($owner instanceof TeamSeason, fn ($q) => $q->whereKey($owner->id));
     }
 
     #[On('season-finance-updated')]
@@ -40,8 +50,13 @@ trait SeasonFinanceActions
         if (static::$kind === 'expenses') {
             return array_map(function ($field) {
                 if ($field->getName() === 'team_season_id') {
-                    $field->options(fn () => TeamSeason::where('tenant_id', Filament::getTenant()->id)
-                        ->where('season_id', $this->getOwnerRecord()->id)->where('active', true)->orderBy('label')->pluck('label', 'id'));
+                    $field->options(fn () => $this->financeTeams($this->getOwnerRecord())->where('active', true)->orderBy('label')->pluck('label', 'id'));
+                    if ($this->getOwnerRecord() instanceof TeamSeason) {
+                        $field->default($this->getOwnerRecord()->id)->disabled()->dehydrated();
+                    }
+                }
+                if ($field->getName() === 'member_id' && $this->getOwnerRecord() instanceof Member) {
+                    return Hidden::make('member_id')->default($this->getOwnerRecord()->id);
                 }
 
                 return $field;
@@ -49,7 +64,8 @@ trait SeasonFinanceActions
         }
 
         return [
-            ...($create ? [MemberResource::memberSelect('member_id')->required()] : [Hidden::make('revision')->required()]),
+            ...($create ? [$this->getOwnerRecord() instanceof Member ? Hidden::make('member_id')->default($this->getOwnerRecord()->id) : MemberResource::memberSelect('member_id')->required()] : [Hidden::make('revision')->required()]),
+            ...($create && $this->getOwnerRecord() instanceof Member ? [Select::make('season_id')->label('Saison')->searchable()->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderByDesc('name')->pluck('name', 'id'))] : []),
             Select::make('invoice_category_id')->label('Kategorie')->required($create)
                 ->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('sort_order')->pluck('name', 'id')),
             Select::make('tax_mode')->label('Steuerbehandlung')->required()->default('exempt')
@@ -60,7 +76,7 @@ trait SeasonFinanceActions
 
     private function withSeasonFinanceActions(Table $table): Table
     {
-        if (! $this->getOwnerRecord() instanceof Season) {
+        if ($this->isReadOnly()) {
             return $table;
         }
         $invoice = static::$kind === 'invoices';
@@ -70,6 +86,7 @@ trait SeasonFinanceActions
 
         return $table->recordUrl(null)->recordAction('positions')->headerActions([
             Action::make('createFinance')->label($invoice ? 'Rechnung erstellen' : 'Spesenbeleg erfassen')->icon('heroicon-o-plus')
+                ->visible(! $invoice || $this->getOwnerRecord() instanceof Season || $this->getOwnerRecord() instanceof Member)
                 ->slideOver()->schema(fn () => $this->financeSchema(true))
                 ->action(fn (array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance(null, $data))),
         ])->recordActions([
@@ -78,7 +95,7 @@ trait SeasonFinanceActions
                 ->slideOver()->modalWidth('7xl')->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')
                 ->modalContent(fn ($record) => view('clubunio.finance.season-positions', [
                     'component' => $invoice ? InvoiceLinesRelationManager::class : ExpenseLinesRelationManager::class,
-                    'record' => $record, 'seasonId' => $this->getOwnerRecord()->id,
+                    'record' => $record, 'contextId' => $this->getOwnerRecord()->id, 'contextType' => $this->getOwnerRecord()::class,
                     'pageClass' => $invoice ? ViewInvoice::class : ViewExpense::class,
                 ])),
             Action::make('editFinance')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Beleg bearbeiten')->slideOver()->visible($editable)
@@ -112,16 +129,24 @@ trait SeasonFinanceActions
             $tenant = Filament::getTenant();
             $actor = Filament::auth()->user()->fresh();
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless($actor?->canAccessTenant($tenant) && $this->getOwnerRecord() instanceof Season, 403);
-            $season = Season::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($this->getOwnerRecord()->id);
-            $row = $id ? $season->{static::$kind}()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : null;
+            abort_unless($actor?->canAccessTenant($tenant) && ! $this->isReadOnly(), 403);
+            $owner = $this->getOwnerRecord()::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($this->getOwnerRecord()->id);
+            $relation = $owner->{static::$kind}();
+            $row = $id ? $relation->where($relation->getRelated()->qualifyColumn('tenant_id'), $tenant->id)->lockForUpdate()->findOrFail($id) : null;
+            if ($owner instanceof Member) {
+                $data['member_id'] = $owner->id;
+            }
             abort_unless($id || $operation === 'header', 403);
             if (static::$kind === 'invoices') {
                 abort_unless(in_array($operation, ['header', 'release', 'cancel'], true), 403);
                 if ($id) {
                     app(InvoiceWorkflowService::class)->change($actor, $tenant, $row->id, (int) ($data['revision'] ?? 0), $operation, $data);
                 } else {
-                    app(InvoiceWorkflowService::class)->create($actor, $tenant, array_replace($data, ['season_id' => $season->id]));
+                    abort_unless($owner instanceof Season || $owner instanceof Member, 403);
+                    if ($owner instanceof Season) {
+                        $data['season_id'] = $owner->id;
+                    }
+                    app(InvoiceWorkflowService::class)->create($actor, $tenant, $data);
                 }
             } else {
                 abort_unless(in_array($operation, ['header', 'transition'], true), 403);
@@ -129,7 +154,10 @@ trait SeasonFinanceActions
                     abort_unless($row, 404);
                     app(ExpenseService::class)->transition($actor, $tenant, $row->id, $data);
                 } else {
-                    TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $season->id)->lockForUpdate()->findOrFail($data['team_season_id'] ?? null);
+                    if ($owner instanceof TeamSeason) {
+                        $data['team_season_id'] = $owner->id;
+                    }
+                    $this->financeTeams($owner)->lockForUpdate()->findOrFail($data['team_season_id'] ?? null);
                     app(ExpenseService::class)->save($actor, $tenant, $row?->id, $data);
                 }
             }

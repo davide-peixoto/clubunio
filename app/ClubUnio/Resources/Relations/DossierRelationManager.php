@@ -3,6 +3,9 @@
 namespace App\ClubUnio\Resources\Relations;
 
 use App\ClubUnio\Models\Member;
+use App\ClubUnio\Models\Season;
+use App\ClubUnio\Models\Team;
+use App\ClubUnio\Models\TeamSeason;
 use App\ClubUnio\Resources\DossierTables;
 use App\ClubUnio\Resources\MemberResource;
 use Filament\Facades\Filament;
@@ -20,6 +23,12 @@ abstract class DossierRelationManager extends RelationManager
 
     #[Locked]
     public ?int $seasonContextId = null;
+
+    #[Locked]
+    public ?string $financeContextType = null;
+
+    #[Locked]
+    public ?int $financeContextId = null;
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
@@ -41,6 +50,14 @@ abstract class DossierRelationManager extends RelationManager
     private function authorizeOwner(): void
     {
         abort_unless(static::canViewForRecord($this->getOwnerRecord(), $this->pageClass ?? ''), 403);
+        if ($this->financeContextType !== null) {
+            abort_unless(in_array($this->financeContextType, [Member::class, Season::class, Team::class, TeamSeason::class], true)
+                && in_array(static::$kind, ['invoiceLines', 'expenseLines'], true), 403);
+            $parent = $this->financeContextType::where('tenant_id', Filament::getTenant()->id)->find($this->financeContextId);
+            abort_unless($parent && Filament::auth()->user()?->fresh()?->can('view', $parent), 403);
+            $relation = $parent->{static::$kind === 'invoiceLines' ? 'invoices' : 'expenses'}();
+            abort_unless($relation->where($relation->getRelated()->qualifyColumn('tenant_id'), Filament::getTenant()->id)->whereKey($this->getOwnerRecord()->id)->exists(), 403);
+        }
         if ($this->seasonContextId !== null) {
             $owner = $this->getOwnerRecord()->fresh();
             abort_unless(in_array(static::$kind, ['invoiceLines', 'expenseLines'], true)
@@ -53,7 +70,7 @@ abstract class DossierRelationManager extends RelationManager
     protected function financeLinesChanged(): void
     {
         $this->getOwnerRecord()->refresh();
-        if ($this->seasonContextId !== null) {
+        if ($this->seasonContextId !== null || $this->financeContextType !== null) {
             $this->dispatch('season-finance-updated');
         }
     }

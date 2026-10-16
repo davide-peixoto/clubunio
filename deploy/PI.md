@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Dossier-Finanzdialoge (16.10.2026)
+
+Release `20261016-clubunio-dossier-finance`, Basis/Ruecksprung
+`20261016-clubunio-season-finance`. Finanzdialoge fuer Mitglieder,
+Mannschaften und Mannschaften pro Saison; keine DB-Migration.
+Details: CLUBUNIO-DOSSIER-FINANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Saison-Finanzdialoge (16.10.2026)
 
 Release `20261016-clubunio-season-finance`, Basis/Ruecksprung

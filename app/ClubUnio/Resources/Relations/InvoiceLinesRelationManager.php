@@ -25,7 +25,7 @@ class InvoiceLinesRelationManager extends DossierRelationManager
     private function afterInvoiceChange(): void
     {
         $this->financeLinesChanged();
-        if ($this->seasonContextId === null) {
+        if ($this->seasonContextId === null && $this->financeContextType === null) {
             $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->getOwnerRecord()->id]));
         }
     }

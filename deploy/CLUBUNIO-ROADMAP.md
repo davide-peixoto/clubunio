@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Mitglieder-/Mannschaftsdossiers: Finanzdialoge (16.10.2026)
+
+Rechnungen und Spesen direkt bearbeiten, Positionen im rechten Dialog.
+Neue Belege im Mitgliederdossier; neue Spesen auch bei Mannschaften.
+Mannschaftsrechnungen nur ueber explizite Beitragspositionszuordnung.
+Keine DB-Migration; Zuordnungen beim spaeteren Import erhalten.
+Details: CLUBUNIO-DOSSIER-FINANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Saison: Rechnungen und Spesen direkt bearbeiten (16.10.2026)
 
 Belegkopf/Neuanlage und wiederverwendete Positionsmanager im Saison-Dialog;

@@ -4,6 +4,12 @@ namespace App\ClubUnio\Models;
 
 class TeamSeason extends CatalogModel
 {
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'season_id', 'season_id')->whereHas('lines', fn ($q) => $q->whereIn('id',
+            TeamPlayer::where('tenant_id', $this->tenant_id)->where('team_season_id', $this->id)->select('invoice_line_id')));
+    }
+
     public function trainingSlots()
     {
         return $this->hasMany(TrainingSlot::class);
