@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Beitrags-/Entwurfsperformance (17.10.2026)
+
+25er-Stapelvorschau mit gebuendelter Saison-/Regel-/Preis-/Familien-/Positions-
+Grundlage und gemeinsamer Ergebnisberechnung. Einzelentwurf weiterhin frisch
+unter bestehenden Locks, Spieler-Verknuepfungen einmal lesen. Rechte, Rappen,
+Fingerprints und Audit erhalten. Kein Bexio-Versand, keine Migration.
+CLUBUNIO-CONTRIBUTION-PERFORMANCE.md.
+
 ## Profilabnahme (17.10.2026)
 
 Geschaeftsstelle nur lesen und Finanzen bearbeiten automatisiert abgenommen:

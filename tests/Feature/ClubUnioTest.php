@@ -454,6 +454,76 @@ class ClubUnioTest extends TestCase
         Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer refreshed-access'));
     }
 
+    public function test_contribution_batch_matches_single_results_and_reads_shared_tables_once(): void
+    {
+        [$member, $season] = $this->contributionFixture();
+        $team = $member->teamPlayers()->sole()->team_season_id;
+        $ids = [$member->id];
+        for ($i = 0; $i < 4; $i++) {
+            $m = new Member;
+            $m->forceFill(['tenant_id' => $this->own->id, 'first_name' => 'Synthetic', 'last_name' => 'Batch '.$i,
+                'gender_id' => $member->gender_id, 'birth_date' => $i === 3 ? null : '2010-01-01', 'honorary' => $i === 1])->save();
+            $this->db->table('team_players')->insert(['tenant_id' => $this->own->id, 'member_id' => $m->id, 'team_season_id' => $team]);
+            $ids[] = $m->id;
+        }
+        $family = $this->db->table('families')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Synthetic family']);
+        $this->db->table('family_members')->insert(['tenant_id' => $this->own->id, 'family_id' => $family, 'member_id' => $ids[3], 'discount' => '999.00']);
+        $service = app(ContributionInvoiceService::class);
+        $expected = [];
+        foreach ($ids as $id) {
+            try {
+                $expected[] = $service->preview($this->actor, $this->own, $id, $season);
+            } catch (ValidationException $e) {
+                $m = Member::findOrFail($id);
+                $expected[] = ['member_id' => $id, 'member' => $m->display_name, 'error' => $e->validator->errors()->first()];
+            }
+        }
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $this->assertSame($expected, $service->previewMany($this->actor, $this->own, $season, $ids));
+        $queries = $this->db->getQueryLog();
+        foreach (['contribution_rules', 'contribution_prices', 'family_members', 'team_players'] as $table) {
+            $this->assertCount(1, array_filter($queries, fn ($q) => str_starts_with(explode(' from ', $q['query'], 2)[1] ?? '', '"clubora"."'.$table.'"')), $table);
+        }
+        $this->db->disableQueryLog();
+        $invoice = $service->create($this->actor, $this->own, $member->id, $season, $expected[0]['fingerprint']);
+        $this->assertSame($invoice->id, $service->previewMany($this->actor, $this->own, $season, [$member->id])[0]['existing_invoice_id']);
+        $this->assertSame($service->preview($this->actor, $this->own, $member->id, $season), $service->previewMany($this->actor, $this->own, $season, [$member->id])[0]);
+        Http::assertNothingSent();
+    }
+
+    public function test_contribution_batch_rechecks_changed_price_and_role_before_writing(): void
+    {
+        [$member, $season, $price] = $this->contributionFixture();
+        $batch = app(ContributionBatchService::class)->preview($this->actor, $this->own, $season);
+        $this->db->table('contribution_prices')->where('id', $price)->update(['amount' => 300]);
+        $result = app(ContributionBatchService::class)->create($this->actor, $this->own, $batch);
+        $this->assertArrayNotHasKey('invoice_id', $result[0]);
+        $this->assertSame(0, Invoice::where('tenant_id', $this->own->id)->count());
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->expectException(HttpException::class);
+        app(ContributionInvoiceService::class)->previewMany($this->actor, $this->own, $season, [$member->id]);
+    }
+
+    public function test_contribution_many_rejects_foreign_members_and_oversized_input(): void
+    {
+        [$member, $season] = $this->contributionFixture();
+        $service = app(ContributionInvoiceService::class);
+        $foreign = Member::where('tenant_id', $this->other->id)->firstOrFail();
+        try {
+            $service->previewMany($this->actor, $this->own, $season, [$foreign->id]);
+            $this->fail('Foreign member accepted');
+        } catch (ModelNotFoundException) {
+            $this->assertTrue(true);
+        }
+        try {
+            $service->previewMany($this->actor, $this->own, $season, array_fill(0, 26, $member->id));
+            $this->fail('Oversized preview accepted');
+        } catch (HttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
+    }
+
     public function test_invoice_batch_preview_creation_and_replay(): void
     {
         [$member, $season] = $this->contributionFixture();

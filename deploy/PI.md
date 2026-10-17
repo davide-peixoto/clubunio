@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Beitrags-/Entwurfsperformance (17.10.2026)
+
+Delta 20261017-clubunio-contribution-performance auf verifiziertem Release.
+Zwei Fachservices, keine DB-/Rollenmigration. CLI-Pruefung mit synthetischen
+Rollback-Entwuerfen, HTTP gesperrt, keine echte Rechnung/Bexio-Zustellung.
+Messungen/Rollback: CLUBUNIO-CONTRIBUTION-PERFORMANCE.md.
+
 ## Saison-/Mehrfachaktionsperformance (17.10.2026)
 
 Delta 20261017-clubunio-season-bulk-performance auf aktuellem Profil-Release.

@@ -15,15 +15,8 @@ class ContributionBatchService
         Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
         $members = app(MemberAccessService::class)->activeMembers($tenant)->where('id', '>', $after)
             ->whereHas('teamPlayers', fn ($q) => $q->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId)))
-            ->orderBy('id')->limit(26)->get();
-        $rows = [];
-        foreach ($members->take(25) as $member) {
-            try {
-                $rows[] = app(ContributionInvoiceService::class)->preview($actor, $tenant, $member->id, $seasonId);
-            } catch (ValidationException $error) {
-                $rows[] = ['member_id' => $member->id, 'member' => $member->display_name, 'error' => $error->validator->errors()->first()];
-            }
-        }
+            ->orderBy('id')->limit(26)->get(['clubora.members.id']);
+        $rows = app(ContributionInvoiceService::class)->previewMany($actor, $tenant, $seasonId, $members->take(25)->pluck('id')->all());
 
         return ['season_id' => $seasonId, 'rows' => $rows, 'next' => $members->count() > 25 ? $members[24]->id : null];
     }

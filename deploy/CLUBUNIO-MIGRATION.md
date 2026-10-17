@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+17.10.2026: Contribution batch preview shares bounded calculation reads within
+one run. Single/create previews remain fresh; same results/fingerprints,
+locks, rights, idempotency and audit. Preserve historical invoice/player IDs.
+No schema/import/Bexio send/payment/API/SaaS/operations or PHPMaker DEV/PROD
+change. See CLUBUNIO-CONTRIBUTION-PERFORMANCE.md.
+
 17.10.2026: Named profile acceptance completed with transactional synthetic
 accounts and domain records. Read-only office and finance editing tested;
 existing rights fingerprints unchanged after rollback. No migration, deployment

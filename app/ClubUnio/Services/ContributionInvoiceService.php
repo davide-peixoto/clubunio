@@ -13,6 +13,8 @@ use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\TeamPlayer;
 use App\ClubUnio\Models\Tenant;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -38,7 +40,8 @@ class ContributionInvoiceService
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'view');
         $member = app(MemberAccessService::class)->activeMembers($tenant)->findOrFail($memberId);
         $season = Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
-        if (! $member->teamPlayers()->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->exists()) {
+        $players = $member->teamPlayers()->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->get(['invoice_line_id']);
+        if ($players->isEmpty()) {
             $this->fail('Keine aktive Spielerzuordnung in dieser Saison vorhanden.');
         }
         if (! $member->birth_date || ! $member->gender_id) {
@@ -48,11 +51,65 @@ class ContributionInvoiceService
             ->where('season_id', $seasonId)->where('gender_id', $member->gender_id)
             ->where('year_from', '<=', $member->birth_date->year)->where('year_to', '>=', $member->birth_date->year)
             ->whereHas('price', fn ($q) => $q->where('active', true))->with('price')->get();
+        $families = FamilyMember::where('tenant_id', $tenant->id)->where('member_id', $memberId)->where('active', true)
+            ->whereHas('family', fn ($q) => $q->where('active', true))->get();
+        $existing = InvoiceLine::where('tenant_id', $tenant->id)->where('active', true)->where('contribution', true)
+            ->whereHas('invoice', fn ($q) => $q->where('active', true)->where('member_id', $memberId)->where('season_id', $seasonId))->get();
+
+        return $this->result($member, $season, $rules, $families, $existing, $players);
+    }
+
+    public function previewMany(Account $actor, Tenant $tenant, int $seasonId, array $memberIds): array
+    {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'view');
+        abort_if(count($memberIds) > 25, 422);
+        if (! $memberIds) {
+            return [];
+        }
+        $season = Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
+        $members = app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id', $memberIds)->get()->keyBy('id');
+        $players = TeamPlayer::where('tenant_id', $tenant->id)->where('active', true)->whereIn('member_id', $memberIds)
+            ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))
+            ->get(['member_id', 'invoice_line_id'])->groupBy('member_id');
+        $rules = ContributionRule::where('tenant_id', $tenant->id)->where('active', true)->where('season_id', $seasonId)
+            ->whereHas('price', fn ($q) => $q->where('active', true))->with('price')->get();
+        $families = FamilyMember::where('tenant_id', $tenant->id)->where('active', true)->whereIn('member_id', $memberIds)
+            ->whereHas('family', fn ($q) => $q->where('active', true))->get()->groupBy('member_id');
+        $existing = InvoiceLine::query()->join('clubora.invoices as ci', fn ($join) => $join->on('ci.id', '=', 'clubora.invoice_lines.invoice_id')->on('ci.tenant_id', '=', 'clubora.invoice_lines.tenant_id'))
+            ->where('clubora.invoice_lines.tenant_id', $tenant->id)->where('clubora.invoice_lines.active', true)->where('clubora.invoice_lines.contribution', true)
+            ->where('ci.active', true)->where('ci.season_id', $seasonId)->whereIn('ci.member_id', $memberIds)
+            ->get(['clubora.invoice_lines.*', 'ci.member_id as contribution_member_id'])->groupBy('contribution_member_id');
+        $rows = [];
+        foreach ($memberIds as $id) {
+            // Authorization is fresh for each result, not cached with shared calculation data.
+            app(ModulePermissionService::class)->authorize($actor, $tenant, 'contributions', 'view');
+            $member = $members->get($id);
+            if (! $member) {
+                throw (new ModelNotFoundException)->setModel(Member::class, [$id]);
+            }
+            try {
+                $matching = $rules->filter(fn ($rule) => $member->birth_date && (int) $rule->gender_id === (int) $member->gender_id
+                    && $rule->year_from <= $member->birth_date->year && $rule->year_to >= $member->birth_date->year)->values();
+                $rows[] = $this->result($member, $season, $matching, $families->get($id, collect()), $existing->get($id, collect()), $players->get($id, collect()));
+            } catch (ValidationException $error) {
+                $rows[] = ['member_id' => $id, 'member' => $member->display_name, 'error' => $error->validator->errors()->first()];
+            }
+        }
+
+        return $rows;
+    }
+
+    private function result(Member $member, Season $season, Collection $rules, Collection $families, Collection $existing, Collection $players): array
+    {
+        if ($players->isEmpty()) {
+            $this->fail('Keine aktive Spielerzuordnung in dieser Saison vorhanden.');
+        }
+        if (! $member->birth_date || ! $member->gender_id) {
+            $this->fail('Geburtsdatum und Geschlecht müssen für die Beitragsberechnung gepflegt sein.');
+        }
         if ($rules->count() !== 1) {
             $this->fail($rules->isEmpty() ? 'Kein passender Beitragssatz gefunden.' : 'Mehrere passende Beitragssätze: bitte die Regeln bereinigen.');
         }
-        $families = FamilyMember::where('tenant_id', $tenant->id)->where('member_id', $memberId)->where('active', true)
-            ->whereHas('family', fn ($q) => $q->where('active', true))->get();
         if ($families->count() > 1) {
             $this->fail('Mehrere aktive Familienzuordnungen: bitte den Familienrabatt eindeutig klären.');
         }
@@ -60,16 +117,13 @@ class ContributionInvoiceService
         $gross = $this->cents((string) $rule->price->amount);
         $exempt = $member->honorary || $member->free_membership;
         $discount = $exempt ? $gross : min($gross, $this->cents((string) ($families->first()?->discount ?? '0')));
-        $existing = InvoiceLine::where('tenant_id', $tenant->id)->where('active', true)->where('contribution', true)
-            ->whereHas('invoice', fn ($q) => $q->where('active', true)->where('member_id', $memberId)->where('season_id', $seasonId))->get();
         if ($existing->count() > 1) {
             $this->fail('Mehrere bestehende Beitragspositionen in dieser Saison: bitte zuerst prüfen.');
         }
-        if ($existing->isEmpty() && $member->teamPlayers()->where('active', true)->whereNotNull('invoice_line_id')
-            ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->exists()) {
+        if ($existing->isEmpty() && $players->contains(fn ($player) => $player->invoice_line_id !== null)) {
             $this->fail('Eine Spielerzuordnung hat bereits eine abweichende Rechnungsposition. Bitte zuerst prüfen.');
         }
-        $result = ['member_id' => $memberId, 'member' => $member->display_name, 'season_id' => $seasonId, 'season' => $season->name,
+        $result = ['member_id' => $member->id, 'member' => $member->display_name, 'season_id' => $season->id, 'season' => $season->name,
             'rule_id' => $rule->id, 'price_id' => $rule->price_id, 'price' => $rule->price->name,
             'gross_cents' => $gross, 'discount_cents' => $discount, 'net_cents' => $gross - $discount,
             'discount_reason' => $exempt ? 'Ehren-/Freimitglied' : 'Familienrabatt',
