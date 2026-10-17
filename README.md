@@ -1,5 +1,7 @@
 # ClubUnio
 
+Saisonwechsel: [Uebernahme und Mehrfachaktionen](deploy/CLUBUNIO-SEASON-BULK-PERFORMANCE.md).
+
 Rundnachrichten: [Empfaengerauswahl und Listenperformance](deploy/CLUBUNIO-ANNOUNCEMENT-PERFORMANCE.md).
 
 Benutzerverwaltung: [Dynamische Modul- und Funktionsprofile](deploy/CLUBUNIO-DYNAMIC-ROLES.md),

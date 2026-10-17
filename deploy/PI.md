@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Saison-/Mehrfachaktionsperformance (17.10.2026)
+
+Delta 20261017-clubunio-season-bulk-performance auf aktuellem Profil-Release.
+Vier Fachdateien, keine Migration oder Berechtigungsumstellung. Frische
+Schreibservices und Rollbackbasis erhalten. Messungen und Tests siehe
+CLUBUNIO-SEASON-BULK-PERFORMANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Dynamische Rollen (16.10.2026)
 
 Release `20261016-clubunio-access-profiles`, aktiviert als gezieltes Delta

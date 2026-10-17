@@ -53,7 +53,9 @@ class WorkspaceEditingTest extends TestCase
         $visible = collect($partition['navigation'])->flatMap(fn ($group) => $group->getItems());
         $this->assertFalse($visible->contains(fn ($item) => str_contains($item->getUrl(), '/countries')));
         $all = $visible->concat(collect($partition['settings'])->flatten(1))->map(fn ($item) => $item->getUrl())->sort()->values()->all();
-        $original = collect($raw)->flatMap(fn ($group) => $group->getItems())->map(fn ($item) => $item->getUrl())->sort()->values()->all();
+        // Training plans are registered manually, outside Filament's resource navigation.
+        $original = collect($raw)->flatMap(fn ($group) => $group->getItems())->map(fn ($item) => $item->getUrl())
+            ->push(url('/planning/training-plans'))->sort()->values()->all();
         $this->assertSame($original, $all);
         $this->get('/configuration')->assertOk()->assertSee('Einstellungen suchen')->assertSee('Sport &amp; Anlagen', false)->assertSee('Parameter');
     }
@@ -83,6 +85,58 @@ class WorkspaceEditingTest extends TestCase
         $record->refresh()->forceFill(['label' => 'Concurrent change'])->save();
         $component->callMountedTableAction()->assertHasTableActionErrors();
         $this->assertTrue($record->fresh()->active);
+    }
+
+    public function test_transfer_batches_member_reads_and_keeps_existing_fingerprint_shape(): void
+    {
+        $target = new Season;
+        $target->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Next', 'active' => true])->save();
+        $save = app(TeamAssignmentService::class);
+        $source = $save->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
+        $member = new Member;
+        $member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic'])->save();
+        $function = $this->db->table('clubora.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'coach', 'name' => 'Coach']);
+        foreach ([TeamPlayer::class, TeamStaff::class, TechnicalLead::class] as $model) {
+            $save->save($this->actor, $this->tenant, $model, null, ['member_id' => $member->id, 'team_season_id' => $source->id, 'active' => true]
+                + ($model === TeamStaff::class ? ['staff_function_id' => $function] : []));
+        }
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $plan = app(SeasonAssignmentTransferService::class)->preview($this->actor, $this->tenant, $this->season->id, $target->id);
+        $memberReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."members"'));
+        $this->assertCount(2, $memberReads);
+        $this->db->disableQueryLog();
+        $sources = TeamSeason::where('tenant_id', $this->tenant->id)->where('season_id', $this->season->id)->where('active', true)->with('team')->orderBy('id')->get();
+        $targets = TeamSeason::where('tenant_id', $this->tenant->id)->where('season_id', $target->id)->orderBy('id')->get();
+        $fingerprint = [$this->actor->id, $this->tenant->id, $this->season->id, $target->id, $sources->toArray(), $targets->toArray()];
+        foreach ([TeamPlayer::class, TeamStaff::class, TechnicalLead::class] as $model) {
+            $assignments = $model::where('tenant_id', $this->tenant->id)->where('team_season_id', $source->id)->where('active', true)->with('member')->orderBy('id')->get();
+            $fingerprint[] = [$assignments->toArray(), []];
+        }
+        $this->assertSame(hash_hmac('sha256', json_encode([$fingerprint, $plan['rows']], JSON_THROW_ON_ERROR), config('app.key')), $plan['token']);
+        $this->assertCount(4, $plan['rows']);
+    }
+
+    public function test_bulk_assignment_lock_read_is_batched(): void
+    {
+        $records = [];
+        for ($i = 0; $i < 3; $i++) {
+            $team = new Team;
+            $team->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Bulk '.$i, 'active' => true])->save();
+            $records[] = app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamSeason::class, null,
+                ['team_id' => $team->id, 'season_id' => $this->season->id, 'active' => true]);
+        }
+        $page = $this->manager()->mountTableBulkAction('deactivateAssignments', $records);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        $page->callMountedTableAction()->assertHasNoTableActionErrors();
+        $batchReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."team_seasons"')
+            && str_contains($q['query'], '"id" in (') && str_contains($q['query'], 'for update'));
+        $this->assertCount(1, $batchReads);
+        $this->db->disableQueryLog();
+        foreach ($records as $record) {
+            $this->assertFalse($record->fresh()->active);
+        }
     }
 
     public function test_season_transfer_preview_duplicates_and_stale_snapshot(): void

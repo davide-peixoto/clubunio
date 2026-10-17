@@ -11,6 +11,7 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Resources\ContributionRuleResource;
 use App\ClubUnio\Resources\FamilyMemberResource;
 use App\ClubUnio\Resources\FormMutation;
+use App\ClubUnio\Resources\ProfileUi;
 use App\ClubUnio\Resources\TeamPlayerResource;
 use App\ClubUnio\Resources\TeamSeasonResource;
 use App\ClubUnio\Resources\TeamStaffResource;
@@ -56,8 +57,11 @@ trait AssignmentRelationActions
                     abort_unless($records->count() > 0 && $records->count() <= 100 && $records->count() === count($this->assignmentBulkSnapshot), 422);
                     DB::connection('clubunio')->transaction(function () use ($records, $active) {
                         Tenant::whereKey(Filament::getTenant()->id)->lockForUpdate()->firstOrFail();
+                        $locked = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)
+                            ->whereIn('id', $records->pluck('id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+                        abort_unless($locked->count() === $records->count(), 404);
                         foreach ($records as $selected) {
-                            $record = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)->lockForUpdate()->findOrFail($selected->id);
+                            $record = $locked->get($selected->id);
                             $data = $this->assignmentData($record);
                             if (! hash_equals($this->assignmentBulkSnapshot[$record->id] ?? '', hash('sha256', json_encode($data, JSON_THROW_ON_ERROR)))) {
                                 throw ValidationException::withMessages(['active' => 'Auswahl wurde inzwischen geändert. Bitte neu auswählen.']);
@@ -137,7 +141,7 @@ trait AssignmentRelationActions
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $actor = Filament::auth()->user()?->fresh();
             abort_unless($actor && $tenant && $actor->can('view', $this->getOwnerRecord())
-                && \App\ClubUnio\Resources\ProfileUi::model($this->getRelationship()->getRelated())
+                && ProfileUi::model($this->getRelationship()->getRelated())
                 && (int) $this->getOwnerRecord()->tenant_id === (int) $tenant->id, 403);
             // A submitted identifier must still belong to this exact dossier, not just the tenant.
             $function = 'create';
@@ -146,7 +150,7 @@ trait AssignmentRelationActions
                 $function = array_key_exists('active', $data) && (bool) $data['active'] !== (bool) $record->active
                     ? ((bool) $data['active'] ? 'restore' : 'deactivate') : 'update';
             }
-            abort_unless(\App\ClubUnio\Resources\ProfileUi::model($this->getRelationship()->getRelated(), $function), 403);
+            abort_unless(ProfileUi::model($this->getRelationship()->getRelated(), $function), 403);
             $data[$this->assignmentParentField()] = $this->getOwnerRecord()->id;
             $resource = $this->assignmentResource();
             $service = match (static::$kind) {

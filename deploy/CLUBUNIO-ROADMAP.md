@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saison-/Mehrfachaktionsperformance (17.10.2026)
+
+Saisonvorschau mit gruppierten Zuordnungen, gemeinsam geladenen Mitgliedern
+und passenden Zielteams. Auswahl-Select nur ID/Label; Snapshot-Lock-Reads
+fuer Mehrfachaktionen gebuendelt. Frische Schreibrechte, Versionen, HMAC und
+Audit unveraendert. Keine Migration. CLUBUNIO-SEASON-BULK-PERFORMANCE.md.
+
 ## Rundnachrichten-Performance (16.10.2026)
 
 Benutzer-/Mannschaftsauswahl mit Serversuche statt voller Listen,50 Treffer

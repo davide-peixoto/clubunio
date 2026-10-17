@@ -11,10 +11,11 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Locked;
 
 class TeamSeasonsRelationManager extends DossierRelationManager
@@ -75,9 +76,9 @@ class TeamSeasonsRelationManager extends DossierRelationManager
             })]);
     }
 
-    private function transferTeamOptions(): \Illuminate\Support\Collection
+    private function transferTeamOptions(): Collection
     {
-        return TeamSeason::where('tenant_id', Filament::getTenant()->id)->where('season_id', $this->getOwnerRecord()->id)->where('active', true)->with('team')->get()->mapWithKeys(fn ($team) => [$team->id => $team->label]);
+        return TeamSeason::where('tenant_id', Filament::getTenant()->id)->where('season_id', $this->getOwnerRecord()->id)->where('active', true)->pluck('label', 'id');
     }
 
     private function refreshTransferPreview(int $target, array $teams): void

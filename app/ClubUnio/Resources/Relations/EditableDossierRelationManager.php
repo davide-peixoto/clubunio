@@ -45,8 +45,11 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
                     abort_unless($records->count() > 0 && $records->count() <= 100 && $records->count() === count($this->itemBulkSnapshot), 422);
                     DB::connection('clubunio')->transaction(function () use ($records, $save, $active) {
                         Tenant::whereKey(Filament::getTenant()->id)->lockForUpdate()->firstOrFail();
+                        $locked = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)
+                            ->whereIn('id', $records->pluck('id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+                        abort_unless($locked->count() === $records->count(), 404);
                         foreach ($records as $selected) {
-                            $record = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)->lockForUpdate()->findOrFail($selected->id);
+                            $record = $locked->get($selected->id);
                             $data = $this->itemValues($record);
                             if (! hash_equals($this->itemBulkSnapshot[$record->id] ?? '', hash('sha256', json_encode($data, JSON_THROW_ON_ERROR)))) {
                                 throw ValidationException::withMessages(['active' => 'Auswahl wurde inzwischen geändert. Bitte neu auswählen.']);
@@ -58,6 +61,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
                 });
             })->deselectRecordsAfterCompletion(), [false, true]);
     }
+
     public function isReadOnly(): bool
     {
         return false;

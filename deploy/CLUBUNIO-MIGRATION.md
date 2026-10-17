@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+17.10.2026: Season transfer indexes existing assignment collections and batches
+member hydration. Bulk confirmation rows locked/read together; per-record
+write authorization, validation and audit remain fresh. Preserve HMAC shape,
+IDs and inactive records. No schema/import/API/SaaS/operations or PHPMaker
+DEV/PROD change. See CLUBUNIO-SEASON-BULK-PERFORMANCE.md.
+
 16.10.2026: Announcement choices now bounded server searches plus selected-ID
 labels; status catalog reused per table build only. Existing recipient IDs,
 snapshots, token/hash checks and transactional delivery unchanged. No schema,

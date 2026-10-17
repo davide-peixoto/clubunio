@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\TeamPlayer;
 use App\ClubUnio\Models\TeamSeason;
@@ -32,41 +33,52 @@ final class SeasonAssignmentTransferService
             $sources = $sources->whereIn('id', $teamSeasonIds)->values();
         }
         $targets = TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $target)->orderBy('id')->get();
+        $targetsByTeam = $targets->groupBy('team_id');
+        $relevantTargets = $targets->whereIn('team_id', $sources->pluck('team_id'));
+        $assignmentTeamIds = $sources->pluck('id')->merge($relevantTargets->pluck('id'));
         $models = [TeamPlayer::class => 'Spieler', TeamStaff::class => 'Staff', TechnicalLead::class => 'Technische Leitung'];
         $assignmentsByModel = [];
         $memberIds = collect();
         foreach ($models as $model => $label) {
-            $assignmentsByModel[$model] = $model::where('tenant_id', $tenant->id)->whereIn('team_season_id', $sources->pluck('id')->merge($targets->pluck('id')))->with('member')->orderBy('id')->get();
+            $assignmentsByModel[$model] = $model::where('tenant_id', $tenant->id)->whereIn('team_season_id', $assignmentTeamIds)->orderBy('id')->get();
             $memberIds = $memberIds->merge($assignmentsByModel[$model]->pluck('member_id'));
         }
-        $activeMembers = app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id', $memberIds->unique())->pluck('id')->all();
-        $validFunctions = DB::connection('clubunio')->table('clubora.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)->pluck('id')->all();
+        $members = Member::where('tenant_id', $tenant->id)->whereIn('id', $memberIds->unique())->get()->keyBy('id');
+        foreach ($assignmentsByModel as $model => $assignments) {
+            foreach ($assignments as $assignment) {
+                $assignment->setRelation('member', $members->get($assignment->member_id));
+            }
+            $assignmentsByModel[$model] = $assignments->groupBy('team_season_id');
+        }
+        $activeMembers = array_fill_keys(app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id', $memberIds->unique())->pluck('id')->all(), true);
+        $validFunctions = array_fill_keys(DB::connection('clubunio')->table('clubora.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)->pluck('id')->all(), true);
         $rows = [];
         $seen = [];
         $fingerprint = [$actor->id, $tenant->id, $source, $target, $sources->toArray(), $targets->toArray()];
         foreach ($sources as $team) {
-            $matches = $targets->where('team_id', $team->team_id);
+            $matches = $targetsByTeam->get($team->team_id, collect());
             $destination = $matches->first();
             $key = 'team:'.$team->team_id;
             $blocked = ! $team->team?->active || $matches->count() > 1 || ($destination && ! $destination->active);
             $rows[] = ['type' => 'Mannschaft', 'label' => $team->label, 'state' => $blocked ? 'blockiert' : (($destination || isset($seen[$key])) ? 'vorhanden' : 'neu'), 'reason' => $blocked ? 'Mannschaft inaktiv oder Zielzuordnung inaktiv/mehrdeutig' : '', 'model' => TeamSeason::class, 'source_id' => $team->id, 'team_id' => $team->team_id, 'data' => ['team_id' => $team->team_id, 'season_id' => $target, 'active' => true]];
             $seen[$key] = true;
             foreach ($models as $model => $label) {
-                $assignments = $assignmentsByModel[$model]->where('team_season_id', $team->id)->where('active', true)->values();
-                $existing = $destination ? $assignmentsByModel[$model]->where('team_season_id', $destination->id)->values() : collect();
+                $assignments = $assignmentsByModel[$model]->get($team->id, collect())->where('active', true)->values();
+                $existing = $destination ? $assignmentsByModel[$model]->get($destination->id, collect()) : collect();
+                $existingByMember = $existing->groupBy('member_id');
                 $fingerprint[] = [$assignments->toArray(), $existing->toArray()];
                 foreach ($assignments as $assignment) {
                     $data = ['member_id' => $assignment->member_id, 'active' => true];
-                    $duplicates = $existing->where('member_id', $assignment->member_id);
+                    $duplicates = $existingByMember->get($assignment->member_id, collect());
                     $invalidFunction = false;
                     if ($model === TeamStaff::class) {
                         $data['staff_function_id'] = $assignment->staff_function_id;
                         $duplicates = $duplicates->where('staff_function_id', $assignment->staff_function_id);
-                        $invalidFunction = ! in_array($assignment->staff_function_id, $validFunctions);
+                        $invalidFunction = ! isset($validFunctions[$assignment->staff_function_id]);
                     }
                     $key = $model.':'.$team->team_id.':'.$assignment->member_id.':'.($data['staff_function_id'] ?? '');
-                    $state = $blocked || $invalidFunction || ! in_array($assignment->member_id, $activeMembers) ? 'blockiert' : ($duplicates->isNotEmpty() || isset($seen[$key]) ? 'vorhanden' : 'neu');
-                    $reason = $blocked ? 'Mannschaft blockiert' : ($invalidFunction ? 'Staff-Funktion fehlt oder ist inaktiv' : (! in_array($assignment->member_id, $activeMembers) ? 'Mitglied ausgetreten oder archiviert' : ($duplicates->where('active', false)->isNotEmpty() ? 'Inaktive Zielzuordnung bleibt unverändert' : '')));
+                    $state = $blocked || $invalidFunction || ! isset($activeMembers[$assignment->member_id]) ? 'blockiert' : ($duplicates->isNotEmpty() || isset($seen[$key]) ? 'vorhanden' : 'neu');
+                    $reason = $blocked ? 'Mannschaft blockiert' : ($invalidFunction ? 'Staff-Funktion fehlt oder ist inaktiv' : (! isset($activeMembers[$assignment->member_id]) ? 'Mitglied ausgetreten oder archiviert' : ($duplicates->where('active', false)->isNotEmpty() ? 'Inaktive Zielzuordnung bleibt unverändert' : '')));
                     $rows[] = ['type' => $label, 'label' => $team->label.' / '.$assignment->member?->display_name, 'state' => $state, 'reason' => $reason, 'model' => $model, 'source_id' => $assignment->id, 'team_id' => $team->team_id, 'data' => $data];
                     $seen[$key] = true;
                 }
@@ -83,6 +95,7 @@ final class SeasonAssignmentTransferService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'transfer');
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'seasons', 'transfer');
+
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $source, $target, $token, $teamSeasonIds) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'transfer');
