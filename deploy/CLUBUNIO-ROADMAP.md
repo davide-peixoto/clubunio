@@ -1,5 +1,19 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Profilabnahme (17.10.2026)
+
+Geschaeftsstelle nur lesen und Finanzen bearbeiten automatisiert abgenommen:
+6 Tests/564 Assertions inklusive Ressourcen-/Untertabellenpruefung. Testdaten
+zurueckgerollt, bestehende Rechte per Fingerprint unveraendert. Keine Migration,
+kein Deployment, keine Benutzerumstellung. Details: CLUBUNIO-PROFILE-ACCEPTANCE.md.
+
+Manueller Browserdurchlauf auf dev.clubunio.ch mit zwei separaten Testkonten
+ebenfalls erfolgt: Rechtegrenzen, Rechnungs-/Positions-/Spesenbearbeitung und
+PDF bestaetigt, Testdaten anschliessend entfernt. Offen aus der UI-Abnahme:
+Rechnungsverlauf entpackt after_value.invoice nicht, Elternzeile/Tab nach
+verschachtelten Dialogen nicht frisch, Positionsaktion "Edit line" unuebersetzt.
+Keine pauschale Vollabnahme aller Dialoge; Details und Bildbelege im Testbericht.
+
 ## Saison-/Mehrfachaktionsperformance (17.10.2026)
 
 Saisonvorschau mit gruppierten Zuordnungen, gemeinsam geladenen Mitgliedern

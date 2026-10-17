@@ -1,5 +1,17 @@
 # ClubUnio migration work packages
 
+17.10.2026: Named profile acceptance completed with transactional synthetic
+accounts and domain records. Read-only office and finance editing tested;
+existing rights fingerprints unchanged after rollback. No migration, deployment
+or real assignments. See CLUBUNIO-PROFILE-ACCEPTANCE.md for scope and limits.
+
+Manual deployed-browser acceptance followed using two separate synthetic
+accounts: rights boundaries passed; invoice/line/expense edits and PDF checked.
+Fixtures removed, original rights unchanged. No schema/import changes.
+Before final UI sign-off fix nested invoice audit decoding, stale parent/tab
+refresh after nested dialogs and the remaining "Edit line" label. No PHPMaker
+DEV/PROD changes, no application deployment in this acceptance-only package.
+
 17.10.2026: Season transfer indexes existing assignment collections and batches
 member hydration. Bulk confirmation rows locked/read together; per-record
 write authorization, validation and audit remain fresh. Preserve HMAC shape,

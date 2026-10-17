@@ -2,6 +2,12 @@
 
 Stand 16.10.2026: Fachintegration getestet und auf dev.clubunio.ch bereitgestellt.
 
+Abnahme 17.10.2026: [Beispielprofile und Ergebnisse](CLUBUNIO-PROFILE-ACCEPTANCE.md).
+Nur Lesen und Finanzen bearbeiten mit isolierten Testkonten geprueft;
+bestehende Benutzerrechte unveraendert, keine dauerhafte Profilzuordnung.
+Auch im Browser auf ClubUnio geprueft. Rechtegrenzen bestanden; offene
+Verlaufs-/Aktualisierungs-/Beschriftungsbefunde stehen im Abnahmebericht.
+
 ## Bedienung
 
 Unter Einstellungen > Rollen & Berechtigungen legen Administratoren eigene Profile
