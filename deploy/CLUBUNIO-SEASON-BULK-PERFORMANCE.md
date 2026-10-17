@@ -63,8 +63,14 @@ verschiedene Tests nach Korrektur erfolgreich, in getrennten Laeufen.
 Pint, PHP-Syntax, View-/Routen-/Tenantchecks und Profil-Aktivierungscheck OK.
 Release 20261017-clubunio-season-bulk-performance aktiv; Rollbackbasis
 20261016-clubunio-access-profiles. Login HTTP-Pruefung erfolgreich.
-Angemeldete manuelle Sichtpruefung noch offen: Browser zeigt Loginformular;
-Livewire-Dialoge inklusive Auswahl/Bestaetigung automatisiert geprueft.
+Angemeldete Chrome-Sichtpruefung am17.10.2026 abgeschlossen: Saisondossier
+2025/2026,26 Quellteams, Ziel2026/2027. Vorschau zeigt213 neu/209 vorhanden/
+89 blockiert samt Begruendung. Nach Entfernen der Mannschaft Abmeldung aus
+der Dialogauswahl korrekt neu berechnet:212 neu/209 vorhanden/86 blockiert.
+Uebernahme bleibt wegen Blockierungen gesperrt, keine Konsolenfehler.
+Dialog abgebrochen, keine Uebernahme oder sonstige Datenveraenderung.
+Livewire-Dialoge inklusive Auswahl/Bestaetigung zusaetzlich automatisiert
+geprueft. Sichtbare Darstellung ohne Ueberlagerungen, Tabelle scrollbar.
 
 ## Migration und Rollback
 
