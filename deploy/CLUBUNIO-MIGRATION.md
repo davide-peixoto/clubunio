@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+18.10.2026: Seven SV Sissach access profiles created without account assignments.
+Tenant-specific setup, not a schema migration or legacy import. Explicit rights,
+audited creation, existing profiles never overwritten. Future database moves
+must recreate deliberately without automatic account assignment or copied IDs.
+See CLUBUNIO-SVS-ACCESS-PROFILES.md.
+
 18.10.2026: Training list metadata projection, scoped read optimization and
 one aggregate quota query. No schema/import/configuration/provider contract
 change. Preserve owner/shared/team scope, fresh download/edit permissions,

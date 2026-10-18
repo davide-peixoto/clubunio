@@ -5,8 +5,12 @@ Stand 16.10.2026: Fachintegration getestet und auf dev.clubunio.ch bereitgestell
 Abnahme 17.10.2026: [Beispielprofile und Ergebnisse](CLUBUNIO-PROFILE-ACCEPTANCE.md).
 Nur Lesen und Finanzen bearbeiten mit isolierten Testkonten geprueft;
 bestehende Benutzerrechte unveraendert, keine dauerhafte Profilzuordnung.
-Auch im Browser auf ClubUnio geprueft. Rechtegrenzen bestanden; offene
-Verlaufs-/Aktualisierungs-/Beschriftungsbefunde stehen im Abnahmebericht.
+Auch im Browser auf ClubUnio geprueft. Die drei UI-Nebenbefunde sind seit
+18.10.2026 korrigiert: CLUBUNIO-DOSSIER-UI-FIXES.md.
+
+18.10.2026: Sieben konkrete SVS-Profile inklusive Platzwart angelegt, ohne
+Benutzerzuordnung. Rechteumfang und Wiederholung:
+[SVS-Verwaltungsprofile](CLUBUNIO-SVS-ACCESS-PROFILES.md).
 
 ## Bedienung
 

@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Vorbereitete SVS-Profile (18.10.2026)
+
+Sieben Verwaltungsprofile inklusive Platzwart angelegt, ohne Benutzerzuordnung.
+Bestehende Rechte unveraendert; keine Schema- oder Anwendungsmigration.
+Definition, Pruefung und Migrationshinweise: CLUBUNIO-SVS-ACCESS-PROFILES.md.
+
 ## Trainingsplan-Performance (18.10.2026)
 
 Planliste nur mit sichtbaren Metadaten statt vollstaendigen Plan-JSONs;
