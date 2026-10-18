@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -192,5 +193,82 @@ class SyncWorkTest extends TestCase
         $this->assertSame(5, $service->retry($this->actor, $this->tenant, $id, 1));
         $this->assertSame('succeeded', $service->table()->find($id)->state);
         $this->assertNull($service->table()->find($id)->lease_token);
+    }
+
+    public function test_history_loads_on_demand_and_all_older_notes_remain_reachable(): void
+    {
+        $id = app(SyncWorkService::class)->remember($this->actor, $this->tenant, 'catalog', 1, []);
+        $rows = [];
+        for ($i = 0; $i < 45; $i++) {
+            $rows[] = ['work_item_id' => $id, 'actor_id' => $this->actor->id, 'event' => 'attention', 'code' => 'status_503',
+                'encrypted_note' => Crypt::encryptString(sprintf('History entry %03d', $i))];
+        }
+        $this->db->table('clubora.sync_work_events')->insert($rows);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        try {
+            $page = Livewire::test(Synchronisation::class)->assertSuccessful()->assertDontSee('History entry');
+            $queries = collect($this->db->getQueryLog())->pluck('query');
+        } finally {
+            $this->db->disableQueryLog();
+        }
+        $this->assertFalse($queries->contains(fn ($sql) => str_contains($sql, 'sync_work_events')));
+        $page->call('showHistory', $id)->assertSuccessful()->assertSee('History entry 044')->assertDontSee('History entry 024');
+        $this->assertSame(20, $page->viewData('history')->count());
+        $this->assertSame(46, $page->viewData('history')->total());
+        $page->call('gotoPage', 2, 'historyPage')->assertSee('History entry 024')->assertDontSee('History entry 044');
+        $page->call('gotoPage', 3, 'historyPage')->assertSee('History entry 000')->assertSee('Auftrag gespeichert');
+        $page->call('closeHistory')->assertSet('historyItemId', null)->assertDontSee('History entry');
+        $this->assertSame(46, $this->db->table('clubora.sync_work_events')->where('work_item_id', $id)->count());
+        $this->assertSame(1, app(SyncWorkService::class)->table()->find($id)->revision);
+        Http::assertNothingSent();
+    }
+
+    public function test_history_switch_and_filters_reset_only_read_selection(): void
+    {
+        $service = app(SyncWorkService::class);
+        $first = $service->remember($this->actor, $this->tenant, 'catalog', 1, []);
+        $second = $service->remember($this->actor, $this->tenant, 'sfv_schedule', 2, ['from' => '2026-10-15', 'to' => '2026-10-16']);
+        $this->db->table('clubora.sync_work_events')->insert(['work_item_id' => $second, 'actor_id' => null, 'event' => 'attention',
+            'code' => 'status_503', 'encrypted_note' => Crypt::encryptString('SFV history only')]);
+        $page = Livewire::test(Synchronisation::class)->assertSee('2026-10-15')->call('showHistory', $first);
+        $page->call('showHistory', $second)->assertSet('historyItemId', $second)->assertSee('SFV history only')->assertSee('Öffentliche Anmeldung');
+        $page->set('provider', 'bexio')->assertSet('historyItemId', null)->assertDontSee('SFV history only')->assertDontSee('SFV · Spielplan abrufen');
+        $page->set('provider', 'all')->call('showHistory', $second)->set('state', 'closed')->assertSet('historyItemId', null)->assertDontSee('SFV history only');
+    }
+
+    public function test_list_does_not_read_unused_provider_payload_or_technical_tokens(): void
+    {
+        $service = app(SyncWorkService::class);
+        $id = $service->remember($this->actor, $this->tenant, 'catalog', 1, ['fixture' => 'Provider payload not for display']);
+        $service->table()->where('id', $id)->update(['encrypted_payload' => 'Not even a valid ciphertext', 'lease_token' => Str::uuid()]);
+        $page = Livewire::test(Synchronisation::class)->assertSuccessful()->assertSee('Bexio · Artikel und Steuern');
+        $row = $page->viewData('rows')->first();
+        $this->assertNull($row->encrypted_payload);
+        $this->assertFalse(property_exists($row, 'lease_token'));
+        $this->assertFalse(property_exists($row, 'connection_hash'));
+        $this->assertFalse(property_exists($row, 'deduplication_key'));
+    }
+
+    public function test_foreign_history_is_not_accessible_and_role_revocation_blocks_paging(): void
+    {
+        $service = app(SyncWorkService::class);
+        $id = $service->remember($this->actor, $this->tenant, 'catalog', 1, []);
+        $other = Tenant::create(['slug' => 'history-other-'.Str::random(10), 'name' => 'Synthetic']);
+        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $foreign = $service->remember($this->actor, $other, 'catalog', 2, []);
+        Livewire::test(Synchronisation::class)->call('showHistory', $foreign)->assertNotFound();
+        $page = Livewire::test(Synchronisation::class)->call('showHistory', $id)->assertSuccessful();
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $page->call('gotoPage', 2, 'historyPage')->assertForbidden();
+    }
+
+    public function test_main_page_change_closes_history_and_locked_selection_rejects_client_input(): void
+    {
+        $id = app(SyncWorkService::class)->remember($this->actor, $this->tenant, 'catalog', 1, []);
+        $page = Livewire::test(Synchronisation::class)->call('showHistory', $id);
+        $page->call('gotoPage', 2)->assertSet('historyItemId', null)->assertDontSee('Auftrag gespeichert');
+        $this->expectException(CannotUpdateLockedPropertyException::class);
+        $page->set('historyItemId', $id);
     }
 }

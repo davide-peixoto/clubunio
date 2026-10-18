@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Synchronisations-/Protokollperformance (18.10.2026)
+
+Delta 20261018-clubunio-sync-view-performance auf Trainingsplan-Performance.
+Nur Synchronisationsseite und View, keine Migration/Sync-Automatisierung.
+Synthetischer Vergleich mit20 Auftraegen/2000 Ereignissen und Rollback.
+Pruefungen und Ruecksprung: CLUBUNIO-SYNC-VIEW-PERFORMANCE.md.
+
 ## Trainingsplan-Performance (18.10.2026)
 
 Delta 20261018-clubunio-training-performance, Basis Dossier-UI-Fixes.

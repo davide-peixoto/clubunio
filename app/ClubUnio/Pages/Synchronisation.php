@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 use Livewire\WithPagination;
 
 class Synchronisation extends Page
@@ -24,6 +25,9 @@ class Synchronisation extends Page
     public string $provider = 'all';
 
     public string $note = '';
+
+    #[Locked]
+    public ?int $historyItemId = null;
 
     public static function getNavigationGroup(): ?string
     {
@@ -42,12 +46,41 @@ class Synchronisation extends Page
 
     public function updatedState(): void
     {
+        $this->resetHistory();
         $this->resetPage();
     }
 
     public function updatedProvider(): void
     {
+        $this->resetHistory();
         $this->resetPage();
+    }
+
+    public function updatedPaginators($page, $pageName): void
+    {
+        if ($pageName === 'page') {
+            $this->resetHistory();
+        }
+    }
+
+    public function showHistory(int $id): void
+    {
+        $service = app(SyncWorkService::class);
+        $service->authorize(Filament::auth()->user(), Filament::getTenant());
+        abort_unless($service->table()->where('tenant_id', Filament::getTenant()->id)->where('id', $id)->exists(), 404);
+        $this->resetHistory();
+        $this->historyItemId = $id;
+    }
+
+    public function closeHistory(): void
+    {
+        $this->resetHistory();
+    }
+
+    private function resetHistory(): void
+    {
+        $this->historyItemId = null;
+        $this->resetPage('historyPage');
     }
 
     public function collectOutstanding(): void
@@ -91,23 +124,29 @@ class Synchronisation extends Page
             ->when($this->provider === 'bexio', fn ($q) => $q->whereNotIn('operation', ['sfv_schedule', 'training_review', 'azure_upload']))
             ->when($this->provider === 'ai', fn ($q) => $q->where('operation', 'training_review'))
             ->when($this->provider === 'azure', fn ($q) => $q->where('operation', 'azure_upload'))
+            ->select(['id', 'operation', 'object_id', 'state', 'attempts', 'error_code', 'revision', 'lease_until', 'updated_at'])
+            ->selectRaw('case when operation in (?, ?, ?) then encrypted_payload else null end as encrypted_payload', ['sfv_schedule', 'training_review', 'azure_upload'])
             ->orderByDesc('updated_at')->orderByDesc('id')->paginate(20);
-        $events = DB::connection('clubunio')->table('clubora.sync_work_events')->whereIn('work_item_id', $rows->pluck('id'))
-            ->orderByDesc('id')->get()->groupBy('work_item_id');
+        $history = null;
+        if ($this->historyItemId !== null) {
+            app(SyncWorkService::class)->authorize(Filament::auth()->user(), Filament::getTenant());
+            if ($rows->contains('id', $this->historyItemId)) {
+                $history = DB::connection('clubunio')->table('clubora.sync_work_events')->where('work_item_id', $this->historyItemId)
+                    ->orderByDesc('id')->paginate(20, ['id', 'actor_id', 'event', 'code', 'encrypted_note', 'created_at'], 'historyPage');
+                foreach ($history as $event) {
+                    $event->note = $event->encrypted_note ? Crypt::decryptString($event->encrypted_note) : null;
+                }
+            }
+        }
         foreach ($rows as $row) {
-            $payload = json_decode(Crypt::decryptString($row->encrypted_payload), true, 512, JSON_THROW_ON_ERROR);
+            $payload = $row->encrypted_payload === null ? [] : json_decode(Crypt::decryptString($row->encrypted_payload), true, 512, JSON_THROW_ON_ERROR);
             $row->context = $row->operation === 'sfv_schedule' ? ($payload['from'].' – '.$payload['to'])
                 : ($row->operation === 'training_review' ? ($payload['input']['goal'] ?? '') : '');
             if ($row->operation === 'azure_upload') {
                 $row->context = (['member' => 'Mitglied', 'registration' => 'Anmeldung', 'expense' => 'Spesenposition'][$payload['kind']] ?? 'Dokument').' #'.$payload['owner_id'];
             }
         }
-        foreach ($events as $items) {
-            foreach ($items as $event) {
-                $event->note = $event->encrypted_note ? Crypt::decryptString($event->encrypted_note) : null;
-            }
-        }
 
-        return compact('rows', 'counts', 'events') + ['labels' => SyncWorkService::LABELS];
+        return compact('rows', 'counts', 'history') + ['labels' => SyncWorkService::LABELS];
     }
 }

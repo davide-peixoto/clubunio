@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Synchronisations-/Protokollperformance (18.10.2026)
+
+Uebersicht ohne vorab geladene Verlaufseintraege; pro geoeffnetem Auftrag
+20 Eintraege, aeltere ueber separate Pagination vollstaendig erreichbar.
+Listenprojektion ohne technische Tokens und ohne ungenutzte Payloads.
+Frische Admin-/Vereinspruefung beim Oeffnen und Blaettern. Keine Historie
+geloescht, keine Aenderung der Sync-Ausfuehrung oder Rechte. Keine Migration.
+CLUBUNIO-SYNC-VIEW-PERFORMANCE.md.
+
 ## Vorbereitete SVS-Profile (18.10.2026)
 
 Sieben Verwaltungsprofile inklusive Platzwart angelegt, ohne Benutzerzuordnung.

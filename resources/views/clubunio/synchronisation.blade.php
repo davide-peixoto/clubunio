@@ -37,7 +37,7 @@
         <table class="cu-sync-table">
             <thead><tr class="border-b text-left"><th class="p-3">Auftrag</th><th class="p-3">Status</th><th class="p-3">Letzter Versuch</th><th class="p-3">Aktion</th></tr></thead>
             <tbody>@forelse($rows as $row)
-                <tr class="border-b align-top">
+                <tr class="border-b align-top" wire:key="sync-item-{{ $row->id }}">
                     <td class="p-3">{{ $labels[$row->operation] ?? $row->operation }}<br><small>Objekt {{ $row->object_id }} · Auftrag {{ $row->id }}</small>
                         @if($row->context)<br>{{ $row->context }}@endif
                         @if(in_array($row->operation, ['invoice_transfer','invoice_action','invoice_status','invoice_sync','invoice_result']))
@@ -48,8 +48,9 @@
                     </td>
                     <td class="p-3">{{ ['pending'=>'Bereit','running'=>'In Bearbeitung','attention'=>'Prüfung erforderlich','succeeded'=>'Erfolgreich','closed'=>'Manuell abgeschlossen'][$row->state] }}
                         @if($row->error_code)<br><small>{{ \App\ClubUnio\Services\SyncWorkService::ERRORS[$row->error_code] ?? 'Ausführung prüfen' }}</small>@endif
-                        <details><summary>Verlauf ({{ $row->attempts }} Versuche)</summary>
-                            @foreach($events[$row->id] ?? [] as $event)
+                        @if($historyItemId === $row->id && $history)
+                            <x-filament::button wire:click="closeHistory" wire:loading.attr="disabled" icon="heroicon-o-chevron-up" color="gray" size="sm" aria-expanded="true">Verlauf schliessen ({{ $row->attempts }} Versuche)</x-filament::button>
+                            @foreach($history as $event)
                                 <p>{{ \Carbon\CarbonImmutable::parse($event->created_at)->tz('Europe/Zurich')->format('d.m.Y H:i:s') }} ·
                                     {{ ['recorded'=>'Auftrag gespeichert','started'=>'Versuch gestartet','succeeded'=>'Erfolgreich','attention'=>'Prüfung erforderlich','closed_manually'=>'Manuell abgeschlossen'][$event->event] ?? $event->event }}
                                     · {{ $event->actor_id ? 'Benutzer '.$event->actor_id : 'Öffentliche Anmeldung' }}
@@ -57,7 +58,10 @@
                                     @if($event->note)<br>{{ $event->note }}@endif
                                 </p>
                             @endforeach
-                        </details>
+                            {{ $history->links() }}
+                        @else
+                            <x-filament::button wire:click="showHistory({{ $row->id }})" wire:loading.attr="disabled" icon="heroicon-o-clock" color="gray" size="sm" aria-expanded="false">Verlauf ({{ $row->attempts }} Versuche)</x-filament::button>
+                        @endif
                     </td>
                     <td class="p-3">{{ \Carbon\CarbonImmutable::parse($row->updated_at)->tz('Europe/Zurich')->format('d.m.Y H:i') }}</td>
                     <td class="p-3">

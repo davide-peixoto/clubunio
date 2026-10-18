@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+18.10.2026: Synchronisation page reads history only for the selected item,
+20 entries per separate history page; preserve every historical event/note.
+Metadata projection and conditional context payload reads only. Fresh admin
+authorization and tenant-scoped parent lookup; no client-supplied selection.
+No schema/index/import/settings/retention or sync execution changes. Deploy
+page and Blade together; rollback via prior release. API/SaaS/operations and
+legacy DEV/PROD unchanged. See CLUBUNIO-SYNC-VIEW-PERFORMANCE.md.
+
 18.10.2026: Seven SV Sissach access profiles created without account assignments.
 Tenant-specific setup, not a schema migration or legacy import. Explicit rights,
 audited creation, existing profiles never overwritten. Future database moves

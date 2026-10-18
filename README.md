@@ -1,5 +1,7 @@
 # ClubUnio
 
+Synchronisation: [Uebersicht und Protokollperformance](deploy/CLUBUNIO-SYNC-VIEW-PERFORMANCE.md).
+
 Trainingsplaene: [KI-Webplanung und PDF-Performance](deploy/CLUBUNIO-TRAINING-PERFORMANCE.md).
 
 Teamplanung: [Serienaenderungen und Absenzen](deploy/CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md).
