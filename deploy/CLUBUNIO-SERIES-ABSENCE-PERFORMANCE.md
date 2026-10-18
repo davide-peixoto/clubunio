@@ -57,8 +57,14 @@ Regressionstests/71 Assertions, vier SportsProfilePermissionTest-Faelle/
 Routen/Views, Tenant-/Dokumentguards und Profil-Aktivierungscheck erfolgreich.
 Release20261018-clubunio-series-absence-performance aktiv; Ruecksprungbasis
 20261017-clubunio-contribution-performance. Login HTTP200 nach Aktivierung.
-Angemeldete Sichtpruefung noch offen: bestehende Browsersitzung abgelaufen,
-erneute Anmeldung angefragt. Keine echten Termin-/Absenz-Schreibtests im Web.
+Angemeldete Chrome-Sichtpruefung nach erneuter Anmeldung abgeschlossen:
+Terminliste und Detailansicht geladen; Serienvorschau mit30 Minuten Verschiebung
+und Kapazitaet100 zeigt sieben Aenderungen und zehn ausgenommene Termine.
+Kapazitaet1 wird mit fachlicher Meldung abgewiesen. Absenzuebersicht inkl.
+Zeitraeumen und Status korrekt dargestellt; keine erfassten Browserfehler.
+Vorschau nie bestaetigt, keine echte Teilnahme oder Absenz angelegt/geaendert.
+Schreib-/Rollenabnahme weiterhin durch die genannten Rollback-Tests abgedeckt;
+Browserdurchlauf war nur mit dem angemeldeten Administrationskonto.
 
 ## Migration und Rollback
 
