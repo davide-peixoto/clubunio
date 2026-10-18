@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+## Trainingsplan-Performance (18.10.2026)
+
+Delta 20261018-clubunio-training-performance, Basis Dossier-UI-Fixes.
+Nur Trainings-Webcontroller/-Service und Listenview; keine DB-Migration.
+Synthetische Planliste/PDF/Kopie mit Rollback, kein externer KI-Aufruf.
+Messung, Sicherheitspruefung und Ruecksprung:
+CLUBUNIO-TRAINING-PERFORMANCE.md.
+
 ## Dossierdialoge (18.10.2026)
 
 Delta 20261018-clubunio-dossier-ui-fixes auf Serien-/Absenzperformance-Basis.

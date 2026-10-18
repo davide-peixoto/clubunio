@@ -154,6 +154,90 @@ class TrainingPlanTest extends TestCase
         app(TrainingPlanService::class)->get($this->actor, $this->tenant, $id);
     }
 
+    public function test_list_projects_metadata_and_read_does_not_load_unused_teams(): void
+    {
+        $id = $this->insert();
+        $response = $this->get('/planning/training-plans?q=Testtraining&team='.$this->team)->assertOk()->assertSee('Fixture team');
+        $row = $response->viewData('plans')->first();
+        $this->assertSame(['id', 'title', 'team_season_id', 'shared', 'updated_at'], array_keys((array) $row));
+        $this->assertSame($id, $row->id);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        try {
+            $plan = app(TrainingPlanService::class)->get($this->actor, $this->tenant, $id);
+            $queries = collect($this->db->getQueryLog())->pluck('query');
+        } finally {
+            $this->db->disableQueryLog();
+        }
+        $this->assertEquals($this->plan(), $plan->plan);
+        $this->assertFalse($queries->contains(fn ($sql) => str_contains($sql, 'team_seasons')));
+        $this->get('/planning/training-plans?q=Missing&team='.$this->team)->assertOk()->assertDontSee('Testtraining');
+    }
+
+    public function test_aggregate_ai_quotas_keep_actor_minute_day_and_tenant_day_limits(): void
+    {
+        $other = $this->account('admin');
+        foreach (['minute' => 1, 'actor_day' => 20, 'tenant_day' => 100] as $kind => $count) {
+            $this->db->table('training_plan_requests')->where('tenant_id', $this->tenant->id)->delete();
+            $rows = [];
+            for ($i = 0; $i < $count; $i++) {
+                $rows[] = ['tenant_id' => $this->tenant->id, 'actor_id' => $kind === 'tenant_day' ? $other->id : $this->actor->id,
+                    'kind' => 'generate', 'request_key' => (string) Str::uuid(), 'reference' => (string) Str::uuid(),
+                    'created_at' => ($kind === 'minute' ? now() : now()->subHours(2))->toIso8601String()];
+            }
+            $this->db->table('training_plan_requests')->insert($rows);
+            try {
+                app(TrainingPlanService::class)->generate($this->actor, $this->tenant, $this->input(), (string) Str::uuid());
+                $this->fail('Quota bypass: '.$kind);
+            } catch (ValidationException $error) {
+                $this->assertStringContainsString('Anfragelimit', $error->getMessage());
+            }
+            $this->assertSame($count, $this->db->table('training_plan_requests')->where('tenant_id', $this->tenant->id)->count());
+        }
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_quality_changes_do_not_update_plan_or_sharing(): void
+    {
+        $id = $this->insert();
+        $invalid = [];
+        $plan = $this->plan();
+        $plan['principles'] = ['Spielfreude'];
+        $plan['qualityChecks'] = ['Alles gut'];
+        $invalid[] = $plan;
+        $plan = $this->plan();
+        $plan['exercises'][0]['durationMinutes'] = 19;
+        $invalid[] = $plan;
+        $plan = $this->plan();
+        $plan['exercises'] = array_reverse($plan['exercises']);
+        $invalid[] = $plan;
+        foreach ($invalid as $plan) {
+            try {
+                app(TrainingPlanService::class)->save($this->actor, $this->tenant, $id, 1, $plan, true);
+                $this->fail('Quality gate bypass');
+            } catch (ValidationException $error) {
+                $this->assertArrayHasKey('plan', $error->errors());
+            }
+            $row = $this->db->table('training_plans')->where('id', $id)->first();
+            $this->assertSame(1, $row->revision);
+            $this->assertFalse($row->shared);
+            $this->assertEquals($this->plan(), json_decode($row->plan_json, true));
+        }
+    }
+
+    public function test_trainer_team_revocation_also_blocks_fresh_pdf_access(): void
+    {
+        $id = $this->insert();
+        $this->db->table('training_plans')->where('id', $id)->update(['shared' => true]);
+        $this->actingAs($this->trainer, 'clubunio');
+        $url = '/planning/'.$this->tenant->slug.'/training-plans/'.$id;
+        $this->get($url)->assertOk();
+        $this->db->table('team_staff')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+        $this->get($url)->assertForbidden();
+        $this->get($url.'/pdf')->assertForbidden();
+        Http::assertNothingSent();
+    }
+
     public function test_copies_and_ai_have_independent_rate_limits(): void
     {
         $id = $this->insert();

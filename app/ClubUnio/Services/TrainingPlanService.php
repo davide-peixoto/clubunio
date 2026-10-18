@@ -41,9 +41,10 @@ class TrainingPlanService
 
     public function visible(Account $actor, Tenant $tenant)
     {
-        $teams = $this->teams($actor, $tenant)->pluck('id');
+        $this->authorizeOperation($actor, $tenant, 'view');
         $q = DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
+            $teams = $this->teams($actor, $tenant)->pluck('id');
             $q->whereIn('team_season_id', $teams)->where(fn ($q) => $q->where('owner_id', $actor->id)->orWhere('shared', true));
         }
 
@@ -173,6 +174,7 @@ class TrainingPlanService
     public function copy(Account $actor, Tenant $tenant, int $id, int $revision, string $key): int
     {
         $this->authorizeOperation($actor, $tenant, 'copy');
+
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $key) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorizeOperation($actor, $tenant, 'copy');
@@ -213,10 +215,16 @@ class TrainingPlanService
                 throw ValidationException::withMessages(['request' => 'Diese Anfrage wurde bereits gesendet. Bitte neu laden.']);
             }
             $copy = str_starts_with($kind, 'copy:');
-            $quota = (clone $q)->where('kind', $copy ? 'like' : 'not like', 'copy:%');
-            if ((clone $quota)->where('actor_id', $actor->id)->where('created_at', '>', now()->subMinute()->toIso8601String())->count() >= ($copy ? 10 : 1)
-                || (clone $quota)->where('actor_id', $actor->id)->where('created_at', '>', now()->subDay()->toIso8601String())->count() >= ($copy ? 100 : 20)
-                || (clone $quota)->where('created_at', '>', now()->subDay()->toIso8601String())->count() >= ($copy ? 500 : 100)) {
+            $now = now();
+            $quota = (clone $q)->where('kind', $copy ? 'like' : 'not like', 'copy:%')
+                ->where('created_at', '>', $now->copy()->subDay()->toIso8601String())
+                ->selectRaw('count(*) as tenant_day')
+                ->selectRaw('count(*) filter (where actor_id = ?) as actor_day', [$actor->id])
+                ->selectRaw('count(*) filter (where actor_id = ? and created_at > ?) as actor_minute', [$actor->id, $now->copy()->subMinute()->toIso8601String()])
+                ->first();
+            if ($quota->actor_minute >= ($copy ? 10 : 1)
+                || $quota->actor_day >= ($copy ? 100 : 20)
+                || $quota->tenant_day >= ($copy ? 500 : 100)) {
                 throw ValidationException::withMessages(['request' => 'Das Anfragelimit ist erreicht. Bitte später erneut versuchen.']);
             }
             $id = DB::connection('clubunio')->table('clubora.training_plan_requests')->insertGetId([

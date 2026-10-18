@@ -3,6 +3,8 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\MemberAccessService;
+use App\ClubUnio\Services\ModulePermissionService;
 use App\ClubUnio\Services\TrainingPlanService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -26,6 +28,7 @@ class TrainingPlanController
         $context = $this->context($request, $tenant);
         $filters = $request->validate(['q' => 'nullable|string|max:100', 'team' => 'nullable|integer', 'archived' => 'nullable|in:0,1']);
         $plans = app(TrainingPlanService::class)->visible($context['actor'], $tenant)
+            ->select(['id', 'title', 'team_season_id', 'shared', 'updated_at'])
             ->when($request->boolean('archived'), fn ($q) => $q->whereNotNull('archived_at'), fn ($q) => $q->whereNull('archived_at'))
             ->when($filters['q'] ?? null, fn ($q, $value) => $q->where('title', 'ilike', '%'.$value.'%'))
             ->when($filters['team'] ?? null, fn ($q, $value) => $q->where('team_season_id', $value))
@@ -58,8 +61,8 @@ class TrainingPlanController
     {
         $context = $this->context($request, $tenant);
         $row = app(TrainingPlanService::class)->get($context['actor'], $tenant, $plan);
-        $canManage = app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($context['actor'], $tenant, 'training', 'update')
-            || (in_array(app(\App\ClubUnio\Services\MemberAccessService::class)->membership($context['actor']->fresh(), $tenant)?->role, ['trainer', 'technical_lead'], true) && $row->owner_id === $context['actor']->id);
+        $canManage = app(ModulePermissionService::class)->allows($context['actor'], $tenant, 'training', 'update')
+            || (in_array(app(MemberAccessService::class)->membership($context['actor']->fresh(), $tenant)?->role, ['trainer', 'technical_lead'], true) && $row->owner_id === $context['actor']->id);
         $editable = $canManage && $row->archived_at === null;
         $review = $request->session()->get($this->key($tenant, $plan));
         if ($review && ($review['expires'] < time() || $review['actor'] !== $context['actor']->id || $review['revision'] !== $row->revision)) {

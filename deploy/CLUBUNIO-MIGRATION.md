@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+18.10.2026: Training list metadata projection, scoped read optimization and
+one aggregate quota query. No schema/import/configuration/provider contract
+change. Preserve owner/shared/team scope, fresh download/edit permissions,
+request idempotency/limits/locks, legacy quality gate and audit. PDF content,
+SVG safety, disabled remote/PHP/JavaScript and no-store headers unchanged.
+Rollback via previous ClubUnio release. API/SaaS/operations and legacy DEV/PROD
+unchanged. See CLUBUNIO-TRAINING-PERFORMANCE.md.
+
 18.10.2026: Dossier UI fixes require no database migration or audit rewriting.
 Deploy history service/view, relation actions, tab loading attributes and CSS
 together. Existing permissions/assignments remain untouched. Rollback via

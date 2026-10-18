@@ -1,5 +1,7 @@
 # ClubUnio
 
+Trainingsplaene: [KI-Webplanung und PDF-Performance](deploy/CLUBUNIO-TRAINING-PERFORMANCE.md).
+
 Teamplanung: [Serienaenderungen und Absenzen](deploy/CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md).
 
 Beitraege: [Stapelvorschau und interne Entwuerfe](deploy/CLUBUNIO-CONTRIBUTION-PERFORMANCE.md).

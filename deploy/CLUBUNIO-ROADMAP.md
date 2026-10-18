@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Trainingsplan-Performance (18.10.2026)
+
+Planliste nur mit sichtbaren Metadaten statt vollstaendigen Plan-JSONs;
+Teamlabels einmal indizieren. Unbeschraenkte Fachleserechte brauchen keine
+ungenutzte Teamliste beim Detail-/PDF-Zugriff. Frische Rechte und Trainer-
+Teamscopes bleiben erhalten. KI-/Kopierlimits unter gleichem Lock gemeinsam
+zaehlen. Keine KI-Vertrags-/Qualitaets- oder Datenbankaenderung.
+CLUBUNIO-TRAINING-PERFORMANCE.md.
+
 ## Dossierdialoge (18.10.2026)
 
 Drei Browser-Abnahmebefunde korrigiert: verschachtelte Rechnungs-Audits,
