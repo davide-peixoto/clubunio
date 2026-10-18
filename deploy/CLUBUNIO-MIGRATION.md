@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+18.10.2026: Series/absence reads optimized without schema or data import.
+Preserve unique participation keys, encrypted original participation/comment,
+trainer decisions, deadlines and fresh write authorization. No persistent
+permission/absence cache. Deploy both planning services together; rollback
+via previous release, no database rollback. API/SaaS/operations and legacy
+DEV/PROD unchanged. See CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md.
+
 17.10.2026: Contribution batch preview shares bounded calculation reads within
 one run. Single/create previews remain fresh; same results/fingerprints,
 locks, rights, idempotency and audit. Preserve historical invoice/player IDs.

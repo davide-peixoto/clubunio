@@ -98,6 +98,77 @@ class TeamPlanningTest extends TestCase
         return $this->db->table('team_participations')->where('event_id', $event)->where('member_id', $this->member)->first();
     }
 
+    public function test_capacity_count_matches_roster_reference_with_two_scalar_queries(): void
+    {
+        $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $members = [$this->member, $this->otherMember];
+        foreach (['ABWESEND', 'OFFEN', 'NICHT_AUFGEBOT', 'DABEI'] as $status) {
+            $member = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Count', 'last_name' => 'Fixture']);
+            $members[] = $member;
+            $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $member]);
+            $this->db->table('team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id, 'member_id' => $member, 'status' => $status]);
+        }
+        // Staff plus player must still count once; non-roster participation must not count.
+        $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $this->otherMember]);
+        $outside = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Outside', 'last_name' => 'Fixture']);
+        $this->db->table('team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id, 'member_id' => $outside, 'status' => 'DABEI']);
+        foreach ([['DABEI', null], ['OFFEN', null], ['DABEI', now()]] as [$status, $deleted]) {
+            $this->db->table('team_guests')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id, 'first_name' => 'Guest', 'last_name' => 'Fixture', 'status' => $status, 'deleted_at' => $deleted]);
+        }
+        $event = $this->service->event($this->admin, $this->tenant, $id);
+        foreach (['ANMELDEN', 'ABMELDEN'] as $mode) {
+            $event->mode = $mode;
+            foreach ([null, ...$members] as $except) {
+                $rows = $this->db->table('team_participations')->where('event_id', $id)->get()->keyBy('member_id');
+                $expected = $this->service->roster($this->tenant, $event)->pluck('id')->filter(fn ($member) => $member !== $except && ($rows[$member]->status ?? ($mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN')) === 'DABEI')->count() + 1;
+                $this->db->enableQueryLog();
+                $this->db->flushQueryLog();
+                try {
+                    $actual = $this->service->effectiveCount($this->tenant, $event, $except);
+                    $queries = $this->db->getQueryLog();
+                } finally {
+                    $this->db->disableQueryLog();
+                }
+                $this->assertSame($expected, $actual);
+                $this->assertCount(2, $queries);
+                foreach ($queries as $query) {
+                    $this->assertStringContainsString('count(*)', $query['query']);
+                }
+            }
+        }
+    }
+
+    public function test_absence_reuses_periods_and_scopes_participation_reads(): void
+    {
+        $ids = [];
+        for ($i = 0; $i < 4; $i++) {
+            $ids[] = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        }
+        $locked = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['deadline_at' => now('Europe/Zurich')->subHour()->format('Y-m-d\TH:i')]));
+        $this->service->participate($this->trainer, $this->tenant, $ids[0], $this->member, ['status' => 'DABEI', 'attendance' => 'OFFEN']);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        try {
+            $result = $this->service->saveAbsence($this->player, $this->tenant, null, $this->absence());
+            $reads = collect($this->db->getQueryLog())->pluck('query')->filter(fn ($sql) => str_starts_with($sql, 'select'));
+        } finally {
+            $this->db->disableQueryLog();
+        }
+        $this->assertSame(1, $result['skipped']);
+        $this->assertCount(2, $reads->filter(fn ($sql) => str_contains($sql, 'from "clubora"."team_absences"')));
+        $participations = $reads->filter(fn ($sql) => str_starts_with($sql, 'select * from "clubora"."team_participations"'));
+        $this->assertCount(4, $participations);
+        foreach ($participations as $sql) {
+            $this->assertStringContainsString('"member_id" = ?', $sql);
+        }
+        $this->assertNull($this->participation($locked));
+        $this->assertSame('trainer', $this->participation($ids[0])->source);
+        foreach (array_slice($ids, 1) as $id) {
+            $this->assertSame('absence', $this->participation($id)->source);
+        }
+        $this->assertStringNotContainsString('PRIVATE-HEALTH', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+    }
+
     public function test_reused_calendar_team_labels_do_not_expand_invited_player_permissions(): void
     {
         $input = $this->input(['title' => 'Invited fixture']);

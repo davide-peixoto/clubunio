@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+## Serien-/Absenzperformance (18.10.2026)
+
+Delta 20261018-clubunio-series-absence-performance auf verifiziertem Release.
+Zwei Planungsservices, keine Migration oder Berechtigungsumstellung.
+Synthetischer CLI-Vergleich mit Rollback, keine echten Termine geaendert.
+Releasepruefung und Ruecksprungbasis siehe
+CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md.
+
 ## Beitrags-/Entwurfsperformance (17.10.2026)
 
 Delta 20261017-clubunio-contribution-performance auf verifiziertem Release.

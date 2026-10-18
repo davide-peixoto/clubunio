@@ -36,11 +36,14 @@ class PlanningSeriesService
                 continue;
             }
             $next = collect((array) $row)->only(['team_season_id', 'title', 'kind', 'mode', 'status', 'capacity', 'location', 'description', 'revision'])->all();
+            $beforeTimes = [];
             foreach (['starts_at', 'ends_at', 'deadline_at'] as $field) {
                 if (! $row->$field) {
                     throw ValidationException::withMessages(['from' => 'Ein Serientermin hat keine Frist. Bitte zuerst einzeln ergänzen.']);
                 }
-                $time = Time::parse($row->$field)->tz('Europe/Zurich')->addMinutes((int) $data['shift_minutes']);
+                $original = Time::parse($row->$field)->tz('Europe/Zurich');
+                $beforeTimes[$field] = $original->format('Y-m-d\TH:i');
+                $time = $original->addMinutes((int) $data['shift_minutes']);
                 if ($time->isPast()) {
                     throw ValidationException::withMessages(['shift_minutes' => 'Die Verschiebung würde einen Termin oder seine Frist in die Vergangenheit legen.']);
                 }
@@ -63,8 +66,7 @@ class PlanningSeriesService
             }
             $changed = false;
             foreach ($next as $field => $value) {
-                $before = in_array($field, ['starts_at', 'ends_at', 'deadline_at'], true)
-                    ? Time::parse($row->$field)->tz('Europe/Zurich')->format('Y-m-d\TH:i') : $row->$field;
+                $before = $beforeTimes[$field] ?? $row->$field;
                 $changed = $changed || (string) $before !== (string) $value;
             }
             if (! $changed) {
@@ -81,6 +83,7 @@ class PlanningSeriesService
     public function apply(Account $actor, Tenant $tenant, int $id, array $input, string $fingerprint): int
     {
         $this->planning->authorizeOperation($actor, $tenant, 'update');
+
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $fingerprint) {
             $this->planning->lock($tenant);
             $preview = $this->preview($actor, $tenant, $id, $input);

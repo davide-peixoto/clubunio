@@ -1,5 +1,7 @@
 # ClubUnio
 
+Teamplanung: [Serienaenderungen und Absenzen](deploy/CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md).
+
 Beitraege: [Stapelvorschau und interne Entwuerfe](deploy/CLUBUNIO-CONTRIBUTION-PERFORMANCE.md).
 
 Saisonwechsel: [Uebernahme und Mehrfachaktionen](deploy/CLUBUNIO-SEASON-BULK-PERFORMANCE.md).

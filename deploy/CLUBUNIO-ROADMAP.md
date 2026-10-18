@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Serien-/Absenzperformance (18.10.2026)
+
+Kapazitaet im SQL zaehlen statt Teilnehmerdaten zu laden. Absenzperioden
+innerhalb eines gesperrten Schreibvorgangs einmal lesen; Terminabgleich nur
+fuer das betroffene Mitglied. Serienvorschau verwendet unveraenderliche
+Datumswerte erneut. Rechte, Fristsperren, Revisionen und Audit erhalten.
+Keine Migration. CLUBUNIO-SERIES-ABSENCE-PERFORMANCE.md.
+
 ## Beitrags-/Entwurfsperformance (17.10.2026)
 
 25er-Stapelvorschau mit gebuendelter Saison-/Regel-/Preis-/Familien-/Positions-

@@ -5,6 +5,7 @@ namespace App\ClubUnio\Services;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
 use Carbon\CarbonImmutable as Time;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -95,6 +96,7 @@ class TeamPlanningService
         if (app(MemberAccessService::class)->membership($actor->fresh(), $tenant)?->role === 'profile') {
             return $this->table($tenant, 'team_invitations')->whereRaw('1=0');
         }
+
         return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id'));
     }
 
@@ -260,9 +262,16 @@ class TeamPlanningService
 
     public function effectiveCount(Tenant $tenant, object $event, ?int $except = null): int
     {
-        $rows = $this->table($tenant, 'team_participations')->where('event_id', $event->id)->get()->keyBy('member_id');
+        $participations = $this->table($tenant, 'team_participations')->where('event_id', $event->id)
+            ->whereColumn('member_id', 'clubora.members.id')->selectRaw('1');
 
-        return $this->roster($tenant, $event)->pluck('id')->filter(fn ($id) => $id !== $except && ($rows[$id]->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN')) === 'DABEI')->count()
+        return $this->roster($tenant, $event)->when($except !== null, fn ($q) => $q->whereKeyNot($except))
+            ->where(function ($q) use ($participations, $event) {
+                $q->whereExists((clone $participations)->where('status', 'DABEI'));
+                if ($event->mode === 'ABMELDEN') {
+                    $q->orWhereNotExists((clone $participations)->whereNotNull('status'));
+                }
+            })->count()
             + $this->table($tenant, 'team_guests')->where('event_id', $event->id)->whereNull('deleted_at')->where('status', 'DABEI')->count();
     }
 
@@ -317,18 +326,20 @@ class TeamPlanningService
                 $teams = array_merge($teams, $this->table($tenant, $table)->where('member_id', $member)->where('active', true)->pluck('team_season_id')->all());
             }
             $skipped = 0;
+            $new = $this->table($tenant, 'team_absences')->where('id', $id)->first();
+            $periods = $this->table($tenant, 'team_absences')->where('member_id', $member)->whereNull('deleted_at')
+                ->get(['member_id', 'starts_on', 'ends_on']);
             foreach ($this->table($tenant, 'team_events')->where('ends_at', '>', now()->toIso8601String())->where(function ($q) use ($tenant, $teams, $member) {
                 $q->whereIn('id', $this->table($tenant, 'team_invitations')->where('member_id', $member)->select('event_id'));
                 $q->orWhereIn('team_season_id', $teams)->orWhereIn('id', $this->table($tenant, 'team_participations')->where('member_id', $member)->where('source', 'absence')->select('event_id'));
             })->get() as $event) {
                 if ($this->locked($event)) {
                     $date = Time::parse($event->starts_at)->setTimezone('Europe/Zurich')->toDateString();
-                    $new = $this->table($tenant, 'team_absences')->where('id', $id)->first();
                     if (($old && $date >= $old->starts_on && $date <= $old->ends_on) || ($date >= $new->starts_on && $date <= $new->ends_on)) {
                         $skipped++;
                     }
                 } else {
-                    $this->reconcile($tenant, $event, $member);
+                    $this->reconcileEvent($tenant, $event, $member, $periods);
                 }
             }
             $this->audit($actor, $tenant, 'team_absences', $id, $old?->revision, $data['revision']);
@@ -339,21 +350,31 @@ class TeamPlanningService
 
     public function reconcile(Tenant $tenant, object $event, ?int $only = null): void
     {
+        $this->reconcileEvent($tenant, $event, $only);
+    }
+
+    private function reconcileEvent(Tenant $tenant, object $event, ?int $only = null, ?Collection $periods = null): void
+    {
         if ($this->locked($event)) {
             return;
         }
         $date = Time::parse($event->starts_at)->setTimezone('Europe/Zurich')->toDateString();
-        $roster = $this->roster($tenant, $event)->pluck('id');
-        $existing = $this->table($tenant, 'team_participations')->where('event_id', $event->id)->get()->keyBy('member_id');
+        $roster = $this->roster($tenant, $event)->when($only, fn ($q) => $q->whereKey($only))->pluck('id');
+        $existing = $this->table($tenant, 'team_participations')->where('event_id', $event->id)
+            ->when($only, fn ($q) => $q->where('member_id', $only))->get()->keyBy('member_id');
         $ids = $roster->merge($existing->where('source', 'absence')->keys())->unique()->filter(fn ($id) => ! $only || $id === $only);
-        $absent = $this->table($tenant, 'team_absences')->whereNull('deleted_at')->whereIn('member_id', $ids)->where('starts_on', '<=', $date)->where('ends_on', '>=', $date)->pluck('member_id')->all();
+        $absent = $periods !== null
+            ? $periods->filter(fn ($period) => $period->starts_on <= $date && $period->ends_on >= $date)->pluck('member_id')->all()
+            : $this->table($tenant, 'team_absences')->whereNull('deleted_at')->whereIn('member_id', $ids)->where('starts_on', '<=', $date)->where('ends_on', '>=', $date)->pluck('member_id')->all();
+        $absent = array_fill_keys($absent, true);
+        $rosterIds = array_fill_keys($roster->all(), true);
         foreach ($ids as $member) {
             $old = $existing[$member] ?? null;
             if ($old?->source === 'trainer' || $old?->status === 'NICHT_AUFGEBOT') {
                 continue;
             }
             $query = $this->table($tenant, 'team_participations')->where('event_id', $event->id)->where('member_id', $member);
-            if (in_array($member, $absent, true) && $roster->contains($member)) {
+            if (isset($absent[$member], $rosterIds[$member])) {
                 if ($old?->source === 'absence') {
                     continue;
                 }
