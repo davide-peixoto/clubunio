@@ -69,7 +69,7 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                         (int) $data['revision'], 'restore_line', $data + ['line_id' => $record->id]));
                     $this->afterInvoiceChange();
                 }),
-            Action::make('editLine')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')->visible(fn ($record) => $editable() && $record->active)
+            Action::make('editLine')->label('Position bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Position bearbeiten')->visible(fn ($record) => $editable() && $record->active)
                 ->fillForm(fn ($record) => $record->only(['description', 'gross_amount', 'discount', 'notes', 'bexio_catalog_article_id', 'bexio_catalog_tax_id']) + ['revision' => $this->getOwnerRecord()->fresh()->revision])
                 ->schema($schema)->action(fn ($record, array $data) => $save($data, $record->id)),
             Action::make('removeLine')->label('Position entfernen')->icon('heroicon-o-trash')->iconButton()->tooltip('Position entfernen')->color('danger')

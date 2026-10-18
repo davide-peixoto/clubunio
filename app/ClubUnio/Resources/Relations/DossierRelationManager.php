@@ -121,6 +121,11 @@ abstract class DossierRelationManager extends RelationManager
             ], array_values($table->getColumns())));
         }
 
-        return $this->withAssignmentActions($table);
+        return $this->withAssignmentActions($table)->extraAttributes([
+            'wire:loading.class' => 'cu-dossier-loading',
+            'wire:target' => 'unmountAction,__dispatch',
+            'wire:loading.attr' => 'aria-busy',
+            'data-loading-message' => 'Tabelle wird aktualisiert …',
+        ], merge: true);
     }
 }

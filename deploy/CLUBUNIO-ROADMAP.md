@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dossierdialoge (18.10.2026)
+
+Drei Browser-Abnahmebefunde korrigiert: verschachtelte Rechnungs-Audits,
+explizite Tabellenaktualisierung beim Positionsdialogschluss und Ladezustand
+der Relation-Tabs; deutsche Positions-/Verlaufsbeschriftungen. Keine Migration
+oder Benutzerrechteaenderung. CLUBUNIO-DOSSIER-UI-FIXES.md.
+
 ## Serien-/Absenzperformance (18.10.2026)
 
 Kapazitaet im SQL zaehlen statt Teilnehmerdaten zu laden. Absenzperioden

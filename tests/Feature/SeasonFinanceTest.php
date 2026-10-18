@@ -289,6 +289,46 @@ class SeasonFinanceTest extends TestCase
         $component->dispatch('season-finance-updated')->assertSet('tableSearch', 'Fixture')->assertSet('tableFilters', $filters);
     }
 
+    public function test_invoice_history_reads_wrapped_snapshots_and_keeps_null_changes(): void
+    {
+        $invoice = $this->invoice();
+        $service = app(InvoiceWorkflowService::class);
+        $invoice = $service->change($this->actor, $this->tenant, $invoice->id, $invoice->revision, 'header', ['notes' => 'Changed', 'tax_mode' => 'exempt', 'invoice_category_id' => $this->category]);
+        $history = app(\App\ClubUnio\Services\DossierHistoryService::class);
+        $changes = collect($history->entries($this->actor, $this->tenant, $invoice)[0]['changes'])->keyBy('field');
+        $this->assertSame('Changed', $changes['notes']['after']);
+        $this->assertSame($invoice->revision, $changes['revision']['after']);
+        $this->assertFalse($changes->has('active'));
+        $this->db->table('clubora.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'invoices', 'object_id' => $invoice->id,
+            'before_value' => json_encode(['notes' => 'Changed']), 'after_value' => json_encode(['invoice' => ['notes' => null, 'api_key' => 'NEVER_SHOW'], 'secret' => 'NEVER_SHOW'])]);
+        $entries = $history->entries($this->actor, $this->tenant, $invoice);
+        $this->assertSame(['field' => 'notes', 'before' => 'Changed', 'after' => null], $entries[0]['changes'][0]);
+        $this->assertStringNotContainsString('NEVER_SHOW', json_encode($entries));
+    }
+
+    public function test_invoice_position_action_has_a_german_label(): void
+    {
+        $component = Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $this->invoice(), 'pageClass' => ViewInvoice::class]);
+        $this->assertSame('Position bearbeiten', $component->instance()->getTable()->getAction('editLine')->getLabel());
+    }
+
+    public function test_closing_positions_refreshes_parent_totals_without_losing_filters(): void
+    {
+        $invoice = $this->invoice();
+        $component = $this->manager()->mountTableAction('positions', $invoice);
+        $filters = $component->get('tableFilters');
+        $service = app(InvoiceWorkflowService::class);
+        $service->change($this->actor, $this->tenant, $invoice->id, $invoice->revision, 'line', ['description' => 'New line', 'gross_amount' => '41.00', 'discount' => '0']);
+        $component->call('unmountAction')->assertSet('mountedActions', [])->assertSet('tableFilters', $filters);
+        $row = $component->instance()->getTableRecords()->firstWhere('id', $invoice->id);
+        $this->assertSame(41.0, (float) $row->active_lines_sum_net_amount);
+        $component->assertSee('Tabelle wird aktualisiert');
+        Livewire::test(ViewMember::class, ['record' => $this->member->id])
+            ->set('activeRelationManager', '0')->assertSee('Ansicht wird geladen')
+            ->set('activeRelationManager', '2')->assertSet('activeRelationManager', '2')
+            ->assertSee('content.relationManagerTabs.2', escape: false);
+    }
+
     public function test_stale_revision_imported_records_and_revoked_role_are_protected(): void
     {
         $invoice = $this->invoice();

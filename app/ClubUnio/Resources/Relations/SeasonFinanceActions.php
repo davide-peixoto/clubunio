@@ -42,7 +42,18 @@ trait SeasonFinanceActions
     #[On('season-finance-updated')]
     public function refreshSeasonFinance(): void
     {
+        $this->getOwnerRecord()->refresh();
         $this->flushCachedTableRecords();
+    }
+
+    public function unmountAction(bool | string | null $cancelParentActions = null): void
+    {
+        $positionsClosed = ($this->mountedActions[0]['name'] ?? null) === 'positions';
+        parent::unmountAction($cancelParentActions);
+        // Closing the nested manager must not depend on a separate event request finishing first.
+        if ($positionsClosed && $this->mountedActions === []) {
+            $this->refreshSeasonFinance();
+        }
     }
 
     private function financeSchema(bool $create = false): array

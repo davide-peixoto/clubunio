@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+## Dossierdialoge (18.10.2026)
+
+Delta 20261018-clubunio-dossier-ui-fixes auf Serien-/Absenzperformance-Basis.
+Keine Migration oder Rechteumstellung. View-/Konfigurations-/Routencache neu
+aufbauen; CSS-Version4. Pruefung/Rollback: CLUBUNIO-DOSSIER-UI-FIXES.md.
+
 ## Serien-/Absenzperformance (18.10.2026)
 
 Delta 20261018-clubunio-series-absence-performance auf verifiziertem Release.

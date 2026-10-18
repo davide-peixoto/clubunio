@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+18.10.2026: Dossier UI fixes require no database migration or audit rewriting.
+Deploy history service/view, relation actions, tab loading attributes and CSS
+together. Existing permissions/assignments remain untouched. Rollback via
+previous release. See CLUBUNIO-DOSSIER-UI-FIXES.md.
+
 18.10.2026: Series/absence reads optimized without schema or data import.
 Preserve unique participation keys, encrypted original participation/comment,
 trainer decisions, deadlines and fresh write authorization. No persistent

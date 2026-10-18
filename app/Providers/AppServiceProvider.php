@@ -80,6 +80,14 @@ class AppServiceProvider extends ServiceProvider
                 ? app(\App\ClubUnio\Policies\ProfilePolicyBridge::class)->check($actor, $ability, $arguments) : null;
         });
         Livewire::component('clubunio.signage-feeds', SignageFeeds::class);
+        \Filament\Schemas\Components\Tabs::configureUsing(function ($tabs) {
+            $tabs->extraAttributes(fn ($component) => $component->getLivewireProperty() === 'activeRelationManager' ? [
+                'wire:loading.class' => 'cu-dossier-loading',
+                'wire:target' => 'activeRelationManager',
+                'wire:loading.attr' => 'aria-busy',
+                'data-loading-message' => 'Ansicht wird geladen …',
+            ] : [], merge: true);
+        });
         // Shared display semantics for status/lookup values in every ClubUnio table and detail.
         foreach ([TextColumn::class, TextEntry::class] as $component) {
             $component::configureUsing(function ($entry) {

@@ -146,6 +146,12 @@ keine echten Nachrichten, Zahlungen oder Bexio-Buchungen ausgelöst.
 PHPMaker DEV/PROD unveraendert. CLI-Helfer und Zustandsdatei nach Bereinigung
 auch vom Server entfernt; kein oeffentlicher Testendpunkt.
 
+## Nachtrag 18.10.2026: UI-Befunde
+
+Die drei oben dokumentierten Nebenbefunde werden im separaten Korrekturpaket
+CLUBUNIO-DOSSIER-UI-FIXES.md behandelt. Historische Ergebnisse bleiben oben
+unveraendert nachvollziehbar. Keine Erweiterung der getesteten Profilrechte.
+
 ## Grenzen
 
 Automatisierte Abnahme und manueller Browserdurchlauf mit synthetischen

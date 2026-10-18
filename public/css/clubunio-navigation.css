@@ -15,4 +15,8 @@
 .cu-settings-section span { flex: 1; overflow-wrap: anywhere; }
 .fi-sidebar .cu-search-hidden { display: none !important; }
 .fi-sidebar-item-label { white-space: normal; overflow-wrap: break-word; }
+.cu-dossier-loading { position: relative; }
+.cu-dossier-loading > .fi-sc-tabs-tab, .cu-dossier-loading > .fi-ta-ctn { opacity: 0; pointer-events: none; }
+.cu-dossier-loading::after { content: attr(data-loading-message); position: absolute; inset: 64px 16px auto; padding: 16px; color: #164b8a; background: #eff6ff; border-radius: 6px; font-size: 14px; }
+.dark .cu-dossier-loading::after { color: #b9ddf5; background: #182c40; }
 @media (max-width: 1023px) { .cu-nav-width { display: none; } :root { --sidebar-width: min(280px, 85vw) !important; } }

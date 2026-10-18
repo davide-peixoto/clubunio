@@ -26,9 +26,14 @@ final class DossierHistoryService
             ->where('changes.tenant_id', $tenant->id)->where('changes.object_type', str($record->getTable())->afterLast('.')->toString())
             ->where('changes.object_id', $record->id)->orderByDesc('changes.id')->limit(100)
             ->get(['changes.before_value', 'changes.after_value', 'changes.created_at', 'actors.display_name'])
-            ->map(function ($entry) use ($fields) {
+            ->map(function ($entry) use ($fields, $record) {
                 $before = json_decode($entry->before_value ?? '{}', true, flags: JSON_THROW_ON_ERROR) ?? [];
                 $after = json_decode($entry->after_value, true, flags: JSON_THROW_ON_ERROR) ?? [];
+                // Invoice workflow audits wrap the snapshot; never expose unrelated payload data.
+                if ($record instanceof \App\ClubUnio\Models\Invoice) {
+                    $before = $before['invoice'] ?? $before;
+                    $after = $after['invoice'] ?? (($after['action'] ?? null) === 'create' ? ($after['data'] ?? []) : $after);
+                }
                 $changes = [];
                 foreach ($fields as $field) {
                     if ((array_key_exists($field, $before) || array_key_exists($field, $after)) && ($before[$field] ?? null) !== ($after[$field] ?? null)) {
