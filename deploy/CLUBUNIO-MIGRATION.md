@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+19.10.2026: Read-only finance acceptance checker for known sandbox fixtures;
+GS-00005 already allocated in package72. No migration or repeated business
+write. Two-target allocation remains a separate manual sandbox acceptance.
+See CLUBUNIO-FINANCE-ACCEPTANCE.md.
+
 19.10.2026: Repeated application-lifecycle performance acceptance, plus
 synthetic rolled-back save/PDF/history scenarios. CLI tooling/documentation
 only; no business behavior, permissions, indexes, schema or data import changed.

@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Finanz-Abnahmeabgleich (19.10.2026)
+
+GS-00004/RE-00009 und GS-00005/RE-00013 erneut lesend live bestaetigt;
+veraltete Offen-Vermerke berichtigt. Naechste Fachabnahme: ein Guthaben auf
+zwei Zielrechnungen verteilen. Keine erneute Anlage bestehender Gutschriften,
+keine Schema-/Runtimeaenderung. CLUBUNIO-FINANCE-ACCEPTANCE.md.
+
 ## Performance-Gesamtmessung (19.10.2026)
 
 Zwoelf Web-Lifecycle-Szenarien je dreimal gemessen; synthetisches Speichern,

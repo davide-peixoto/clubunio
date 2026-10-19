@@ -1,5 +1,9 @@
 # ClubUnio: Gutschriften und Rueckerstattungen
 
+Nachtrag19.10.2026: Korrektur18 ist inzwischen ueber GS-00005/RE-00013
+bestaetigt. Historische Offen-Vermerke unten sind ueberholt. Aktuelle
+Abnahme und naechster Schritt: CLUBUNIO-FINANCE-ACCEPTANCE.md.
+
 Nachtrag67: Mehrrechnungsverrechnung aus Originalkorrekturen und getrenntes
 Kundenguthaben-Journal siehe CLUBUNIO-CUSTOMER-CREDITS.md. Historische Grenzen
 unten gelten fuer Release55; manuelle Bexio-Teilkorrektur RE-00006 bleibt offen.

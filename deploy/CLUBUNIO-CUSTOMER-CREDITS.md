@@ -1,5 +1,9 @@
 # Teilgutschriften und Kundenguthaben
 
+Nachtrag19.10.2026: GS-00005 ist seit Paket72 gegen RE-00013 verrechnet;
+heute erneut lesend bestaetigt. Der untenstehende Offen-Vermerk beschreibt
+den historischen Stand15.10. Aktueller Stand: CLUBUNIO-FINANCE-ACCEPTANCE.md.
+
 Fachpaket67,15.10.2026. Nur ClubUnio/eigene Datenbank und Bexio-Sandbox.
 Keine Bankzahlungen, keine externe Zustellung, kein API-/SaaS-/Betriebsprojekt.
 Bestehendes PHPMaker DEV/PROD bleibt unangetastet.

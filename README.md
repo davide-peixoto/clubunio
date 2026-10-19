@@ -51,7 +51,8 @@ und Fachservices bleiben erhalten. Keine Datenbankmigration.
 Fachpaket67: [Teilgutschriften und Kundenguthaben](deploy/CLUBUNIO-CUSTOMER-CREDITS.md).
 Webjournal fuer manuell attestierte Kundengutschriften und frisch nachgewiesene
 Bexio-Mehrrechnungsverrechnungen, Mitgliederdossier und Restbetragschutz.
-Live-Teilkorrektur RE-00006 wartet noch auf manuelle Bexio-Anlage/Verrechnung.
+Live-Teilkorrektur inzwischen als GS-00005 gegen RE-00013 bestaetigt.
+Aktueller [Finanz-Abnahmestand](deploy/CLUBUNIO-FINANCE-ACCEPTANCE.md).
 
 Fachpaket66: [Signage in Vereinsfarben](deploy/CLUBUNIO-SIGNAGE-DESIGN.md).
 Kompakte TV-Ansicht; Logo, Farbe, Titel und Trainingsperiode je Verein unter
