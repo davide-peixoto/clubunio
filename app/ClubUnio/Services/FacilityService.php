@@ -29,6 +29,13 @@ class FacilityService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
+            if ($model === FieldAvailability::class && $id && ! app(ModulePermissionService::class)->allows($actor, $tenant, 'facilities', 'update')) {
+                // Narrow caretakers may change status/note, not move or deactivate the field record.
+                abort_if((array_key_exists('field_id', $input) && (int) $input['field_id'] !== (int) $record->field_id)
+                    || (array_key_exists('active', $input) && (bool) $input['active'] !== (bool) $record->active), 403);
+                $input['field_id'] = $record->field_id;
+                $input['active'] = $record->active;
+            }
             if ($id && array_key_exists('active', $input) && (bool) $record->active !== (bool) $input['active']) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $input['active'] ? 'restore' : 'deactivate');
             }

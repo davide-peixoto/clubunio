@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Platzwart (19.10.2026)
+
+Delta 20261019-clubunio-caretaker auf Sync-View-Performance-Basis. Vier
+Fachdateien plus gezielter CLI-Profilupdate. Keine Schemamigration.
+Rollbacks sperren das schmale Profil statt alte breite Rechte zu vergeben.
+Details: CLUBUNIO-CARETAKER-SCOPE.md.
+
 ## Synchronisations-/Protokollperformance (18.10.2026)
 
 Delta 20261018-clubunio-sync-view-performance auf Trainingsplan-Performance.

@@ -1,6 +1,7 @@
 # SV Sissach: vorbereitete Verwaltungsprofile
 
-Stand 18.10.2026. Auf ClubUnio angelegt, **keinem Benutzer zugeordnet**.
+Stand Anlage 18.10.2026, Platzwart eingeschraenkt am19.10.2026.
+Auf ClubUnio angelegt, **keinem Benutzer zugeordnet**.
 Bestehende Benutzer, Rollen, Zuordnungen und Profile unveraendert.
 
 | Profil | ID | Rechteumfang |
@@ -11,13 +12,13 @@ Bestehende Benutzer, Rollen, Zuordnungen und Profile unveraendert.
 | Finanzen verantworten | 271 | Wie Finanzbearbeitung, zusaetzlich Finanzfreigabe, Versand, Stornierung und Abgleich. Bexio nur ansehen/synchronisieren; keine Verbindungsgeheimnisse. |
 | Sportadministration | 272 | Saisons, Teams, Zuordnungen, Trainingszeiten, Planung und Absenzen verwalten; Saisonuebernahme. Mitglieder nur lesen. Keine Finanzrechte. |
 | Anlagen & Signage | 273 | Wettkaempfe/SFV-Abgleich, Garderoben, Anlagenstatus, Busentscheide und Signage; Teams/Saisons lesen. Keine Mitgliederverwaltung, Finanzen oder allgemeinen Rundnachrichten. |
-| Platzwart | 274 | Ausschliesslich `facilities.view` und `facilities.update`. Plaetze/Status/Bemerkungen anzeigen und bearbeiten. Keine Anlage, Kopie, Exporte, Bus-, Signage-, Mitglieder- oder Finanzrechte. |
+| Platzwart | 274 | Ausschliesslich `field_availability.view` und `field_availability.update`. Nur Verfuegbarkeit und Bemerkungen bestehender Plaetze bearbeiten, keine Status-Wertetabelle. |
 
 ## Wichtige Grenzen
 
-- Platzwart: Das heutige Anlagenmodul umfasst Platzverfuegbarkeiten **und**
-  die Anlagenstatus-Wertetabelle. Das Profil ist keine neue zeilenbezogene
-  Platzzuordnung. Bestehende Bearbeitungsformulare bleiben unveraendert.
+- Platzwart: Seit19.10.2026 eigenes schmales Modul. Keine Status-Wertetabelle,
+  Platzumordnung oder Aktivierung/Deaktivierung. Details und Rollback:
+  CLUBUNIO-CARETAKER-SCOPE.md.
 - Verwaltungsprofile wirken vereinsweit. Bestehende TL-/Trainer-/Spieler-/
   Elternrollen und deren Teamscopes bleiben bestehen, keine automatische Umstellung.
 - Admin bleibt eine separate Systemrolle. Benutzerverwaltung, technische

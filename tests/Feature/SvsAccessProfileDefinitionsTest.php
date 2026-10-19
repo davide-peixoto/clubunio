@@ -18,8 +18,8 @@ class SvsAccessProfileDefinitionsTest extends TestCase
                 $this->assertContains(explode('.', $permission)[0].'.view', $profile['permissions']);
             }
         }
-        $this->assertSame(['facilities.view', 'facilities.update'], $profiles['Platzwart']['permissions']);
-        $this->assertEqualsCanonicalizing(PermissionCatalog::readOnly(), $profiles['Geschäftsstelle nur lesen']['permissions']);
+        $this->assertSame(['field_availability.view', 'field_availability.update'], $profiles['Platzwart']['permissions']);
+        $this->assertEqualsCanonicalizing(array_diff(PermissionCatalog::readOnly(), ['field_availability.view']), $profiles['Geschäftsstelle nur lesen']['permissions']);
         foreach (['Finanzen bearbeiten', 'Geschäftsstelle'] as $name) {
             foreach (['invoices', 'expenses', 'credits'] as $module) {
                 foreach (['approve', 'send', 'cancel', 'sync'] as $function) {

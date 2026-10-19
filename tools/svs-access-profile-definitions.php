@@ -57,8 +57,8 @@ $profiles = [
         ],
     ],
     'Platzwart' => [
-        'description' => 'Nur Anlagenstatus und Bemerkungen der Plätze anzeigen/bearbeiten. Das Anlagenmodul umfasst auch Anlagenstatus-Werte. Keine Anlage, Exporte, Bus-, Signage-, Mitglieder- oder Finanzrechte.',
-        'modules' => ['facilities' => ['view', 'update']],
+        'description' => 'Nur Verfügbarkeit und Bemerkungen bestehender Plätze ändern. Keine Status-Wertetabelle, Platzumordnung, Aktivierung/Deaktivierung, Anlage, Exporte oder anderen Fachrechte.',
+        'modules' => ['field_availability' => ['view', 'update']],
     ],
 ];
 foreach ($profiles as &$profile) {

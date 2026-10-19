@@ -13,7 +13,8 @@ final class PermissionCatalog
         'training_slots' => 'Trainingszeiten', 'competitions' => 'Wettkämpfe und SFV',
         'invoices' => 'Rechnungen', 'expenses' => 'Spesen', 'contributions' => 'Beiträge',
         'credits' => 'Gutschriften und Rückerstattungen', 'bexio' => 'Bexio',
-        'bus' => 'Busverwaltung', 'facilities' => 'Anlagen', 'signage' => 'Signage',
+        'bus' => 'Busverwaltung', 'facilities' => 'Anlagen inklusive Status-Wertetabelle',
+        'field_availability' => 'Platzverfügbarkeit und Bemerkungen', 'signage' => 'Signage',
         'announcements' => 'Ankündigungen', 'events' => 'Veranstaltungen',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
         'templates' => 'Nachrichtenvorlagen',
@@ -31,6 +32,9 @@ final class PermissionCatalog
 
     public static function functions(string $module): array
     {
+        if ($module === 'field_availability') {
+            return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'update']));
+        }
         $extra = match ($module) {
             'invoices', 'expenses', 'credits' => ['download', 'upload', 'export', 'approve', 'send', 'cancel', 'sync'],
             'registrations', 'member_changes' => ['download', 'upload', 'approve', 'send'],

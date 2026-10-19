@@ -9,6 +9,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Filament\Facades\Filament;
+use App\ClubUnio\Services\ModulePermissionService;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -26,7 +28,8 @@ class FieldAvailabilityResource extends FacilityResource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([Hidden::make('revision'), Select::make('field_id')->label('Spielfeld')->options(fn () => TrainingSlotResource::choices('field'))->required(), Select::make('status_id')->label('Status')->options(fn () => static::options(FacilityStatus::class))->required(), Textarea::make('note')->label('Bemerkung')->maxLength(500), Toggle::make('active')->label('Aktiv')->default(true)]);
+        $restricted = fn ($record) => $record !== null && ! app(ModulePermissionService::class)->allows(Filament::auth()->user(), Filament::getTenant(), 'facilities', 'update');
+        return $schema->components([Hidden::make('revision'), Select::make('field_id')->label('Spielfeld')->options(fn () => TrainingSlotResource::choices('field'))->required()->disabled($restricted), Select::make('status_id')->label('Status')->options(fn () => static::options(FacilityStatus::class))->required(), Textarea::make('note')->label('Bemerkung')->maxLength(500), Toggle::make('active')->label('Aktiv')->default(true)->disabled($restricted)]);
     }
 
     public static function table(Table $table): Table

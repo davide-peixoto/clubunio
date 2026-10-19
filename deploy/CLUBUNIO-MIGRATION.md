@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+19.10.2026: Narrow caretaker grants to field_availability.view/update. Deploy
+catalog, permissions, facility service and form together. No schema migration.
+Old broad facilities grants remain compatible; never re-expand caretaker grants
+on rollback. See CLUBUNIO-CARETAKER-SCOPE.md.
+
 18.10.2026: Synchronisation page reads history only for the selected item,
 20 entries per separate history page; preserve every historical event/note.
 Metadata projection and conditional context payload reads only. Fresh admin

@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Platzwart-Einschraenkung (19.10.2026)
+
+Eigenes Modul fuer Platzverfuegbarkeit/Bemerkungen, keine Status-Wertetabelle.
+Bestehende breite Anlagenrechte anderer Profile erhalten. Profilupdate ohne
+Benutzerzuordnung oder Schemamigration. CLUBUNIO-CARETAKER-SCOPE.md.
+
 ## Synchronisations-/Protokollperformance (18.10.2026)
 
 Uebersicht ohne vorab geladene Verlaufseintraege; pro geoeffnetem Auftrag

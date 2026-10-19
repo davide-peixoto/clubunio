@@ -20,7 +20,7 @@ final class ModulePermissionService
         'expenses' => ['Expense', 'ExpenseLine'], 'contributions' => ['ContributionPrice', 'ContributionRule'],
         'credits' => ['CreditNote', 'CreditNoteLine', 'CustomerCredit', 'CustomerCreditAllocation', 'Refund'],
         'bexio' => ['BexioBalance', 'BexioCatalogEntry'], 'bus' => ['Bus'],
-        'facilities' => ['FieldAvailability', 'FacilityStatus'], 'signage' => ['SignageNotice'],
+        'facilities' => ['FacilityStatus'], 'field_availability' => ['FieldAvailability'], 'signage' => ['SignageNotice'],
         'announcements' => ['Announcement'], 'events' => ['ClubEvent', 'EventGuest'],
         'reports' => ['SpotsRecipient'], 'templates' => ['MessageTemplate', 'MessageTemplateRevision'],
         'catalogs' => ['Bank', 'BillingRecipient', 'ClubFunction', 'Country', 'DocumentType', 'ExpenseRound',
@@ -88,6 +88,10 @@ final class ModulePermissionService
     }
     public function allows(Account $actor, Tenant $tenant, string $module, string $function): bool
     {
+        // Existing broad facilities grants retain their scope; narrow grants never flow back.
+        if ($module === 'field_availability' && $this->allows($actor, $tenant, 'facilities', $function)) {
+            return true;
+        }
         if (! array_key_exists($module, PermissionCatalog::MODULES)
             || ! array_key_exists($function, PermissionCatalog::functions($module))) {
             return false;

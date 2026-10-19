@@ -99,6 +99,41 @@ class SportsProfilePermissionTest extends TestCase
         $this->profile->forceFill(['permissions' => $permissions])->save();
     }
 
+    public function test_caretaker_changes_only_field_status_and_note_and_cannot_access_status_catalog(): void
+    {
+        $this->grant(['field_availability.view', 'field_availability.update']);
+        $service = app(FacilityService::class);
+        $permissions = app(\App\ClubUnio\Services\ModulePermissionService::class);
+        $field = $this->db->table('training_options')->insertGetId(['tenant_id' => $this->tenant->id, 'category' => 'field', 'code' => 'test', 'name' => 'Test field', 'active' => true]);
+        $other = $this->db->table('training_options')->insertGetId(['tenant_id' => $this->tenant->id, 'category' => 'field', 'code' => 'other', 'name' => 'Other field', 'active' => true]);
+        $status = $service->save($this->admin, $this->tenant, FacilityStatus::class, null, ['code' => 'open', 'name' => 'Open', 'blocks_training' => false, 'sort_order' => 0, 'active' => true]);
+        $blocked = $service->save($this->admin, $this->tenant, FacilityStatus::class, null, ['code' => 'blocked', 'name' => 'Blocked', 'blocks_training' => true, 'sort_order' => 1, 'active' => true]);
+        $model = \App\ClubUnio\Models\FieldAvailability::class;
+        $record = $service->save($this->admin, $this->tenant, $model, null, ['field_id' => $field, 'status_id' => $status->id, 'note' => null, 'active' => true]);
+        $record = $service->save($this->actor, $this->tenant, $model, $record->id, ['revision' => $record->revision, 'status_id' => $blocked->id, 'note' => 'Wet field']);
+        $this->assertSame($blocked->id, $record->status_id);
+        $this->assertSame('Wet field', $record->note);
+        $this->assertTrue($record->active);
+        $input = ['revision' => $record->revision, 'status_id' => $status->id, 'note' => 'Test'];
+        $this->denied(fn () => $service->save($this->actor, $this->tenant, $model, $record->id, $input + ['field_id' => $other]));
+        $this->denied(fn () => $service->save($this->actor, $this->tenant, $model, $record->id, $input + ['active' => false]));
+        $this->denied(fn () => $service->save($this->actor, $this->tenant, $model, null, []));
+        $this->denied(fn () => $service->save($this->actor, $this->tenant, FacilityStatus::class, $status->id, []));
+        $this->assertFalse($permissions->allowsModel($this->actor, $this->tenant, FacilityStatus::class, 'view'));
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        $this->actingAs($this->actor, 'clubunio');
+        \Filament\Facades\Filament::setTenant($this->tenant);
+        $this->assertTrue(\App\ClubUnio\Resources\FieldAvailabilityResource::canViewAny());
+        $this->assertTrue(\App\ClubUnio\Resources\FieldAvailabilityResource::canEdit($record));
+        $this->assertFalse(\App\ClubUnio\Resources\FacilityStatusResource::canViewAny());
+        $this->assertFalse(\App\ClubUnio\Resources\FieldAvailabilityResource::canCreate());
+        $this->get('/field-availabilities')->assertOk();
+        $this->get('/facility-statuses')->assertForbidden();
+        $this->grant(['facilities.view', 'facilities.update']);
+        $this->assertTrue($permissions->allowsModel($this->actor, $this->tenant, FacilityStatus::class, 'update'));
+        $this->assertTrue($permissions->allowsModel($this->actor, $this->tenant, $model, 'update'));
+    }
+
     private function denied(callable $operation): void
     {
         try {
