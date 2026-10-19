@@ -5,6 +5,7 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\MemberService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 // Synthetic, rolled-back local transaction; never touch existing club members.
@@ -16,6 +17,7 @@ $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+Http::preventStrayRequests();
 $db->beginTransaction();
 try {
     $tenant = Tenant::create(['slug' => 'form-check-'.Str::random(16), 'name' => 'Synthetic performance check']);

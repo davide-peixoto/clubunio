@@ -1,5 +1,7 @@
 # ClubUnio
 
+Gesamtmessung: [Performance-Abnahme und Wiederholungspruefung](deploy/CLUBUNIO-PERFORMANCE-ACCEPTANCE.md).
+
 Synchronisation: [Uebersicht und Protokollperformance](deploy/CLUBUNIO-SYNC-VIEW-PERFORMANCE.md).
 
 Trainingsplaene: [KI-Webplanung und PDF-Performance](deploy/CLUBUNIO-TRAINING-PERFORMANCE.md).

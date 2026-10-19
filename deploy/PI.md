@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Performance-Gesamtmessung (19.10.2026)
+
+Delta 20261019-clubunio-performance-acceptance auf Platzwart-Basis.
+Nur CLI-Messwerkzeuge und Doku, keine Runtime-/Profil-/Schemamigration.
+Anwendungscode unveraendert. Wiederholungsmatrix, Sicherheitsgrenzen und
+Ruecksprung: CLUBUNIO-PERFORMANCE-ACCEPTANCE.md.
+
 ## Platzwart (19.10.2026)
 
 Delta 20261019-clubunio-caretaker auf Sync-View-Performance-Basis. Vier

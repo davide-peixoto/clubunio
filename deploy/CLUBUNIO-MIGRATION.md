@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+19.10.2026: Repeated application-lifecycle performance acceptance, plus
+synthetic rolled-back save/PDF/history scenarios. CLI tooling/documentation
+only; no business behavior, permissions, indexes, schema or data import changed.
+Keep record IDs, audit history, error references and fresh operation guards.
+Browser end-to-end validation remains explicitly incomplete. Legacy DEV/PROD,
+API/SaaS/operations unchanged. See CLUBUNIO-PERFORMANCE-ACCEPTANCE.md.
+
 19.10.2026: Narrow caretaker grants to field_availability.view/update. Deploy
 catalog, permissions, facility service and form together. No schema migration.
 Old broad facilities grants remain compatible; never re-expand caretaker grants

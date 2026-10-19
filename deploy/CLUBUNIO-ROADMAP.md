@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Performance-Gesamtmessung (19.10.2026)
+
+Zwoelf Web-Lifecycle-Szenarien je dreimal gemessen; synthetisches Speichern,
+Trainings-PDF/Kopie und grosse Historie separat mit Rollback. Wiederholbare
+CLI-Suite mit Median/Spannweite, Abfragen/DB-Zeit, ohne Identitaetsausgabe.
+Kein weiterer belegter Fachcode-Engpass; keine Rechte-/Cache-/Schemaaenderung.
+Browser-Ende-zu-Ende-Abnahme bleibt offen, Steuerung aus Sicherheitsgruenden
+beendet. Messwerte/Grenzen: CLUBUNIO-PERFORMANCE-ACCEPTANCE.md.
+
 ## Platzwart-Einschraenkung (19.10.2026)
 
 Eigenes Modul fuer Platzverfuegbarkeit/Bemerkungen, keine Status-Wertetabelle.

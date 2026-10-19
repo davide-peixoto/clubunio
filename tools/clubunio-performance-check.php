@@ -16,6 +16,7 @@ use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 // CLI-only, read-only page profiling. Never output HTML, SQL bindings or identities.
@@ -29,6 +30,7 @@ $path = $argv[1] ?? '/members';
 abort_unless(in_array($path, ['/', '/signage-preview', '/field-availabilities', '/competitions', '/signage-notices', '/bus', '/bus/create', '/members', '/invoices', '/expenses', '/registrations', '/member-reports', '/player-reports', '/staff-reports', '/family-reports', '/bank-account-reports', '/open-invoices', '/payment-reports', '/unassigned-members', '/passive-members', '/key-reports', '/spots-recipients', '/member-documents', '/documents/member', '/documents/registration', '/documents/expense', '/configuration', '/planning', '/planning/calendar', '/planning/detail', '/members/detail', '/members/dossier', '/invoices/detail', '/expenses/detail'], true), 422);
 $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+Http::preventStrayRequests();
 config(['session.driver' => 'array']);
 $db->beginTransaction();
 try {
