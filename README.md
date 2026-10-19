@@ -1,5 +1,8 @@
 # ClubUnio
 
+Finanztest: [Sandbox-Guthaben auf zwei Zielrechnungen](deploy/CLUBUNIO-FINANCE-ACCEPTANCE.md),
+vorbereitet mit neuen Testbelegen; manuelle Bexio-Verrechnung noch offen.
+
 Gesamtmessung: [Performance-Abnahme und Wiederholungspruefung](deploy/CLUBUNIO-PERFORMANCE-ACCEPTANCE.md).
 
 Synchronisation: [Uebersicht und Protokollperformance](deploy/CLUBUNIO-SYNC-VIEW-PERFORMANCE.md).

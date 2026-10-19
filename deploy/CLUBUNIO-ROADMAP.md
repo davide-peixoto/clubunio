@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Zwei-Zielrechnungen-Sandbox vorbereitet (19.10.2026)
+
+Neue synthetische Rechnungen RE-00014/15/16 und lokale Korrektur427,
+ohne alte Belege zu veraendern, E-Mails oder Zahlungen auszuloesen.
+Manuell eine neue GS30 erstellen, zuerst10 auf RE-00015, nach Pruefung20
+auf RE-00016. Provider- und lokaler Zwei-Schritt-Nachweis bleiben offen.
+Details: CLUBUNIO-FINANCE-ACCEPTANCE.md. Keine Schema-/Runtimeaenderung;
+Fixtures nicht produktiv migrieren. PHPMaker DEV/PROD unveraendert.
+
 ## Finanz-Abnahmeabgleich (19.10.2026)
 
 GS-00004/RE-00009 und GS-00005/RE-00013 erneut lesend live bestaetigt;
