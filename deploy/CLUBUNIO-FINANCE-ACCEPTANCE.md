@@ -102,6 +102,21 @@ Diese Fixtures niemals nach PHPMaker DEV/PROD oder spaeter produktiv migrieren.
 
 ### Vorheriger lesender Nachtest
 
+### Zwischenpruefung nach gemeldeter erster Verrechnung (19.10.2026)
+
+Benutzer meldet neue GS und CHF10 auf RE-00015. Frischer direkter
+Providerabruf bestaetigt dies noch NICHT: RE-00015 Rest20/Gutschrift0,
+Verrechnungsnachweise leer; RE-00016 Rest25/Gutschrift0; RE-00014 Rest30.
+Lokale Salden identisch. Korrektur427 freigegeben, noch kein Kundenguthaben
+registriert. Keine GS-Nummer aus den Nachweisen bestimmbar. Kein Cacheabruf.
+Nicht blind registrieren oder eine Verrechnung nachbilden. Vor Schritt2
+GS-Nummer und Bexio-Firma/Verrechnungsansicht mit Benutzer klaeren.
+Nur lesend geprueft; keine Fachbuchung, keine Statusanwendung, keine
+Provider-Schreibaktion. CLI-Lesemodus zeigt jetzt zusaetzlich Provider-
+Nachweise, lokale Salden und vorhandene Kundenguthabenzuordnungen.
+
+### Historischer Pruefumfang
+
 Nur Pruefwerkzeug und Doku, keine Runtime-/Schema-/Datenmigration. Auf ClubUnio
 ausserhalb des Webroots in shared mit CLUBUNIO_BASE auf current ausfuehren.
 Kein Releasewechsel oder Cache-Reset erforderlich. DEV/PROD, Benutzerrechte,

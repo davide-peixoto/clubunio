@@ -93,6 +93,12 @@ foreach (['SOURCE' => '30.00', 'TARGET-A' => '20.00', 'TARGET-B' => '25.00'] as 
         'cash_received' => $remote['total_received_payments'] ?? null,
         'credit_applied' => $remote['total_credit_vouchers'] ?? null,
         'contact_id' => $remote['contact_id'] ?? null], JSON_THROW_ON_ERROR).PHP_EOL;
+    if ($mode === '--read' && $invoice->bexio_invoice_id) {
+        $evidence = $creditService->remote($actor, $tenant, $invoice->id);
+        echo json_encode(['role' => $role, 'provider_balance' => $evidence['balance'],
+            'provider_allocations' => $evidence['credit_allocations'],
+            'local_balance' => $invoice->bexioBalance?->only(['total_cents', 'credit_cents', 'remaining_cents'])], JSON_THROW_ON_ERROR).PHP_EOL;
+    }
 }
 
 $requestId = '07c9b792-6ee1-4f5e-a6b3-f3f633e25019';
@@ -113,4 +119,9 @@ if ($note) {
     echo json_encode(['local_credit_note_id' => $note->id, 'amount_cents' => $note->amount_cents,
         'included_tax' => $note->included_tax, 'status' => $note->status->code,
         'bexio_credit_creation' => 'manual_only'], JSON_THROW_ON_ERROR).PHP_EOL;
+    $credit = \App\ClubUnio\Models\CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->first();
+    echo json_encode(['customer_credit' => $credit ? ['id' => $credit->id,
+        'reference' => $credit->external_reference, 'amount_cents' => $credit->amount_cents,
+        'remaining_cents' => $credit->remaining_cents,
+        'allocations' => $credit->allocations()->get(['invoice_id', 'amount_cents'])->toArray()] : null], JSON_THROW_ON_ERROR).PHP_EOL;
 }

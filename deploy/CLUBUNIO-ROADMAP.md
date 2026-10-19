@@ -8,6 +8,9 @@ Manuell eine neue GS30 erstellen, zuerst10 auf RE-00015, nach Pruefung20
 auf RE-00016. Provider- und lokaler Zwei-Schritt-Nachweis bleiben offen.
 Details: CLUBUNIO-FINANCE-ACCEPTANCE.md. Keine Schema-/Runtimeaenderung;
 Fixtures nicht produktiv migrieren. PHPMaker DEV/PROD unveraendert.
+Zwischenpruefung: gemeldete CHF10-Verrechnung auf RE-00015 im direkten
+Providerabruf noch nicht sichtbar (Rest20, keine Verrechnungsnachweise).
+GS-Nummer/Firma klaeren, zweite Teilverrechnung noch nicht freigegeben.
 
 ## Finanz-Abnahmeabgleich (19.10.2026)
 
