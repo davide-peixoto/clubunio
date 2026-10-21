@@ -1,5 +1,17 @@
 # ClubUnio migration work packages
 
+21.10.2026: Season-planning wizard. Migration72 adds encrypted revisioned plans
+and per-item completion mappings only to ClubUnio PostgreSQL. Preserve APP_KEY,
+drafts, result mappings and audit history. Do not refresh/import legacy data.
+Draft edits never write domain tables. Explicit finish runs existing catalog,
+contribution/training and assignment services in one transaction; replay returns
+the existing season. No invoices, notifications, provider calls or current-season
+setting change. Deploy page/view/CSS/provider/service/catalog changes together.
+Retain additive tables on code rollback. Automated transaction/Livewire checks;
+authenticated visual/drag-drop and real full-season acceptance remain open.
+PHPMaker DEV/PROD, API, SaaS and operations unchanged.
+See CLUBUNIO-SEASON-PLANNING.md.
+
 19.10.2026: Read-only finance acceptance checker for known sandbox fixtures;
 GS-00005 already allocated in package72. No migration or repeated business
 write. Two-target allocation remains a separate manual sandbox acceptance.

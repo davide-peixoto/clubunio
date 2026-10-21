@@ -41,9 +41,10 @@ class CatalogService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input) {
             abort_unless(app(ModulePermissionService::class)->allowsModel($actor, $tenant, $model, $id ? 'update' : 'create'), 403);
-            // Serialize mapping changes with invoice status reconciliation.
-            if (in_array($model, [InvoiceStatus::class, InvoiceLineStatus::class], true)) {
+            // Serialize invoice mappings and season/team edits with their respective workflows.
+            if (in_array($model, [InvoiceStatus::class, InvoiceLineStatus::class, Season::class, Team::class], true)) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+                abort_unless(app(ModulePermissionService::class)->allowsModel($actor, $tenant, $model, $id ? 'update' : 'create'), 403);
             }
             $record = $id ? $model::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail() : new $model;
             if ($id && array_key_exists('active', $input) && (bool) $input['active'] !== (bool) $record->active) {
@@ -110,7 +111,7 @@ class CatalogService
             }
             $before = $record->exists ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id])->save();
-            if (in_array($model, [Team::class, Season::class], true)) {
+            if ($id && in_array($model, [Team::class, Season::class], true)) {
                 DB::connection('clubunio')->update("UPDATE clubora.team_seasons ts SET label=t.name || ' / ' || s.name
                     FROM clubora.teams t,clubora.seasons s WHERE ts.tenant_id=? AND t.tenant_id=ts.tenant_id AND s.tenant_id=ts.tenant_id AND t.id=ts.team_id AND s.id=ts.season_id", [$tenant->id]);
             }

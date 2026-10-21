@@ -1,5 +1,18 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saisonplanungs-Wizard (21.10.2026)
+
+Sieben Webschritte mit verschluesselten, versionierten Entwuerfen; Saisonvorlage,
+Mannschaften, neue Beitraege/Regeln, Spielerpool mit Vorschlaegen/Drag-and-drop,
+Staff/TL, Trainingszeiten und frischer Abschlusspruefung. Erst bestaetigter
+Abschluss erstellt alle Objekte gemeinsam ueber bestehende Fachservices.
+Rollback bei Fehlern und idempotenter Wiederholungsabschluss; keine Rechnungen,
+Nachrichten oder Umstellung der aktuellen Saison. Migration72 nur in ClubUnio:
+season_plans/season_plan_results. Kein Bestandsimport/PHPMaker-Eingriff.
+Angemeldete visuelle/fachliche Gesamtplan-Abnahme bleibt offen; Computersteuerung
+hat Browserzugriff sicherheitsbedingt beendet. CLUBUNIO-SEASON-PLANNING.md.
+API, SaaS und Betrieb weiterhin ausgeschlossen.
+
 ## Zwei-Zielrechnungen-Sandbox vorbereitet (19.10.2026)
 
 Neue synthetische Rechnungen RE-00014/15/16 und lokale Korrektur427,

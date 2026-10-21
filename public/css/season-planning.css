@@ -1,0 +1,46 @@
+.season-planner{--sp-line:#d1d5db;--sp-muted:#4b5563;--sp-bg:#fff;color:#17212e;min-width:0;letter-spacing:0}
+.season-planner section{padding:1.25rem 0;border-top:1px solid var(--sp-line)}
+.season-planner h2{font-size:1.2rem;font-weight:650;margin:0 0 .8rem}
+.season-planner h3{font-size:1rem;font-weight:650;margin:0 0 .6rem}
+.sp-toolbar{display:flex;flex-wrap:wrap;gap:.85rem;align-items:end;margin-bottom:1rem}
+.sp-toolbar h2{margin-right:auto}
+.sp-status{align-items:center;border-top:1px solid var(--sp-line);padding-top:1rem}
+.sp-status span,.sp-note{color:var(--sp-muted);font-size:.875rem;line-height:1.5}
+.sp-note{margin:.65rem 0}
+.sp-steps{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--sp-line);margin:1rem 0}
+.sp-steps button{padding:.7rem .85rem;border-bottom:3px solid transparent;font-size:.9rem}
+.sp-steps button.is-current{border-color:#164b8a;color:#164b8a;font-weight:650}
+.sp-steps button span{font-variant-numeric:tabular-nums;margin-right:.2rem}
+.sp-editor{min-width:0;border:0;margin:0;padding:0}
+.sp-editor:disabled{opacity:.8}
+.sp-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:.85rem;align-items:end}
+.season-planner label{display:flex;flex-direction:column;gap:.35rem;font-size:.875rem;min-width:0}
+.season-planner input:not([type=checkbox]),.season-planner select{width:100%;min-width:0;background:var(--sp-bg);border:1px solid #9ca3af;border-radius:5px;padding:.5rem .65rem;min-height:2.5rem;color:inherit;font-size:.9rem}
+.season-planner .sp-check{flex-direction:row;align-items:center;min-height:2.5rem;gap:.55rem}
+.season-planner input[type=checkbox]{width:1.1rem;height:1.1rem;flex-shrink:0}
+.sp-row{border-bottom:1px solid var(--sp-line);padding:1rem 0}
+.sp-row .sp-toolbar{margin:.8rem 0 0}
+.sp-board{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:1.25rem;margin-top:1.25rem;align-items:start}
+.sp-pool{min-width:0}
+.sp-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1rem}
+.sp-team{min-width:0;min-height:180px;border:1px solid var(--sp-line);border-radius:6px;background:var(--sp-bg);padding:.85rem}
+.sp-team h3{display:flex;justify-content:space-between;gap:.5rem;overflow-wrap:anywhere}
+.sp-team h3 span{white-space:nowrap;color:var(--sp-muted)}
+.sp-person{display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:3.5rem;border-bottom:1px solid var(--sp-line);padding:.55rem .15rem}
+.sp-person[draggable=true]{cursor:grab}
+.sp-person span{min-width:0;overflow-wrap:anywhere}
+.sp-person small{display:block;color:var(--sp-muted);font-size:.75rem}
+.sp-person button{flex-shrink:0}
+.sp-alert{border-left:4px solid #164b8a;background:#eef6fc;padding:1rem;margin:1rem 0;overflow-wrap:anywhere}
+.sp-alert ul{list-style:disc;padding-left:1.2rem}
+.sp-error{border-color:#b91c1c;background:#fff1f2}
+.sp-warning{border-color:#b7791f;background:#fffbea}
+.sp-counts{display:flex;flex-wrap:wrap;gap:1.5rem;margin:1rem 0}
+.sp-counts dt{font-size:.85rem;color:var(--sp-muted)}
+.sp-counts dd{font-size:1.4rem;font-weight:650}
+.sp-footer{border-top:1px solid var(--sp-line);padding-top:1rem}
+.sp-busy button{cursor:wait}
+.season-planner button:focus-visible,.season-planner select:focus-visible,.season-planner input:focus-visible{outline:2px solid #164b8a;outline-offset:3px}
+.dark .season-planner{--sp-line:#495360;--sp-muted:#c5ccd5;--sp-bg:#20252c;color:#f1f5f9}
+.dark .sp-alert{color:#17212e}
+@media(max-width:760px){.sp-board{grid-template-columns:minmax(0,1fr)}.sp-steps button{padding:.65rem .5rem}.sp-toolbar>label{flex:1 1 180px}.sp-teams{grid-template-columns:minmax(0,1fr)}}

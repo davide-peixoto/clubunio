@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Saisonplanung (21.10.2026)
+
+Aktiv: 20261021-clubunio-season-planning, Ruecksprung:
+20261019-clubunio-performance-acceptance. Sieben Webschritte, Migration72 mit zwei
+neuen Planungstabellen ausschliesslich in ClubUnio. Lokaler und Pi-Code teilen
+dieselbe ClubUnio-DB; Migrationsjournal verhindert Doppelanlage. Vorhandene
+Konfiguration/Storage erhalten. Caches, Tenant-/Profil-/Verschluesselungschecks
+erfolgreich; Login/CSS200, Wizard anonym302. Keine echte Saison/Rechnung oder
+Nachricht erzeugt. Planungstabellen/Audit bei Code-Rollback erhalten.
+Details und offene visuelle Abnahme: CLUBUNIO-SEASON-PLANNING.md.
+API/SaaS/Betrieb und PHPMaker DEV/PROD unveraendert.
+
 ## Performance-Gesamtmessung (19.10.2026)
 
 Delta 20261019-clubunio-performance-acceptance auf Platzwart-Basis.

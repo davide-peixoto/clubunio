@@ -10,6 +10,7 @@ use App\ClubUnio\Pages\BexioSandbox;
 use App\ClubUnio\Pages\BusReservations;
 use App\ClubUnio\Pages\ContributionPreview;
 use App\ClubUnio\Pages\Login;
+use App\ClubUnio\Pages\SeasonPlanning;
 use App\ClubUnio\Pages\SettingsOverview;
 use App\ClubUnio\Pages\SfvCompetitions;
 use App\ClubUnio\Pages\SignagePreview;
@@ -195,7 +196,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 MemberStatusResource::class, MemberTypeResource::class,
                 RegistrationStatusResource::class,
             ])
-            ->pages([Dashboard::class, SettingsOverview::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class])->widgets([ClubOverview::class, AccountWidget::class,
+            ->pages([Dashboard::class, SettingsOverview::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class])->widgets([ClubOverview::class, AccountWidget::class,
                 MembersByStatus::class, ExpensesByStatus::class, MembersByAge::class,
                 ExpensesBySeason::class, NewMembersMonthly::class,
                 InvoicesByStatus::class, InvoicesBySeason::class,
