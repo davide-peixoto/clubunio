@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Profil-Seed-Regression und Wizard-Sichtpruefung (22.10.2026)
+
+Seed71-Test prueft seine eingefrorene Rechtevorlage statt heutiger Modulvorlage.
+Zusaetzlicher Test schuetzt vorhandene Profile und Benutzerzuordnungen vor
+Ueberschreiben/Rechteerweiterung. Nur Tests/Doku; keine Migration, Rechteaenderung
+oder neuer Runtime-Release. Wizard-Sichtpruefung erneut durch Browsersteuerung
+wegen nicht zuverlaessig feststellbarer URL blockiert und weiterhin offen.
+Alle30 Profil-/Wizard-Tests mit220 Assertions erfolgreich, ohne Testausschluss.
+Details: CLUBUNIO-SEASON-PLANNING.md. API/SaaS/Betrieb/PHPMaker DEV/PROD unveraendert.
+
 ## Saisonplanungs-Wizard (21.10.2026)
 
 Sieben Webschritte mit verschluesselten, versionierten Entwuerfen; Saisonvorlage,

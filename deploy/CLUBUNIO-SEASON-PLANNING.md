@@ -129,12 +129,21 @@ Finaler Lauf: alle17 Wizard-Tests und11 Modulrechtetests, zusammen28 Tests/
 Webzuordnung: drei Tests/38 Assertions erfolgreich. Alle synthetischen Daten
 zurueckgerollt; lokale Checks finden keine zurueckgebliebenen Planungsentwuerfe.
 
-Unabhaengiger bestehender Befund: ModulePermissionTest erwartet im historischen
-Seed71 dieselben Leserechte wie im heutigen Modulverzeichnis. Dort kam inzwischen
-field_availability hinzu. Seed71 vergibt absichtlich nur seine versionierte Liste;
-neue Module werden nicht automatisch nachberechtigt. Dieser einzelne Test zeigt
-deshalb eine Erwartungsabweichung, keine vom Wizard erweiterte Berechtigung.
-Migration71, PermissionCatalog und bestehende Profile bleiben unveraendert.
+Profil-Seed-Testkorrektur (22.10.2026): Die alte Erwartung an Seed71 wurde von der
+heutigen dynamischen Leserechtevorlage auf seine ausdruecklich versionierte Liste
+umgestellt. Der Test verbietet dabei das nachtraeglich hinzugekommene explizite
+field_availability.view und prueft die Liste auf reine bekannte Leserechte.
+Ein weiterer Regressionstest prueft zweimaligen Seed bei einem bereits vorhandenen
+Nur-Lesen-Profil: kompletter Profildatensatz und Benutzerzuordnung bleiben gleich,
+ebenso die effektiven Einschraenkungen fuer Bearbeiten, Download, Export und
+Saisonuebernahme. Migration71, PermissionCatalog und Laufzeitcode unveraendert;
+keine Rechtekorrektur oder Datenbankmigration notwendig.
+
+Nachpruefung22.10.: vollstaendige ModulePermissionTest- und SeasonPlanningTest-
+Dateien ohne Ausschluss erfolgreich:30 Tests/220 Assertions, inklusive des zuvor
+abweichenden Seedtests und des neuen Bestandsschutztests. Testdaten transaktional
+zurueckgerollt; Syntax und Git-Diff-Pruefung erfolgreich. Keine Runtime-Dateien
+geaendert, deshalb kein neuer Anwendungsdeploy erforderlich.
 
 Lokale synthetische Messung, jeweils mit abschliessendem Fixture-Rollback:
 101 Spieler plus Staff/TL, ein Team, Preis/Regel/Slot: Abschluss zuvor22.67s/
@@ -146,3 +155,9 @@ Browser. Das Windows-Steuerungswerkzeug hat die Sichtpruefung wegen unklarer
 Browser-URL aus Sicherheitsgruenden beendet. Keine Umgehung oder Anmeldung per
 extrahierter Session; automatisierte Livewire-Tests ersetzen diese Sichtabnahme
 nicht. Keine echte Saison aus Bestand zu Testzwecken abgeschlossen.
+
+Erneuter Sichtpruefungsversuch am22.10.2026 ebenfalls durch das Steuerungswerkzeug
+beendet: aktuelle Browser-URL nicht zuverlaessig feststellbar. Es konnte keine
+Wizard-Seite visuell geprueft werden. Desktop-/Mobilansicht und echtes Drag-and-drop
+bleiben ausdruecklich offen; weder Anmeldung noch Sessionumgehung vorgenommen.
+Dieser Nachtrag ist eine Test-/Dokumentationsaenderung, kein neuer Runtime-Release.

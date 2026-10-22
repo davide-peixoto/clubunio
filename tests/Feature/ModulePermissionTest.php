@@ -262,7 +262,37 @@ class ModulePermissionTest extends TestCase
         $migration->up();
         $rows = $this->db->table('clubora.access_profiles')->where('tenant_id', $this->tenant->id)->where('name', 'Nur Lesen')->get();
         $this->assertCount(1, $rows);
-        $this->assertSame(\App\ClubUnio\Services\PermissionCatalog::readOnly(), json_decode($rows->first()->permissions, true));
+        // Historical seed rights are frozen, not the current module catalog's read-only template.
+        $expected = ['members.view', 'registrations.view', 'member_changes.view', 'documents.view',
+            'families.view', 'seasons.view', 'teams.view', 'planning.view', 'training.view',
+            'training_slots.view', 'competitions.view', 'invoices.view', 'expenses.view',
+            'contributions.view', 'credits.view', 'bexio.view', 'bus.view', 'facilities.view',
+            'signage.view', 'announcements.view', 'events.view', 'reports.view', 'catalogs.view', 'templates.view'];
+        $actual = json_decode($rows->first()->permissions, true);
+        $this->assertSame($expected, $actual);
+        $this->assertNotContains('field_availability.view', $actual);
+        $this->assertSame([], array_diff($actual, \App\ClubUnio\Services\PermissionCatalog::readOnly()));
         $this->assertSame($before, $this->db->table('clubora.tenant_accounts')->orderBy('id')->get()->toJson());
+    }
+
+    public function test_activation_preserves_existing_read_only_profile_without_expanding_rights(): void
+    {
+        $profile = $this->profile();
+        $profile->forceFill(['name' => 'Nur Lesen', 'revision' => 7])->save();
+        $link = app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
+        $beforeProfile = $profile->fresh()->getAttributes();
+        $beforeMembership = $link->fresh()->getAttributes();
+        $migration = require database_path('clubunio/2026_10_16_000071_enable_access_profiles.php');
+        $migration->up();
+        $migration->up();
+        $this->assertSame($beforeProfile, $profile->fresh()->getAttributes());
+        $this->assertSame($beforeMembership, $link->fresh()->getAttributes());
+        $this->assertSame(['members.view'], $profile->fresh()->permissions);
+        $gate = app(ModulePermissionService::class);
+        $this->assertTrue($gate->allows($link->account, $this->tenant, 'members', 'view'));
+        foreach ([['members', 'update'], ['members', 'download'], ['members', 'export'],
+            ['field_availability', 'view'], ['seasons', 'transfer']] as [$module, $function]) {
+            $this->assertFalse($gate->allows($link->account, $this->tenant, $module, $function));
+        }
     }
 }

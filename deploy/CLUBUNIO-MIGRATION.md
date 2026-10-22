@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+22.10.2026: Correct historical seed71 test expectations to its frozen read-only
+grant list, not today's module catalog. Additional regression checks repeated
+seeding preserves the complete existing profile and membership, with write,
+download/export and transfer still denied. No migration, permissions, runtime
+code or deployment change. Browser-driven visual wizard acceptance retried but
+blocked by URL-verification safety guard; remains open, not marked passed.
+See CLUBUNIO-SEASON-PLANNING.md. API/SaaS/operations and legacy DEV/PROD unchanged.
+
 21.10.2026: Season-planning wizard. Migration72 adds encrypted revisioned plans
 and per-item completion mappings only to ClubUnio PostgreSQL. Preserve APP_KEY,
 drafts, result mappings and audit history. Do not refresh/import legacy data.
