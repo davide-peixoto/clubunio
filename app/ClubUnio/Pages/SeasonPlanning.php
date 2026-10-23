@@ -320,10 +320,10 @@ class SeasonPlanning extends Page
         $this->draftPage = max(1, min($this->draftPage, (int) ceil($draftCount / 50)));
         $drafts = $draftQuery->orderByDesc('updated_at')->orderByDesc('id')->offset((max(1, $this->draftPage) - 1) * 50)->limit(50)
             ->get(['id', 'name', 'state', 'revision', 'updated_at']);
-        $pool = collect($facts['members'])->sortBy(fn ($m) => mb_strtolower($m->last_name.' '.$m->first_name));
+        $pool = collect($facts['members'])->sortBy(fn ($m) => mb_strtolower($this->service()->memberLabel($m)));
         $assigned = collect($this->document['assignments'] ?? [])->where('kind', $this->kind)->pluck('member_id')->all();
         $team = collect($this->document['teams'] ?? [])->firstWhere('key', $this->targetTeam);
-        $pool = $pool->filter(fn ($m) => (! $this->search || str_contains(mb_strtolower($m->first_name.' '.$m->last_name), mb_strtolower($this->search)))
+        $pool = $pool->filter(fn ($m) => (! $this->search || str_contains(mb_strtolower($this->service()->memberLabel($m).' '.$m->first_name.' '.$m->last_name), mb_strtolower($this->search)))
             && (! $this->birthYear || substr($m->birth_date ?? '', 0, 4) == $this->birthYear)
             && (! $this->onlyUnassigned || ! in_array($m->id, $assigned))
             && ($this->kind !== 'player' || ! $this->onlyMatching || ($team && $this->service()->matches($m, $team, $this->document))));

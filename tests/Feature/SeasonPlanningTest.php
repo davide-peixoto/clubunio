@@ -6,11 +6,14 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\TeamPlayer;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Models\TrainingSlot;
+use App\ClubUnio\NavigationStructure;
 use App\ClubUnio\Pages\SeasonPlanning;
 use App\ClubUnio\Services\ContributionTrainingService;
 use App\ClubUnio\Services\SeasonPlanningService;
 use App\ClubUnio\Services\TeamAssignmentService;
 use Filament\Facades\Filament;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -449,5 +452,28 @@ class SeasonPlanningTest extends TestCase
         } catch (ValidationException) {
             $this->assertSame(1, $this->rows('seasons'));
         }
+    }
+
+    public function test_member_pool_labels_and_search_include_companies_and_unnamed_records(): void
+    {
+        $this->insert('members', ['company' => 'QA Partner']);
+        $unnamed = $this->insert('members', ['first_name' => null, 'last_name' => null]);
+        $row = $this->draft();
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)->call('go', 4)
+            ->assertSee('QA Partner')->assertSee('Mitglied #'.$unnamed)->assertHasNoErrors();
+        $page->set('search', 'QA Partner')->assertSee('Mitgliederpool (1)')->assertSee('QA Partner')->assertDontSee('Mitglied #'.$unnamed);
+        $page->set('search', 'Mitglied #'.$unnamed)->assertSee('Mitgliederpool (1)')->assertSee('Mitglied #'.$unnamed)->assertDontSee('QA Partner');
+        $this->assertSame(0, $this->rows('seasons'));
+    }
+
+    public function test_wizard_is_placed_in_sport_navigation_not_in_settings(): void
+    {
+        $item = NavigationItem::make('Saisonplanung')->url(SeasonPlanning::getNavigationUrl());
+        $parts = NavigationStructure::partition(Filament::getPanel('clubunio'),
+            [NavigationGroup::make('Sport')->items([$item])]);
+        $sport = collect($parts['navigation'])->first(fn ($group) => $group->getLabel() === 'Sport');
+        $this->assertNotNull($sport);
+        $this->assertTrue(collect($sport->getItems())->contains(fn ($entry) => $entry->getUrl() === SeasonPlanning::getNavigationUrl()));
+        $this->assertSame([], $parts['settings']);
     }
 }

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/season-planning.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/season-planning.css') }}?v=3">
     @php
         $editable = $planId && $state === 'draft' && \App\ClubUnio\Resources\ProfileUi::allows('seasons', 'create');
         $canFinish = $editable && \App\ClubUnio\Resources\ProfileUi::allows('seasons', 'transfer') && \App\ClubUnio\Resources\ProfileUi::allows('teams', 'create') && \App\ClubUnio\Resources\ProfileUi::allows('contributions', 'create') && \App\ClubUnio\Resources\ProfileUi::allows('training_slots', 'create');
@@ -107,11 +107,11 @@
                         @if($kind === 'player')<label class="sp-check"><input type="checkbox" wire:model.live="onlyMatching">Passender Jahrgang für Zielmannschaft</label>@endif
                     </div>
                     <div class="sp-board">
-                        <div class="sp-pool"><h3>Mitgliederpool ({{ $total }})</h3>
+                        <div class="sp-pool"><h3>Mitgliederpool ({{ $total }})</h3><div class="sp-pool-members">
                             @foreach($pool as $member)<div class="sp-person" wire:key="pool-{{ $member->id }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: $wire.kind, member: {{ $member->id }}, from: null}; $event.dataTransfer.effectAllowed = 'move'; $event.dataTransfer.setData('text/plain', '{{ $member->id }}')" x-on:dragend="drag = null">
-                                <span>{{ $member->last_name }} {{ $member->first_name }}<small>{{ substr($member->birth_date ?? '', 0, 4) ?: 'Jahrgang unbekannt' }}</small></span>
+                                <span>{{ app(\App\ClubUnio\Services\SeasonPlanningService::class)->memberLabel($member) }}<small>{{ substr($member->birth_date ?? '', 0, 4) ?: 'Jahrgang unbekannt' }}</small></span>
                                 <x-filament::icon-button wire:click="moveMember('{{ $kind }}', {{ $member->id }}, null, '{{ $targetTeam }}')" :disabled="!$targetTeam" wire:loading.attr="disabled" icon="heroicon-o-arrow-right" label="Der gewählten Mannschaft zuordnen" />
-                            </div>@endforeach
+                            </div>@endforeach</div>
                             <div class="sp-toolbar"><x-filament::icon-button wire:click="browsePool(-1)" :disabled="$poolPage <= 1" icon="heroicon-o-chevron-left" label="Vorherige Mitglieder" /><span>{{ $poolPage }} / {{ max(1, (int) ceil($total / 40)) }}</span><x-filament::icon-button wire:click="browsePool(1)" :disabled="$poolPage * 40 >= $total" icon="heroicon-o-chevron-right" label="Weitere Mitglieder" /></div>
                         </div>
                         <div class="sp-teams">
@@ -126,7 +126,7 @@
                                     @foreach($links as $assignment)
                                         @php($member = $facts['members'][$assignment['member_id']] ?? null)
                                         <div class="sp-person" wire:key="assigned-{{ $assignment['key'] }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: '{{ $assignment['kind'] }}', member: {{ $assignment['member_id'] }}, from: '{{ $team['key'] }}'}; @if($kind === 'staff') $wire.functionId = {{ (int) $assignment['function_id'] }}; @endif $event.dataTransfer.setData('text/plain', '{{ $assignment['member_id'] }}')" x-on:dragend="drag = null">
-                                            <span>{{ $member ? $member->last_name.' '.$member->first_name : 'Inaktives/fehlendes Mitglied #'.$assignment['member_id'] }}<small>{{ $kind === 'staff' ? ($facts['staff_functions'][$assignment['function_id'] ?? 0] ?? null)?->name : substr($member?->birth_date ?? '', 0, 4) }}</small></span>
+                                            <span>{{ $member ? app(\App\ClubUnio\Services\SeasonPlanningService::class)->memberLabel($member) : 'Inaktives/fehlendes Mitglied #'.$assignment['member_id'] }}<small>{{ $kind === 'staff' ? ($facts['staff_functions'][$assignment['function_id'] ?? 0] ?? null)?->name : substr($member?->birth_date ?? '', 0, 4) }}</small></span>
                                             <x-filament::icon-button wire:click="removeRow('assignments', '{{ $assignment['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-x-mark" color="danger" label="Zuordnung entfernen" />
                                         </div>
                                     @endforeach

@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Wizard-Sichtpruefung und Anzeige (23.10.2026)
+
+Browser-Plugin erlaubt angemeldete Desktop-/390px-Sichtpruefung. Kein verbindlicher
+Abschluss. Korrekturen: Navigation unter Sport, Firmen-/ID-Fallback statt leerer
+Mitgliederzeilen samt Suche, begrenzter Pool-Scrollbereich fuer schmale Ansichten.
+Keine Rechte-/Schema-/Fachregel-Aenderung. Korrekturen deployed und nach Verbindungs-
+abbruch in frischem angemeldetem Tab visuell bestaetigt, Desktop/390px ohne
+horizontalen Ueberlauf. Gefuellte Trainingszeiten und echtes Drag-and-drop noch
+offen. CLUBUNIO-SEASON-PLANNING.md. PHPMaker DEV/PROD unveraendert.
+
 ## Profil-Seed-Regression und Wizard-Sichtpruefung (22.10.2026)
 
 Seed71-Test prueft seine eingefrorene Rechtevorlage statt heutiger Modulvorlage.

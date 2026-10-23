@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+## Wizard-Anzeige (23.10.2026)
+
+Delta20261023-clubunio-season-planning-visual auf20261021-Saisonplanung:
+Navigation unter Sport, Firmen-/ID-Fallback und Suche im Pool, Scrollbegrenzung,
+CSS-Version3. Keine Migration, Rechte- oder Konfigurationsaenderung. Bestehende
+Entwuerfe erhalten; Vorschau vor Abschluss frisch pruefen (erweiterte Fakten).
+Aktiv deployed; Checks erfolgreich, angemeldete Desktop-/Mobil-Nachkontrolle
+erfolgreich. Gefuellte Trainingszeiten und Drag-and-drop bleiben offen.
+CLUBUNIO-SEASON-PLANNING.md. PHPMaker DEV/PROD unveraendert.
+
 ## Saisonplanung (21.10.2026)
 
 Aktiv: 20261021-clubunio-season-planning, Ruecksprung:

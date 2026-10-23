@@ -12,7 +12,7 @@ class NavigationStructure
 {
     private const PRIMARY = [
         'Mitglieder' => ['MemberResource', 'RegistrationResource', 'MemberChangeRequestResource', 'FamilyResource', 'MemberDocumentResource', 'FamilyMemberResource'],
-        'Sport' => ['TeamPlanning', 'SeasonResource', 'TeamSeasonResource', 'TeamPlayerResource', 'TeamStaffResource', 'TechnicalLeadResource', 'TrainingSlotResource', 'SfvCompetitions', 'CompetitionResource', 'LegacyTrainingPlanResource'],
+        'Sport' => ['TeamPlanning', 'SeasonResource', 'SeasonPlanning', 'TeamSeasonResource', 'TeamPlayerResource', 'TeamStaffResource', 'TechnicalLeadResource', 'TrainingSlotResource', 'SfvCompetitions', 'CompetitionResource', 'LegacyTrainingPlanResource'],
         'Finanzen' => ['InvoiceResource', 'ExpenseResource', 'ContributionPreview', 'CustomerCreditResource', 'CreditNoteResource', 'RefundResource', 'BexioReconciliation'],
         'Anlagen & Kommunikation' => ['FieldAvailabilityResource', 'BusReservations', 'SignagePreview', 'SignageNoticeResource', 'AnnouncementResource', 'ClubEventResource', 'MaterialReceiptResource', 'LegacyMaterialReceiptResource'],
         'Auswertungen' => ['MemberReportResource', 'UnassignedMemberResource', 'PassiveMemberResource', 'PlayerReportResource', 'StaffReportResource', 'FamilyReportResource', 'OpenInvoiceResource', 'PaymentReportResource', 'BankAccountReportResource', 'KeyReportResource', 'SpotsRecipientResource'],

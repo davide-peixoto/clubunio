@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+23.10.2026: Wizard visual QA via authenticated Browser plugin, desktop/390px.
+Place the existing authorized page in Sport navigation, load company for member
+label/search fallback and constrain pool height. No member exclusion or altered
+assignment/age/permission rules, no schema or data import. Existing review tokens
+must be refreshed because the facts now include company names. Deploy navigation,
+page/service/Blade/CSS together. Post-deploy desktop/mobile display verified after
+recovering the browser connection in a fresh tab. Filled-slot and real drag/drop
+browser checks remain open; no new draft or season was created during visual QA.
+API/SaaS/operations and legacy DEV/PROD unchanged. CLUBUNIO-SEASON-PLANNING.md.
+
 22.10.2026: Correct historical seed71 test expectations to its frozen read-only
 grant list, not today's module catalog. Additional regression checks repeated
 seeding preserves the complete existing profile and membership, with write,

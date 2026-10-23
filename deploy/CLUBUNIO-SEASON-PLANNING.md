@@ -1,6 +1,53 @@
 # Saisonplanungs-Wizard
 
-Stand: 21.10.2026. Ausschliesslich ClubUnio-Web; kein PHPMaker-Import und keine
+## Visueller Nachlauf23.10.2026
+
+Mit dem explizit eingebundenen Browser-Plugin ist die angemeldete Seite erstmals
+sicher unter https://dev.clubunio.ch/season-planning erreichbar. Desktop und390x844
+geprueft: Mannschaftsformular, Beitragspreise/-regeln, Spielerpool, Staff sowie
+leere Trainingszeitenansicht. Labels/Schritte umbrechen in schmaler Ansicht ohne
+sichtbare Ueberlagerung. Keine verbindliche Saison oder Mitgliederzuordnung
+ausgefuehrt; beim bestehenden Entwurf112 nur gespeicherten Wizard-Schritt gewechselt.
+
+Gefundene Anzeigeprobleme: Wizard war nicht in der zentralen Sport-Navigation
+einsortiert. Mitglieder ohne Personennamen erschienen als leere Poolzeilen, weil
+der Firmenname nicht geladen wurde. Korrektur: autorisierten Navigationspunkt unter
+Sport ergaenzen; Anzeige und Suche verwenden Namen, ersatzweise Firma, zuletzt
+Mitglied-ID. Dieselbe Bezeichnung wird bei Zuordnungen und Pruefhinweisen benutzt.
+Keine Mitglieder ausgeblendet, Filter/Rechte/Zuordnungs- oder Altersregeln erhalten.
+Pool erhaelt begrenzten Scrollbereich, insbesondere damit auf schmalen Bildschirmen
+die Mannschaftsbereiche nicht hinter40 Eintraegen verschwinden. CSS-Version3;
+negative Standardraender der Iconbuttons im Pool neutralisiert, damit kein
+horizontaler Scrollbalken innerhalb der mobilen Liste entsteht.
+
+Ein separater unverbindlicher Sichtpruefungsentwurf wurde angefordert; beim
+Bestaetigungsdialog fiel die Browserverbindung mit Zeitueberschreitungen aus.
+Abbruch wurde beim Benutzer angefragt. In einem frischen Tab derselben Sitzung
+ist danach weiterhin nur der bestehende Entwurf112 sichtbar; kein neuer
+Pruefentwurf wurde angelegt. Die Nachpruefung der Korrekturen gelang im frischen
+Tab: Sport-Menuepunkt sichtbar, Pool mit benannten Eintraegen, Desktop und390px
+ohne horizontalen Ueberlauf (Dokument und Pool jeweils scrollWidth=clientWidth).
+Echte Drag-and-drop-Bedienung und gefuellte Trainingszeiten bleiben offen.
+Die beobachteten Ansichten ersetzen keine vollstaendige fachliche Abnahme.
+
+Delta-Release20261023-clubunio-season-planning-visual: nur Navigation, Page,
+Darstellungsfelder/-texte, Blade/CSS und Doku. Keine Migration oder neue Rechte.
+Vorheriger Runtime-Release20261021-clubunio-season-planning bleibt erhalten.
+API/SaaS/Betrieb und PHPMaker DEV/PROD unveraendert.
+
+Release deployed; Cache-, Tenant-, Profil- und Entwurfsverschluesselungschecks
+erfolgreich. Nur bestehender Entwurf112 vorhanden, dessen Schritt zum Abschluss
+der Sichtpruefung auf den vorherigen Beitraege-Schritt zurueckgesetzt wurde.
+Keine Inhalte, Zuordnungen oder Saisonfachtabellen durch Browserpruefung geaendert.
+Temporare Viewport-Ueberschreibung zurueckgesetzt. Lokale Screenshotnachweise
+unter storage/app/private/qa-wizard-20261023, bewusst nicht im Git-Repository.
+
+Tests: Saisonplanungs-/Tenant-Navigationslauf28 Tests/303 Assertions erfolgreich;
+separater Nachlauf beider neuen Label-/Navigationsregressionen2 Tests/15 Assertions
+erfolgreich. Alle Testdaten zurueckgerollt. Laufzeitrechte und historische Seeds
+unveraendert; kein PHPMaker-Deployment.
+
+Stand: 23.10.2026. Ausschliesslich ClubUnio-Web; kein PHPMaker-Import und keine
 Aenderung an bestehendem DEV/PROD, API, SaaS oder Betrieb.
 
 ## Einstieg und Ablauf

@@ -62,7 +62,7 @@ final class SeasonPlanningService
                 ->where('active', true)->orderBy('id')->get($columns)->keyBy('id')->all();
         }
         $facts['members'] = app(MemberAccessService::class)->activeMembers($tenant)->orderBy('id')
-            ->get(['id', 'first_name', 'last_name', 'birth_date', 'gender_id'])->keyBy('id')->all();
+            ->get(['id', 'first_name', 'last_name', 'company', 'birth_date', 'gender_id'])->keyBy('id')->all();
 
         return $facts;
     }
@@ -249,6 +249,11 @@ final class SeasonPlanningService
             && (empty($range['gender_id']) || $range['gender_id'] == $member->gender_id);
     }
 
+    public function memberLabel(object $member): string
+    {
+        return trim($member->last_name.' '.$member->first_name) ?: (trim($member->company ?? '') ?: 'Mitglied #'.$member->id);
+    }
+
     public function review(Account $actor, Tenant $tenant, int $id): array
     {
         $row = $this->get($actor, $tenant, $id);
@@ -329,7 +334,7 @@ final class SeasonPlanningService
             if ($assignment['kind'] === 'player') {
                 $players[$assignment['member_id']][] = $team['name'];
                 if (! $this->matches($member, $team, $doc)) {
-                    $warnings[] = $member->first_name.' '.$member->last_name.': Jahrgang/Geschlecht für '.$team['name'].' nicht passend oder nicht definiert.';
+                    $warnings[] = $this->memberLabel($member).': Jahrgang/Geschlecht für '.$team['name'].' nicht passend oder nicht definiert.';
                 }
             }
         }

@@ -22,6 +22,7 @@
 .sp-row .sp-toolbar{margin:.8rem 0 0}
 .sp-board{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:1.25rem;margin-top:1.25rem;align-items:start}
 .sp-pool{min-width:0}
+.sp-pool-members{max-height:36rem;overflow-y:auto;overscroll-behavior:contain}
 .sp-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1rem}
 .sp-team{min-width:0;min-height:180px;border:1px solid var(--sp-line);border-radius:6px;background:var(--sp-bg);padding:.85rem}
 .sp-team h3{display:flex;justify-content:space-between;gap:.5rem;overflow-wrap:anywhere}
@@ -30,7 +31,7 @@
 .sp-person[draggable=true]{cursor:grab}
 .sp-person span{min-width:0;overflow-wrap:anywhere}
 .sp-person small{display:block;color:var(--sp-muted);font-size:.75rem}
-.sp-person button{flex-shrink:0}
+.season-planner .sp-person button{flex-shrink:0;margin:0}
 .sp-alert{border-left:4px solid #164b8a;background:#eef6fc;padding:1rem;margin:1rem 0;overflow-wrap:anywhere}
 .sp-alert ul{list-style:disc;padding-left:1.2rem}
 .sp-error{border-color:#b91c1c;background:#fff1f2}
@@ -43,4 +44,4 @@
 .season-planner button:focus-visible,.season-planner select:focus-visible,.season-planner input:focus-visible{outline:2px solid #164b8a;outline-offset:3px}
 .dark .season-planner{--sp-line:#495360;--sp-muted:#c5ccd5;--sp-bg:#20252c;color:#f1f5f9}
 .dark .sp-alert{color:#17212e}
-@media(max-width:760px){.sp-board{grid-template-columns:minmax(0,1fr)}.sp-steps button{padding:.65rem .5rem}.sp-toolbar>label{flex:1 1 180px}.sp-teams{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.sp-board{grid-template-columns:minmax(0,1fr)}.sp-pool-members{max-height:20rem}.sp-steps button{padding:.65rem .5rem}.sp-toolbar>label{flex:1 1 180px}.sp-teams{grid-template-columns:minmax(0,1fr)}}
