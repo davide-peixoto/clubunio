@@ -7,7 +7,7 @@
         $status = ['draft' => 'Entwurf', 'completed' => 'Abgeschlossen', 'discarded' => 'Verworfen'];
         $labels = ['player' => 'Spieler', 'staff' => 'Staff', 'lead' => 'Technische Leitung'];
     @endphp
-    <div class="season-planner" x-data="{ drag: null }" wire:loading.class="sp-busy">
+    <div class="season-planner" x-data="{ drag: null, newPlanConfirmation: false, discardConfirmation: false }" wire:loading.class="sp-busy">
         @if($errors->any())
             <div class="sp-alert sp-error" role="alert"><strong>Nicht gespeichert oder abgeschlossen</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
@@ -26,9 +26,19 @@
             @endif
             @if(\App\ClubUnio\Resources\ProfileUi::allows('seasons', 'create'))
                 <label>Vorlage <select wire:model="sourceId"><option value="">Ohne Vorlage</option>@foreach(collect($facts['seasons'])->sortByDesc('name') as $season)<option value="{{ $season->id }}">{{ $season->name }}</option>@endforeach</select></label>
-                <x-filament::button wire:click="newPlan" wire:confirm="Neue Planung erstellen? Der aktuelle gespeicherte Entwurf bleibt erhalten." wire:loading.attr="disabled" icon="heroicon-o-plus">Neue Planung</x-filament::button>
+                <x-filament::button x-on:click="newPlanConfirmation = !newPlanConfirmation" x-bind:aria-expanded="newPlanConfirmation" aria-controls="sp-new-plan-confirmation" wire:loading.attr="disabled" icon="heroicon-o-plus">Neue Planung</x-filament::button>
             @endif
         </div>
+        @if(\App\ClubUnio\Resources\ProfileUi::allows('seasons', 'create'))
+            <section id="sp-new-plan-confirmation" x-show="newPlanConfirmation" x-cloak aria-labelledby="sp-new-plan-title">
+                <h2 id="sp-new-plan-title">Neuen Entwurf anlegen?</h2>
+                <p>Der aktuelle gespeicherte Entwurf bleibt erhalten. Eine Saison wird damit noch nicht verbindlich erstellt.</p>
+                <div class="sp-toolbar">
+                    <x-filament::button x-on:click="newPlanConfirmation = false" color="gray">Abbrechen</x-filament::button>
+                    <x-filament::button wire:click="newPlan" x-on:click="newPlanConfirmation = false" wire:loading.attr="disabled" icon="heroicon-o-plus">Entwurf anlegen</x-filament::button>
+                </div>
+            </section>
+        @endif
         @if($planId)
             <div class="sp-toolbar sp-status" role="status">
                 <strong>{{ $document['season']['name'] ?: 'Neue Saison' }} · {{ $status[$state] }} #{{ $planId }}</strong>
@@ -168,8 +178,18 @@
             <div class="sp-toolbar sp-footer">
                 @if($step > 1)<x-filament::button wire:click="go({{ $step - 1 }})" wire:loading.attr="disabled" color="gray" icon="heroicon-o-chevron-left">Zurück</x-filament::button>@endif
                 @if($step < 7)<x-filament::button wire:click="go({{ $step + 1 }})" wire:loading.attr="disabled" icon="heroicon-o-chevron-right" icon-position="after">Weiter</x-filament::button>@endif
-                @if($editable && \App\ClubUnio\Resources\ProfileUi::allows('seasons', 'deactivate'))<x-filament::button wire:click="discard" wire:confirm="Entwurf verwerfen? Die Planung bleibt zur Nachverfolgung erhalten, es werden keine Fachdaten erstellt." wire:loading.attr="disabled" color="danger" outlined icon="heroicon-o-archive-box">Verwerfen</x-filament::button>@endif
+                @if($editable && \App\ClubUnio\Resources\ProfileUi::allows('seasons', 'deactivate'))<x-filament::button x-on:click="discardConfirmation = !discardConfirmation" x-bind:aria-expanded="discardConfirmation" aria-controls="sp-discard-confirmation" wire:loading.attr="disabled" color="danger" outlined icon="heroicon-o-archive-box">Verwerfen</x-filament::button>@endif
             </div>
+            @if($editable && \App\ClubUnio\Resources\ProfileUi::allows('seasons', 'deactivate'))
+                <section id="sp-discard-confirmation" x-show="discardConfirmation" x-cloak aria-labelledby="sp-discard-title">
+                    <h2 id="sp-discard-title">Diesen Entwurf verwerfen?</h2>
+                    <p>Die Planung bleibt zur Nachverfolgung erhalten. Es werden daraus keine Fachdaten erstellt.</p>
+                    <div class="sp-toolbar">
+                        <x-filament::button x-on:click="discardConfirmation = false" color="gray">Weiter bearbeiten</x-filament::button>
+                        <x-filament::button wire:click="discard" x-on:click="discardConfirmation = false" wire:loading.attr="disabled" color="danger" icon="heroicon-o-archive-box">Entwurf verwerfen</x-filament::button>
+                    </div>
+                </section>
+            @endif
         @else
             <p>Noch keine Planung geöffnet.</p>
         @endif

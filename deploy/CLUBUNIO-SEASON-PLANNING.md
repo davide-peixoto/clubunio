@@ -1,5 +1,44 @@
 # Saisonplanungs-Wizard
 
+## Interaktionspruefung und Autosave (23.10.2026)
+
+Angemeldete Browserpruefung auf ClubUnio in separatem QA-Entwurf136, vorbereitet
+ueber den regulaeren autorisierten Planungsdienst, weil der native Neue-Planung-
+Dialog die Browsersteuerung blockierte. Echtes Drag-and-drop: Pool -> Verwaltung
+-> 1te Mannschaft. Eine Zuordnung gespeichert, keine doppelte Zuordnung.
+
+Schnelle Folgeeingaben bei Trainingszeiten verloren beim Wiederladen einzelne
+Werte. Autosave ersetzt deshalb nicht mehr das gesamte Livewire-Dokument durch
+die normalisierte Speicherkopie: laufende Browsereingaben bleiben erhalten.
+Validierung, Verschluesselung, Versionskonflikte und Rechte bleiben unveraendert.
+Die normalisierte Kopie wird beim expliziten Oeffnen geladen.
+
+Nach Deployment erneut rasch befuellt, gespeichert, Seite neu geladen und Entwurf
+wieder geoeffnet: Mannschaft, Sommer, Dienstag, Kunstrasen, Garderobe2, Links,
+17:45-19:15, QA-Halle, Nur-Kunstrasen und Websichtbarkeit bleiben erhalten.
+Desktop und390x844 geprueft, mobile Dokumentbreite375 = scrollWidth375.
+
+Neue Planung und Verwerfen verwenden auf Benutzerwunsch eine Seitenbestaetigung
+statt nativer JavaScript-Dialoge. Neue Planung aufklappen/abbrechen geprueft;
+Verwerfen direkt im Browser ausgefuehrt: QA136 bleibt als verworfener Entwurf
+mit einer Zuordnung/einer Trainingszeit erhalten, ohne season_id. Bestehender
+Entwurf112 bleibt auf Revision22. Vorher-/Nachherzaehlung der Saison-, Mannschafts-,
+Zuordnungs-, Trainingszeit- und Ergebnisfachtabellen identisch. Kein verbindlicher
+Abschluss, keine Benachrichtigungen oder externen Synchronisationen im Browser.
+Verbindlicher Abschluss und andere bestehende Sicherheitsdialoge bleiben erhalten.
+
+Delta20261023-clubunio-season-planning-interactions deployed, Cache-/Tenant-/
+Profil-/Verschluesselungschecks erfolgreich. Keine Migration oder neuen Rechte.
+Private Screenshotnachweise unter storage/app/private/qa-wizard-20261023;
+keine Mitgliederdaten oder Testlaufzeitdateien im Git. Zwei neue transaktionale
+Tests fuer Verschieben aller drei Zuordnungsarten und volle Trainingszeit-
+Persistenz; zusaetzliche Tests fuer Seitenbestaetigungen/Entwurfsverwerfen.
+Abschliessender Lauf SeasonPlanningTest + ModulePermissionTest:36 Tests,
+307 Assertions erfolgreich, einschliesslich Profil-Seed-Regression; alle Fixtures
+zurueckgerollt. Pint und diff --check erfolgreich; Runtime-Dateihashes lokal/server
+identisch. Keine Browser-Konsolefehler waehrend des Nachlaufs.
+API/SaaS/Betrieb und PHPMaker DEV/PROD unveraendert.
+
 ## Visueller Nachlauf23.10.2026
 
 Mit dem explizit eingebundenen Browser-Plugin ist die angemeldete Seite erstmals

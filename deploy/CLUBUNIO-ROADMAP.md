@@ -1,5 +1,18 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Wizard-Interaktionen abgeschlossen (23.10.2026)
+
+Echtes Drag-and-drop aus Pool und zwischen Mannschaften geprueft. Voll befuellte
+Trainingszeit nach Neuladen erhalten; schneller Autosave ueberschreibt keine
+laufenden Eingaben mehr. Neue Planung/Verwerfen mit Seitenbestaetigung, Verwerfen
+im Browser erfolgreich. QA136 verworfen, Entwurf112 unveraendert, keine Saison
+verbindlich angelegt und keine Fachtabellen befuellt. Desktop/390px geprueft.
+Korrektur auf ClubUnio deployed; keine Migration oder Rechteaenderung.
+Automatisierte Tests decken zusaetzlich Spieler/Staff/TL-Verschieben und alle
+Trainingszeitfelder ab. Vollstaendige Fachabnahme bleibt davon getrennt.
+API/SaaS/Betrieb und PHPMaker DEV/PROD bleiben ausgeschlossen.
+CLUBUNIO-SEASON-PLANNING.md.
+
 ## Wizard-Sichtpruefung und Anzeige (23.10.2026)
 
 Browser-Plugin erlaubt angemeldete Desktop-/390px-Sichtpruefung. Kein verbindlicher

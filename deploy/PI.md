@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Wizard-Interaktionen (23.10.2026)
+
+Aktiv:20261023-clubunio-season-planning-interactions, vorheriger Release
+20261023-clubunio-season-planning-visual als Rueckweg erhalten. Delta: Page-Autosave
+behaelt laufende Browsereingaben; Blade mit Seitenbestaetigung fuer Neue Planung
+und Verwerfen. Keine Migration/Konfiguration/Rechteaenderung. Cache-, Tenant-,
+Profil- und Entwurfschecks erfolgreich. Browsernachlauf: Drag/drop, volle Trainings-
+zeit nach Neuladen, mobile Ansicht und Verwerfen des QA-Entwurfs136 erfolgreich.
+Keine Saison verbindlich erstellt; bestehender Entwurf112 unveraendert.
+CLUBUNIO-SEASON-PLANNING.md. PHPMaker DEV/PROD unveraendert.
+
 ## Wizard-Anzeige (23.10.2026)
 
 Delta20261023-clubunio-season-planning-visual auf20261021-Saisonplanung:

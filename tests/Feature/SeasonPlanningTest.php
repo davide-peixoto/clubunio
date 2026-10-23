@@ -476,4 +476,102 @@ class SeasonPlanningTest extends TestCase
         $this->assertTrue(collect($sport->getItems())->contains(fn ($entry) => $entry->getUrl() === SeasonPlanning::getNavigationUrl()));
         $this->assertSame([], $parts['settings']);
     }
+
+    public function test_member_moves_between_teams_resume_without_duplicate_or_domain_writes(): void
+    {
+        $doc = $this->document();
+        $doc['assignments'] = [];
+        $other = array_replace($doc['teams'][0], ['key' => (string) Str::uuid(), 'name' => 'Second fixture']);
+        $doc['teams'][] = $other;
+        $row = $this->draft($doc);
+        $first = $doc['teams'][0]['key'];
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)->call('go', 4);
+
+        foreach (['player', 'staff', 'lead'] as $kind) {
+            $page->set('kind', $kind)->set('functionId', $this->function)
+                ->call('moveMember', $kind, $this->member, null, $first)
+                ->call('moveMember', $kind, $this->member, $first, $other['key'])
+                ->call('moveMember', $kind, $this->member, null, $other['key'])
+                ->assertHasNoErrors();
+            $saved = $this->service()->get($this->actor, $this->tenant, $row->id);
+            $links = collect($saved->document['assignments'])->where('kind', $kind)->values();
+            $this->assertCount(1, $links);
+            $this->assertSame($other['key'], $links[0]['team_key']);
+            $this->assertSame($kind === 'staff' ? $this->function : null, $links[0]['function_id']);
+        }
+
+        $page->call('openPlan', $row->id)->assertHasNoErrors();
+        $this->assertCount(3, $page->get('document')['assignments']);
+        foreach (['seasons', 'team_seasons', 'team_players', 'team_staff', 'technical_leads'] as $table) {
+            $this->assertSame(0, $this->rows($table), $table);
+        }
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
+
+    public function test_filled_training_slot_autosaves_all_values_and_resumes_without_completion(): void
+    {
+        $doc = $this->document();
+        $doc['slots'] = [];
+        $row = $this->draft($doc);
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)
+            ->call('go', 6)->call('addRow', 'slots')->assertHasNoErrors();
+        $slot = $page->get('document')['slots'][0];
+        $slot = array_replace($slot, [
+            'team_key' => $doc['teams'][0]['key'], 'starts_at' => '17:45', 'ends_at' => '19:15',
+            'hall' => 'QA Halle', 'all_fields' => true, 'without_main' => true,
+            'synthetic_only' => false, 'website_visible' => false,
+        ]);
+        foreach ($this->options as $category => $id) {
+            $slot[$category.'_id'] = $id;
+        }
+        foreach ($slot as $column => $value) {
+            if ($column !== 'key') {
+                $page->set('document.slots.0.'.$column, $value)->assertHasNoErrors();
+            }
+        }
+        $page->assertSet('document.slots.0.starts_at', '17:45')
+            ->assertSet('document.slots.0.ends_at', '19:15');
+        $slot['starts_at'] = '17:45:00';
+        $slot['ends_at'] = '19:15:00';
+        $page->call('go', 4)->call('openPlan', $row->id)->call('go', 6)
+            ->assertSet('document.slots.0', $slot)->assertSet('state', 'draft')->assertHasNoErrors();
+        $this->assertSame($slot, $this->service()->get($this->actor, $this->tenant, $row->id)->document['slots'][0]);
+        foreach (['seasons', 'training_slots', 'season_plan_results'] as $table) {
+            $this->assertSame(0, $this->rows($table), $table);
+        }
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
+
+    public function test_new_draft_uses_inline_confirmation_and_preserves_previous_draft(): void
+    {
+        $existing = $this->draft();
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $existing->id)
+            ->assertSee('Neuen Entwurf anlegen?')->assertSee('Entwurf anlegen')
+            ->assertDontSee('wire:confirm="Neue Planung erstellen?', false);
+        $page->call('newPlan')->assertHasNoErrors()->assertSet('state', 'draft');
+        $this->assertNotSame($existing->id, $page->get('planId'));
+        $this->assertSame($existing->document, $this->service()->get($this->actor, $this->tenant, $existing->id)->document);
+        $this->assertSame(2, $this->rows('season_plans'));
+        $this->assertSame(0, $this->rows('seasons'));
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
+
+    public function test_web_discard_uses_inline_confirmation_and_keeps_draft_history(): void
+    {
+        $row = $this->draft();
+        Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)
+            ->assertSee('Diesen Entwurf verwerfen?')->assertSee('Entwurf verwerfen')
+            ->assertDontSee('wire:confirm="Entwurf verwerfen?', false)
+            ->call('discard')->assertSet('state', 'discarded')->assertHasNoErrors()
+            ->assertSee('Verworfener Entwurf.');
+        $saved = $this->service()->get($this->actor, $this->tenant, $row->id);
+        $this->assertSame($row->document, $saved->document);
+        $this->assertSame('discarded', $saved->state);
+        $this->assertSame(0, $this->rows('seasons'));
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
 }

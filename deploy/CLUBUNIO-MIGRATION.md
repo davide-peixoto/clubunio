@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+23.10.2026 follow-up: authenticated real drag/drop and filled training-slot
+browser checks completed in isolated QA draft136 (now discarded, history kept).
+Fix autosave overwriting pending browser fields by retaining the editor document;
+storage still validates/normalizes/encrypts and enforces revisions/permissions.
+New-plan/discard confirmations are inline instead of native JS. Reopened full slot
+verified on desktop/390px. Domain-table counts unchanged; existing draft112 remains
+revision22. Delta20261023-clubunio-season-planning-interactions deployed, no schema,
+imports, rights changes or binding season creation. Regression tests use rollback.
+Legacy DEV/PROD, API/SaaS/operations untouched. CLUBUNIO-SEASON-PLANNING.md.
+
 23.10.2026: Wizard visual QA via authenticated Browser plugin, desktop/390px.
 Place the existing authorized page in Sport navigation, load company for member
 label/search fallback and constrain pool height. No member exclusion or altered

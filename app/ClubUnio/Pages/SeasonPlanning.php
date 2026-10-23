@@ -134,7 +134,7 @@ class SeasonPlanning extends Page
         $this->acknowledge = false;
         $this->savedAt = null;
         $row = $this->service()->save(Filament::auth()->user(), Filament::getTenant(), $this->planId, $this->revision, $this->document);
-        $this->document = $row->document;
+        // Keep pending browser edits intact; normalized storage is loaded when reopening.
         $this->revision = $row->revision;
         $this->savedAt = $row->updated_at;
         $this->resetErrorBag();
