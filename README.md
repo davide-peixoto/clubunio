@@ -1,6 +1,8 @@
 # ClubUnio
 
 Saisonplanung: [Speicherbarer Wizard mit verbindlichem Abschluss](deploy/CLUBUNIO-SEASON-PLANNING.md).
+Technische [Fachabnahme mit isolierten Testdaten](deploy/CLUBUNIO-SEASON-ACCEPTANCE.md)
+inklusive verbindlichem Browserabschluss und vollstaendigem Ergebnisabgleich.
 
 Finanztest: [Sandbox-Guthaben auf zwei Zielrechnungen](deploy/CLUBUNIO-FINANCE-ACCEPTANCE.md),
 vorbereitet mit neuen Testbelegen; manuelle Bexio-Verrechnung noch offen.

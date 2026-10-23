@@ -7,7 +7,7 @@
         $status = ['draft' => 'Entwurf', 'completed' => 'Abgeschlossen', 'discarded' => 'Verworfen'];
         $labels = ['player' => 'Spieler', 'staff' => 'Staff', 'lead' => 'Technische Leitung'];
     @endphp
-    <div class="season-planner" x-data="{ drag: null, newPlanConfirmation: false, discardConfirmation: false }" wire:loading.class="sp-busy">
+    <div class="season-planner" x-data="{ drag: null, newPlanConfirmation: false, discardConfirmation: false, finishConfirmation: false }" wire:loading.class="sp-busy">
         @if($errors->any())
             <div class="sp-alert sp-error" role="alert"><strong>Nicht gespeichert oder abgeschlossen</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
@@ -128,14 +128,14 @@
                             @foreach($document['teams'] as $team)
                                 @php($range = app(\App\ClubUnio\Services\SeasonPlanningService::class)->range($team, $document))
                                 @php($links = collect($document['assignments'])->where('team_key', $team['key'])->where('kind', $kind))
-                                <div class="sp-team" wire:key="board-{{ $team['key'] }}" x-on:dragover.prevent="$event.dataTransfer.dropEffect = 'move'" x-on:drop.prevent="if (drag) { $wire.moveMember(drag.kind, drag.member, drag.from, '{{ $team['key'] }}'); drag = null }">
+                                <div class="sp-team" wire:key="board-{{ $team['key'] }}" x-on:dragover.prevent="$event.dataTransfer.dropEffect = 'move'" x-on:drop.prevent="if (drag) { $wire.moveMember(drag.kind, drag.member, drag.from, '{{ $team['key'] }}', drag.functionId ?? null); drag = null }">
                                     <h3>{{ $team['name'] ?: 'Neue Mannschaft' }} <span>{{ $links->count() }}{{ $kind === 'player' && $team['capacity'] ? ' / '.$team['capacity'] : '' }}</span></h3>
                                     @if($kind === 'player')<p class="sp-note">Jahrgänge {{ $range['year_from'] ?? '–' }}–{{ $range['year_to'] ?? '–' }} · {{ ($facts['genders'][$range['gender_id'] ?? 0] ?? null)?->name ?? 'Alle' }}</p>
                                         <x-filament::button size="sm" color="gray" wire:click="suggest('{{ $team['key'] }}')" wire:confirm="Passende, noch nicht zugeordnete Spieler bis zur Zielgrösse ergänzen?" wire:loading.attr="disabled" icon="heroicon-o-sparkles">Vorschläge übernehmen</x-filament::button>
                                     @endif
                                     @foreach($links as $assignment)
                                         @php($member = $facts['members'][$assignment['member_id']] ?? null)
-                                        <div class="sp-person" wire:key="assigned-{{ $assignment['key'] }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: '{{ $assignment['kind'] }}', member: {{ $assignment['member_id'] }}, from: '{{ $team['key'] }}'}; @if($kind === 'staff') $wire.functionId = {{ (int) $assignment['function_id'] }}; @endif $event.dataTransfer.setData('text/plain', '{{ $assignment['member_id'] }}')" x-on:dragend="drag = null">
+                                        <div class="sp-person" wire:key="assigned-{{ $assignment['key'] }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: '{{ $assignment['kind'] }}', member: {{ $assignment['member_id'] }}, from: '{{ $team['key'] }}', functionId: {{ $kind === 'staff' ? (int) $assignment['function_id'] : 'null' }}}; $event.dataTransfer.setData('text/plain', '{{ $assignment['member_id'] }}')" x-on:dragend="drag = null">
                                             <span>{{ $member ? app(\App\ClubUnio\Services\SeasonPlanningService::class)->memberLabel($member) : 'Inaktives/fehlendes Mitglied #'.$assignment['member_id'] }}<small>{{ $kind === 'staff' ? ($facts['staff_functions'][$assignment['function_id'] ?? 0] ?? null)?->name : substr($member?->birth_date ?? '', 0, 4) }}</small></span>
                                             <x-filament::icon-button wire:click="removeRow('assignments', '{{ $assignment['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-x-mark" color="danger" label="Zuordnung entfernen" />
                                         </div>
@@ -169,7 +169,15 @@
                         @if($review['warnings'])<div class="sp-alert sp-warning"><h3>Hinweise zur Planung</h3><ul>@foreach($review['warnings'] as $message)<li>{{ $message }}</li>@endforeach</ul><label class="sp-check"><input type="checkbox" wire:model.live="acknowledge">Hinweise geprüft; Abweichungen sind beabsichtigt.</label></div>@endif
                         @if(!$review['errors'] && $canFinish)
                             <p class="sp-note">Der Abschluss erstellt alle geplanten Fachdaten gemeinsam. Vorlagensaison und bestehende Mitglieder bleiben unverändert. Es erfolgen weder Rechnungsversand noch Push-Nachrichten oder externe Synchronisationen.</p>
-                            <x-filament::button wire:click="finish" wire:confirm="Saison jetzt verbindlich mit sämtlichen geplanten Verknüpfungen erstellen?" wire:loading.attr="disabled" :disabled="count($review['warnings']) && !$acknowledge" icon="heroicon-o-check">Saison verbindlich erstellen</x-filament::button>
+                            <x-filament::button x-on:click="finishConfirmation = !finishConfirmation" x-bind:aria-expanded="finishConfirmation" aria-controls="sp-finish-confirmation" wire:loading.attr="disabled" :disabled="count($review['warnings']) && !$acknowledge" icon="heroicon-o-check">Saison verbindlich erstellen</x-filament::button>
+                            <div id="sp-finish-confirmation" x-show="finishConfirmation" x-cloak class="sp-alert" role="group" aria-labelledby="sp-finish-title">
+                                <h3 id="sp-finish-title">Saisonabschluss bestätigen</h3>
+                                <p>{{ $document['season']['name'] }} wird jetzt mit sämtlichen geplanten Verknüpfungen erstellt. Der Entwurf ist danach nicht mehr bearbeitbar.</p>
+                                <div class="sp-toolbar">
+                                    <x-filament::button x-on:click="finishConfirmation = false" color="gray">Planung weiter bearbeiten</x-filament::button>
+                                    <x-filament::button wire:click="finish" x-on:click="finishConfirmation = false" wire:loading.attr="disabled" :disabled="count($review['warnings']) && !$acknowledge" icon="heroicon-o-check">Abschluss bestätigen und erstellen</x-filament::button>
+                                </div>
+                            </div>
                         @endif
                         @if($editable && !$canFinish)<p class="sp-note">Für den Abschluss fehlen Erstellungsrechte für mindestens einen Bereich oder das Recht zur Saisonübernahme.</p>@endif
                     @endif

@@ -1,5 +1,17 @@
 # Saisonplanungs-Wizard
 
+## Aktueller Abnahmestand (23.10.2026)
+
+Technische Fachabnahme mit isolierten synthetischen Daten abgeschlossen:
+Vorlage, neue Mannschaft, Beitraege, Spieler, Staff/TL und Trainingszeiten bis
+zum verbindlichen Browserabschluss sowie vollstaendigem Datenabgleich.
+Alle25 Ergebnisverknuepfungen korrekt, Vorlage und SVS-Bestand unveraendert.
+QA-Daten und temporaerer Testzugang nach Nachweis entfernt. Staff-Drag-Funktion,
+Mitglied-ID-Suche und Seitenbestaetigung vor Abschluss korrigiert und deployed.
+Die darunterstehenden Offen-Vermerke sind historische Zwischenstaende und werden
+durch diesen Nachweis ersetzt. Details: [Fachabnahme](CLUBUNIO-SEASON-ACCEPTANCE.md).
+Echte Vereinsplanung weiterhin nur nach fachlicher Freigabe, kein Bestandsimport.
+
 ## Interaktionspruefung und Autosave (23.10.2026)
 
 Angemeldete Browserpruefung auf ClubUnio in separatem QA-Entwurf136, vorbereitet

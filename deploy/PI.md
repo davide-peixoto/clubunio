@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Saison-Fachabnahme (23.10.2026)
+
+Aktiv:20261023-clubunio-season-planning-acceptance, Rueckweg:
+20261023-clubunio-season-planning-interactions. Page/Blade-Delta fuer Staff-Drag-
+Funktion, ID-Suche und explizite Seitenbestaetigung beim Abschluss. Keine Migration,
+Konfiguration oder Rechteaenderung. Cache-, Tenant-, Profil- und Entwurfschecks
+erfolgreich. Verbindliche Browserabnahme ausschliesslich mit isolierten QA-Daten,
+alle25 Ergebnisverknuepfungen geprueft, Vorlage/Bestand unveraendert. Temporaren
+Testbereich danach entfernt und Browser auf SV Sissach zurueckgestellt.
+CLUBUNIO-SEASON-ACCEPTANCE.md. PHPMaker DEV/PROD unveraendert.
+
 ## Wizard-Interaktionen (23.10.2026)
 
 Aktiv:20261023-clubunio-season-planning-interactions, vorheriger Release

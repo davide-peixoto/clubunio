@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saisonplanung fachlich-technisch abgenommen (23.10.2026)
+
+Gesamtablauf einschliesslich verbindlichem Browserabschluss nur mit isolierten
+Testdaten durchgefuehrt: drei Teams, drei Preise/Regeln, elf Zuordnungen, drei
+Trainingszeiten; alle25 Ergebnisverknuepfungen korrekt. Quellsaetze und echter
+Vereinsbestand unveraendert; temporaere QA-Daten/Zuordnung entfernt. Staff-/TL-
+Drag nun visuell bestaetigt. Staff-Funktionsuebergabe beim Drag und Mitglied-ID-
+Suche korrigiert; Abschluss mit expliziter Seitenbestaetigung. ClubUnio deployed,
+keine Migration oder Rechteerweiterung. Technische Restabnahme des Wizards erledigt;
+Freigabe eines echten Vereinsplans bleibt Aufgabe der Verantwortlichen.
+CLUBUNIO-SEASON-ACCEPTANCE.md. API/SaaS/Betrieb/PHPMaker DEV/PROD unveraendert.
+
 ## Wizard-Interaktionen abgeschlossen (23.10.2026)
 
 Echtes Drag-and-drop aus Pool und zwischen Mannschaften geprueft. Voll befuellte

@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+23.10.2026: season-planning acceptance completed with synthetic isolated source
+and followup seasons, including real browser completion and all25 result links.
+Source rows and SVS baseline unchanged; temporary fixture/access cleaned up.
+Delta20261023-clubunio-season-planning-acceptance: Page/Blade only, explicit staff
+function in drag payload, member ID search and inline final confirmation.
+No schema/import/config/permission migration. Preserve existing drafts, encryption
+key, revision guards and result history. Do not migrate synthetic QA seasons.
+Historical open visual/overall checks are superseded by CLUBUNIO-SEASON-ACCEPTANCE.md.
+Real planning still requires user business approval. API/SaaS/operations and
+PHPMaker DEV/PROD untouched.
+
 23.10.2026 follow-up: authenticated real drag/drop and filled training-slot
 browser checks completed in isolated QA draft136 (now discarded, history kept).
 Fix autosave overwriting pending browser fields by retaining the editor document;

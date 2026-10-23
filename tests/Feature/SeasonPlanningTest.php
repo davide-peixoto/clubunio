@@ -574,4 +574,159 @@ class SeasonPlanningTest extends TestCase
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
+
+    public function test_staff_drag_keeps_source_function_independent_of_pool_selection(): void
+    {
+        $doc = $this->document();
+        $assistant = $this->insert('staff_functions', ['name' => 'Assistant', 'code' => 'assistant']);
+        $source = $doc['teams'][0]['key'];
+        $target = (string) Str::uuid();
+        $doc['teams'][] = array_replace($doc['teams'][0], ['key' => $target, 'name' => 'Second team']);
+        $doc['assignments'][] = ['key' => (string) Str::uuid(), 'kind' => 'staff', 'team_key' => $source,
+            'member_id' => $this->member, 'function_id' => $assistant];
+        $row = $this->draft($doc);
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)->call('go', 5)
+            ->set('functionId', $assistant)
+            ->call('moveMember', 'staff', $this->member, $source, $target, $this->function)
+            ->assertHasNoErrors()->assertSet('functionId', $assistant);
+        $links = collect($page->get('document')['assignments'])->where('kind', 'staff');
+        $this->assertCount(2, $links);
+        $this->assertSame($target, $links->firstWhere('function_id', $this->function)['team_key']);
+        $this->assertSame($source, $links->firstWhere('function_id', $assistant)['team_key']);
+        $page->call('moveMember', 'staff', $this->member, $target, $source, -1)
+            ->assertHasErrors('assignment');
+        $this->assertSame($links->all(), collect($this->service()->get($this->actor, $this->tenant, $row->id)->document['assignments'])->where('kind', 'staff')->all());
+        $this->assertSame(0, $this->rows('team_staff'));
+    }
+
+    public function test_member_pool_search_accepts_member_id_for_named_members(): void
+    {
+        $row = $this->draft();
+        Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)->call('go', 4)
+            ->set('onlyUnassigned', false)->set('search', (string) $this->member)
+            ->assertSee('Mitgliederpool (1)')->assertSee('Fixture Player')->assertHasNoErrors();
+    }
+
+    public function test_full_followup_season_reconciles_every_result_and_preserves_source(): void
+    {
+        $first = $this->draft();
+        $review = $this->service()->review($this->actor, $this->tenant, $first->id);
+        $source = $this->service()->complete($this->actor, $this->tenant, $first->id, 1, $review['token'], false);
+        $tables = ['seasons', 'teams', 'team_seasons', 'contribution_prices', 'contribution_rules',
+            'team_players', 'team_staff', 'technical_leads', 'training_slots'];
+        $before = [];
+        foreach ($tables as $table) {
+            $before[$table] = $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant->id)->orderBy('id')->get()->keyBy('id')->all();
+        }
+        $sourceMember = $this->db->table('clubora.members')->where('id', $this->member)->first();
+        $candidate = $this->insert('members', ['first_name' => 'Next cohort', 'birth_date' => '2018-01-01', 'gender_id' => $this->gender]);
+        $outside = $this->insert('members', ['first_name' => 'Outside cohort', 'birth_date' => '2000-01-01', 'gender_id' => $this->gender]);
+        $doc = $this->service()->seed($this->actor, $this->tenant, $source);
+        $this->assertSame('2031/2032', $doc['season']['name']);
+        $this->assertSame(2015, $doc['rules'][0]['year_from']);
+        $this->assertSame(2018, $doc['rules'][0]['year_to']);
+        $team = $doc['teams'][0]['key'];
+        $newTeam = (string) Str::uuid();
+        $doc['teams'][] = array_replace($doc['teams'][0], ['key' => $newTeam, 'team_id' => null,
+            'name' => 'New followup team', 'capacity' => 2]);
+        $row = $this->service()->save($this->actor, $this->tenant, null, null, $doc, $source);
+        $page = Livewire::test(SeasonPlanning::class)->call('openPlan', $row->id)
+            ->call('go', 4)->call('suggest', $newTeam)->assertHasNoErrors();
+        $players = collect($page->get('document')['assignments'])->where('kind', 'player');
+        $this->assertCount(2, $players);
+        $this->assertTrue($players->contains('member_id', $candidate));
+        $this->assertFalse($players->contains('member_id', $outside));
+        $page->call('go', 5)->set('functionId', $this->function)
+            ->call('moveMember', 'staff', $this->member, null, $newTeam)
+            ->call('moveMember', 'lead', $this->member, null, $newTeam)
+            ->call('go', 6)->call('addRow', 'slots')->assertHasNoErrors();
+        $slot = array_replace($doc['slots'][0], ['key' => $page->get('document')['slots'][1]['key'],
+            'team_key' => $newTeam, 'starts_at' => '19:30', 'ends_at' => '21:00', 'hall' => 'Followup hall',
+            'website_visible' => false, 'synthetic_only' => true]);
+        $page->set('document.slots.1', $slot)->call('go', 7)->assertHasNoErrors();
+        $this->assertSame([], $page->get('review')['errors']);
+        $this->assertSame([], $page->get('review')['warnings']);
+        $finalDoc = $this->service()->get($this->actor, $this->tenant, $row->id)->document;
+        $reviewToken = $page->get('review')['token'];
+        $revision = $page->get('revision');
+        $page->call('finish')->assertHasNoErrors()->assertSet('state', 'completed');
+        $season = $page->get('seasonId');
+        $this->assertNotSame($source, $season);
+        $this->assertSame($season, $this->service()->complete($this->actor, $this->tenant, $row->id, $revision, $reviewToken, false));
+        $results = $this->db->table('clubora.season_plan_results')->where('plan_id', $row->id)->get()->keyBy('item_key');
+        $this->assertCount(14, $results);
+        $this->assertSame($season, $results['season']->target_id);
+        foreach ($finalDoc['teams'] as $planned) {
+            $ts = $this->db->table('clubora.team_seasons')->where('id', $results[$planned['key']]->target_id)->first();
+            $this->assertSame($season, $ts->season_id);
+            $this->assertSame($planned['team_id'] ?? $results['master:'.$planned['key']]->target_id, $ts->team_id);
+        }
+        foreach ($finalDoc['assignments'] as $planned) {
+            $result = $results[$planned['key']];
+            $actual = $this->db->table('clubora.'.$result->entity)->where('id', $result->target_id)->first();
+            $this->assertSame($this->tenant->id, $actual->tenant_id);
+            $this->assertSame($planned['member_id'], $actual->member_id);
+            $this->assertSame($results[$planned['team_key']]->target_id, $actual->team_season_id);
+            if ($planned['kind'] === 'staff') {
+                $this->assertSame($this->function, $actual->staff_function_id);
+            }
+        }
+        foreach ($finalDoc['slots'] as $planned) {
+            $actual = $this->db->table('clubora.training_slots')->where('id', $results[$planned['key']]->target_id)->first();
+            $this->assertSame($results[$planned['team_key']]->target_id, $actual->team_season_id);
+            foreach (['period_id', 'weekday_id', 'field_id', 'room_id', 'side_id', 'starts_at', 'ends_at', 'hall', 'all_fields', 'without_main', 'synthetic_only', 'website_visible'] as $column) {
+                $this->assertSame($planned[$column], $actual->$column, $column);
+            }
+        }
+        $newRule = $this->db->table('clubora.contribution_rules')->where('id', $results[$finalDoc['rules'][0]['key']]->target_id)->first();
+        $this->assertSame($season, $newRule->season_id);
+        $this->assertSame($results[$finalDoc['prices'][0]['key']]->target_id, $newRule->price_id);
+        $this->assertSame(2015, $newRule->year_from);
+        $this->assertSame(2018, $newRule->year_to);
+        foreach ($before as $table => $records) {
+            $this->assertEquals($records, $this->db->table('clubora.'.$table)->whereIn('id', array_keys($records))->orderBy('id')->get()->keyBy('id')->all(), $table);
+        }
+        $this->assertEquals($sourceMember, $this->db->table('clubora.members')->where('id', $this->member)->first());
+        $this->assertSame(0, $this->rows('invoices'));
+        $this->assertSame(0, $this->rows('notifications'));
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
+
+    public function test_acceptance_review_blocks_invalid_rules_and_lookups_and_reports_cohort_warnings(): void
+    {
+        $doc = $this->document();
+        $doc['rules'][] = array_replace($doc['rules'][0], ['key' => (string) Str::uuid()]);
+        $row = $this->draft($doc);
+        $this->assertContains('Beitragsregeln desselben Geschlechts überschneiden sich.', $this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
+
+        $doc = $this->document();
+        $doc['slots'][0]['field_id'] = $this->options['room'];
+        $row = $this->draft($doc);
+        $this->assertContains('Bei einer Trainingszeit fehlt ein gültiger Auswahlwert (field).', $this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
+
+        $doc = $this->document();
+        $extra = $this->insert('members', ['first_name' => 'Outside cohort', 'birth_date' => '2000-01-01', 'gender_id' => $this->gender]);
+        $doc['teams'][0]['capacity'] = 1;
+        $doc['assignments'][] = ['key' => (string) Str::uuid(), 'kind' => 'player', 'team_key' => $doc['teams'][0]['key'], 'member_id' => $extra, 'function_id' => null];
+        $doc['teams'][] = array_replace($doc['teams'][0], ['key' => (string) Str::uuid(), 'name' => 'Other juniors']);
+        $doc['assignments'][] = array_replace($doc['assignments'][0], ['key' => (string) Str::uuid(), 'team_key' => $doc['teams'][1]['key']]);
+        $row = $this->draft($doc);
+        $review = $this->service()->review($this->actor, $this->tenant, $row->id);
+        $this->assertSame([], $review['errors']);
+        $this->assertContains('Fixture juniors: Zielgrösse überschritten.', $review['warnings']);
+        $this->assertContains('Mitglied #'.$this->member.' ist mehreren Mannschaften zugeordnet.', $review['warnings']);
+        $this->assertContains('Outside cohort: Jahrgang/Geschlecht für Fixture juniors nicht passend oder nicht definiert.', $review['warnings']);
+        try {
+            $this->service()->complete($this->actor, $this->tenant, $row->id, 1, $review['token'], false);
+            $this->fail('Unacknowledged acceptance warnings allowed');
+        } catch (ValidationException) {
+            $this->assertSame(0, $this->rows('seasons'));
+            $this->assertSame(0, $this->rows('season_plan_results'));
+        }
+        $this->db->table('clubora.members')->where('id', $extra)->update(['archived_at' => now()]);
+        $this->assertNotEmpty($this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
 }

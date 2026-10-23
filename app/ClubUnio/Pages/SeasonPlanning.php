@@ -249,23 +249,24 @@ class SeasonPlanning extends Page
         $this->saveDraft();
     }
 
-    public function moveMember(string $kind, int $member, ?string $from, string $to): void
+    public function moveMember(string $kind, int $member, ?string $from, string $to, ?int $function = null): void
     {
         $this->writable();
         abort_unless(in_array($kind, ['player', 'staff', 'lead']) && collect($this->document['teams'])->contains('key', $to), 422);
         $facts = $this->service()->facts(Filament::auth()->user(), Filament::getTenant());
         abort_unless(isset($facts['members'][$member]), 422);
-        if ($kind === 'staff' && ! isset($facts['staff_functions'][$this->functionId ?? 0])) {
+        $function = $kind === 'staff' ? ($function ?? $this->functionId) : null;
+        if ($kind === 'staff' && ! isset($facts['staff_functions'][$function ?? 0])) {
             $this->addError('assignment', 'Bitte eine aktive Staff-Funktion auswählen.');
 
             return;
         }
         if ($from) {
-            $this->document['assignments'] = array_values(array_filter($this->document['assignments'], fn ($r) => ! ($r['kind'] === $kind && $r['member_id'] == $member && $r['team_key'] === $from && ($kind !== 'staff' || $r['function_id'] == $this->functionId))));
+            $this->document['assignments'] = array_values(array_filter($this->document['assignments'], fn ($r) => ! ($r['kind'] === $kind && $r['member_id'] == $member && $r['team_key'] === $from && ($kind !== 'staff' || $r['function_id'] == $function))));
         }
-        $exists = collect($this->document['assignments'])->contains(fn ($r) => $r['kind'] === $kind && $r['member_id'] == $member && $r['team_key'] === $to && ($kind !== 'staff' || $r['function_id'] == $this->functionId));
+        $exists = collect($this->document['assignments'])->contains(fn ($r) => $r['kind'] === $kind && $r['member_id'] == $member && $r['team_key'] === $to && ($kind !== 'staff' || $r['function_id'] == $function));
         if (! $exists) {
-            $this->document['assignments'][] = ['key' => (string) Str::uuid(), 'kind' => $kind, 'team_key' => $to, 'member_id' => $member, 'function_id' => $kind === 'staff' ? $this->functionId : null];
+            $this->document['assignments'][] = ['key' => (string) Str::uuid(), 'kind' => $kind, 'team_key' => $to, 'member_id' => $member, 'function_id' => $function];
         }
         $this->saveDraft();
     }
@@ -323,7 +324,7 @@ class SeasonPlanning extends Page
         $pool = collect($facts['members'])->sortBy(fn ($m) => mb_strtolower($this->service()->memberLabel($m)));
         $assigned = collect($this->document['assignments'] ?? [])->where('kind', $this->kind)->pluck('member_id')->all();
         $team = collect($this->document['teams'] ?? [])->firstWhere('key', $this->targetTeam);
-        $pool = $pool->filter(fn ($m) => (! $this->search || str_contains(mb_strtolower($this->service()->memberLabel($m).' '.$m->first_name.' '.$m->last_name), mb_strtolower($this->search)))
+        $pool = $pool->filter(fn ($m) => (! $this->search || str_contains(mb_strtolower($this->service()->memberLabel($m).' '.$m->first_name.' '.$m->last_name.' '.$m->id), mb_strtolower($this->search)))
             && (! $this->birthYear || substr($m->birth_date ?? '', 0, 4) == $this->birthYear)
             && (! $this->onlyUnassigned || ! in_array($m->id, $assigned))
             && ($this->kind !== 'player' || ! $this->onlyMatching || ($team && $this->service()->matches($m, $team, $this->document))));
