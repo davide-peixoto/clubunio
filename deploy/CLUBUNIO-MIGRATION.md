@@ -397,3 +397,11 @@ writes, Azure writes or mobile endpoint changes.
 Release14: additive migration000016 for private encrypted saved list views,
 scoped to tenant/account/list. Six admin/office lists support named views and
 one default. No legacy data changes; see CLUBUNIO-SAVED-VIEWS.md and PI.md.
+
+25.10.2026 tenant-boundary review: migration77 adds26 composite tenant foreign
+keys to existing web relationships after validating current data. Applied only
+to shared ClubUnio PostgreSQL, no data rewrite/import, no PHPMaker DEV/PROD change.
+Exact opt-in customdomain mapping, host-bound context and request-local branding
+are implemented locally; real DNS/TLS/hosts and code deployment remain separate.
+Parallel API76 remains a separate acceptance item. Preserve FK security on
+rollback. Scope, checks and rollout: CLUBUNIO-TENANT-BOUNDARIES.md.

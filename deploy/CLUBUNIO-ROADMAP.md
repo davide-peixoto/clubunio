@@ -1219,3 +1219,11 @@ Produktname und Verwaltungszugang werden auf ClubUnio umgestellt.
 Keine Datenmigration; technische Kompatibilitaetskennungen bleiben erhalten.
 Details und Grenzen: [CLUBUNIO-REBRAND.md](CLUBUNIO-REBRAND.md).
 
+## Mandantentrennung und Vereinsdomains (25.10.2026)
+
+Web-/DB-Grenzpruefung,26 zusaetzliche Tenant-FKs (Migration77) auf ClubUnio,
+exakte Domainzuordnung ohne Rechtevergabe und vereinsbezogener Login mit Logo/
+Farbe vorbereitet. Keine realen Domains, DNS/TLS oder Code-Deployment geaendert.
+Mehrvereinsauswahl bleibt zentral; Customdomain ist an einen Verein gebunden.
+Parallel entstehende API76 separat abnehmen; keine pauschale Kunden-/SaaS-Freigabe.
+Pruefmatrix, Wiederholung und Grenzen: CLUBUNIO-TENANT-BOUNDARIES.md.

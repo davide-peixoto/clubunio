@@ -442,6 +442,25 @@ class SponsorRunTest extends TestCase
         $this->get('/sponsor-run-qa/info')->assertStatus(405);
     }
 
+    public function test_public_tokens_cannot_be_replayed_on_another_club_domain(): void
+    {
+        $p = $this->participant($this->event());
+        [$public, $token] = $this->publicLink($p);
+        $public->submit($token, $this->pledgeInput(['consent' => true]));
+        $confirmation = $this->confirmation();
+        $foreign = Tenant::create(['slug' => 'host-foreign-'.Str::random(12), 'name' => 'Foreign host']);
+        request()->attributes->set(\App\ClubUnio\Services\TenantDomainService::class, $foreign);
+        try {
+            $this->assertHttpStatus(404, fn () => $public->info($token));
+            $this->assertHttpStatus(404, fn () => $public->submit($token, $this->pledgeInput(['consent' => true])));
+            $this->assertHttpStatus(404, fn () => $public->confirm($confirmation));
+            $this->assertSame(0, SponsorRunPledge::where('tenant_id', $this->tenant->id)->count());
+        } finally {
+            request()->attributes->remove(\App\ClubUnio\Services\TenantDomainService::class);
+        }
+        $this->assertSame('Consented alias', $public->info($token)['alias']);
+    }
+
     public function test_web_chf_inputs_preserve_integer_cents_and_existing_displays(): void
     {
         $e = $this->event();

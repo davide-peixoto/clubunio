@@ -1,7 +1,8 @@
 @php
     $actor = auth('clubunio')->user();
     $active = \Filament\Facades\Filament::getTenant();
-    $tenants = $actor?->getTenants(\Filament\Facades\Filament::getPanel('clubunio')) ?? collect();
+    $boundTenant = app(\App\ClubUnio\Services\TenantDomainService::class)->current();
+    $tenants = $boundTenant ? collect([$boundTenant]) : ($actor?->getTenants(\Filament\Facades\Filament::getPanel('clubunio')) ?? collect());
     $context = $actor ? session(app(\App\ClubUnio\Services\ActiveTenant::class)->key(request())) : null;
 @endphp
 @if($active && $context)

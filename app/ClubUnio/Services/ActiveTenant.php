@@ -21,6 +21,25 @@ class ActiveTenant
         $actor = $request->user('clubunio');
         abort_unless($actor && $actor->active, 403);
         $context = $request->session()->get($this->key($request));
+        abort_unless($context === null || (is_array($context) && isset($context['tenant'], $context['revision'])), 419);
+        if ($bound = app(TenantDomainService::class)->current()) {
+            abort_unless($actor->fresh()?->canAccessTenant($bound), 403);
+            if ($context && ((int) $context['tenant'] !== (int) $bound->id || ($context['host'] ?? null) !== $request->getHost())) {
+                abort_unless($request->isMethodSafe(), 419, 'Der Verein oder die Domain wurde gewechselt. Bitte neu laden.');
+                $context = null;
+            }
+            if (! $context) {
+                $this->select($request, $bound);
+            }
+
+            return $bound;
+        }
+        if (isset($context['host'])) {
+            abort_unless($request->isMethodSafe(), 419, 'Die Domain wurde gewechselt. Bitte neu laden.');
+            $tenant = Tenant::findOrFail($context['tenant']);
+            $this->select($request, $tenant);
+            $context = $request->session()->get($this->key($request));
+        }
         if (! $context) {
             $tenant = $actor->getTenants(Filament::getPanel('clubunio'))->sortBy('id')->first();
             abort_unless($tenant, 403);
@@ -35,8 +54,14 @@ class ActiveTenant
 
     public function select(Request $request, Tenant $tenant): void
     {
+        $bound = app(TenantDomainService::class)->current();
+        abort_if($bound && ! $bound->is($tenant), 403);
         abort_unless($request->user('clubunio')->canAccessTenant($tenant), 403);
-        $request->session()->put($this->key($request), ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()]);
+        $context = ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()];
+        if ($bound) {
+            $context['host'] = $request->getHost();
+        }
+        $request->session()->put($this->key($request), $context);
     }
 
     public function assertSnapshot(Request $request, array $context): void

@@ -134,6 +134,8 @@ class SponsorRunPublicService
         $db = $this->core->db();
         $initial = $db->table('clubora.sponsor_run_links')->where('token_hash', $hash)->first();
         abort_unless($initial, 404, 'Link ist ungültig oder abgelaufen.');
+        $bound = app(TenantDomainService::class)->current();
+        abort_if($bound && (int) $bound->id !== (int) $initial->tenant_id, 404);
         $this->enabled((int) $initial->tenant_id);
         $tenant = Tenant::findOrFail($initial->tenant_id);
         if ($lock) {

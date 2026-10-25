@@ -7,4 +7,5 @@ return [
     AppServiceProvider::class,
     ClubUnioPanelProvider::class,
     App\Providers\TenantNavigationServiceProvider::class,
+    App\Providers\TenantBoundaryServiceProvider::class,
 ];
