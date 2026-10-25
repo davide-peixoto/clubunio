@@ -66,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\App\ClubUnio\Models\ApiAccessToken::class);
+        \Laravel\Sanctum\Sanctum::authenticateAccessTokensUsing(fn ($token, $valid) => $valid
+            && $token instanceof \App\ClubUnio\Models\ApiAccessToken && ! $token->revoked_at);
         \Livewire\on('call', function ($component, string $method) {
             if ($method !== 'callMountedAction' || ! method_exists($component, 'getMountedActions')
                 || ! str_starts_with($component::class, 'App\\ClubUnio\\')) {

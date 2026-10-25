@@ -23,7 +23,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
 
     protected $hidden = ['password'];
 
-    protected $casts = ['active' => 'boolean'];
+    protected $casts = ['active' => 'boolean', 'api_only' => 'boolean'];
 
     public function getRememberTokenName()
     {
@@ -70,7 +70,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'clubunio' && $this->hasBackofficeTenant();
+        return ! $this->api_only && $panel->getId() === 'clubunio' && $this->hasBackofficeTenant();
     }
 
     public function hasBackofficeTenant(): bool

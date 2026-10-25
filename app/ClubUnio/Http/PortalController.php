@@ -30,7 +30,7 @@ class PortalController
             RateLimiter::hit($key, 60);
         }
         $guard = Auth::guard('portal');
-        if ($guard->attempt(['username' => $username, 'password' => $data['password'], 'active' => true])) {
+        if ($guard->attempt(['username' => $username, 'password' => $data['password'], 'active' => true, 'api_only' => false])) {
             $actor = $guard->user();
             $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $access->canEnter($actor, $tenant));
             if ($tenants->isNotEmpty()) {

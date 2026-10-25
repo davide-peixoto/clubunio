@@ -1,5 +1,25 @@
 # ClubUnio migration work packages
 
+25.10.2026 new independently versioned API: apply additive migration76 only to
+ClubUnio (api_only account flag, dedicated integrations/tokens/audit/idempotency).
+No default permissions or client tokens are seeded. Sanctum provider discovery
+and a fresh route/config/view cache are required for the new release. Preserve
+current encryption keys and all revocation/idempotency/audit evidence on rollback;
+the web/portal API-only login restriction must remain while service accounts
+exist. The old PHPMaker API and all existing app/website consumers stay in place;
+future cutovers require explicit client contract tests and their own approval.
+API authorization is now in scope; SaaS, operations and app rebuild are not.
+Details and exact exposed capabilities: CLUBUNIO-API.md.
+26.10.2026: reviewed composite integration/profile FK78 explicitly applied via
+the migration journal; no repair/import. Final API119 tests/26,554 assertions
+passed. Preserve the exact-domain/token API middleware on every v1 route when
+rebuilding route caches. Remaining specialized adapters are explicitly listed in
+CLUBUNIO-API-COVERAGE.md; existing clients are not automatically migrated.
+Deployed API release and isolated HTTPS QA passed; synthetic tokens revoked and
+accounts/profile disabled. Final UI/no-store follow-up needs no schema change.
+Keep API-only web login exclusion and composite profile FK on rollback; do not
+drop tables or reactivate QA credentials. Existing PHPMaker DEV/PROD unchanged.
+
 25.10.2026 sponsor CHF web boundary: all web monetary fields use amount_chf and
 cap_chf; server validates and converts to existing integer amount_cents/cap_cents.
 Do NOT multiply or rewrite persisted amounts. Domain/Bexio snapshots unchanged,

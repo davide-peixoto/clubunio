@@ -1,5 +1,27 @@
 # Pi staging: dev.clubunio.ch
 
+## API v1 release (26.10.2026)
+
+Deployed delta20261026-clubunio-api-v1 on sponsor-chf. Own technical integration
+API, admin tokens, private Swagger/OpenAPI, explicit service-backed resources,
+documents/upload recovery and reports.70 resources/209 documented paths/128
+scopes. Additive migrations76/78 already applied through the shared ClubUnio
+journal, no import/refresh/profile grants. Sanctum4.3.3 added, Livewire4.4.7
+patched narrowly to4.4.8; Composer audit clean. Final119 API tests/26,554
+assertions pass; previous profile groups passed without expanded rights.
+API exact-domain/token guard and its service/config dependencies are included;
+the separate web-branding/domain provider package is not rolled out here.
+Existing runtime keys/storage preserved, config/routes/views rebuilt and six
+CLI checks are release gates. Existing PHPMaker DEV/PROD, clients, scheduler,
+SaaS and bank payments untouched. Real HTTPS QA acceptance passed (club15478,
+integration620): four feeds200, member/write403, revoked401; fixtures disabled.
+Authenticated Chrome administration and Swagger rendered successfully.
+Final follow-up20261026-clubunio-api-v1-final on api-v1: responsive scope grid,
+Swagger scope extensions and private no-store/referrer response middleware.
+No further migration/dependency change; same six gates, previous api-v1 retained.
+Scope and deliberate remaining adapters: CLUBUNIO-API.md and
+CLUBUNIO-API-COVERAGE.md.
+
 ## Sponsorenlauf CHF (25.10.2026)
 
 Delta20261025-clubunio-sponsor-chf auf sponsor-visual: Webadapter und Formulare,

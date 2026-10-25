@@ -1,5 +1,21 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Eigene API-Plattform (25.10.2026)
+
+API-Aufbau ausdruecklich freigegeben; neuer unabhaengiger v1-Vertrag mit
+technischen Integrationen, bestehenden Rechteprofilen und eingeschraenkten
+Scopes. Admin-only Tokenverwaltung/Swagger/OpenAPI, lesende Webseite-DTOs,
+explizite Fachadapter, private Dateizugriffe und bestehende Upload-Wiederaufnahme.
+Migration76 additiv nur ClubUnio, keine bestehenden Rechte erweitert oder
+Client-Tokens automatisch angelegt. FK78 fuer die Profil-/Vereinsgrenze gezielt
+angewendet. Finale API-Gruppe119 Tests/26,554 Assertions gruen; reale HTTPS-
+Abnahme mit isoliertem QA-Verein und angemeldete Swagger-/Verwaltungspruefung
+erfolgreich. Release20261026-clubunio-api-v1-final ergaenzt responsive Scope-
+Auswahl und no-store fuer Tokenantworten. Abdeckungsmatrix benennt bewusst
+offene Spezialadapter, keine pauschale Vollabnahme aller Webfunktionen.
+App-Neubau folgt separat; SaaS/Betrieb und PHPMaker DEV/PROD
+bleiben unveraendert. Siehe CLUBUNIO-API.md.
+
 ## Gezielte Bexio-Gutschriftzuordnung (25.10.2026)
 
 Offizielle Doku und Sandbox-Oberflaeche bestaetigen unter Verkauf > Mehr >

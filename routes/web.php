@@ -29,6 +29,11 @@ use Filament\Http\Middleware\SetUpPanel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware('auth:clubunio')->group(function () {
+    Route::get('/api-docs', [\App\ClubUnio\Http\ApiDocumentationController::class, 'show'])->name('clubunio.api-docs');
+    Route::get('/api-docs/openapi.json', [\App\ClubUnio\Http\ApiDocumentationController::class, 'specification'])->name('clubunio.api-docs.specification');
+});
+
 Route::get('/signage/{tenant:slug}', [PublicWebController::class, 'signage'])->middleware('throttle:120,1')->name('clubunio.public.signage');
 Route::get('/join/{tenant:slug}', [PublicWebController::class, 'registration'])->middleware('throttle:60,1')->name('clubunio.public.registration');
 Route::post('/join/{tenant:slug}', [PublicWebController::class, 'submit'])->middleware('throttle:5,10')->name('clubunio.public.registration.submit');

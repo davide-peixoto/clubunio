@@ -1,5 +1,10 @@
 # ClubUnio
 
+Eigene [API-Plattform mit Admin-Tokens und geschuetzter Swagger-Doku](deploy/CLUBUNIO-API.md).
+API-Basis `/api/v1`, Adminverwaltung `/api-integrations`, Dokumentation `/api-docs`.
+Lesender Webseite-Zugang ist vom Mitgliederdaten-/Fachzugriff getrennt.
+Die bestehende App und PHPMaker DEV/PROD werden dadurch nicht umgestellt.
+
 Neue Webmodule: [Dokumentenserien](deploy/CLUBUNIO-DOCUMENT-SERIES.md) und
 [Sponsorenlauf](deploy/CLUBUNIO-SPONSOR-RUN.md), mit eigener
 [Bexio-Abrechnung und Wiederaufnahme](deploy/CLUBUNIO-SPONSOR-BILLING.md).

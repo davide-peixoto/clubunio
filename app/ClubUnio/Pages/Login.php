@@ -20,6 +20,6 @@ class Login extends \Filament\Auth\Pages\Login
 
     protected function getCredentialsFromFormData(array $data): array
     {
-        return ['username' => mb_strtolower(trim($data['email'])), 'password' => $data['password'], 'active' => true];
+        return ['username' => mb_strtolower(trim($data['email'])), 'password' => $data['password'], 'active' => true, 'api_only' => false];
     }
 }
