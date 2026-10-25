@@ -5,6 +5,13 @@
     <style>
         .ds-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.ds-field{display:flex;flex-direction:column;gap:.35rem;min-width:0}.ds-field input,.ds-field select,.ds-field textarea,.ds-search{width:100%;border:1px solid #9ca3af;border-radius:4px;padding:.45rem;background:transparent;color:inherit}.ds-tools{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem}.ds-table{width:100%;border-collapse:collapse;font-size:.875rem}.ds-table th,.ds-table td{text-align:left;padding:.6rem;border-bottom:1px solid #9ca3af55;vertical-align:top;overflow-wrap:anywhere}.ds-table input{min-width:5rem;max-width:100%;border:1px solid #9ca3af;border-radius:4px;padding:.35rem;background:transparent}.ds-scroll{overflow:auto;max-height:25rem}.ds-band{border-top:1px solid #9ca3af55;padding-top:1.2rem;margin-top:1rem}.ds-options{max-height:15rem;overflow:auto;display:grid;gap:.5rem;padding:.5rem 0}.ds-heading{font-size:1.1rem;font-weight:600;margin-bottom:.8rem}.ds-preview{width:100%;height:650px;border:1px solid #9ca3af55;background:white}.ds-error{color:#dc2626;font-size:.875rem}.ds-check{display:flex;gap:.5rem;align-items:center}@media(max-width:767px){.ds-grid{grid-template-columns:1fr}.ds-preview{height:520px}}
     </style>
+    <style>
+        .ds-field input[type=checkbox],.ds-table input[type=checkbox]{width:1rem;height:1rem;min-width:1rem;flex:0 0 1rem;padding:0}
+        .ds-check{justify-content:flex-start;overflow-wrap:anywhere}
+        .ds-scroll{min-width:0;max-width:100%}
+        .ds-table .fi-badge-label{white-space:normal;overflow:visible;text-overflow:clip}
+        @media(max-width:767px){.ds-scroll .ds-table{min-width:40rem}}
+    </style>
     @if($errors->any())<div class="ds-error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
     <div class="ds-tools">
         @if($can('create'))<x-filament::button wire:click="defaults" icon="heroicon-o-document-duplicate" color="gray">Standardvorlagen</x-filament::button><x-filament::button wire:click="editTemplate(true)" icon="heroicon-o-plus" color="gray">Neue Vorlage</x-filament::button>@endif

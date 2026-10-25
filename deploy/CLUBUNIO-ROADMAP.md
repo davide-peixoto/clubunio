@@ -1,5 +1,16 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Sichtabnahme Dokumentenserien/Sponsorenlauf (25.10.2026)
+
+Angemeldete Chrome-Pruefung ueber ClubUnio/Pi-Proxy abgeschlossen: Historie,
+Vorlageneditor ohne Speichern, private Serie41, Anlass/Teilnehmer134 und
+Abrechnung42 am Desktop sowie390px. Layoutluecken/Checkboxbreite korrigiert,
+breite Tabellen innen scrollbar und Statusbeschriftungen nicht abgeschnitten.
+Reines Blade-Delta deployed, keine Schema-/Rechte-/Fachaenderung oder externer
+Schreibaufruf. Testdaten unveraendert; PDF vom Benutzer selbst geprueft, weil
+dessen Viewer-Erweiterung die Browsersteuerung blockierte. Genaue Testgrenzen:
+CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. API/SaaS/Betrieb/Legacy unveraendert.
+
 ## Azure-/Bexio-Live-Abnahme (25.10.2026)
 
 Dokumentserie41 mit neuem privatem Azure-PDF erfolgreich, identische SHA256 beim
@@ -11,7 +22,7 @@ Versendet zurueckgelesen. Keine echte Zahlung. Laenderfeld im Adapter korrigiert
 Versandkonfiguration wiederhergestellt, QA-Referenzsaison/Teamzuordnungen inaktiv.
 Originalbestand unveraendert; immutable QA-Evidenz erhalten. Drei Live-Webkernel-
 Tests/27 Assertions sowie14 Provider-/Billing-Tests/73 Assertions bestanden.
-Manuelle angemeldete Desktop-/Mobilpruefung bleibt offen, Browser weiterhin Login.
+Manuelle angemeldete Desktop-/Mobilpruefung anschliessend durchgefuehrt, siehe oben.
 CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. Kein API-/SaaS-/Betriebs- oder Legacy-Delta.
 
 ## Dokumentenserien und Sponsorenlauf (25.10.2026)

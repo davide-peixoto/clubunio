@@ -69,8 +69,44 @@ Evidenz. Versand wird nicht erneut ausgefuehrt, wenn bereits Versendet.
 14 Billing-/Provider-Tests mit Doubles:73 Assertions erfolgreich. Zusaetzlich
 drei explizit freigegebene Live-HTTP-/Livewire-Pruefungen:27 Assertions erfolgreich,
 echte Azure-/Bexio-Lesezugriffe, keine neuen Schreibaufrufe im Test.
-Diese Pruefungen laufen im authentifizierten Laravel-Webtestkernel; sie ersetzen
-keine manuelle Desktop-/Mobilpruefung durch den Pi-Proxy. Die Chrome-Sitzung
-zeigte weiterhin Login. Keine Browserabnahme behaupten.
+Diese Pruefungen laufen im authentifizierten Laravel-Webtestkernel. Der erste
+Versuch der manuellen Pruefung scheiterte an der abgemeldeten Chrome-Sitzung;
+der nachfolgende angemeldete Sichttest ist unten getrennt nachgewiesen.
 Keine neue Schemamigration. Code-Rollback behaelt QA-Evidenz/Journal/Dateien.
 API, SaaS, Betrieb und bestehendes PHPMaker DEV/PROD unveraendert.
+
+## Angemeldete Web-Sichtpruefung (25.10.2026)
+
+Bestehender Admin in Chrome ueber https://dev.clubunio.ch und den Pi-Proxy.
+Desktop (normaler Browser) und390x844px geprueft, temporaere Viewport-Vorgabe
+danach entfernt. Nur bestehende QA-Serie41, Anlass134 und Abrechnung42 gelesen;
+keine Serie/Vorlagenversion gespeichert, keine Runden/Zusagen geaendert, keine
+Mail erneut versendet, kein Bexio-Schreibaufruf und keine Zahlung.
+
+- Dokumentenserien: Vorlagenauswahl, vorausgefuellter Versionseditor ohne Speichern,
+  Historie, Serie oeffnen, privater Nachweis und Original-PDF-Link geprueft.
+- Sponsorenlauf: Anlassliste, bestehender Anlass, Teilnehmerdetails, fuenf finale
+  Runden, Zusage100 Rappen/Runde mit Obergrenze300 und Helfertabelle geprueft.
+- Abrechnung: CHF3.00, Versendet, Bexio17, Bezahlt0 sowie PDF-Verknuepfung sichtbar.
+  PDF-Oeffnen startet den geschuetzten Browser-PDF-Tab; dessen Erweiterungsansicht
+  verhindert automatisches Auslesen. Benutzer hat PDF selbst geprueft/geschlossen.
+  Kein behaupteter automatisierter PDF-Viewer-Sichttest. Die eigentlichen PDF-
+  Inhalte und echten geschuetzten HTTP-Abrufe sind separat oben nachgewiesen.
+
+Gefunden/behoben: nicht vorhandene Utility-Layoutregeln der Sponsorenlaufseite
+durch eigene, seitenspezifisch begrenzte Regeln ersetzt. Filter und Aktionen
+umbrechen, Tabellen haben Abstaende und mobile innere Scrollbereiche. Checkboxen
+der Dokumentenserien erben nicht mehr100% Eingabebreite. Breite Dokument-/Billing-
+Tabellen bleiben mobil scrollbar, Statusbeschriftungen umbrechen statt Ellipse.
+Kein horizontaler Seitenueberlauf bei390px; breite Tabellen bewusst innen scrollbar.
+Keine Fach-/Rechte-/Schemamigration. Delta20261025-clubunio-sponsor-visual deployed,
+vorheriger Release sponsor-live-acceptance als Rueckweg erhalten. Private Screenshots
+unter storage/app/private/*visual*.png, bewusst weder oeffentlich noch in Git.
+Live-Lesetests erneut3/28 erfolgreich; vollstaendige gezielte Modulregression
+50 Tests/390 Assertions erfolgreich, mit expliziter DB-Testfreigabe, synthetischen
+Fixtures im aeusseren Rollback und gesperrten echten Provider-/Mail-Schreibaufrufen.
+Erster Aufruf ohne DB-Opt-in uebersprang39 Tests und gilt nicht als Vollabnahme;
+der anschliessende Opt-in-Lauf hatte keine Skips oder Fehler.
+Fachliche Rollen-/Rueckgabe-/Portalfaelle
+bleiben durch die gezielten automatisierten Tests abgesichert; hier kein neuer
+manueller Spieler-/Eltern- oder Unterschriftsdurchlauf behauptet.

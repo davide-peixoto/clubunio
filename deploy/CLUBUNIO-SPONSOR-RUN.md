@@ -184,3 +184,10 @@ Gemeinsamer Release20261025-clubunio-sponsor-documents auf ClubUnio aktiv,
 alle fuenf Releasechecks erfolgreich. Login/Public/Assets200 und geschuetzte
 Verwaltungsseiten anonym302. Angemeldete Desktop-/Mobilabnahme bleibt offen;
 keine Aktivierung oeffentlicher Zusagen oder SMTP-/Bexio-Schreibtests beim Deploy.
+
+Nachlauf25.10.2026: angemeldete Desktop-/390px-Sichtpruefung mit bestehendem
+QA-Anlass134/Teilnehmer134 abgeschlossen. Fehlende Utility-Layoutregeln durch
+seitenspezifische Regeln abgesichert; Tabellenabstaende, Filter, Aktionen und
+innere mobile Scrollbereiche auf ClubUnio korrigiert. Keine Fachdaten/Regeln oder
+Rechte geaendert. CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md ersetzt den frueher
+offenen Sichtabnahmestand; keine manuelle Rollen-/Portalvollabnahme behauptet.

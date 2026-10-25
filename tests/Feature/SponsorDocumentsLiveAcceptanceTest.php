@@ -58,7 +58,7 @@ class SponsorDocumentsLiveAcceptanceTest extends TestCase
     public function test_prepared_filled_web_pages_render_without_new_writes(): void
     {
         Livewire::test(DocumentSeries::class)->call('openSeries', $this->fixture['series'])->assertSuccessful()->assertSee('QA-Sponsor-Dokumente-20261025')->assertSee('Nur privates Dossier');
-        Livewire::test(SponsorRuns::class)->call('openEvent', $this->fixture['event'])->call('openParticipant', $this->fixture['participant'])->assertSuccessful()->assertSee('QA-Abnahme 20261025');
+        Livewire::test(SponsorRuns::class)->call('openEvent', $this->fixture['event'])->call('openParticipant', $this->fixture['participant'])->assertSuccessful()->assertSee('QA-Abnahme 20261025')->assertSee('class="cu-sr"', false);
         Livewire::test(SponsorRunBilling::class)->set('event', $this->fixture['event'])->assertSuccessful()->assertSee('Versendet')->assertSee('QA-Abnahme 20261025');
     }
 }

@@ -79,3 +79,9 @@ synthetischen Daten, einschliesslich RE-00017 und Testversand an Admin.
 Laenderzuordnung auf reales Feld iso_3166_alpha2 korrigiert. Frueheren offenen
 Live-Stand ersetzt CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md; manuelle angemeldete
 Browserabnahme bleibt separat offen. Keine Bankzahlung oder Produktivfreigabe.
+
+Weiterer Nachlauf25.10.2026: angemeldete Desktop-/390px-Abrechnungssicht mit
+bestehender Rechnung42 erfolgreich; Tabellen mobil innen scrollbar, Statuslabel
+umbrechen. PDF-Link geoeffnet, Viewer durch Browser-Erweiterungsansicht blockiert;
+Benutzer hat das PDF selbst geprueft/geschlossen. Keine weitere Rechnung, Mail
+oder Zahlung ausgeloest. Details CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md.

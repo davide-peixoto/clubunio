@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Web-Sichtabnahme (25.10.2026)
+
+Aktiv:20261025-clubunio-sponsor-visual, Rueckweg sponsor-live-acceptance.
+Nur Blade-Layoutregeln fuer Sponsorenlauf/Dokumentenserien/Abrechnung und Doku.
+Konfigurations-/Routen-/Viewcache fuer neuen Release neu erstellt (absolute
+Viewpfade duerfen nicht auf den vorherigen Release zeigen). Modul-/Profilchecks
+erfolgreich, keine Rechteaenderung. Angemeldeter Desktop-/390px-Sichttest ueber
+oeffentlichen ClubUnio-Proxy erledigt; bestehende QA-Objekte unveraendert.
+Keine Migration, Provider-Writes, Zustellung oder Zahlung. Browser-PDF selbst vom
+Benutzer geprueft; automatisierter Viewer durch Erweiterungsansicht blockiert.
+Details CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. Legacy DEV/PROD unveraendert.
+
 ## Live-Abnahme-Nachlauf (25.10.2026)
 
 Delta20261025-clubunio-sponsor-live-acceptance auf sponsor-documents:

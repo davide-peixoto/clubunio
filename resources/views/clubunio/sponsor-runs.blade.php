@@ -1,4 +1,18 @@
 <x-filament-panels::page>
+    <style>
+        .cu-sr{display:grid;gap:1.25rem;min-width:0}
+        .cu-sr .flex{display:flex;align-items:center;gap:.75rem}.cu-sr .flex-wrap{flex-wrap:wrap}.cu-sr .items-end{align-items:end}
+        .cu-sr label{display:grid;gap:.35rem;min-width:0;max-width:100%;flex:1 1 12rem}.cu-sr label:has(input){flex-grow:2}
+        .cu-sr .overflow-x-auto{width:100%;min-width:0;overflow-x:auto}
+        .cu-sr table{width:100%;border-collapse:collapse;font-size:.875rem}
+        .cu-sr th,.cu-sr td{padding:.65rem;text-align:left;vertical-align:top;border-bottom:1px solid #9ca3af55;overflow-wrap:anywhere}
+        .cu-sr th{font-weight:600}.cu-sr .text-center{text-align:center}
+        .cu-sr .border-t{border-top:1px solid #9ca3af55;padding-top:1.25rem}
+        .cu-sr .space-y-4{display:grid;gap:1rem;min-width:0}.cu-sr .font-semibold{font-weight:600}.cu-sr .text-xl{font-size:1.15rem}
+        .cu-sr .break-all{overflow-wrap:anywhere}
+        @media(max-width:767px){.cu-sr th,.cu-sr td{padding:.5rem}.cu-sr .overflow-x-auto table{min-width:36rem}.cu-sr label{flex-basis:100%}}
+    </style>
+    <div class="cu-sr">
     <div class="flex flex-wrap items-end gap-3">
         <label>Saison<x-filament::input.wrapper><x-filament::input.select wire:model.live="season"><option value="">Alle</option>@foreach($choices['seasons'] as $id=>$name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
         <label>Status<x-filament::input.wrapper><x-filament::input.select wire:model.live="status"><option value="">Alle</option>@foreach($choices['statuses'] as $code=>$name)<option value="{{ $code }}">{{ $name }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
@@ -27,4 +41,5 @@
     <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr><th class="p-2 text-left">Sponsor</th><th>Zusage</th><th>Rappen</th><th>Obergrenze</th><th>Zahlungsweg</th></tr></thead><tbody>@foreach($pledges as $g)<tr class="border-b"><td class="p-2">{{ $g->sponsor_name }}</td><td>{{ $g->amount_type==='fixed'?'Fixbetrag':'Pro Runde' }}</td><td>{{ $g->amount_cents }}</td><td>{{ $g->cap_cents??'-' }}</td><td>{{ $g->payment_mode==='invoice'?'Rechnung':'Sammelzahlung' }}</td></tr>@endforeach</tbody></table></div>{{ $pledges->links() }}
     </section>
     @endif
+    </div>
 </x-filament-panels::page>

@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+25.10.2026 visual follow-up: authenticated document-series/sponsor-run/billing
+desktop and390px checks through ClubUnio proxy. Blade-only layout fixes deployed
+as20261025-clubunio-sponsor-visual; no schema/import/config/permission changes.
+Keep QA evidence and previous release on rollback. No provider writes, resends or
+bank payments. Manual PDF inspection by user; browser viewer automation blocked.
+See CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md for exact coverage and limits.
+
 25.10.2026 live acceptance: additive synthetic QA rows only, no schema change or
 legacy import. Private Azure series41/document388 and sandbox RE-00017 remain
 traceable; reference QA season/team assignments deactivated and prior sponsor
@@ -7,7 +14,7 @@ billing configuration restored. Never migrate QA fixture rows as club business
 data or discard immutable evidence in a rollback. Country adapter corrected to
 the actual iso_3166_alpha2 provider field. Repeatable CLI opt-in and real-provider
 webkernel read tests documented in CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md.
-Manual authenticated desktop/mobile acceptance is still separate/open.
+Manual authenticated desktop/mobile acceptance subsequently completed as above.
 
 25.10.2026: native document-series and sponsor-run web modules. Additive
 ClubUnio-only migrations73/74/75 create immutable template/snapshot evidence,

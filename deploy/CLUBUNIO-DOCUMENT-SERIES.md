@@ -194,4 +194,6 @@ Nachtrag25.10.2026: neue echte Azure-Serie41/Dokument388 erfolgreich ueber
 private Ablage und geschuetzten Webabruf geprueft, auch direkt auf Pi.
 Keine Duplikate, anonymer Azure-Zugriff abgewiesen, Originalbestand unveraendert.
 Details: CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. Manuelle Browser-/Mobilpruefung
-bleibt offen; kein echter unterschriebener Ruecklauf behauptet.
+anschliessend abgeschlossen (25.10.2026), siehe denselben Abnahmenachweis.
+Checkboxbreite und mobile Tabellen/Statusbeschriftungen dort korrigiert und
+auf ClubUnio deployed; kein echter unterschriebener Ruecklauf behauptet.

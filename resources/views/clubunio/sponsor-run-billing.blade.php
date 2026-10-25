@@ -4,6 +4,8 @@
         .cu-srb-scroll{width:100%;overflow-x:auto}.cu-srb-table{width:100%;border-collapse:collapse;font-size:14px}
         .cu-srb-table th,.cu-srb-table td{padding:12px;border-bottom:1px solid #d1d5db;text-align:left;vertical-align:top}
         .cu-srb-actions{display:flex;flex-wrap:wrap;gap:8px;min-width:140px}.cu-srb-table td{overflow-wrap:anywhere}
+        .cu-srb-table .fi-badge-label{white-space:normal;overflow:visible;text-overflow:clip}
+        @media(max-width:767px){.cu-srb-table{min-width:44rem}}
     </style>
     <div class="cu-srb-toolbar">
         <label>Anlass<x-filament::input.wrapper><x-filament::input.select wire:model.live="event"><option value="">Alle Anlässe</option>@foreach($events as $id=>$title)<option value="{{ $id }}">{{ $title }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>

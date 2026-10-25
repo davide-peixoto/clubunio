@@ -6,6 +6,8 @@ Neue Webmodule: [Dokumentenserien](deploy/CLUBUNIO-DOCUMENT-SERIES.md) und
 Legacy-DEV/PROD und App-API bleiben unveraendert.
 Echter [Azure-/Bexio-Abnahmenachweis](deploy/CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md)
 mit synthetischen Daten und Testversand ausschliesslich an Admin.
+Angemeldete Desktop-/Mobil-Sichtpruefung nachgefuehrt; Layoutkorrekturen auf
+ClubUnio bereitgestellt, keine Aenderung am bestehenden PHPMaker DEV/PROD.
 
 Saisonplanung: [Speicherbarer Wizard mit verbindlichem Abschluss](deploy/CLUBUNIO-SEASON-PLANNING.md).
 Technische [Fachabnahme mit isolierten Testdaten](deploy/CLUBUNIO-SEASON-ACCEPTANCE.md)
