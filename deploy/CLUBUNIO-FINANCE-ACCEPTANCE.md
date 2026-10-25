@@ -3,7 +3,38 @@
 Stand25.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
 
-## Browserabnahme25.10.2026: freie Zuordnung noch nicht nachgewiesen
+## Doku- und UI-Pruefung25.10.2026: gezielte Zuordnung gefunden
+
+Die offizielle Dokumentation nennt den Assistenten unter Verkauf > Mehr
+(Doku: Weitere) > Zahlungen erfassen (Manuell):
+- https://help.bexio.com/s/article/000001727?language=de
+- https://help.bexio.com/s/article/000001683?language=de
+
+Im angemeldeten Sandbox-Browser nur lesend bestaetigt: nach Suche nach
+Kontakt3 erscheint GS-00007 mit offen30, bearbeitbarem Auszifferungsbetrag
+und Rechnungs-Dropdown inklusive RE-00015 und RE-00016. Buchungsbetrag0,
+Buchungsstapel leer. Keine Diskette/Zuordnung und kein Buchen ausgeloest.
+Damit ist der im historischen Abschnitt noch gesuchte UI-Weg gefunden;
+die tatsaechliche Zwei-Schritt-Verbuchung bleibt weiterhin nicht abgenommen.
+
+Vorbereitete Abnahme nach separater Freigabe:
+1. Firma SVS Api Test, Kontakt3, Buchungsbetrag0 verwenden. Keine echte
+   Zahlung erfassen; GS-00004 und sonstige bestehende Belege nicht auswaehlen.
+2. NUR in der Zeile GS-00007 Auszifferungsbetrag10 und RE-00015 waehlen.
+   Diskette, Stapel kontrollieren, erst dann Buchen. Erwartung: GS-Rest20,
+   RE-00015 Rest10, Geldzahlung0. Bei abweichendem Stapel NICHT buchen.
+3. Neu lesen und Provider-Nachweise in ClubUnio pruefen/registrieren.
+4. Erst danach denselben Assistenten erneut fuer GS-00007, Betrag20 und
+   RE-00016 verwenden. Erwartung: GS-Rest0, RE-00016 Rest5, Geldzahlung0.
+5. Alte Zuordnungen und RE-00014 unveraendert nachweisen. Keine automatische
+   Sammelverrechnung ueber den gelben Hinweis verwenden.
+
+Kein Ersatztest oder neue Testkontakte erforderlich, solange dieser
+gezielte Weg die erwarteten Teilbetraege akzeptiert. Die Dokumentation
+belegt den UI-Weg, nicht einen oeffentlichen API-Schreibendpunkt.
+Diese Pruefung hat keine Buchungen/DB-Daten geaendert; DEV/PROD unveraendert.
+
+## Historische Browserabnahme25.10.2026: Detailansichten ohne Auswahl
 
 Firma `SVS Api Test` im angemeldeten Browser geprueft. Liste aller vorhandenen
 Gutschriften enthielt keine neue CHF30-Gutschrift. Mit Benutzerfreigabe wurde
