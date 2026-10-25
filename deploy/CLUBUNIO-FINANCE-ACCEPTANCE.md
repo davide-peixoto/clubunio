@@ -3,7 +3,41 @@
 Stand25.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
 
-## Wiederaufnahme25.10.2026: keine Doppelbuchung, Browser blockiert
+## Wiederaufnahme25./26.10.2026: erster Teil abgeglichen
+
+Nach erneutem Oeffnen des Browsers ist die erste Verrechnung jetzt belegt:
+GS-00007 / Payment36 / RE-00015 / CHF10. Sie wurde NICHT erneut gebucht.
+Der frische Providerabruf zeigte RE-00015 Rest10, RE-00016 Rest25,
+Ursprungsrechnung RE-00014 Rest30 und jeweils Geldzahlung0.
+Wann die zuvor blockierte Bestaetigung wirksam wurde, ist nicht belegt.
+
+ClubUnio ueber bestehende Fachservices abgeglichen: Kundenguthaben110 zur
+Korrektur427 registriert, GS-00007/Payment36 eindeutig zu Rechnung10452
+zugeordnet, lokaler Rechnungssaldo jetzt Gutschrift10/Rest10. Guthabenrest20,
+Korrektur weiterhin released. Zwischenpruefung VOR dem zweiten Schritt erfolgt.
+
+Danach im Bexio-Assistenten NUR GS-00007/CHF20/RE-00016 in den leeren
+Stapel aufgenommen. Buchungsbetrag0. Beim Buchen blockiert der Browser erneut
+am Bestaetigungsdialog; zweimaliger direkter Nachtest zeigt weiterhin keine
+zweite Verrechnung. Keine Wiederholung des Buchens und kein lokaler Ersatz.
+Benutzer um Bestaetigung ausschliesslich des offenen Dialogs gebeten.
+Abnahme noch OFFEN: nach dessen Bestaetigung erneut Provider lesen und erst
+bei genau GS-00007/CHF20/RE-00016 lokal uebernehmen. Erwartung Rest5/Guthaben0.
+
+Neues CLI-Werkzeug tools/clubunio-two-target-credit-reconcile.php: Standard
+--read ohne Fachwrites; --first/--second verwenden feste Fixture-IDs,
+Sandbox-/DB-Guards, eindeutige Providerbelege und bestehende Fachservices.
+Keine Provider-Schreiboperation. Fehlender zweiter Beleg stoppt vor Writes.
+Vorhandene lokale Zuordnungen werden auf Betrag und Nachweis geprueft statt
+erneut angelegt. Keine Daten-/Schemamigration, keine Runtime-Bereitstellung.
+Gemeinsame ClubUnio-DB enthaelt den Zwischenabgleich bereits.
+Finanzregression mit DB-Opt-in und direktem PHPUnit-Aufruf:35 Tests,
+209 Assertions erfolgreich; synthetische Testaenderungen zurueckgerollt.
+PHP-Syntaxpruefung des neuen Werkzeugs erfolgreich.
+Bestehender Live-Abnahmepruefer: GS-00004/05 und Rechnung6 unveraendert,
+Fachfingerprints unveraendert. PHPMaker DEV/PROD nicht angefasst.
+
+## Historische Wiederaufnahme25.10.2026: keine Doppelbuchung, Browser blockiert
 
 Erneuter direkter Leselauf mit clubunio-two-target-credit-prepare.php:
 RE-00014 Rest30, RE-00015 Rest20, RE-00016 Rest25; jeweils Gutschrift0,
