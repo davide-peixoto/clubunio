@@ -408,9 +408,15 @@ rollback. Scope, checks and rollout: CLUBUNIO-TENANT-BOUNDARIES.md.
 
 26.10.2026 API tenant review: additive migration78 prepares a validated composite
 FK from api_integrations(tenant_id,access_profile_id) to access_profiles(tenant_id,id).
-Not durably applied in this review; the constraint test uses an outer rollback.
-Requires the parallel API base migration76 and sources to be integrated first.
+Follow-up authorized26.10.2026: already installed, batch77; targeted migrate is
+a no-op and the metadata audit confirms validated tenant FKs. Do not rerun up().
+The constraint test retains its outer rollback. Parallel API76 sources still
+require separate integration; this review does not commit that working tree.
 No data rewrite/import, no PHPMaker DEV/PROD changes. API domain/token binding
 and regression suite accompany this isolated security delta; not a standalone
 API release. Rebuild route cache and repeat tests after parallel API completion.
+Follow-up complete for the tested local snapshot:119 API tests/26554 assertions
+pass with isolated built route cache; the temporary cache was removed. The
+schema audit finds no unpaired tenant FK among128 tenant tables. No code
+deployment or legacy environment changes were performed by this review.
 Review and rollout limits: CLUBUNIO-API-TENANT-BOUNDARIES.md.

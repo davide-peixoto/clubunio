@@ -1235,6 +1235,9 @@ Separates Sicherheitsdelta fuer die parallel entwickelte API: Domain-/Tokenverei
 vor jedem Controller abgleichen, unbekannte Hosts ablehnen; Migration78 fuer den
 zusammengesetzten Profil-FK vorbereitet. API-Basisarbeitsstand bewusst nicht
 mitcommitten. Neue Grenztests und vorhandene Fachregressionen gemeinsam pruefen.
-Noch kein Deployment/keine dauerhafte Migration78; finale API-Integration und
-Wiederholung nach Abschluss des parallelen Chats erforderlich. Abos, Abrechnung
+Nachlauf26.10.: Migration78 bereits installiert (Batch77), Schemaaudit ohne
+ungesicherte Tenant-FK-Paare. Kein Deployment in diesem Nachlauf.
+119 API-Tests/26554 Assertions inklusive Swagger-/Admin-UI und aufgebautem
+Routecache erfolgreich. Finale API-Integration bleibt separat; Wiederholung
+bei weiteren parallelen Aenderungen erforderlich. Abos, Abrechnung
 und bestehendes DEV/PROD unveraendert. CLUBUNIO-API-TENANT-BOUNDARIES.md.

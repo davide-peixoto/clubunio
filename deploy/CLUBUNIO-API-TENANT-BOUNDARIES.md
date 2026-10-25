@@ -58,10 +58,12 @@ Nur synthetische Vereins-/Kontodaten in einer aeusseren Rollbacktransaktion.
 Migration78 wird im Constraint-Test ausschliesslich innerhalb dieses Rollbacks
 ausgefuehrt, falls sie noch nicht installiert ist. Kein implizites DB-Upgrade.
 
-Migration78 ist fuer das gemeinsame API-Release vorbereitet, noch nicht dauerhaft
-angewendet. Zuerst API-Basismigration76 und deren Quellen committen/integrieren,
-dann diese Sicherheitskorrektur gemeinsam pruefen und Migration78 gezielt ueber
-das Migrationsjournal ausfuehren. Nicht diesen Commit allein als vollstaendiges
+Nach Freigabe des Nachlaufs am26.10.2026 ist Migration78 als installiert bestaetigt:
+Der gezielte Migrationsaufruf meldet Nothing to migrate, migrate:status zeigt
+Ran (Batch77), und das read-only Schemaaudit bestaetigt die validierte Absicherung.
+Sie war beim Nachlauf bereits installiert; kein erneutes up(), keine Datenreparatur.
+API-Basismigration76 und deren Quellen weiterhin separat committen/integrieren.
+Nicht diesen Sicherheitscommit allein als vollstaendiges
 API-Release deployen: Er enthaelt absichtlich nicht die parallelen API-Quellen.
 Nach Abschluss der parallelen Entwicklung gesamte API-Regressionsgruppe sowie
 Domainpruefungen mit neu gebautem Routecache erneut ausfuehren.
@@ -85,6 +87,45 @@ Domainpruefungen mit neu gebautem Routecache erneut ausfuehren.
 
 Der Routen-Testcache liegt unter einem eigenen APP_ROUTES_CACHE-Pfad und wird
 im finally-Block entfernt. Der normale lokale Routen-Cache wird nicht ersetzt.
-Die gesamte75er-Gruppe ist nach den parallelen Aenderungen nicht erneut als
-vollstaendig gruener Lauf bestaetigt. Diese gemeinsame Endabnahme bleibt beim
-fertigen API-Release erforderlich.
+Der unten dokumentierte Nachlauf ersetzt den zuvor noch offenen Gesamtlauf
+fuer den getesteten lokalen Stand. Die gemeinsame Releaseabnahme bleibt bei
+weiteren parallelen Aenderungen erneut erforderlich.
+
+## Nachlauf nach Freigabe (26.10.2026)
+
+- Migration78: installiert, Batch77, kein erneuter Schemaeingriff notwendig.
+- Schemaaudit:128 Tabellen mit tenant_id, keine ungesicherten Tenant-FK-Paare.
+  Das Audit verlangt validierte zusammengesetzte Fremdschluessel; reine
+  Schema-Metadaten ersetzen keine Anwendungstests.
+- API-Konfigurationspruefung:70 Ressourcen,209 dokumentierte Pfade,128 Scopes;
+  Bearer-only und private Dokumentation bestaetigt, technische Konten0.
+- Komplette API-Testgruppe einschliesslich Dokumentation und Verwaltungs-UI:
+  **119 Tests/26554 Assertions bestanden**, keine Fehler, Laufzeit6:09,
+  mit separatem aufgebautem Routen-Cache. Cache im finally-Block entfernt.
+  API-Quellen/Controller/Router/Bootstrap blieben zwischen dem fruehen
+  Quellhash-Snapshot im Lauf und dessen Ende unveraendert. Geprueft ist dieser
+  lokale Stand, nicht jede spaeter ergaenzte API-Funktion.
+
+Wiederholbarer Gesamtlauf (lokales Windows-Projekt; relativer Cachepfad, damit
+Laravel keinen zweiten Laufwerksnamen voranstellt):
+
+```powershell
+$env:CLUBUNIO_TEST_DB='1'
+$previous=$env:APP_ROUTES_CACHE
+$env:APP_ROUTES_CACHE='storage/framework/cache/api-full-tenant-review-routes.php'
+if (Test-Path -LiteralPath $env:APP_ROUTES_CACHE) { throw 'Auditcache bereits vorhanden' }
+try {
+    php -d extension=pdo_pgsql artisan route:cache
+    if ($LASTEXITCODE -ne 0) { throw 'Routecache fehlgeschlagen' }
+    $filter='ApiDocumentationTest|ApiIntegrationsUiTest|ApiModulesTest|ApiPlatformTest|ApiSecurityRegressionTest|ApiTenantBoundaryTest|AuxiliaryApiModulesTest|WorkflowApiModulesTest'
+    php -d extension=pdo_pgsql vendor/phpunit/phpunit/phpunit --filter=$filter
+    if ($LASTEXITCODE -ne 0) { throw 'API-Regression fehlgeschlagen' }
+} finally {
+    php -d extension=pdo_pgsql artisan route:clear
+    $env:APP_ROUTES_CACHE=$previous
+}
+```
+
+Der parallele API-Arbeitsstand bleibt bewusst ausserhalb dieses Doku-Commits.
+Keine Installation/Umstellung der API auf dem Server durch diesen Nachlauf,
+keine PHPMaker-DEV-/PROD-Aenderung, keine SaaS-Abrechnung oder Provider-Writes.
