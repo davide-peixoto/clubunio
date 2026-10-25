@@ -1228,3 +1228,13 @@ Farbe vorbereitet. Keine realen Domains, DNS/TLS oder Code-Deployment geaendert.
 Mehrvereinsauswahl bleibt zentral; Customdomain ist an einen Verein gebunden.
 Parallel entstehende API76 separat abnehmen; keine pauschale Kunden-/SaaS-Freigabe.
 Pruefmatrix, Wiederholung und Grenzen: CLUBUNIO-TENANT-BOUNDARIES.md.
+
+## API-Mandantengrenzen (26.10.2026)
+
+Separates Sicherheitsdelta fuer die parallel entwickelte API: Domain-/Tokenverein
+vor jedem Controller abgleichen, unbekannte Hosts ablehnen; Migration78 fuer den
+zusammengesetzten Profil-FK vorbereitet. API-Basisarbeitsstand bewusst nicht
+mitcommitten. Neue Grenztests und vorhandene Fachregressionen gemeinsam pruefen.
+Noch kein Deployment/keine dauerhafte Migration78; finale API-Integration und
+Wiederholung nach Abschluss des parallelen Chats erforderlich. Abos, Abrechnung
+und bestehendes DEV/PROD unveraendert. CLUBUNIO-API-TENANT-BOUNDARIES.md.

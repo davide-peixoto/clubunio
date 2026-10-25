@@ -405,3 +405,12 @@ Exact opt-in customdomain mapping, host-bound context and request-local branding
 are implemented locally; real DNS/TLS/hosts and code deployment remain separate.
 Parallel API76 remains a separate acceptance item. Preserve FK security on
 rollback. Scope, checks and rollout: CLUBUNIO-TENANT-BOUNDARIES.md.
+
+26.10.2026 API tenant review: additive migration78 prepares a validated composite
+FK from api_integrations(tenant_id,access_profile_id) to access_profiles(tenant_id,id).
+Not durably applied in this review; the constraint test uses an outer rollback.
+Requires the parallel API base migration76 and sources to be integrated first.
+No data rewrite/import, no PHPMaker DEV/PROD changes. API domain/token binding
+and regression suite accompany this isolated security delta; not a standalone
+API release. Rebuild route cache and repeat tests after parallel API completion.
+Review and rollout limits: CLUBUNIO-API-TENANT-BOUNDARIES.md.

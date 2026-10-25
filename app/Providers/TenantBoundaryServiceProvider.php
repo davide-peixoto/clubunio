@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\ClubUnio\Http\BindTenantDomain;
+use App\ClubUnio\Http\BindApiTenantDomain;
 use App\ClubUnio\Services\TenantDomainService;
 use Filament\Facades\Filament;
 use Filament\Support\Colors\Color;
@@ -16,6 +17,10 @@ class TenantBoundaryServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             if (! $this->app->routesAreCached()) {
                 foreach ($this->app['router']->getRoutes() as $route) {
+                    if (str_starts_with($route->getName() ?? '', 'clubunio.api.')) {
+                        // After bearer authentication, inside its audit/error envelope.
+                        $route->middleware(BindApiTenantDomain::class);
+                    }
                     if (str_starts_with($route->getName() ?? '', 'filament.clubunio.')) {
                         $action = $route->getAction();
                         $action['middleware'] = [BindTenantDomain::class, ...($action['middleware'] ?? [])];
