@@ -19,6 +19,7 @@
             @if(\App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'expenses', 'view'))<a href="{{ route('clubunio.portal.expenses', ['tenant'=>$tenant->slug]) }}">Spesen</a>@endif
             @if(\App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'invoices', 'view'))<a href="{{ route('clubunio.portal.invoices', ['tenant'=>$tenant->slug]) }}">Rechnungen</a>@endif
             <a href="{{ route('clubunio.portal.announcements', $tenant->slug) }}">Ankündigungen</a>
+            <a href="{{ route('clubunio.portal.sponsor-runs', $tenant->slug) }}">Sponsorenlauf</a>
             @if(app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter(auth('portal')->user(), $tenant) && \App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'documents', 'view'))
                 <a href="{{ route('clubunio.portal.material.index', $tenant->slug) }}">Material</a>
             @endif

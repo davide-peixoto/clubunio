@@ -16,6 +16,7 @@ final class PermissionCatalog
         'bus' => 'Busverwaltung', 'facilities' => 'Anlagen inklusive Status-Wertetabelle',
         'field_availability' => 'Platzverfügbarkeit und Bemerkungen', 'signage' => 'Signage',
         'announcements' => 'Ankündigungen', 'events' => 'Veranstaltungen',
+        'sponsor_runs' => 'Sponsorenlauf',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
         'templates' => 'Nachrichtenvorlagen',
     ];
@@ -40,7 +41,7 @@ final class PermissionCatalog
             'registrations', 'member_changes' => ['download', 'upload', 'approve', 'send'],
             'documents' => ['download', 'upload', 'send', 'cancel', 'sync'],
             'seasons', 'teams' => ['transfer', 'export'],
-            'planning', 'training' => ['download', 'export', 'approve', 'send', 'cancel', 'sync'],
+            'planning', 'training', 'sponsor_runs' => ['download', 'export', 'approve', 'send', 'cancel', 'sync'],
             'competitions', 'bexio' => ['sync', 'download', 'export'],
             'reports' => ['export', 'download'],
             'announcements', 'templates', 'signage' => ['send'],

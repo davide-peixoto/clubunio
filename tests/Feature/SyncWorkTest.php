@@ -158,12 +158,14 @@ class SyncWorkTest extends TestCase
         $service->run($this->actor, $this->tenant, 'catalog', $this->tenant->id);
     }
 
-    public function test_queue_page_renders_and_test_pages_are_not_navigation_items(): void
+    public function test_queue_page_renders_with_current_dispatch_navigation_and_hidden_auxiliary_pages(): void
     {
         app(SyncWorkService::class)->remember($this->actor, $this->tenant, 'sfv_schedule', $this->tenant->id, ['from' => '2026-10-15', 'to' => '2026-10-16']);
         Livewire::test(Synchronisation::class)->assertSuccessful()->assertSee('SFV · Spielplan abrufen')->assertSee('Erneut prüfen');
         $this->assertFalse(BexioSandbox::shouldRegisterNavigation());
-        $this->assertFalse(BexioDispatchTrials::shouldRegisterNavigation());
+        // Versandpruefung is an existing business page; this release must not hide it.
+        $this->assertTrue(BexioDispatchTrials::shouldRegisterNavigation());
+        $this->assertFalse(\App\ClubUnio\Pages\SponsorRunBilling::shouldRegisterNavigation());
     }
 
     public function test_historical_latest_errors_import_idempotently_without_external_calls(): void

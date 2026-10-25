@@ -26,6 +26,7 @@ class SyncWorkService
         'finance_result' => 'Bexio · Finanzaktion klären',
         'training_review' => 'KI-Training · Anfrage prüfen',
         'azure_upload' => 'Azure · Dokument übertragen',
+        'sponsor_run_billing' => 'Sponsorenlauf · Bexio-Abrechnung prüfen',
     ];
 
     public const ERRORS = [
@@ -173,6 +174,7 @@ class SyncWorkService
     {
         return match ($row->operation) {
             'azure_upload' => app(DocumentUploadService::class)->process($actor, $tenant, $row->object_id),
+            'sponsor_run_billing' => $this->sponsorBilling($actor, $tenant, $row, $payload),
             'invoice_transfer' => app(BexioInvoiceTransferService::class)->transferNow($actor, $tenant, $row->object_id, (int) $payload['revision']),
             'invoice_action' => $this->invoiceAction($actor, $tenant, $row->object_id, $payload['operation']),
             'invoice_status', 'expense_status' => app(BexioReconciliationService::class)->previewNow($actor, $tenant, $row->operation === 'invoice_status' ? 'invoice' : 'expense', $row->object_id),
@@ -196,6 +198,18 @@ class SyncWorkService
         }
 
         return $check;
+    }
+
+    private function sponsorBilling(Account $actor, Tenant $tenant, object $row, array $payload): object
+    {
+        $service = app(SponsorRunBillingService::class);
+        $bill = $service->get($actor, $tenant, $row->object_id);
+        // A repeated work item only reconciles. It never repeats an ambiguous provider write.
+        if ((int) $row->attempts > 0) {
+            return $service->executeNow($actor, $tenant, $bill->id, $bill->revision, 'sync', []);
+        }
+
+        return $service->executeNow($actor, $tenant, $row->object_id, (int) $payload['revision'], $payload['action'], $payload['input']);
     }
 
     private function invoiceAction(Account $actor, Tenant $tenant, int $id, string $operation): void
@@ -229,6 +243,9 @@ class SyncWorkService
 
     private function outcome(object $row, mixed $result): ?string
     {
+        if ($row->operation === 'sponsor_run_billing') {
+            return str_ends_with($result->state, '_uncertain') || $result->operation_token ? 'provider_unconfirmed' : null;
+        }
         if ($row->operation === 'invoice_transfer' && $result->state !== 'accepted') {
             return 'provider_unconfirmed';
         }

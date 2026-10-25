@@ -12,7 +12,8 @@ final class ModulePermissionService
     private const MODELS = [
         'members' => ['Member', 'MemberNote', 'MemberFunction', 'MemberKey', 'Sponsorship', 'MemberBankAccount'],
         'registrations' => ['Registration'], 'member_changes' => ['MemberChangeRequest'],
-        'documents' => ['MemberDocument', 'MaterialReceipt', 'LegacyMaterialReceipt'],
+        'documents' => ['MemberDocument', 'MaterialReceipt', 'LegacyMaterialReceipt', 'DocumentSeries', 'DocumentSeriesTemplate', 'DocumentSeriesRecipient'],
+        'sponsor_runs' => ['SponsorRunEvent', 'SponsorRunParticipant', 'SponsorRunPledge'],
         'families' => ['Family', 'FamilyMember'], 'seasons' => ['Season'],
         'teams' => ['Team', 'TeamSeason', 'TeamPlayer', 'TeamStaff', 'TechnicalLead'],
         'training' => ['LegacyTrainingPlan'], 'training_slots' => ['TrainingSlot'],

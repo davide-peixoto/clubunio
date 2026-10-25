@@ -12,6 +12,8 @@ use App\ClubUnio\Http\NotificationPortalController;
 use App\ClubUnio\Http\PortalController;
 use App\ClubUnio\Http\PublicWebController;
 use App\ClubUnio\Http\RegistrationPortalController;
+use App\ClubUnio\Http\SponsorRunPortalController;
+use App\ClubUnio\Http\SponsorRunPublicController;
 use App\ClubUnio\Http\TeamPlanningController;
 use App\ClubUnio\Http\TenantNavigationController;
 use App\ClubUnio\Http\TrainingPlanController;
@@ -31,6 +33,11 @@ Route::get('/signage/{tenant:slug}', [PublicWebController::class, 'signage'])->m
 Route::get('/join/{tenant:slug}', [PublicWebController::class, 'registration'])->middleware('throttle:60,1')->name('clubunio.public.registration');
 Route::post('/join/{tenant:slug}', [PublicWebController::class, 'submit'])->middleware('throttle:5,10')->name('clubunio.public.registration.submit');
 
+Route::get('/sponsor-run', [SponsorRunPublicController::class, 'landing'])->middleware('throttle:60,1')->name('clubunio.sponsor.public');
+Route::post('/sponsor-run/info', [SponsorRunPublicController::class, 'info'])->middleware('throttle:120,1')->name('clubunio.sponsor.public.info');
+Route::post('/sponsor-run/submit', [SponsorRunPublicController::class, 'submit'])->middleware('throttle:20,1')->name('clubunio.sponsor.public.submit');
+Route::post('/sponsor-run/confirm', [SponsorRunPublicController::class, 'confirm'])->middleware('throttle:20,1')->name('clubunio.sponsor.public.confirm');
+
 Route::get('/portal/login', [PortalController::class, 'loginForm'])->name('clubunio.portal.login');
 Route::post('/portal/login', [PortalController::class, 'login']);
 Route::get('/portal/{tenant:slug}/members', [PortalController::class, 'members'])
@@ -39,6 +46,11 @@ Route::post('/portal/logout', [PortalController::class, 'logout'])
     ->middleware('auth:portal')->name('clubunio.portal.logout');
 
 Route::middleware('auth:portal')->group(function () {
+    Route::get('/portal/{tenant:slug}/sponsor-runs', [SponsorRunPortalController::class, 'index'])->name('clubunio.portal.sponsor-runs');
+    Route::get('/portal/{tenant:slug}/sponsor-runs/{event}', [SponsorRunPortalController::class, 'show'])->whereNumber('event')->name('clubunio.portal.sponsor-run');
+    Route::post('/portal/{tenant:slug}/sponsor-participants/{participant}/pledge', [SponsorRunPortalController::class, 'pledge'])->whereNumber('participant')->middleware('throttle:20,1')->name('clubunio.portal.sponsor-run.pledge');
+    Route::post('/portal/{tenant:slug}/sponsor-participants/{participant}/operations', [SponsorRunPortalController::class, 'operations'])->whereNumber('participant')->middleware('throttle:30,1')->name('clubunio.portal.sponsor-run.operations');
+    Route::post('/portal/{tenant:slug}/sponsor-participants/{participant}/share', [SponsorRunPortalController::class, 'share'])->whereNumber('participant')->middleware('throttle:10,1')->name('clubunio.portal.sponsor-run.share');
     Route::get('/portal/{tenant:slug}/material-history/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
         return app(LegacyMaterialReceiptService::class)->pdf($request->user('portal'), $tenant, $receipt, false, $request->boolean('original'));
     })->whereNumber('receipt')->name('clubunio.portal.material.history.pdf');
@@ -79,6 +91,16 @@ Route::middleware('auth:portal')->group(function () {
 Route::get('/material/{tenant:slug}/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
     return app(MaterialReceiptService::class)->pdf($request->user('clubunio'), $tenant, $receipt, true);
 })->whereNumber('receipt')->middleware('auth:clubunio')->name('clubunio.material.pdf');
+
+foreach (['original' => false, 'signed' => true] as $kind => $signed) {
+    Route::get('/document-series/{tenant:slug}/{series}/{recipient}/'.$kind, function (Request $request, Tenant $tenant, int $series, int $recipient) use ($signed) {
+        return app(\App\ClubUnio\Services\DocumentSeriesService::class)->download($request->user('clubunio'), $tenant, $series, $recipient, $signed);
+    })->whereNumber('series')->whereNumber('recipient')->middleware('auth:clubunio')->name('clubunio.document-series.'.$kind);
+}
+
+Route::get('/sponsor-run-billing/{invoice}/pdf', function (Request $request, int $invoice) {
+    return app(\App\ClubUnio\Services\SponsorRunBillingService::class)->pdf($request->user('clubunio'), \Filament\Facades\Filament::getTenant(), $invoice);
+})->whereNumber('invoice')->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class])->name('clubunio.sponsor.billing.pdf');
 
 Route::get('/material-history/{tenant:slug}/{receipt}/pdf', function (Request $request, Tenant $tenant, int $receipt) {
     return app(LegacyMaterialReceiptService::class)->pdf($request->user('clubunio'), $tenant, $receipt, true, $request->boolean('original'));

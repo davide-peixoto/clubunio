@@ -1,5 +1,21 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dokumentenserien und Sponsorenlauf (25.10.2026)
+
+Zwei Legacy-Erweiterungen als native ClubUnio-Webmodule umgesetzt. Serien mit
+unveraenderlichen Vorlagenversionen/Empfaengersnapshots, frischer Vorschau,
+wiederaufnehmbarer privater PDF-Ablage und getrennten geprueften Rueckgaben.
+Sponsorenlauf mit Saison-/Teambezug, Teilnehmerbestand, Helferrechten, Runden-
+Freigabe, geschuetzten Zusagen und widerrufbaren Aliaslinks. Oeffentliche Zusagen
+bleiben bis bewusster Admin-Aktivierung gesperrt; Testmail nur an Admin.
+Einzelabrechnung mit expliziten Buchhaltungszuordnungen, fixer Sandbox-Pruefung,
+durabler Ausfuehrungsabsicht und Sync-Auftraegen ohne blinde Schreibwiederholung.
+Migrationen73/74/75 ausschliesslich ClubUnio; keine Legacy-Datenuebernahme,
+kein Refresh und keine neue Rechtevorlage. Vorlagen/Belege bei Rollback erhalten.
+Details, Abnahmegrenzen und offene Live-Pruefungen in CLUBUNIO-DOCUMENT-SERIES.md,
+CLUBUNIO-SPONSOR-RUN.md und CLUBUNIO-SPONSOR-BILLING.md.
+App-API, SaaS, Betrieb und bestehendes PHPMaker DEV/PROD unveraendert.
+
 ## Saisonplanung fachlich-technisch abgenommen (23.10.2026)
 
 Gesamtablauf einschliesslich verbindlichem Browserabschluss nur mit isolierten

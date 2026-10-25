@@ -1,5 +1,28 @@
 # Pi staging: dev.clubunio.ch
 
+## Dokumentenserien und Sponsorenlauf (25.10.2026)
+
+Aktiv:20261025-clubunio-sponsor-documents; Basis/Rueckweg:
+20261023-clubunio-season-planning-acceptance. Additive Migrationen73/74/75
+bereits gezielt auf gemeinsamer ClubUnio-DB angewendet; Pi prueft das Journal.
+Neue native Webseiten Dokumentenserien, Sponsorenlauf und dessen Abrechnung,
+geschuetzte Dokumentrouten sowie Portal-/Public-Testwege. Public-Links erst nach
+bewusster Admin-Aktivierung, keine Aktivierung durch Deployment. Versandkonfiguration
+default inaktiv, fixe Bexio-Sandboxidentitaet, Testempfaenger ausschliesslich Admin.
+Schreibabbrueche bleiben bis zum Abgleich gesperrt. Keine echten Bankzahlungen.
+Releasecheck: check-sponsor-documents.php zusaetzlich zu bisherigen vier Checks;
+Caches erneut aufbauen, bisherige .env/Storage/Schluessel unveraendert erhalten.
+Bei Ruecksprung neue Tabellen und Evidenz nicht entfernen. PHPMaker DEV/PROD,
+App-API, SaaS und Betrieb unveraendert. Details und Abnahmegrenzen:
+CLUBUNIO-DOCUMENT-SERIES.md, CLUBUNIO-SPONSOR-RUN.md, CLUBUNIO-SPONSOR-BILLING.md.
+Deployment abgeschlossen: alle fuenf CLI-Checks erfolgreich,195 verschluesselte
+Settings/46 Nachrichtenvorlagen und zwei bestehende Saisonentwuerfe unveraendert.
+Login/Public/CSS/JS HTTP200, drei neue Verwaltungsseiten anonym302, /.env403.
+50 neue Tests/390 Assertions bestanden; bestehende Profil-/Queue-Regression
+inklusive korrigierter historischer Navigationsannahme geprueft. Vier Standard-
+PDFs visuell A4 geprueft. Angemeldete Desktop-/Mobil- und neue echte Azure-/Bexio-
+Abnahme bleiben offen, Browser steht bei Login. Keine echten Dateien versendet.
+
 ## Saison-Fachabnahme (23.10.2026)
 
 Aktiv:20261023-clubunio-season-planning-acceptance, Rueckweg:

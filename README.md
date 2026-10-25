@@ -1,5 +1,10 @@
 # ClubUnio
 
+Neue Webmodule: [Dokumentenserien](deploy/CLUBUNIO-DOCUMENT-SERIES.md) und
+[Sponsorenlauf](deploy/CLUBUNIO-SPONSOR-RUN.md), mit eigener
+[Bexio-Abrechnung und Wiederaufnahme](deploy/CLUBUNIO-SPONSOR-BILLING.md).
+Legacy-DEV/PROD und App-API bleiben unveraendert.
+
 Saisonplanung: [Speicherbarer Wizard mit verbindlichem Abschluss](deploy/CLUBUNIO-SEASON-PLANNING.md).
 Technische [Fachabnahme mit isolierten Testdaten](deploy/CLUBUNIO-SEASON-ACCEPTANCE.md)
 inklusive verbindlichem Browserabschluss und vollstaendigem Ergebnisabgleich.

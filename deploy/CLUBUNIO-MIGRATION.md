@@ -1,5 +1,19 @@
 # ClubUnio migration work packages
 
+25.10.2026: native document-series and sponsor-run web modules. Additive
+ClubUnio-only migrations73/74/75 create immutable template/snapshot evidence,
+recipient processing/return provenance, season-based runs/pledges/helper/public
+consent history, and individually referenced Bexio billing/audit records.
+Apply explicit paths in order; journal protects the shared local/Pi database.
+No legacy database refresh/import, default-role grants or existing document moves.
+Future source import must map seasons/teams/members first, preserve sponsor
+consents/financial references and issued evidence, and separately reconcile remote
+IDs before any provider write. Never silently regenerate issued documents.
+Code rollback preserves new tables and encryption key; no destructive down.
+App API, SaaS, operations and existing PHPMaker DEV/PROD remain out of scope.
+See CLUBUNIO-DOCUMENT-SERIES.md, CLUBUNIO-SPONSOR-RUN.md and
+CLUBUNIO-SPONSOR-BILLING.md for workflows, tests and live acceptance limits.
+
 23.10.2026: season-planning acceptance completed with synthetic isolated source
 and followup seasons, including real browser completion and all25 result links.
 Source rows and SVS baseline unchanged; temporary fixture/access cleaned up.
