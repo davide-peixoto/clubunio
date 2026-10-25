@@ -3,6 +3,28 @@
 Stand25.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
 
+## Wiederaufnahme25.10.2026: keine Doppelbuchung, Browser blockiert
+
+Erneuter direkter Leselauf mit clubunio-two-target-credit-prepare.php:
+RE-00014 Rest30, RE-00015 Rest20, RE-00016 Rest25; jeweils Gutschrift0,
+Geldzahlung0 und leere Provider-Verrechnungsnachweise. Lokale ClubUnio-Salden
+identisch. Korrektur427 weiterhin released; kein Kundenguthaben registriert.
+
+Im vorherigen Versuch war ausschliesslich GS-00007/Betrag10/RE-00015 im
+Buchungsstapel vorbereitet. Wichtig: Rechnung zuerst auswaehlen, danach
+Teilbetrag setzen, da die Auswahl das Betragsfeld auf den Rechnungsrest setzt.
+Die Browserbestaetigung lief in einen Timeout; eine Buchung ist durch den
+aktuellen direkten Nachtest NICHT bestaetigt. Auch erneute Tab-Verbindung
+lief zweimal in einen Timeout. Aktueller Browser-Stapel daher nicht lesbar.
+Keine erneute Buchung, kein zweiter Teilbetrag, kein lokaler Ersatzbeleg.
+
+Fortsetzung: Browserzugriff wiederherstellen, Provider erneut lesen und
+vorhandenen Stapel pruefen. Einen bereits vorbereiteten Eintrag nicht noch
+einmal hinzufuegen. Erst bei eindeutigem GS-00007/10/RE-00015-Stapel buchen;
+danach ClubUnio-Nachweis pruefen, erst dann20 auf RE-00016. Abnahme offen.
+Keine Aenderung an bestehenden Buchungen oder PHPMaker DEV/PROD in diesem
+Nachtest. Nur Dokumentation, kein Deployment oder Migrationslauf.
+
 ## Doku- und UI-Pruefung25.10.2026: gezielte Zuordnung gefunden
 
 Die offizielle Dokumentation nennt den Assistenten unter Verkauf > Mehr
