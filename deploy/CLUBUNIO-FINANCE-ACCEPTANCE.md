@@ -1,7 +1,47 @@
 # Bexio/Finanzen: aktueller Abnahmestand
 
-Stand19.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
+Stand25.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
+
+## Browserabnahme25.10.2026: freie Zuordnung noch nicht nachgewiesen
+
+Firma `SVS Api Test` im angemeldeten Browser geprueft. Liste aller vorhandenen
+Gutschriften enthielt keine neue CHF30-Gutschrift. Mit Benutzerfreigabe wurde
+GS-00007 fuer Kontakt3 angelegt: SANDBOX TWO-TARGET-20261019, CHF30 inklusive
+8.1%, MWST2.25, Konto3200, keine E-Mail oder Geldzahlung.
+
+Wichtige Korrektur der untenstehenden Testanleitung: Der Link
+`Gutschrift mit Rechnungen verbuchen` oeffnet KEINEN Auswahldialog. Er hat
+sofort CHF10 auf RE-00013 und CHF20 auf RE-00014 verteilt, wie im Hinweis
+ueber dem Link vorgeschlagen. Diese vom Agenten irrtuemlich ausgeloesten
+neuen Zuordnungen (Payment34/35, GS-00007) wurden gezielt wieder entfernt.
+Die bestehende Zuordnung GS-00005/Payment28 wurde nicht entfernt.
+Auditspuren/Zeitstempel der Zwischenaktionen koennen bestehen bleiben;
+keine Behauptung byte-identischer Providerhistorie.
+
+Erneuter direkter API-/Fachservice-Nachtest erfolgreich:
+- RE-00013 wieder GS-00005 CHF10, Rest10; RE-00009/GS-00004 unveraendert.
+- RE-00014 Rest30, RE-00015 Rest20, RE-00016 Rest25; keine Zuordnungen,
+  Geldzahlungen jeweils0. Lokale ClubUnio-Salden stimmen ueberein.
+- GS-00007 im Browser offen30, abgerechnet0, Steuer2.25.
+- Korrektur427 weiterhin freigegeben; kein Kundenguthaben registriert und
+  keine lokale Verrechnung ohne Providerbeleg nachgebildet.
+
+Auf RE-00015 bietet der allgemeine Link stattdessen die alte GS-00004 an;
+diesen NICHT benutzen. In den geprueften Ansichten wurde keine Auswahl
+einzelner Gutschriften/Zielrechnungen oder eines Teilbetrags gefunden.
+Die geplante10/20-Abnahme ist NICHT abgeschlossen. Naechster Schritt:
+unterstuetzten gezielten Zuordnungsweg mit Bexio klaeren oder neuen Test
+mit komplett isoliertem Empfaenger/gestaffelt offenen Zielbelegen planen.
+Bestehende Belege nicht umdatieren, umhaengen oder temporaer bezahlen,
+um die automatische Reihenfolge zu manipulieren. GS-00007 nicht duplizieren.
+
+Lokaler Screenshot (nicht Git):
+`storage/app/private/qa/bexio-gs00007-open-20261025.png`.
+Keine Runtime-/Schemamigration, kein Deployment/Cache-Reset erforderlich.
+PHPMaker DEV/PROD unveraendert; fremde parallele Sponsorenlauf-Aenderungen
+nicht Bestandteil dieses Commits. Keine neue automatisierte Vollregression,
+da kein Anwendungscode geaendert; beide vorhandenen Live-Lesepruefer bestanden.
 
 ## Heute lesend in der Sandbox bestaetigt
 
@@ -61,7 +101,8 @@ Neue lokale Korrektur427 ist freigegeben, CHF30.00, Originalsteuer2.247919
 Kundenguthaben. RE-00014 bleibt bewusst unverrechnet: nur synthetische
 Korrekturgrundlage, keine vorgetaeuschte Zahlung oder Rueckerstattung.
 
-Manuell in Bexio:
+Urspruenglicher Soll-Testplan, NICHT als bestaetigte Bexio-Klickanleitung
+verwenden (siehe Browserbefund25.10.2026):
 
 1. Firma `SVS Api Test` waehlen; Empfaenger von RE-00015 verwenden (Kontakt3).
 2. Eine NEUE eigenstaendige Gutschrift ueber CHF30.00 inklusive8.1% erstellen;
