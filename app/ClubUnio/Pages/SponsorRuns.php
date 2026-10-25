@@ -7,6 +7,7 @@ use App\ClubUnio\Models\SponsorRunParticipant;
 use App\ClubUnio\Services\MemberAccessService;
 use App\ClubUnio\Services\SponsorRunPublicService;
 use App\ClubUnio\Services\SponsorRunService;
+use App\ClubUnio\Services\SponsorRunMoney;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -175,7 +176,8 @@ class SponsorRuns extends Page
     {
         return [Hidden::make('request_key')->default(fn () => (string) Str::uuid()), TextInput::make('sponsor_name')->label('Sponsorname')->required()->maxLength(160),
             Select::make('amount_type')->label('Zusageart')->options(['per_lap' => 'Pro Runde', 'fixed' => 'Fixbetrag'])->required()->default('per_lap'),
-            TextInput::make('amount_cents')->label('Betrag in Rappen')->numeric()->minValue(1)->maxValue(10000000)->required(), TextInput::make('cap_cents')->label('Obergrenze in Rappen')->numeric()->minValue(1)->maxValue(10000000),
+            TextInput::make('amount_chf')->label('Betrag')->prefix('CHF')->inputMode('decimal')->rules([fn () => SponsorRunMoney::rule()])->required(),
+            TextInput::make('cap_chf')->label('Obergrenze')->prefix('CHF')->inputMode('decimal')->rules([fn () => SponsorRunMoney::rule()]),
             Select::make('payment_mode')->label('Zahlungsweg')->options(['invoice' => 'Rechnung', 'collective' => 'Sammelzahlung'])->default('invoice')->required(),
             Checkbox::make('collector_confirmed')->label('Ich übernehme diese Sammelzahlung persönlich'),
             Select::make('recipient_type')->label('Rechnungsempfaenger')->options(['person' => 'Person', 'company' => 'Firma'])->default('person')->required(),
@@ -188,7 +190,7 @@ class SponsorRuns extends Page
     public function pledgeAction(): Action
     {
         return Action::make('pledge')->label('Zusage erfassen')->icon('heroicon-o-plus')->visible(fn () => $this->participantId && $this->allowed('create'))->schema(self::pledgeSchema())
-            ->action(fn (array $data) => $this->service()->addPledge($this->actor(), Filament::getTenant(), $this->participantId, $data));
+            ->action(fn (array $data) => $this->service()->addPledge($this->actor(), Filament::getTenant(), $this->participantId, SponsorRunMoney::fromWeb($data)));
     }
 
     public function operationAction(): Action

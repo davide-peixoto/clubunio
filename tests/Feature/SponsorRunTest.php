@@ -442,6 +442,42 @@ class SponsorRunTest extends TestCase
         $this->get('/sponsor-run-qa/info')->assertStatus(405);
     }
 
+    public function test_web_chf_inputs_preserve_integer_cents_and_existing_displays(): void
+    {
+        $e = $this->event();
+        $p = $this->participant($e);
+        $input = $this->pledgeInput() + ['amount_chf' => '1.25', 'cap_chf' => '5.00'];
+        Livewire::test(SponsorRuns::class)->call('openEvent', $e->id)->call('openParticipant', $p->id)
+            ->callAction('pledge', data: $input)->assertHasNoActionErrors()->assertSee('CHF 1.25')->assertSee('CHF 5.00');
+        $row = SponsorRunPledge::where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame(125, $row->amount_cents);
+        $this->assertSame(500, $row->cap_cents);
+        Livewire::test(SponsorRuns::class)->call('openEvent', $e->id)->call('openParticipant', $p->id)
+            ->callAction('pledge', data: array_replace($input, ['amount_chf' => '1.001']))->assertHasActionErrors(['amount_chf']);
+        $this->actingAs($this->parent, 'portal');
+        $url = route('clubunio.portal.sponsor-run.pledge', [$this->tenant->slug, $p->id]);
+        $portal = array_replace($input, ['request_key' => (string) Str::uuid(), 'amount_chf' => '2,35', 'cap_chf' => '', 'amount_cents' => 99999]);
+        $this->post($url, $portal)->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(235, SponsorRunPledge::where('request_key', $portal['request_key'])->sole()->amount_cents);
+        $this->postJson($url, array_replace($portal, ['amount_chf' => '0.001']))->assertUnprocessable()->assertJsonValidationErrors('amount_chf');
+        $this->get(route('clubunio.portal.sponsor-run', [$this->tenant->slug, $e->id, 'participant' => $p->id]))->assertOk()->assertSee('CHF 1.25')->assertSee('CHF 2.35')->assertDontSee('Rp.');
+    }
+
+    public function test_public_web_chf_is_converted_server_side_before_confirmation(): void
+    {
+        $p = $this->participant($this->event());
+        [$public, $token] = $this->publicLink($p);
+        Route::middleware('web')->post('/sponsor-run-chf-qa', [SponsorRunPublicController::class, 'submit']);
+        $input = $this->pledgeInput(['consent' => true]) + ['token' => $token, 'amount_chf' => '0.15', 'cap_chf' => '2.50'];
+        $this->postJson('/sponsor-run-chf-qa', $input)->assertOk();
+        $public->confirm($this->confirmation());
+        $row = SponsorRunPledge::where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame(15, $row->amount_cents);
+        $this->assertSame(250, $row->cap_cents);
+        $this->postJson('/sponsor-run-chf-qa', array_replace($input, ['cap_chf' => '2.501']))->assertUnprocessable()->assertJsonValidationErrors('cap_chf');
+        Mail::assertNothingSent();
+    }
+
     public function test_testmail_web_action_is_admin_only_and_transport_guards_prevent_delivery(): void
     {
         $e = $this->event();

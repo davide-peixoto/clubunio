@@ -7,6 +7,7 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\MemberAccessService;
 use App\ClubUnio\Services\SponsorRunPublicService;
 use App\ClubUnio\Services\SponsorRunService;
+use App\ClubUnio\Services\SponsorRunMoney;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -60,7 +61,7 @@ class SponsorRunPortalController
 
     public function pledge(Request $request, Tenant $tenant, int $participant, SponsorRunService $service)
     {
-        $service->addPledge($this->actor($request), $tenant, $participant, $request->all());
+        $service->addPledge($this->actor($request), $tenant, $participant, SponsorRunMoney::fromWeb($request->all()));
 
         return back()->with('sponsor_run_message', 'Sponsorenzusage gespeichert.');
     }

@@ -191,3 +191,30 @@ seitenspezifische Regeln abgesichert; Tabellenabstaende, Filter, Aktionen und
 innere mobile Scrollbereiche auf ClubUnio korrigiert. Keine Fachdaten/Regeln oder
 Rechte geaendert. CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md ersetzt den frueher
 offenen Sichtabnahmestand; keine manuelle Rollen-/Portalvollabnahme behauptet.
+
+## CHF im Web (25.10.2026)
+
+Alle Betragseingaben in Verwaltung, Mitgliederportal und oeffentlicher Webzusage
+verwenden CHF (`amount_chf`, `cap_chf`); dezimaler Punkt oder Komma erlaubt,
+maximal zwei Nachkommastellen, CHF0.01 bis100000.00, leere Obergrenze bleibt null.
+SponsorRunMoney validiert/konvertiert serverseitig mit Ganzzahlarithmetik, ohne
+Float-Multiplikation oder stilles Runden. Mitgesendete cents-Felder werden niemals
+statt CHF uebernommen; alte offene Formulare bitte neu laden. Fehler beziehen
+sich auf das CHF-Eingabefeld und erhalten im Portal die eingegebenen CHF-Werte.
+Verwaltungstabellen/Portalsummen/Zusagen zeigen CHF mit zwei Nachkommastellen;
+noch nicht feststehende Summen und fehlende Obergrenzen bleiben `-`, nicht CHF0.
+Interner SponsorRunService, Snapshots, Summen, Grenzen und Billing behalten den
+bisherigen Ganzzahl-Rappenvertrag. Bestand125 wird CHF1.25, kein Datenupdate.
+Keine App-API-Erweiterung, keine Schema-/Rechteaenderung, keine Bexio-Schreibtests
+oder Zustellung. Public-Gate bleibt unveraendert. Vier gezielte neue CHF-Tests
+mit71 Assertions bestanden (Parser, Livewire, Eltern-POST, Public-Bestaetigung),
+isolierte DB-Fixtures mit Rollback, Provider-/Mailversand gesperrt.
+Release20261025-clubunio-sponsor-chf auf ClubUnio aktiv; PHP-Syntax, Viewcache,
+Sponsor-/Profilchecks und Login/Public-Web200 geprueft. Erneute visuelle CHF-
+Nachpruefung nicht moeglich: Chrome-Tabsteuerung konnte sich nicht verbinden.
+Die vorherige Layoutabnahme bleibt separat dokumentiert, keine neue behaupten.
+Bestehende QA-Serie/Anlass/Abrechnung im angemeldeten Laravel-Webkernel erneut
+rein lesend geprueft:1 Test/15 Assertions, insbesondere gespeicherte100/300 Rappen
+als CHF1.00/CHF3.00 angezeigt, keine neue Zusage oder Provider-Schreiboperation.
+Gesamte Sponsorenlauf-/Billing-/Provider-/CHF-Regression:36 Tests/315 Assertions
+bestanden, keine Fehler oder uebersprungenen Tests.

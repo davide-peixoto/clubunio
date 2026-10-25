@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Services\SponsorRunPublicService;
+use App\ClubUnio\Services\SponsorRunMoney;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -22,7 +23,7 @@ class SponsorRunPublicController
     public function submit(Request $request, SponsorRunPublicService $service)
     {
         return $this->action($request, $service, 'submit', 20, function () use ($request, $service) {
-            $service->submit((string) $request->input('token', ''), $request->all());
+            $service->submit((string) $request->input('token', ''), SponsorRunMoney::fromWeb($request->all()));
 
             return ['message' => 'Anfrage gespeichert. Die Bestätigung wird ausschliesslich an die Testadresse zugestellt.'];
         });

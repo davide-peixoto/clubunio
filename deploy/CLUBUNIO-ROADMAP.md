@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Sponsorenlauf in CHF (25.10.2026)
+
+Betragseingaben und Anzeigen durchgehend CHF: Verwaltung, Mitgliederportal und
+oeffentliche Webzusage. Serveradapter rechnet exakt in interne Ganzzahl-Rappen,
+Punkt/Komma und maximal zwei Nachkommastellen, optionale Obergrenze bleibt null.
+Keine Umrechnung bestehender DB-Werte, keine Schema-/Rechte-/App-API-Aenderung,
+kein Bexio-Versand oder Bankzahlung. CLUBUNIO-SPONSOR-RUN.md. Release
+20261025-clubunio-sponsor-chf, Rueckweg sponsor-visual; Legacy DEV/PROD unveraendert.
+
 ## Sichtabnahme Dokumentenserien/Sponsorenlauf (25.10.2026)
 
 Angemeldete Chrome-Pruefung ueber ClubUnio/Pi-Proxy abgeschlossen: Historie,

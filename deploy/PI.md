@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Sponsorenlauf CHF (25.10.2026)
+
+Delta20261025-clubunio-sponsor-chf auf sponsor-visual: Webadapter und Formulare,
+Vorlagen/JS fuer CHF statt Rappen. Keine Datenmigration oder neue Abhaengigkeit.
+Bestandsdaten unveraendert, Rechte/Fristen/Public-Gate unveraendert. Alle Caches
+releasebezogen neu aufbauen, vorherigen Release und gemeinsame Storage erhalten.
+Keine Provider-Writes/Mails/Zahlungen oder Aenderung an PHPMaker DEV/PROD.
+Details und Nachweis: CLUBUNIO-SPONSOR-RUN.md.
+
 ## Web-Sichtabnahme (25.10.2026)
 
 Aktiv:20261025-clubunio-sponsor-visual, Rueckweg sponsor-live-acceptance.

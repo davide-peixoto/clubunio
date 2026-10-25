@@ -4,6 +4,7 @@ Neue Webmodule: [Dokumentenserien](deploy/CLUBUNIO-DOCUMENT-SERIES.md) und
 [Sponsorenlauf](deploy/CLUBUNIO-SPONSOR-RUN.md), mit eigener
 [Bexio-Abrechnung und Wiederaufnahme](deploy/CLUBUNIO-SPONSOR-BILLING.md).
 Legacy-DEV/PROD und App-API bleiben unveraendert.
+Sponsorenlauf im Web durchgehend in CHF, intern weiterhin ganzzahlige Rappen.
 Echter [Azure-/Bexio-Abnahmenachweis](deploy/CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md)
 mit synthetischen Daten und Testversand ausschliesslich an Admin.
 Angemeldete Desktop-/Mobil-Sichtpruefung nachgefuehrt; Layoutkorrekturen auf

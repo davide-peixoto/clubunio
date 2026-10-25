@@ -37,8 +37,6 @@
             data.consent = pledge.elements.consent.checked;
             data.request_key = key;
             data.payment_mode = 'invoice';
-            data.amount_cents = Number(data.amount_cents);
-            data.cap_cents = data.cap_cents ? Number(data.cap_cents) : null;
             const result = await post('submit', data);
             message.textContent = result.message;
             pledge.hidden = true;

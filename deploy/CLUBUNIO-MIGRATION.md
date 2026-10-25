@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+25.10.2026 sponsor CHF web boundary: all web monetary fields use amount_chf and
+cap_chf; server validates and converts to existing integer amount_cents/cap_cents.
+Do NOT multiply or rewrite persisted amounts. Domain/Bexio snapshots unchanged,
+no migration, import, profile grant or API rollout. Reopen stale web forms after
+deployment. Rollback to sponsor-visual restores cents UI without DB changes.
+Exact precision/bounds and web tests: CLUBUNIO-SPONSOR-RUN.md.
+
 25.10.2026 visual follow-up: authenticated document-series/sponsor-run/billing
 desktop and390px checks through ClubUnio proxy. Blade-only layout fixes deployed
 as20261025-clubunio-sponsor-visual; no schema/import/config/permission changes.
