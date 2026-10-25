@@ -220,7 +220,7 @@ class SponsorRunBillingService
 
     private function recipientCountry(string $token, SponsorRunBexioClient $client, string $iso): int
     {
-        $found = array_values(array_filter($client->catalog($token, 'countries'), fn ($r) => strtoupper($r['iso3166_alpha2'] ?? '') === strtoupper($iso)));
+        $found = array_values(array_filter($client->catalog($token, 'countries'), fn ($r) => strtoupper($r['iso_3166_alpha2'] ?? '') === strtoupper($iso)));
         abort_unless(count($found) === 1, 409, 'Land im Bexio-Katalog nicht eindeutig.');
 
         return (int) $found[0]['id'];

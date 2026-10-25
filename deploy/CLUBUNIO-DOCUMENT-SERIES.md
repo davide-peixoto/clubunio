@@ -189,3 +189,9 @@ Integrierter Release20261025-clubunio-sponsor-documents auf Pi aktiv. Panel,
 Navigation, private Routen und Server-/HTTP-Pruefungen erfolgreich. Angemeldete
 Browserpruefung am Login gestoppt; bleibt ebenso wie ein neuer echter Azure-
 Durchlauf offen. Kein Bestandsimport oder PHPMaker-Deployment.
+
+Nachtrag25.10.2026: neue echte Azure-Serie41/Dokument388 erfolgreich ueber
+private Ablage und geschuetzten Webabruf geprueft, auch direkt auf Pi.
+Keine Duplikate, anonymer Azure-Zugriff abgewiesen, Originalbestand unveraendert.
+Details: CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. Manuelle Browser-/Mobilpruefung
+bleibt offen; kein echter unterschriebener Ruecklauf behauptet.

@@ -249,7 +249,7 @@ class FakeSponsorBillingClient extends SponsorRunBexioClient
 
     public function catalog(string $token, string $kind): array
     {
-        return [['id' => 1, 'name' => $kind === 'currencies' ? 'CHF' : 'Synthetic', 'iso3166_alpha2' => 'CH']];
+        return [['id' => 1, 'name' => $kind === 'currencies' ? 'CHF' : 'Synthetic', 'iso_3166_alpha2' => 'CH']];
     }
 
     public function findContact(string $token, string $reference): ?array

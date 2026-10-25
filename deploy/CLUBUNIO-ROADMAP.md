@@ -1,5 +1,19 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Azure-/Bexio-Live-Abnahme (25.10.2026)
+
+Dokumentserie41 mit neuem privatem Azure-PDF erfolgreich, identische SHA256 beim
+direkten Ruecklesen und geschuetzten Webabruf, anonym404, keine Duplikate.
+Sponsorenlauf134 mit synthetischen Daten, fuenf Runden und CHF3.00-Obergrenze;
+Bexio RE-00017 angelegt/ausgestellt, Testversand an Admin bestaetigt, Status
+Versendet zurueckgelesen. Keine echte Zahlung. Laenderfeld im Adapter korrigiert
+(`iso_3166_alpha2`), Testdouble nach realem Vertrag nachgezogen. Vorherige
+Versandkonfiguration wiederhergestellt, QA-Referenzsaison/Teamzuordnungen inaktiv.
+Originalbestand unveraendert; immutable QA-Evidenz erhalten. Drei Live-Webkernel-
+Tests/27 Assertions sowie14 Provider-/Billing-Tests/73 Assertions bestanden.
+Manuelle angemeldete Desktop-/Mobilpruefung bleibt offen, Browser weiterhin Login.
+CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md. Kein API-/SaaS-/Betriebs- oder Legacy-Delta.
+
 ## Dokumentenserien und Sponsorenlauf (25.10.2026)
 
 Zwei Legacy-Erweiterungen als native ClubUnio-Webmodule umgesetzt. Serien mit

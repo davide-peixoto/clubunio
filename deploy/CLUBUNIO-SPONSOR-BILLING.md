@@ -73,3 +73,9 @@ Tests/390 Assertions, ohne echte Provider-Schreibaufrufe oder Zustellungen.
 Bestehende Profil-/Modul-/Queue-Regression gezielt mitgeprueft. Angemeldete
 Browserabnahme und ein echter neuer Azure-/Bexio-End-to-End-Durchlauf sind separat
 offen; die automatisierten Provider-Doubles ersetzen diese Abnahme nicht.
+
+Nachtrag25.10.2026: echter Azure-/Bexio-Durchlauf inzwischen erfolgreich mit
+synthetischen Daten, einschliesslich RE-00017 und Testversand an Admin.
+Laenderzuordnung auf reales Feld iso_3166_alpha2 korrigiert. Frueheren offenen
+Live-Stand ersetzt CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md; manuelle angemeldete
+Browserabnahme bleibt separat offen. Keine Bankzahlung oder Produktivfreigabe.

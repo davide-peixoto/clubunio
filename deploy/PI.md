@@ -1,5 +1,20 @@
 # Pi staging: dev.clubunio.ch
 
+## Live-Abnahme-Nachlauf (25.10.2026)
+
+Delta20261025-clubunio-sponsor-live-acceptance auf sponsor-documents:
+ein Laenderfeld im Bexio-Adapter korrigiert, neue explizite CLI-/Webkernel-
+Abnahme und Doku. Keine Schemamigration. Echte Azure-/Bexio-Abrufe auch auf
+ClubUnio-Pi erfolgreich, QA-Saison/Teamzuordnungen deaktiviert, Modulkonfiguration
+wieder inaktiv. Private QA-Evidenz und Journal erhalten. Keine Bestandsdatei oder
+Legacy-DEV-/PROD-Aenderung, keine Zahlung. Angemeldete manuelle Sichtpruefung offen.
+CLUBUNIO-SPONSOR-DOCUMENT-ACCEPTANCE.md.
+Aktiv deployed auf20261025-clubunio-sponsor-live-acceptance, Rueckweg
+20261025-clubunio-sponsor-documents. Fuenf CLI-Checks erfolgreich,196 Settings
+entschluesselbar/46 Vorlagen unveraendert. Neue Verwaltungswege anonym302,
+Login200, /.env403. Erneuter echter Bexio-Abgleich auf Pi: RE-00017 Versendet,
+Zahlung/Gutschrift0. Urspruenglicher Bestandshash unveraendert.
+
 ## Dokumentenserien und Sponsorenlauf (25.10.2026)
 
 Aktiv:20261025-clubunio-sponsor-documents; Basis/Rueckweg:
