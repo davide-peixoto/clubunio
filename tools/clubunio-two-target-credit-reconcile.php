@@ -52,8 +52,13 @@ foreach ($targets as $role => [$id, $remoteId, $amount, $remaining]) {
     }
     $existing = $credit->allocations()->where('invoice_id', $id)->first();
     if ($existing) {
+        // PostgreSQL jsonb does not preserve object key order.
+        $savedEvidence = $existing->evidence['allocation'];
+        $freshEvidence = $observed[$role]['credit_allocations'][0];
+        ksort($savedEvidence);
+        ksort($freshEvidence);
         abort_unless($existing->amount_cents === $amount
-            && $existing->evidence['allocation'] === $observed[$role]['credit_allocations'][0], 409);
+            && $savedEvidence === $freshEvidence, 409, 'Saved allocation evidence differs');
     } else {
         $credit = $credits->allocate($actor, $tenant, $credit->id, $credit->fresh()->revision, $id);
     }

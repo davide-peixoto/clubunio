@@ -4,8 +4,9 @@
 
 Offizielle Doku und Sandbox-Oberflaeche bestaetigen unter Verkauf > Mehr >
 Zahlungen erfassen (Manuell) ein Betragsfeld plus Zielrechnungs-Auswahl
-pro Gutschrift. Keine Buchung ausgefuehrt. Die 10/20-Abnahme fuer GS-00007
-auf RE-00015/16 bleibt offen; genaue Schritte und Stop-Bedingungen in
+pro Gutschrift. Abschluss26.10.2026: GS-00007 mit10 auf RE-00015 (Payment36)
+und20 auf RE-00016 (Payment37) verrechnet; ClubUnio-Salden10/5,
+Kundenguthaben110 Rest0, Korrektur427 confirmed. Nachweise in
 CLUBUNIO-FINANCE-ACCEPTANCE.md. Kein automatischer API-Schreibweg daraus
 ableiten. Keine Runtime-/Schema-/Datenmigration und kein Deployment noetig;
 bestehende Buchungen sowie PHPMaker DEV/PROD unveraendert.

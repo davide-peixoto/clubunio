@@ -1,7 +1,37 @@
 # Bexio/Finanzen: aktueller Abnahmestand
 
-Stand25.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005. Historische
+Stand26.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005/07. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
+
+## Abschluss26.10.2026: Zwei-Zielrechnungen-Abnahme erfolgreich
+
+Nach manueller Bestaetigung des zweiten Sandbox-Dialogs durch den Benutzer
+ist die gesamte GS-00007/CHF30 eindeutig in Bexio nachgewiesen:
+
+| Ziel | Bexio-Nachweis | Verrechnet | Rechnungsrest |
+| --- | --- | --- | --- |
+| RE-00015 / ClubUnio10452 | Payment36, Voucher7 | CHF10 | CHF10 |
+| RE-00016 / ClubUnio10453 | Payment37, Voucher7 | CHF20 | CHF5 |
+
+Beide Belege weiterhin ohne Geldzahlung. Erster Teil NICHT erneut gebucht.
+ClubUnio ueber bestehende Fachservices vollstaendig abgeglichen:
+Kundenguthaben110 hat Rest0 und zwei eindeutige Zuordnungen; Korrektur427
+ist confirmed. Lokale Rechnungssalden stimmen mit Bexio ueberein.
+Zwischenpruefung des ersten Teils erfolgte vor Vorbereitung des zweiten.
+
+Das reine Abnahmewerkzeug sortiert JSON-Objektschluessel vor dem strikten
+Vergleich, da PostgreSQL jsonb deren Reihenfolge aendert. Werte/Typen und
+Payment-IDs werden weiterhin strikt geprueft; kein gelockerter Betragscheck.
+Der vorherige Vergleichsstopp erzeugte keine zweite lokale Zuordnung.
+PHP-Syntaxcheck und echter zweiter Fachabgleich erfolgreich. Finanzregression
+im vorausgegangenen Schritt:35 Tests/209 Assertions erfolgreich.
+Kontrollpruefer bestaetigt GS-00004/05, Rechnung6 und deren lokale
+Fachfingerprints unveraendert; RE-00014 weiterhin Rest30/Gutschrift0.
+
+Migrationshinweis: reine Sandbox-Abnahme, keine Runtime-/Schemamigration und
+kein Deployment notwendig. Die gemeinsame ClubUnio-DB enthaelt die Ergebnisse.
+Testbelege und deren Zuordnungen nie in Produktivmigration uebernehmen.
+PHPMaker DEV/PROD, Rechte und andere Buchungen unveraendert. Kein Bankauftrag.
 
 ## Wiederaufnahme25./26.10.2026: erster Teil abgeglichen
 
