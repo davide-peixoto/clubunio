@@ -1291,3 +1291,17 @@ HTTPS-QA und1220 Dateihashes bestaetigt. Noch keine realen Vereinsdomains.
 Weitere parallele Provider-API79 ausgeschlossen und separat abzunehmen.
 Bestehendes DEV/PROD, App-Neubau, SaaS und Bankzahlungen unveraendert.
 Migrations-/Rollbacknachweis: CLUBUNIO-TENANT-API-RELEASE.md.
+
+## Plattformverwaltung (26.10.2026)
+
+Separate zentrale Verwaltung unter /platform: Vereine, Domains, Vereinsdesign,
+persoenliche Konten und Vereinszuordnungen, mit globaler separat freigegebener
+Rolle statt einer Superadmin-Ausnahme in Fachdaten. Migration80 installiert;
+initiales Konto nach ausdruecklicher Bestaetigung freigeschaltet. Normale
+Vereinsadmins duerfen Plattformkonten auch nicht per Kennwortreset uebernehmen.
+Domains erst nach Besitz-/DNS-/TLS-Pruefvermerken aktiv; keine echte Domain neu
+aufgeschaltet. Release20261026-clubunio-platform auf impersonation, acht Gates
+und21 Quellhashes geprueft.60 Grenztests plus41 ueberlappende finale Integrations-
+tests gruen. Angemeldete Browser-Sichtpruefung nach erneuter Anmeldung offen.
+Keine Abos/SaaS-Abrechnung, App-Neubau oder PHPMaker-DEV-/PROD-Aenderung.
+Details und Grenzen: CLUBUNIO-PLATFORM-ADMINISTRATION.md.

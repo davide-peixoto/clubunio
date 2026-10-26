@@ -1502,3 +1502,16 @@ Release20261026-clubunio-impersonation aus39094d3, Rueckweg
 ClubUnio-DB vorhanden; keine Freischaltungen angelegt.48 Tests/617 Assertions
 und sechs Releasegates gruen; HTTPS-Supportseite anonym302 zum Login.
 Details und Grenzen: CLUBUNIO-IMPERSONATION.md. PHPMaker DEV/PROD unveraendert.
+
+## Plattformverwaltung (26.10.2026)
+
+Aktiv20261026-clubunio-platform, Rueckweg20261026-clubunio-impersonation.
+Festgehaltenes21-Dateien-Delta aus5262c6d, keine Uebernahme paralleler Mobile-
+Arbeitsdateien. Gemeinsame Vorversionen vor Ueberlagerung abgeglichen, acht
+Servergates vor Wechsel gruen, danach21 Dateihashes identisch und HTTPS geprueft.
+Migration80/Batch79 bereits installiert; initiale globale Freigabe explizit,
+keine weiteren Rechte automatisch. Zentral /platform bzw. /platform/login,
+Vereinsdomains bleiben fuer Plattformzugriffe gesperrt. Alte API-/Support-
+Funktionen erhalten, Cache releasebezogen neu. Keine echten Domain-/DNS-/TLS-
+Aenderungen, Abos, Bankzahlungen oder PHPMaker-DEV-/PROD-Aenderung.
+Abnahme und noch offene angemeldete Sichtpruefung: CLUBUNIO-PLATFORM-ADMINISTRATION.md.

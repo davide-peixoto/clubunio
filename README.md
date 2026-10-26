@@ -1,5 +1,9 @@
 # ClubUnio
 
+Zentrale [Plattformverwaltung fuer Vereine, Domains, Design und Benutzerzuordnungen](deploy/CLUBUNIO-PLATFORM-ADMINISTRATION.md)
+unter `/platform`, eigene Anmeldung `/platform/login`. Nur separat freigeschaltete
+Plattformadmins, keine automatische Fachdatenberechtigung oder SaaS-Abrechnung.
+
 Persoenlich freigeschalteter [Nur-Lesen-Supportmodus](deploy/CLUBUNIO-IMPERSONATION.md)
 unter `/support/impersonation`, ohne automatische Freischaltung bestehender Konten.
 

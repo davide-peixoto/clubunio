@@ -466,3 +466,14 @@ is not shipped. Preserve shared configuration/storage and all audit/token/write
 evidence.128 isolated tests/26755 assertions, seven server gates and HTTPS QA
 passed. Previous api-v1-final retained; no legacy environment or client cutover.
 Exact artifact, checks and rollback: CLUBUNIO-TENANT-API-RELEASE.md.
+
+26.10.2026 platform administration: additive migration80 on shared ClubUnio only
+(batch79): tenants.platform_revision, platform_admins, tenant_domains and
+platform_changes. No automatic administrator seed, customer-data/lookup copy,
+secret migration or refresh. First personal operator explicitly approved and
+bootstrapped separately. Release20261026-clubunio-platform overlays21 reviewed
+files on impersonation; keeps API/support/current tenant permissions intact.
+Never down-migrate platform authority/audit on rollback. Eight gates,60 initial
+boundary tests and41 overlapping final integration tests passed. Existing
+PHPMaker DEV/PROD, billing and app rebuild untouched. Configuration/limitations:
+CLUBUNIO-PLATFORM-ADMINISTRATION.md.
