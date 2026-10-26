@@ -50,3 +50,12 @@ Rueckrolltransaktionen und verhindert externe HTTP-Aufrufe. Prueft persoenliche
 Freigabe, Passwort, Ziel-/Vereinsgrenze, Sperren, Originalidentitaet, Protokoll,
 Beenden, Ablauf/Widerruf, Admin-Demotion, Portalrechte und konkurrierende Freigaben.
 PHPMaker DEV/PROD, bestehende Benutzerrechte und Bexio-Buchungen bleiben unberuehrt.
+
+Release: 20261026-clubunio-impersonation, Quellrevision39094d3.
+9 gezielte Tests/87 Assertions und39 Rechte-/Vereinsregressionstests/530 Assertions
+erfolgreich. Sechs Servergates, Route-/Config-/View-Cache erfolgreich. HTTPS-Aufruf
+ohne Anmeldung leitet korrekt zum Login. Angemeldete visuelle Abnahme noch offen:
+der vorhandene Browserzugriff meldete einen Verbindungs-Timeout. Keine reale
+Freischaltung fuer einen Test angelegt.
+Zusatzgate auf dem Server bestaetigt die Middleware-Reihenfolge auch mit
+gecacheten Routen (Portal, Fachliste, Start/Freigabe, Livewire):0 aktive Grants.

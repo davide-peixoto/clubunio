@@ -20,7 +20,7 @@ php artisan migrate --database=clubunio --path=database/clubunio/2026_10_26_0000
 php artisan config:cache
 php artisan route:cache
 sudo -u www-data php artisan view:cache
-for check in check-tenant-navigation check-clubunio check-access-profiles check-season-planning check-sponsor-documents check-api; do
+for check in check-tenant-navigation check-clubunio check-access-profiles check-season-planning check-sponsor-documents check-api check-impersonation; do
     sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $e) { fwrite(STDERR, "Release gate failed: ".get_class($e)."\n"); exit(1); }' "deploy/$check.php"
 done
 sudo chgrp -R www-data "$release"

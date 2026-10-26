@@ -1495,3 +1495,10 @@ Shared-Konfiguration/Storage erhalten; keine Schema-/Rechte-/Scheduleraenderung
 durch diesen Release, keine Zahlungen oder PHPMaker-DEV-/PROD-Aenderung.
 Details, Archivhash und Rueckweg: CLUBUNIO-TENANT-API-RELEASE.md.
 
+# Benutzersimulation (26.10.2026)
+
+Release20261026-clubunio-impersonation aus39094d3, Rueckweg
+20261026-clubunio-api-providers-final. Migration81 bereits auf gemeinsamer
+ClubUnio-DB vorhanden; keine Freischaltungen angelegt.48 Tests/617 Assertions
+und sechs Releasegates gruen; HTTPS-Supportseite anonym302 zum Login.
+Details und Grenzen: CLUBUNIO-IMPERSONATION.md. PHPMaker DEV/PROD unveraendert.
