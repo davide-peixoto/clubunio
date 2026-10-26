@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Schedule;
 
 require __DIR__.'/clubunio-console.php';
 
+Artisan::command('clubunio:platform-bootstrap {username}', function () {
+    app(\App\ClubUnio\Services\PlatformAdministrationService::class)->bootstrap($this->argument('username'));
+    $this->info('Initial platform administrator verified. No club permissions changed.');
+});
+
 Artisan::command('clubunio:planning-import', function () {
     app(TeamPlanningImporter::class)->run();
     $this->info('Planning snapshot imported (idempotent).');

@@ -56,6 +56,17 @@ class SignageBrandService
             && ! isset($parts['user']) && ! isset($parts['pass']);
     }
 
+    public function validateDesign(array $input): array
+    {
+        $data = Validator::make($input, ['color' => ['required', 'regex:/^#[a-f0-9]{6}$/iD'],
+            'logo' => 'required|string|max:2048', 'title' => 'required|string|max:100'])->validate();
+        if (! $this->safeLogo($data['logo'])) {
+            throw ValidationException::withMessages(['logo' => 'Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Vereinslogo verwenden.']);
+        }
+
+        return $data;
+    }
+
     public function save(Account $actor, Tenant $tenant, array $input): void
     {
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);

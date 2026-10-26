@@ -29,6 +29,8 @@ use Filament\Http\Middleware\SetUpPanel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+require __DIR__.'/clubunio-platform.php';
+
 Route::middleware('auth:clubunio')->group(function () {
     Route::get('/api-docs', [\App\ClubUnio\Http\ApiDocumentationController::class, 'show'])->name('clubunio.api-docs');
     Route::get('/api-docs/openapi.json', [\App\ClubUnio\Http\ApiDocumentationController::class, 'specification'])->name('clubunio.api-docs.specification');

@@ -19,6 +19,7 @@ class BindTenantDomain
             return $next($request);
         }
         $request->attributes->set(TenantDomainService::class, $tenant);
+        abort_if($request->is('platform', 'platform/*'), 404);
         $routeTenant = $request->route()?->parameter('tenant');
         abort_if($routeTenant instanceof Tenant && ! $routeTenant->is($tenant), 404);
         abort_if(is_string($routeTenant) && $routeTenant !== $tenant->slug, 404);

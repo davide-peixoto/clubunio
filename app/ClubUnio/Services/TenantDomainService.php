@@ -29,9 +29,16 @@ class TenantDomainService
         if (app()->environment('local', 'testing')) {
             $central = [...$central, 'localhost', '127.0.0.1', '::1'];
         }
-        abort_unless(in_array($host, $central, true), 404);
+        if (in_array($host, $central, true)) {
+            return null;
+        }
+        $tenant = Tenant::whereExists(fn ($q) => $q->selectRaw('1')->from('clubora.tenant_domains as domain')
+            ->whereColumn('domain.tenant_id', 'clubora.tenants.id')->where('domain.host', $host)
+            ->where('domain.active', true)->where('domain.ownership_verified', true)
+            ->where('domain.dns_verified', true)->where('domain.tls_verified', true))->first();
+        abort_unless($tenant, 404);
 
-        return null;
+        return $tenant;
     }
 
     public function brand(): ?array

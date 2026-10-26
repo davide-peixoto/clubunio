@@ -21,6 +21,9 @@
     @endif
 @endif
 @if($actor)
+@if(!$boundTenant && app(\App\ClubUnio\Services\PlatformAdministrationService::class)->allowed($actor))
+<a href="{{ route('clubunio.platform.index') }}" class="px-4 py-2 text-sm">@svg('heroicon-o-building-office-2','inline h-4 w-4') Plattformverwaltung</a>
+@endif
 <div class="cu-nav-controls" data-cu-navigation data-user="{{ $actor->id }}">
     <label for="cu-menu-search" class="sr-only">Menü durchsuchen</label>
     <input id="cu-menu-search" type="search" placeholder="Menü durchsuchen" autocomplete="off">
