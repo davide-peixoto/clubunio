@@ -1,5 +1,8 @@
 # ClubUnio
 
+Persoenlich freigeschalteter [Nur-Lesen-Supportmodus](deploy/CLUBUNIO-IMPERSONATION.md)
+unter `/support/impersonation`, ohne automatische Freischaltung bestehender Konten.
+
 Eigene [API-Plattform mit Admin-Tokens und geschuetzter Swagger-Doku](deploy/CLUBUNIO-API.md).
 API-Basis `/api/v1`, Adminverwaltung `/api-integrations`, Dokumentation `/api-docs`.
 Lesender Webseite-Zugang ist vom Mitgliederdaten-/Fachzugriff getrennt.

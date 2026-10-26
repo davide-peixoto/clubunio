@@ -8,4 +8,5 @@ return [
     ClubUnioPanelProvider::class,
     App\Providers\TenantNavigationServiceProvider::class,
     App\Providers\TenantBoundaryServiceProvider::class,
+    App\Providers\ImpersonationServiceProvider::class,
 ];

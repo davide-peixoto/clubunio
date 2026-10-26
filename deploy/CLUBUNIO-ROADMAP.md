@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Benutzersimulation (26.10.2026)
+
+Additive Migration81 und persoenlich freizuschaltender Nur-Lesen-Supportmodus.
+Kein bestehendes Konto automatisch freigeschaltet, keine Rechteveraenderung.
+Web-Allowlist, feste Vereinsgrenze, eigenes Passwort, Supportgrund,15-Minuten-
+Limit und Originaladmin-Protokoll. App/API-Simulation und interaktive Livewire-
+Bedienung noch nicht enthalten. Details/Abnahme: CLUBUNIO-IMPERSONATION.md.
+
 ## API-Fachaktionen Bexio, SFV und KI (26.10.2026)
 
 Durable verschluesselte API-Auftraege/Ergebnisse mit additiver Migration79.

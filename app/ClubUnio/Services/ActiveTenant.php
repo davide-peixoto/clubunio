@@ -18,6 +18,11 @@ class ActiveTenant
 
     public function resolve(Request $request): Tenant
     {
+        if ($simulation = $request->attributes->get('clubunio_impersonation')) {
+            $tenant = Tenant::findOrFail($simulation->tenant_id);
+            abort_unless($request->user('clubunio')?->canAccessTenant($tenant), 403);
+            return $tenant;
+        }
         $actor = $request->user('clubunio');
         abort_unless($actor && $actor->active, 403);
         $context = $request->session()->get($this->key($request));

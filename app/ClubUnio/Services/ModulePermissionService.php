@@ -89,6 +89,13 @@ final class ModulePermissionService
     }
     public function allows(Account $actor, Tenant $tenant, string $module, string $function): bool
     {
+        if ($simulation = request()->attributes->get('clubunio_impersonation')) {
+            if ((int) $simulation->tenant_id !== (int) $tenant->id || (int) $simulation->target_id !== (int) $actor->id
+                || ! in_array($function, ['view', 'list'], true)
+                || in_array($module, ['settings', 'users', 'profiles', 'bexio', 'templates'], true)) {
+                return false;
+            }
+        }
         // Existing broad facilities grants retain their scope; narrow grants never flow back.
         if ($module === 'field_availability' && $this->allows($actor, $tenant, 'facilities', $function)) {
             return true;

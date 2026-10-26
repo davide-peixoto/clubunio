@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+26.10.2026 support impersonation: additive migration81 creates grants, bounded
+support sessions and audit events. Applied only to shared ClubUnio database;
+no grants seeded and no original roles changed. First delivery is read-only Web,
+not API/mobile impersonation. Preserve audit tables on rollback. Documentation
+and explicit interaction limits: CLUBUNIO-IMPERSONATION.md.
+
 26.10.2026 provider actions: additive migration79 creates encrypted API work and
 append-only event evidence; no legacy import, profile grant or configuration
 change. Staged requests never call providers in the API idempotency transaction.

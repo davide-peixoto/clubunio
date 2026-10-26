@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(append: [\App\ClubUnio\Http\ProtectApiAdminResponse::class]);
+        $middleware->web(append: [\App\ClubUnio\Http\ProtectApiAdminResponse::class, \App\ClubUnio\Http\ImpersonationMiddleware::class]);
+        $middleware->prependToPriorityList(\Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class, \App\ClubUnio\Http\ImpersonationMiddleware::class);
         $middleware->redirectGuestsTo(fn (Request $request) => ! $request->routeIs('clubunio.workspace.*') && $request->is('portal/*', 'planning/*') ? '/portal/login' : '/login');
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
