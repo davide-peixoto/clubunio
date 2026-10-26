@@ -154,6 +154,7 @@ final class PlatformAdministrationService
     private function brand(Tenant $tenant, array $input): array
     {
         $data = app(SignageBrandService::class)->validateDesign($input);
+        $before = array_intersect_key(app(SignageBrandService::class)->read($tenant), $data);
         foreach (['color', 'logo', 'title'] as $field) {
             $row = Setting::where('tenant_id', $tenant->id)->where('area', 'signage')
                 ->where('key', SignageBrandService::KEYS[$field])->first() ?? new Setting;
@@ -162,7 +163,7 @@ final class PlatformAdministrationService
                 'is_secret' => false, 'encrypted_value' => Crypt::encryptString($data[$field])])->save();
         }
 
-        return $data;
+        return ['before' => $before, 'after' => $data];
     }
 
     private function domain(Account $actor, Tenant $tenant, array $input): array
@@ -188,7 +189,9 @@ final class PlatformAdministrationService
         $table->updateOrInsert(['host' => $data['host']], $data + ['tenant_id' => $tenant->id,
             'verified_by' => $actor->id, 'verified_at' => now()]);
 
-        return ['host' => $data['host'], 'active' => (bool) $data['active'], 'ownership_verified' => (bool) $data['ownership_verified'],
+        return ['before' => $old ? ['active' => (bool) $old->active, 'ownership_verified' => (bool) $old->ownership_verified,
+            'dns_verified' => (bool) $old->dns_verified, 'tls_verified' => (bool) $old->tls_verified] : null,
+            'host' => $data['host'], 'active' => (bool) $data['active'], 'ownership_verified' => (bool) $data['ownership_verified'],
             'dns_verified' => (bool) $data['dns_verified'], 'tls_verified' => (bool) $data['tls_verified']];
     }
 
@@ -219,7 +222,8 @@ final class PlatformAdministrationService
             ['role' => $data['role'], 'access_profile_id' => $profile, 'portal_enabled' => (bool) $data['portal_enabled'],
                 'revision' => ($old?->revision ?? 0) + 1]);
 
-        return ['account_id' => $account->id, 'before_role' => $old?->role, 'role' => $data['role'],
+        return ['account_id' => $account->id, 'before' => $old ? ['role' => $old->role, 'portal_enabled' => (bool) $old->portal_enabled,
+            'access_profile_id' => $old->access_profile_id] : null, 'role' => $data['role'],
             'portal_enabled' => (bool) $data['portal_enabled'], 'access_profile_id' => $profile];
     }
 
