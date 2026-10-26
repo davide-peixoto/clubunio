@@ -13,6 +13,11 @@ if present), each wrapped to exit nonzero on exceptions before symlink switch.
 Release script rechecks the previous target to avoid replacing another release.
 Exact contract, test limits and final evidence: CLUBUNIO-API-PROVIDERS.md.
 Existing PHPMaker DEV/PROD and scheduler remain unchanged.
+Deployed from90dc47f on20261026-clubunio-tenant-api; all seven gates passed,
+including20 guarded API routes. HTTPS isolated QA acceptance passed; no provider
+processing invoked, tokens revoked/accounts disabled. Final example-only
+follow-up20261026-clubunio-api-providers-final retains the provider release as
+rollback. Runtime contract228 paths/138 scopes/15 actions. No new dependency.
 
 ## API v1 release (26.10.2026)
 

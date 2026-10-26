@@ -46,6 +46,7 @@ class ProviderApiDocumentationTest extends TestCase
             $this->assertSame(['object_id', 'input'], array_keys($body['properties']));
             $this->assertSame('integer', $body['properties']['object_id']['type']);
             $this->assertSame(0, $body['properties']['object_id']['minimum']);
+            $this->assertSame(in_array($name, ['sfv.refresh', 'training.generate'], true) ? 0 : 1, $body['properties']['object_id']['example']);
             $input = $body['properties']['input'];
             $this->assertSame('object', $input['type']);
             $this->assertFalse($input['additionalProperties']);

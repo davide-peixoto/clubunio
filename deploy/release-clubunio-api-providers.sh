@@ -5,8 +5,9 @@ base=/var/www/svs-laravel
 previous="${1:?Pass the verified current release path}"
 revision="${2:?Pass the reviewed source Git revision}"
 [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
-release="$base/releases/20261026-clubunio-api-providers"
+release="${3:-$base/releases/20261026-clubunio-api-providers}"
 case "$previous" in "$base"/releases/*) ;; *) exit 1 ;; esac
+case "$release" in "$base"/releases/20261026-clubunio-api-providers*) ;; *) exit 1 ;; esac
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 sudo cp -a "$previous" "$release"

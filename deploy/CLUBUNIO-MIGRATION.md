@@ -7,6 +7,10 @@ Bexio execution requires a real-admin per-item web approval, never a technical
 role upgrade. Preserve original token revocations, intent/result encryption keys
 and uncertain work on rollback; never reset running work to pending. No new
 scheduler. Exact scope and release evidence: CLUBUNIO-API-PROVIDERS.md.
+Migration79 applied via the shared ClubUnio journal; seven release gates and
+isolated HTTPS staging/replay/status tests passed. Source90dc47f; final Swagger
+example follow-up does not require another migration. Preserve the prior
+20261026-clubunio-api-providers release and its durable evidence on rollback.
 
 25.10.2026 new independently versioned API: apply additive migration76 only to
 ClubUnio (api_only account flag, dedicated integrations/tokens/audit/idempotency).

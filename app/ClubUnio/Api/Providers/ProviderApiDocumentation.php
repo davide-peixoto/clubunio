@@ -35,6 +35,7 @@ final class ProviderApiDocumentation
                 'type' => 'object', 'additionalProperties' => false, 'required' => ['object_id', 'input'],
                 'properties' => [
                     'object_id' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 999999999999999999,
+                        'example' => in_array($name, ['sfv.refresh', 'training.generate'], true) ? 0 : 1,
                         'description' => 'Tenant-owned domain object ID; use 0 only for actions without an existing object. Action-specific validation still applies.'],
                     'input' => $this->inputSchema($definition['fields']),
                 ],

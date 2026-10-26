@@ -11,6 +11,10 @@ KI-Erstellung/Pruefung und privates Trainings-PDF. Bestehende Scopes, Fachrechte
 Fristen, Qualitaetsgates und Garderoben bleiben erhalten. Keine Profilvergabe,
 Bankzahlung, API-Clientumstellung oder Aenderung an PHPMaker DEV/PROD.
 Details und Abnahme: CLUBUNIO-API-PROVIDERS.md.
+Deployment erfolgreich,214 Regressionstests plus70 ueberlappende gezielte
+Abschlusspruefungen gruen. HTTPS-Einreichen/Wiederholung/Status mit isoliertem
+QA-Verein geprueft, Testzugriffe deaktiviert. Swagger1.1.0 und Verwaltungsansicht
+angemeldet geprueft; keine echten Provider-Schreibtests oder Zahlungen.
 
 ## Eigene API-Plattform (25.10.2026)
 

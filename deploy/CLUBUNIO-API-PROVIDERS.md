@@ -114,7 +114,25 @@ No additional worker or hosting scheduler is installed.
 Verification uses isolated rollback fixtures, blocked stray HTTP and fake AI/
 Bexio responses. These tests cover real existing service logic with synthetic
 data, not actual bank movements or a new paid provider acceptance run.
-Deployment/HTTPS evidence is appended after the release gates pass.
+Deployed on ClubUnio as20261026-clubunio-api-providers, based on the independently
+verified20261026-clubunio-tenant-api release (preserved rollback). All seven CLI
+gates passed, including cached web/API domain guards on all20 API routes.
+228 documented paths,138 scopes and15 provider actions. Existing196 encrypted
+settings,46 templates and parent/self-link counts25/66 remained unchanged.
+
+Real HTTPS acceptance with isolated QA club16152/integration1163 passed:
+context/four website feeds200, member/write403, revoked401; separate restricted
+provider credentials staged SFV work61 with202, replay returned the same ID,
+status remained pending200, local SFV source read200. Processing was deliberately
+not requested; no Bexio/SFV/AI provider call or payment occurred. All QA tokens
+revoked and accounts/profiles disabled; pending evidence retained, not executable.
+Anonymous specification redirected302 and unauthenticated work returned the
+canonical401. Authenticated Chrome showed the administration/empty work list and
+Swagger1.1.0 with all228 JSON paths; the expanded training action rendered its
+exact input/202/scopes. No browser token was created or external action executed.
+Final documentation-example follow-up20261026-clubunio-api-providers-final uses
+object_id0 for generation/refresh instead of Swagger's generated large ID; no
+schema, permission, provider or business behavior change.
 
 Combined regression run:214 tests/31,513 assertions passed (11m14s). This includes
 the existing API, module workflows, token/admin UI, tenant boundaries, provider
