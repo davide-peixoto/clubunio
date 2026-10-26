@@ -129,3 +129,11 @@ try {
 Der parallele API-Arbeitsstand bleibt bewusst ausserhalb dieses Doku-Commits.
 Keine Installation/Umstellung der API auf dem Server durch diesen Nachlauf,
 keine PHPMaker-DEV-/PROD-Aenderung, keine SaaS-Abrechnung oder Provider-Writes.
+
+## Gemeinsamer Release nach Abschluss der API-Basis
+
+26.10.2026: API cb8d89a und Web-Mandantengrenzen gemeinsam auf ClubUnio deployed.
+Isolierte128 Tests/26755 Assertions erfolgreich, sieben Pi-Gates, HTTP-QA mit
+Tokenentzug und1220 Quellhashes bestaetigt. Eigene Vereinsdomains bleiben ohne
+gesonderte Freigabe unkonfiguriert. Weitere parallele Provider-API79 gehoert nicht
+zu diesem geprueften Release. Details: CLUBUNIO-TENANT-API-RELEASE.md.

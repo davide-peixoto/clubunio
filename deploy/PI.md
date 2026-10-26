@@ -1463,3 +1463,16 @@ Neuer Login /clubunio/login, alte /clubunio-GET-Links leiten weiter.
 Nur Branding-Delta, keine neue Migration/Fachfunktion. HTTP200, Caches neu,
 189 Einstellungen und42 Vorlagen geprueft. Details CLUBUNIO-REBRAND.md.
 
+## Gemeinsamer Tenant-/API-Release (26.10.2026)
+
+Aktiv:20261026-clubunio-tenant-api, Rueckweg:20261026-clubunio-api-v1-final.
+Quellrevision a09a197157594bc6a532c30a6d5c7d11f27806f4 basiert auf der fertigen
+API cb8d89a plus Release-Gates. Jetzt auch Web-Domainprovider/Branding enthalten;
+keine realen Domainzuordnungen oder DNS/TLS-Aenderungen. Neue parallele
+Provider-API79 nicht mitausgeliefert.128 Tests/26755 Assertions isoliert gruen,
+sieben Servergates und Schemaaudit erfolgreich,1220 Dateihashes identisch.
+HTTPS/QAToken-200/403/401 erfolgreich; QA15889/941 danach deaktiviert/gesperrt.
+Shared-Konfiguration/Storage erhalten; keine Schema-/Rechte-/Scheduleraenderung
+durch diesen Release, keine Zahlungen oder PHPMaker-DEV-/PROD-Aenderung.
+Details, Archivhash und Rueckweg: CLUBUNIO-TENANT-API-RELEASE.md.
+

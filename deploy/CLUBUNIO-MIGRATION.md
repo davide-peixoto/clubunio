@@ -440,3 +440,11 @@ pass with isolated built route cache; the temporary cache was removed. The
 schema audit finds no unpaired tenant FK among128 tenant tables. No code
 deployment or legacy environment changes were performed by this review.
 Review and rollout limits: CLUBUNIO-API-TENANT-BOUNDARIES.md.
+
+26.10.2026 combined tenant/API deployment: release20261026-clubunio-tenant-api,
+source a09a197 (completed API cb8d89a plus release gates). Existing migrations
+76/77/78 verified, none executed or reversed by this deployment; parallel79
+is not shipped. Preserve shared configuration/storage and all audit/token/write
+evidence.128 isolated tests/26755 assertions, seven server gates and HTTPS QA
+passed. Previous api-v1-final retained; no legacy environment or client cutover.
+Exact artifact, checks and rollback: CLUBUNIO-TENANT-API-RELEASE.md.

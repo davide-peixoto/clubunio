@@ -1257,3 +1257,13 @@ ungesicherte Tenant-FK-Paare. Kein Deployment in diesem Nachlauf.
 Routecache erfolgreich. Finale API-Integration bleibt separat; Wiederholung
 bei weiteren parallelen Aenderungen erforderlich. Abos, Abrechnung
 und bestehendes DEV/PROD unveraendert. CLUBUNIO-API-TENANT-BOUNDARIES.md.
+
+## Gemeinsame Web-/API-Freigabe (26.10.2026)
+
+Abgeschlossene API cb8d89a mit gepruefter Web-Mandantentrennung auf ClubUnio
+zusammengefuehrt: Release20261026-clubunio-tenant-api, Quellrevision a09a197.
+128 Tests/26755 Assertions isoliert erfolgreich; sieben Servergates, echtes
+HTTPS-QA und1220 Dateihashes bestaetigt. Noch keine realen Vereinsdomains.
+Weitere parallele Provider-API79 ausgeschlossen und separat abzunehmen.
+Bestehendes DEV/PROD, App-Neubau, SaaS und Bankzahlungen unveraendert.
+Migrations-/Rollbacknachweis: CLUBUNIO-TENANT-API-RELEASE.md.
