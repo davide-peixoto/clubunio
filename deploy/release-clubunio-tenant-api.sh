@@ -31,9 +31,9 @@ php artisan config:cache
 php artisan route:cache
 sudo -u www-data php artisan view:cache
 for check in check-tenant-navigation check-clubunio check-access-profiles check-season-planning check-sponsor-documents check-api check-tenant-api-release; do
-    sudo -u www-data php "deploy/$check.php"
+    sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $error) { fwrite(STDERR, "Release check failed: ".get_class($error).PHP_EOL); exit(1); }' "deploy/$check.php"
 done
-sudo -u www-data php tools/clubunio-audit-tenant-boundaries.php
+sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $error) { fwrite(STDERR, "Schema audit failed: ".get_class($error).PHP_EOL); exit(1); }' tools/clubunio-audit-tenant-boundaries.php
 printf '%s\n' "$revision" > CLUBUNIO-REVISION
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$base/current.next"
