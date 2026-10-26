@@ -6,6 +6,7 @@ use App\ClubUnio\Api\ApiTokenService;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\AccountAdministrationService;
 use App\ClubUnio\Services\PlatformAdministrationService;
 use App\ClubUnio\Services\SignageBrandService;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PlatformAdministrationTest extends TestCase
@@ -231,5 +233,23 @@ class PlatformAdministrationTest extends TestCase
         $this->post('http://localhost/platform/tenants/'.$this->one->id,
             ['operation' => 'name', 'revision' => 1, 'name' => 'Forbidden CSRF change', 'reason' => 'Synthetic CSRF regression'])->assertStatus(419);
         $this->assertSame('Synthetic platform one', $this->one->fresh()->name);
+    }
+
+    public function test_club_admin_cannot_take_over_platform_account_by_password_reset(): void
+    {
+        $this->operator->tenants()->attach($this->one, ['role' => 'office']);
+        $link = $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->one->id)->where('account_id', $this->operator->id)->first();
+        $hash = $this->operator->password;
+        try {
+            app(AccountAdministrationService::class)->save($this->admin, $this->one, $link->id,
+                ['display_name' => $this->operator->display_name, 'active' => true, 'role' => 'office', 'portal_enabled' => false,
+                    'reason' => 'Synthetic unauthorized reset test', 'revision' => $link->revision, 'account_revision' => $this->operator->fresh()->revision,
+                    'password' => 'Forbidden-password-change-123', 'password_confirmation' => 'Forbidden-password-change-123']);
+            $this->fail('Club administrator reset a platform account password');
+        } catch (ValidationException $error) {
+            $this->assertArrayHasKey('password', $error->errors());
+        }
+        $this->assertSame($hash, $this->operator->fresh()->password);
+        $this->assertTrue(app(PlatformAdministrationService::class)->allowed($this->operator));
     }
 }

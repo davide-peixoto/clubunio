@@ -57,6 +57,11 @@ class AccountAdministrationService
                 throw ValidationException::withMessages(['role' => 'Benutzer wurde inzwischen geändert. Bitte neu öffnen.']);
             }
             $passwordChanged = ! empty($data['password']);
+            if ($id && DB::connection('clubunio')->table('clubora.platform_admins')->where('account_id', $account->id)->exists()
+                && ! app(PlatformAdministrationService::class)->allowed($actor)
+                && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
+                throw ValidationException::withMessages(['password' => 'Globale Plattformkonten dürfen nicht durch Vereinsadministratoren geändert werden.']);
+            }
             if ($id && $account->tenants()->where('clubora.tenants.id', '<>', $tenant->id)->exists()
                 && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
                 throw ValidationException::withMessages(['active' => 'Vereinsübergreifendes Konto: globale Kontodaten nur nach gesonderter Prüfung ändern.']);
