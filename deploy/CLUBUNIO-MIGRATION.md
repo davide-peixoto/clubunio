@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+26.10.2026 provider actions: additive migration79 creates encrypted API work and
+append-only event evidence; no legacy import, profile grant or configuration
+change. Staged requests never call providers in the API idempotency transaction.
+Bexio execution requires a real-admin per-item web approval, never a technical
+role upgrade. Preserve original token revocations, intent/result encryption keys
+and uncertain work on rollback; never reset running work to pending. No new
+scheduler. Exact scope and release evidence: CLUBUNIO-API-PROVIDERS.md.
+
 25.10.2026 new independently versioned API: apply additive migration76 only to
 ClubUnio (api_only account flag, dedicated integrations/tokens/audit/idempotency).
 No default permissions or client tokens are seeded. Sanctum provider discovery

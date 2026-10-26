@@ -119,11 +119,11 @@ final class WorkflowApiModules
     public function unsupported(): array
     {
         return ['expense_payments' => 'No bank payments or paid assertions.',
-            'external_actions' => 'No Bexio/provider writes, document URLs, uploads or external delivery.',
+            'external_actions' => 'Generic resource writes remain local. Reviewed Bexio/SFV/AI work uses separate durable provider-actions; no arbitrary provider URLs or delivery.',
             'announcement_delivery' => 'Draft editing only; recipient snapshots and publishing are not exposed.',
             'planning_private_sources' => 'Absence reasons, participation/guest comments, original source values and encrypted notes are never returned. Manager deadline overrides follow the existing services; profiles never impersonate members.',
             'keybox_operations' => 'No direct keybox issue/simulation/hardware endpoint; reservation changes retain service-local code invalidation.',
-            'training_ai' => 'No AI generation or provider review; content editing, archive/restore and private copying are local only.',
+            'training_ai' => 'AI generation/review uses separate durable provider-actions with existing quota/quality checks. Generic content editing/archive/copy remains local.',
             'registration_acceptance_delivery' => 'Acceptance only copies existing private storage references and proposes pending parent links; no provider upload, external delivery or automatic account-link approval.',
             'contribution_batches' => 'Only single-member preview and internal draft creation are supported.'];
     }

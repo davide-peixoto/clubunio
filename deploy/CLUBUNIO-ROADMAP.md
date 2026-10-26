@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## API-Fachaktionen Bexio, SFV und KI (26.10.2026)
+
+Durable verschluesselte API-Auftraege/Ergebnisse mit additiver Migration79.
+Lokales Einreichen mit Idempotenz, explizite Ausfuehrung ausserhalb SQL-Transaktion,
+keine automatische Wiederholung unklarer Provider-/KI-Aufrufe. Bexio bleibt
+Admin-only mit objektbezogener Web-Freigabe und beiden Identitaeten im Journal.
+SFV-Quelllesezugriff, Abruf, gepruefte Wettkampf-/Teamplanung-Uebernahme sowie
+KI-Erstellung/Pruefung und privates Trainings-PDF. Bestehende Scopes, Fachrechte,
+Fristen, Qualitaetsgates und Garderoben bleiben erhalten. Keine Profilvergabe,
+Bankzahlung, API-Clientumstellung oder Aenderung an PHPMaker DEV/PROD.
+Details und Abnahme: CLUBUNIO-API-PROVIDERS.md.
+
 ## Eigene API-Plattform (25.10.2026)
 
 API-Aufbau ausdruecklich freigegeben; neuer unabhaengiger v1-Vertrag mit

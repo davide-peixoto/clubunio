@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\ClubUnio\Api\ApiDocumentation;
 use App\ClubUnio\Api\ApiContext;
+use App\ClubUnio\Api\ApiDocumentation;
 use App\ClubUnio\Api\ApiTokenService;
 use App\ClubUnio\Api\Modules\ApiModuleRegistry;
 use App\ClubUnio\Api\Modules\WorkflowApiModules;
-use App\ClubUnio\Http\ApiDocumentationController;
+use App\ClubUnio\Api\Providers\ProviderApiRegistry;
 use App\ClubUnio\Http\ApiController;
+use App\ClubUnio\Http\ApiDocumentationController;
 use App\ClubUnio\Http\ApiFileController;
 use App\ClubUnio\Http\ApiReportController;
 use App\ClubUnio\Http\ApiUploadController;
@@ -16,9 +17,9 @@ use App\ClubUnio\Http\AuthenticateApiIntegration;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\ApiAccessToken;
 use App\ClubUnio\Models\ApiIntegration;
+use App\ClubUnio\Models\Competition;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Models\TrainingSlot;
-use App\ClubUnio\Models\Competition;
 use App\ClubUnio\Services\ActiveTenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -286,6 +287,9 @@ class ApiDocumentationTest extends TestCase
                 foreach ($operation['x-required-scopes-by-kind'] ?? [] as $kindScopes) {
                     $required = [...$required, ...$kindScopes];
                 }
+                foreach ($operation['x-required-scopes-by-operation'] ?? [] as $actionScopes) {
+                    $required = [...$required, ...$actionScopes];
+                }
                 foreach ($operation['x-conditional-scopes'] ?? [] as $condition) {
                     $required[] = $condition['scope'];
                 }
@@ -539,8 +543,9 @@ class ApiDocumentationTest extends TestCase
             }
         }
         $resourceNames = array_keys($registry->definitions());
+        $providerPaths = [...array_map(fn ($operation) => '/provider-actions/'.$operation, array_keys(app(ProviderApiRegistry::class)->definitions())), '/provider-work/{id}', '/provider-work/{id}/process', '/sfv/schedule'];
         foreach ($spec['paths'] as $path => $operations) {
-            if ($path !== '/context' && ! str_starts_with($path, '/website/') && ! str_starts_with($path, '/files/') && ! str_starts_with($path, '/uploads/') && ! str_starts_with($path, '/reports/') && ! str_starts_with($path, '/exports/')) {
+            if ($path !== '/context' && ! in_array($path, $providerPaths, true) && ! str_starts_with($path, '/website/') && ! str_starts_with($path, '/files/') && ! str_starts_with($path, '/uploads/') && ! str_starts_with($path, '/reports/') && ! str_starts_with($path, '/exports/')) {
                 $this->assertContains(explode('/', $path)[1], $resourceNames, 'Unregistered resource in API documentation');
             }
             foreach ($operations as $method => $operation) {
@@ -581,7 +586,8 @@ class ApiDocumentationTest extends TestCase
             ...array_map(fn ($kind) => '/reports/'.$kind, array_keys(ApiReportController::REPORTS)),
             ...array_map(fn ($kind) => '/exports/'.$kind, [...array_keys(ApiReportController::REPORTS), 'invoices', 'payments']),
             ...array_map(fn ($kind) => '/files/'.$kind.'/{id}', array_keys(ApiFileController::TYPES)),
-            ...array_map(fn ($kind) => '/uploads/'.$kind.'/{id}', array_keys(ApiUploadController::TYPES)), '/uploads/{id}', '/uploads/{id}/process'], array_keys($spec['paths']));
+            ...array_map(fn ($kind) => '/uploads/'.$kind.'/{id}', array_keys(ApiUploadController::TYPES)), '/uploads/{id}', '/uploads/{id}/process',
+            ...array_map(fn ($operation) => '/provider-actions/'.$operation, array_keys(app(ProviderApiRegistry::class)->definitions())), '/provider-work/{id}', '/provider-work/{id}/process', '/sfv/schedule'], array_keys($spec['paths']));
         foreach ($spec['paths'] as $path => $operations) {
             $operation = $operations['get'] ?? $operations['post'];
             $this->assertArrayHasKey('401', $operation['responses']);
@@ -653,6 +659,7 @@ class ApiDocumentationTest extends TestCase
         $gate = new class($account, $tenant)
         {
             public bool $allowed = true;
+
             public int $checks = 0;
 
             public function __construct(private Account $account, private Tenant $tenant) {}

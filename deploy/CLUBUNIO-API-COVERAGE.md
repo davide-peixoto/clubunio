@@ -16,10 +16,11 @@ access or generic status mutation is provided.
 | Families | Family and member links, versioned edits | No arbitrary cross-club family links |
 | Member changes | Read existing requests, approve/reject with conflict checks | Technical profiles cannot submit as a represented member/parent |
 | Planning | Events/series, participation, guests, absences, fresh series preview/apply | Existing self/parent restrictions and deadline locks are retained; profile tokens do not become parents |
-| Training plans | Read metadata/content, validate/save, archive/restore/copy | No synchronous paid AI generation/review or training-PDF adapter yet |
-| Training slots/grounds | Training slots/options, competitions, status and field availability, notices | Publication/deactivation effects require additional scopes; no new SFV remote-sync adapter |
+| Training plans | Read/content/save/archive/restore/copy, durable AI generation/review, private training PDF | Explicit processing, existing quotas/quality gates, no automatic paid retry or sharing |
+| Training slots/grounds | Training slots/options, competitions, statuses/notices; SFV source read/refresh, reviewed competition apply and team-planning import | Publication and conditional create/cancel/restore need their own scopes; manual dressing rooms retained |
 | Bus | Bus catalog read, reservations, rescheduling, approve/reject/cancel | No hardware/keybox API operations |
-| Invoices | Headers, lines, internal release/cancel/archive/restore; existing private PDF services | No new Bexio transfer/issue/send/payment operation |
+| Invoices | Headers/lines/internal workflow/private PDFs; durable Bexio transfer/issue/cancel/status/sync/reconciliation requests | Each Bexio execution requires explicit real-admin web approval; no payment or external email dispatch |
+| Provider work | Encrypted durable requests/results, status, explicit direct processing, admin inspection/rejection and dual-identity approval | Running/uncertain work is never automatically retried; no credentials or arbitrary provider URLs |
 | Expenses | Belegs/positions, server suggestion/review fields, submit/approve/reject/reopen | No client-authored suggestion flags, paid assertion or bank payment |
 | Contributions | Prices/rules, single-member preview/internal invoice creation | No bulk billing or Bexio dispatch |
 | Credits/refunds | Explicit metadata; local credit draft/release/cancel and refund cancellation | No provider entitlement, external reconciliation, allocations or paid refund confirmation |
@@ -32,7 +33,7 @@ access or generic status mutation is provided.
 
 ## Release gates
 
-- Schema76 plus reviewed tenant/profile FK78, no profile grants or imports.
+- Schema76, tenant/profile FK78 and additive provider intent/event schema79; no profile grants/imports.
 - Transactional fixtures for domain/resource, token/scope, tenant, version,
   idempotency, private document and admin UI checks.
 - Injected query error with debug enabled: no SQL/bindings/token in response or
@@ -49,9 +50,9 @@ before switching any real website or rebuilding/releasing the future mobile app.
 
 ## Next API work
 
-Complete the remaining specialized adapters in small reviewed groups: durable
-Bexio/SFV/AI work requests and reconciliation, announcement delivery, document
+Complete the remaining specialized adapters in small reviewed groups: announcement delivery, document
 series and sponsor workflows, season-wizard/bulk actions and narrowly scoped
 bank-account management. Use the existing services, scopes and durable intents;
 do not bypass admin-only functions or move network writes into the generic SQL
 idempotency transaction. Existing PHPMaker DEV/PROD remain unchanged throughout.
+Provider-action details and precise Bexio/SFV/AI limits: CLUBUNIO-API-PROVIDERS.md.

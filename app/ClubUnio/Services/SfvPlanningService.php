@@ -6,6 +6,7 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Setting;
 use App\ClubUnio\Models\Tenant;
 use Carbon\CarbonImmutable as Time;
+use Closure;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SfvPlanningService
 {
@@ -22,6 +24,7 @@ class SfvPlanningService
     {
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'competitions', 'sync')) {
             abort_unless($this->planning->table($tenant, 'team_seasons')->where('active', true)->exists(), 403);
+
             return;
         }
         $this->planning->authorizeOperation($actor, $tenant, 'sync');
@@ -43,7 +46,7 @@ class SfvPlanningService
         return app(SyncWorkService::class)->run($actor, $tenant, 'sfv_schedule', $tenant->id, $data);
     }
 
-    public function refreshNow(Account $actor, Tenant $tenant, array $input): int
+    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null): int
     {
         $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
@@ -104,9 +107,10 @@ class SfvPlanningService
                     'home' => in_array($a, $own, true) || (! in_array($b, $own, true) && stripos($location, 'Sissach') !== false)];
             }
 
-            return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $rows) {
+            return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $rows, $authorization) {
                 $p = $this->planning;
                 $p->lock($tenant);
+                $authorization?->__invoke();
                 $this->authorizeSync($actor, $tenant);
                 foreach ($rows as $row) {
                     $q = $p->table($tenant, 'sfv_schedule')->where('match_id', $row['match_id']);
@@ -124,7 +128,7 @@ class SfvPlanningService
                 return count($rows);
             });
         } catch (\Throwable $error) {
-            if ($error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+            if ($error instanceof HttpExceptionInterface) {
                 throw $error;
             }
             $reference = (string) Str::uuid();
@@ -136,6 +140,7 @@ class SfvPlanningService
     public function import(Account $actor, Tenant $tenant, int $id, array $input): int
     {
         $this->planning->authorizeOperation($actor, $tenant, 'sync');
+
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             $p = $this->planning;
             $p->lock($tenant);

@@ -184,7 +184,7 @@ final class ApiModuleDefinitions
             'invoices' => 'No financial records, provider calls or payment actions.',
             'expenses' => 'No financial records, bank details or payment actions.',
             'credits' => 'No credit, refund or allocation actions.',
-            'bexio' => 'No connection/provider mutation or synchronization adapter. Authorized PDF reads use dedicated file endpoints.',
+            'bexio' => 'Connection/credentials remain web-admin-only. Reviewed durable provider actions use the separate admin-approved provider-actions API; private PDFs use file endpoints.',
             'planning' => 'No calendar/absence/series workflow adapter yet.',
             'training' => 'No AI or training-plan adapter yet.',
             'season_plans' => 'No wizard completion or bulk season transfer adapter yet.',

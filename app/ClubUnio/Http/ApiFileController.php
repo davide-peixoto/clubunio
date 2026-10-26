@@ -7,6 +7,7 @@ use App\ClubUnio\Services\InvoicePdfService;
 use App\ClubUnio\Services\LegacyMaterialReceiptService;
 use App\ClubUnio\Services\MaterialReceiptService;
 use App\ClubUnio\Services\MemberDocumentService;
+use App\ClubUnio\Services\TrainingPlanPdfService;
 use Illuminate\Http\Request;
 
 final class ApiFileController
@@ -15,6 +16,7 @@ final class ApiFileController
         'invoice-pdf' => 'invoices', 'invoice-bexio-pdf' => 'invoices',
         'member-document' => 'documents', 'registration-document' => 'registrations',
         'expense-document' => 'expenses', 'material-receipt' => 'documents', 'historical-material-receipt' => 'documents',
+        'training-pdf' => 'training',
     ];
 
     public function open(Request $request, string $kind, int $id)
@@ -33,6 +35,7 @@ final class ApiFileController
             'expense-document' => app(MemberDocumentService::class)->openExpense($c->actor, $c->tenant, $id, $download, $data['index'] ?? 0),
             'material-receipt' => app(MaterialReceiptService::class)->pdf($c->actor, $c->tenant, $id, true),
             'historical-material-receipt' => app(LegacyMaterialReceiptService::class)->pdf($c->actor, $c->tenant, $id, true, false),
+            'training-pdf' => app(TrainingPlanPdfService::class)->open($c->actor, $c->tenant, $id),
         };
         abort_unless($response->getStatusCode() === 200, $response->getStatusCode());
 

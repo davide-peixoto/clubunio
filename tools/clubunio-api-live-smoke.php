@@ -18,6 +18,7 @@ $db = DB::connection('clubunio');
 abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 $integration = $admin = $profile = $tenant = null;
 $checks = [];
+$providerIntegration = $providerProfile = null;
 try {
     [$tenant, $admin, $profile, $integration, $token] = $db->transaction(function () {
         $tenant = Tenant::create(['name' => 'QA API release smoke', 'slug' => 'qa-api-'.Str::lower(Str::random(16))]);
@@ -54,7 +55,41 @@ try {
     $response = Http::withToken($token)->acceptJson()->withoutRedirecting()->timeout(30)->get('https://dev.clubunio.ch/api/v1/context');
     abort_unless($response->status() === 401, 409);
     $checks['revoked'] = 401;
+    // Separate credentials: the website token never acquires synchronization rights.
+    $providerProfile = new AccessProfile;
+    $providerProfile->forceFill(['tenant_id' => $tenant->id, 'name' => 'QA provider staging', 'active' => true,
+        'permissions' => ['competitions.view', 'competitions.sync']])->save();
+    $providerIntegration = app(ApiTokenService::class)->createIntegration($admin, $tenant, ['name' => 'QA provider staging',
+        'access_profile_id' => $providerProfile->id, 'scopes' => ['competitions:read', 'competitions:sync'], 'rate_limit' => 60]);
+    $providerToken = app(ApiTokenService::class)->issueToken($admin, $tenant, $providerIntegration->id, 'QA staging only', $providerIntegration->scopes, now()->addMinutes(5))['token'];
+    $key = (string) Str::uuid();
+    $payload = ['object_id' => 0, 'input' => ['from' => '2026-11-01', 'to' => '2026-11-02']];
+    $staged = Http::withToken($providerToken)->acceptJson()->withHeaders(['Idempotency-Key' => $key])->withoutRedirecting()->timeout(30)
+        ->post('https://dev.clubunio.ch/api/v1/provider-actions/sfv.refresh', $payload);
+    abort_unless($staged->status() === 202 && $staged->json('data.state') === 'pending', 409);
+    $work = $staged->json('data.id');
+    $replay = Http::withToken($providerToken)->acceptJson()->withHeaders(['Idempotency-Key' => $key])->withoutRedirecting()->timeout(30)
+        ->post('https://dev.clubunio.ch/api/v1/provider-actions/sfv.refresh', $payload);
+    abort_unless($replay->status() === 202 && $replay->json('data.id') === $work && $replay->header('Idempotency-Replayed') === 'true', 409);
+    $status = Http::withToken($providerToken)->acceptJson()->withoutRedirecting()->timeout(30)->get('https://dev.clubunio.ch/api/v1/provider-work/'.$work);
+    abort_unless($status->status() === 200 && $status->json('data.state') === 'pending', 409);
+    $schedule = Http::withToken($providerToken)->acceptJson()->withoutRedirecting()->timeout(30)->get('https://dev.clubunio.ch/api/v1/sfv/schedule');
+    abort_unless($schedule->status() === 200 && $schedule->json('data') === [], 409);
+    abort_if($db->table('clubora.sync_work_items')->where('tenant_id', $tenant->id)->exists(), 409);
+    $checks['provider_stage'] = 202;
+    $checks['provider_replay_same_id'] = true;
+    $checks['provider_work_id'] = $work;
+    $checks['provider_status_pending'] = 200;
+    $checks['sfv_source'] = 200;
+    $checks['provider_execution_not_requested'] = true;
 } finally {
+    if ($providerIntegration && $admin && $tenant) {
+        app(ApiTokenService::class)->disableIntegration($admin, $tenant, $providerIntegration->id);
+        Account::whereKey($providerIntegration->account_id)->update(['active' => false]);
+    }
+    if ($providerProfile) {
+        $providerProfile->forceFill(['active' => false])->save();
+    }
     if ($integration && $admin && $tenant) {
         app(ApiTokenService::class)->disableIntegration($admin, $tenant, $integration->id);
         Account::whereKey($integration->account_id)->update(['active' => false]);

@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Api;
 
 use App\ClubUnio\Api\Modules\ApiModuleRegistry;
+use App\ClubUnio\Api\Providers\ProviderApiDocumentation;
 use App\ClubUnio\Http\ApiFileController;
 use App\ClubUnio\Http\ApiReportController;
 use App\ClubUnio\Http\ApiUploadController;
@@ -250,15 +251,17 @@ final class ApiDocumentation
             }
         }
 
+        $provider = app(ProviderApiDocumentation::class)->extend($paths, $schemas);
+
         return [
             'openapi' => '3.0.3',
-            'info' => ['title' => 'ClubUnio API', 'version' => '1.0.0', 'description' => 'Tenant-bound bearer API. Token scopes and current account permissions must both allow each operation. Website responses use separate safe DTOs.'],
+            'info' => ['title' => 'ClubUnio API', 'version' => '1.1.0', 'description' => 'Tenant-bound bearer API. Token scopes and current account permissions must both allow each operation. Website responses use separate safe DTOs. Provider actions use durable work with explicit approval where required.'],
             'servers' => [['url' => '/api/v1']],
             'security' => [['bearerAuth' => []]],
-            'paths' => $paths,
+            'paths' => $provider['paths'],
             'components' => [
                 'securitySchemes' => ['bearerAuth' => ['type' => 'http', 'scheme' => 'bearer', 'description' => 'Manually supplied API token. Web sessions do not authorize API requests.']],
-                'schemas' => array_map(fn ($schema) => $this->openApiSchema($schema), $schemas),
+                'schemas' => array_map(fn ($schema) => $this->openApiSchema($schema), $provider['schemas']),
                 'responses' => $this->errorResponses(),
             ],
         ];

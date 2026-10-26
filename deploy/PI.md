@@ -1,5 +1,19 @@
 # Pi staging: dev.clubunio.ch
 
+## Provider API release (26.10.2026)
+
+Target20261026-clubunio-api-providers is a narrowly packaged delta on the verified
+current ClubUnio release, preserving concurrent tenant/domain deployment files.
+Additive migration79 only; no composer/env/setting/profile changes. Durable work
+and event tables retain original/approving actors and encrypted inputs/results.
+Network execution requires committed intent; no automatic uncertain-write retry.
+Admin-only Bexio approval, SFV read/refresh/review/import and quota/quality-checked
+training AI/PDF. Cache rebuild plus six API/web gates (and combined tenant gate
+if present), each wrapped to exit nonzero on exceptions before symlink switch.
+Release script rechecks the previous target to avoid replacing another release.
+Exact contract, test limits and final evidence: CLUBUNIO-API-PROVIDERS.md.
+Existing PHPMaker DEV/PROD and scheduler remain unchanged.
+
 ## API v1 release (26.10.2026)
 
 Deployed delta20261026-clubunio-api-v1 on sponsor-chf. Own technical integration

@@ -118,6 +118,25 @@
     </section>
 
     <section class="api-section">
+        <h2>API-Synchronisationsaufträge</h2>
+        <div class="api-scroll"><table class="api-table"><thead><tr><th>Auftrag</th><th>Integration</th><th>Aktion / Objekt</th><th>Status</th><th>Prüfen</th></tr></thead><tbody>
+            @forelse($providerWorkRows as $row)
+                <tr wire:key="api-work-{{ $row->id }}"><td>#{{ $row->id }}</td><td>#{{ $row->integration_id }}</td><td>{{ $providerActionLabels[$row->operation] ?? $row->operation }}<br>#{{ $row->object_id }}</td><td>{{ ['pending'=>'Bereit', 'awaiting_approval'=>'Admin-Freigabe ausstehend', 'running'=>'In Ausführung', 'succeeded'=>'Abgeschlossen', 'attention'=>'Prüfung nötig', 'rejected'=>'Abgelehnt'][$row->state] }}@if($row->error_code)<br>{{ $row->error_code }}@endif</td><td><x-filament::icon-button icon="heroicon-o-eye" label="Auftrag prüfen" tooltip="Auftrag prüfen" wire:click="inspectProviderWork({{ $row->id }})" /></td></tr>
+            @empty<tr><td colspan="5">Keine API-Synchronisationsaufträge.</td></tr>@endforelse
+        </tbody></table></div>
+        @if($providerWorkDetail)
+            <h3>{{ $providerActionLabels[$providerWorkDetail['operation']] ?? $providerWorkDetail['operation'] }} #{{ $providerWorkDetail['id'] }}</h3>
+            <dl><dt>Objekt</dt><dd>#{{ $providerWorkDetail['object_id'] }}</dd><dt>Eingaben</dt><dd><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['input'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></dd></dl>
+            @if($providerWorkDetail['error_code'])<p>{{ $providerWorkDetail['error_code'] }}</p>@endif
+            @if($providerWorkDetail['result'] !== null)<details><summary>Ergebnis</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></details>@endif
+            <details><summary>Verlauf</summary><ul>@foreach($providerWorkDetail['events'] as $event)<li>{{ \Carbon\CarbonImmutable::parse($event->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}: {{ $event->event }} · Benutzer #{{ $event->actor_id }} @if($event->code)({{ $event->code }})@endif</li>@endforeach</ul></details>
+            @if($providerWorkDetail['state'] === 'awaiting_approval' && $providerWorkRevision === $providerWorkDetail['revision'])
+                <div class="api-toolbar"><x-filament::button icon="heroicon-o-check" wire:click="executeProviderWork" wire:loading.attr="disabled">Freigeben und ausführen</x-filament::button><x-filament::button color="danger" icon="heroicon-o-x-mark" wire:click="rejectProviderWork" wire:loading.attr="disabled">Ablehnen</x-filament::button></div>
+            @endif
+        @endif
+    </section>
+
+    <section class="api-section">
         <h2>API-Audit</h2>
         <div class="api-scroll"><table class="api-table"><thead><tr><th>Zeit ({{ config('app.timezone') }})</th><th>Integration</th><th>Token-ID</th><th>Ereignis</th><th>Status</th><th>Request-ID</th><th>Dauer (ms)</th></tr></thead><tbody>
             @forelse($auditRows as $row)

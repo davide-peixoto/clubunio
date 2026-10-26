@@ -2,7 +2,9 @@
 
 namespace App\ClubUnio\Pages;
 
+use App\ClubUnio\Api\ApiProviderWork;
 use App\ClubUnio\Api\ApiTokenService;
+use App\ClubUnio\Api\Providers\ProviderApiRegistry;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
@@ -47,6 +49,12 @@ class ApiIntegrations extends Page
 
     // Never dehydrate plaintext into the Livewire snapshot or session.
     protected ?string $issuedToken = null;
+
+    #[Locked]
+    public ?int $providerWorkId = null;
+
+    #[Locked]
+    public ?int $providerWorkRevision = null;
 
     public static function canAccess(): bool
     {
@@ -147,6 +155,34 @@ class ApiIntegrations extends Page
         $this->context();
     }
 
+    public function inspectProviderWork(int $id): void
+    {
+        $this->issuedToken = null;
+        [$actor, $tenant] = $this->context();
+        $row = app(ApiProviderWork::class)->inspect($actor, $tenant, $id);
+        $this->providerWorkId = $id;
+        $this->providerWorkRevision = $row['revision'];
+    }
+
+    public function executeProviderWork(): void
+    {
+        $this->issuedToken = null;
+        [$actor, $tenant] = $this->context();
+        abort_unless($this->providerWorkId && $this->providerWorkRevision, 422);
+        app(ApiProviderWork::class)->approve($actor, $tenant, $this->providerWorkId, $this->providerWorkRevision);
+        $this->reset('providerWorkId', 'providerWorkRevision');
+        Notification::make()->title('API-Auftrag ausgeführt')->success()->send();
+    }
+
+    public function rejectProviderWork(): void
+    {
+        $this->issuedToken = null;
+        [$actor, $tenant] = $this->context();
+        abort_unless($this->providerWorkId && $this->providerWorkRevision, 422);
+        app(ApiProviderWork::class)->reject($actor, $tenant, $this->providerWorkId, $this->providerWorkRevision);
+        $this->reset('providerWorkId', 'providerWorkRevision');
+    }
+
     public function updatedIntegrationId(): void
     {
         $this->tokenScopes = [];
@@ -186,6 +222,9 @@ class ApiIntegrations extends Page
             'scopeLabels' => $this->scopeLabels(),
             'allScopeLabels' => app(ApiTokenService::class)->scopes(),
             'issuedToken' => $this->issuedToken,
+            'providerWorkRows' => app(ApiProviderWork::class)->adminRows($actor, $tenant),
+            'providerWorkDetail' => $this->providerWorkId ? app(ApiProviderWork::class)->inspect($actor, $tenant, $this->providerWorkId) : null,
+            'providerActionLabels' => array_map(fn ($definition) => $definition['title'], app(ProviderApiRegistry::class)->definitions()),
             'auditRows' => DB::connection('clubunio')->table('clubora.api_audit as audit')
                 ->leftJoin('clubora.api_integrations as integration', function ($join) {
                     $join->on('integration.id', '=', 'audit.integration_id')

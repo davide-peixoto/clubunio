@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Api;
 
 use App\ClubUnio\Api\Modules\ApiModuleRegistry;
+use App\ClubUnio\Api\Providers\ProviderApiRegistry;
 use App\ClubUnio\Http\ApiFileController;
 use App\ClubUnio\Http\ApiUploadController;
 use App\ClubUnio\Models\AccessProfile;
@@ -71,6 +72,11 @@ final class ApiTokenService
         }
         foreach (ApiUploadController::TYPES as $module) {
             $functions[$module][] = 'upload';
+        }
+        foreach (app(ProviderApiRegistry::class)->definitions() as $definition) {
+            foreach ($definition['scopes'] as $scope => [$module, $function]) {
+                $scopes[$scope] = PermissionCatalog::MODULES[$module].': '.(PermissionCatalog::functions($module)[$function] ?? $function);
+            }
         }
         foreach (['signage' => ['send'], 'documents' => ['send', 'create'], 'training' => ['send'], 'planning' => ['cancel', 'restore'],
             'reports' => ['view', 'export'], 'invoices' => ['export'], 'expenses' => ['export']] as $module => $extra) {

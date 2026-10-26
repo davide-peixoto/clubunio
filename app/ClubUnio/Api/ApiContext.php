@@ -20,8 +20,10 @@ final class ApiContext
 
     public function authorize(string $scope, string $module, string $function): void
     {
-        [$ceiling, $abilities] = $this->current();
+        [$ceiling, $abilities, , $permissions] = $this->current();
         abort_unless(in_array($scope, $abilities, true) && in_array($scope, $ceiling, true), 403);
+        $allows = fn (string $key) => in_array($key.'.view', $permissions, true) && in_array($key.'.'.$function, $permissions, true);
+        abort_unless($allows($module) || ($module === 'field_availability' && $allows('facilities')), 403);
         app(ModulePermissionService::class)->authorize($this->actor, $this->tenant, $module, $function);
     }
 

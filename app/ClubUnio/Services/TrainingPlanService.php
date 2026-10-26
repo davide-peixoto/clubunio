@@ -4,6 +4,7 @@ namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -81,7 +82,7 @@ class TrainingPlanService
         return $data;
     }
 
-    public function generate(Account $actor, Tenant $tenant, array $input, string $key): int
+    public function generate(Account $actor, Tenant $tenant, array $input, string $key, ?Closure $authorization = null): int
     {
         $this->authorizeOperation($actor, $tenant, 'create');
         $input = $this->input($actor, $tenant, $input);
@@ -91,8 +92,10 @@ class TrainingPlanService
         }
         $plan = $this->call($actor, $tenant, $attempt, $input);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $input, $plan, $attempt) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $input, $plan, $attempt, $authorization) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             // Permission may have changed during the provider request.
+            $authorization?->__invoke();
             $this->authorizeOperation($actor, $tenant, 'create');
             $this->input($actor, $tenant, $input);
             $id = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId([
@@ -106,18 +109,24 @@ class TrainingPlanService
         });
     }
 
-    public function review(Account $actor, Tenant $tenant, int $id, int $revision, string $key): array
+    public function review(Account $actor, Tenant $tenant, int $id, int $revision, string $key, ?Closure $authorization = null): array
     {
         $this->authorizeOperation($actor, $tenant, 'approve');
         $row = $this->get($actor, $tenant, $id, true, 'approve');
         $this->revision($row, $revision);
         $attempt = $this->reserve($actor, $tenant, $key, 'review');
         $plan = $this->call($actor, $tenant, $attempt, $row->input, $row->plan);
-        $this->authorizeOperation($actor, $tenant, 'approve');
-        $this->get($actor, $tenant, $id, true, 'approve');
-        $this->finish($attempt, 'completed', $id);
 
-        return ['plan' => $plan, 'revision' => $row->revision, 'actor' => $actor->id, 'expires' => time() + 1800];
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $attempt, $authorization) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $authorization?->__invoke();
+            $this->authorizeOperation($actor, $tenant, 'approve');
+            $row = $this->get($actor, $tenant, $id, true, 'approve');
+            $this->revision($row, $revision);
+            $this->finish($attempt, 'completed', $id);
+
+            return ['plan' => $plan, 'revision' => $row->revision, 'actor' => $actor->id, 'expires' => time() + 1800];
+        });
     }
 
     public function save(Account $actor, Tenant $tenant, int $id, int $revision, array $plan, bool $shared): void

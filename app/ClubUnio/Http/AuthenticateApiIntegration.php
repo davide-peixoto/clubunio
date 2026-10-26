@@ -6,6 +6,7 @@ use App\ClubUnio\Api\ApiContext;
 use App\ClubUnio\Api\ApiErrors;
 use App\ClubUnio\Api\ApiTokenService;
 use App\ClubUnio\Api\Modules\ApiModuleRegistry;
+use App\ClubUnio\Api\Providers\ProviderApiRegistry;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\ApiAccessToken;
@@ -107,6 +108,10 @@ final class AuthenticateApiIntegration
             $path = str_replace('{id}', $id, $path);
         }
         $kind = $route->parameter('kind');
+        $operation = $route->parameter('operation');
+        if (is_string($operation) && isset(app(ProviderApiRegistry::class)->definitions()[$operation])) {
+            $path = str_replace('{operation}', $operation, $path);
+        }
         $known = [...array_keys(ApiFileController::TYPES), ...array_keys(ApiUploadController::TYPES), ...array_keys(ApiReportController::REPORTS), 'invoices', 'payments'];
         if (is_string($kind) && in_array($kind, $known, true)) {
             $path = str_replace('{kind}', $kind, $path);

@@ -21,6 +21,12 @@ Implemented modules and remaining specialized adapters are explicitly tracked in
 [the capability matrix](CLUBUNIO-API-COVERAGE.md). This is not a claim that every
 existing web operation has already been exposed through the API.
 
+26.10.2026 extension: [Bexio, SFV and AI provider actions](CLUBUNIO-API-PROVIDERS.md)
+use encrypted durable work, explicit processing and per-request real-admin
+approval for Bexio. Swagger includes the exact action fields/scopes and work
+states. SFV source reads and private training PDFs are available separately.
+No automatic retry of running/uncertain paid or external write requests.
+
 ## Administration
 
 Under Einstellungen > Zugaenge & System > API-Integrationen, an admin creates a

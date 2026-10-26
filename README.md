@@ -4,6 +4,8 @@ Eigene [API-Plattform mit Admin-Tokens und geschuetzter Swagger-Doku](deploy/CLU
 API-Basis `/api/v1`, Adminverwaltung `/api-integrations`, Dokumentation `/api-docs`.
 Lesender Webseite-Zugang ist vom Mitgliederdaten-/Fachzugriff getrennt.
 Die bestehende App und PHPMaker DEV/PROD werden dadurch nicht umgestellt.
+Spezialisierte [Bexio-, SFV- und KI-API-Auftraege](deploy/CLUBUNIO-API-PROVIDERS.md)
+mit dauerhafter Ergebnisnachverfolgung und bestehender Admin-Freigabe fuer Bexio.
 
 Neue Webmodule: [Dokumentenserien](deploy/CLUBUNIO-DOCUMENT-SERIES.md) und
 [Sponsorenlauf](deploy/CLUBUNIO-SPONSOR-RUN.md), mit eigener

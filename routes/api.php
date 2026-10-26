@@ -2,6 +2,7 @@
 
 use App\ClubUnio\Http\ApiController;
 use App\ClubUnio\Http\ApiFileController;
+use App\ClubUnio\Http\ApiProviderController;
 use App\ClubUnio\Http\ApiReportController;
 use App\ClubUnio\Http\ApiUploadController;
 use App\ClubUnio\Http\AuthenticateApiIntegration;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware([AuthenticateApiIntegration::class, BindApiTenantDomain::class])->group(function () {
     Route::get('context', [ApiController::class, 'context'])->name('clubunio.api.context');
+    Route::get('sfv/schedule', [ApiProviderController::class, 'schedule'])->name('clubunio.api.sfv.schedule');
+    Route::post('provider-actions/{operation}', [ApiProviderController::class, 'stage'])->name('clubunio.api.provider.stage');
+    Route::get('provider-work/{id}', [ApiProviderController::class, 'show'])->where('id', '[1-9][0-9]{0,17}')->name('clubunio.api.provider.show');
+    Route::post('provider-work/{id}/process', [ApiProviderController::class, 'process'])->where('id', '[1-9][0-9]{0,17}')->name('clubunio.api.provider.process');
     Route::get('reports/{kind}', [ApiReportController::class, 'index'])->name('clubunio.api.report');
     Route::get('exports/{kind}', [ApiReportController::class, 'export'])->name('clubunio.api.export');
     Route::get('files/{kind}/{id}', [ApiFileController::class, 'open'])->where('id', '[1-9][0-9]{0,17}')->name('clubunio.api.file');
