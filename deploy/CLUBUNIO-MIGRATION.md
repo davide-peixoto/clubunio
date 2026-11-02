@@ -485,3 +485,10 @@ dimensions and stylesheet version5; caches rebuilt, eight release gates passed.
 14 platform tests/106 assertions plus layout regression/5 assertions passed;
 authenticated desktop/mobile navigation visually verified. Previous platform
 release retained for rollback; legacy DEV/PROD and mobile work unchanged.
+
+02.11.2026 family navigation: standalone family assignment menu hidden only.
+Family dossier relation management, direct resource routes, existing permissions
+and derived family report preserved. Release20261102-clubunio-family-navigation
+overlays one resource file on platform-navigation; no schema/data migration.
+Unit regression/5 assertions, eight server gates and authenticated browser
+navigation check passed. Previous release retained; legacy DEV/PROD unchanged.

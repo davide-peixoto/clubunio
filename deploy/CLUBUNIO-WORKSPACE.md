@@ -143,3 +143,15 @@ Blade-Kompilierung und Pint erfolgreich. Auf ClubUnio Release68 aus Basis67
 deployt; beide Listen und ein Busdetail angemeldet auf Desktop gesichtet,
 altes Planungs-Lesezeichen leitet korrekt weiter. Die mobile Sichtpruefung
 konnte wegen eines Abbruchs der Browsersteuerung nicht abgeschlossen werden.
+
+## Familiennavigation (02.11.2026)
+
+Der eigenstaendige Menuepunkt Familienzuordnungen ist ausgeblendet; Zuordnungen
+weiterhin im Familiendossier unter Familien verwalten. Die direkte Resource-Route,
+Fachservices und Berechtigungen bleiben unveraendert. Abgeleitete Auswertung
+Familien mit Kindern bleibt sichtbar (keine vererbte Navigationssperre).
+Regressionstest mit5 Assertions erfolgreich; angemeldeter Browser bestaetigt
+0 Zuordnungslinks,1 Familienlink und1 Familienauswertungslink. Acht Servergates
+erfolgreich, Ein-Dateien-Delta auf ClubUnio Release20261102-clubunio-family-navigation,
+vorheriger platform-navigation-Release als Rueckweg erhalten. Keine DB-Aenderung,
+keine Aenderung am bestehenden PHPMaker DEV/PROD oder an paralleler Mobile-Arbeit.

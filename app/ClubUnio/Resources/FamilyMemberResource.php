@@ -27,6 +27,12 @@ class FamilyMemberResource extends FamilyResource
 
     protected static ?string $tenantRelationshipName = 'familyMembers';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Keep derived reports visible; only the standalone assignment menu is redundant.
+        return static::class !== self::class && parent::shouldRegisterNavigation();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->columns(2)->components([
