@@ -8,6 +8,9 @@ Altplanuebernahme in Einstellungen. Quittungen und Adressliste fuer Massenversan
 statt technischer Altbezeichnungen. Keine Daten-/Rechtemigration oder Import.
 Details und Abnahme: CLUBUNIO-NAVIGATION-CLEANUP.md.
 
+Mobile Sichtabnahme390px/320px abgeschlossen: Pfeile, Suche, Zielseiten und
+Umbruch bestaetigt. Keine Code-/DB-Korrektur notwendig; nur Doku-Nachlauf.
+
 ## Saison-Untermenues (02.11.2026)
 
 Saisonplanung, Mannschaften pro Saison, Spieler-, Staff- und TL-Zuordnungen sowie

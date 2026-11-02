@@ -58,6 +58,36 @@ Angemeldete Live-Browserpruefung:
 
 Danach Browsersteuerung bei Vorbereitung der abschliessenden Mobil-/Screenshot-
 pruefung unterbrochen; trotz erneutem Verbindungsversuch keine weitere Kontrolle
-moeglich. Fuer diesen Nachlauf kein neuer Screenshot und keine abgeschlossene
-mobile Sichtabnahme behauptet. Keine fachlichen Daten im Browser geaendert.
+moeglich. Dieser offene Punkt wurde durch den unten dokumentierten Nachlauf
+abgeschlossen. Keine fachlichen Daten im Browser geaendert.
 PHPMaker DEV/PROD und parallele Mobile-Entwicklung unveraendert gelassen.
+
+## Mobile Sichtabnahme abgeschlossen (02.11.2026)
+
+Angemeldete Pruefung auf dev.clubunio.ch mit Chrome in responsiven Ansichten
+390x844 und320x740, bestehendes Adminkonto. Frischer Testtab nach veralteter
+Tab-Verbindung; keine neue Anmeldung, keine Konten-/Profil-/Fachdatenmutation.
+
+- Mobile Seitenleiste vom Dashboard aus geoeffnet. Saisonpfeil oeffnet/schliesst
+  ohne Navigation; URL bleibt auf Dashboard und die Seitenleiste bleibt offen.
+- Alle sechs Saison-Unterpunkte lesbar und innerhalb des Menues; native Pfeile
+  mit korrektem aria-expanded. Finanzpfeil zeigt alle vier Rechnungsunterpunkte.
+- Suche Gutschriften oeffnet zuvor geschlossenen Finanzknoten. Leeren der Suche
+  stellt den vorherigen Zustand aria-expanded=false wieder her.
+- Gutschriften und Trainingszeiten ueber die Untermenues aufgerufen: richtige
+  Zielseite, mobile Seitenleiste schliesst automatisch, aktiver Finanzbereich
+  ist beim erneuten Oeffnen aufgeklappt.
+- Menuesuche findet Quittungen und Adressliste fuer Massenversand. Bei320px
+  bricht der lange Adresslistentext in zwei Zeilen um: Linkbreite/clientWidth
+  und scrollWidth jeweils224px; keine horizontale Seitenueberbreite.
+- Einstellungen > Datenuebernahme > Altplaene uebernehmen auch mobil erreichbar.
+
+Screenshots lokal, nicht versioniert:
+storage/framework/testing/navigation-cleanup-mobile-season.png,
+navigation-cleanup-mobile-finance.png, navigation-cleanup-mobile-search.png und
+navigation-cleanup-mobile-320-address.png (jeweils im selben Verzeichnis).
+Temporaere Viewportvorgabe aufgehoben, Testtab geschlossen, urspruenglicher
+Benutzertab unveraendert erhalten. Keine Codekorrektur, kein neuer Runtime-
+Release und keine DB-/Rechte-/Provideraktion notwendig. Nur Doku-Nachlauf;
+bestehendes PHPMaker DEV/PROD unveraendert. Kein Test auf realer iOS-/Android-
+Hardware; Nachweis betrifft die responsiven Web-Menues im Chrome-Browser.

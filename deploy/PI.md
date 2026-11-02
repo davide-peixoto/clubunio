@@ -7,8 +7,11 @@ season-navigation (Rueckweg erhalten): unabhaengige Aufklapppfeile fuer Saisons
 und Rechnungen, Finanz-Untermenues, Altplanuebernahme in Einstellungen und
 verstaendliche Listenbezeichnungen. Keine DB-/Rechte-/Datenmigration.
 Neun Gates/acht Laufzeitdateihashes,10 Tests/80 Assertions gruen. Angemeldete
-Desktoppruefung von Pfeilen/Tastatur/Suche/Bezeichnungen erfolgreich; finale
-Mobil-/Screenshotpruefung durch Browserverbindungsabbruch offen.
+Desktoppruefung von Pfeilen/Tastatur/Suche/Bezeichnungen erfolgreich.
+Mobile Sichtabnahme am02.11. abgeschlossen:390x844/320x740, Pfeile ohne
+Navigation, Suche mit Zustandswiederherstellung, direkte Untermenueziele,
+Bezeichnungen und Datenuebernahme. Screenshots lokal, Viewport aufgehoben.
+Keine Codekorrektur oder neuer Runtime-Release; nur Doku nachgefuehrt.
 Abnahme und Rueckweg: CLUBUNIO-NAVIGATION-CLEANUP.md.
 
 ## Saison-Untermenues (02.11.2026)
