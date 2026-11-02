@@ -9,4 +9,5 @@ return [
     App\Providers\TenantNavigationServiceProvider::class,
     App\Providers\TenantBoundaryServiceProvider::class,
     App\Providers\ImpersonationServiceProvider::class,
+    App\Providers\MobileCommunicationServiceProvider::class,
 ];

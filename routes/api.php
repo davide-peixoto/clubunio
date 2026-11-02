@@ -10,6 +10,8 @@ use App\ClubUnio\Http\BindApiTenantDomain;
 use App\ClubUnio\Http\WebsiteApiController;
 use Illuminate\Support\Facades\Route;
 
+require __DIR__.'/mobile.php';
+
 Route::prefix('v1')->middleware([AuthenticateApiIntegration::class, BindApiTenantDomain::class])->group(function () {
     Route::get('context', [ApiController::class, 'context'])->name('clubunio.api.context');
     Route::get('sfv/schedule', [ApiProviderController::class, 'schedule'])->name('clubunio.api.sfv.schedule');

@@ -10,6 +10,20 @@ Keine erweiterten Loeschrechte; Fristsperren, Revision, Audit und Datenschutz
 erhalten. Keine DB-Migration oder Profil-/Datenuebernahme. Gezielter ClubUnio-
 Release, PHPMaker DEV/PROD unveraendert. Details: CLUBUNIO-ABSENCE-MANAGEMENT.md.
 
+## App-Kommunikation (02.11.2026, Entwicklungsstand)
+
+Persoenlicher Login, saisongebundene Chats, Ankuendigungen, Umfragen,
+Planungsadapter, Bexio-bestaetigte private Rechnungshinweise und KI-Adapter
+lokal implementiert. Folgepaket: Bearbeiten/Loeschen, Gruppenmoderation,
+Direktkontaktsperren, Mute, Empfaengervorschau, Aenderungscursor, private
+Bild-/PDF-Quarantaene mit zwingendem Scanner und persistente Sprachwahl.
+Migrationen82/83 vorbereitet, nicht angewendet; Modul/KI/Uploads aus.
+36 Tests/343 Assertions,13 neue und10 bestehende Transportchecks bestanden.
+Noch kein Abschluss P0-P6: Push/WebSocket, fachlicher Mitgliedschaftsabgleich,
+Retention und Geraeteabnahme offen. DEV-Loginpfad live404; Deployment fehlt.
+Details: CLUBUNIO-COMMUNICATION-API.md, CLUBUNIO-COMMUNICATION-AI.md und
+CLUBUNIO-COMMUNICATION-PACKAGE2.md; App-Abnahme im mobilen Repository.
+
 ## Benutzersimulation (26.10.2026)
 
 Additive Migration81 und persoenlich freizuschaltender Nur-Lesen-Supportmodus.
