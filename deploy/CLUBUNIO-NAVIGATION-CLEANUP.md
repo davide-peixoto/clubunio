@@ -38,4 +38,26 @@ erhalten. PHPMaker DEV/PROD und parallele Mobile-Arbeiten nicht mit ausrollen.
 
 10 gezielte Tests/80 Assertions erfolgreich: vollstaendige Linkerhaltung,
 Saison-/Finanzverschachtelung, unabhaengige Profilrechte und Sidebar-Vertrag.
-Deployment-/Browserabnahme werden nachgefuehrt.
+
+## Auslieferung und Abnahme
+
+Ausgeliefert `20261102-clubunio-navigation-cleanup`, Quellrevision
+`f5c3ce27f4a386a34db8f0a91b149f722c6a30d7`, Rueckweg
+`20261102-clubunio-season-navigation` erhalten. Alle neun Release-Gates
+erfolgreich, acht Laufzeitdateien gegen die Quellrevision abgeglichen.
+Konfiguration/Routen/Views im neuen Release neu aufgebaut; keine DB-Aenderung.
+
+Angemeldete Live-Browserpruefung:
+- Quittungen als Seiten-/Tabellentitel, neue Adresslistenbezeichnung im Menue.
+- Saisonpfeil auf/zu: URL bleibt unveraendert, aria-expanded wechselt korrekt,
+  Spielerzuordnungen werden ohne vorherigen Seitenaufruf sichtbar.
+- Rechnungspfeil per Enter oeffnet ohne Navigation; Gutschriften sichtbar.
+- Gutschriftensuche oeffnet den zuvor geschlossenen Finanzknoten, Leeren der
+  Suche stellt aria-expanded=false wieder her.
+- Einstellungen > Datenuebernahme und Altplaene uebernehmen sichtbar.
+
+Danach Browsersteuerung bei Vorbereitung der abschliessenden Mobil-/Screenshot-
+pruefung unterbrochen; trotz erneutem Verbindungsversuch keine weitere Kontrolle
+moeglich. Fuer diesen Nachlauf kein neuer Screenshot und keine abgeschlossene
+mobile Sichtabnahme behauptet. Keine fachlichen Daten im Browser geaendert.
+PHPMaker DEV/PROD und parallele Mobile-Entwicklung unveraendert gelassen.

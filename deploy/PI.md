@@ -2,9 +2,13 @@
 
 ## Navigationsbereinigung (02.11.2026)
 
-Geplantes Delta auf season-navigation: unabhaengige Aufklapppfeile fuer Saisons
+Ausgeliefert20261102-clubunio-navigation-cleanup ausf5c3ce2 auf
+season-navigation (Rueckweg erhalten): unabhaengige Aufklapppfeile fuer Saisons
 und Rechnungen, Finanz-Untermenues, Altplanuebernahme in Einstellungen und
 verstaendliche Listenbezeichnungen. Keine DB-/Rechte-/Datenmigration.
+Neun Gates/acht Laufzeitdateihashes,10 Tests/80 Assertions gruen. Angemeldete
+Desktoppruefung von Pfeilen/Tastatur/Suche/Bezeichnungen erfolgreich; finale
+Mobil-/Screenshotpruefung durch Browserverbindungsabbruch offen.
 Abnahme und Rueckweg: CLUBUNIO-NAVIGATION-CLEANUP.md.
 
 ## Saison-Untermenues (02.11.2026)
