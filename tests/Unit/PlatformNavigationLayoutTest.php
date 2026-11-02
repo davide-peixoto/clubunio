@@ -16,7 +16,7 @@ class PlatformNavigationLayoutTest extends TestCase
         $this->assertStringContainsString('class="cu-platform-link"', $view);
         $this->assertStringContainsString("'cu-platform-link-icon'", $view);
         $this->assertMatchesRegularExpression('/\.cu-platform-link > \.cu-platform-link-icon\s*\{[^}]*width: 20px;[^}]*height: 20px;[^}]*flex: 0 0 20px;/s', $css);
-        $this->assertStringContainsString("clubunio-navigation.css') }}?v=6", $head);
+        $this->assertStringContainsString("clubunio-navigation.css') }}?v=7", $head);
         $this->assertStringContainsString('PlatformAdministrationService::class)->allowed($actor)', $view);
     }
 
@@ -32,5 +32,17 @@ class PlatformNavigationLayoutTest extends TestCase
         $this->assertStringContainsString("@include('clubunio-filament-original::components.sidebar.item')", $view);
         $this->assertStringContainsString("new CustomEvent('cu-submenu-search'", $script);
         $this->assertStringContainsString('beforeSearch = null', $view);
+    }
+
+    public function test_compact_navigation_has_disclosure_search_and_accessible_resize_handle(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $view = file_get_contents($root.'/resources/views/clubunio/tenant-switcher.blade.php');
+        $handle = file_get_contents($root.'/resources/views/clubunio/sidebar-resizer.blade.php');
+        $this->assertStringContainsString('heroicon-o-magnifying-glass', $view);
+        $this->assertStringContainsString('id="cu-menu-search-panel" hidden', $view);
+        $this->assertStringNotContainsString('type="range"', $view);
+        $this->assertStringContainsString('role="separator" tabindex="0"', $handle);
+        $this->assertStringContainsString('aria-orientation="vertical"', $handle);
     }
 }

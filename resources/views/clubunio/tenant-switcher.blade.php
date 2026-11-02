@@ -25,11 +25,12 @@
 <a href="{{ route('clubunio.platform.index') }}" class="cu-platform-link">@svg('heroicon-o-building-office-2','cu-platform-link-icon') <span>Plattformverwaltung</span></a>
 @endif
 <div class="cu-nav-controls" data-cu-navigation data-user="{{ $actor->id }}">
-    <label for="cu-menu-search" class="sr-only">Menü durchsuchen</label>
-    <input id="cu-menu-search" type="search" placeholder="Menü durchsuchen" autocomplete="off">
-    <label class="cu-nav-width" for="cu-menu-width">Menübreite
-        <input id="cu-menu-width" type="range" min="240" max="420" step="10" value="280">
-    </label>
+    <x-filament::icon-button icon="heroicon-o-magnifying-glass" label="Menü durchsuchen"
+        title="Menü durchsuchen" data-cu-search-toggle aria-expanded="false" aria-controls="cu-menu-search-panel" />
+    <div id="cu-menu-search-panel" hidden>
+        <label for="cu-menu-search" class="cu-visually-hidden">Menü durchsuchen</label>
+        <input id="cu-menu-search" type="search" placeholder="Menü durchsuchen" autocomplete="off">
+    </div>
     <p class="cu-nav-empty" role="status" hidden>Keine Menüpunkte gefunden.</p>
     @if(\App\ClubUnio\Pages\SettingsOverview::canAccess())
     <a class="cu-settings-shortcut" data-settings-url="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" href="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" hidden>In Einstellungen suchen</a>

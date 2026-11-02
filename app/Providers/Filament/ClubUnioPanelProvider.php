@@ -102,12 +102,11 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+use App\ClubUnio\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -131,6 +130,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->tenantMenu(false)
             ->tenantMiddleware([UseActiveTenant::class], isPersistent: true)
             ->renderHook('panels::sidebar.nav.start', fn () => view('clubunio.tenant-switcher'))
+            ->renderHook('panels::sidebar.footer', fn () => view('clubunio.sidebar-resizer'))
             ->colors(['primary' => array_replace(Color::hex('#164B8A'), [
                 400 => Color::convertToOklch('#48A9E8'),
                 600 => Color::convertToOklch('#164B8A'),
@@ -196,7 +196,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 MemberStatusResource::class, MemberTypeResource::class,
                 RegistrationStatusResource::class,
             ])
-            ->pages([Dashboard::class, SettingsOverview::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class])->widgets([ClubOverview::class, AccountWidget::class,
+            ->pages([Dashboard::class, SettingsOverview::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class])->widgets([ClubOverview::class,
                 MembersByStatus::class, ExpensesByStatus::class, MembersByAge::class,
                 ExpensesBySeason::class, NewMembersMonthly::class,
                 InvoicesByStatus::class, InvoicesBySeason::class,

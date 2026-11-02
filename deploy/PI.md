@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Kompakte Navigation/Dashboard (02.11.2026)
+
+Geplantes Delta auf mobile-communication: Lupe statt permanenter Suche,
+ziehbarer Menue-Seitenrand statt Slider, persoenliche Dashboard-Ueberschrift
+ohne AccountWidget. Profil-Abmeldung und Rechte unveraendert. Keine Migration.
+Nachweis/Rueckweg: CLUBUNIO-COMPACT-SHELL.md.
+
 ## Mobile-Kommunikation DEV (02.11.2026)
 
 Release20261102-clubunio-mobile-communication auf navigation-cleanup aktiviert.

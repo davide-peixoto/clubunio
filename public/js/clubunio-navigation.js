@@ -8,18 +8,66 @@
             const sidebar = control.closest('.fi-sidebar');
             if (!sidebar) return;
             const search = control.querySelector('input[type=search]');
-            const width = control.querySelector('input[type=range]');
+            const searchToggle = control.querySelector('[data-cu-search-toggle]');
+            const searchPanel = control.querySelector('#cu-menu-search-panel');
+            const resizer = sidebar.querySelector('[data-cu-sidebar-resize]');
             const key = `clubunio.sidebar.width.${control.dataset.user}`;
             const resize = value => {
-                const pixels = Math.min(420, Math.max(240, Number(value) || 280));
-                width.value = pixels;
+                const pixels = Math.round(Math.min(420, Math.max(240, Number(value) || 280)));
+                resizer?.setAttribute('aria-valuenow', String(pixels));
                 document.documentElement.style.setProperty('--sidebar-width', `${pixels}px`);
                 return pixels;
             };
             try { resize(localStorage.getItem(key)); } catch { resize(280); }
-            width.addEventListener('input', () => {
-                const pixels = resize(width.value);
+            const rememberWidth = value => {
+                const pixels = resize(value);
                 try { localStorage.setItem(key, String(pixels)); } catch { /* Storage may be disabled. */ }
+            };
+            let drag = null;
+            resizer?.addEventListener('pointerdown', event => {
+                if (event.button !== 0 || !window.matchMedia('(min-width: 1024px)').matches) return;
+                event.preventDefault();
+                drag = { pointer: event.pointerId, x: event.clientX, width: sidebar.getBoundingClientRect().width,
+                    direction: getComputedStyle(sidebar).direction === 'rtl' ? -1 : 1 };
+                resizer.setPointerCapture(event.pointerId);
+                document.documentElement.classList.add('cu-sidebar-resizing');
+            });
+            resizer?.addEventListener('pointermove', event => {
+                if (!drag || drag.pointer !== event.pointerId) return;
+                resize(drag.width + (event.clientX - drag.x) * drag.direction);
+            });
+            const finishDrag = event => {
+                if (!drag || drag.pointer !== event.pointerId) return;
+                rememberWidth(event.type === 'pointercancel' ? drag.width : resizer.getAttribute('aria-valuenow'));
+                drag = null;
+                document.documentElement.classList.remove('cu-sidebar-resizing');
+                if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
+            };
+            resizer?.addEventListener('pointerup', finishDrag);
+            resizer?.addEventListener('pointercancel', finishDrag);
+            resizer?.addEventListener('lostpointercapture', finishDrag);
+            resizer?.addEventListener('keydown', event => {
+                const current = Number(resizer.getAttribute('aria-valuenow'));
+                const direction = getComputedStyle(sidebar).direction === 'rtl' ? -1 : 1;
+                const next = { ArrowLeft: current - 10 * direction, ArrowRight: current + 10 * direction, Home: 240, End: 420 }[event.key];
+                if (next === undefined) return;
+                event.preventDefault();
+                rememberWidth(next);
+            });
+            resizer?.addEventListener('dblclick', () => rememberWidth(280));
+            const toggleSearch = open => {
+                searchPanel.hidden = !open;
+                searchToggle.setAttribute('aria-expanded', String(open));
+                if (open) search.focus();
+                else {
+                    search.value = '';
+                    search.dispatchEvent(new Event('input'));
+                    searchToggle.focus();
+                }
+            };
+            searchToggle.addEventListener('click', () => toggleSearch(searchPanel.hidden));
+            search.addEventListener('keydown', event => {
+                if (event.key === 'Escape') { event.preventDefault(); toggleSearch(false); }
             });
             const collapsedBeforeSearch = new Map();
             search.addEventListener('input', () => {

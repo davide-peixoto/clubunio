@@ -98,6 +98,19 @@ class WorkspaceEditingTest extends TestCase
             ->assertSee('/team-players')->assertSee('/credit-notes');
     }
 
+    public function test_dashboard_has_personal_heading_without_duplicate_account_widget(): void
+    {
+        $this->actor->forceFill(['display_name' => 'Davide Fixture'])->save();
+        $this->get('/')->assertOk()->assertSee('Willkommen, Davide')
+            ->assertSee('Benutzermenü')->assertSee('data-cu-search-toggle', false)
+            ->assertSee('data-cu-sidebar-resize', false)->assertDontSee('fi-wi-account', false);
+        $this->assertNotContains(\Filament\Widgets\AccountWidget::class, Filament::getWidgets());
+        $dashboard = new \App\ClubUnio\Pages\Dashboard;
+        $this->assertSame('Willkommen, Davide', $dashboard->getHeading());
+        $this->actor->display_name = '';
+        $this->assertSame('Willkommen', $dashboard->getHeading());
+    }
+
     public function test_settings_overview_is_not_accessible_after_role_revocation(): void
     {
         $this->get('/configuration')->assertOk();

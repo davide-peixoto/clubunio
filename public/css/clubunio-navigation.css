@@ -1,10 +1,13 @@
 .cu-nav-controls { display: grid; gap: 10px; min-width: 0; }
+.cu-nav-controls > .fi-icon-btn { justify-self: start; }
+.cu-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.cu-sidebar-resizer { position: absolute; inset-block: 0; inset-inline-end: 0; width: 6px; z-index: 30; cursor: col-resize; touch-action: none; }
+.cu-sidebar-resizer:hover, .cu-sidebar-resizer:focus-visible { background: #48a9e880; outline: none; }
+.cu-sidebar-resizing, .cu-sidebar-resizing * { cursor: col-resize !important; user-select: none !important; }
 .cu-platform-link { display: flex; align-items: center; gap: 10px; padding: 8px 0; min-width: 0; font-size: 14px; line-height: 20px; }
 .cu-platform-link > .cu-platform-link-icon { display: block; width: 20px; height: 20px; min-width: 20px; max-width: 20px; flex: 0 0 20px; }
 .cu-platform-link > span { min-width: 0; overflow-wrap: anywhere; }
 .cu-nav-controls input[type=search] { width: 100%; min-width: 0; border: 1px solid #94a3b8; border-radius: 6px; padding: 8px 10px; background: transparent; color: inherit; }
-.cu-nav-width { display: flex; align-items: center; gap: 12px; font-size: 12px; }
-.cu-nav-width input { min-width: 0; width: 100%; accent-color: #164b8a; }
 .cu-nav-empty { font-size: 13px; }
 .cu-settings-shortcut { color: #164b8a; text-decoration: underline; font-size: 13px; }
 .dark .cu-settings-shortcut { color: #48a9e8; }
@@ -29,4 +32,4 @@
 .cu-dossier-loading > .fi-sc-tabs-tab, .cu-dossier-loading > .fi-ta-ctn { opacity: 0; pointer-events: none; }
 .cu-dossier-loading::after { content: attr(data-loading-message); position: absolute; inset: 64px 16px auto; padding: 16px; color: #164b8a; background: #eff6ff; border-radius: 6px; font-size: 14px; }
 .dark .cu-dossier-loading::after { color: #b9ddf5; background: #182c40; }
-@media (max-width: 1023px) { .cu-nav-width { display: none; } :root { --sidebar-width: min(280px, 85vw) !important; } }
+@media (max-width: 1023px) { .cu-sidebar-resizer { display: none; } :root { --sidebar-width: min(280px, 85vw) !important; } }

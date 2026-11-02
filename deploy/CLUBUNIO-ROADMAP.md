@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Kompakte Navigation und Dashboard (02.11.2026)
+
+Suchfeld nur ueber Lupe, Desktop-Menuebreite per ziehbarem Rand mit bestehender
+Benutzerspeicherung. Dashboard nur persoenliche Begruessung statt Profilkarte;
+Abmeldung im Profilmenue. Keine DB-/Daten-/Rechte-Migration. Details:
+CLUBUNIO-COMPACT-SHELL.md.
+
 ## Aufklappbare Fachnavigation (02.11.2026)
 
 Saisons/Rechnungen mit unabhaengigen Pfeilbuttons und weiterhin direkten
