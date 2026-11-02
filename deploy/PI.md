@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Mobile-Kommunikation DEV (02.11.2026)
+
+Release20261102-clubunio-mobile-communication auf navigation-cleanup aktiviert.
+Gezielte additive Migrationen82/83 nach echtem isoliertem PG18-Backup-Restore und
+zurueckgerollter DDL-Pruefung angewendet. Elf Release-Gates erfolgreich,
+25 Dateihashes verifiziert; Kommunikation/Uploads an, KI mangels Providerkey aus.
+ClamAV aktuell, synthetischer Scan erfolgreich;29 Tests/287 Assertions gruen.
+Kein PHPMaker-/PROD-/SVS-App-Eingriff. Ausfuehrung, Rueckweg und offene echte
+App-/KI-Abnahme: CLUBUNIO-MOBILE-DEV-DEPLOYMENT.md.
+
+
 ## Navigationsbereinigung (02.11.2026)
 
 Ausgeliefert20261102-clubunio-navigation-cleanup ausf5c3ce2 auf

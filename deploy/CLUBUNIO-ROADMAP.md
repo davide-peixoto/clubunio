@@ -1348,3 +1348,12 @@ und21 Quellhashes geprueft.60 Grenztests plus41 ueberlappende finale Integration
 tests gruen. Angemeldete Browser-Sichtpruefung nach erneuter Anmeldung offen.
 Keine Abos/SaaS-Abrechnung, App-Neubau oder PHPMaker-DEV-/PROD-Aenderung.
 Details und Grenzen: CLUBUNIO-PLATFORM-ADMINISTRATION.md.
+
+## DEV-Kommunikation aktiviert (02.11.2026)
+
+Release20261102-clubunio-mobile-communication aktiviert; additive Migrationen82/83
+nach isoliertem PG18-Backup-Restore und DDL-Rollback erfolgreich angewendet.
+Kommunikation/gescannte Uploads aktiv,421 TeamSaisons provisioniert; KI mangels
+DEV-Providerkey weiterhin aus. Elf Gates und29 Tests/287 Assertions erfolgreich.
+HTTPS context401/session422 statt404, Weblogin200. Echte persoenliche App-Abnahme
+und KI-Realaufruf offen. Details/Rueckweg: CLUBUNIO-MOBILE-DEV-DEPLOYMENT.md.
