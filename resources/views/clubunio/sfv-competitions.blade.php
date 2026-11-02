@@ -1,10 +1,10 @@
 <x-filament-panels::page>
 @php($canSync = \App\ClubUnio\Resources\ProfileUi::allows('competitions', 'sync'))
-<div class="min-w-0 space-y-6">
+<div class="cu-admin-native">
 <x-filament::section heading="Zeitraum">
-<div class="flex flex-wrap items-end gap-4">
-<div class="min-w-0 space-y-2"><label for="sfv-from">Von</label><x-filament::input.wrapper :valid="! $errors->has('from')"><x-filament::input id="sfv-from" type="date" wire:model.live="from" /></x-filament::input.wrapper></div>
-<div class="min-w-0 space-y-2"><label for="sfv-to">Bis</label><x-filament::input.wrapper :valid="! $errors->has('to')"><x-filament::input id="sfv-to" type="date" wire:model.live="to" /></x-filament::input.wrapper></div>
+<div class="cu-admin-toolbar">
+<div class="cu-admin-field"><label for="sfv-from">Von</label><x-filament::input.wrapper :valid="! $errors->has('from')"><x-filament::input id="sfv-from" type="date" wire:model.live="from" /></x-filament::input.wrapper></div>
+<div class="cu-admin-field"><label for="sfv-to">Bis</label><x-filament::input.wrapper :valid="! $errors->has('to')"><x-filament::input id="sfv-to" type="date" wire:model.live="to" /></x-filament::input.wrapper></div>
 @if($canSync)<x-filament::button wire:click="refreshSchedule" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">SFV abrufen</x-filament::button>@endif
 <x-filament::button wire:click="inspectBatch" wire:loading.attr="disabled" icon="heroicon-o-queue-list">Zeitraum prüfen</x-filament::button>
 <x-filament::button tag="a" :href="\App\ClubUnio\Resources\CompetitionResource::getUrl()" color="gray" icon="heroicon-o-list-bullet">Wettkämpfe</x-filament::button>

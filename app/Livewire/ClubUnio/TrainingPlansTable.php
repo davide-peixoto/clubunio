@@ -57,20 +57,21 @@ class TrainingPlansTable extends PlanningAdminTable
                 TextColumn::make('shared')->label('Freigabe')->badge()->sortable()
                     ->color(fn ($state) => StatusAppearance::palette($state ? 'Teamverantwortliche' : 'Privat'))
                     ->formatStateUsing(fn ($state) => $state ? 'Teamverantwortliche' : 'Privat'),
-                TextColumn::make('updated_at')->label('Geaendert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
+                TextColumn::make('updated_at')->label('Geändert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
                 SelectFilter::make('archived')->label('Bestand')->options(['0' => 'Aktuell', '1' => 'Archiv'])->default('0')->selectablePlaceholder(false),
             ])->deferFilters(false)
             ->headerActions([
-                Action::make('legacy')->label('Altpläne prüfen und zuordnen')->icon('heroicon-o-archive-box')
+                Action::make('legacy')->label('Altpläne prüfen und zuordnen')->icon('heroicon-o-archive-box')->color('gray')
                     ->url(LegacyTrainingPlanResource::getUrl())
                     ->visible(fn () => ProfileUi::profileAllows($actor, $tenant, 'training', 'view')),
                 Action::make('create')->label('Neuer Trainingsplan')->icon('heroicon-o-plus')->url(route('clubunio.training.create', $tenant->slug))
                     ->visible(fn () => ProfileUi::profileAllows($actor, $tenant, 'training', 'create')),
             ])
             ->defaultSort('updated_at', 'desc')->paginationPageOptions([10, 20, 50, 100])->defaultPaginationPageOption(20)
-            ->emptyStateHeading('Keine Trainingspläne vorhanden.');
+            ->modelLabel('Trainingsplan')->pluralModelLabel('Trainingspläne')
+            ->emptyStateHeading('Keine Trainingspläne vorhanden.')->emptyStateDescription(null);
     }
 }

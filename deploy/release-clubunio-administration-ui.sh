@@ -2,10 +2,12 @@
 set -euo pipefail
 umask 027
 base=/var/www/svs-laravel
-previous="$base/releases/20261102-clubunio-family-navigation"
-release="$base/releases/20261102-clubunio-administration-ui"
+previous="${2:-$base/releases/20261102-clubunio-family-navigation}"
+release="${3:-$base/releases/20261102-clubunio-administration-ui}"
 revision="${1:?Reviewed source revision required}"
 [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+[[ "$previous" =~ ^$base/releases/[0-9]{8}-clubunio-[a-z0-9-]+$ ]]
+[[ "$release" =~ ^$base/releases/[0-9]{8}-clubunio-[a-z0-9-]+$ ]]
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 sudo cp -a "$previous" "$release"

@@ -101,6 +101,7 @@ class TeamPlanningTable extends PlanningAdminTable
                         && $service->teams($actor, $tenant, true)->exists()),
             ])
             ->defaultSort('starts_at')->paginationPageOptions([10, 25, 50, 100])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Termine gefunden.');
+            ->modelLabel('Termin')->pluralModelLabel('Termine')
+            ->emptyStateHeading('Keine Termine gefunden.')->emptyStateDescription(null);
     }
 }
