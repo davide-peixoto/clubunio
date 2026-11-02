@@ -51,4 +51,9 @@ Vier Provider-Unitests verifizieren Requestvertrag, Azure-Ziel/Deployment,
 Translator-Grenzen und Ablehnung beliebiger Azure-Origins. Featuretests belegen
 Cache nach Anbieterwechsel, Budget und keine blinde Wiederholung. Noch offen:
 Sprachqualitaet mit realen Fachbeispielen, Prompt-Angriffsauswertung, parallele
-PG-Budgetrennen, Termin-/Optionsuebersetzung und persistente Sprachpraeferenz.
+PG-Budgetrennen, Termin-/Optionsuebersetzung und vollstaendige Oberflaechensprachen.
+
+Folgepaket: Sprachpraeferenz serverseitig gespeichert; Edit/Delete invalidiert
+Ergebnisse, parallele Nachrichtenaenderung im Fake-Provideraufruf geprueft.
+App verwendet fuer denselben Text/Revision/Sprache dieselbe KI-Request-ID in
+der laufenden Sitzung. Details: CLUBUNIO-COMMUNICATION-PACKAGE2.md.

@@ -20,4 +20,5 @@ return [
     ],
     'push_enabled' => false,
     'uploads_enabled' => false,
+    'attachments' => ['clamd_socket' => env('CLUBUNIO_CLAMD_SOCKET')],
 ];

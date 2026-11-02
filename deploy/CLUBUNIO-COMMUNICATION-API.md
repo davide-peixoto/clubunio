@@ -1,6 +1,7 @@
 # ClubUnio Kommunikation: Implementierung und API
 
-Stand 02.11.2026. Implementierter Entwicklungsstand, noch kein Server-Release.
+Stand02.11.2026. Implementierter Entwicklungsstand, noch kein Server-Release.
+Folgepaket: [Chatkontrolle und private Dateien](CLUBUNIO-COMMUNICATION-PACKAGE2.md).
 App: eigenes Repository `davide-peixoto/clubunio_mobile`, `lib/clubunio/mobile`.
 Verbindlicher Gesamtumfang/Abnahme: dort `docs/COMMUNICATION-PLAN.md` und
 `docs/COMMUNICATION-ACCEPTANCE.md`. Die Pakete P0-P6 sind noch nicht vollstaendig abgeschlossen.
@@ -99,7 +100,7 @@ behalten. down() ist absichtlich gesperrt. Backup-Restore noch nicht erprobt.
 
 ## Nachweis und offene Gates
 
-25 gezielte PHPUnit-Tests/191 Assertions bestanden, davon14 Featuretests dieses
+Basisnachweis vor dem Folgepaket:25 gezielte PHPUnit-Tests/191 Assertions bestanden, davon14 Featuretests dieses
 Moduls,4 Provider-Unitests und7 vorhandene Administration/Dokumenten-Regressionen.
 Externe Aufrufe ausschliesslich gefaked und unbekannte HTTP-Aufrufe gesperrt.
 Testbefehl in normaler Umgebung:
@@ -108,10 +109,12 @@ Hier PHPUnit mit lokalem Bootstrap-Helfer wegen Windows-is_readable-/Cache-
 Einschraenkungen, SQLite mit expliziter PG-Dialektanpassung. Kein Nachweis fuer
 PG-Sperren, echte FK-Ausfuehrung, Leap-Day-Altersgrenze oder Produktionslast.
 
-Noch offen: WebSocket/Reverb, Push/FCM/APNs, private Chat-Anhaenge, Offline-
-Dauerablage, Edit/Delete/Melden/Sperren, automatischer Mitgliedschaftsabgleich bei
+Inzwischen umgesetzt: Edit/Delete, Gruppenmeldungen/Moderation, Direktkontaktsperren,
+Admin-Empfaengervorschau, Gelesen im Posteingang und private Anhaenge mit Quarantaene.
+Dazu additive Migration83, nicht angewendet. Details/Nachweis im Folgepaket.
+Noch offen: WebSocket/Reverb, Push/FCM/APNs, Offline-Dauerablage und automatischer Mitgliedschaftsabgleich bei
 jeder fachlichen Aenderung, exakte Eintrittszeit vor erstem App-Aufruf, automatische
-Termin-Aenderungsmeldungen, Admin-Empfaengervorschau, externe Deep Links,
+Termin-Aenderungsmeldungen, externe Deep Links,
 Loeschfristen/Retention, vollstaendige Oberflaechensprachen und Geraeteabnahme.
 Der Entwicklungsstand nutzt sechssekundiges Vordergrund-Polling; kein
 Hintergrunddienst, keine WebSocket- oder Push-Zusage.

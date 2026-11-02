@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.mobile.')->group(function () {
     Route::post('session', [Mobile::class, 'login'])->name('login');
+    Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
     Route::get('sessions', [Mobile::class, 'sessions'])->name('sessions');
     Route::delete('session', [Mobile::class, 'revoke'])->name('logout');
@@ -27,6 +28,20 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('invoices/{invoice}', [Mobile::class, 'invoice'])->whereNumber('invoice');
         Route::get('invoices/{invoice}/pdf', [Mobile::class, 'invoicePdf'])->whereNumber('invoice');
         Route::get('inbox', [Mobile::class, 'inbox']);
+        Route::get('chats/{chat}/changes', [Mobile::class, 'changes'])->whereNumber('chat');
+        Route::post('messages/{message}/edit', [Mobile::class, 'editMessage'])->whereNumber('message');
+        Route::post('messages/{message}/delete', [Mobile::class, 'deleteMessage'])->whereNumber('message');
+        Route::post('messages/{message}/report', [Mobile::class, 'reportMessage'])->whereNumber('message');
+        Route::get('chats/{chat}/reports', [Mobile::class, 'reports'])->whereNumber('chat');
+        Route::post('reports/{report}/resolve', [Mobile::class, 'resolveReport'])->whereNumber('report');
+        Route::get('announcements/preview', [Mobile::class, 'announcementPreview']);
+        Route::get('blocks', [Mobile::class, 'blocks']);
+        Route::post('blocks', [Mobile::class, 'block']);
+        Route::post('inbox/{notice}/read', [Mobile::class, 'inboxRead'])->whereNumber('notice');
+        Route::post('chats/{chat}/attachments', [Mobile::class, 'uploadAttachment'])->whereNumber('chat');
+        Route::post('attachments/{attachment}/scan', [Mobile::class, 'scanAttachment'])->whereUuid('attachment');
+        Route::delete('attachments/{attachment}', [Mobile::class, 'cancelAttachment'])->whereUuid('attachment');
+        Route::get('attachments/{attachment}', [Mobile::class, 'downloadAttachment'])->whereUuid('attachment');
         Route::post('ai', [Mobile::class, 'ai']);
     });
 });

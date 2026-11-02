@@ -87,6 +87,9 @@ final class MobileAccess
             || ! app(MemberAccessService::class)->canEnter($other, $tenant)) {
             return false;
         }
+        if (DB::connection('clubunio')->table('clubora.chat_blocks')->where('tenant_id', $tenant->id)
+            ->where(fn ($q) => $q->where(fn ($a) => $a->where('account_id', $actor->id)->where('other_account_id', $other->id))
+                ->orWhere(fn ($a) => $a->where('account_id', $other->id)->where('other_account_id', $actor->id)))->exists()) { return false; }
         if ($this->admin($actor, $tenant) || $this->admin($other, $tenant)) {
             return true;
         }

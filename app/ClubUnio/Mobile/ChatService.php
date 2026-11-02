@@ -128,6 +128,9 @@ final class ChatService
             }
             $result[] = ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
                 'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
+                'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
+                'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
+                'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
                 'can_write' => $chat->kind !== 'announcements' || $access->admin($actor, $tenant),
                 'can_poll' => $chat->kind !== 'announcements' && ($access->admin($actor, $tenant)
                     || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists())),
@@ -157,6 +160,7 @@ final class ChatService
     {
         $chat = $this->chat($actor, $tenant, $chatId);
         $membership = $this->membership($actor, $tenant, $chat);
+        $changeCursor = (int) ($this->table($tenant, 'chat_changes')->where('conversation_id', $chatId)->max('id') ?? 0);
         $query = $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)->where('id', '>', max($after, $membership->joined_after));
         if ($before) {
             $query->where('id', '<', $before);
@@ -166,7 +170,7 @@ final class ChatService
         $rows = $rows->take(50)->sortBy('id');
 
         return ['data' => $rows->map(fn ($row) => $this->messageDto($actor, $tenant, $row))->values()->all(),
-            'meta' => ['has_more' => $hasMore, 'first_id' => $rows->min('id'), 'last_id' => $rows->max('id')]];
+            'meta' => ['has_more' => $hasMore, 'first_id' => $rows->min('id'), 'last_id' => $rows->max('id'), 'change_cursor' => $changeCursor]];
     }
 
     public function messageDto(Account $actor, Tenant $tenant, object $row): array
@@ -176,7 +180,12 @@ final class ChatService
             'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
             'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
             'poll' => $row->kind === 'poll' && ! $row->deleted_at ? $this->pollDto($actor, $tenant, (int) $row->object_id) : null,
-            'event_id' => $row->kind === 'event' ? (int) $row->object_id : null];
+            'event_id' => ! $row->deleted_at && $row->kind === 'event' ? (int) $row->object_id : null,
+            'can_edit' => ! $row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)
+                && \Carbon\CarbonImmutable::parse($row->created_at)->gte(now()->subMinutes(30)),
+            'can_delete' => ! $row->deleted_at && ((int) $row->account_id === (int) $actor->id
+                || app(ChatControls::class)->moderator($actor, $tenant, $this->table($tenant, 'chat_conversations')->where('id', $row->conversation_id)->first())),
+            'attachment' => ! $row->deleted_at ? app(ChatAttachments::class)->forMessage($tenant, (int) $row->id) : null];
     }
 
     public function send(Account $actor, Tenant $tenant, int $chatId, array $input): object
@@ -184,9 +193,10 @@ final class ChatService
         $chat = $this->chat($actor, $tenant, $chatId, true);
         $data = Validator::make($input, ['client_id' => 'required|uuid', 'text' => 'required|string|max:4000',
             'kind' => 'nullable|in:text,event,poll,announcement', 'event_id' => 'nullable|integer|min:1',
+            'recipient_fingerprint' => 'nullable|string|size:64', 'attachment_id' => 'nullable|uuid',
             'poll' => 'nullable|array', 'poll.options' => 'required_if:kind,poll|array|min:2|max:10',
             'poll.options.*' => 'required|string|max:200|distinct', 'poll.multiple' => 'required_if:kind,poll|boolean',
-            'poll.closes_at' => 'required_if:kind,poll|date|after:now'])->validate();
+            'poll.closes_at' => 'required_if:kind,poll|date'])->validate();
         abort_if(trim($data['text']) === '', 422);
         $kind = $data['kind'] ?? 'text';
         abort_if($kind === 'announcement' && $chat->kind !== 'announcements', 422);
@@ -200,6 +210,14 @@ final class ChatService
 
             return $old;
         }
+        if ($kind === 'announcement') {
+            $preview = app(ChatControls::class)->preview($actor, $tenant);
+            abort_unless(isset($data['recipient_fingerprint']) && hash_equals($preview['fingerprint'], $data['recipient_fingerprint']), 409);
+        }
+        if (! empty($data['attachment_id'])) {
+            abort_unless(in_array($kind, ['text', 'announcement'], true), 422);
+            app(ChatAttachments::class)->ready($actor, $tenant, $chatId, $data['attachment_id']);
+        }
         $object = null;
         if ($kind === 'event') {
             $event = app(TeamPlanningService::class)->event($actor, $tenant, (int) ($data['event_id'] ?? 0));
@@ -207,6 +225,7 @@ final class ChatService
             $object = $event->id;
         }
         if ($kind === 'poll') {
+            abort_unless(\Carbon\CarbonImmutable::parse($data['poll']['closes_at'])->isFuture(), 422);
             // First iteration permits creation by responsible staff/admin, voting by all members.
             abort_unless(app(MobileAccess::class)->admin($actor, $tenant)
                 || ($chat->team_season_id && app(MobileAccess::class)->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()), 403);
@@ -232,7 +251,12 @@ final class ChatService
                 'event_key' => 'announcement:'.$id, 'kind' => 'announcement', 'object_id' => $chat->id, 'created_at' => now()->toIso8601String()]);
         }
 
-        return $this->table($tenant, 'chat_messages')->where('id', $id)->first();
+        $row = $this->table($tenant, 'chat_messages')->where('id', $id)->first();
+        if (! empty($data['attachment_id'])) {
+            $this->table($tenant, 'chat_attachments')->where('id', $data['attachment_id'])->update(['message_id' => $id]);
+        }
+        app(ChatControls::class)->record($actor, $tenant, $row, 'send');
+        return $row;
     }
 
     public function pollDto(Account $actor, Tenant $tenant, int $id): array
@@ -255,12 +279,16 @@ final class ChatService
     {
         $poll = $this->table($tenant, 'chat_polls')->where('id', $id)->firstOrFail();
         $this->chat($actor, $tenant, (int) $poll->conversation_id);
+        $message = $this->table($tenant, 'chat_messages')->where('kind', 'poll')->where('object_id', $id)->whereNull('deleted_at')->first();
+        abort_unless($message, 404);
+        app(ChatControls::class)->visible($actor, $tenant, (int) $message->id);
         abort_unless(\Carbon\CarbonImmutable::parse($poll->closes_at)->isFuture(), 409);
         $valid = array_column(json_decode($poll->options, true), 'id');
         abort_if(count($choices) !== count(array_unique($choices)) || array_diff($choices, $valid) || (! $poll->multiple && count($choices) > 1), 422);
         $this->table($tenant, 'chat_votes')->updateOrInsert(['poll_id' => $id, 'account_id' => $actor->id],
             ['tenant_id' => $tenant->id, 'choices' => json_encode(array_values($choices)), 'updated_at' => now()->toIso8601String()]);
 
+        app(ChatControls::class)->record($actor, $tenant, $message, 'vote');
         return $this->pollDto($actor, $tenant, $id);
     }
 

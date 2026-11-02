@@ -35,8 +35,9 @@ final class MobileController
         $tenants = $actor->tenants()->get()->filter(fn ($t) => app(MemberAccessService::class)->canEnter($actor, $t));
         $bound = app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($r);
         return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name],
+            'language' => DB::connection('clubunio')->table('clubora.mobile_preferences')->where('account_id', $actor->id)->value('language') ?? 'de',
             'tenants' => $tenants->filter(fn ($t) => ! $bound || $bound->is($t))->map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name])->values(),
-            'capabilities' => ['push' => false, 'uploads' => false, 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
+            'capabilities' => ['push' => false, 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
     }
 
     public function sessions(Request $r)
@@ -73,7 +74,7 @@ final class MobileController
     public function direct(Request $r)
     {
         $d = $r->validate(['account_id' => 'required|integer|min:1']);
-        return $this->write($r, fn () => $this->data(['id' => app(ChatService::class)->direct($this->actor($r), $this->tenant($r), (int) $d['account_id'])->id]));
+        return $this->write($r, fn () => $this->data(['id' => app(ChatService::class)->direct($this->actor($r), $this->tenant($r), (int) $d['account_id'])->id, 'other_account_id' => (int) $d['account_id'], 'uploads' => (bool) config('clubunio-mobile.uploads_enabled')]));
     }
 
     public function messages(Request $r)
@@ -200,6 +201,128 @@ final class MobileController
             }
         }
         return $this->data($result);
+    }
+
+    public function preferences(Request $r)
+    {
+        $d = $r->validate(['language' => 'required|in:de,en,fr,it,pt-PT']);
+        $actor = app(MobileSessions::class)->authenticate($r);
+        DB::connection('clubunio')->table('clubora.mobile_preferences')->updateOrInsert(['account_id' => $actor->id],
+            ['language' => $d['language'], 'updated_at' => now()->toIso8601String()]);
+        return $this->data(['language' => $d['language']]);
+    }
+
+    public function changes(Request $r)
+    {
+        $d = $r->validate(['after' => 'required|integer|min:0']);
+        return response()->json(app(ChatControls::class)->changes($this->actor($r), $this->tenant($r), (int) $r->route('chat'), (int) $d['after']));
+    }
+
+    public function editMessage(Request $r)
+    {
+        $d = $r->validate(['revision' => 'required|integer|min:1', 'text' => 'required|string|max:4000']);
+        return $this->write($r, function () use ($r, $d) {
+            $row = app(ChatControls::class)->edit($this->actor($r), $this->tenant($r), (int) $r->route('message'), (int) $d['revision'], $d['text']);
+            return $this->data(app(ChatService::class)->messageDto($this->actor($r), $this->tenant($r), $row));
+        });
+    }
+
+    public function deleteMessage(Request $r)
+    {
+        $d = $r->validate(['revision' => 'required|integer|min:1']);
+        return $this->write($r, function () use ($r, $d) {
+            $row = app(ChatControls::class)->edit($this->actor($r), $this->tenant($r), (int) $r->route('message'), (int) $d['revision'], null);
+            return $this->data(app(ChatService::class)->messageDto($this->actor($r), $this->tenant($r), $row));
+        });
+    }
+
+    public function reportMessage(Request $r)
+    {
+        $d = $r->validate(['reason' => 'required|string|max:1000']);
+        return $this->write($r, fn () => $this->data(app(ChatControls::class)->report($this->actor($r), $this->tenant($r), (int) $r->route('message'), $d['reason'])));
+    }
+
+    public function reports(Request $r)
+    {
+        return $this->data(app(ChatControls::class)->reports($this->actor($r), $this->tenant($r), (int) $r->route('chat')));
+    }
+
+    public function resolveReport(Request $r)
+    {
+        return $this->write($r, fn () => $this->data(app(ChatControls::class)->resolve($this->actor($r), $this->tenant($r), (int) $r->route('report'))));
+    }
+
+    public function announcementPreview(Request $r)
+    {
+        return $this->data(app(ChatControls::class)->preview($this->actor($r), $this->tenant($r)));
+    }
+
+    public function blocks(Request $r)
+    {
+        $s = app(ChatService::class); $t = $this->tenant($r);
+        $ids = $s->table($t, 'chat_blocks')->where('account_id', $this->actor($r)->id)->pluck('other_account_id');
+        return $this->data($t->accounts()->whereIn('clubora.accounts.id', $ids)->orderBy('clubora.accounts.id')->limit(100)
+            ->get(['clubora.accounts.id', 'clubora.accounts.display_name as name']));
+    }
+
+    public function block(Request $r)
+    {
+        $d = $r->validate(['account_id' => 'required|integer|min:1', 'blocked' => 'required|boolean']);
+        return $this->write($r, function () use ($r, $d) {
+            $s = app(ChatService::class); $a = $this->actor($r); $t = $this->tenant($r);
+            $query = $s->table($t, 'chat_blocks')->where('account_id', $a->id)->where('other_account_id', $d['account_id']);
+            if ($d['blocked']) {
+                $other = Account::findOrFail($d['account_id']);
+                abort_unless((clone $query)->exists() || app(MobileAccess::class)->canContact($a, $other, $t), 404);
+                $s->table($t, 'chat_blocks')->insertOrIgnore(['tenant_id' => $t->id, 'account_id' => $a->id, 'other_account_id' => $other->id, 'created_at' => now()->toIso8601String()]);
+            } else { $query->delete(); }
+            return $this->data(['blocked' => (bool) $d['blocked']]);
+        });
+    }
+
+    public function inboxRead(Request $r)
+    {
+        return $this->write($r, function () use ($r) {
+            $s = app(ChatService::class); $a = $this->actor($r); $t = $this->tenant($r);
+            $q = $s->table($t, 'mobile_inbox')->where('account_id', $a->id)->where('id', $r->route('notice'));
+            $row = (clone $q)->firstOrFail();
+            if ($row->kind === 'invoice') { app(MobileAccess::class)->invoice($a, $t, $row->object_id); }
+            else { $s->chat($a, $t, (int) $row->object_id); }
+            $q->whereNull('read_at')->update(['read_at' => now()->toIso8601String()]);
+            return $this->data(['read' => true]);
+        });
+    }
+
+    public function uploadAttachment(Request $r)
+    {
+        $d = $r->validate(['client_id' => 'required|uuid', 'file' => 'required|file|max:5120']);
+        return $this->write($r, fn () => $this->data(app(ChatAttachments::class)->stage($this->actor($r), $this->tenant($r), (int) $r->route('chat'), $d['client_id'], $r->file('file')), 201));
+    }
+
+    public function scanAttachment(Request $r)
+    {
+        $s = app(ChatAttachments::class); $id = $r->route('attachment');
+        $row = $s->owned($this->actor($r), $this->tenant($r), $id);
+        if ($row->state !== 'quarantine') { return $this->data(['id' => $id, 'state' => $row->state]); }
+        // Scanner I/O deliberately outside SQL/tenant locks. Fresh authorization follows.
+        $verdict = $s->scanBytes($row);
+        return $this->write($r, fn () => $this->data($s->finishScan($this->actor($r), $this->tenant($r), $id, $verdict)));
+    }
+
+    public function cancelAttachment(Request $r)
+    {
+        return $this->write($r, function () use ($r) {
+            $row = app(ChatAttachments::class)->owned($this->actor($r), $this->tenant($r), $r->route('attachment'));
+            abort_if($row->message_id, 409);
+            app(ChatService::class)->table($this->tenant($r), 'chat_attachments')->where('id', $row->id)
+                ->update(['state' => 'removed', 'bytes_encrypted' => null]);
+            return $this->data(['removed' => true]);
+        });
+    }
+
+    public function downloadAttachment(Request $r)
+    {
+        return app(ChatAttachments::class)->download($this->actor($r), $this->tenant($r), $r->route('attachment'));
     }
 
     public function ai(Request $r)
