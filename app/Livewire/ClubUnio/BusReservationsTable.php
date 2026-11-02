@@ -46,7 +46,7 @@ class BusReservationsTable extends WorkspaceScopedTable
             ])
             ->deferFilters(false)->filters([
                 SelectFilter::make('bus_id')->label('Bus')->options($buses)->default($this->initialFilters['bus'] ?? null),
-                SelectFilter::make('team_season_id')->label('Mannschaft')->options($teams)->default($this->initialFilters['team'] ?? null),
+                SelectFilter::make('team_season_id')->label('Mannschaft')->searchable()->options($teams)->default($this->initialFilters['team'] ?? null),
                 SelectFilter::make('status')->label('Status')->options($statuses)->default($this->initialFilters['status'] ?? null),
                 Filter::make('period')->label('Zeitraum')->schema([
                     DatePicker::make('from')->label('Von')->default($this->initialFilters['from'] ?? now('Europe/Zurich')->toDateString()),

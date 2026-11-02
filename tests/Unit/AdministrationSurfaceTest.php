@@ -2,10 +2,22 @@
 
 namespace Tests\Unit;
 
+use Filament\Tables\Contracts\HasTable;
 use PHPUnit\Framework\TestCase;
 
 class AdministrationSurfaceTest extends TestCase
 {
+    public function test_specialist_lists_implement_the_native_table_contract(): void
+    {
+        foreach (['SfvCompetitions', 'SponsorRuns', 'SponsorRunBilling', 'Synchronisation',
+            'BexioReconciliation', 'BexioDispatchTrials', 'BexioSandbox', 'DocumentSeries', 'ApiIntegrations'] as $page) {
+            $this->assertTrue(is_subclass_of('App\\ClubUnio\\Pages\\'.$page, HasTable::class), $page);
+        }
+        foreach (['TeamPlanningTable', 'TrainingPlansTable', 'BusReservationsTable', 'PlanningAbsencesTable', 'PlanningSfvTable'] as $table) {
+            $this->assertTrue(is_subclass_of('App\\Livewire\\ClubUnio\\'.$table, HasTable::class), $table);
+        }
+    }
+
     public function test_native_workspace_tables_are_outside_legacy_style_scope(): void
     {
         $root = dirname(__DIR__, 2);

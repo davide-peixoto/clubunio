@@ -10,6 +10,7 @@ use App\ClubUnio\Services\BexioFinancialActionService;
 use App\ClubUnio\Services\BexioGeneralSandboxFixtureService;
 use App\ClubUnio\Services\BexioInvoiceActionService;
 use App\ClubUnio\Services\BexioSandboxDispatchService;
+use App\ClubUnio\Services\StatusAppearance;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -128,14 +129,15 @@ class BexioSandbox extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $stateLabels = ['ready' => 'Bereit', 'running' => 'Gestartet', 'accepted' => 'Angelegt und geprüft',
+            'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt'];
+
         return $table->records($this->dispatchRecords(...))->columns([
             TextColumn::make('document')->label('Testbeleg')->state(fn (array $record) => ($record['kind'] === 'invoice' ? 'Rechnung' : 'Spesen').' #'.($record['invoice_id'] ?? $record['expense_id']))
                 ->description(fn (array $record) => $record['source_trial_id'] ? 'Allgemeine Versandprüfung' : 'Fester Testbeleg')->searchable()->sortable(),
             TextColumn::make('amount')->label('Betrag CHF')->state(fn (array $record) => number_format(($record['expected_cents'] ?? ($record['kind'] === 'invoice' ? 2500 : 1500)) / 100, 2, '.', "'")),
-            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn (string $state) => [
-                'ready' => 'Bereit', 'running' => 'Gestartet', 'accepted' => 'Angelegt und geprüft',
-                'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt',
-            ][$state] ?? $state)->sortable(),
+            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn (string $state) => $stateLabels[$state] ?? $state)
+                ->color(fn (string $state) => StatusAppearance::palette($stateLabels[$state] ?? $state))->sortable(),
             ViewColumn::make('protocol')->label('Übertragungsprotokoll')->view('clubunio.bexio-sandbox-protocol'),
             TextColumn::make('remote_id')->label('Bexio-ID')->placeholder('-')->wrap()->searchable()->sortable(),
             ViewColumn::make('operations')->label('Aktion')->view('clubunio.bexio-sandbox-operations'),

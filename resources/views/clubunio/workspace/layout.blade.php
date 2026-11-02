@@ -20,7 +20,7 @@
         @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
         @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
         @hasSection('native-content')
-            @yield('native-content')
+            <div class="cu-admin-native">@yield('native-content')</div>
         @else
             <div class="workspace-content">@yield('content')</div>
         @endif

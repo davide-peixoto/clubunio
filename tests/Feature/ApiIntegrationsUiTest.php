@@ -125,6 +125,15 @@ class ApiIntegrationsUiTest extends TestCase
             ->assertSee('API profile fixture')->assertDontSee('existing-secret-must-never-render');
     }
 
+    public function test_native_search_retains_status_filter_without_exposing_existing_secrets(): void
+    {
+        Livewire::test(ApiIntegrations::class)->filterTable('active', '1')
+            ->searchTable('missing')->assertCountTableRecords(0)
+            ->searchTable('Fixture')->assertCountTableRecords(1)
+            ->filterTable('active', '0')->assertCountTableRecords(0)
+            ->assertDontSee('existing-secret-must-never-render');
+    }
+
     public function test_office_and_profile_roles_are_not_admin(): void
     {
         foreach (['office', 'profile'] as $role) {

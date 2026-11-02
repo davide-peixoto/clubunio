@@ -1,7 +1,7 @@
 @extends('clubunio.planning.layout')
 @if(request()->attributes->get('clubunioWorkspace'))
 @section('native-content')
-    <h1 class="text-2xl font-bold mb-6">SFV-Spiele</h1>
+    <header class="fi-header"><h1 class="fi-header-heading">SFV-Spiele</h1></header>
     @livewire('club-unio.planning-sfv-table', ['tenantId' => (int) $tenant->id, 'filters' => $filters])
 @endsection
 @else

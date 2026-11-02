@@ -60,7 +60,7 @@ class TrainingPlansTable extends PlanningAdminTable
                 TextColumn::make('updated_at')->label('Geaendert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             ])
             ->filters([
-                SelectFilter::make('team')->label('Mannschaft')->options($teams->pluck('label', 'id')->all()),
+                SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
                 SelectFilter::make('archived')->label('Bestand')->options(['0' => 'Aktuell', '1' => 'Archiv'])->default('0')->selectablePlaceholder(false),
             ])->deferFilters(false)
             ->headerActions([

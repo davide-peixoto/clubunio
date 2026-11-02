@@ -84,7 +84,7 @@ class TeamPlanningTable extends PlanningAdminTable
                 TextColumn::make('deadline_at')->label('Frist')->dateTime('d.m.Y H:i', 'Europe/Zurich')->placeholder('Keine Frist')->sortable(),
             ])
             ->filters([
-                SelectFilter::make('team')->label('Mannschaft')->options($teams->pluck('label', 'id')->all()),
+                SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
                 SelectFilter::make('status')->label('Status')->options(collect($options['status'] ?? [])->pluck('name', 'code')->all()),
                 Filter::make('dates')->label('Zeitraum')->schema([
                     DatePicker::make('from')->label('Von')->default(now('Europe/Zurich')->toDateString()),

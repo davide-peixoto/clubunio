@@ -376,7 +376,7 @@ class TeamPlanningTest extends TestCase
         $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
         $base = '/planning';
         $this->get($base)->assertOk()->assertSee('Fixture training');
-        $this->get($base.'?team='.$this->team.'&q=training&status=AKTIV')->assertOk()->assertSee('Fixture training')->assertSee('name="team"', false);
+        $this->get($base.'?team='.$this->team.'&q=training&status=AKTIV')->assertOk()->assertSee('Fixture training')->assertSee('tableFilters.team.value', false)->assertSee('tableSearch', false);
         foreach (['/new', '/events/'.$id, '/events/'.$id.'/edit', '/absences', '/options'] as $path) {
             $this->get($base.$path)->assertOk();
         }

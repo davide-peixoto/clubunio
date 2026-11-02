@@ -1,9 +1,9 @@
 @php($profileAllows = fn (string $function) => \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'planning', $function))
-<h1 class="text-2xl font-bold mb-6">Absenzen</h1>
+<header class="fi-header"><h1 class="fi-header-heading">Absenzen</h1></header>
 @if($own->count() && $profileAllows($record ? 'update' : 'create'))
 <details class="mb-6" @if($record || $errors->any()) open @endif>
     <summary>{{ $record ? 'Absenz bearbeiten' : 'Absenz erfassen' }}</summary>
-    <form class="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2" method="post" action="{{ route('clubunio.planning.absence.save', [$tenant->slug, $record->id ?? null]) }}">
+    <form class="cu-admin-form" method="post" action="{{ route('clubunio.planning.absence.save', [$tenant->slug, $record->id ?? null]) }}">
         @csrf @include('clubunio.workspace.context')
         <input type="hidden" name="revision" value="{{ old('revision', $record->revision ?? 0) }}">
         <label class="space-y-2"><span>Mitglied</span><x-filament::input.wrapper><x-filament::input.select name="member_id" required>

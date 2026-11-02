@@ -1,4 +1,4 @@
-<div>
-    <h1 class="text-2xl font-bold mb-6">Busreservierungen</h1>
+<div class="cu-admin-native">
+    <header class="fi-header"><h1 class="fi-header-heading">Busreservierungen</h1></header>
     {{ $this->table }}
 </div>
