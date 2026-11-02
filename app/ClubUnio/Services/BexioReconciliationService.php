@@ -238,6 +238,7 @@ class BexioReconciliationService
                 'object_type' => $check->object_type === 'invoice' ? 'invoices' : 'expenses', 'object_id' => $document->id,
                 'before_value' => json_encode($before), 'after_value' => json_encode($document->only(array_keys($before)) + ['action' => 'bexio_reconcile', 'reference' => $check->reference, 'financials' => $financials])]);
             DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $checkId)->update(['state' => 'applied', 'applied_at' => now()->toIso8601String()]);
+            app(\App\ClubUnio\Mobile\InvoiceNotifications::class)->confirmed($tenant, $checkId);
         });
     }
 

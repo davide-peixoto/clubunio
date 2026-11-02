@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## App-Kommunikation (02.11.2026, Entwicklungsstand)
+
+Persoenlicher Login, saisongebundene Chats, Ankuendigungen, Umfragen,
+Planungsadapter, Bexio-bestaetigte private Rechnungshinweise und KI-Adapter
+lokal implementiert. Migration82 vorbereitet, nicht angewendet; Modul/KI aus.
+Noch kein Abschluss P0-P6: Push/Dateien/WebSocket/Moderation und Geraeteabnahme
+offen. Umfang, Tests und Rueckweg: CLUBUNIO-COMMUNICATION-API.md und
+CLUBUNIO-COMMUNICATION-AI.md; App-Abnahme im eigenen mobilen Repository.
+
 ## Benutzersimulation (26.10.2026)
 
 Additive Migration81 und persoenlich freizuschaltender Nur-Lesen-Supportmodus.

@@ -19,10 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->dontFlash(['value']);
-        $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*'));
+        $exceptions->dontFlash(['value', 'text', 'password']);
+        $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*'));
         $exceptions->render(function (\Throwable $error, Request $request) {
-            if ($request->is('api/v1', 'api/v1/*')) {
+            if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*')) {
                 return app(\App\ClubUnio\Api\ApiErrors::class)->render($error, $request);
             }
         });

@@ -1,5 +1,8 @@
 # ClubUnio
 
+Kommunikationsmodul fuer die Flutter-App: [API und Entwicklungsstand](deploy/CLUBUNIO-COMMUNICATION-API.md),
+[KI-/Azure-Betrieb](deploy/CLUBUNIO-COMMUNICATION-AI.md). Noch deaktiviert; kein Serverrelease.
+
 Zentrale [Plattformverwaltung fuer Vereine, Domains, Design und Benutzerzuordnungen](deploy/CLUBUNIO-PLATFORM-ADMINISTRATION.md)
 unter `/platform`, eigene Anmeldung `/platform/login`. Nur separat freigeschaltete
 Plattformadmins, keine automatische Fachdatenberechtigung oder SaaS-Abrechnung.
