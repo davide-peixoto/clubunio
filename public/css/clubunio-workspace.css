@@ -1,17 +1,23 @@
 /* Module content only: the shared Filament navigation and theme stay untouched. */
-.club-workspace {
-    --ws-border: #dce2eb;
+.club-workspace { min-width: 0; padding: 0 0 32px; }
+.club-workspace > .workspace-navigation { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--svs-border, #e4e4e7); margin-bottom: 24px; }
+.club-workspace > .workspace-navigation a { display: inline-flex; padding: 10px 12px; color: inherit; text-decoration: none; font-size: 14px; }
+.club-workspace > .workspace-navigation a[aria-current] { border-bottom: 3px solid #164b8a; font-weight: 600; }
+.club-workspace > .notice, .club-workspace > .errors { margin: 16px 0; padding: 12px; border-left: 4px solid #164b8a; }
+.club-workspace > .errors { border-color: #b91c1c; color: #b91c1c; }
+.club-workspace .workspace-content {
+    --ws-border: #e4e4e7;
     --ws-surface: #fff;
-    --ws-muted: #647084;
-    --ws-soft: #f3f6fa;
-    color: #202c3b;
-    padding: 20px 0 32px;
+    --ws-muted: #71717a;
+    --ws-soft: #f4f4f5;
+    color: #18181b;
+    padding: 0;
     font-size: 14px;
     line-height: 1.5;
     min-width: 0;
     & * { box-sizing: border-box; letter-spacing: 0; }
     & a { color: #164b8a; text-underline-offset: 3px; }
-    & h1 { font-size: 24px; font-weight: 700; margin: 0 0 18px; }
+    & h1 { font-size: 26px; line-height: 1.25; font-weight: 700; margin: 0 0 24px; }
     & h2 { font-size: 19px; font-weight: 600; margin: 20px 0 12px; }
     & h3 { font-size: 17px; font-weight: 600; }
     & h4 { font-size: 15px; font-weight: 600; }
@@ -23,15 +29,15 @@
     & .workspace-navigation a, & .planning-tabs a { padding: 10px 12px; }
     & nav a[aria-current] { border-bottom: 3px solid #164b8a; font-weight: 600; }
     & .toolbar, & .filters { align-items: end; margin: 20px 0; }
-    & label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 13px; }
-    & input, & select, & textarea { font: inherit; color: inherit; border: 1px solid var(--ws-border); border-radius: 6px; padding: 8px 10px; background: var(--ws-surface); max-width: 100%; min-height: 40px; }
+    & label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 14px; }
+    & input:not(.fi-input), & select:not(.fi-select-input), & textarea { font: inherit; color: inherit; border: 1px solid var(--ws-border); border-radius: 6px; padding: 8px 10px; background: var(--ws-surface); max-width: 100%; min-height: 36px; }
     & textarea { resize: vertical; }
     & input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: #164b8a; }
     & label:has(input[type=checkbox]) { flex-direction: row; align-items: center; }
     & :is(input,select,textarea,button,a):focus-visible { outline: 2px solid #48a9e8; outline-offset: 2px; }
-    & button, & .primary, & .icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--ws-border); border-radius: 6px; font: inherit; color: inherit; background: var(--ws-surface); cursor: pointer; text-decoration: none; }
+    & button:not(.fi-btn):not(.fi-icon-btn), & .primary, & .icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 14px; border: 1px solid var(--ws-border); border-radius: 5px; font: inherit; color: inherit; background: var(--ws-surface); cursor: pointer; text-decoration: none; }
     & .primary { color: white; background: #164b8a; border-color: #164b8a; }
-    & .icon-button { width: 40px; height: 40px; padding: 8px; flex-shrink: 0; }
+    & .icon-button { width: 36px; height: 36px; padding: 8px; flex-shrink: 0; }
     & button svg, & .primary svg, & .icon-button svg, & .action-icon { width: 20px; height: 20px; flex-shrink: 0; }
     & .planning-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; max-width: 960px; padding: 20px 0; }
     & .planning-form :is(input,select,textarea) { width: 100%; }
@@ -87,12 +93,12 @@
         & .calendar-filters select { max-width: 100%; }
     }
 }
-.dark .club-workspace {
-    --ws-border: #394452;
-    --ws-surface: #181f28;
-    --ws-muted: #aab6c6;
-    --ws-soft: #242f3e;
-    color: #e4eaf2;
+.dark .club-workspace .workspace-content {
+    --ws-border: #3f3f46;
+    --ws-surface: #18181b;
+    --ws-muted: #a1a1aa;
+    --ws-soft: #27272a;
+    color: #e4e4e7;
     & a { color: #70baf0; }
     & .primary { color: white; }
     & nav a[aria-current] { border-color: #48a9e8; }

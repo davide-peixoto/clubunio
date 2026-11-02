@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Einheitliche Verwaltung (02.11.2026)
+
+Geprueftes UI-Delta auf20261102-clubunio-family-navigation, Ziel
+20261102-clubunio-administration-ui. Keine Migration/Seeder/Composer-/Env-
+Aenderung. Gemeinsame Storage und Schluessel erhalten, releasebezogenen
+Konfigurations-/Routen-/Viewcache neu erstellen. Bisherige acht Gates plus
+check-administration-ui pruefen native Tabellenklassen und Darstellungsassets.
+Vorheriger Release bleibt als Rueckweg; kein bestehendes PHPMaker DEV/PROD
+oder Providerkonto wird umgestellt. Genaue Abdeckung/Abnahme:
+CLUBUNIO-ADMINISTRATION-UI.md.
+
 ## Provider API release (26.10.2026)
 
 Target20261026-clubunio-api-providers is a narrowly packaged delta on the verified

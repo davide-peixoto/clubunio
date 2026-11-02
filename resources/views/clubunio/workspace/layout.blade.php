@@ -1,5 +1,5 @@
 <x-filament-panels::layout>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=3">
     <div class="club-workspace">
         <nav class="workspace-navigation" aria-label="{{ match($module) { 'bus' => 'Busverwaltung', 'bexio' => 'Integrationen', default => 'Teamplanung' } }}">
             @if($module === 'bexio')
@@ -19,6 +19,10 @@
         </nav>
         @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
         @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-        @yield('content')
+        @hasSection('native-content')
+            @yield('native-content')
+        @else
+            <div class="workspace-content">@yield('content')</div>
+        @endif
     </div>
 </x-filament-panels::layout>

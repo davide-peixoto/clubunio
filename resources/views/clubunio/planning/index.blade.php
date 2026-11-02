@@ -1,5 +1,8 @@
 @extends('clubunio.planning.layout')
-@section('content')
+@section(request()->attributes->get('clubunioWorkspace') ? 'native-content' : 'content')
+@if(request()->attributes->get('clubunioWorkspace'))
+@livewire(\App\Livewire\ClubUnio\TeamPlanningTable::class, ['tenantId' => (int) $tenant->id, 'initialFilters' => $filters])
+@else
 @php($profileAllows = fn (string $function) => \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'planning', $function))
 <div class="page-heading"><h1>Teamplanung</h1>@if(count($managed) && $profileAllows('create'))<a class="primary" href="{{ route('clubunio.planning.create',$tenant->slug) }}">@svg('heroicon-o-plus') Termin erstellen</a>@endif</div>
 <form method="get" class="toolbar">
@@ -14,4 +17,5 @@
 @forelse($events as $event)<tr><td>{{ \Carbon\Carbon::parse($event->starts_at)->tz('Europe/Zurich')->format('d.m.Y H:i') }}</td><td><a href="{{ route('clubunio.planning.show',[$tenant->slug,$event->id]) }}">{{ $event->title }}</a><small>{{ $options['kind'][$event->kind]->name??$event->kind }}</small></td><td>{{ $teams->firstWhere('id',$event->team_season_id)?->label }}</td><td>{{ $event->location }}</td><td>@include('clubunio.planning.badge',['category'=>'status','code'=>$event->status])</td><td>{{ $event->deadline_at ? \Carbon\Carbon::parse($event->deadline_at)->tz('Europe/Zurich')->format('d.m.Y H:i') : 'Keine Frist' }}</td></tr>
 @empty<tr><td colspan="6">Keine Termine gefunden.</td></tr>@endforelse
 </tbody></table></div>{{ $events->links('pagination::simple-default') }}
+@endif
 @endsection

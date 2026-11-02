@@ -135,6 +135,7 @@ final class ProfileUi
             return self::resource($component::getResource(), $function);
         }
         $module = match (class_basename($component)) {
+            'SponsorRuns', 'SponsorRunBilling', 'SponsorRunTable' => 'sponsor_runs',
             'ContributionPreview' => 'contributions', 'SfvCompetitions' => 'competitions',
             'SignagePreview' => 'signage', 'BexioReconciliation' => 'bexio',
             default => null,

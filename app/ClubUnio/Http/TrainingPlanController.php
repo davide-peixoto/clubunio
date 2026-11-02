@@ -24,6 +24,14 @@ class TrainingPlanController
 
     public function index(Request $request, Tenant $tenant)
     {
+        if ($request->attributes->get('clubunioWorkspace')) {
+            app(TrainingPlanService::class)->authorizeOperation($request->user(), $tenant, 'view');
+            $filters = $request->validate(['q' => 'nullable|string|max:100', 'team' => 'nullable|integer', 'archived' => 'nullable|in:0,1']);
+
+            $managed = app(TrainingPlanService::class)->teams($request->user(), $tenant)->pluck('id');
+
+            return response()->view('clubunio.training.index', ['tenant' => $tenant, 'actor' => $request->user(), 'filters' => $filters, 'managed' => $managed])->header('Cache-Control', 'private, no-store');
+        }
         $context = $this->context($request, $tenant);
         $filters = $request->validate(['q' => 'nullable|string|max:100', 'team' => 'nullable|integer', 'archived' => 'nullable|in:0,1']);
         $plans = app(TrainingPlanService::class)->visible($context['actor'], $tenant)

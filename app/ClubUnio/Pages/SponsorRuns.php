@@ -5,9 +5,10 @@ namespace App\ClubUnio\Pages;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\SponsorRunParticipant;
 use App\ClubUnio\Services\MemberAccessService;
+use App\ClubUnio\Services\SponsorRunMoney;
 use App\ClubUnio\Services\SponsorRunPublicService;
 use App\ClubUnio\Services\SponsorRunService;
-use App\ClubUnio\Services\SponsorRunMoney;
+use App\ClubUnio\Services\StatusAppearance;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -20,11 +21,19 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 
-class SponsorRuns extends Page
+class SponsorRuns extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected string $view = 'clubunio.sponsor-runs';
 
     protected static ?string $title = 'Sponsorenlauf';
@@ -40,19 +49,14 @@ class SponsorRuns extends Page
     #[Locked]
     public ?string $shareUrl = null;
 
+    #[Locked]
+    public int $pledgeTableRevision = 0;
+
     public ?int $season = null;
 
     public string $status = '';
 
     public string $search = '';
-
-    public string $participantSearch = '';
-
-    public ?int $team = null;
-
-    public int $eventPage = 1;
-
-    public int $participantPage = 1;
 
     public static function getNavigationGroup(): ?string
     {
@@ -86,29 +90,48 @@ class SponsorRuns extends Page
 
     public function updatedSeason(): void
     {
-        $this->eventPage = 1;
+        $this->resetPage();
         $this->eventId = null;
         $this->participantId = null;
     }
 
     public function updatedSearch(): void
     {
-        $this->eventPage = 1;
+        $this->resetPage();
     }
 
     public function updatedStatus(): void
     {
-        $this->eventPage = 1;
+        $this->resetPage();
     }
 
-    public function updatedParticipantSearch(): void
+    public function table(Table $table): Table
     {
-        $this->participantPage = 1;
+        $choices = $this->service()->choices($this->actor(), Filament::getTenant());
+
+        return $table->query(fn () => $this->service()->events($this->actor(), Filament::getTenant(), [
+            'season_id' => $this->season, 'status_code' => $this->status, 'search' => $this->search,
+        ])->reorder())->defaultSort('event_date', 'desc')->columns([
+            TextColumn::make('title')->label('Anlass')->searchable()->sortable(),
+            TextColumn::make('event_date')->label('Datum')->date('d.m.Y')->sortable(),
+            TextColumn::make('status_code')->label('Status')->badge()
+                ->formatStateUsing(fn ($state) => $choices['statuses'][$state] ?? $state)
+                ->color(fn ($state) => StatusAppearance::palette($choices['statuses'][$state] ?? $state)),
+        ])->filters([
+            SelectFilter::make('season_id')->label('Saison')->options($choices['seasons']),
+            SelectFilter::make('status_code')->label('Status')->options($choices['statuses']),
+        ])->deferFilters(false)->headerActions([$this->newEventAction(), $this->publicConfigurationAction()])
+            ->recordActions([Action::make('view')->label('Anlass öffnen')->icon('heroicon-o-arrow-right')->iconButton()->tooltip('Anlass öffnen')
+                ->action(fn ($record) => $this->openEvent($record->id))])
+            ->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading('Keine Anlässe.');
     }
 
-    public function updatedTeam(): void
+    protected function afterActionCalled(Action $action): void
     {
-        $this->participantPage = 1;
+        if ($action->getName() === 'pledge') {
+            $this->pledgeTableRevision++;
+        }
+        $this->dispatch('sponsor-run-tables-refresh');
     }
 
     public function openEvent(int $id): void
@@ -118,10 +141,9 @@ class SponsorRuns extends Page
         $this->eventId = $id;
         $this->participantId = null;
         $this->shareUrl = null;
-        $this->participantPage = 1;
-        $this->team = null;
     }
 
+    #[On('sponsor-run-participant-selected')]
     public function openParticipant(int $id): void
     {
         $this->service()->authorize($this->actor(), Filament::getTenant());
@@ -146,7 +168,7 @@ class SponsorRuns extends Page
     public function newEventAction(): Action
     {
         return Action::make('newEvent')->label('Anlass anlegen')->icon('heroicon-o-plus')->visible(fn () => $this->allowed('create'))
-            ->schema(fn () => $this->eventSchema())->fillForm(fn () => ['revision' => 0, 'status_code' => 'draft', 'season_id' => $this->season])
+            ->schema(fn () => $this->eventSchema())->fillForm(fn () => ['revision' => 0, 'status_code' => 'draft', 'season_id' => $this->getTableFilterState('season_id')['value'] ?? $this->season])
             ->action(function (array $data) {
                 $r = $this->service()->saveEvent($this->actor(), Filament::getTenant(), null, $data);
                 $this->openEvent($r->id);
@@ -293,14 +315,10 @@ class SponsorRuns extends Page
         $tenant = Filament::getTenant();
         $a = $this->actor();
         $s->authorize($a, $tenant);
-        $events = $s->events($a, $tenant, ['season_id' => $this->season, 'status_code' => $this->status, 'search' => $this->search])->paginate(20, ['*'], 'events', max(1, $this->eventPage));
         $event = $this->eventId ? $s->event($tenant, $this->eventId) : null;
-        $participants = $event ? $s->participants($a, $tenant, $event->id, ['search' => $this->participantSearch, 'team_season_id' => $this->team])->paginate(20, ['*'], 'participants', max(1, $this->participantPage)) : null;
         $selected = $this->participantId ? SponsorRunParticipant::where('tenant_id', $tenant->id)->where('event_id', $this->eventId)->findOrFail($this->participantId) : null;
 
-        return ['events' => $events, 'event' => $event, 'choices' => $s->choices($a, $tenant, $event?->season_id ?? $this->season), 'participants' => $participants,
-            'summaries' => $participants ? $s->summaries($a, $tenant, $participants->pluck('id')->all()) : [], 'helpers' => $event ? $s->helpers($a, $tenant, $event->id) : [],
-            'selected' => $selected, 'pledges' => $selected ? $s->pledges($a, $tenant, $selected->id)->paginate(20) : null, 'canBill' => $this->allowed('approve'),
-            'outbox' => $event && $this->canTestSend() ? $this->outbox()->orderByDesc('o.id')->limit(20)->get(['o.id', 'o.delivery_state', 'o.created_at', 'l.alias']) : collect()];
+        return ['event' => $event, 'selected' => $selected, 'canBill' => $this->allowed('approve'),
+            'canTestSend' => $this->canTestSend()];
     }
 }

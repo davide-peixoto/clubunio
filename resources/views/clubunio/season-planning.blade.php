@@ -13,6 +13,7 @@
         @endif
         <div class="sp-toolbar">
             <label>Planung suchen<input type="search" maxlength="100" wire:model.live.debounce.500ms="planSearch"></label>
+            <x-filament::icon-button wire:click="$set('planSearch', '')" icon="heroicon-o-x-mark" label="Planungssuche leeren" tooltip="Planungssuche leeren" :disabled="$planSearch === ''" />
             <label>Planung öffnen
                 <select aria-label="Planung öffnen" wire:change="openPlan($event.target.value)" wire:loading.attr="disabled">
                     <option value="" disabled @selected(!$planId)>Auswählen</option>
@@ -20,9 +21,9 @@
                 </select>
             </label>
             @if($draftCount > 50 || $draftPage > 1)
-                <x-filament::icon-button wire:click="browseDrafts(-1)" :disabled="$draftPage <= 1" icon="heroicon-o-chevron-left" label="Vorherige Planungen" />
+                <x-filament::icon-button wire:click="browseDrafts(-1)" :disabled="$draftPage <= 1" icon="heroicon-o-chevron-left" label="Vorherige Planungen" tooltip="Vorherige Planungen" />
                 <span>{{ $draftPage }} / {{ max(1, (int) ceil($draftCount / 50)) }}</span>
-                <x-filament::icon-button wire:click="browseDrafts(1)" :disabled="$draftPage * 50 >= $draftCount" icon="heroicon-o-chevron-right" label="Weitere Planungen" />
+                <x-filament::icon-button wire:click="browseDrafts(1)" :disabled="$draftPage * 50 >= $draftCount" icon="heroicon-o-chevron-right" label="Weitere Planungen" tooltip="Weitere Planungen" />
             @endif
             @if(\App\ClubUnio\Resources\ProfileUi::allows('seasons', 'create'))
                 <label>Vorlage <select wire:model="sourceId"><option value="">Ohne Vorlage</option>@foreach(collect($facts['seasons'])->sortByDesc('name') as $season)<option value="{{ $season->id }}">{{ $season->name }}</option>@endforeach</select></label>
@@ -79,7 +80,7 @@
                                 <label>Zielgrösse Spieler<input type="number" min="1" max="200" wire:model.live.debounce.1000ms="document.teams.{{ $i }}.capacity"></label>
                             </div>
                             <div class="sp-toolbar">
-                                <x-filament::icon-button wire:click="removeRow('teams', '{{ $team['key'] }}')" wire:confirm="Mannschaft einschliesslich ihrer geplanten Zuordnungen und Trainingszeiten aus diesem Entwurf entfernen?" icon="heroicon-o-trash" label="Mannschaft entfernen" color="danger" wire:loading.attr="disabled" />
+                                <x-filament::icon-button wire:click="removeRow('teams', '{{ $team['key'] }}')" wire:confirm="Mannschaft einschliesslich ihrer geplanten Zuordnungen und Trainingszeiten aus diesem Entwurf entfernen?" icon="heroicon-o-trash" label="Mannschaft entfernen" tooltip="Mannschaft entfernen" color="danger" wire:loading.attr="disabled" />
                                 @if(count($document['teams']) > 1)
                                     <label>Zusammenführen nach<select aria-label="Zielmannschaft für Zusammenführung" wire:change="mergeTeam('{{ $team['key'] }}', $event.target.value)" wire:confirm="Zuordnungen und Trainingszeiten verschieben und diese Mannschaft aus dem Entwurf entfernen?"><option value="">Auswählen</option>@foreach($document['teams'] as $other)@if($other['key'] !== $team['key'])<option value="{{ $other['key'] }}">{{ $other['name'] ?: 'Neue Mannschaft' }}</option>@endif@endforeach</select></label>
                                 @endif
@@ -92,7 +93,7 @@
                     @foreach($document['prices'] as $i => $price)<div class="sp-row sp-fields" wire:key="price-{{ $price['key'] }}">
                         <label>Bezeichnung<input maxlength="160" wire:model.live.debounce.1000ms="document.prices.{{ $i }}.name"></label>
                         <label>Betrag CHF<input type="number" min="0" step="0.0001" wire:model.live.debounce.1000ms="document.prices.{{ $i }}.amount"></label>
-                        <x-filament::icon-button wire:click="removeRow('prices', '{{ $price['key'] }}')" icon="heroicon-o-trash" color="danger" label="Preis entfernen" wire:loading.attr="disabled" />
+                        <x-filament::icon-button wire:click="removeRow('prices', '{{ $price['key'] }}')" icon="heroicon-o-trash" color="danger" label="Preis entfernen" tooltip="Preis entfernen" wire:loading.attr="disabled" />
                     </div>@endforeach
                 </section>
                 <section><div class="sp-toolbar"><h2>Beitragsregeln</h2><x-filament::button wire:click="addRow('rules')" wire:loading.attr="disabled" icon="heroicon-o-plus">Regel</x-filament::button></div>
@@ -101,7 +102,7 @@
                         <label>Geschlecht<select wire:model.live="document.rules.{{ $i }}.gender_id"><option value="">Auswählen</option>@foreach($facts['genders'] as $g)<option value="{{ $g->id }}">{{ $g->name }}</option>@endforeach</select></label>
                         <label>Jahrgang von<input type="number" min="1800" max="2200" wire:model.live.debounce.1000ms="document.rules.{{ $i }}.year_from"></label>
                         <label>Jahrgang bis<input type="number" min="1800" max="2200" wire:model.live.debounce.1000ms="document.rules.{{ $i }}.year_to"></label>
-                        <x-filament::icon-button wire:click="removeRow('rules', '{{ $rule['key'] }}')" icon="heroicon-o-trash" color="danger" label="Regel entfernen" wire:loading.attr="disabled" />
+                        <x-filament::icon-button wire:click="removeRow('rules', '{{ $rule['key'] }}')" icon="heroicon-o-trash" color="danger" label="Regel entfernen" tooltip="Regel entfernen" wire:loading.attr="disabled" />
                     </div>@endforeach
                     <p class="sp-note">Vorschläge beruhen auf Jahrgang und Geschlecht der Beitragsregel, nicht auf einer sportrechtlichen Spielberechtigung. Bei einer Vorlage werden die Jahrgangsgrenzen um ein Jahr verschoben.</p>
                 </section>
@@ -113,6 +114,7 @@
                         <label>Zielmannschaft<select wire:model.live="targetTeam"><option value="">Auswählen</option>@foreach($document['teams'] as $t)<option value="{{ $t['key'] }}">{{ $t['name'] }}</option>@endforeach</select></label>
                         <label>Mitglied suchen<input type="search" wire:model.live.debounce.500ms="search"></label>
                         <label>Jahrgang<input type="number" min="1800" max="2200" wire:model.live.debounce.500ms="birthYear"></label>
+                        <x-filament::button color="gray" icon="heroicon-o-x-mark" x-on:click="$wire.$set('search', '', false); $wire.$set('birthYear', null, false); $wire.$set('onlyUnassigned', true, false); $wire.$set('onlyMatching', false)" wire:loading.attr="disabled">Filter zurücksetzen</x-filament::button>
                         <label class="sp-check"><input type="checkbox" wire:model.live="onlyUnassigned">Noch nicht zugeordnet</label>
                         @if($kind === 'player')<label class="sp-check"><input type="checkbox" wire:model.live="onlyMatching">Passender Jahrgang für Zielmannschaft</label>@endif
                     </div>
@@ -120,9 +122,9 @@
                         <div class="sp-pool"><h3>Mitgliederpool ({{ $total }})</h3><div class="sp-pool-members">
                             @foreach($pool as $member)<div class="sp-person" wire:key="pool-{{ $member->id }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: $wire.kind, member: {{ $member->id }}, from: null}; $event.dataTransfer.effectAllowed = 'move'; $event.dataTransfer.setData('text/plain', '{{ $member->id }}')" x-on:dragend="drag = null">
                                 <span>{{ app(\App\ClubUnio\Services\SeasonPlanningService::class)->memberLabel($member) }}<small>{{ substr($member->birth_date ?? '', 0, 4) ?: 'Jahrgang unbekannt' }}</small></span>
-                                <x-filament::icon-button wire:click="moveMember('{{ $kind }}', {{ $member->id }}, null, '{{ $targetTeam }}')" :disabled="!$targetTeam" wire:loading.attr="disabled" icon="heroicon-o-arrow-right" label="Der gewählten Mannschaft zuordnen" />
+                                <x-filament::icon-button wire:click="moveMember('{{ $kind }}', {{ $member->id }}, null, '{{ $targetTeam }}')" :disabled="!$targetTeam" wire:loading.attr="disabled" icon="heroicon-o-arrow-right" label="Der gewählten Mannschaft zuordnen" tooltip="Der gewählten Mannschaft zuordnen" />
                             </div>@endforeach</div>
-                            <div class="sp-toolbar"><x-filament::icon-button wire:click="browsePool(-1)" :disabled="$poolPage <= 1" icon="heroicon-o-chevron-left" label="Vorherige Mitglieder" /><span>{{ $poolPage }} / {{ max(1, (int) ceil($total / 40)) }}</span><x-filament::icon-button wire:click="browsePool(1)" :disabled="$poolPage * 40 >= $total" icon="heroicon-o-chevron-right" label="Weitere Mitglieder" /></div>
+                            <div class="sp-toolbar"><x-filament::icon-button wire:click="browsePool(-1)" :disabled="$poolPage <= 1" icon="heroicon-o-chevron-left" label="Vorherige Mitglieder" tooltip="Vorherige Mitglieder" /><span>{{ $poolPage }} / {{ max(1, (int) ceil($total / 40)) }}</span><x-filament::icon-button wire:click="browsePool(1)" :disabled="$poolPage * 40 >= $total" icon="heroicon-o-chevron-right" label="Weitere Mitglieder" tooltip="Weitere Mitglieder" /></div>
                         </div>
                         <div class="sp-teams">
                             @foreach($document['teams'] as $team)
@@ -137,7 +139,7 @@
                                         @php($member = $facts['members'][$assignment['member_id']] ?? null)
                                         <div class="sp-person" wire:key="assigned-{{ $assignment['key'] }}" draggable="{{ $editable ? 'true' : 'false' }}" x-on:dragstart="drag = {kind: '{{ $assignment['kind'] }}', member: {{ $assignment['member_id'] }}, from: '{{ $team['key'] }}', functionId: {{ $kind === 'staff' ? (int) $assignment['function_id'] : 'null' }}}; $event.dataTransfer.setData('text/plain', '{{ $assignment['member_id'] }}')" x-on:dragend="drag = null">
                                             <span>{{ $member ? app(\App\ClubUnio\Services\SeasonPlanningService::class)->memberLabel($member) : 'Inaktives/fehlendes Mitglied #'.$assignment['member_id'] }}<small>{{ $kind === 'staff' ? ($facts['staff_functions'][$assignment['function_id'] ?? 0] ?? null)?->name : substr($member?->birth_date ?? '', 0, 4) }}</small></span>
-                                            <x-filament::icon-button wire:click="removeRow('assignments', '{{ $assignment['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-x-mark" color="danger" label="Zuordnung entfernen" />
+                                            <x-filament::icon-button wire:click="removeRow('assignments', '{{ $assignment['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-x-mark" color="danger" label="Zuordnung entfernen" tooltip="Zuordnung entfernen" />
                                         </div>
                                     @endforeach
                                 </div>
@@ -156,7 +158,7 @@
                         <label>Bis<input type="time" wire:model.live="document.slots.{{ $i }}.ends_at"></label>
                         <label>Halle<input maxlength="255" wire:model.live.debounce.1000ms="document.slots.{{ $i }}.hall"></label>
                         @foreach(['all_fields' => 'Alle Plätze', 'without_main' => 'Ohne Hauptplatz', 'synthetic_only' => 'Nur Kunstrasen', 'website_visible' => 'Auf Webseite sichtbar'] as $column => $caption)<label class="sp-check"><input type="checkbox" wire:model.live="document.slots.{{ $i }}.{{ $column }}">{{ $caption }}</label>@endforeach
-                        <x-filament::icon-button wire:click="removeRow('slots', '{{ $slot['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-trash" color="danger" label="Trainingszeit entfernen" />
+                        <x-filament::icon-button wire:click="removeRow('slots', '{{ $slot['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-trash" color="danger" label="Trainingszeit entfernen" tooltip="Trainingszeit entfernen" />
                     </div></div>@endforeach
                 </section>
             @endif

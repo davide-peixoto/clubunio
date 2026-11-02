@@ -205,7 +205,12 @@ class BusReservationTest extends TestCase
         $id = $this->service->create($this->office, $this->tenant, $this->input());
         $this->officeWorkspace();
         $this->get(route('clubunio.bus.create', $this->tenant->slug))->assertOk()->assertSee('Fixture / Season');
-        $this->get(route('clubunio.bus.index', $this->tenant->slug).'?status=GENEHMIGT&q=Test')->assertOk()->assertSee('Test destination')->assertSee('name="status" value="GENEHMIGT"', false);
+        $page = $this->get(route('clubunio.bus.index', $this->tenant->slug).'?status=GENEHMIGT&q=Test')->assertOk()->assertSee('Test destination')->assertSee('fi-ta', false);
+        preg_match_all('/wire:snapshot="([^"]+)"/', $page->getContent(), $snapshots);
+        $state = collect($snapshots[1])->map(fn ($snapshot) => json_decode(html_entity_decode($snapshot, ENT_QUOTES | ENT_HTML5), true))
+            ->first(fn ($snapshot) => $snapshot['memo']['name'] === 'club-unio.bus-reservations-table');
+        $this->assertSame('Test', $state['data']['tableSearch']);
+        $this->assertSame('GENEHMIGT', $state['data']['tableFilters'][0]['status'][0]['value']);
         $this->get(route('clubunio.bus.index', $this->tenant->slug).'?status=ABGELEHNT&q=Test')->assertOk()->assertDontSee('Test destination');
         $this->get(route('clubunio.bus.show', [$this->tenant->slug, $id]))->assertOk()->assertSee('Applicant');
         $this->actingAs($this->trainer, 'portal');

@@ -42,6 +42,15 @@ class TeamPlanningController
 
     public function index(Request $request, Tenant $tenant)
     {
+        if ($request->attributes->get('clubunioWorkspace')) {
+            $this->service->enter($request->user(), $tenant);
+            $filters = $request->validate(['team' => 'nullable|integer', 'q' => 'nullable|string|max:100', 'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from', 'status' => 'nullable|string|max:40']);
+            $filters += ['from' => now('Europe/Zurich')->toDateString()];
+
+            $managed = $this->service->teams($request->user(), $tenant, true)->pluck('id')->all();
+
+            return $this->view('index', ['tenant' => $tenant, 'actor' => $request->user(), 'filters' => $filters, 'managed' => $managed]);
+        }
         $data = $this->context($request, $tenant);
         $filters = $request->validate(['team' => 'nullable|integer', 'q' => 'nullable|string|max:100', 'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from', 'status' => 'nullable|string|max:40']);
         $filters += ['from' => now('Europe/Zurich')->toDateString()];
@@ -192,6 +201,9 @@ class TeamPlanningController
         $filters = $request->validate(['from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from']);
         $filters['from'] = $filters['from'] ?? now('Europe/Zurich')->toDateString();
         $filters['to'] = $filters['to'] ?? now('Europe/Zurich')->addMonths(3)->toDateString();
+        if ($request->attributes->get('clubunioWorkspace')) {
+            return $this->view('sfv', $data + compact('filters'));
+        }
         $teamIds = $data['teams']->whereIn('id', $data['managed'])->pluck('team_id');
         $sfvIds = $this->service->table($tenant, 'teams')->whereIn('id', $teamIds)->whereNotNull('sfv_team_id')->pluck('sfv_team_id');
         $matches = $this->service->table($tenant, 'sfv_schedule')->where(fn ($q) => $q->whereIn('team_a_id', $sfvIds)->orWhereIn('team_b_id', $sfvIds))
@@ -253,6 +265,18 @@ class TeamPlanningController
     public function absences(Request $request, Tenant $tenant)
     {
         $data = $this->context($request, $tenant);
+        if ($request->attributes->get('clubunioWorkspace')) {
+            $record = null;
+            if ($request->filled('edit')) {
+                $id = $request->validate(['edit' => 'required|integer|min:1'])['edit'];
+                $record = $this->service->absences($data['actor'], $tenant)->where('id', $id)->first();
+                abort_unless($record && $data['own']->contains('id', $record->member_id), 404);
+                $record->note = $record->note_encrypted ? Crypt::decryptString($record->note_encrypted) : '';
+                unset($record->note_encrypted);
+            }
+
+            return $this->view('absences', $data + compact('record'));
+        }
         $absences = $this->service->absences($data['actor'], $tenant)->orderByDesc('starts_on')->paginate(25);
         $members = $this->service->table($tenant, 'members')->whereIn('id', $absences->pluck('member_id'))->get()->keyBy('id');
         foreach ($absences as $absence) {

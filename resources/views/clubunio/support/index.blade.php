@@ -20,6 +20,6 @@
 <label>Freischaltung<select name="enabled"><option value="0" @selected(!$grant?->enabled)>Gesperrt</option><option value="1" @selected($grant?->enabled)>Erlaubt</option></select></label>
 <label>Begründung<textarea name="reason" required minlength="10" maxlength="500"></textarea></label><label>Eigenes Passwort<input type="password" name="password" required autocomplete="current-password"></label><button type="submit">Freischaltung speichern</button></form></details>
 @endif @endforeach
-</section><section><h2>Supportprotokoll</h2><div class="scroll"><table><thead><tr><th>Zeit</th><th>Admin-ID</th><th>Benutzer-ID</th><th>Ereignis</th><th>Details</th></tr></thead><tbody>
+</section><section><h2>Supportprotokoll</h2><div class="scroll"><table class="cu-admin-journal"><thead><tr><th>Zeit</th><th>Admin-ID</th><th>Benutzer-ID</th><th>Ereignis</th><th>Details</th></tr></thead><tbody>
 @foreach($events as $event)<tr><td>{{ \Carbon\CarbonImmutable::parse($event->created_at)->timezone('Europe/Zurich')->format('d.m.Y H:i:s') }}</td><td>{{ $event->actor_id }}</td><td>{{ $event->target_id }}</td><td>{{ $event->action }}</td><td>{{ $event->details }}</td></tr>@endforeach
 </tbody></table></div></section></main></body></html>

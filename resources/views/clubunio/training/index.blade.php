@@ -1,5 +1,8 @@
 @extends('clubunio.planning.layout')
-@section('content')
+@section(request()->attributes->get('clubunioWorkspace') ? 'native-content' : 'content')
+@if(request()->attributes->get('clubunioWorkspace'))
+@livewire(\App\Livewire\ClubUnio\TrainingPlansTable::class, ['tenantId' => (int) $tenant->id, 'initialFilters' => $filters])
+@else
 @php($teamLabels = $teams->pluck('label', 'id'))
 <div class="page-heading"><h1>Trainingspläne</h1>@if(\App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'training', 'create'))<a class="primary" href="{{ route('clubunio.training.create',$tenant->slug) }}">@svg('heroicon-o-plus') Neuer Trainingsplan</a>@endif</div>
 @if($actor->canAccessTenant($tenant) && \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'training', 'view'))<a href="{{ \App\ClubUnio\Resources\LegacyTrainingPlanResource::getUrl() }}">Altpläne prüfen und zuordnen</a>@endif
@@ -7,4 +10,5 @@
 <div class="table-scroll"><table><thead><tr><th>Training</th><th>Mannschaft</th><th>Freigabe</th><th>Geändert</th></tr></thead><tbody>
 @forelse($plans as $row)<tr><td><a href="{{ route('clubunio.training.show',[$tenant->slug,$row->id]) }}">{{ $row->title }}</a></td><td>{{ $teamLabels[$row->team_season_id] ?? null }}</td><td>{{ $row->shared ? 'Teamverantwortliche' : 'Privat' }}</td><td>{{ \Carbon\CarbonImmutable::parse($row->updated_at)->setTimezone('Europe/Zurich')->format('d.m.Y H:i') }}</td></tr>@empty<tr><td colspan="4">Keine Trainingspläne vorhanden.</td></tr>@endforelse
 </tbody></table></div>{{ $plans->links('clubunio.planning.pagination') }}
+@endif
 @endsection

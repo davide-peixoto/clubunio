@@ -84,6 +84,20 @@ class BexioReconciliationTest extends TestCase
         Http::preventStrayRequests();
     }
 
+    public function test_native_reconciliation_table_keeps_type_search_and_tenant_scope(): void
+    {
+        $invoice = Invoice::findOrFail($this->invoice);
+        $table = Livewire::test(BexioReconciliation::class)
+            ->assertCanSeeTableRecords([$invoice])
+            ->searchTable('not-present')->assertCanNotSeeTableRecords([$invoice])
+            ->searchTable('123')->assertCanSeeTableRecords([$invoice])
+            ->sortTable('legacy_id')->assertSuccessful();
+        $table->searchTable('')->set('type', 'expense')
+            ->assertCanSeeTableRecords([Expense::findOrFail($this->expense)]);
+        $this->assertSame('expense', $table->get('type'));
+        Http::assertNothingSent();
+    }
+
     private function account(string $role): Account
     {
         $a = new Account;

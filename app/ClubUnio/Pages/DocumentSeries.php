@@ -2,19 +2,29 @@
 
 namespace App\ClubUnio\Pages;
 
+use App\ClubUnio\Models\DocumentSeries as Series;
+use App\ClubUnio\Models\DocumentSeriesTemplate;
 use App\ClubUnio\Resources\ProfileUi;
 use App\ClubUnio\Services\DocumentSeriesRenderer;
 use App\ClubUnio\Services\DocumentSeriesService;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\WithFileUploads;
 
-class DocumentSeries extends Page
+class DocumentSeries extends Page implements HasTable
 {
+    use InteractsWithTable;
     use WithFileUploads;
 
     protected string $view = 'clubunio.document-series.page';
@@ -44,10 +54,6 @@ class DocumentSeries extends Page
     public string $teamSearch = '';
 
     public string $recipientSearch = '';
-
-    public string $historySearch = '';
-
-    public int $historyPage = 1;
 
     public array $editor = ['name' => '', 'title' => '', 'text' => '', 'type_id' => null, 'signature_required' => true, 'items' => []];
 
@@ -94,6 +100,58 @@ class DocumentSeries extends Page
         return app(DocumentSeriesService::class);
     }
 
+    public function table(Table $table): Table
+    {
+        return $table->heading('Letzte Serien')
+            ->query(fn () => $this->historyQuery())
+            ->columns([
+                TextColumn::make('id')->label('Serie')->prefix('#')->sortable(),
+                TextColumn::make('template_name')->label('Vorlage')->wrap()
+                    ->description(fn (Series $record) => 'Version '.$record->template_version)
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search));
+
+                        return $query->whereIn('template_id', DocumentSeriesTemplate::query()
+                            ->where('tenant_id', Filament::getTenant()->id)
+                            ->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", ['%'.$search.'%'])->select('id'));
+                    }),
+                TextColumn::make('created_at')->label('Erstellt')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->sortable(),
+                TextColumn::make('completed_count')->label('Dokumente')
+                    ->formatStateUsing(fn ($state, Series $record) => $state.' / '.$record->recipients_count),
+            ])
+            ->filters([
+                SelectFilter::make('template_id')->label('Vorlage / Version')->searchable()
+                    ->options(fn () => $this->service()->templates(Filament::auth()->user(), Filament::getTenant())
+                        ->mapWithKeys(fn ($template) => [$template->id => $template->name.' / v'.$template->version])->all()),
+            ])->deferFilters(false)
+            ->recordActions([
+                Action::make('openSeries')->label('Serie öffnen')->icon('heroicon-o-folder-open')
+                    ->iconButton()->tooltip('Serie öffnen')->hidden(fn () => ! ProfileUi::allows('documents'))
+                    ->alpineClickHandler(fn (Series $record) => '$wire.openSeries('.(int) $record->id.')'),
+            ])
+            ->defaultSort('id', 'desc')->paginationPageOptions([10, 25, 50])->defaultPaginationPageOption(25)
+            ->emptyStateHeading('Keine Serien gefunden.')->emptyStateDescription(null);
+    }
+
+    protected function historyQuery(): Builder
+    {
+        $actor = Filament::auth()->user();
+        $tenant = Filament::getTenant();
+        abort_unless($actor && $tenant, 403);
+        $this->service()->authorize($actor, $tenant);
+        $table = (new Series)->getTable();
+
+        return Series::query()->where($table.'.tenant_id', $tenant->id)->select(['id', 'template_id', 'created_at'])
+            ->selectSub(DocumentSeriesTemplate::query()->where('tenant_id', $tenant->id)
+                ->whereColumn('id', $table.'.template_id')->select('name'), 'template_name')
+            ->selectSub(DocumentSeriesTemplate::query()->where('tenant_id', $tenant->id)
+                ->whereColumn('id', $table.'.template_id')->select('version'), 'template_version')
+            ->withCount([
+                'recipients' => fn ($query) => $query->where('tenant_id', $tenant->id),
+                'recipients as completed_count' => fn ($query) => $query->where('tenant_id', $tenant->id)->whereNotNull('document_id'),
+            ]);
+    }
+
     public function updated(string $field): void
     {
         if (in_array(explode('.', $field)[0], ['templateId', 'teams', 'target', 'date', 'signatureRequired', 'portalVisible', 'common', 'individual', 'selected'])) {
@@ -110,9 +168,6 @@ class DocumentSeries extends Page
             $template = $this->service()->templates(Filament::auth()->user(), Filament::getTenant())->firstWhere('id', $this->templateId);
             abort_unless($template, 404);
             $this->signatureRequired = $template->definition['signature_required'];
-        }
-        if ($field === 'historySearch') {
-            $this->historyPage = 1;
         }
     }
 
@@ -254,11 +309,6 @@ class DocumentSeries extends Page
         $this->service()->finishSignedReturn(Filament::auth()->user(), Filament::getTenant(), $this->seriesId, $recipient);
     }
 
-    public function historyMove(int $direction): void
-    {
-        $this->historyPage = max(1, $this->historyPage + ($direction > 0 ? 1 : -1));
-    }
-
     protected function getViewData(): array
     {
         $actor = Filament::auth()->user();
@@ -275,7 +325,6 @@ class DocumentSeries extends Page
         }
 
         return ['lookups' => $lookups, 'filteredCandidates' => $candidates, 'previewHtml' => $previewHtml,
-            'history' => $this->service()->history($actor, $tenant, $this->historySearch, $this->historyPage),
             'recipients' => $this->seriesId ? $this->service()->recipients($actor, $tenant, $this->seriesId) : collect(),
         ];
     }

@@ -19,6 +19,7 @@ use Tests\TestCase;
 class TrainingPlanTest extends TestCase
 {
     use WorkspaceForm;
+    use \Tests\Concerns\PlanningTableRequests;
 
     private $db;
 
@@ -157,10 +158,25 @@ class TrainingPlanTest extends TestCase
     public function test_list_projects_metadata_and_read_does_not_load_unused_teams(): void
     {
         $id = $this->insert();
-        $response = $this->get('/planning/training-plans?q=Testtraining&team='.$this->team)->assertOk()->assertSee('Fixture team');
-        $row = $response->viewData('plans')->first();
-        $this->assertSame(['id', 'title', 'team_season_id', 'shared', 'updated_at'], array_keys((array) $row));
-        $this->assertSame($id, $row->id);
+        $this->db->enableQueryLog();
+        $this->db->flushQueryLog();
+        try {
+            $response = $this->get('/planning/training-plans?q=Testtraining&team='.$this->team)->assertOk()->assertSee('Fixture team');
+            $listQueries = collect($this->db->getQueryLog())->pluck('query')
+                ->filter(fn ($sql) => str_contains($sql, 'from "clubora"."training_plans"'));
+        } finally {
+            $this->db->disableQueryLog();
+        }
+        $this->assertNotEmpty($listQueries);
+        foreach ($listQueries as $sql) {
+            $this->assertStringNotContainsString('input_json', $sql);
+            $this->assertStringNotContainsString('plan_json', $sql);
+            $this->assertStringNotContainsString('select *', $sql);
+        }
+        $snapshot = $this->tableSnapshot($response->getContent());
+        $this->updatePlanningTable($snapshot)->assertOk();
+        $this->assertStringContainsString('Testtraining', $response->getContent());
+        $this->assertStringContainsString('/planning/training-plans/'.$id, $response->getContent());
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         try {
@@ -320,6 +336,56 @@ class TrainingPlanTest extends TestCase
         $row = $this->db->table('training_plan_requests')->where('tenant_id', $this->tenant->id)->first();
         $this->assertSame('failed', $row->state);
         $this->assertSame(429, $row->provider_status);
+    }
+
+    public function test_native_training_table_real_updates_search_filter_sort_and_archive(): void
+    {
+        $id = $this->insert();
+        $second = $this->insert();
+        $this->db->table('training_plans')->where('id', $second)->update(['title' => 'ZZZ Training']);
+        $archived = $this->insert();
+        $this->db->table('training_plans')->where('id', $archived)->update(['title' => 'Archived fixture', 'archived_at' => now()]);
+        $page = $this->get('/planning/training-plans')->assertOk()->assertSee('fi-ta-table', false)
+            ->assertSee('Testtraining')->assertDontSee('Archived fixture');
+        $this->assertStringContainsString('no-store', $page->headers->get('Cache-Control'));
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $response = $this->updatePlanningTable($snapshot, ['tableSearch' => 'Testtraining', 'tableFilters.team.value' => (string) $this->team])->assertOk();
+        $html = $response->json('components.0.effects.html');
+        $this->assertStringContainsString('Testtraining', $html);
+        $this->assertStringNotContainsString('ZZZ Training', $html);
+        $this->assertStringContainsString('/planning/training-plans/'.$id, $html);
+        $response = $this->updatePlanningTable($snapshot, ['tableSort' => 'title:desc', 'tableRecordsPerPage' => 10])->assertOk();
+        $html = $response->json('components.0.effects.html');
+        $this->assertLessThan(strpos($html, 'Testtraining'), strpos($html, 'ZZZ Training'));
+        $response = $this->updatePlanningTable($snapshot, ['tableFilters.archived.value' => '1'])->assertOk();
+        $html = $response->json('components.0.effects.html');
+        $this->assertStringContainsString('Archived fixture', $html);
+        $this->assertStringNotContainsString('ZZZ Training', $html);
+        $this->assertStringNotContainsString('input_json', $snapshot);
+        $this->assertStringNotContainsString('plan_json', $snapshot);
+        Http::assertNothingSent();
+    }
+
+    public function test_native_training_snapshot_rejects_revoked_account_and_role(): void
+    {
+        $this->insert();
+        $snapshot = $this->tableSnapshot($this->get('/planning/training-plans')->assertOk()->getContent());
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'member']);
+        $this->updatePlanningTable($snapshot, ['tableSearch' => 'Test'])->assertForbidden();
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+        Account::whereKey($this->actor->id)->update(['active' => false]);
+        $this->updatePlanningTable($snapshot)->assertForbidden();
+    }
+
+    public function test_training_portal_list_keeps_renderer_and_private_scope(): void
+    {
+        $this->insert();
+        $shared = $this->insert();
+        $this->db->table('training_plans')->where('id', $shared)->update(['title' => 'Shared portal fixture', 'shared' => true]);
+        auth('clubunio')->logout();
+        $this->actingAs($this->trainer, 'portal');
+        $this->get('/planning/'.$this->tenant->slug.'/training-plans')->assertOk()
+            ->assertSee('Shared portal fixture')->assertDontSee('Testtraining')->assertDontSee('fi-ta-table', false);
     }
 
     protected function tearDown(): void

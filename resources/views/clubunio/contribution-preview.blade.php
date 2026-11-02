@@ -22,8 +22,8 @@
         @endif
     @endif
     @if($batch)
-    <section><h2>Saisonlauf</h2>
-        <div style="overflow-x:auto"><table class="clubunio-batch-table"><thead><tr><th>Mitglied</th><th>Netto CHF</th><th>Prüfung</th></tr></thead><tbody>
+    <x-filament::section heading="Saisonlauf">
+        <div style="overflow-x:auto"><table class="cu-admin-journal clubunio-batch-table"><thead><tr><th>Mitglied</th><th>Netto CHF</th><th>Prüfung</th></tr></thead><tbody>
         @foreach($batch['rows'] as $row)
         <tr><td>{{ $row['member'] }}</td><td>{{ isset($row['net_cents']) ? number_format($row['net_cents']/100,2,'.',"'") : '–' }}</td><td>{{ $row['error'] ?? (!empty($row['existing_invoice_id']) ? 'Bereits vorhanden' : 'Entwurf möglich') }}</td></tr>
         @endforeach
@@ -33,6 +33,6 @@
         @endif
         @foreach($batchResults as $result)<p>{{ $result['member'] }}: {{ $result['result'] }}</p>@endforeach
         @if($batch['next'])<x-filament::button color="gray" wire:click="nextBatch" wire:loading.attr="disabled">Nächste 25 prüfen</x-filament::button>@endif
-    </section>
+    </x-filament::section>
     @endif
 </x-filament-panels::page>

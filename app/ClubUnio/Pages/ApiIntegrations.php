@@ -8,17 +8,28 @@ use App\ClubUnio\Api\Providers\ProviderApiRegistry;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\StatusAppearance;
 use Carbon\CarbonImmutable;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 
-class ApiIntegrations extends Page
+class ApiIntegrations extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected string $view = 'clubunio.api-integrations';
 
     protected static ?string $title = 'API-Integrationen';
@@ -71,6 +82,46 @@ class ApiIntegrations extends Page
         abort_unless(static::canAccess(), 403);
         $this->contextTenantId = (int) Filament::getTenant()->getKey();
         $this->contextAccountId = (int) Filament::auth()->id();
+    }
+
+    public function table(Table $table): Table
+    {
+        $scopeLabels = app(ApiTokenService::class)->scopes();
+
+        return $table->records(function (?string $search, ?array $filters, ?string $sortColumn, ?string $sortDirection, int|string $page, int|string $recordsPerPage) {
+            [$actor, $tenant] = $this->context();
+            $profiles = AccessProfile::where('tenant_id', $tenant->id)->where('active', true)->pluck('name', 'id');
+            $rows = app(ApiTokenService::class)->integrations($actor, $tenant)->map(fn ($row) => [
+                '__key' => (string) $row->id, 'id' => $row->id, 'name' => $row->name, 'active' => $row->active,
+                'profile_name' => $profiles[$row->access_profile_id] ?? null, 'rate_limit' => $row->rate_limit,
+                'scopes' => $row->scopes ?? [], 'tokens' => collect($row->tokens)->map(fn ($token) => (object) [
+                    'id' => $token->id, 'name' => $token->name, 'abilities' => $token->abilities ?? [],
+                    'revoked_at' => $token->revoked_at, 'expires_at' => $token->expires_at, 'last_used_at' => $token->last_used_at,
+                ]),
+            ])->filter(fn ($row) => ! filled($search) || mb_stripos($row['name'], mb_substr($search, 0, 100)) !== false)
+                ->filter(fn ($row) => ! filled($filters['active']['value'] ?? null) || (int) $row['active'] === (int) $filters['active']['value']);
+            $column = in_array($sortColumn, ['name', 'rate_limit'], true) ? $sortColumn : 'id';
+            $rows = $rows->sortBy($column, SORT_REGULAR, $sortDirection !== 'asc')->values();
+            $perPage = in_array((int) $recordsPerPage, [10, 25, 50], true) ? (int) $recordsPerPage : 25;
+            $page = max(1, (int) $page);
+
+            return new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page);
+        })->columns([
+            TextColumn::make('name')->label('Integration')->searchable()->sortable(),
+            TextColumn::make('active')->label('Status')->badge()->formatStateUsing(fn ($state) => $state ? 'Aktiv' : 'Deaktiviert')
+                ->color(fn ($state) => StatusAppearance::palette($state ? 'Aktiv' : 'Deaktiviert')),
+            TextColumn::make('profile_name')->label('Profil')->placeholder('Profil nicht verfügbar'),
+            TextColumn::make('rate_limit')->label('Anfragen / Minute')->numeric()->sortable(),
+            TextColumn::make('scopes')->label('Scopes')->listWithLineBreaks()->limitList(3)->expandableLimitedList()
+                ->formatStateUsing(fn ($state) => $scopeLabels[$state] ?? $state),
+            ViewColumn::make('tokens')->label('Tokens')->view('clubunio.api.integration-tokens')->viewData(['allScopeLabels' => $scopeLabels]),
+        ])->filters([
+            SelectFilter::make('active')->label('Status')->options([1 => 'Aktiv', 0 => 'Deaktiviert']),
+        ])->deferFilters(false)->recordActions([
+            Action::make('deactivateItem')->label('Integration deaktivieren')->icon('heroicon-o-stop-circle')->iconButton()->tooltip('Integration deaktivieren')->color('danger')
+                ->visible(fn (array $record) => $record['active'])->requiresConfirmation()->action(fn (array $record) => $this->disableIntegration($record['id'])),
+        ])->defaultSort('id', 'desc')->paginationPageOptions([10, 25, 50])->defaultPaginationPageOption(25)
+            ->emptyStateHeading('Keine Integrationen.')->emptyStateDescription(null);
     }
 
     private function context(): array

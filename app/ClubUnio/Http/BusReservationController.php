@@ -44,6 +44,9 @@ class BusReservationController
         $data = $this->context($request, $tenant);
         $filters = $request->validate(['q' => 'nullable|string|max:100', 'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from', 'team' => 'nullable|integer', 'status' => 'nullable|string|max:40', 'bus' => 'nullable|integer']);
         $filters += ['from' => now('Europe/Zurich')->toDateString()];
+        if ($request->attributes->get('clubunioWorkspace')) {
+            return $this->view('index', $data + compact('filters'));
+        }
         $q = $this->service->visible($data['actor'], $tenant);
         if (! empty($filters['q'])) {
             $q->where(fn ($q) => $q->where('location', 'ilike', '%'.$filters['q'].'%')->orWhere('description', 'ilike', '%'.$filters['q'].'%'));

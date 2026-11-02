@@ -6,7 +6,9 @@ use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\ProfileUi;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\SponsorRunBillingService;
+use App\ClubUnio\Services\SponsorRunMoney;
 use App\ClubUnio\Services\SponsorRunService;
+use App\ClubUnio\Services\StatusAppearance;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
@@ -16,13 +18,17 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
-use Livewire\WithPagination;
 
-class SponsorRunBilling extends Page
+class SponsorRunBilling extends Page implements HasTable
 {
-    use WithPagination;
+    use InteractsWithTable;
 
     protected string $view = 'clubunio.sponsor-run-billing';
 
@@ -85,22 +91,26 @@ class SponsorRunBilling extends Page
         return Action::make('prepare')->label('Rechnung vorbereiten')->icon('heroicon-o-document-plus')->slideOver()
             ->visible(fn () => ProfileUi::allows('sponsor_runs', 'approve'))
             ->schema([Select::make('pledge_id')->label('Freigegebene Zusage')->required()->searchable()
-                ->options(fn () => $this->event ? collect(app(SponsorRunService::class)->billablePledges(Filament::auth()->user(), Filament::getTenant(), $this->event))->pluck('label', 'id')->all() : [])])
+                ->options(function () {
+                    $event = $this->getTableFilterState('event_id')['value'] ?? null;
+
+                    return $event ? collect(app(SponsorRunService::class)->billablePledges(Filament::auth()->user(), Filament::getTenant(), (int) $event))->pluck('label', 'id')->all() : [];
+                })])
             ->action(fn (array $data) => FormMutation::run($this, fn () => app(SponsorRunBillingService::class)->prepare(Filament::auth()->user(), Filament::getTenant(), (int) $data['pledge_id'])));
     }
 
-    public function operationAction(): Action
+    public function operationAction(?string $operation = null): Action
     {
-        return Action::make('operation')->label('Rechnungsaktion bestätigen')->requiresConfirmation()->slideOver()
-            ->schema(fn (array $arguments) => [Hidden::make('revision')->default($arguments['revision'] ?? 0),
-                ...(($arguments['action'] ?? '') === 'link-contact' ? [TextInput::make('contact_id')->label('Bestätigte Bexio-Kontakt-ID')->integer()->minValue(1)->required()] : []),
-                ...(($arguments['action'] ?? '') === 'confirm-sent' ? [Textarea::make('reason')->label('Nachweis der manuellen Versandprüfung')->required()->minLength(10)->maxLength(1000)] : [])])
-            ->modalDescription(fn (array $arguments) => ($arguments['action'] ?? '') === 'send'
+        return Action::make($operation ?? 'operation')->label('Rechnungsaktion bestätigen')->requiresConfirmation()->slideOver()
+            ->schema(fn (array $arguments, ?array $record) => [Hidden::make('revision')->default($record['revision'] ?? $arguments['revision'] ?? 0),
+                ...(($operation ?? $arguments['action'] ?? '') === 'link-contact' ? [TextInput::make('contact_id')->label('Bestätigte Bexio-Kontakt-ID')->integer()->minValue(1)->required()] : []),
+                ...(($operation ?? $arguments['action'] ?? '') === 'confirm-sent' ? [Textarea::make('reason')->label('Nachweis der manuellen Versandprüfung')->required()->minLength(10)->maxLength(1000)] : [])])
+            ->modalDescription(fn (array $arguments) => ($operation ?? $arguments['action'] ?? '') === 'send'
                 ? 'Die Testrechnung wird ausschliesslich an admin@svsissach.ch versendet.' : 'Bestehende Zuordnungen und aktuellen Beleg prüfen und Aktion bestätigen.')
-            ->action(function (array $arguments, array $data) {
+            ->action(function (array $arguments, array $data, ?array $record) use ($operation) {
                 try {
                     app(SponsorRunBillingService::class)->execute(Filament::auth()->user(), Filament::getTenant(),
-                        (int) $arguments['id'], (int) $data['revision'], (string) $arguments['action'], $data);
+                        (int) ($record['id'] ?? $arguments['id']), (int) $data['revision'], (string) ($operation ?? $arguments['action']), $data);
                     Notification::make()->title('Rechnungsaktion abgeschlossen')->success()->send();
                 } catch (\Throwable) {
                     Notification::make()->title('Aktion nicht bestätigt')->body('Prüfauftrag bleibt in Synchronisation erhalten. Keine ungeprüfte Neuerstellung.')->warning()->send();
@@ -108,18 +118,72 @@ class SponsorRunBilling extends Page
             });
     }
 
-    protected function getViewData(): array
+    private function canOperate(): bool
     {
-        $service = app(SponsorRunBillingService::class);
-        $service->authorize(Filament::auth()->user(), Filament::getTenant());
-        $rows = $service->table(Filament::getTenant())->when($this->event, fn ($q) => $q->where('event_id', $this->event))
-            ->when($this->state !== '', fn ($q) => $q->where('state', $this->state))
-            ->orderByDesc('id')->paginate(20, ['id', 'event_id', 'pledge_id', 'state', 'revision', 'total_cents', 'remote_id', 'paid_cents', 'credit_cents', 'updated_at']);
-        $events = DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->limit(100)->pluck('title', 'id');
-        $sponsors = DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', Filament::getTenant()->id)
-            ->whereIn('id', $rows->pluck('pledge_id'))->pluck('sponsor_name', 'id');
+        return BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()) && ProfileUi::allows('sponsor_runs', 'approve');
+    }
 
-        return compact('rows', 'events', 'sponsors') + ['states' => SponsorRunBillingService::STATES,
-            'canOperate' => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()) && ProfileUi::allows('sponsor_runs', 'approve')];
+    public function table(Table $table): Table
+    {
+        $actions = [Action::make('pdf')->label('Bexio-PDF öffnen')->icon('heroicon-o-document-text')->iconButton()->tooltip('Bexio-PDF öffnen')
+            ->visible(fn (array $record) => $record['remote_id'] && ProfileUi::allows('sponsor_runs', 'download'))
+            ->url(fn (array $record) => route('clubunio.sponsor.billing.pdf', ['invoice' => $record['id']]))->openUrlInNewTab()];
+        foreach ([
+            'link-contact' => ['Kontakt zuordnen', 'user-plus', ['prepared']],
+            'create-contact' => ['Externen Kontakt erstellen', 'user-circle', ['prepared']],
+            'create-draft' => ['Bexio-Entwurf erstellen', 'document-plus', ['contact_ready']],
+            'issue' => ['Ausstellen', 'check-circle', ['draft']],
+            'send' => ['Testrechnung versenden', 'paper-airplane', ['issued']],
+            'cancel' => ['Stornieren', 'x-circle', ['issued', 'sent']],
+            'confirm-sent' => ['Versand manuell nachweisen', 'clipboard-document-check', ['send_uncertain']],
+            'refresh-preview' => ['Empfängersnapshot und Buchhaltung neu prüfen', 'arrow-path-rounded-square', ['prepared', 'contact_ready']],
+            'sync' => ['Ergebnis und Zahlungsstatus abgleichen', 'arrow-path', null],
+        ] as $operation => [$label, $icon, $states]) {
+            $actions[] = $this->operationAction($operation)->label($label)->icon('heroicon-o-'.$icon)->iconButton()->tooltip($label)
+                ->visible(fn (array $record) => $this->canOperate() && ($states === null || in_array($record['state'], $states, true)));
+        }
+
+        return $table->records(function (?string $search, ?array $filters, int $page, int|string $recordsPerPage, ?string $sortColumn, ?string $sortDirection) {
+            $recordsPerPage = in_array((string) $recordsPerPage, ['10', '20', '50'], true) ? (int) $recordsPerPage : 20;
+            $page = max(1, $page);
+            $service = app(SponsorRunBillingService::class);
+            $tenant = Filament::getTenant();
+            $service->authorize(Filament::auth()->user(), $tenant);
+            $query = $service->table($tenant)->when($this->state !== '', fn ($q) => $q->where('state', $this->state))
+                ->when($filters['event_id']['value'] ?? null, fn ($q, $id) => $q->where('event_id', $id))
+                ->when($filters['state']['value'] ?? null, fn ($q, $state) => $q->where('state', $state));
+            if (filled($search)) {
+                $query->where(function ($q) use ($search, $tenant) {
+                    $term = '%'.mb_substr(trim($search), 0, 100).'%';
+                    $q->whereIn('pledge_id', DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('sponsor_name', 'ilike', $term)->select('id'))
+                        ->orWhereIn('event_id', DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', $tenant->id)->where('title', 'ilike', $term)->select('id'));
+                });
+            }
+            $column = in_array($sortColumn, ['id', 'total_cents', 'state', 'updated_at'], true) ? $sortColumn : 'id';
+            $rows = $query->orderBy($column, $sortDirection === 'asc' ? 'asc' : 'desc')
+                ->paginate($recordsPerPage, ['id', 'event_id', 'pledge_id', 'state', 'revision', 'total_cents', 'remote_id', 'paid_cents', 'credit_cents', 'updated_at'], 'page', $page);
+            $events = DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('event_id'))->pluck('title', 'id');
+            $sponsors = DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('pledge_id'))->pluck('sponsor_name', 'id');
+            $rows->setCollection($rows->getCollection()->map(fn ($row) => (array) $row + ['__key' => (string) $row->id,
+                'sponsor' => $sponsors[$row->pledge_id] ?? 'Zusage #'.$row->pledge_id, 'event_title' => $events[$row->event_id] ?? '']));
+
+            return $rows;
+        })->columns([
+            TextColumn::make('sponsor')->label('Zusage')->description(fn (array $record) => $record['event_title'])->searchable(),
+            TextColumn::make('total_cents')->label('Betrag')->formatStateUsing(fn ($state) => SponsorRunMoney::format($state))->sortable(),
+            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn ($state) => SponsorRunBillingService::STATES[$state] ?? $state)
+                ->color(fn ($state) => StatusAppearance::palette(SponsorRunBillingService::STATES[$state] ?? $state))->sortable(),
+            TextColumn::make('remote_id')->label('Bexio')->prefix('#')->placeholder('-'),
+            TextColumn::make('paid_cents')->label('Bezahlt')->formatStateUsing(fn ($state) => SponsorRunMoney::format($state))->placeholder('-'),
+        ])->filters([
+            SelectFilter::make('event_id')->label('Anlass')->default(fn () => $this->event)->options(fn () => DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->pluck('title', 'id')->all()),
+            SelectFilter::make('state')->label('Status')->options(SponsorRunBillingService::STATES),
+        ])->deferFilters(false)->headerActions([
+            $this->prepareAction(),
+            Action::make('loadCatalogs')->label('Bexio-Kataloge laden')->icon('heroicon-o-arrow-path')
+                ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))->action(fn () => $this->loadCatalogs()),
+            $this->configureAction(),
+            Action::make('sponsorRuns')->label('Sponsorenlauf')->icon('heroicon-o-arrow-left')->url(url('/sponsor-runs'))->color('gray'),
+        ])->recordActions($actions)->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading('Keine vorbereiteten Sponsorenrechnungen.');
     }
 }

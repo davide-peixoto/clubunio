@@ -14,8 +14,7 @@
         .api-scope-grid input { flex-shrink:0; margin-top:2px; }
         .api-scope-grid span { min-width:0; overflow-wrap:anywhere; }
         .api-scroll { overflow-x:auto; min-width:0; max-width:100%; }
-        .api-table { width:100%; min-width:760px; border-collapse:collapse; text-align:left; font-size:14px; }
-        .api-table th,.api-table td { padding:12px; border-bottom:1px solid #d1d5db; vertical-align:top; }
+        .api-table { min-width:760px; }
         .api-secret { overflow-wrap:anywhere; white-space:pre-wrap; user-select:all; }
         .api-section { display:grid; gap:16px; min-width:0; }
         .api-section h2 { font-size:18px; font-weight:600; }
@@ -92,34 +91,12 @@
 
     <section class="api-section">
         <h2>Integrationen und Tokens</h2>
-        <div class="api-scroll"><table class="api-table"><thead><tr><th>Integration</th><th>Profil / Limit</th><th>Scopes</th><th>Tokens</th><th>Aktion</th></tr></thead><tbody>
-            @forelse($integrations as $integration)
-                <tr wire:key="api-integration-{{ $integration->id }}">
-                    <td>{{ $integration->name }}<br>{{ $integration->active ? 'Aktiv' : 'Deaktiviert' }}</td>
-                    <td>{{ $profiles[$integration->access_profile_id] ?? 'Profil inaktiv oder nicht verfügbar' }}<br>{{ $integration->rate_limit }} / min</td>
-                    <td>@foreach($integration->scopes ?? [] as $scope)<div>{{ $allScopeLabels[$scope] ?? $scope }}</div>@endforeach</td>
-                    <td>@forelse($integration->tokens as $token)
-                        <div wire:key="api-token-{{ $token->id }}">
-                            <strong>{{ $token->name }}</strong><br>
-                            @if($token->revoked_at)Widerrufen
-                            @elseif(! $integration->active)Gesperrt
-                            @elseif($token->expires_at && \Carbon\CarbonImmutable::parse($token->expires_at)->isPast())Abgelaufen
-                            @else Aktiv @endif
-                            <br>Ablauf: {{ $token->expires_at ? \Carbon\CarbonImmutable::parse($token->expires_at)->timezone(config('app.timezone'))->format('d.m.Y H:i') : '-' }}
-                            <br>Letzte Nutzung: {{ $token->last_used_at ? \Carbon\CarbonImmutable::parse($token->last_used_at)->timezone(config('app.timezone'))->format('d.m.Y H:i') : '-' }}
-                            @foreach($token->abilities ?? [] as $scope)<div>{{ $allScopeLabels[$scope] ?? $scope }}</div>@endforeach
-                            @unless($token->revoked_at)<x-filament::icon-button icon="heroicon-o-no-symbol" color="danger" label="Token widerrufen" tooltip="Token widerrufen" wire:click="revokeToken({{ $token->id }})" wire:loading.attr="disabled" />@endunless
-                        </div>
-                    @empty Keine Tokens. @endforelse</td>
-                    <td>@if($integration->active)<x-filament::icon-button icon="heroicon-o-stop-circle" color="danger" label="Integration deaktivieren" tooltip="Integration deaktivieren" wire:click="disableIntegration({{ $integration->id }})" wire:loading.attr="disabled" />@endif</td>
-                </tr>
-            @empty<tr><td colspan="5">Keine Integrationen.</td></tr>@endforelse
-        </tbody></table></div>
+        {{ $this->table }}
     </section>
 
     <section class="api-section">
         <h2>API-Synchronisationsaufträge</h2>
-        <div class="api-scroll"><table class="api-table"><thead><tr><th>Auftrag</th><th>Integration</th><th>Aktion / Objekt</th><th>Status</th><th>Prüfen</th></tr></thead><tbody>
+        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>Auftrag</th><th>Integration</th><th>Aktion / Objekt</th><th>Status</th><th>Prüfen</th></tr></thead><tbody>
             @forelse($providerWorkRows as $row)
                 <tr wire:key="api-work-{{ $row->id }}"><td>#{{ $row->id }}</td><td>#{{ $row->integration_id }}</td><td>{{ $providerActionLabels[$row->operation] ?? $row->operation }}<br>#{{ $row->object_id }}</td><td>{{ ['pending'=>'Bereit', 'awaiting_approval'=>'Admin-Freigabe ausstehend', 'running'=>'In Ausführung', 'succeeded'=>'Abgeschlossen', 'attention'=>'Prüfung nötig', 'rejected'=>'Abgelehnt'][$row->state] }}@if($row->error_code)<br>{{ $row->error_code }}@endif</td><td><x-filament::icon-button icon="heroicon-o-eye" label="Auftrag prüfen" tooltip="Auftrag prüfen" wire:click="inspectProviderWork({{ $row->id }})" /></td></tr>
             @empty<tr><td colspan="5">Keine API-Synchronisationsaufträge.</td></tr>@endforelse
@@ -138,7 +115,7 @@
 
     <section class="api-section">
         <h2>API-Audit</h2>
-        <div class="api-scroll"><table class="api-table"><thead><tr><th>Zeit ({{ config('app.timezone') }})</th><th>Integration</th><th>Token-ID</th><th>Ereignis</th><th>Status</th><th>Request-ID</th><th>Dauer (ms)</th></tr></thead><tbody>
+        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>Zeit ({{ config('app.timezone') }})</th><th>Integration</th><th>Token-ID</th><th>Ereignis</th><th>Status</th><th>Request-ID</th><th>Dauer (ms)</th></tr></thead><tbody>
             @forelse($auditRows as $row)
                 <tr>
                     <td>{{ \Carbon\CarbonImmutable::parse($row->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}</td>

@@ -492,3 +492,11 @@ and derived family report preserved. Release20261102-clubunio-family-navigation
 overlays one resource file on platform-navigation; no schema/data migration.
 Unit regression/5 assertions, eight server gates and authenticated browser
 navigation check passed. Previous release retained; legacy DEV/PROD unchanged.
+
+02.11.2026 unified administration: native Filament tables for remaining normal
+workspace and specialist administration lists; shared controls and static review
+journal styling. No schema/data/profile migration, new dependencies, import or
+refresh. Existing write services, revision checks, private fields, domain/tenant
+boundaries and portal renderer retained. New read-only table components recheck
+current authorization and the session context on follow-up requests. Targeted
+release/rollback and acceptance evidence: CLUBUNIO-ADMINISTRATION-UI.md.

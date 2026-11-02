@@ -13,11 +13,20 @@ use App\ClubUnio\Services\BexioSandboxDispatchService;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
-class BexioSandbox extends Page
+class BexioSandbox extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected string $view = 'clubunio.bexio-sandbox';
 
     protected static ?string $title = 'Bexio-Sandbox';
@@ -113,16 +122,88 @@ class BexioSandbox extends Page
     protected function getViewData(): array
     {
         abort_unless(static::canAccess(), 403);
-        $rows = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
-            ->where('tenant_id', Filament::getTenant()->id)->orderBy('id')->get();
 
-        return ['rows' => $rows,
-            'eligibleInvoices' => Invoice::where('tenant_id', Filament::getTenant()->id)->whereIn('id', $rows->pluck('invoice_id')->filter())->whereHas('workflowStatus', fn ($q) => $q->where('code', 'released'))->pluck('id')->all(),
-            'eligibleExpenses' => Expense::where('tenant_id', Filament::getTenant()->id)->whereIn('id', $rows->pluck('expense_id')->filter())
+        return [];
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table->records($this->dispatchRecords(...))->columns([
+            TextColumn::make('document')->label('Testbeleg')->state(fn (array $record) => ($record['kind'] === 'invoice' ? 'Rechnung' : 'Spesen').' #'.($record['invoice_id'] ?? $record['expense_id']))
+                ->description(fn (array $record) => $record['source_trial_id'] ? 'Allgemeine Versandprüfung' : 'Fester Testbeleg')->searchable()->sortable(),
+            TextColumn::make('amount')->label('Betrag CHF')->state(fn (array $record) => number_format(($record['expected_cents'] ?? ($record['kind'] === 'invoice' ? 2500 : 1500)) / 100, 2, '.', "'")),
+            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn (string $state) => [
+                'ready' => 'Bereit', 'running' => 'Gestartet', 'accepted' => 'Angelegt und geprüft',
+                'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt',
+            ][$state] ?? $state)->sortable(),
+            ViewColumn::make('protocol')->label('Übertragungsprotokoll')->view('clubunio.bexio-sandbox-protocol'),
+            TextColumn::make('remote_id')->label('Bexio-ID')->placeholder('-')->wrap()->searchable()->sortable(),
+            ViewColumn::make('operations')->label('Aktion')->view('clubunio.bexio-sandbox-operations'),
+        ])->filters([
+            SelectFilter::make('kind')->label('Dokument')->options(['invoice' => 'Rechnungen', 'expense' => 'Spesen']),
+            SelectFilter::make('state')->label('Status')->options([
+                'ready' => 'Bereit', 'running' => 'Gestartet', 'accepted' => 'Angelegt und geprüft',
+                'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt',
+            ]),
+            SelectFilter::make('source')->label('Herkunft')->options(['trial' => 'Allgemeine Versandprüfung', 'fixture' => 'Fester Testbeleg']),
+        ])->deferFilters(false)->paginated([15, 25, 50])->defaultPaginationPageOption(15)->defaultSort('id', 'asc')
+            ->emptyStateHeading('Noch keine passenden Web-Testbelege.')->emptyStateDescription(null);
+    }
+
+    private function dispatchRecords(?string $search, ?array $filters, int $page, int $recordsPerPage, ?string $sortColumn, ?string $sortDirection): LengthAwarePaginator
+    {
+        abort_unless(static::canAccess(), 403);
+        $tenant = Filament::getTenant();
+        $search = mb_substr(trim($search ?? ''), 0, 100);
+        $rows = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+            ->where('tenant_id', $tenant->id)
+            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search) {
+                foreach (['id', 'invoice_id', 'expense_id', 'remote_id'] as $column) {
+                    $query->orWhereRaw('CAST('.$column.' AS TEXT) ILIKE ?', ['%'.$search.'%']);
+                }
+            }));
+        foreach (['kind', 'state'] as $filter) {
+            if (filled($value = $filters[$filter]['value'] ?? null)) {
+                $rows->where($filter, $value);
+            }
+        }
+        if (($filters['source']['value'] ?? null) === 'trial') {
+            $rows->whereNotNull('source_trial_id');
+        } elseif (($filters['source']['value'] ?? null) === 'fixture') {
+            $rows->whereNull('source_trial_id');
+        }
+        $direction = $sortDirection === 'desc' ? 'desc' : 'asc';
+        if ($sortColumn === 'document') {
+            $rows->orderByRaw('COALESCE(invoice_id, expense_id) '.$direction);
+        } elseif (in_array($sortColumn, ['id', 'state', 'remote_id'], true)) {
+            $rows->orderBy($sortColumn, $direction);
+        }
+        $rows = $rows->orderBy('id')->paginate($recordsPerPage, [
+            'id', 'kind', 'invoice_id', 'expense_id', 'state', 'remote_id', 'http_status',
+            'attachment_id', 'source_trial_id', 'expected_cents',
+        ], 'page', $page);
+
+        $context = [
+            'eligibleInvoices' => Invoice::where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('invoice_id')->filter())->whereHas('workflowStatus', fn ($q) => $q->where('code', 'released'))->pluck('id')->all(),
+            'eligibleExpenses' => Expense::where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('expense_id')->filter())
                 ->whereHas('status', fn ($q) => $q->where('code', 'Z'))->whereNotNull('payment_released_on')->pluck('id')->all(),
             'financialActions' => DB::connection('clubunio')->table('clubora.bexio_financial_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'),
-            'balances' => DB::connection('clubunio')->table('clubora.bexio_balances')->where('tenant_id', Filament::getTenant()->id)->get()->keyBy(fn ($balance) => $balance->object_type.':'.$balance->object_id),
+            'balances' => DB::connection('clubunio')->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)
+                ->where(fn ($query) => $query->where(fn ($q) => $q->where('object_type', 'invoice')->whereIn('object_id', $rows->pluck('invoice_id')->filter()))
+                    ->orWhere(fn ($q) => $q->where('object_type', 'expense')->whereIn('object_id', $rows->pluck('expense_id')->filter())))
+                ->get()->keyBy(fn ($balance) => $balance->object_type.':'.$balance->object_id),
             'actions' => DB::connection('clubunio')->table('clubora.bexio_invoice_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'), 'steps' => DB::connection('clubunio')->table('clubora.bexio_sandbox_steps')
                 ->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id')];
+        $rows->setCollection($rows->getCollection()->map(fn ($row) => (array) $row + [
+            '__key' => (string) $row->id,
+            'steps' => $context['steps'][$row->id] ?? collect(),
+            'actions' => $context['actions'][$row->id] ?? collect(),
+            'financialActions' => $context['financialActions'][$row->id] ?? collect(),
+            'balance' => $context['balances'][$row->kind.':'.($row->invoice_id ?? $row->expense_id)] ?? null,
+            'eligibleInvoice' => in_array($row->invoice_id, $context['eligibleInvoices']),
+            'eligibleExpense' => in_array($row->expense_id, $context['eligibleExpenses']),
+        ]));
+
+        return $rows;
     }
 }

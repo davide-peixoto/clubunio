@@ -23,6 +23,7 @@ use Tests\TestCase;
 class TeamPlanningTest extends TestCase
 {
     use WorkspaceForm;
+    use \Tests\Concerns\PlanningTableRequests;
 
     private $db;
 
@@ -497,6 +498,83 @@ class TeamPlanningTest extends TestCase
         $this->get($base.'/options')->assertForbidden();
         auth('portal')->logout();
         $this->get($base)->assertRedirect('/portal/login');
+    }
+
+    public function test_native_planning_real_updates_preserve_scope_dates_filters_and_pagination(): void
+    {
+        $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $row = (array) $this->service->event($this->admin, $this->tenant, $id);
+        unset($row['id']);
+        $row['title'] = 'ZZZ Fixture';
+        $this->db->table('team_events')->insert($row);
+        $row['title'] = 'Past fixture';
+        $row['starts_at'] = now()->subDays(5);
+        $this->db->table('team_events')->insert($row);
+        $row['starts_at'] = now()->addDays(20);
+        $row['ends_at'] = now()->addDays(20)->addHours(2);
+        for ($i = 1; $i <= 12; $i++) {
+            $row['title'] = 'Page '.sprintf('%02d', $i);
+            $this->db->table('team_events')->insert($row);
+        }
+        $page = $this->get('/planning')->assertOk()->assertSee('Fixture training')->assertDontSee('Past fixture')->assertSee('fi-ta-table', false);
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $response = $this->updatePlanningTable($snapshot, ['tableRecordsPerPage' => 10])->assertOk();
+        $this->assertStringNotContainsString('Page 12', $response->json('components.0.effects.html'));
+        $response = $this->updatePlanningTable($response->json('components.0.snapshot'), [], [['method' => 'setPage', 'params' => [2]]])->assertOk();
+        $this->assertStringContainsString('Page 12', $response->json('components.0.effects.html'));
+        $response = $this->updatePlanningTable($snapshot, ['tableSearch' => 'Fixture training', 'tableFilters.team.value' => (string) $this->team])->assertOk();
+        $html = $response->json('components.0.effects.html');
+        $this->assertStringContainsString('Fixture training', $html);
+        $this->assertStringNotContainsString('ZZZ Fixture', $html);
+        $this->assertStringContainsString('/planning/events/'.$id, $html);
+        $response = $this->updatePlanningTable($snapshot, ['tableFilters.dates.from' => null, 'tableSort' => 'title:desc', 'tableRecordsPerPage' => 25])->assertOk();
+        $html = $response->json('components.0.effects.html');
+        $this->assertStringContainsString('Past fixture', $html);
+        $this->assertLessThan(strpos($html, 'Fixture training'), strpos($html, 'ZZZ Fixture'));
+        $response = $this->updatePlanningTable($snapshot, ['tableFilters.status.value' => 'ABGESAGT'])->assertOk();
+        $this->assertStringNotContainsString('Fixture training', $response->json('components.0.effects.html'));
+    }
+
+    public function test_native_planning_snapshot_rejects_workspace_revision_and_tenant_switch(): void
+    {
+        $page = $this->get('/planning')->assertOk();
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $key = 'clubunio_context.'.$this->admin->id;
+        $context = session($key);
+        session()->put($key.'.revision', 'changed-revision');
+        $this->updatePlanningTable($snapshot)->assertStatus(419);
+        session()->put($key, $context);
+        $other = Tenant::create(['slug' => 'table-other-'.bin2hex(random_bytes(4)), 'name' => 'Other']);
+        $this->admin->tenants()->attach($other, ['role' => 'admin']);
+        app(\App\ClubUnio\Services\ActiveTenant::class)->select(request(), $other);
+        $this->updatePlanningTable($snapshot, [], [['method' => 'sortTable', 'params' => ['title', 'asc']]])->assertStatus(419);
+    }
+
+    public function test_native_planning_keeps_invited_inactive_team_without_expanding_scope(): void
+    {
+        $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $hidden = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['title' => 'Hidden inactive event']));
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'member_id' => $this->member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
+        $this->db->table('team_invitations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id, 'member_id' => $this->member]);
+        $this->db->table('team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $page = $this->get('/planning')->assertOk()->assertSee('Fixture training')->assertSee('Fixture team / season')->assertDontSee('Hidden inactive event');
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $this->assertStringNotContainsString('Hidden inactive event', $this->updatePlanningTable($snapshot)->assertOk()->json('components.0.effects.html'));
+        $this->assertNotSame($id, $hidden);
+        auth('clubunio')->logout();
+        $this->actingAs($this->player, 'portal');
+        $this->get('/planning/'.$this->tenant->slug)->assertOk()->assertSee('Fixture training')->assertDontSee('fi-ta-table', false);
+    }
+
+    public function test_native_planning_domain_change_rejects_real_update(): void
+    {
+        $other = Tenant::create(['slug' => 'table-domain-'.bin2hex(random_bytes(4)), 'name' => 'Other domain']);
+        $this->admin->tenants()->attach($other, ['role' => 'admin']);
+        config(['clubunio-domains.hosts' => ['planning-one.test' => $this->tenant->slug, 'planning-two.test' => $other->slug]]);
+        $page = $this->get('https://planning-one.test/planning')->assertOk();
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $this->updatePlanningTable($snapshot, [], [], 'https://planning-one.test')->assertOk();
+        $this->updatePlanningTable($snapshot, [], [], 'https://planning-two.test')->assertStatus(419);
     }
 
     public function test_reminders_are_internal_idempotent_and_no_absence_reason_leaks(): void

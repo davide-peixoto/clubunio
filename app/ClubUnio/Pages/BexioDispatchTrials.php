@@ -4,20 +4,26 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
-use App\ClubUnio\Services\BackofficeReadContext;
+use App\ClubUnio\Resources\ProfileUi;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioDispatchTrialService;
 use App\ClubUnio\Services\BexioSandboxDispatchService;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Livewire\WithPagination;
 
-class BexioDispatchTrials extends Page
+class BexioDispatchTrials extends Page implements HasTable
 {
-    use WithPagination;
+    use InteractsWithTable;
 
     protected string $view = 'clubunio.bexio-dispatch-trials';
 
@@ -45,15 +51,17 @@ class BexioDispatchTrials extends Page
 
     public static function canAccess(): bool
     {
-        return \App\ClubUnio\Resources\ProfileUi::allows('bexio');
+        return ProfileUi::allows('bexio');
     }
 
     public static function canDocumentOperation(string $type, string $function): bool
     {
-        $module = match ($type) { 'invoice' => 'invoices', 'expense' => 'expenses', default => null };
+        $module = match ($type) {
+            'invoice' => 'invoices', 'expense' => 'expenses', default => null
+        };
 
         return static::canAccess() && $module !== null
-            && \App\ClubUnio\Resources\ProfileUi::allows($module, $function);
+            && ProfileUi::allows($module, $function);
     }
 
     private function authorizeTrial(int $id, string $function): void
@@ -66,12 +74,86 @@ class BexioDispatchTrials extends Page
 
     public function updatedType(): void
     {
-        $this->resetPage();
+        $this->resetTable();
     }
 
     public function updatedSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table->query(fn () => $this->documentsQuery())->columns([
+            TextColumn::make('id')->label('Dokument')->state(fn ($record) => $record->legacy_id ?? $record->id)
+                ->sortable()->searchable(query: fn (Builder $query, string $search) => $query->where(function (Builder $query) use ($search) {
+                    foreach (['id', 'legacy_id'] as $column) {
+                        $query->orWhereRaw('CAST('.$query->getModel()->qualifyColumn($column).' AS TEXT) ILIKE ?', ['%'.mb_substr(trim($search), 0, 100).'%']);
+                    }
+                })),
+            TextColumn::make('member.display_name')->label('Mitglied')->searchable(query: fn (Builder $query, string $search) => $query->whereHas('member',
+                fn ($member) => $this->searchMember($member, $search)))
+                ->sortable(['last_name', 'first_name']),
+        ])->filters([
+            SelectFilter::make('trial')->label('Meine Versandprüfung')->options(['checked' => 'Bereits geprüft', 'unchecked' => 'Noch nicht geprüft'])
+                ->query(function (Builder $query, array $data): Builder {
+                    if (! in_array($data['value'] ?? null, ['checked', 'unchecked'], true)) {
+                        return $query;
+                    }
+                    $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+                        ->where('tenant_id', Filament::getTenant()->id)->where('actor_id', Filament::auth()->id())
+                        ->where('object_type', $this->type)->select('object_id');
+
+                    return ($data['value'] === 'checked')
+                        ? $query->whereIn('id', $trial) : $query->whereNotIn('id', $trial);
+                }),
+        ])->deferFilters(false)->recordActions([
+            // Keep the existing guarded method for profiles not mapped by the mounted-action bridge.
+            Action::make('check')->label('Prüfen')->icon('heroicon-o-magnifying-glass')->iconButton()->tooltip('Prüfen')
+                ->visible(fn () => static::canDocumentOperation($this->type, 'send'))
+                ->extraAttributes(['wire:loading.attr' => 'disabled', 'wire:target' => 'check'])
+                ->alpineClickHandler(fn ($record) => '$wire.check('.((int) $record->id).')'),
+        ])->paginationPageOptions([15, 25, 50])->defaultPaginationPageOption(15)->defaultSort('id', 'desc')
+            ->emptyStateHeading('Keine freigegebenen, noch nicht verknüpften Dokumente.')->emptyStateDescription(null);
+    }
+
+    private function searchMember(Builder $query, string $search): Builder
+    {
+        return $query->where('tenant_id', Filament::getTenant()->id)->whereRaw(
+            "concat_ws(' ', first_name, last_name) ILIKE ?", ['%'.mb_substr(trim($search), 0, 100).'%']);
+    }
+
+    protected function documentsQuery(): Builder
+    {
+        abort_unless(static::canAccess(), 403);
+        $this->validate(['type' => 'required|in:invoice,expense', 'search' => 'string|max:100']);
+        $documentTypes = $this->documentTypes();
+        if ($documentTypes && ! isset($documentTypes[$this->type])) {
+            $this->type = array_key_first($documentTypes);
+        }
+        $tenant = Filament::getTenant();
+        $class = $this->type === 'invoice' ? Invoice::class : Expense::class;
+        $field = $this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id';
+        $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $documents = $class::where('tenant_id', $tenant->id)->where('active', true)
+            ->when(! static::canDocumentOperation($this->type, 'view'), fn ($q) => $q->whereRaw('1 = 0'))
+            ->when($binding, fn ($q) => $q->whereNull('legacy_id')->where('member_id', $this->type === 'invoice' ? $binding->member_id : $binding->supplier_id))
+            ->whereHas('member', fn ($q) => $q->where('tenant_id', $tenant->id))
+            ->where(fn ($q) => $q->whereNull($field)->orWhere($field, ''))
+            ->with('member')->when(trim($this->search) !== '', fn ($q) => $q->whereHas('member', fn ($m) => $this->searchMember($m, $this->search)));
+        if ($this->type === 'invoice') {
+            $documents->whereNull('legacy_id')->whereHas('workflowStatus', fn ($q) => $q->where('code', 'released'));
+        } else {
+            $documents->whereHas('status', fn ($q) => $q->where('code', 'Z'));
+        }
+
+        return $documents;
+    }
+
+    private function documentTypes(): array
+    {
+        return array_filter(['invoice' => 'Rechnungen', 'expense' => 'Spesen'],
+            fn ($type) => static::canDocumentOperation($type, 'view'), ARRAY_FILTER_USE_KEY);
     }
 
     public function check(int $id): void
@@ -115,33 +197,18 @@ class BexioDispatchTrials extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->validate(['type' => 'required|in:invoice,expense', 'search' => 'string|max:100']);
-        $documentTypes = array_filter(['invoice' => 'Rechnungen', 'expense' => 'Spesen'],
-            fn ($type) => static::canDocumentOperation($type, 'view'), ARRAY_FILTER_USE_KEY);
+        $documentTypes = $this->documentTypes();
         if ($documentTypes && ! isset($documentTypes[$this->type])) {
             $this->type = array_key_first($documentTypes);
             $this->resetPage();
         }
         $tenant = Filament::getTenant();
-        $class = $this->type === 'invoice' ? Invoice::class : Expense::class;
-        $field = $this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id';
-        $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
-        $documents = $class::where('tenant_id', $tenant->id)->where('active', true)
-            ->when(! static::canDocumentOperation($this->type, 'view'), fn ($q) => $q->whereRaw('1 = 0'))
-            ->when($binding, fn ($q) => $q->whereNull('legacy_id')->where('member_id', $this->type === 'invoice' ? $binding->member_id : $binding->supplier_id))
-            ->whereHas('member', fn ($q) => $q->where('tenant_id', $tenant->id))
-            ->where(fn ($q) => $q->whereNull($field)->orWhere($field, ''))
-            ->with('member')->when(trim($this->search) !== '', fn ($q) => $q->whereHas('member', fn ($m) => $m->where('tenant_id', $tenant->id)->where(fn ($n) => $n->where('first_name', 'ilike', '%'.trim($this->search).'%')->orWhere('last_name', 'ilike', '%'.trim($this->search).'%'))));
-        if ($this->type === 'invoice') {
-            $documents->whereNull('legacy_id')->whereHas('workflowStatus', fn ($q) => $q->where('code', 'released'));
-        } else {
-            $documents->whereHas('status', fn ($q) => $q->where('code', 'Z'));
-        }
 
         $visibleTypes = array_values(array_filter(['invoice', 'expense'], fn ($type) => static::canDocumentOperation($type, 'view')));
         $trials = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', Filament::auth()->id())
             ->whereIn('object_type', $visibleTypes)->orderByDesc('id')->limit(30)->get();
 
-        return ['documentTypes' => $documentTypes, 'documents' => $documents->orderByDesc('id')->paginate(15), 'trials' => $trials,
+        return ['documentTypes' => $documentTypes, 'trials' => $trials,
             'sandboxAdmin' => BexioConnectionService::canManage(Filament::auth()->user()->fresh(), $tenant)
                 && DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists(),
             'sandboxTrials' => DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('source_trial_id')->pluck('state', 'source_trial_id'),
