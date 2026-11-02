@@ -18,6 +18,13 @@
 .cu-settings-section span { flex: 1; overflow-wrap: anywhere; }
 .fi-sidebar .cu-search-hidden { display: none !important; }
 .fi-sidebar-item-label { white-space: normal; overflow-wrap: break-word; }
+.cu-submenu-row { display: flex; align-items: center; min-width: 0; }
+.cu-submenu-row > .fi-sidebar-item-btn { flex: 1; min-width: 0; }
+.cu-submenu-toggle { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 4px; cursor: pointer; }
+.cu-submenu-toggle:hover { background: #48a9e81a; }
+.cu-submenu-toggle:focus-visible { outline: 2px solid #48a9e8; outline-offset: -2px; }
+.cu-submenu-chevron { width: 16px; height: 16px; transition: transform 120ms; }
+.cu-submenu-open { transform: rotate(180deg); }
 .cu-dossier-loading { position: relative; }
 .cu-dossier-loading > .fi-sc-tabs-tab, .cu-dossier-loading > .fi-ta-ctn { opacity: 0; pointer-events: none; }
 .cu-dossier-loading::after { content: attr(data-loading-message); position: absolute; inset: 64px 16px auto; padding: 16px; color: #164b8a; background: #eff6ff; border-radius: 6px; font-size: 14px; }

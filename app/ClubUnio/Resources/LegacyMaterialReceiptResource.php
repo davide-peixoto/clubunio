@@ -13,9 +13,9 @@ class LegacyMaterialReceiptResource extends CatalogResource
 {
     protected static ?string $model = LegacyMaterialReceipt::class;
 
-    protected static ?string $modelLabel = 'Historische Quittung';
+    protected static ?string $modelLabel = 'Quittung';
 
-    protected static ?string $pluralModelLabel = 'Historische Quittungen';
+    protected static ?string $pluralModelLabel = 'Quittungen';
 
     protected static ?string $tenantRelationshipName = 'legacyMaterialReceipts';
 

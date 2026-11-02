@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Navigationsbereinigung (02.11.2026)
+
+Geplantes Delta auf season-navigation: unabhaengige Aufklapppfeile fuer Saisons
+und Rechnungen, Finanz-Untermenues, Altplanuebernahme in Einstellungen und
+verstaendliche Listenbezeichnungen. Keine DB-/Rechte-/Datenmigration.
+Abnahme und Rueckweg: CLUBUNIO-NAVIGATION-CLEANUP.md.
+
 ## Saison-Untermenues (02.11.2026)
 
 Ausgeliefert20261102-clubunio-season-navigation aus0eb9e17 auf

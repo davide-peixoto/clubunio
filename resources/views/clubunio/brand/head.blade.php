@@ -12,6 +12,6 @@
     .primary{background:var(--clubunio-club-color);border-color:var(--clubunio-club-color);color:var(--clubunio-club-ink)}
 </style>
 @endif
-<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=5">
+<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=6">
 <link rel="stylesheet" href="{{ asset('css/clubunio-administration.css') }}?v=3">
-<script src="{{ asset('js/clubunio-navigation.js') }}?v=4" defer></script>
+<script src="{{ asset('js/clubunio-navigation.js') }}?v=5" defer></script>

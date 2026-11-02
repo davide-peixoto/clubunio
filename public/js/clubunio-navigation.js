@@ -50,6 +50,9 @@
                     }
                     matches += visible;
                 });
+                sidebar.querySelectorAll('[data-cu-submenu]').forEach(item => {
+                    item.dispatchEvent(new CustomEvent('cu-submenu-search', { detail: { active: !!query } }));
+                });
                 control.querySelector('.cu-nav-empty').hidden = matches > 0 || !query;
                 const settings = control.querySelector('.cu-settings-shortcut');
                 if (settings) {

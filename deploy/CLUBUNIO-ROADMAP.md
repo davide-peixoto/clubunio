@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Aufklappbare Fachnavigation (02.11.2026)
+
+Saisons/Rechnungen mit unabhaengigen Pfeilbuttons und weiterhin direkten
+Seitenlinks. Finanzkorrekturen/Beitragsberechnung unter Rechnungen;
+Altplanuebernahme in Einstellungen. Quittungen und Adressliste fuer Massenversand
+statt technischer Altbezeichnungen. Keine Daten-/Rechtemigration oder Import.
+Details und Abnahme: CLUBUNIO-NAVIGATION-CLEANUP.md.
+
 ## Saison-Untermenues (02.11.2026)
 
 Saisonplanung, Mannschaften pro Saison, Spieler-, Staff- und TL-Zuordnungen sowie

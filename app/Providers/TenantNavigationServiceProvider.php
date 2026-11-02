@@ -36,6 +36,7 @@ class TenantNavigationServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        view()->addNamespace('clubunio-filament-original', base_path('vendor/filament/filament/resources/views'));
         $this->app->booted(function () {
             if ($this->app->routesAreCached()) {
                 return;

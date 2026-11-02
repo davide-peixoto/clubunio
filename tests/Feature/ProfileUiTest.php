@@ -226,6 +226,22 @@ class ProfileUiTest extends TestCase
             ->contains(fn ($item) => $item->getLabel() === 'Saisons'));
     }
 
+    public function test_finance_submenu_does_not_grant_invoice_access_to_credit_reader(): void
+    {
+        $this->permissions(['credits.view']);
+        $this->get('/customer-credits')->assertOk()->assertSee('data-cu-submenu="invoices"', false);
+        $panel = Filament::getCurrentPanel();
+        $parts = \App\ClubUnio\NavigationStructure::partition($panel, $panel->getAuthorizedNavigation());
+        $parent = collect($parts['navigation'])->flatMap(fn ($group) => $group->getItems())
+            ->first(fn ($item) => $item->getLabel() === 'Rechnungen');
+        $this->assertNotNull($parent);
+        $this->assertNull($parent->getUrl());
+        $this->assertCount(3, $parent->getChildItems());
+        $this->get('/invoices')->assertForbidden();
+        $this->get('/contribution-preview')->assertForbidden();
+        $this->assertFalse(\App\ClubUnio\Resources\CreditNoteResource::canCreate());
+    }
+
     public function test_bexio_dispatch_navigation_is_registered_and_module_guarded(): void
     {
         $page = \App\ClubUnio\Pages\BexioDispatchTrials::class;

@@ -2,6 +2,10 @@
 
 ## Struktur und Bedienung
 
+Nachfolge02.11.: unabhaengige Pfeilbuttons statt Aktivierung nur durch
+Seitenaufruf, siehe CLUBUNIO-NAVIGATION-CLEANUP.md. Die folgende Erstabnahme
+beschreibt den urspruenglichen Zwischenstand.
+
 Unter Sport bleibt **Saisons** der Einstieg in die Saisonverwaltung. Folgende
 bisher gleichrangige Eintraege liegen jetzt als native Filament-Untermenues dort:
 

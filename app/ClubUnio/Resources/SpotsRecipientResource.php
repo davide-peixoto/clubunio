@@ -17,7 +17,12 @@ class SpotsRecipientResource extends CatalogResource
 {
     protected static ?string $model = SpotsRecipient::class;
 
-    protected static ?string $pluralModelLabel = 'Spots-Versandliste';
+    protected static ?string $pluralModelLabel = 'Adressliste für Massenversand';
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Adressliste für Massenversand';
+    }
 
     protected static ?string $tenantRelationshipName = 'spotsRecipients';
 

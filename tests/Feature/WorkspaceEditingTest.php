@@ -64,6 +64,12 @@ class WorkspaceEditingTest extends TestCase
         $this->assertSame(['Saisonplanung', 'Mannschaften Pro Saison', 'Spielerzuordnungen', 'Staff-Zuordnungen', 'Technische Leiter', 'Trainingszeiten'],
             array_map(fn ($item) => $item->getLabel(), $parent->getChildItems()));
         $this->assertFalse($visible->contains(fn ($item) => str_ends_with($item->getUrl() ?? '', '/team-players')));
+        $invoice = $visible->first(fn ($item) => str_ends_with($item->getUrl() ?? '', '/invoices'));
+        $this->assertCount(4, $invoice->getChildItems());
+        $this->assertFalse($visible->contains(fn ($item) => str_ends_with($item->getUrl() ?? '', '/legacy-training-plans')));
+        $this->assertTrue(collect($partition['settings']['Datenübernahme'])->contains(fn ($item) => str_ends_with($item->getUrl(), '/legacy-training-plans')));
+        $this->assertTrue($visible->contains(fn ($item) => $item->getLabel() === 'Adressliste für Massenversand'));
+        $this->assertTrue($visible->contains(fn ($item) => $item->getLabel() === 'Quittungen'));
         $again = NavigationStructure::partition($panel, $raw);
         $this->assertCount(6, collect($again['navigation'])->flatMap(fn ($group) => $group->getItems())
             ->first(fn ($item) => $item->getLabel() === 'Saisons')->getChildItems());
@@ -80,6 +86,16 @@ class WorkspaceEditingTest extends TestCase
         $season = collect($sport->getItems())->first(fn ($item) => $item->getLabel() === 'Saisons');
         $this->assertTrue($season->isChildItemsActive());
         $page->assertSee('fi-sidebar-sub-group-items', false)->assertSee('/training-slots');
+    }
+
+    public function test_submenus_render_disclosure_controls_without_visiting_parent_page(): void
+    {
+        $this->get('/members')->assertOk()
+            ->assertSee('data-cu-submenu="seasons"', false)
+            ->assertSee('data-cu-submenu="invoices"', false)
+            ->assertSee('aria-controls="cu-submenu-seasons"', false)
+            ->assertSee('aria-controls="cu-submenu-invoices"', false)
+            ->assertSee('/team-players')->assertSee('/credit-notes');
     }
 
     public function test_settings_overview_is_not_accessible_after_role_revocation(): void
