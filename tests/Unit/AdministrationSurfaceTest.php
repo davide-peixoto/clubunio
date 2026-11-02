@@ -29,5 +29,6 @@ class AdministrationSurfaceTest extends TestCase
         $this->assertStringContainsString('input:not(.fi-input)', $css);
         $this->assertStringContainsString('button:not(.fi-btn):not(.fi-icon-btn)', $css);
         $this->assertStringContainsString('clubunio-workspace.css\') }}?v=3', $layout);
+        $this->assertStringContainsString('grid-template-columns: minmax(0,1fr)', file_get_contents($root.'/public/css/clubunio-administration.css'));
     }
 }
