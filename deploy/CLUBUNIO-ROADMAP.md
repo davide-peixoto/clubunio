@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saison-Untermenues (02.11.2026)
+
+Saisonplanung, Mannschaften pro Saison, Spieler-, Staff- und TL-Zuordnungen sowie
+Trainingszeiten unter Saisons gebuendelt. Bestehende direkte URLs, berechtigte
+Unterbereiche ohne Saisonrecht und Menuesuche bleiben erhalten. Operative
+Planung/Wettkaempfe/Trainingsplaene bleiben eigenstaendig. Keine DB-Migration,
+Rechteerweiterung oder Datenuebernahme. CLUBUNIO-SEASON-NAVIGATION.md.
+
 ## Absenzen durch Mannschaftsverantwortliche (02.11.2026)
 
 Trainer und technische Leiter duerfen Absenzen der aktiven Mitglieder ihrer

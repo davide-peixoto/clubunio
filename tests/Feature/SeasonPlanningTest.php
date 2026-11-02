@@ -473,7 +473,10 @@ class SeasonPlanningTest extends TestCase
             [NavigationGroup::make('Sport')->items([$item])]);
         $sport = collect($parts['navigation'])->first(fn ($group) => $group->getLabel() === 'Sport');
         $this->assertNotNull($sport);
-        $this->assertTrue(collect($sport->getItems())->contains(fn ($entry) => $entry->getUrl() === SeasonPlanning::getNavigationUrl()));
+        $parent = collect($sport->getItems())->first(fn ($entry) => $entry->getLabel() === 'Saisons');
+        $this->assertNotNull($parent);
+        $this->assertNull($parent->getUrl());
+        $this->assertTrue(collect($parent->getChildItems())->contains(fn ($entry) => $entry->getUrl() === SeasonPlanning::getNavigationUrl()));
         $this->assertSame([], $parts['settings']);
     }
 

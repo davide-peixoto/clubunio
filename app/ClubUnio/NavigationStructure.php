@@ -12,11 +12,14 @@ class NavigationStructure
 {
     private const PRIMARY = [
         'Mitglieder' => ['MemberResource', 'RegistrationResource', 'MemberChangeRequestResource', 'FamilyResource', 'MemberDocumentResource', 'DocumentSeries', 'FamilyMemberResource'],
-        'Sport' => ['TeamPlanning', 'SponsorRuns', 'SeasonResource', 'SeasonPlanning', 'TeamSeasonResource', 'TeamPlayerResource', 'TeamStaffResource', 'TechnicalLeadResource', 'TrainingSlotResource', 'SfvCompetitions', 'CompetitionResource', 'LegacyTrainingPlanResource'],
+        'Sport' => ['TeamPlanning', 'SponsorRuns', 'SeasonResource', 'SfvCompetitions', 'CompetitionResource', 'LegacyTrainingPlanResource'],
         'Finanzen' => ['InvoiceResource', 'ExpenseResource', 'ContributionPreview', 'CustomerCreditResource', 'CreditNoteResource', 'RefundResource', 'BexioReconciliation'],
         'Anlagen & Kommunikation' => ['FieldAvailabilityResource', 'BusReservations', 'SignagePreview', 'SignageNoticeResource', 'AnnouncementResource', 'ClubEventResource', 'MaterialReceiptResource', 'LegacyMaterialReceiptResource'],
         'Auswertungen' => ['MemberReportResource', 'UnassignedMemberResource', 'PassiveMemberResource', 'PlayerReportResource', 'StaffReportResource', 'FamilyReportResource', 'OpenInvoiceResource', 'PaymentReportResource', 'BankAccountReportResource', 'KeyReportResource', 'SpotsRecipientResource'],
     ];
+
+    private const SEASON_CHILDREN = ['SeasonPlanning', 'TeamSeasonResource', 'TeamPlayerResource',
+        'TeamStaffResource', 'TechnicalLeadResource', 'TrainingSlotResource'];
 
     private const SETTINGS = [
         'Mitglieder & Verein' => ['MemberStatusResource', 'MemberTypeResource', 'RegistrationStatusResource', 'CountryResource', 'GenderResource', 'BillingRecipientResource', 'DocumentTypeResource', 'ClubFunctionResource', 'QualificationResource'],
@@ -32,10 +35,16 @@ class NavigationStructure
         foreach ([...$panel->getResources(), ...$panel->getPages()] as $class) {
             $classes[$class::getNavigationUrl()] = class_basename($class);
         }
-        $main = $settings = [];
+        $main = $settings = $season = [];
         foreach ($groups as $group) {
             foreach ($group->getItems() as $item) {
+                $item = clone $item;
                 $name = $classes[$item->getUrl()] ?? null;
+                if (in_array($name, self::SEASON_CHILDREN, true)) {
+                    $season[array_search($name, self::SEASON_CHILDREN, true)] = $item;
+
+                    continue;
+                }
                 if ($name === 'Dashboard') {
                     $main[''][] = $item;
 
@@ -70,6 +79,14 @@ class NavigationStructure
                 $settings[$category][] = $item;
             }
         }
+        if ($season) {
+            ksort($season);
+            $position = array_search('SeasonResource', self::PRIMARY['Sport'], true);
+            // A structural parent never grants access to the season resource itself.
+            $parent = $main['Sport'][$position] ?? NavigationItem::make('Saisons')->icon('heroicon-o-calendar-days');
+            $main['Sport'][$position] = $parent->childItems(array_values($season))
+                ->extraAttributes(['data-cu-search-label' => implode(' ', array_map(fn ($item) => $item->getLabel(), $season))]);
+        }
         if (ProfileUi::allows('training')) {
             $main['Sport'][] = NavigationItem::make('Trainingspläne')
                 ->icon('heroicon-o-academic-cap')
@@ -83,7 +100,7 @@ class NavigationStructure
             }
             ksort($main[$label]);
             $items = array_values($main[$label]);
-            $active = collect($items)->contains(fn ($item) => $item->isActive());
+            $active = collect($items)->contains(fn ($item) => $item->isActive() || $item->isChildItemsActive());
             if ($label === 'Einstellungen') {
                 $active = $active || collect($settings)->flatten(1)->contains(fn ($item) => $item->isActive());
                 foreach ($items as $item) {

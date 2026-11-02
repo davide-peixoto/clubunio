@@ -202,6 +202,30 @@ class ProfileUiTest extends TestCase
         $this->assertSame([], \App\ClubUnio\NavigationStructure::partition($panel, [])['navigation']);
     }
 
+    public function test_season_submenu_preserves_independent_profile_permissions(): void
+    {
+        $this->permissions(['teams.view']);
+        $page = $this->get('/team-players')->assertOk();
+        $panel = Filament::getCurrentPanel();
+        $parts = \App\ClubUnio\NavigationStructure::partition($panel, $panel->getAuthorizedNavigation());
+        $items = collect($parts['navigation'])->flatMap(fn ($group) => $group->getItems());
+        $season = $items->first(fn ($item) => $item->getLabel() === 'Saisons');
+        $this->assertNotNull($season);
+        $this->assertNull($season->getUrl());
+        $urls = array_map(fn ($item) => $item->getUrl(), $season->getChildItems());
+        $this->assertCount(4, $urls);
+        $this->assertContains(url('/team-players'), $urls);
+        $this->assertNotContains(url('/seasons'), $urls);
+        $this->assertNotContains(url('/training-slots'), $urls);
+        $page->assertSee('fi-sidebar-sub-group-items', false);
+        $this->get('/seasons')->assertForbidden();
+        $this->get('/training-slots')->assertForbidden();
+        $this->permissions(['members.view']);
+        $parts = \App\ClubUnio\NavigationStructure::partition($panel, []);
+        $this->assertFalse(collect($parts['navigation'])->flatMap(fn ($group) => $group->getItems())
+            ->contains(fn ($item) => $item->getLabel() === 'Saisons'));
+    }
+
     public function test_bexio_dispatch_navigation_is_registered_and_module_guarded(): void
     {
         $page = \App\ClubUnio\Pages\BexioDispatchTrials::class;

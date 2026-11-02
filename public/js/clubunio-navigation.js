@@ -32,9 +32,12 @@
                     }
                     let visible = 0;
                     const groupMatch = group.dataset.groupLabel?.toLocaleLowerCase().includes(query);
-                    group.querySelectorAll('.fi-sidebar-item').forEach(item => {
+                    [...group.querySelectorAll('.fi-sidebar-item')].reverse().forEach(item => {
                         const label = item.querySelector('.fi-sidebar-item-label')?.textContent || '';
-                        const show = !query || groupMatch || label.toLocaleLowerCase().includes(query);
+                        const searchable = `${label} ${item.dataset.cuSearchLabel || ''}`;
+                        const matchingChild = [...item.querySelectorAll('.fi-sidebar-item')]
+                            .some(child => !child.classList.contains('cu-search-hidden'));
+                        const show = !query || groupMatch || searchable.toLocaleLowerCase().includes(query) || matchingChild;
                         item.classList.toggle('cu-search-hidden', !show);
                         if (show) visible++;
                     });

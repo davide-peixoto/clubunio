@@ -52,12 +52,34 @@ class WorkspaceEditingTest extends TestCase
         $this->assertSame([null, 'Mitglieder', 'Sport', 'Finanzen', 'Anlagen & Kommunikation', 'Auswertungen', null], $groups);
         $visible = collect($partition['navigation'])->flatMap(fn ($group) => $group->getItems());
         $this->assertFalse($visible->contains(fn ($item) => str_contains($item->getUrl(), '/countries')));
-        $all = $visible->concat(collect($partition['settings'])->flatten(1))->map(fn ($item) => $item->getUrl())->sort()->values()->all();
+        $nested = $visible->flatMap(fn ($item) => [$item, ...$item->getChildItems()]);
+        $all = $nested->concat(collect($partition['settings'])->flatten(1))->map(fn ($item) => $item->getUrl())->filter()->sort()->values()->all();
         // Training plans are registered manually, outside Filament's resource navigation.
         $original = collect($raw)->flatMap(fn ($group) => $group->getItems())->map(fn ($item) => $item->getUrl())
             ->push(url('/planning/training-plans'))->sort()->values()->all();
         $this->assertSame($original, $all);
+        $parent = $visible->first(fn ($item) => $item->getLabel() === 'Saisons');
+        $this->assertNotNull($parent);
+        $this->assertCount(6, $parent->getChildItems());
+        $this->assertSame(['Saisonplanung', 'Mannschaften Pro Saison', 'Spielerzuordnungen', 'Staff-Zuordnungen', 'Technische Leiter', 'Trainingszeiten'],
+            array_map(fn ($item) => $item->getLabel(), $parent->getChildItems()));
+        $this->assertFalse($visible->contains(fn ($item) => str_ends_with($item->getUrl() ?? '', '/team-players')));
+        $again = NavigationStructure::partition($panel, $raw);
+        $this->assertCount(6, collect($again['navigation'])->flatMap(fn ($group) => $group->getItems())
+            ->first(fn ($item) => $item->getLabel() === 'Saisons')->getChildItems());
         $this->get('/configuration')->assertOk()->assertSee('Einstellungen suchen')->assertSee('Sport &amp; Anlagen', false)->assertSee('Parameter');
+    }
+
+    public function test_active_season_child_keeps_sport_navigation_open(): void
+    {
+        $page = $this->get('/team-players')->assertOk();
+        $panel = Filament::getCurrentPanel();
+        $partition = NavigationStructure::partition($panel, $panel->getAuthorizedNavigation());
+        $sport = collect($partition['navigation'])->first(fn ($group) => $group->getLabel() === 'Sport');
+        $this->assertFalse($sport->isCollapsed());
+        $season = collect($sport->getItems())->first(fn ($item) => $item->getLabel() === 'Saisons');
+        $this->assertTrue($season->isChildItemsActive());
+        $page->assertSee('fi-sidebar-sub-group-items', false)->assertSee('/training-slots');
     }
 
     public function test_settings_overview_is_not_accessible_after_role_revocation(): void

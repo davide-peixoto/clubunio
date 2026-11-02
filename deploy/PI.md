@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+## Saison-Untermenues (02.11.2026)
+
+Gezieltes Navigationsdelta auf absence-management: sechs saisonabhaengige
+Bereiche unter Saisons statt als gleichrangige Sportmenues. Nur autorisierte
+Links umordnen; keine DB-/Rechte-/Routenmigration oder Mobile-Auslieferung.
+Menuesuche samt Elternknoten und aktive Gruppen erhalten. Abnahme/Rueckweg:
+CLUBUNIO-SEASON-NAVIGATION.md.
+
 ## Absenzen verwalten (02.11.2026)
 
 Ausgeliefert20261102-clubunio-absence-management ausa0d59a6 auf
