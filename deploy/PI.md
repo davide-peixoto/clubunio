@@ -2,11 +2,15 @@
 
 ## Absenzen verwalten (02.11.2026)
 
-Gezieltes Delta auf20261102-clubunio-administration-ui-responsive geplant:
+Ausgeliefert20261102-clubunio-absence-management ausa0d59a6 auf
+20261102-clubunio-administration-ui-responsive (Rueckweg erhalten):
 Trainer/TL koennen Absenzen der eigenen Teams erfassen/bearbeiten; Admin und
 Geschaeftsstelle alle aktiven Vereinsmitglieder. Keine erweiterten Loeschrechte,
 keine Migration/Seeder/Profileinstellung. Fristen, Datenschutz und Audit bleiben.
 Parallele Mobile-Arbeiten und PHPMaker DEV/PROD nicht mit ausrollen.
+Neun Release-Gates und sechs Laufzeitdateihashes bestaetigt;13 Tests/157
+Assertions plus ueberlappender Negativnachlauf1/17 erfolgreich. Angemeldete
+Desktop-/Mobilpruefung ohne echte Speicherung, Viewport zurueckgesetzt.
 Release-/Abnahmenachweis: CLUBUNIO-ABSENCE-MANAGEMENT.md.
 
 ## Einheitliche Verwaltung (02.11.2026)

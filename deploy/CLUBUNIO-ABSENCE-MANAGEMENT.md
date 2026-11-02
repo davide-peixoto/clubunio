@@ -56,4 +56,27 @@ pruefungen fuer fremde bestehende Absenzen und entzogene TL-Zuordnung separat:
 1 Test/17 Assertions erfolgreich (ueberlappt mit der obigen Gruppe).
 Alle sechs betroffenen PHP-Quellen/Tests ohne Syntaxfehler.
 
-Release und visuelle Abnahme werden nachgetragen.
+## Auslieferung und Sichtpruefung
+
+Ausgeliefert als `20261102-clubunio-absence-management`, Quellrevision
+`a0d59a6b16069090e8594dc1cb47e49cd0c57941`. Vorheriger Release
+`20261102-clubunio-administration-ui-responsive` bleibt erhalten.
+Alle sechs Laufzeitdateien vor Ueberlagerung mit dem bisherigen Git-Stand und
+nachher mit der Quellrevision abgeglichen. Alle neun Release-Gates bestanden;
+Konfigurations-, Routen- und Viewcache neu erstellt, PHP-FPM neu geladen.
+
+Angemeldete Chrome-Pruefung auf dev.clubunio.ch:
+- Erfassungsaktion und Bearbeitung beider vorhandenen Zeilen sichtbar.
+- Mitgliedersuche liefert begrenzte Treffer; Auswahl nur lesend getestet.
+- Bearbeitung laedt Mitglied und bestehende Von-/Bis-Daten korrekt vor;
+  Mitglied bleibt im Aenderungsdialog gesperrt.
+- Desktop1440x900 und Mobil390x844 geprueft. Mobil Dokumentbreite390px bei
+  Viewport390px, alle Felder und Formularaktionen innerhalb des Dialogs.
+- Alle Dialoge abgebrochen, keine echte Absenz angelegt/geaendert und kein
+  Provider-/Push-/E-Mail-Aufruf durch diese Sichtpruefung.
+- Temporaere Viewportvorgabe anschliessend aufgehoben.
+
+Rollenpruefungen fuer Trainer/TL erfolgten mit isolierten Rollback-Testkonten,
+die angemeldete Live-Sichtpruefung mit dem bestehenden Adminkonto.
+Screenshots nur lokal unter storage/framework/testing/absence-management-*.png,
+nicht im Repository. Bestehendes PHPMaker DEV/PROD unveraendert.
