@@ -2,11 +2,14 @@
 
 ## Saison-Untermenues (02.11.2026)
 
-Gezieltes Navigationsdelta auf absence-management: sechs saisonabhaengige
+Ausgeliefert20261102-clubunio-season-navigation aus0eb9e17 auf
+absence-management (Rueckweg erhalten): sechs saisonabhaengige
 Bereiche unter Saisons statt als gleichrangige Sportmenues. Nur autorisierte
 Links umordnen; keine DB-/Rechte-/Routenmigration oder Mobile-Auslieferung.
 Menuesuche samt Elternknoten und aktive Gruppen erhalten. Abnahme/Rueckweg:
-CLUBUNIO-SEASON-NAVIGATION.md.
+CLUBUNIO-SEASON-NAVIGATION.md. Neun Gates und drei Laufzeitdateihashes gruen;
+6 Integrationstests/46 Assertions, Layouttest1/5, Desktop-/Mobil-Menuesuche
+angemeldet geprueft. Keine fachlichen Daten geaendert.
 
 ## Absenzen verwalten (02.11.2026)
 

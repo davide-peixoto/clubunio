@@ -44,4 +44,25 @@ verschachtelten Wizard, aktive Sportgruppe, reine Team-Leseprofile ohne
 Saison-/Trainingszeitenzugriff und unveraenderte Einstellungsrechte.
 6 gezielte Integrationstests/46 Assertions sowie Layouttest1/5 erfolgreich.
 PHP- und JavaScript-Syntaxpruefungen ohne Fehler.
-Browser-/Deploymentnachweis folgt nach Abschluss.
+
+## Auslieferung und Browserabnahme
+
+Release `20261102-clubunio-season-navigation`, Quellrevision
+`0eb9e17fa598d14d07f1a8022d9d847315ddfc76`. Rueckweg:
+`20261102-clubunio-absence-management`, unveraendert erhalten.
+Drei Laufzeitdateien vorher gegen den Ausgangsstand und nachher gegen die
+Quellrevision geprueft; alle neun Release-Gates erfolgreich. Konfigurations-,
+Routen- und Viewcache im neuen Release erneuert; keine DB-Aenderung.
+
+Angemeldete Chrome-Pruefung auf dev.clubunio.ch:
+- Saisons zeigt alle sechs eingerueckten Unterbereiche.
+- Spielerzuordnungen direkt aufgerufen, Saisons und Nachbarunterpunkte bleiben sichtbar.
+- Suche Staff findet Saisons samt Staff-Zuordnungen und die passenden Auswertungen.
+- Von Teamplanung aus findet Trainingszeiten den Einstieg Saisons; nach Oeffnen
+  ist Trainingszeiten direkt erreichbar.
+- Mobil390x844: Seitenleiste aufgeklappt, Suche Technische zeigt Saisons mit
+  Technische Leiter. Keine horizontale Seitenueberbreite.
+- Suche geleert und Viewportvorgabe aufgehoben; keine fachlichen Daten geaendert.
+
+Lokale Screenshots storage/framework/testing/season-navigation-*.png nicht
+versioniert. Parallele Mobile-Aenderungen und PHPMaker DEV/PROD nicht deployed.
