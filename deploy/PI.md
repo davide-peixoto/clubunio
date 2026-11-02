@@ -2,9 +2,13 @@
 
 ## Kompakte Navigation/Dashboard (02.11.2026)
 
-Geplantes Delta auf mobile-communication: Lupe statt permanenter Suche,
+Ausgeliefert20261102-clubunio-compact-shell ausb595257 auf
+mobile-communication (Rueckweg erhalten): Lupe statt permanenter Suche,
 ziehbarer Menue-Seitenrand statt Slider, persoenliche Dashboard-Ueberschrift
 ohne AccountWidget. Profil-Abmeldung und Rechte unveraendert. Keine Migration.
+Elf Release-Gates, sieben Laufzeithashes,9 PHPUnit-Tests/81 Assertions und
+3 Node-Verhaltenstests gruen. Begruessung/Lupensuche/Escape live bestaetigt;
+native Maus-/Mobilabnahme durch URL-Sicherheitsstopp der Browsersteuerung offen.
 Nachweis/Rueckweg: CLUBUNIO-COMPACT-SHELL.md.
 
 ## Mobile-Kommunikation DEV (02.11.2026)
