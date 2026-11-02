@@ -477,3 +477,11 @@ Never down-migrate platform authority/audit on rollback. Eight gates,60 initial
 boundary tests and41 overlapping final integration tests passed. Existing
 PHPMaker DEV/PROD, billing and app rebuild untouched. Configuration/limitations:
 CLUBUNIO-PLATFORM-ADMINISTRATION.md.
+
+02.11.2026 platform navigation correction: release20261102-clubunio-platform-navigation
+overlays only tenant-switcher, brand head and navigation CSS on the previous
+platform release. No DB/schema/setting/permission migration. Explicit20px SVG
+dimensions and stylesheet version5; caches rebuilt, eight release gates passed.
+14 platform tests/106 assertions plus layout regression/5 assertions passed;
+authenticated desktop/mobile navigation visually verified. Previous platform
+release retained for rollback; legacy DEV/PROD and mobile work unchanged.

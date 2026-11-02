@@ -12,5 +12,5 @@
     .primary{background:var(--clubunio-club-color);border-color:var(--clubunio-club-color);color:var(--clubunio-club-ink)}
 </style>
 @endif
-<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=4">
+<link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=5">
 <script src="{{ asset('js/clubunio-navigation.js') }}?v=3" defer></script>

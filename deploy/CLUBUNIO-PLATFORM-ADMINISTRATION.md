@@ -130,3 +130,20 @@ Plattformjournal, Domainreservierungen, Konten oder Shared-Storage. Beim
 Ruecksprung geht die neue Plattformoberflaeche verloren; keine echte Kunden-
 Customdomain ist bisher eingerichtet. Vor spaeteren Domainaktivierungen den
 Rueckweg erneut bewerten und die Domain-Grenzen beibehalten.
+
+## Navigationskorrektur (02.11.2026)
+
+Der Plattformlink im angemeldeten Filament-Menue hatte nur nicht mitgelieferte
+Utility-Groessenklassen; SVG dadurch216 statt20 Pixel breit/hoch. Eigene
+Navigationsklassen begrenzen das Symbol auf20x20 Pixel, Link als kompakte
+Flexzeile. Stylesheet-Version5 erzwingt den Abruf der korrigierten Darstellung.
+Keine Rollen-, Daten- oder Fachlogikaenderung.
+
+Release20261102-clubunio-platform-navigation als Drei-Dateien-Delta auf
+20261026-clubunio-platform, diesen als Rueckweg erhalten. Acht Servergates
+erfolgreich;14 Plattformtests/106 Assertions und ein Layouttest/5 Assertions
+bestanden. Angemeldete Dashboard-Navigation in Chrome am Desktop und390px
+visuell geprueft: Symbol20x20, Link36px hoch am Desktop, keine mobile
+Seitenueberbreite. Viewport zurueckgesetzt. Diese gezielte Sichtpruefung ersetzt
+nicht die noch offene komplette Sichtabnahme der Plattform-Verwaltungsformulare.
+Bestehendes PHPMaker DEV/PROD und parallele Mobile-Arbeit unveraendert.
