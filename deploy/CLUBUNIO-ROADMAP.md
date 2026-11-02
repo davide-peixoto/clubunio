@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Absenzen durch Mannschaftsverantwortliche (02.11.2026)
+
+Trainer und technische Leiter duerfen Absenzen der aktiven Mitglieder ihrer
+zugeordneten Teams erfassen/bearbeiten. Admin/Geschaeftsstelle auch ohne eigene
+Mitgliedsverknuepfung fuer alle aktiven Vereinsmitglieder. Native Seitendialoge,
+begrenzte Mitgliedersuche und frische serverseitige Pruefung beim Speichern.
+Keine erweiterten Loeschrechte; Fristsperren, Revision, Audit und Datenschutz
+erhalten. Keine DB-Migration oder Profil-/Datenuebernahme. Gezielter ClubUnio-
+Release, PHPMaker DEV/PROD unveraendert. Details: CLUBUNIO-ABSENCE-MANAGEMENT.md.
+
 ## Benutzersimulation (26.10.2026)
 
 Additive Migration81 und persoenlich freizuschaltender Nur-Lesen-Supportmodus.

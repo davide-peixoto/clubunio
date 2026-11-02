@@ -279,6 +279,9 @@ class TeamPlanningService
     {
         $this->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
+        if (in_array($access->membership($actor->fresh(), $tenant)?->role, ['admin', 'office'], true)) {
+            return $this->table($tenant, 'team_absences')->whereNull('deleted_at');
+        }
         $own = $access->membership($actor->fresh(), $tenant)?->role === 'profile' ? collect() : $access->represented($actor, $tenant)->pluck('id');
         $teams = $this->teams($actor, $tenant, true, 'view')->pluck('id');
 
@@ -286,6 +289,26 @@ class TeamPlanningService
             $q->whereIn('member_id', $own);
             foreach (['team_players', 'team_staff'] as $table) {
                 $q->orWhereIn('member_id', $this->table($tenant, $table)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
+            }
+        });
+    }
+
+    public function absenceMembers(Account $actor, Tenant $tenant, string $function)
+    {
+        abort_unless(in_array($function, ['create', 'update'], true), 403);
+        $this->authorizeOperation($actor, $tenant, $function);
+        $access = app(MemberAccessService::class);
+        $members = $access->activeMembers($tenant);
+        if (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $function)) {
+            return $members;
+        }
+        $teams = $access->responsibleTeams($actor, $tenant);
+
+        return $members->where(function ($query) use ($access, $actor, $tenant, $teams) {
+            $query->whereIn('clubora.members.id', $access->represented($actor, $tenant)->select('clubora.members.id'));
+            foreach (['team_players', 'team_staff'] as $table) {
+                $query->orWhereIn('clubora.members.id', $this->table($tenant, $table)
+                    ->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
             }
         });
     }
@@ -303,9 +326,11 @@ class TeamPlanningService
             }
             $this->conflict($old, $input);
             $member = (int) ($old->member_id ?? $input['member_id'] ?? 0);
-            $members = app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $delete ? 'deactivate' : ($id ? 'update' : 'create'))
-                ? app(MemberAccessService::class)->activeMembers($tenant)
-                : app(MemberAccessService::class)->represented($actor, $tenant);
+            $members = $delete
+                ? (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', 'deactivate')
+                    ? app(MemberAccessService::class)->activeMembers($tenant)
+                    : app(MemberAccessService::class)->represented($actor, $tenant))
+                : $this->absenceMembers($actor, $tenant, $id ? 'update' : 'create');
             abort_unless($members->whereKey($member)->exists(), 403);
             if ($delete) {
                 $data = ['deleted_at' => now()->toIso8601String()];

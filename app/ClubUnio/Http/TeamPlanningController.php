@@ -265,12 +265,18 @@ class TeamPlanningController
     public function absences(Request $request, Tenant $tenant)
     {
         $data = $this->context($request, $tenant);
+        $editing = $request->filled('edit');
+        $absenceMembers = (! $request->attributes->get('clubunioWorkspace') || $editing)
+            && \App\ClubUnio\Resources\ProfileUi::profileAllows($data['actor'], $tenant, 'planning', $editing ? 'update' : 'create')
+            ? $this->service->absenceMembers($data['actor'], $tenant, $editing ? 'update' : 'create')->orderBy('last_name')->orderBy('first_name')->get()
+            : collect();
+        $data['absenceMembers'] = $absenceMembers;
         if ($request->attributes->get('clubunioWorkspace')) {
             $record = null;
             if ($request->filled('edit')) {
                 $id = $request->validate(['edit' => 'required|integer|min:1'])['edit'];
                 $record = $this->service->absences($data['actor'], $tenant)->where('id', $id)->first();
-                abort_unless($record && $data['own']->contains('id', $record->member_id), 404);
+                abort_unless($record && $absenceMembers->contains('id', $record->member_id), 404);
                 $record->note = $record->note_encrypted ? Crypt::decryptString($record->note_encrypted) : '';
                 unset($record->note_encrypted);
             }
@@ -283,11 +289,14 @@ class TeamPlanningController
             $absence->note = $absence->note_encrypted ? Crypt::decryptString($absence->note_encrypted) : '';
             unset($absence->note_encrypted);
         }
+        $data['absenceEditableIds'] = \App\ClubUnio\Resources\ProfileUi::profileAllows($data['actor'], $tenant, 'planning', 'update')
+            ? $this->service->absenceMembers($data['actor'], $tenant, 'update')->whereIn('clubora.members.id', $absences->pluck('member_id'))->pluck('id')->all()
+            : [];
         $record = null;
         if ($request->filled('edit')) {
             $id = $request->validate(['edit' => 'required|integer|min:1'])['edit'];
             $record = $this->service->absences($data['actor'], $tenant)->where('id', $id)->first();
-            abort_unless($record && $data['own']->contains('id', $record->member_id), 404);
+            abort_unless($record && $absenceMembers->contains('id', $record->member_id), 404);
             $record->note = $record->note_encrypted ? Crypt::decryptString($record->note_encrypted) : '';
         }
 

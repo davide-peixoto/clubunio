@@ -169,10 +169,10 @@ class WorkspaceBusPlanningTablesTest extends TestCase
         $html = $response->json('components.0.effects.html');
         $this->assertStringContainsString('PRIVATE-OWN-NOTE', $html);
         $this->assertStringContainsString('Table Member', $html);
-        $this->assertStringContainsString('/planning/absences?edit='.$id, $html);
+        $this->assertStringContainsString('Absenz bearbeiten', $html);
         $this->assertStringContainsString('/planning/absences/'.$id, $html);
         $this->assertStringNotContainsString('/planning/absences?edit='.$otherId, $html);
-        $this->get('/planning/absences?edit='.$otherId)->assertNotFound();
+        $this->get('/planning/absences?edit='.$otherId)->assertOk();
         $this->get('/planning/absences?edit='.$id)->assertOk()->assertSee('PRIVATE-OWN-NOTE');
         Http::assertNothingSent();
     }

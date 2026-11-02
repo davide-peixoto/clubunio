@@ -435,22 +435,109 @@ class TeamPlanningTest extends TestCase
     {
         $result = $this->service->saveAbsence($this->player, $this->tenant, null, $this->absence());
         $this->assertTrue($this->service->absences($this->trainer, $this->tenant)->where('id', $result['id'])->exists());
-        try {
-            $this->service->saveAbsence($this->trainer, $this->tenant, $result['id'], $this->absence(['revision' => 1]));
-            $this->fail('Trainer edited foreign absence');
-        } catch (HttpException $e) {
-            $this->assertSame(403, $e->getStatusCode());
-        }
+        $this->service->saveAbsence($this->trainer, $this->tenant, $result['id'], $this->absence(['revision' => 1]));
         $parent = $this->account('member');
         $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $parent->id, 'member_id' => $this->member, 'kind' => 'parent', 'state' => 'approved', 'source' => 'test']);
-        $this->service->saveAbsence($parent, $this->tenant, $result['id'], $this->absence(['revision' => 1, 'note' => 'Parent correction']));
-        $this->assertSame(2, $this->db->table('team_absences')->where('id', $result['id'])->value('revision'));
+        $this->service->saveAbsence($parent, $this->tenant, $result['id'], $this->absence(['revision' => 2, 'note' => 'Parent correction']));
+        $this->assertSame(3, $this->db->table('team_absences')->where('id', $result['id'])->value('revision'));
         $outsider = $this->account('member');
         $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $outsider->id, 'member_id' => $this->otherMember, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
         $this->assertSame(0, $this->service->absences($outsider, $this->tenant)->count());
         $this->actingAs($outsider, 'clubunio');
         $this->get('/planning/'.$this->tenant->slug.'/absences')->assertOk()->assertDontSee('Parent correction');
-        $this->post('/planning/'.$this->tenant->slug.'/absences/'.$result['id'], $this->absence(['revision' => 2]))->assertForbidden();
+        $this->post('/planning/'.$this->tenant->slug.'/absences/'.$result['id'], $this->absence(['revision' => 3]))->assertForbidden();
+    }
+
+    public function test_absence_managers_can_create_and_edit_only_their_responsible_members(): void
+    {
+        $lead = $this->account('technical_lead');
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $lead->id,
+            'member_id' => $this->otherMember, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
+        $this->db->table('technical_leads')->insert(['tenant_id' => $this->tenant->id, 'member_id' => $this->otherMember, 'team_season_id' => $this->team]);
+        $unassigned = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Unassigned']);
+        $foreignTenant = Tenant::create(['slug' => 'absence-other-'.bin2hex(random_bytes(6)), 'name' => 'Other']);
+        $foreign = $this->db->table('members')->insertGetId(['tenant_id' => $foreignTenant->id, 'first_name' => 'Foreign']);
+        $outsideAbsence = $this->service->saveAbsence($this->admin, $this->tenant, null, $this->absence(['member_id' => $unassigned]));
+        foreach ([$this->trainer, $lead] as $manager) {
+            $created = $this->service->saveAbsence($manager, $this->tenant, null, $this->absence());
+            $this->service->saveAbsence($manager, $this->tenant, $created['id'], $this->absence(['revision' => 1, 'note' => 'Manager correction']));
+            $this->assertSame(2, $this->db->table('team_absences')->where('id', $created['id'])->value('revision'));
+            foreach ([$unassigned, $foreign] as $member) {
+                try {
+                    $this->service->saveAbsence($manager, $this->tenant, null, $this->absence(['member_id' => $member]));
+                    $this->fail('Unrelated member accepted');
+                } catch (HttpException $error) {
+                    $this->assertSame(403, $error->getStatusCode());
+                }
+            }
+            $this->actingAs($manager, 'clubunio')->get('/planning/'.$this->tenant->slug.'/absences?edit='.$created['id'])
+                ->assertOk()->assertSee('Manager correction');
+            try {
+                $this->service->saveAbsence($manager, $this->tenant, $outsideAbsence['id'], $this->absence(['revision' => 1]));
+                $this->fail('Unrelated absence edit accepted');
+            } catch (HttpException $error) {
+                $this->assertSame(403, $error->getStatusCode());
+            }
+            try {
+                $this->service->saveAbsence($manager, $this->tenant, $created['id'], ['revision' => 2], true);
+                $this->fail('Team-manager delete was unexpectedly expanded');
+            } catch (HttpException $error) {
+                $this->assertSame(403, $error->getStatusCode());
+            }
+        }
+        $this->db->table('technical_leads')->where('tenant_id', $this->tenant->id)->where('member_id', $this->otherMember)->update(['active' => false]);
+        $this->assertFalse($this->service->absenceMembers($lead, $this->tenant, 'update')->whereKey($this->member)->exists());
+        try {
+            $this->service->saveAbsence($lead, $this->tenant, $created['id'], $this->absence(['revision' => 2]));
+            $this->fail('Revoked team assignment retained edit access');
+        } catch (HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+    }
+
+    public function test_admin_without_self_link_can_manage_an_unassigned_absence_in_native_actions(): void
+    {
+        $this->assertFalse($this->db->table('account_member_links')->where('account_id', $this->admin->id)->exists());
+        $member = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Unassigned Admin Fixture']);
+        $page = $this->get('/planning/absences')->assertOk()->assertSee('Absenz erfassen');
+        $snapshot = $this->tableSnapshot($page->getContent());
+        $mounted = $this->updatePlanningTable($snapshot, [], [['method' => 'mountAction', 'params' => ['create', [], ['table' => true]]]])->assertOk();
+        $this->assertStringContainsString('"name":"create"', $mounted->json('components.0.snapshot'));
+        $data = $this->absence(['member_id' => $member, 'revision' => 0]);
+        $updates = [];
+        foreach ($data as $field => $value) {
+            $updates['mountedActions.0.data.'.$field] = $value;
+        }
+        $this->updatePlanningTable($mounted->json('components.0.snapshot'), $updates,
+            [['method' => 'callMountedAction', 'params' => []]])->assertOk();
+        $record = $this->db->table('team_absences')->where('tenant_id', $this->tenant->id)->where('member_id', $member)->sole();
+        $this->assertSame(1, $record->revision);
+        $page = $this->get('/planning/absences')->assertOk()->assertSee('Unassigned Admin Fixture');
+        $mounted = $this->updatePlanningTable($this->tableSnapshot($page->getContent()), [],
+            [['method' => 'mountAction', 'params' => ['edit', [], ['table' => true, 'recordKey' => (string) $record->id]]]])->assertOk();
+        $this->assertStringContainsString('PRIVATE-HEALTH-FIXTURE', $mounted->json('components.0.snapshot'));
+        $this->assertArrayHasKey('clubunioContext', json_decode($mounted->json('components.0.snapshot'), true)['memo']);
+        $this->updatePlanningTable($mounted->json('components.0.snapshot'), ['mountedActions.0.data.note' => 'Edited by admin'],
+            [['method' => 'callMountedAction', 'params' => []]])->assertOk();
+        $this->assertSame(2, $this->db->table('team_absences')->where('id', $record->id)->value('revision'));
+        Http::assertNothingSent();
+    }
+
+    public function test_read_only_planning_profile_cannot_use_absence_write_scope(): void
+    {
+        $profile = app(\App\ClubUnio\Services\AccessProfileService::class)->save($this->admin, $this->tenant, null,
+            ['name' => 'Absence reader', 'permissions' => ['planning.view'], 'active' => true, 'reason' => 'Synthetic test']);
+        $reader = $this->account('member');
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $reader->id)->update(['role' => 'profile', 'access_profile_id' => $profile->id, 'portal_enabled' => false]);
+        $this->actingAs($reader, 'clubunio')->get('/planning/absences')->assertOk()->assertDontSee('Absenz erfassen');
+        foreach (['create', 'update'] as $function) {
+            try {
+                $this->service->absenceMembers($reader, $this->tenant, $function);
+                $this->fail('Read-only profile obtained write scope');
+            } catch (HttpException $error) {
+                $this->assertSame(403, $error->getStatusCode());
+            }
+        }
     }
 
     public function test_capacity_stale_participation_and_foreign_tenant_blocked(): void

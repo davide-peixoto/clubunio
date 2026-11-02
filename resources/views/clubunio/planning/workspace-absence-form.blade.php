@@ -1,13 +1,13 @@
 @php($profileAllows = fn (string $function) => \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'planning', $function))
 <header class="fi-header"><h1 class="fi-header-heading">Absenzen</h1></header>
-@if($own->count() && $profileAllows($record ? 'update' : 'create'))
+@if($record && $absenceMembers->count() && $profileAllows('update'))
 <details class="mb-6" @if($record || $errors->any()) open @endif>
     <summary>{{ $record ? 'Absenz bearbeiten' : 'Absenz erfassen' }}</summary>
     <form class="cu-admin-form" method="post" action="{{ route('clubunio.planning.absence.save', [$tenant->slug, $record->id ?? null]) }}">
         @csrf @include('clubunio.workspace.context')
         <input type="hidden" name="revision" value="{{ old('revision', $record->revision ?? 0) }}">
         <label class="space-y-2"><span>Mitglied</span><x-filament::input.wrapper><x-filament::input.select name="member_id" required>
-            @foreach($own as $member)@if(!$record || $member->id === $record->member_id)
+            @foreach($absenceMembers as $member)@if(!$record || $member->id === $record->member_id)
                 <option value="{{ $member->id }}" @selected(old('member_id', $record->member_id ?? '') == $member->id)>{{ $member->display_name }}</option>
             @endif @endforeach
         </x-filament::input.select></x-filament::input.wrapper></label>

@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Absenzen verwalten (02.11.2026)
+
+Gezieltes Delta auf20261102-clubunio-administration-ui-responsive geplant:
+Trainer/TL koennen Absenzen der eigenen Teams erfassen/bearbeiten; Admin und
+Geschaeftsstelle alle aktiven Vereinsmitglieder. Keine erweiterten Loeschrechte,
+keine Migration/Seeder/Profileinstellung. Fristen, Datenschutz und Audit bleiben.
+Parallele Mobile-Arbeiten und PHPMaker DEV/PROD nicht mit ausrollen.
+Release-/Abnahmenachweis: CLUBUNIO-ABSENCE-MANAGEMENT.md.
+
 ## Einheitliche Verwaltung (02.11.2026)
 
 Geprueftes UI-Delta auf20261102-clubunio-family-navigation, Ziel
