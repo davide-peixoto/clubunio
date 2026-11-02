@@ -11,6 +11,11 @@ Vorheriger Release bleibt als Rueckweg; kein bestehendes PHPMaker DEV/PROD
 oder Providerkonto wird umgestellt. Genaue Abdeckung/Abnahme:
 CLUBUNIO-ADMINISTRATION-UI.md.
 
+Ausgeliefert:20261102-clubunio-administration-ui-responsive, Quellstand168ff09,
+71 Laufzeitdateien verifiziert. Nine gates gruen; Desktop-/Mobilabnahme
+abgeschlossen. Letzter Rueckweg administration-ui-final; vollstaendig vor UI
+family-navigation. Keine Schema-/Daten-/Rechte-Migration oder Provideraktion.
+
 ## Provider API release (26.10.2026)
 
 Target20261026-clubunio-api-providers is a narrowly packaged delta on the verified

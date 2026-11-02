@@ -38,9 +38,9 @@ erhalten. Vorheriger Release bleibt als Rueckweg verfuegbar.
 
 ## Abnahme
 
-Dateiliste, gezielte Regressionen und angemeldete Desktop-/Mobilpruefung werden
-nach Integration der Fachlisten hier nachgefuehrt. Ohne entsprechende Nachweise
-keine pauschale Vollabnahme aller Fachprozesse ableiten.
+Dateiliste, gezielte Regressionen und angemeldete Desktop-/Mobilpruefung sind
+unten nachgefuehrt. Daraus keine pauschale Vollabnahme aller externen
+Fachprozesse oder Provider-Schreibaktionen ableiten.
 
 ## Abdeckung am 02.11.2026
 
@@ -73,3 +73,49 @@ eingeschraenkten Darstellungsweg. Plattform-/Supportverwaltung behalten ihre
 getrennte globale Autorisierung; Vergleichstabellen sind gemeinsam gestaltet.
 Kalender und Saisonboard behalten die fuer diese Aufgaben erforderliche
 Raum-/Zeitdarstellung. Das bedeutet keine Umstellung von API-Vertraegen oder App.
+
+## Auslieferung und Nachweise
+
+Aktiv: `20261102-clubunio-administration-ui-responsive`, Runtime-Quellstand
+`168ff093fb35af27c85f36a118f401f36df4b69b`. Initiales UI-Delta auf
+`20261102-clubunio-family-navigation`, danach zwei eng begrenzte Darstellungs-
+Nachlaeufe. Sofortiger Rueckweg: `20261102-clubunio-administration-ui-final`;
+vollstaendiger Rueckweg vor dieser UI-Umstellung: family-navigation.
+Alle71 Laufzeitdateien gegen den Git-Blobhash abgeglichen. Vollstaendiges
+Quell-Delta-Archiv SHA256:
+`5df547337f628937697338c15328d673bdddf5074192d1b5c503a576c5b86cc0`.
+Keine Env-, Secret-, Upload-, Vendor- oder Mobile-Dateien im Delta.
+
+- Alle neun Releasegates erfolgreich, inklusive Profil-/Domain-/API-Grenzen,
+ 196 verschluesselter Settings und46 bestehender Nachrichtenvorlagen.
+- Breiter Regressionstest:106 Faelle/1299 Assertions, zunaechst zwei veraltete
+  HTML-Filtererwartungen in Bus/Teamplanung. Auf native Filter angepasst;
+  beide betroffenen Fachtests anschliessend gruen (2 Tests/34 Assertions).
+  Kein erneuter kompletter106er-Lauf nach den rein visuellen Nachkorrekturen.
+- Neue Workspace-Bus-/Absenz-/SFV-HTTP-Gruppe:6 Tests/99 Assertions gruen,
+  inklusive frischer Worker-Anfragen, Suche+Filter und strikter419 bei
+  gewechseltem Domain-/Vereinskontext. Team-/Trainingslisten zusaetzlich mit
+  echten HTTP-Livewire-Folgeanfragen geprueft (9 gezielte Tests/100 Assertions).
+- SFV-/Synchronisationsgruppe14 Tests/343 Assertions, Vorlagen-/Formulargruppe
+ 28 Tests/505 Assertions und Sponsorentabellen5 Tests/95 Assertions gruen.
+  Letztere prueft die tatsaechlichen lesenden Tabellenaktionen eines Nur-Lesen-
+  Profils und weiterhin gesperrte Mutationen, nicht nur direkte Methodenaufrufe.
+- API-Verwaltung18 Tests/102 Assertions plus neuer gezielter Filter-/Suchtest
+  erfolgreich. Bexio-Abgleichgruppe inklusive Layouttest15/107, operative
+  Bexio-Tabellen8/77 gruen. Gruppen ueberlappen; Zahlen nicht addieren.
+- Alle43 betroffenen Blade-Vorlagen als kompiliertes PHP syntaktisch geprueft,
+  geaenderte PHP-Quellen ohne Syntaxfehler. Layout-/Tabellenvertrag abschliessend
+ 2 Tests/21 Assertions gruen, mobile Gridbegrenzung als Regression festgehalten.
+- Angemeldete Browserabnahme: Teamplanung mit Suche/Leerergebnis/Ruecksetzen
+  bei erhaltenem Datum, Sponsorenanlass/Teilnehmer/Zusagen in CHF und SFV-
+  Quelltabelle. Desktop1440px, Mobil390px; Tabellen innerhalb343px breiter
+  Container mit lokalem Scrollen, keine Seitenueberbreite. SFV-Grid zuerst
+  zu breit, explizite minmax(0,1fr)-Spur korrigiert und erneut bestaetigt.
+- Weitere angemeldete Seitenaufrufe erfolgreich: Trainingsplaene, Bus,
+  Absenzen, Planungs-SFV, Dokumentenserien, Bexio-Abgleich, API-Verwaltung,
+  Synchronisation und Sponsorenabrechnung. Keine Anlage/Aenderung realer Daten,
+  kein Sync-/KI-/Versand-/Zahlungsbutton betaetigt. Viewport zurueckgesetzt.
+
+Ruecksprung nur als Symlinkwechsel plus PHP-FPM-Reload; gemeinsame Daten,
+Konfiguration und Dateien nicht zuruecksetzen. Bestehendes PHPMaker DEV/PROD
+und paralleler Mobile-Arbeitsstand unveraendert.

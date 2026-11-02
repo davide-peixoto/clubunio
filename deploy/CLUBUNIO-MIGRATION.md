@@ -500,3 +500,11 @@ refresh. Existing write services, revision checks, private fields, domain/tenant
 boundaries and portal renderer retained. New read-only table components recheck
 current authorization and the session context on follow-up requests. Targeted
 release/rollback and acceptance evidence: CLUBUNIO-ADMINISTRATION-UI.md.
+
+Delivered unified UI on20261102-clubunio-administration-ui-responsive (168ff09),
+71 runtime files hash-verified. Nine gates passed; private shared state retained.
+Authenticated desktop/mobile table and detail navigation checked; responsive
+grid follow-up changes presentation only. Immediate rollback administration-ui-final,
+full pre-UI rollback family-navigation. No down migration, refreshed database,
+provider write or existing DEV/PROD change. Exact test limits and evidence are
+recorded in CLUBUNIO-ADMINISTRATION-UI.md; no blanket end-to-end finance claim.
