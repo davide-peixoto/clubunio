@@ -45,3 +45,14 @@ RetiredGeneralParametersTest:1 Test/8 Assertions, ausschliesslich Rollback-Fixtu
 Allowlist, Bereichstrennung, Erhalt aktueller Parameter, Backupentschluesselung,
 Audit-Sicherung, Loeschreihenfolge und wiederholte Ausfuehrung geprueft.
 Keine Benutzerrechte, Trainingszeiten oder PHPMaker DEV/PROD geaendert.
+
+## Deployment und Abnahme
+
+Aktiviert:20261103-clubunio-retired-parameters, Basis native-planning-teams.
+Migration000091 einmalig auf Pi ausgefuehrt, genau vier Parameter entfernt.
+Sicherung: shared/storage/app/private/migration-backups/
+retired-general-20261103212127-28e1985caced.json,1836Bytes,0600.
+Nachpruefung fuer SV Sissach: general enthaelt nur SaisonID und SIGNAGE_PERIOD_ID;
+aktiver Plan weiterhin Sommer. Config-/Route-/View-Cache erneuert, PHP-FPM geladen.
+Grundpruefung, Rollenpruefung und Mobile-Saisonpruefung erfolgreich.
+Rueckweg fuer Code: vorheriger Release; Datenwiederherstellung nur wie oben.
