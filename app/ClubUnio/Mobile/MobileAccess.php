@@ -31,6 +31,7 @@ final class MobileAccess
             ->join('clubora.teams as t', fn ($join) => $join->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
             ->join('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
             ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true);
+        app(MobileSeasonScope::class)->teams($query, $tenant, 'ts.season_id');
         if (! $this->admin($actor, $tenant)) {
             $responsible = $access->responsibleTeams($actor, $tenant);
             $own = $access->represented($actor, $tenant, $staffOnly)->select('clubora.members.id');

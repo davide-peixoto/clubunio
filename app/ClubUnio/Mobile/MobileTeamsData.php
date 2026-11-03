@@ -15,13 +15,11 @@ final class MobileTeamsData
     {
         app(MobileAccess::class)->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
-        $today = now('Europe/Zurich')->toDateString();
         $q = DB::connection('clubunio')->table('clubora.team_seasons as ts')
             ->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
             ->join('clubora.seasons as s', fn ($j) => $j->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
-            ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true)->where('s.active', true)
-            ->where(fn ($q) => $q->whereNull('s.starts_on')->orWhere('s.starts_on', '<=', $today))
-            ->where(fn ($q) => $q->whereNull('s.ends_on')->orWhere('s.ends_on', '>=', $today));
+            ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true);
+        app(MobileSeasonScope::class)->teams($q, $tenant, 'ts.season_id');
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'teams', 'view')) {
             abort_if($access->membership($actor, $tenant)?->role === 'profile', 403);
             $own = $access->represented($actor, $tenant)->pluck('id');

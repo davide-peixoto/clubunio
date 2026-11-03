@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## App-API auf aktuelle Saison begrenzen (03.11.2026)
+
+Zentraler serverseitiger SQL-Scope fuer persoenliche Team-/Planungsabfragen,
+Totals und direkte IDs. Rechte unveraendert, Web-/Integrationshistorie erhalten;
+keine DB-/Datenmigration. CLUBUNIO-MOBILE-SEASON-SCOPE.md.
+
 ## Dokumentvorschau mit Zoom (03.11.2026)
 
 PDFs/Bilder: Vergroessern, Verkleinern, Prozentwahl, Breiten-/Hoehenanpassung.

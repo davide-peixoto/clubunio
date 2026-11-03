@@ -27,7 +27,8 @@ try {
     $actor = new App\ClubUnio\Models\Account;
     $actor->forceFill(['username' => 'qa-team-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic fixture', 'password' => Illuminate\Support\Facades\Hash::make($password), 'active' => true, 'api_only' => false])->save();
     $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
-    $season = $db->table('clubora.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture season']);
+    $season = $db->table('clubora.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture season',
+        'starts_on' => now('Europe/Zurich')->subMonth()->toDateString(), 'ends_on' => now('Europe/Zurich')->addMonths(2)->toDateString()]);
     $team = $db->table('clubora.teams')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture team']);
     $team = $db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic fixture']);
     $member = $db->table('clubora.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Player', 'birth_date' => '2012-01-01']);

@@ -42,7 +42,7 @@ class TeamPlanningService
     {
         $query = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
         if ($table === 'team_events' && ! $withRemoved && $this->removalSchemaAvailable()) { $query->whereNull('clubora.team_events.deleted_at'); }
-        return $query;
+        return app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->table($query, $tenant, $table);
     }
 
     public function seriesRevision(Tenant $tenant, object $event, ?Collection $rows = null): ?string

@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+03.11.2026 personal App API current-season scope: SQL restriction before lists,
+counts and direct team/event access. No schema/data/rights migration. Seasonal
+metadata must have one current active dated record per tenant. Web/integration
+history unchanged. CLUBUNIO-MOBILE-SEASON-SCOPE.md.
+
 03.11.2026 document preview zoom: shared PDF/image toolbar, width/height fit and
 in-memory redraw. No database, permission or storage migration. Protected reads
 and opt-in registration previews preserved. CLUBUNIO-PREVIEW-ZOOM.md.

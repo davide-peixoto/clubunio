@@ -31,6 +31,7 @@ final class MobileMiddleware
                 abort_if($bound && ! $bound->is($tenant), 404);
                 app(MobileAccess::class)->enter($actor, $tenant);
                 $request->attributes->set('mobile.tenant', $tenant);
+                $request->attributes->set('mobile.season_scope', true);
             }
 
             return $this->protect($next($request));
