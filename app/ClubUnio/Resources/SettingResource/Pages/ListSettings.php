@@ -13,7 +13,10 @@ class ListSettings extends ListRecords
 {
     protected function getHeaderActions(): array
     {
-        return [Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')
+        return [Action::make('appProfiles')->label('App-Module nach Profil')->icon('heroicon-o-squares-2x2')
+            ->visible(fn () => \App\ClubUnio\Resources\AccessProfileResource::canViewAny())
+            ->url(fn () => \App\ClubUnio\Resources\AccessProfileResource::getUrl()),
+            Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')
             ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
             ->url(fn () => route('clubunio.bexio.show'))];
     }

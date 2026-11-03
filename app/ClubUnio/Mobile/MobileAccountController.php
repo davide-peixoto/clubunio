@@ -56,9 +56,11 @@ final class MobileAccountController
             'Trainingsplaner' => 'training', 'BusReservationen' => 'bus', 'Dokumente' => 'documents',
             'Sponsorenlauf' => 'sponsor_runs'];
         $modules = [];
+        $visibleKeys = app(\App\ClubUnio\Services\MobileModuleSettings::class)->visibleKeys($actor, $tenant);
         // Presentation compatibility only; feature claims never grant permissions.
         $supported = explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
         foreach ($map as $key => $permission) {
+            if (! in_array($key, $visibleKeys, true)) { continue; }
             $allowed = app(ModulePermissionService::class)->allows($actor, $tenant, $permission, 'view')
                 || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true));

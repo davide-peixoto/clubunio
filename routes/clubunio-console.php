@@ -199,6 +199,7 @@ Artisan::command('clubunio:import-foundation', function () {
             }
             foreach (['iniApp' => 'app', 'iniBexio' => 'bexio', 'iniWhatsApp' => 'integrations'] as $table => $area) {
                 foreach ($db->table('legacy_prod.'.$table)->get() as $s) {
+                    if (\App\ClubUnio\Services\RetiredIntegrationParameters::contains($area, $s->ParameterName)) { continue; }
                     $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => $area,
                         'key' => $s->ParameterName, 'label' => $s->ParameterName, 'value_type' => 'string',
                         'encrypted_value' => Crypt::encryptString((string) $s->ParameterValue),

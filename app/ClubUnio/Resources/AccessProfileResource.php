@@ -59,6 +59,10 @@ class AccessProfileResource extends CatalogResource
             TextInput::make('name')->label('Profilname')->required()->maxLength(120),
             Textarea::make('description')->label('Beschreibung')->maxLength(2000),
             Toggle::make('active')->label('Profil aktiviert')->default(true)->required(),
+            Toggle::make('mobile_modules_limited')->label('App-Module gezielt auswählen')->default(false)->live(),
+            Select::make('mobile_modules')->label('Sichtbare App-Module')->multiple()->searchable()->preload()
+                ->options(fn () => app(\App\ClubUnio\Services\MobileModuleSettings::class)->options(Filament::getTenant()))
+                ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('mobile_modules_limited'))->default([]),
             Select::make('preset')->label('Vorlage')->options(['empty' => 'Ohne Rechte', 'read' => 'Nur Lesen'])
                 ->live()->dehydrated(false)->afterStateUpdated(function (?string $state, Set $set) {
                     if (! in_array($state, ['empty', 'read'], true)) {
@@ -95,11 +99,16 @@ class AccessProfileResource extends CatalogResource
 
         return ['name' => $copy ? $record->name.' (Kopie)' : $record->name,
             'description' => $record->description, 'active' => $record->active,
+            'mobile_modules_limited' => $record->mobile_modules !== null, 'mobile_modules' => $record->mobile_modules ?? [],
             'modules' => $modules, 'revision' => $copy ? 0 : $record->revision];
     }
 
     public static function input(array $data): array
     {
+        if (array_key_exists('mobile_modules_limited', $data)) {
+            $data['mobile_modules'] = $data['mobile_modules_limited'] ? ($data['mobile_modules'] ?? []) : null;
+            unset($data['mobile_modules_limited']);
+        }
         $permissions = [];
         foreach ($data['modules'] ?? [] as $module => $functions) {
             foreach ($functions as $function) {

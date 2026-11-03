@@ -11,6 +11,7 @@ class SettingOptions
 {
     public function archived(Setting $setting): bool
     {
+        if ($setting->area === 'app' && in_array($setting->key, ['ModulesTrainer','ModulesSpieler','ModulesTechnischeLeiter'],true)) { return true; }
         return $setting->area === 'general' && in_array($setting->key, ['SommerWinter', 'StatusPlatz1', 'StatusPlatz2', 'StatusPlatz3'], true);
     }
 
@@ -61,6 +62,9 @@ class SettingOptions
 
     public function hint(Setting $setting): string
     {
+        if ($setting->area === 'app' && $this->archived($setting)) {
+            return 'Abgelöst durch die App-Modulauswahl in Rollen & Berechtigungen.';
+        }
         if ($setting->area === 'general' && $setting->key === ActiveTrainingPlan::KEY) {
             return 'Aktiver Trainingsplan für Trainingszeiten und Signage.';
         }

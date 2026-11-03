@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Parameterbereinigung und App-Profile (03.11.2026)
+
+Gezielte Migrationen000092/000093: gepruefte Altparameter mit verschluesselter
+Privatsicherung entfernen, erneuten Legacy-Import dieser Schluessel verhindern,
+Modulkatalog und optionale App-Profilzuordnung ergaenzen. Bestehende Rollen und
+Benutzerzuordnungen bleiben unveraendert. FCM sowie aktuelle Bexio-/SFV-/KI-Werte
+erhalten; keine fremden ausstehenden Migrationen automatisch ausfuehren.
+Allowlist, Wiederherstellung und Testgrenzen: CLUBUNIO-PARAMETER-MODERNIZATION.md.
+
 ## Verbindlich: Saison-IDs und freigegebene Bestandskorrekturen
 
 Die folgenden Regeln gehoeren zur Datenmigration, nicht nur zum aktuellen
