@@ -274,3 +274,14 @@ My-Teams-Kernvertrag und vorhandene Team-/Kontaktansicht inzwischen angebunden:
 CLUBUNIO-MOBILE-MY-TEAMS.md. Teamzuordnungen, Rechte-/Versionskonflikte, Trainings und Anmeldesicht
 geprueft. Persoenliche Dossier-/Anmeldelinks, DEV-Release und Gesamtfreischaltung
 bleiben offen; keine pauschale Fertigmeldung fuer den Gesamtauftrag.
+
+## DEV-Nachtrag03.11.2026
+
+Die oben beschriebene Releaseplanung ist ausgefuehrt:84-87 atomar angewendet,
+Backend20261103-clubunio-mobile-planning aktiv. Gepruefte private verschluesselte
+Tabellensicherung, unveraenderte Bestandsfelder und Rueckweg mobile-foundation
+mit geschlossenem nativen Planungsschalter und Entfernen-Scope. Zwoelf Gates,
+15 Routen,23 Dateihashes und persoenliche synthetische HTTP-Kernelablaeufe
+direkt auf DEV bestanden. Fixtures zurueckgerollt; Login200/API401 anonym.
+Native Vollfreischaltung und verbleibende Planungs-/Dossierablaeufe offen.
+Gesamtauftrag aktiv. Backendnachweis: deploy/CLUBUNIO-MOBILE-PLANNING-DEV.md.

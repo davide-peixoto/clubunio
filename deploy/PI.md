@@ -1,5 +1,19 @@
 # Pi staging: dev.clubunio.ch
 
+## Mobile Teamplanung/My Teams (03.11.2026)
+
+Aktiv20261103-clubunio-mobile-planning, Rueckweg mobile-foundation mit
+geschlossenem nativen Planungsschalter und neuem Entfernen-Scope. Quellen
+90d1ac0 auf550cc65, Aktivierung ecefc4f. Migrationen84-87 nach geprueftem
+verschluesseltem Tabellenexport atomar angewendet; Bestandsfelder identisch.
+Zwoelf bestehende Gates,15 geschuetzte Planungsrouten und persoenliche
+HTTP-Kernelablaeufe einschliesslich My Teams/Absenzen/Gaeste/Serien erfolgreich.
+23 Dateihashes bestaetigt, HTTPS login200/API401 anonym, PHP-FPM aktiv.
+Kein vollstaendiger Datenbank-Restore-Nachweis; Hoster-Gesamtbackup nur queued.
+Keine native App-Gesamtabnahme oder Gesamtpaketfertigstellung. Alte Releases
+ohne Entfernen-Scope nicht fuer normalen Ruecksprung verwenden.
+Details und Sicherung: CLUBUNIO-MOBILE-PLANNING-DEV.md.
+
 ## Document preview zoom (03.11.2026)
 
 Release20261103-clubunio-preview-zoom on mobile-account-shell. Shared local

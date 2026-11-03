@@ -39,3 +39,11 @@ Offen: persoenliche Mitgliederdossiers/Bearbeiten, Rechnungs-/Dokumentlinks,
 Anmeldeanhaenge und Gesamtabnahme. Main-App-Modul bleibt bis zur durchgaengigen
 Anbindung offen. Planungs-Schemastufen84/85/86/87 und DEV-Release separat offen;
 deren Pruef-/Rueckwegregeln stehen in CLUBUNIO-MOBILE-PLANNING-WORK.md.
+
+## DEV-Nachtrag03.11.2026
+
+My-Teams-Kernvertrag mit Release20261103-clubunio-mobile-planning ausgeliefert.
+Persoenlicher HTTP-Kerneltest direkt auf DEV mit eigenem synthetischem Mandanten:
+Login, Teamliste, Spielerzuordnung, Details, Versionskonflikt und Entfernung
+erfolgreich; alle Fixtures zurueckgerollt. HTTPS ohne Anmeldung401.
+Persoenliches Dossier/Anmeldeanhaenge und native Gesamtfreischaltung offen.
