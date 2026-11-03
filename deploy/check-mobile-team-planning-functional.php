@@ -12,7 +12,8 @@ $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 $stage = 'fixture';
 $call = function ($method, $path, $body = [], $token = null) use ($kernel, &$stage) {
     $stage = $method.' '.$path;
-    $server = ['HTTPS' => 'on', 'HTTP_HOST' => 'dev.clubunio.ch', 'REMOTE_ADDR' => '127.0.0.1', 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'];
+    $server = ['HTTPS' => 'on', 'HTTP_HOST' => 'dev.clubunio.ch', 'REMOTE_ADDR' => '127.0.0.1', 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_CLUBUNIO_MOBILE_FEATURES' => 'svs-planning-v1,my-teams-v1,expenses-v1'];
     if ($token) { $server['HTTP_AUTHORIZATION'] = 'Bearer '.$token; }
     $r = Illuminate\Http\Request::create('https://dev.clubunio.ch/api/mobile/v1/'.$path, $method, [], [], [], $server, json_encode($body));
     $response = $kernel->handle($r);
@@ -36,6 +37,12 @@ try {
     $member = $db->table('clubora.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Player', 'birth_date' => '2012-01-01']);
     [$status, $login] = $call('POST', 'session', ['username' => $actor->username, 'password' => $password, 'device_name' => 'Synthetic release']);
     $expect($status, 200); $token = $login['data']['token']; $base = 'clubs/'.$tenant->id.'/';
+    [$status, $menu] = $call('GET', $base.'modules', [], $token); $expect($status, 200);
+    $nativeTeams = collect($menu['data']['modules'])->firstWhere('key', 'Teams');
+    $expect($nativeTeams['native'], (bool) config('clubunio-mobile.native_my_teams_enabled'));
+    [$status, $dossier] = $call('GET', $base.'members/'.$member, [], $token); $expect($status, 200);
+    [$status] = $call('POST', $base.'members/'.$member.'/contact', ['_version' => $dossier['data']['Member']['_version'], 'Mobile' => '+41790000000'], $token); $expect($status, 200);
+    [$status] = $call('POST', $base.'members/'.$member.'/contact', ['_version' => $dossier['data']['Member']['_version'], 'Mobile' => '+41790000001'], $token); $expect($status, 422);
     [$status, $teams] = $call('GET', $base.'my-teams', [], $token); $expect($status, 200); $expect($teams['data']['totalRecordCount'], 1);
     [$status, $added] = $call('POST', $base.'my-teams/'.$team.'/players', ['MitgliederID' => $member], $token); $expect($status, 200);
     $assignment = $added['data']['Assignment'];
