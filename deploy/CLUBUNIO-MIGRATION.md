@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+03.11.2026 general-setting lookups: explicit tenant-scoped choices, preserved
+season legacy-ID contract, archived field/period settings no longer editable.
+No schema/value/enabled changes; usage labels replace misleading active icon.
+See CLUBUNIO-SETTING-LOOKUPS.md. No legacy DEV/PROD deployment.
+
 03.11.2026 support acceptance: explicit opt-in for account19/tenant4 only,
 audited via existing service. Other grants and all memberships compared unchanged.
 Desktop/mobile simulation, blocked route and stop visually verified. Small

@@ -36,6 +36,7 @@ class SettingsService
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $value) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $setting = Setting::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail();
+            app(SettingOptions::class)->validate($setting, $value);
             if (in_array($setting->area, ['public', 'signage'], true)) {
                 abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
             }
