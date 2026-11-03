@@ -589,6 +589,50 @@ class TeamPlanningTest extends TestCase
         $this->get($base)->assertRedirect('/portal/login');
     }
 
+    public function test_personal_statistics_preserves_player_history_scope_and_completed_event_counts(): void
+    {
+        config(['clubunio-mobile.enabled' => true]);
+        $from = CarbonImmutable::now('Europe/Zurich')->subDays(3)->startOfDay();
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $this->db->table('team_events')->where('id', $event)->update(['starts_at' => $from->addHours(18)->toIso8601String(), 'ends_at' => $from->addHours(20)->toIso8601String()]);
+        $history = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Historical', 'last_name' => 'Player']);
+        $quiet = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Zero', 'last_name' => 'Player']);
+        $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $quiet]);
+        foreach ([$this->member, $this->otherMember, $history] as $member) {
+            $this->db->table('team_participations')->updateOrInsert(['tenant_id' => $this->tenant->id, 'event_id' => $event, 'member_id' => $member],
+                ['status' => 'DABEI', 'attendance' => 'ANWESEND', 'comment_encrypted' => Crypt::encryptString('PRIVATE-STATS-REASON')]);
+        }
+        // Staff who also have a player assignment still never enter player statistics.
+        $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $this->otherMember]);
+        $this->db->table('team_guests')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $event, 'first_name' => 'Guest', 'last_name' => 'Excluded', 'status' => 'DABEI', 'attendance' => 'ANWESEND']);
+        $copy = (array) $this->service->event($this->admin, $this->tenant, $event); unset($copy['id']);
+        foreach ([['status' => 'ABGESAGT'], ['starts_at' => now()->subHour(), 'ends_at' => now()->addHour()], ['deleted_at' => now()]] as $change) {
+            $id = $this->db->table('team_events')->insertGetId(array_replace($copy, $change));
+            $this->db->table('team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id, 'member_id' => $this->member, 'status' => 'ABWESEND', 'attendance' => 'FEHLT']);
+        }
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Stats fixture'])->assertOk()->json('data.token');
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/statistics?'.http_build_query(['from' => $from->toIso8601String(), 'to' => now('Europe/Zurich')->startOfDay()->toIso8601String()]);
+        $adminToken = $login($this->admin);
+        $result = $this->withToken($adminToken)->getJson($url)->assertOk()->assertDontSee('PRIVATE-STATS-REASON')->assertJsonPath('data.totalRecordCount', 3)->json('data.SpielerStatistiken');
+        $this->assertEqualsCanonicalizing([$this->member, $history, $quiet], array_column($result, 'MitgliederID'));
+        $rows = collect($result)->keyBy('MitgliederID');
+        $this->assertSame(['Zusagen' => 1, 'Absagen' => 0, 'Anwesend' => 1, 'Gefehlt' => 0, 'Entschuldigt' => 0], $rows[$this->member]['Kategorien']['TRAINING']);
+        $this->assertSame(0, $rows[$quiet]['Kategorien']['TRAINING']['Zusagen']);
+        $this->withToken($adminToken)->getJson($url.'&start=1&recperpage=1')->assertOk()->assertJsonCount(1, 'data.SpielerStatistiken')->assertJsonPath('data.totalRecordCount', 3);
+        $this->withToken($login($this->player))->getJson($url)->assertOk()->assertJsonPath('data.totalRecordCount', 1)->assertJsonPath('data.SpielerStatistiken.0.MitgliederID', $this->member);
+        $this->withToken($login($this->trainer))->getJson($url)->assertOk()->assertJsonPath('data.totalRecordCount', 3);
+        $foreign = Tenant::create(['slug' => 'stats-other-'.bin2hex(random_bytes(4)), 'name' => 'Foreign']);
+        $this->withToken($adminToken)->getJson(str_replace('/clubs/'.$this->tenant->id.'/', '/clubs/'.$foreign->id.'/', $url))->assertForbidden();
+        $this->withToken($adminToken)->getJson($url.'&TeamSaisonID=2147483647')->assertOk()->assertJsonPath('data.totalRecordCount', 0);
+        $this->withToken($adminToken)->getJson($url.'&from=invalid')->assertStatus(422);
+        $this->db->table('team_events')->insert(array_replace($copy, ['mode' => 'ABMELDEN']));
+        $rows = collect($this->withToken($adminToken)->getJson($url)->assertOk()->json('data.SpielerStatistiken'))->keyBy('MitgliederID');
+        $this->assertSame(2, $rows[$this->member]['Kategorien']['TRAINING']['Zusagen']);
+        $this->assertSame(1, $rows[$quiet]['Kategorien']['TRAINING']['Zusagen']);
+        $this->assertSame(0, $rows[$quiet]['Kategorien']['TRAINING']['Anwesend']);
+        $this->assertSame(1, $rows[$history]['Kategorien']['TRAINING']['Zusagen']);
+    }
+
     public function test_native_planning_real_updates_preserve_scope_dates_filters_and_pagination(): void
     {
         $id = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
@@ -683,8 +727,7 @@ class TeamPlanningTest extends TestCase
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
         $this->db->statement("SET LOCAL lock_timeout TO '5s'");
-        $migration = require database_path('clubunio/2026_11_03_000084_planning_attendance_notes.php');
-        $migration->up(); // This entire test transaction, including DDL, is rolled back.
+        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubora.team_participations', 'attendance_comment_encrypted'));
         $login = function ($actor) {
             return $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Native fixture'])
                 ->assertOk()->json('data.token');
@@ -723,11 +766,56 @@ class TeamPlanningTest extends TestCase
 
     }
 
+    public function test_personal_attendance_batch_is_atomic_versioned_and_preserves_absence_provenance(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $private = Crypt::encryptString('PRIVATE-ABSENCE');
+        $original = Crypt::encryptString('PRIVATE-ORIGINAL');
+        $this->db->table('team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $event, 'member_id' => $this->member,
+            'status' => 'ABWESEND', 'source' => 'absence', 'comment_encrypted' => $private, 'original_status' => 'DABEI', 'original_comment_encrypted' => $original]);
+        $this->db->table('team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $event, 'member_id' => $this->otherMember, 'status' => 'DABEI']);
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Attendance fixture'])->assertOk()->json('data.token');
+        $token = $login($this->admin);
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events/'.$event.'/attendance';
+        $input = ['Revision' => 1, 'suggestions' => [
+            ['MitgliederID' => $this->member, 'TeilnahmeStatus' => 'ABWESEND', 'Revision' => 1],
+            ['MitgliederID' => $this->otherMember, 'TeilnahmeStatus' => 'DABEI', 'Revision' => 1],
+        ]];
+        $this->withToken($token)->postJson($url.'/confirm-suggestions', $input)->assertConflict();
+        $this->db->table('team_events')->where('id', $event)->update(['starts_at' => now()->subHour()->toIso8601String()]);
+        $this->withToken($login($this->player))->postJson($url.'/confirm-suggestions', $input)->assertNotFound();
+        $bad = $input; $bad['suggestions'][1]['Revision'] = 99;
+        $this->withToken($token)->postJson($url.'/confirm-suggestions', $bad)->assertUnprocessable();
+        $this->assertSame('OFFEN', $this->participation($event)->attendance);
+        $this->assertSame(1, $this->participation($event)->revision);
+        $bad = $input; $bad['suggestions'][1]['MitgliederID'] = $this->member;
+        $this->postJson($url.'/confirm-suggestions', $bad)->assertUnprocessable();
+        $bad = $input; $bad['suggestions'][1]['TeilnahmeStatus'] = 'ABWESEND';
+        $this->postJson($url.'/confirm-suggestions', $bad)->assertConflict();
+        $this->assertSame('OFFEN', $this->participation($event)->attendance);
+        $this->postJson($url.'/confirm-suggestions', $input)->assertOk()->assertJsonPath('data.confirmedCount', 2);
+        $row = $this->participation($event);
+        $this->assertSame('ENTSCHULDIGT', $row->attendance);
+        $this->assertSame(2, $row->revision);
+        $this->assertSame('absence', $row->source);
+        $this->assertSame($private, $row->comment_encrypted);
+        $this->assertSame('DABEI', $row->original_status);
+        $this->assertSame($original, $row->original_comment_encrypted);
+        $this->assertNotNull($row->attendance_updated_at);
+        $this->postJson($url.'/confirm-suggestions', $input)->assertUnprocessable();
+        $this->postJson($url, ['MitgliederID' => $this->member, 'Revision' => 2, 'AnwesenheitsStatus' => 'ANWESEND'])->assertOk();
+        $this->assertSame('absence', $this->participation($event)->source);
+        $this->assertSame($private, $this->participation($event)->comment_encrypted);
+        $this->assertSame($original, $this->participation($event)->original_comment_encrypted);
+        $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+    }
+
     public function test_native_mobile_guests_keep_scope_revision_and_separate_notes(): void
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
         $this->db->statement("SET LOCAL lock_timeout TO '5s'");
-        (require database_path('clubunio/2026_11_03_000084_planning_attendance_notes.php'))->up();
+        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubora.team_guests', 'attendance_comment_encrypted'));
         $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Guest fixture'])->assertOk()->json('data.token');
         $admin = $login($this->admin);
         $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
@@ -764,6 +852,7 @@ class TeamPlanningTest extends TestCase
         // Test the additive DDL and real PostgreSQL service on an empty temporary table.
         // Do not demand an exclusive lock on the shared DEV absence table.
         $this->db->statement('CREATE TEMP TABLE team_absences (LIKE clubora.team_absences INCLUDING ALL) ON COMMIT DROP');
+        $this->db->statement('ALTER TABLE pg_temp.team_absences DROP COLUMN IF EXISTS starts_at CASCADE, DROP COLUMN IF EXISTS ends_at CASCADE');
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000085_planning_absence_windows.php'))->up());
         $this->assertCount(1, $ddl);
         $this->db->statement(str_replace('clubora.team_absences', 'pg_temp.team_absences', $ddl[0]['query']));

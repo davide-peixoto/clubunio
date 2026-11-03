@@ -15,7 +15,7 @@ foreach (Illuminate\Support\Facades\Route::getRoutes() as $route) {
         $count++;
     }
 }
-if ($count !== 15) { throw new LogicException('Unexpected native planning route inventory: '.$count); }
+if ($count !== 17) { throw new LogicException('Unexpected native planning route inventory: '.$count); }
 if ($enabled) {
     $schema = $db->getSchemaBuilder();
     foreach (['team_participations' => ['attendance_comment_encrypted', 'attendance_updated_at'],
@@ -24,4 +24,4 @@ if ($enabled) {
     }
     if (! $schema->hasTable('clubora.mobile_planning_commands')) { throw new LogicException('Missing planning command identities'); }
 }
-echo 'Personal planning '.($enabled ? 'enabled schema' : 'disabled foundation')." and15 protected routes verified.\n";
+echo 'Personal planning '.($enabled ? 'enabled schema' : 'disabled foundation')." and17 protected routes verified.\n";

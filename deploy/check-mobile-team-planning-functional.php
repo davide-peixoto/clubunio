@@ -57,6 +57,18 @@ try {
         [$status, $guests] = $call('POST', $eventUrl.'/guests', ['Vorname' => 'Synthetic', 'Nachname' => 'Guest'], $token); $expect($status, 200);
         $guest = collect($guests['data']['TeamTermin']['Teilnahmen'])->first(fn ($row) => isset($row['GastID']));
         [$status] = $call('DELETE', $eventUrl.'/guests/'.$guest['GastID'], ['Revision' => 1], $token); $expect($status, 200);
+        [$status, $detail] = $call('GET', $eventUrl, [], $token); $expect($status, 200);
+        $person = collect($detail['data']['TeamTermin']['Teilnahmen'])->firstWhere('MitgliederID', $member);
+        [$status, $participation] = $call('POST', $eventUrl.'/participation', ['MitgliederID' => $member, 'Revision' => $person['Revision'], 'TeilnahmeStatus' => 'DABEI'], $token); $expect($status, 200);
+        $person = collect($participation['data']['TeamTermin']['Teilnahmen'])->firstWhere('MitgliederID', $member);
+        // Only this transaction's synthetic event is moved into the past.
+        $db->table('clubora.team_events')->where('tenant_id', $tenant->id)->where('id', $event['TeamTerminID'])->update([
+            'starts_at' => Carbon\CarbonImmutable::now()->subHours(2)->toIso8601String(), 'ends_at' => Carbon\CarbonImmutable::now()->subHour()->toIso8601String()]);
+        $suggestions = ['Revision' => 1, 'suggestions' => [['MitgliederID' => $member, 'TeilnahmeStatus' => 'DABEI', 'Revision' => $person['Revision']]]];
+        [$status, $confirmed] = $call('POST', $eventUrl.'/attendance/confirm-suggestions', $suggestions, $token); $expect($status, 200); $expect($confirmed['data']['confirmedCount'], 1);
+        [$status] = $call('POST', $eventUrl.'/attendance/confirm-suggestions', $suggestions, $token); $expect($status, 422);
+        [$status, $stats] = $call('GET', $base.'planning/statistics?'.http_build_query(['from' => Carbon\CarbonImmutable::now('Europe/Zurich')->subDay()->toDateString(), 'to' => Carbon\CarbonImmutable::now('Europe/Zurich')->toDateString()]), [], $token);
+        $expect($status, 200); $expect($stats['data']['totalRecordCount'], 1); $expect($stats['data']['SpielerStatistiken'][0]['Kategorien']['TRAINING']['Anwesend'], 1);
         $second = array_replace($input, ['DatumVon' => $start->addWeek()->toIso8601String(), 'DatumBis' => $start->addWeek()->addHour()->toIso8601String()]);
         $batch = ['command_key' => (string) Illuminate\Support\Str::uuid(), 'events' => [$input, $second]];
         [$status, $series] = $call('POST', $base.'planning/event-batches', $batch, $token); $expect($status, 200);

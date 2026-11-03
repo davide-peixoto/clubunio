@@ -12,6 +12,9 @@ use Carbon\CarbonImmutable as Time;
 final class MobilePlanningController implements \Illuminate\Routing\Controllers\HasMiddleware
 {
     public static function middleware(): array { return [MobilePlanningReady::class]; }
+    public function statistics(Request $r) {
+        return response()->json(['data' => app(MobilePlanningStatistics::class)->read($r, $r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'))]);
+    }
     public function teams(Request $r) {
         return response()->json(['data' => app(MobilePlanningData::class)->teams($r, $r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'))]);
     }
@@ -190,18 +193,22 @@ final class MobilePlanningController implements \Illuminate\Routing\Controllers\
                 'AnwesenheitsKommentar' => 'nullable|string|max:1000', 'Revision' => 'required|integer|min:0']);
             $id = (int) $r->route('event');
             $event = $p->event($actor, $tenant, $id, true);
-            abort_if(Time::parse($event->starts_at)->isFuture(), 409, 'Anwesenheit erst nach Terminbeginn.');
-            $old = $p->table($tenant, 'team_participations')->where('event_id', $id)->where('member_id', $d['MitgliederID'])->first();
-            $p->participate($actor, $tenant, $id, (int) $d['MitgliederID'], [
-                'revision' => $d['Revision'], 'status' => $old->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN'),
-                'attendance' => $d['AnwesenheitsStatus'],
-                'comment' => $old?->comment_encrypted ? Crypt::decryptString($old->comment_encrypted) : '',
-            ]);
-            $p->table($tenant, 'team_participations')->where('event_id', $id)->where('member_id', $d['MitgliederID'])->update([
-                'attendance_comment_encrypted' => empty($d['AnwesenheitsKommentar']) ? null : Crypt::encryptString($d['AnwesenheitsKommentar']),
-                'attendance_updated_at' => now()->toIso8601String(),
-            ]);
+            app(MobilePlanningAttendance::class)->set($actor, $tenant, $event, $d);
             return ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $id)];
+        });
+    }
+
+    public function attendanceSuggestions(Request $r)
+    {
+        return $this->write($r, function ($actor, $tenant, $p) use ($r) {
+            $d = $r->validate(['Revision' => 'required|integer|min:1', 'suggestions' => 'required|array|max:500',
+                'suggestions.*.MitgliederID' => 'required|integer|min:1|distinct:strict',
+                'suggestions.*.TeilnahmeStatus' => 'required|in:DABEI,ABWESEND', 'suggestions.*.Revision' => 'required|integer|min:0']);
+            $id = (int) $r->route('event');
+            $event = $p->event($actor, $tenant, $id, true);
+            $p->conflict($event, ['revision' => $d['Revision']]);
+            foreach ($d['suggestions'] as $row) { app(MobilePlanningAttendance::class)->set($actor, $tenant, $event, $row, true); }
+            return ['success' => true, 'confirmedCount' => count($d['suggestions']), 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $id)];
         });
     }
 

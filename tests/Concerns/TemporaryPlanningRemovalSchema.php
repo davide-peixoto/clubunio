@@ -15,6 +15,7 @@ trait TemporaryPlanningRemovalSchema
         // Copy only the caller's newly-created synthetic tenant fixtures, never club data.
         $db->statement('CREATE TEMP TABLE team_events (LIKE clubora.team_events INCLUDING ALL) ON COMMIT DROP');
         $db->statement('INSERT INTO pg_temp.team_events SELECT * FROM clubora.team_events WHERE tenant_id = ?', [$tenant]);
+        $db->statement('ALTER TABLE pg_temp.team_events DROP COLUMN IF EXISTS deleted_at');
         $ddl = $db->pretend(fn () => (require database_path('clubunio/2026_11_03_000087_planning_event_removal.php'))->up());
         $db->statement(str_replace('clubora.team_events', 'pg_temp.team_events', $ddl[0]['query']));
         $db->setQueryGrammar(new class($db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
