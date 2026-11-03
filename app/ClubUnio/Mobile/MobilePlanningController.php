@@ -111,4 +111,37 @@ final class MobilePlanningController
         });
     }
 
+    public function guest(Request $r)
+    {
+        return $this->write($r, function ($actor, $tenant, $p) use ($r) {
+            $eventId = (int) $r->route('event');
+            $id = $r->route('guest') ? (int) $r->route('guest') : null;
+            $delete = $r->isMethod('DELETE');
+            $function = $delete ? 'deactivate' : ($id ? 'update' : 'create');
+            $event = $p->event($actor, $tenant, $eventId, true, $function);
+            $old = $id ? $p->table($tenant, 'team_guests')->where('event_id', $eventId)->where('id', $id)->whereNull('deleted_at')->first() : null;
+            abort_if($id && ! $old, 404);
+            $d = $r->validate(['Vorname' => $id ? 'sometimes|required|string|max:100' : 'required|string|max:100',
+                'Nachname' => $id ? 'sometimes|required|string|max:100' : 'required|string|max:100',
+                'TeilnahmeStatus' => 'sometimes|required|string|max:40', 'AnwesenheitsStatus' => 'sometimes|required|string|max:40',
+                'Kommentar' => 'nullable|string|max:1000', 'AnwesenheitsKommentar' => 'nullable|string|max:1000',
+                'Revision' => $id ? 'required|integer|min:1' : 'prohibited']);
+            $attendance = array_key_exists('AnwesenheitsStatus', $d) || array_key_exists('AnwesenheitsKommentar', $d);
+            abort_if($attendance && ! $id, 422, 'Anwesenheit erst am bestehenden Gast bearbeiten.');
+            abort_if($attendance && Time::parse($event->starts_at)->isFuture(), 409, 'Anwesenheit erst nach Terminbeginn.');
+            $input = ['first_name' => $d['Vorname'] ?? $old?->first_name, 'last_name' => $d['Nachname'] ?? $old?->last_name,
+                'status' => $d['TeilnahmeStatus'] ?? $old?->status ?? 'OFFEN',
+                'attendance' => $d['AnwesenheitsStatus'] ?? $old?->attendance ?? 'OFFEN',
+                'comment' => array_key_exists('Kommentar', $d) ? $d['Kommentar'] : ($old?->comment_encrypted ? Crypt::decryptString($old->comment_encrypted) : ''),
+                'revision' => $d['Revision'] ?? 0];
+            app(\App\ClubUnio\Services\PlanningGuestService::class)->save($actor, $tenant, $eventId, $id, $input, $delete);
+            if ($attendance && ! $delete) {
+                $p->table($tenant, 'team_guests')->where('event_id', $eventId)->where('id', $id)->update([
+                    'attendance_comment_encrypted' => empty($d['AnwesenheitsKommentar']) ? null : Crypt::encryptString($d['AnwesenheitsKommentar']),
+                    'attendance_updated_at' => now()->toIso8601String()]);
+            }
+            return ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $eventId)];
+        });
+    }
+
 }

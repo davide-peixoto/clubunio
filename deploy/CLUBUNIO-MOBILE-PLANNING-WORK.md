@@ -40,3 +40,31 @@ PG-Schreibtest mit26 Assertions erfolgreich; Rueckpruefung bestaetigt, dass auf
 beiden Tabellen keine Testspalte verblieben ist. Bestehende Mobile-Gruppe:
 28 Tests/316 Assertions erfolgreich. App:3 native Transport-/Screenfaelle und
 19 Transportchecks erfolgreich, Analyse ohne Befund. Migration84 bleibt vorbereitet.
+
+
+## Fortschritt: Gaeste
+
+Gastanlage, versionierte Zu-/Absage und Anwesenheit sowie Entfernen sind im
+persoenlichen Vertrag und im vorhandenen Repository angebunden. Gastrevisionen
+werden getrennt von Mitgliedsrevisionen aus den gelesenen Termindetails gehalten.
+Nach Loeschen darf die alte Gastrevision keinen weiteren Request erzeugen.
+Kein automatisches Neulesen oder Wiederholen einer unsicheren Schreibaktion.
+
+PlanningGuestService bleibt fachliche Quelle: frische Managementrechte fuer den
+konkreten Termin, Gast-/Terminzuordnung, Revision, Kapazitaet und Audit.
+Anwesenheit vor Terminbeginn gesperrt, getrennte verschluesselte Notiz gemaess
+vorbereiteter Migration84. Neue Gaeste werden ohne fingierte Anwesenheitsnotiz
+angelegt; diese kann anschliessend am bestehenden Gast bearbeitet werden.
+Private Gastkommentare/Anwesenheitsnotizen nur fuer aktuelle Manager, nicht fuer
+normale Spieler. Keine Texte im Audit. Urspruengliche SVS-Repositorymethoden
+koennen den Vertrag verwenden; kein neuer Screen.
+
+Vier native Planungs-Transport-/Screenfaelle und Analyse ohne Befund. Ein
+gezielter PostgreSQL-Gasttest mit20 erfolgreichen Assertions prueft Anlage, stale Revision, falschen Termin,
+Anwesenheitszeitpunkt, Spielergrenzen, getrennte Notizen und wiederholte Loeschung.
+Alle Testdaten und DDL werden zurueckgerollt. Keine dauerhafte Migration,
+DEV-Freischaltung oder neue native Abnahme dieses Zwischenstands.
+
+Unmittelbare Fortsetzung: Absenzen mit originalem Listen-/Editorablauf,
+Revisionen und korrekten Auto-Abmelde-/Wiederherstellungszaehlern; danach
+Serien/Statistik/SFV und My Teams. Gesamtauftrag bleibt aktiv.

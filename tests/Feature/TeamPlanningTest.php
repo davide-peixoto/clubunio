@@ -725,4 +725,38 @@ class TeamPlanningTest extends TestCase
 
     }
 
+    public function test_native_mobile_guests_keep_scope_revision_and_separate_notes(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $this->db->statement("SET LOCAL lock_timeout TO '5s'");
+        (require database_path('clubunio/2026_11_03_000084_planning_attendance_notes.php'))->up();
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Guest fixture'])->assertOk()->json('data.token');
+        $admin = $login($this->admin);
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $otherEvent = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['title' => 'Other fixture']));
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events/'.$event.'/guests';
+        $this->withToken($admin)->postJson($url, ['Vorname' => 'Rejected', 'Nachname' => 'Guest', 'AnwesenheitsStatus' => 'ANWESEND'])->assertUnprocessable();
+        $this->assertSame(0, $this->db->table('team_guests')->where('event_id', $event)->count());
+        $response = $this->withToken($admin)->postJson($url, ['Vorname' => 'Guest', 'Nachname' => 'Fixture'])->assertOk();
+        $guest = collect($response->json('data.TeamTermin.Teilnahmen'))->first(fn ($row) => isset($row['GastID']))['GastID'];
+        $this->patchJson($url.'/'.$guest, ['Revision' => 1, 'TeilnahmeStatus' => 'DABEI', 'Kommentar' => 'PRIVATE-GUEST'])->assertOk();
+        $this->patchJson($url.'/'.$guest, ['Revision' => 1, 'TeilnahmeStatus' => 'ABWESEND'])->assertUnprocessable();
+        $this->patchJson('/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events/'.$otherEvent.'/guests/'.$guest,
+            ['Revision' => 2, 'TeilnahmeStatus' => 'ABWESEND'])->assertNotFound();
+        $this->patchJson($url.'/'.$guest, ['Revision' => 2, 'AnwesenheitsStatus' => 'ANWESEND'])->assertConflict();
+        $this->withToken($login($this->player))->postJson($url, ['Vorname' => 'Forbidden', 'Nachname' => 'Guest'])->assertNotFound();
+        $this->travelTo(\Carbon\CarbonImmutable::parse($this->input()['starts_at'])->addMinute());
+        try {
+            $this->withToken($admin)->patchJson($url.'/'.$guest, ['Revision' => 2, 'AnwesenheitsStatus' => 'ANWESEND', 'AnwesenheitsKommentar' => 'PRIVATE-GUEST-ATTENDANCE'])->assertOk();
+            $row = $this->db->table('team_guests')->where('id', $guest)->first();
+            $this->assertSame('PRIVATE-GUEST', Crypt::decryptString($row->comment_encrypted));
+            $this->assertSame('PRIVATE-GUEST-ATTENDANCE', Crypt::decryptString($row->attendance_comment_encrypted));
+            $view = $this->withToken($login($this->player))->getJson('/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events/'.$event)->assertOk();
+            $this->assertStringNotContainsString('PRIVATE-GUEST', $view->getContent());
+            $this->withToken($admin)->deleteJson($url.'/'.$guest, ['Revision' => 3])->assertOk();
+            $this->deleteJson($url.'/'.$guest, ['Revision' => 3])->assertNotFound();
+        } finally { $this->travelBack(); }
+        $this->assertStringNotContainsString('PRIVATE-GUEST', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+    }
+
 }
