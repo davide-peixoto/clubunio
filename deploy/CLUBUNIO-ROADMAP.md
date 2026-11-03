@@ -1371,3 +1371,16 @@ Kommunikation/gescannte Uploads aktiv,421 TeamSaisons provisioniert; KI mangels
 DEV-Providerkey weiterhin aus. Elf Gates und29 Tests/287 Assertions erfolgreich.
 HTTPS context401/session422 statt404, Weblogin200. Echte persoenliche App-Abnahme
 und KI-Realaufruf offen. Details/Rueckweg: CLUBUNIO-MOBILE-DEV-DEPLOYMENT.md.
+
+
+## Mobile: bestehende SVS-Accountmasken (03.11.2026)
+
+Bestehende Login-/Profil-/Passwortmasken und Modul-Drawer mit persoenlichen
+ClubUnio-Adaptern verbunden. Neues eigenes Profil, Passwortwechsel mit
+Sitzungswiderruf und berechtigungsabhaengiger Modulkatalog. Noch offene
+Fachmodule im Menue deaktiviert, keine Behauptung einer Gesamtmigration.
+Release20261103-clubunio-mobile-account-shell auf member-access ausgeliefert;
+keine Migration, Env/Storage und parallele Aenderungen erhalten. Zwoelf Gates,
+sechs Dateihashes,38 Tests/369 Assertions und synthetischer PG-Kernelablauf
+mit Rollback erfolgreich. HTTPS profile/modules/password401, Weblogin200.
+Details und offene Schritte: CLUBUNIO-MOBILE-ACCOUNT-SHELL.md.

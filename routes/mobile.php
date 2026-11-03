@@ -8,10 +8,13 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::post('session', [Mobile::class, 'login'])->name('login');
     Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
+    Route::get('profile', [\App\ClubUnio\Mobile\MobileAccountController::class, 'profile'])->name('profile');
+    Route::post('password', [\App\ClubUnio\Mobile\MobileAccountController::class, 'password'])->name('password');
     Route::get('sessions', [Mobile::class, 'sessions'])->name('sessions');
     Route::delete('session', [Mobile::class, 'revoke'])->name('logout');
     Route::delete('sessions/{session}', [Mobile::class, 'revoke'])->whereUuid('session')->name('revoke');
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
+        Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('contacts', [Mobile::class, 'contacts']);
         Route::get('chats', [Mobile::class, 'chats']);

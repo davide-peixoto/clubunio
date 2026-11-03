@@ -34,7 +34,7 @@ final class MobileController
         $actor = $this->actor($r);
         $tenants = $actor->tenants()->get()->filter(fn ($t) => app(MemberAccessService::class)->canEnter($actor, $t));
         $bound = app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($r);
-        return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name],
+        return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name, 'username' => $actor->username],
             'language' => DB::connection('clubunio')->table('clubora.mobile_preferences')->where('account_id', $actor->id)->value('language') ?? 'de',
             'tenants' => $tenants->filter(fn ($t) => ! $bound || $bound->is($t))->map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name])->values(),
             'capabilities' => ['push' => false, 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);

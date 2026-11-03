@@ -34,8 +34,12 @@ final class MobileSessions
         $id = (string) Str::uuid();
         $secret = bin2hex(random_bytes(32));
         $expiry = now()->addDays((int) config('clubunio-mobile.session_days', 30));
-        DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
-            'token_hash' => hash('sha256', $secret), 'device_name' => $data['device_name'], 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]);
+        DB::connection('clubunio')->transaction(function () use ($actor, $provider, $credentials, $id, $secret, $data, $expiry) {
+            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
+            abort_unless($fresh->active && ! $fresh->api_only && $provider->validateCredentials($fresh, $credentials), 401);
+            DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
+                'token_hash' => hash('sha256', $secret), 'device_name' => $data['device_name'], 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]);
+        });
         RateLimiter::clear(array_key_first($keys));
 
         return ['token' => $id.'.'.$secret, 'expires_at' => $expiry->toIso8601String(),

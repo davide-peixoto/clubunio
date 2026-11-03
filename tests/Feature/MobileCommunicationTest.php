@@ -499,4 +499,38 @@ SQL);
         $this->assertNull($this->db->table('clubora.chat_attachments')->value('bytes_encrypted'));
         $this->withToken($token)->postJson($this->url('attachments/'.$id.'/scan'))->assertJsonPath('data.state', 'removed');
     }
+    public function test_personal_profile_is_own_and_password_change_revokes_all_sessions(): void
+    {
+        $first = $this->token($this->parent);
+        $second = $this->token($this->parent);
+        $other = $this->token($this->player);
+        $this->withToken($first)->getJson('/api/mobile/v1/profile')->assertOk()
+            ->assertJsonPath('data.username', $this->parent->username)->assertJsonMissingPath('data.password');
+        $this->withToken($first)->postJson('/api/mobile/v1/password', ['current_password' => 'wrong',
+            'password' => 'new-fixture-password', 'password_confirmation' => 'new-fixture-password'])->assertUnprocessable();
+        $this->withToken($first)->postJson('/api/mobile/v1/password', ['current_password' => 'fixture-password',
+            'password' => 'new-fixture-password', 'password_confirmation' => 'new-fixture-password'])->assertOk()
+            ->assertJsonPath('data.reauthentication_required', true);
+        foreach ([$first, $second] as $token) {
+            $this->withToken($token)->getJson('/api/mobile/v1/profile')->assertUnauthorized();
+        }
+        $this->withToken($other)->getJson('/api/mobile/v1/profile')->assertOk();
+        $this->postJson('/api/mobile/v1/session', ['username' => $this->parent->username,
+            'password' => 'fixture-password', 'device_name' => 'Test'])->assertUnauthorized();
+        $this->postJson('/api/mobile/v1/session', ['username' => $this->parent->username,
+            'password' => 'new-fixture-password', 'device_name' => 'Test'])->assertOk();
+    }
+
+    public function test_personal_modules_follow_role_and_tenant_boundary(): void
+    {
+        $this->withToken($this->token($this->admin))->getJson($this->url('modules'))->assertOk()
+            ->assertJsonFragment(['key' => 'Spesen', 'available' => false])
+            ->assertJsonFragment(['key' => 'Profil', 'available' => true]);
+        $token = $this->token($this->parent);
+        $this->withToken($token)->getJson($this->url('modules'))->assertOk()
+            ->assertJsonMissing(['key' => 'Spesen'])->assertJsonFragment(['key' => 'Teamplanung', 'available' => true]);
+        $foreign = Tenant::create(['slug' => 'other-mobile-fixture', 'name' => 'Foreign']);
+        $this->withToken($token)->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules')->assertForbidden();
+    }
+
 }

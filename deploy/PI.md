@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Mobile Account-Shell (03.11.2026)
+
+Aktiv20261103-clubunio-mobile-account-shell, Rueckweg member-access vom03.11.
+Profil/Passwortwechsel/Modulkatalog, keine Schema-/Env-/Bestandsdatenmigration.
+Zwoelf Gates und sechs Dateihashes gruen; PG-Kerneltest mit synthetischem Konto
+vollstaendig zurueckgerollt. HTTPS profile/modules/password401, Weblogin200.
+Offene Gesamtmigration und App-Abnahme: CLUBUNIO-MOBILE-ACCOUNT-SHELL.md.
+
+
 ## Benutzerzugriff im Mitgliederdossier (03.11.2026)
 
 Ausgeliefert20261103-clubunio-member-access ausdea1ab8 auf compact-shell
