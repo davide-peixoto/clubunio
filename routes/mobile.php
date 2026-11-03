@@ -22,7 +22,10 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
         \App\ClubUnio\Mobile\MobileExpenseRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
+        \App\ClubUnio\Mobile\MobileTrainingRoutes::register();
         \App\ClubUnio\Mobile\MobileSponsorRoutes::register();
+        \App\ClubUnio\Mobile\MobileMemberDirectoryRoutes::register();
+        \App\ClubUnio\Mobile\MobileRegistrationRoutes::register();
         Route::get('facilities/fields', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'index']);
         Route::patch('facilities/fields/{field}', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'update'])->whereNumber('field');
         Route::get('bus/reservations', [\App\ClubUnio\Mobile\MobileBusController::class, 'index']);

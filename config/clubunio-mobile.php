@@ -10,7 +10,12 @@ return [
     'native_facilities_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_FACILITIES_ENABLED', false),
     'native_bus_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_BUS_ENABLED', false),
     'native_documents_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_DOCUMENTS_ENABLED', false),
+    'native_registrations_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_REGISTRATIONS_ENABLED', false),
+    'native_training_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_TRAINING_ENABLED', false),
     'native_sponsor_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_SPONSOR_ENABLED', false),
+    'training_ai' => ['enabled' => false, 'cost_reviewed' => false, 'tenant_slugs' => [], 'models' => [],
+        'reservation_microusd' => 0, 'monthly_limit_microusd' => 0, 'max_output_tokens' => 0,
+        'max_input_bytes' => 0, 'dispatch_after_response' => true],
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [

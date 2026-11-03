@@ -74,7 +74,10 @@ class TrainingPlanService
             'team_season_id' => 'required|integer', 'durationMinutes' => 'required|integer|min:30|max:120',
             'playerCount' => 'required|integer|min:4|max:30', 'goal' => 'required|string|max:200',
             'fieldSize' => 'required|string|max:120', 'material' => 'required|string|max:500',
+            'level' => 'sometimes|string|max:120', 'intensity' => 'sometimes|string|max:120',
+            'constraints' => 'sometimes|nullable|string|max:2000',
         ])->validate();
+        foreach (['team_season_id', 'durationMinutes', 'playerCount'] as $field) { $data[$field] = (int) $data[$field]; }
         $team = $this->teams($actor, $tenant)->firstWhere('id', (int) $data['team_season_id']);
         abort_unless($team, 403);
         $data['teamName'] = $team->label;
@@ -111,11 +114,31 @@ class TrainingPlanService
 
     public function review(Account $actor, Tenant $tenant, int $id, int $revision, string $key, ?Closure $authorization = null): array
     {
+        return $this->reviewCandidate($actor, $tenant, $id, $revision, $key, null, [], $authorization);
+    }
+
+    /** Native edited draft; the original public review callback contract stays exact. */
+    public function reviewDraft(Account $actor, Tenant $tenant, int $id, int $revision, string $key, array $draft, array $inputChanges = [], ?Closure $authorization = null): array
+    {
+        return $this->reviewCandidate($actor, $tenant, $id, $revision, $key, $draft, $inputChanges, $authorization);
+    }
+
+    private function reviewCandidate(Account $actor, Tenant $tenant, int $id, int $revision, string $key, ?array $draft, array $inputChanges, ?Closure $authorization): array
+    {
         $this->authorizeOperation($actor, $tenant, 'approve');
         $row = $this->get($actor, $tenant, $id, true, 'approve');
         $this->revision($row, $revision);
+        $input = $row->input;
+        if ($inputChanges !== []) {
+            $inputChanges = Validator::make($inputChanges, ['playerCount' => 'sometimes|required|integer|min:4|max:30'])->validate();
+            $input = array_replace($input, $inputChanges);
+        }
+        // An edited review is a proposal only. Never persist the draft before approval.
+        if ($draft !== null) {
+            $draft = app(TrainingPlanContent::class)->validate($draft, (int) $input['durationMinutes'], false);
+        }
         $attempt = $this->reserve($actor, $tenant, $key, 'review');
-        $plan = $this->call($actor, $tenant, $attempt, $row->input, $row->plan);
+        $plan = $this->call($actor, $tenant, $attempt, $input, $draft ?? $row->plan);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $attempt, $authorization) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -129,22 +152,25 @@ class TrainingPlanService
         });
     }
 
-    public function save(Account $actor, Tenant $tenant, int $id, int $revision, array $plan, bool $shared): void
+    public function save(Account $actor, Tenant $tenant, int $id, int $revision, array $plan, bool $shared, array $inputChanges = []): void
     {
         $this->authorizeOperation($actor, $tenant, 'update');
-        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $shared) {
+        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $shared, $inputChanges) {
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id, true);
             if ($shared !== (bool) $row->shared) {
                 $this->authorizeOperation($actor, $tenant, 'send');
             }
             $this->revision($row, $revision);
+            $inputChanges = Validator::make($inputChanges, ['playerCount' => 'sometimes|required|integer|min:4|max:30'])->validate();
+            $input = array_replace($row->input, $inputChanges);
             foreach ($plan['exercises'] ?? [] as $i => $exercise) {
                 $plan['exercises'][$i]['markers'] ??= $row->plan['exercises'][$i]['markers'] ?? [];
             }
             $plan = app(TrainingPlanContent::class)->validate($plan, (int) $row->input['durationMinutes']);
             DB::connection('clubunio')->table('clubora.training_plans')->where('id', $id)->where('tenant_id', $tenant->id)->update([
                 'title' => $plan['title'], 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => $shared,
+                'input_json' => json_encode($input, JSON_THROW_ON_ERROR),
                 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String(),
                 'legacy_quality_pending' => false,
             ]);
@@ -248,7 +274,7 @@ class TrainingPlanService
     {
         unset($input['team_season_id']);
         try {
-            return app(TrainingPlanAi::class)->generate($tenant, $input, $draft);
+            return $this->providerCall($tenant, $input, $draft);
         } catch (\Throwable $error) {
             $this->finish($attempt, 'failed');
             DB::connection('clubunio')->table('clubora.training_plan_requests')->where('id', $attempt->id)->update(['provider_status' => (int) $error->getCode()]);
@@ -256,6 +282,11 @@ class TrainingPlanService
             Log::warning('clubunio.training.failed', ['reference' => $attempt->reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['request' => 'Der Trainingsplan konnte nicht erstellt werden. Referenz: '.$attempt->reference]);
         }
+    }
+
+    protected function providerCall(Tenant $tenant, array $input, ?array $draft): array
+    {
+        return app(TrainingPlanAi::class)->generate($tenant, $input, $draft);
     }
 
     private function finish(object $attempt, string $state, ?int $id = null): void

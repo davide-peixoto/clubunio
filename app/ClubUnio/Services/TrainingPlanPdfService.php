@@ -9,10 +9,11 @@ use Dompdf\Options;
 
 class TrainingPlanPdfService
 {
-    public function open(Account $actor, Tenant $tenant, int $plan)
+    public function open(Account $actor, Tenant $tenant, int $plan, ?TrainingPlanService $service = null)
     {
-        app(TrainingPlanService::class)->authorizeOperation($actor, $tenant, 'download');
-        $row = app(TrainingPlanService::class)->get($actor, $tenant, $plan);
+        $service ??= app(TrainingPlanService::class);
+        $service->authorizeOperation($actor, $tenant, 'download');
+        $row = $service->get($actor, $tenant, $plan);
         $options = new Options(['isRemoteEnabled' => false, 'isPhpEnabled' => false, 'isJavascriptEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
         $pdf = new Dompdf($options);
         $pdf->loadHtml(view('clubunio.training.pdf', compact('row', 'tenant'))->render());

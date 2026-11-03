@@ -26,18 +26,32 @@ class RegistrationDocumentService
         app(DocumentUploadService::class)->stage(null, $tenant, 'registration', $registration->id, ['kind' => $kind], $file, $requestId);
     }
 
-    private function store(?Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
+    private function store(Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): void
     {
-        $upload = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $kind, $file) {
+        $upload = $this->stage($actor, $tenant, $id, $revision, $kind, $file);
+        app(DocumentUploadService::class)->attempt($actor, $tenant, $upload);
+    }
+
+    /** Persist the protected upload before any external transfer is attempted. */
+    public function stage(Account $actor, Tenant $tenant, int $id, int $revision, string $kind, UploadedFile $file): int
+    {
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $kind, $file) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
                 throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen. Bitte erneut öffnen.']);
             }
 
-            return app(DocumentUploadService::class)->stage($actor, $tenant, 'registration', $id, compact('kind'), $file);
+            $metadata = compact('kind');
+            // A removed file is a retained historical record, not a successful current upload.
+            // Bind a new explicit replacement to that record instead of replaying its old result.
+            $removed = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)
+                ->where('registration_id', $id)->where('kind', $kind)->where('active', false)->where('sha256', hash('sha256', $file->get()))
+                ->orderByDesc('id')->value('id');
+            if ($removed) { $metadata['replaces_removed_document_id'] = (int) $removed; }
+            return app(DocumentUploadService::class)->stage($actor, $tenant, 'registration', $id, $metadata, $file);
         });
-        app(DocumentUploadService::class)->attempt($actor, $tenant, $upload);
     }
 
     public function publishUpload(?Account $actor, Tenant $tenant, object $upload, array $metadata): int

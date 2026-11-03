@@ -20,6 +20,7 @@ class TrainingPlanContent
             'exercises.*.coachingPoints' => 'required|array|min:1|max:8', 'exercises.*.coachingPoints.*' => 'required|string|max:1000',
             'exercises.*.easier' => 'required|string|max:1000', 'exercises.*.harder' => 'required|string|max:1000',
             'exercises.*.diagramDescription' => 'required|string|max:1000',
+            'exercises.*.diagramStale' => 'sometimes|boolean',
             'exercises.*.markers' => 'required|array|min:1|max:50',
             'exercises.*.markers.*.kind' => 'required|in:player,cone,ball',
             'exercises.*.markers.*.x' => 'required|integer|min:0|max:100',
@@ -27,7 +28,7 @@ class TrainingPlanContent
         ])->validate();
         // Only allow the defined textual contract; never render provider HTML or SVG.
         $data = array_intersect_key($data, array_flip(['title', 'focus', 'principles', 'qualityChecks', 'exercises']));
-        $fields = ['phase', 'title', 'durationMinutes', 'setup', 'flow', 'coachingPoints', 'easier', 'harder', 'diagramDescription', 'markers'];
+        $fields = ['phase', 'title', 'durationMinutes', 'setup', 'flow', 'coachingPoints', 'easier', 'harder', 'diagramDescription', 'markers', 'diagramStale'];
         $data['exercises'] = array_map(fn ($e) => array_intersect_key($e, array_flip($fields)), $data['exercises']);
         $phases = array_values(array_unique(array_column($data['exercises'], 'phase')));
         $sequence = array_map(fn ($e) => array_search($e['phase'], ['Einstieg', 'Hauptteil', 'Abschluss']), $data['exercises']);

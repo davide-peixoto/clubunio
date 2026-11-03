@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Http;
 
 class TrainingPlanAi
 {
-    public function generate(Tenant $tenant, array $input, ?array $draft = null): array
+    public function generate(Tenant $tenant, array $input, ?array $draft = null, array $limits = [], ?array $providerConfiguration = null): array
     {
-        $config = [];
-        foreach (Setting::where('tenant_id', $tenant->id)->whereIn('key', ['OPENAI_API_KEY', 'OPENAI_TRAINING_VECTOR_STORE_ID', 'OPENAI_TRAINING_MODEL'])->get() as $setting) {
-            $config[$setting->key] = trim(Crypt::decryptString($setting->encrypted_value));
+        $config = $providerConfiguration ?? [];
+        if ($providerConfiguration === null) {
+            foreach (Setting::where('tenant_id', $tenant->id)->whereIn('key', ['OPENAI_API_KEY', 'OPENAI_TRAINING_VECTOR_STORE_ID', 'OPENAI_TRAINING_MODEL'])->get() as $setting) {
+                $config[$setting->key] = trim(Crypt::decryptString($setting->encrypted_value));
+            }
         }
         foreach (['OPENAI_API_KEY', 'OPENAI_TRAINING_VECTOR_STORE_ID', 'OPENAI_TRAINING_MODEL'] as $key) {
             if (empty($config[$key])) {
@@ -21,7 +23,7 @@ class TrainingPlanAi
             }
         }
         $response = Http::withToken($config['OPENAI_API_KEY'])->acceptJson()->connectTimeout(5)->timeout(85)->withoutRedirecting()
-            ->post('https://api.openai.com/v1/responses', [
+            ->post('https://api.openai.com/v1/responses', array_merge([
                 'model' => $config['OPENAI_TRAINING_MODEL'], 'store' => false,
                 'tools' => [['type' => 'file_search', 'vector_store_ids' => [$config['OPENAI_TRAINING_VECTOR_STORE_ID']], 'max_num_results' => 8]],
                 'tool_choice' => 'required',
@@ -30,7 +32,7 @@ class TrainingPlanAi
                     ['role' => 'user', 'content' => json_encode(['request' => $input, 'draft' => $draft, 'diagramContract' => 'Pro Übung 1 bis 50 Marker für Spieler, Hütchen und Bälle. x/y sind ganzzahlige Prozentpositionen 0..100 auf dem Spielfeld passend zum beschriebenen Aufbau.'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)],
                 ],
                 'text' => ['format' => ['type' => 'json_schema', 'name' => 'clubunio_training', 'strict' => true, 'schema' => app(TrainingPlanContent::class)->schema()]],
-            ]);
+            ], array_intersect_key($limits, array_flip(['max_output_tokens', 'max_tool_calls']))));
         if (! $response->successful()) {
             throw new \RuntimeException('Training provider error', $response->status());
         }
