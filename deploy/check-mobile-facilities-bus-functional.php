@@ -61,7 +61,7 @@ try {
     [$status] = $call('POST', $url.'/reject', ['revision' => 1], $token); $expect($status, 422);
     [$status, $keybox] = $call('GET', $url.'/keybox', [], $token); $expect($status, 200); $expect($keybox['data']['available'], false); $expect($keybox['data']['issuanceEnabled'], false);
     [$status, $cancelled] = $call('POST', $url.'/cancel', ['revision' => 2], $token); $expect($status, 200); $expect($cancelled['data']['ReservierungsStatus'], 'STORNIERT');
-    Illuminate\Support\Facades\Http::assertNothingSent();
+    if (Illuminate\Support\Facades\Http::recorded()->isNotEmpty()) { throw new LogicException('Unexpected external request'); }
     echo "Personal menu/facility status/stale revision/bus request-approve-cancel and closed keybox passed; synthetic transaction rolled back.\n";
 } catch (Throwable $error) {
     fwrite(STDERR, 'Facilities/bus functional gate failed at '.$stage.': '.get_class($error)." (record contents suppressed).\n"); $failed = true;
