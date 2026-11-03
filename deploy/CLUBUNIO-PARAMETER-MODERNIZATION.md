@@ -91,3 +91,14 @@ Parallellauefe mit DDL-/Fixture-Sperrkonflikten, danach Migration93 mit
 Tenant-first-Sperrreihenfolge erfolgreich und beide Testsuiten erneut gruen.
 Angemeldete Sichtpruefung offen: IAB-Verbindung unavailable, Chrome-CDP Timeout.
 Keine erfolgreiche visuelle Abnahme behauptet und keine echten Profile geaendert.
+
+Release115a932 aktiv auf20261103-clubunio-parameter-modernization, vorheriger
+Release20261103-clubunio-retired-parameters bleibt vorhanden. Migration93 lokal
+auf gemeinsamer DB,92 beim Pi-Release erfolgreich. Fuenf Servergates gruen;
+0 Altparameter verbleibend,10 Moduloptionen,16 Bexio-Werte,4 FCM-Werte,
+0 explizite App-Profilzuordnungen. Login HTTP200, PHP-Lint der neuen Oberflaechen
+und des Zuordnungsservices erfolgreich. Sicherung auf gemeinsamem Storage
+retired-integrations-20261103214628-4a90f30d5806.json mit Dateimodus0600.
+Env, Composer-Lock, Shared-Storage-Verknuepfung identisch; Config-/Route-/View-
+Caches neu aufgebaut. Nur gezieltes Commit-Delta deployt, keine fremden lokalen
+App-/OCR-/Trainingsdateien, keine PHPMaker-DEV-/PROD-Aktion und kein Versand.
