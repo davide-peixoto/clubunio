@@ -674,3 +674,29 @@ OCR ohne ausdrueckliche Mandanten-/Kosten-/Anbieterkonfiguration geschlossen.
 Kerneltests umgehen den HTTP-Frontserver; dessen reale Uploadgroessen werden
 separat geprueft (bisher ClubUnio-Nginx10m, eigener FPM-Socket svs-laravel).
 Keine echten Geschaeftsunterlagen, Providerauftraege, Nachrichten oder Zahlungen.
+
+
+## ClubUnio-DEV Uploadtransport04.11.2026
+
+Nur eigener Laravel-VHost auf8092 und eigener FPM-Pool svs-laravel.sock
+angepasst: Nginx40MiB Request, Pool20MiB je Datei/40MiB POST. Vorher
+Nginx10MiB und keine eigenen Upload-/Postueberschreibungen (globale2M/8M).
+Endpointregeln bleiben unveraendert strenger: Spesen5MiB, Dokumente10MiB,
+private Anmeldeanhaenge20MiB, oeffentliches Portrait5MiB plus maximal3
+Identitaetsdateien zu10MiB. Keine neuen MIME-/Rechte-/Malwareausnahmen.
+Die gesamte Konfiguration vor/nach Installation validiert; nur zwei durch
+exakte bekannte SHA256 abgesicherte Zieldateien installiert, beide Dienste
+graceful neu geladen und aktiv. Private Originaldateien gesichert unter
+/var/backups/clubunio-mobile-upload-limits/20261104; Installer b5b8485 enthaelt
+Syntaxpruefung und automatische Dateiwiederherstellung bei Fehler.
+Andere FPM-Pools, Review-VHost und PHPMaker-DEV/PROD unveraendert.
+
+Echter HTTPS-Transportnachweis durch Frontproxy/Nginx/FPM:4 absichtlich
+synthetische Dateien (5+10+10+10MiB; insgesamt36.701.378 Multipartbytes)
+an persoenlichen Login mit eindeutig nicht vorhandenem Testnamen.
+Erwarteter401/unauthenticated beweist erhaltene Loginfelder und erlaubten
+Gesamttransport statt413 oder durch post_max_size verlorener Felder.
+Es wurde keine Sitzung angelegt und kein authentifizierter Dateihandler,
+Blob-/Mail-/Bankprovider oder Geschaeftsprozess aufgerufen. PHP-Tempdateien
+werden am Requestende entfernt. Dies ist ein Transportnachweis, keine
+Scanner-/Azure-/Kamera-/Geraeteabnahme der grossen Dateien.
