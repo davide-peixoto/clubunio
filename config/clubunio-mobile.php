@@ -10,6 +10,7 @@ return [
     'native_facilities_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_FACILITIES_ENABLED', false),
     'native_bus_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_BUS_ENABLED', false),
     'native_documents_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_DOCUMENTS_ENABLED', false),
+    'native_sponsor_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_SPONSOR_ENABLED', false),
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [
