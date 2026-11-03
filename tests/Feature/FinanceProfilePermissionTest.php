@@ -545,4 +545,20 @@ class FinanceProfilePermissionTest extends TestCase
             ->update(['role' => 'office', 'access_profile_id' => null]);
         $this->assertStringContainsString('download=1', view('clubunio.invoices.viewer-content', $data)->render());
     }
+
+    public function test_member_preview_uses_documents_download_permission_not_invoice_permission(): void
+    {
+        $this->actingAs($this->actor, 'clubunio');
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        \Filament\Facades\Filament::setTenant($this->tenant);
+        $data = ['url' => '/documents/members/123/open', 'name' => 'Synthetic image', 'mediaType' => 'image/png'];
+        $this->grant(['invoices.view', 'invoices.download', 'documents.view']);
+        $this->assertStringNotContainsString('data-pdf-url', view('clubunio.documents.preview', $data)->render());
+        $this->grant(['documents.view', 'documents.download']);
+        $html = view('clubunio.documents.preview', $data)->render();
+        $this->assertStringContainsString('data-media-type="image"', $html);
+        $this->assertStringContainsString('data-pdf-url="'.$data['url'].'"', $html);
+        $this->grant(['documents.view']);
+        $this->assertStringNotContainsString('data-pdf-url', view('clubunio.documents.preview', $data)->render());
+    }
 }

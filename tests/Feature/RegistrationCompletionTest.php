@@ -133,15 +133,16 @@ class RegistrationCompletionTest extends TestCase
         $xpath = new \DOMXPath($dom);
         $this->assertSame(0, $xpath->query('//iframe[not(ancestor::template)]')->length);
         $this->assertSame(0, $xpath->query('//img[not(ancestor::template)]')->length);
-        $this->assertSame(1, $xpath->query('//template[@x-if="previewOpen"]//img')->length);
-        $this->assertSame(2, $xpath->query('//svg[@width="20" and @height="20"]')->length);
+        $this->assertSame(1, $xpath->query('//template[@x-if="previewOpen"]//*[@data-media-type="image"]')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-pdf-url and not(ancestor::template)]')->length);
+        $this->assertSame(2, $xpath->query('//svg[@width="20" and @height="20" and not(ancestor::template)]')->length);
         $this->assertStringContainsString('previewOpen: false', $html);
         $this->assertStringContainsString('download=1', $html);
         $pdfHtml = view('clubunio.registration-documents', ['tenant' => $this->tenant,
             'documents' => collect([(object) ['id' => 124, 'kind' => 'identity', 'original_filename' => 'fixture.pdf', 'filename' => 'fixture.pdf']])])->render();
         @$dom->loadHTML($pdfHtml);
         $xpath = new \DOMXPath($dom);
-        $this->assertSame(1, $xpath->query('//template[@x-if="previewOpen"]//iframe')->length);
+        $this->assertSame(1, $xpath->query('//template[@x-if="previewOpen"]//*[@data-media-type="pdf"]')->length);
         $this->assertSame(0, $xpath->query('//iframe[not(ancestor::template)]')->length);
     }
 

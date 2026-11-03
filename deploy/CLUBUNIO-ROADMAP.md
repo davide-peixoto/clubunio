@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Dokumentvorschau mit Zoom (03.11.2026)
+
+PDFs/Bilder: Vergroessern, Verkleinern, Prozentwahl, Breiten-/Hoehenanpassung.
+Gemeinsame Vorschau fuer Rechnungen, Dokumente und opt-in Anmeldeanhaenge.
+Keine Daten-/Rechtemigration; CLUBUNIO-PREVIEW-ZOOM.md.
+
 ## Persoenlicher Benutzerzugriff im Mitgliederdossier (03.11.2026)
 
 Eigener Tab fuer explizite Selbst-/Elternzuordnungen, Wirksamkeitsanzeige und

@@ -1,5 +1,11 @@
 # Pi staging: dev.clubunio.ch
 
+## Document preview zoom (03.11.2026)
+
+Release20261103-clubunio-preview-zoom on mobile-account-shell. Shared local
+PDF/image viewer with zoom and width/height fit; no DB/env/permission change.
+Previous release retained for rollback. CLUBUNIO-PREVIEW-ZOOM.md.
+
 ## Mobile Account-Shell (03.11.2026)
 
 Aktiv20261103-clubunio-mobile-account-shell, Rueckweg member-access vom03.11.

@@ -3,6 +3,7 @@
 .cu-pdf-viewer { height: 75vh; display: flex; flex-direction: column; min-width: 0; color: #252a30; background: #e8ebed; font: 14px system-ui, sans-serif; }
 .cu-pdf-standalone .cu-pdf-viewer { height: 100vh; height: 100dvh; }
 .cu-pdf-viewer nav { flex: none; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; background: #fff; border-bottom: 1px solid #c8cdd2; }
+.cu-pdf-viewer button[aria-pressed="true"] { border-color: #177ec1; background: #e8f4fc; }
 .cu-pdf-viewer button, .cu-pdf-viewer nav a { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 6px; border: 1px solid #c8cdd2; border-radius: 4px; background: #fff; color: inherit; cursor: pointer; }
 .cu-pdf-viewer button:disabled { opacity: .4; cursor: default; }
 .cu-pdf-viewer svg { width: 20px; height: 20px; }

@@ -105,7 +105,21 @@ class InvoicePdfPerformanceTest extends TestCase
         $this->assertStringContainsString($url.'?download=1', $html);
         $this->assertStringNotContainsString('blob:', $html);
         $standalone = view('clubunio.invoices.viewer', compact('url'))->render();
-        $this->assertStringContainsString('pdf-viewer.js?v=2', $standalone);
+        $this->assertStringContainsString('pdf-viewer.js?v=3', $standalone);
         $this->assertStringContainsString('data-pdf-control="pdf"', $standalone);
+    }
+
+    public function test_shared_preview_has_zoom_and_both_fit_controls_for_images_and_pdf(): void
+    {
+        foreach (['application/pdf' => 'pdf', 'image/png' => 'image'] as $mediaType => $type) {
+            $html = view('clubunio.documents.viewer-content', ['url' => '/documents/members/42/open?test=1', 'mediaType' => $mediaType, 'name' => '<unsafe>'])->render();
+            foreach (['zoom-in', 'zoom-out', 'fit-width', 'fit-height'] as $control) {
+                $this->assertStringContainsString('data-pdf-control="'.$control.'"', $html);
+            }
+            $this->assertStringContainsString('data-media-type="'.$type.'"', $html);
+            $this->assertStringContainsString('test=1&amp;download=1', $html);
+            $this->assertStringNotContainsString('<iframe', $html);
+            $this->assertStringNotContainsString('aria-label="<unsafe>"', $html);
+        }
     }
 }

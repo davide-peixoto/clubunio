@@ -1,5 +1,9 @@
 # ClubUnio migration work packages
 
+03.11.2026 document preview zoom: shared PDF/image toolbar, width/height fit and
+in-memory redraw. No database, permission or storage migration. Protected reads
+and opt-in registration previews preserved. CLUBUNIO-PREVIEW-ZOOM.md.
+
 26.10.2026 support impersonation: additive migration81 creates grants, bounded
 support sessions and audit events. Applied only to shared ClubUnio database;
 no grants seeded and no original roles changed. First delivery is read-only Web,
