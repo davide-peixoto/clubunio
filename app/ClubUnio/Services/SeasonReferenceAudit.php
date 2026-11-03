@@ -124,11 +124,34 @@ SQL);
             ->on('c.'.$targetKey, '=', 's.'.$sourceKey)->where('c.tenant_id', $tenant))->whereNull('c.id');
         if ($table === 'team_events') { $missing->whereNull('s.sdeletedAt'); }
 
-        return ['field' => $table.'.'.$column, 'source' => $source.'.'.$sourceField,
+        $result = ['field' => $table.'.'.$column, 'source' => $source.'.'.$sourceField,
             'compared_rows' => (clone $joined)->count(),
             'different_reference' => (clone $joined)->whereRaw($db->getQueryGrammar()->wrap('c.'.$column).' IS DISTINCT FROM p.id')->count(),
             'unresolved_source_reference' => (clone $joined)->whereNotNull('s.'.$sourceField)->whereNull('p.id')->count(),
             'source_rows_without_target' => $missing->count(),
             'imported_rows_without_snapshot' => (clone $base)->leftJoin('legacy_prod.'.$source.' as s', 's.'.$sourceKey, '=', 'c.'.$targetKey)->whereNull('s.'.$sourceKey)->count()];
+        $recognized = 0;
+        if ($table === 'expenses' && $column === 'team_season_id' && $result['different_reference'] > 0) {
+            $changed = (clone $joined)->whereRaw('c.team_season_id IS DISTINCT FROM p.id')
+                ->get(['c.id', 'c.team_season_id', 'p.id as source_team_season_id'])->keyBy('id');
+            $verified = [];
+            foreach ($db->table('clubora.object_changes')->where('tenant_id', $tenant)->where('object_type', 'expenses')
+                ->whereIn('object_id', $changed->keys())->get(['object_id', 'before_value', 'after_value']) as $audit) {
+                $before = json_decode($audit->before_value ?? '', true); $after = json_decode($audit->after_value ?? '', true);
+                $row = $changed->get($audit->object_id);
+                if (($after['correction_key'] ?? null) === 'expense_team_season_fix_20261103'
+                    && isset($before['team_season_id'], $after['team_season_id'])
+                    && $row->source_team_season_id !== null
+                    && (int) $before['team_season_id'] === (int) $row->source_team_season_id
+                    && (int) $after['team_season_id'] === (int) $row->team_season_id) {
+                    $verified[$audit->object_id] = true;
+                }
+            }
+            $recognized = count($verified);
+        }
+        $result['recognized_correction_differences'] = $recognized;
+        $result['unexplained_reference_differences'] = $result['different_reference'] - $recognized;
+
+        return $result;
     }
 }

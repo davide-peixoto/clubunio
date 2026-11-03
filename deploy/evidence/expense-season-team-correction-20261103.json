@@ -1,0 +1,523 @@
+{
+  "correction_date": "2026-11-03",
+  "implementation_commit": "d5cb1f2",
+  "result": {
+    "changed": 14,
+    "already_applied": false,
+    "line_rows_unchanged": 191,
+    "changes": [
+      {
+        "id": 46,
+        "legacy_id": 102,
+        "season_id": 31,
+        "team_id": 3,
+        "old_team_season_id": 229,
+        "new_team_season_id": 256
+      },
+      {
+        "id": 62,
+        "legacy_id": 133,
+        "season_id": 30,
+        "team_id": 5,
+        "old_team_season_id": 262,
+        "new_team_season_id": 233
+      },
+      {
+        "id": 129,
+        "legacy_id": 224,
+        "season_id": 33,
+        "team_id": 36,
+        "old_team_season_id": 276,
+        "new_team_season_id": 309
+      },
+      {
+        "id": 172,
+        "legacy_id": 294,
+        "season_id": 34,
+        "team_id": 35,
+        "old_team_season_id": 312,
+        "new_team_season_id": 321
+      },
+      {
+        "id": 192,
+        "legacy_id": 319,
+        "season_id": 33,
+        "team_id": 27,
+        "old_team_season_id": 319,
+        "new_team_season_id": 310
+      },
+      {
+        "id": 206,
+        "legacy_id": 337,
+        "season_id": 33,
+        "team_id": 5,
+        "old_team_season_id": 317,
+        "new_team_season_id": 306
+      },
+      {
+        "id": 230,
+        "legacy_id": 369,
+        "season_id": 35,
+        "team_id": 27,
+        "old_team_season_id": 319,
+        "new_team_season_id": 346
+      },
+      {
+        "id": 232,
+        "legacy_id": 371,
+        "season_id": 35,
+        "team_id": 7,
+        "old_team_season_id": 323,
+        "new_team_season_id": 350
+      },
+      {
+        "id": 235,
+        "legacy_id": 374,
+        "season_id": 35,
+        "team_id": 28,
+        "old_team_season_id": 320,
+        "new_team_season_id": 347
+      },
+      {
+        "id": 236,
+        "legacy_id": 375,
+        "season_id": 35,
+        "team_id": 28,
+        "old_team_season_id": 320,
+        "new_team_season_id": 347
+      },
+      {
+        "id": 237,
+        "legacy_id": 376,
+        "season_id": 35,
+        "team_id": 28,
+        "old_team_season_id": 320,
+        "new_team_season_id": 347
+      },
+      {
+        "id": 268,
+        "legacy_id": 419,
+        "season_id": 34,
+        "team_id": 5,
+        "old_team_season_id": 344,
+        "new_team_season_id": 317
+      },
+      {
+        "id": 269,
+        "legacy_id": 420,
+        "season_id": 34,
+        "team_id": 5,
+        "old_team_season_id": 344,
+        "new_team_season_id": 317
+      },
+      {
+        "id": 335,
+        "legacy_id": 502,
+        "season_id": 35,
+        "team_id": 5,
+        "old_team_season_id": 370,
+        "new_team_season_id": 344
+      }
+    ],
+    "committed": true,
+    "backup_file": "/var/www/svs-laravel/shared/backups/expense-season-teams-20261103-0d89115aefd3dd3a.cuenc",
+    "backup_sha256": "e867d772182112cc50a9fb07ec35d1e591e533c9bed479eadc15bad094a1e8ae"
+  },
+  "verification": {
+    "backup_integrity_verified": true,
+    "private_mode": "0600",
+    "unchanged_expense_contents": 14,
+    "unchanged_expense_lines": 191,
+    "correction_audit_events": 14,
+    "read_only": true
+  },
+  "audit": {
+    "tenant_id": 4,
+    "references": [
+      {
+        "field": "bus_reservations.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 18,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "chat_conversations.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 842,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "club_events.season_id",
+        "parent": "seasons",
+        "linked_rows": 1,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "contribution_rules.season_id",
+        "parent": "seasons",
+        "linked_rows": 117,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "expenses.season_id",
+        "parent": "seasons",
+        "linked_rows": 447,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "expenses.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 447,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "invoices.season_id",
+        "parent": "seasons",
+        "linked_rows": 6791,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "legacy_training_plans.suggested_team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 1,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "legacy_training_plans.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 20,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "registration_events.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 0,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "registrations.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 64,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "season_plans.season_id",
+        "parent": "seasons",
+        "linked_rows": 0,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "season_plans.source_season_id",
+        "parent": "seasons",
+        "linked_rows": 0,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "sponsor_run_event_teams.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 1,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "sponsor_run_events.season_id",
+        "parent": "seasons",
+        "linked_rows": 1,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "sponsor_run_participants.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 1,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "team_events.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 26,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "team_players.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 6767,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "team_seasons.season_id",
+        "parent": "seasons",
+        "linked_rows": 423,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "team_staff.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 460,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "technical_leads.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 29,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "training_plans.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 20,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      },
+      {
+        "field": "training_slots.team_season_id",
+        "parent": "team_seasons",
+        "linked_rows": 648,
+        "invalid_or_cross_tenant": 0,
+        "validated_tenant_fk": true
+      }
+    ],
+    "snapshot_mappings": [
+      {
+        "field": "team_seasons.season_id",
+        "source": "TeamsSaison.SaisonID",
+        "compared_rows": 422,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "club_events.season_id",
+        "source": "Events.SaisonID",
+        "compared_rows": 1,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "invoices.season_id",
+        "source": "Rechnung.SaisonID",
+        "compared_rows": 6791,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "expenses.season_id",
+        "source": "Spesenbelege.SaisonID",
+        "compared_rows": 447,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "expenses.team_season_id",
+        "source": "Spesenbelege.TeamSaisonID",
+        "compared_rows": 447,
+        "different_reference": 14,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 14,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "contribution_rules.season_id",
+        "source": "Beitragstabelle.SaisonID",
+        "compared_rows": 117,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "registrations.team_season_id",
+        "source": "MitgliederAnmeldungen.TeamSaisonID",
+        "compared_rows": 69,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "team_players.team_season_id",
+        "source": "TeamList.TeamSaisonID",
+        "compared_rows": 6766,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "team_staff.team_season_id",
+        "source": "TeamStaff.TeamSaisonID",
+        "compared_rows": 460,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "technical_leads.team_season_id",
+        "source": "TechnischeLeiterTeams.TeamSaisonID",
+        "compared_rows": 29,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "training_slots.team_season_id",
+        "source": "Trainingszeiten.TeamSaisonID",
+        "compared_rows": 648,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "team_events.team_season_id",
+        "source": "TeamTermine.TeamSaisonID",
+        "compared_rows": 26,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "bus_reservations.team_season_id",
+        "source": "BusReservierungen.TeamSaisonID",
+        "compared_rows": 18,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "invoice_lines.invoice_id",
+        "source": "Positionen.RechnungsID",
+        "compared_rows": 6742,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "expense_lines.expense_id",
+        "source": "SpesenPositionen.SpesenID",
+        "compared_rows": 3703,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "event_guests.club_event_id",
+        "source": "Gaeste.EventID",
+        "compared_rows": 19,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      },
+      {
+        "field": "legacy_training_plans.suggested_team_season_id",
+        "source": "TrainingPlannerAuditLog.SharedTeamSaisonID",
+        "compared_rows": 41,
+        "different_reference": 0,
+        "unresolved_source_reference": 0,
+        "source_rows_without_target": 0,
+        "imported_rows_without_snapshot": 0,
+        "recognized_correction_differences": 0,
+        "unexplained_reference_differences": 0
+      }
+    ],
+    "views": [
+      {
+        "name": "spots_recipients",
+        "legacy_dependency": false,
+        "season_related": false
+      }
+    ],
+    "external_season_fields": [
+      "sfv_schedule.season_id"
+    ],
+    "expense_team_season_disagreement": 0,
+    "source_expense_team_season_disagreement": 14,
+    "same_expense_disagreement_in_snapshot": 0,
+    "season_catalog": {
+      "matched": 37,
+      "label_differences": 0,
+      "source_missing_target": 0
+    },
+    "team_lookup_label_differences": 0,
+    "historical_training_plans": {
+      "linked": 20,
+      "staging_team_disagreements": 0
+    },
+    "planning_participation_pairs": {
+      "source_pairs": 451,
+      "missing_migrated_pairs": 0
+    },
+    "configured_lookup": {
+      "internal_id": 37,
+      "legacy_id": 38,
+      "name": "2026/2027"
+    },
+    "read_only": true,
+    "basis": "clubora versus legacy_prod imported snapshot; not live DEV/PROD"
+  }
+}

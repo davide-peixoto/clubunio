@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 approved historical expense correction: receipt season retained;
+fourteen same-team links moved to the corresponding TeamSeason only in ClubUnio.
+Encrypted verified backup, revision/audit events;191 lines and financial fields
+unchanged. No schema/legacy change. Preserve this approved delta on future imports;
+never replay native IDs blindly. CLUBUNIO-EXPENSE-SEASON-CORRECTION.md.
+
 03.11.2026 retired general parameters: migration000091 removes only general/
 SommerWinter and StatusPlatz1/2/3 after verified private encrypted-row/audit
 backup. SaisonID, SIGNAGE_PERIOD_ID and actual field availability stay intact.

@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Freigegebene historische Spesenkorrektur (03.11.2026)
+
+14 Mannschaftssaison-Verknuepfungen ausd5cb1f2 korrigiert, nur ClubUnio. Belegsaison
+und191 Positionen unveraendert; verschluesselte Sicherung0600 vor Apply geprueft,
+14 Revisions-/Auditereignisse. PostgreSQL-Rollbacktest und nachtraeglicher
+Sicherungsvergleich erfolgreich;0 verbleibende Beleg-/Teamsaison-Widersprueche.
+Kein Runtime-Release/Cachewechsel oder PHPMaker-DEV-/PROD-Eingriff.
+CLUBUNIO-EXPENSE-SEASON-CORRECTION.md.
+
 ## Zentraler Trainingsplan (03.11.2026)
 
 Aktiv: 20261103-clubunio-active-training-plan, gezieltes Delta681833e aus

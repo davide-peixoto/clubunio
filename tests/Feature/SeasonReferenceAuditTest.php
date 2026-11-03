@@ -66,4 +66,26 @@ CREATE TABLE legacy_prod.Rechnung (RechnungsID integer, SaisonID integer);');
         $this->assertSame(1, $report['imported_rows_without_snapshot']);
         $this->assertSame(2, $this->db->table('clubora.invoices')->count());
     }
+
+    public function test_authorized_team_correction_requires_matching_before_and_after_evidence(): void
+    {
+        $this->db->unprepared('CREATE TABLE clubora.team_seasons (id integer, tenant_id integer, legacy_id integer);
+CREATE TABLE clubora.expenses (id integer, tenant_id integer, legacy_id integer, team_season_id integer);
+CREATE TABLE legacy_prod.Spesenbelege (SpesenID integer, TeamSaisonID integer);
+CREATE TABLE clubora.object_changes (tenant_id integer, object_type text, object_id integer, before_value text, after_value text);');
+        $this->db->table('clubora.team_seasons')->insert(['id' => 229, 'tenant_id' => 4, 'legacy_id' => 1000]);
+        $this->db->table('clubora.expenses')->insert(['id' => 46, 'tenant_id' => 4, 'legacy_id' => 102, 'team_season_id' => 256]);
+        $this->db->table('legacy_prod.Spesenbelege')->insert(['SpesenID' => 102, 'TeamSaisonID' => 1000]);
+        $mapping = ['expenses', 'team_season_id', 'Spesenbelege', 'SpesenID', 'TeamSaisonID', 'team_seasons'];
+        $audit = new SeasonReferenceAudit;
+        $this->assertSame(1, $audit->compareMapping($this->db, 4, $mapping)['unexplained_reference_differences']);
+        $this->db->table('clubora.object_changes')->insert(['tenant_id' => 4, 'object_type' => 'expenses', 'object_id' => 46,
+            'before_value' => json_encode(['team_season_id' => 229]), 'after_value' => json_encode(['team_season_id' => 256, 'correction_key' => 'expense_team_season_fix_20261103'])]);
+        $report = $audit->compareMapping($this->db, 4, $mapping);
+        $this->assertSame(1, $report['different_reference']);
+        $this->assertSame(1, $report['recognized_correction_differences']);
+        $this->assertSame(0, $report['unexplained_reference_differences']);
+        $this->db->table('clubora.object_changes')->update(['before_value' => json_encode(['team_season_id' => 999])]);
+        $this->assertSame(1, $audit->compareMapping($this->db, 4, $mapping)['unexplained_reference_differences']);
+    }
 }

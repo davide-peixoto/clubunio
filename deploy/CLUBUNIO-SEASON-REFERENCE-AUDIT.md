@@ -51,6 +51,12 @@ Mandantengrenzen und saisongefilterte Finanzlookups.
 
 ## Fachlicher Altbestand:14 Spesenbelege
 
+**Nachtrag03.11.2026:** Benutzer hat die Belegsaison als richtig bestaetigt und die
+Mannschaftszuordnung freigegeben. Alle14 Belege sind inzwischen nur in ClubUnio
+korrigiert;191 Positionen und alle Finanz-/Belegsaisondaten unveraendert.
+Der folgende Abschnitt beschreibt den Befund vor Korrektur. Ausfuehrung, Sicherung
+und Folgeaudit: [Korrekturprotokoll](CLUBUNIO-EXPENSE-SEASON-CORRECTION.md).
+
 Bei14 Belegen ist expenses.season_id verschieden von der Saison ihrer verknuepften
 Mannschaft. Genau dieselben14 Belege weisen diesen Widerspruch bereits zwischen
 Spesenbelege.SaisonID und TeamsSaison.SaisonID im Quell-Snapshot auf. Beide
