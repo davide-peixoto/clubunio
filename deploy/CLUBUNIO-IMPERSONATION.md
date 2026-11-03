@@ -1,5 +1,27 @@
 # Benutzer simulieren (26.10.2026)
 
+## Freischaltung und Sichtabnahme 03.11.2026
+
+Auf ausdrueckliche Anweisung nur Account19 (davide.peixoto@svsissach.ch),
+Verein4/SV Sissach, freigeschaltet. Bestehende Adminrolle unveraendert.
+Servicebasierte CLI-Ausfuehrung mit zutreffendem Auditgrund; keine behauptete
+Passwortauthentifizierung. Vergleich aller Vereinszuordnungen und fremden Grants
+innerhalb der Transaktion unveraendert. Servergate: genau eine Freischaltung.
+
+Benutzer hat sich selbst angemeldet und Zielkonto7 zur Simulation ausgewaehlt.
+Angemeldete Browserabnahme erfolgreich: Portal-Mitgliederliste, Nur-Lesen-Banner,
+Ablaufzeit, Desktop1280 und Mobil390; gesperrter Benachrichtigungsaufruf zeigt
+Sperrhinweis. Beenden fuehrt zur eigenen Admin-Supportseite zurueck. Protokoll
+zeigt start/read/blocked/stop mit Originaladmin19 und Ziel7. Keine Fachdaten
+geaendert. Keine aktive Testsitzung zurueckgelassen.
+
+Benutzerauswahl lief mobil ueber: minimale Formularbreiten korrigiert,
+320px/390px/1280px visuell geprueft; bei320px kein horizontaler Seitenueberlauf.
+Gezieltes Ein-Datei-Viewdelta auf ClubUnio, Vorversion im privaten shared-Ordner
+gesichert. Kein allgemeines Deployment paralleler Entwicklungen, kein Cache-
+Reset oder Rechteumbau. PHPMaker DEV/PROD unberuehrt.
+Erneuter Regressionstest:9 Tests/87 Assertions erfolgreich (synthetisch/Rollback).
+
 ## Umfang
 
 Web-Supportmodus in ClubUnio. Aufruf aus Benutzerverwaltung > Benutzer simulieren

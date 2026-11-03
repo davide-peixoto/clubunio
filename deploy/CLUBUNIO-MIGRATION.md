@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 support acceptance: explicit opt-in for account19/tenant4 only,
+audited via existing service. Other grants and all memberships compared unchanged.
+Desktop/mobile simulation, blocked route and stop visually verified. Small
+responsive support-form correction deployed; no schema/data import or legacy
+DEV/PROD change. Details: CLUBUNIO-IMPERSONATION.md.
+
 03.11.2026 App finance season: general/SaisonID replaces calendar selection.
 Legacy season reference mapped tenant-locally to native ID; expenses, invoice
 lists and dependent lookups share the SQL scope. No parameter/schema/data change.
