@@ -50,4 +50,28 @@ trotz Staff-/Adminrolle, keine rein rollenbasierten Nutzer, pending/revoked,
 Konto-/Portalsperre, Altersgrenze, direkte Zuordnungs-/Kontobearbeitung,
 Versionskonflikt, Office-Grenze, fremde Dossiers und Rechteentzug nach Mount.
 Bestehende Identitaets-/Portal-/Profil-/Dashboardregression:4 Tests/36 Assertions
-ebenfalls gruen. Deploymentabnahme folgt.
+ebenfalls gruen.
+
+## Auslieferung und Browserabnahme
+
+Release20261103-clubunio-member-access, Quellrevision
+dea1ab85b4e8e454e09e71fde3a93b473d861ab4. Basis/Rueckweg
+20261102-clubunio-compact-shell erhalten. Alle elf Release-Gates bestanden;
+vier Laufzeitdateien gegen die Quellrevision abgeglichen. Private Umgebung,
+Storage und laufende Mobile-Aktivierung beibehalten; keine Schema-/Datenaktion.
+
+Angemeldete lesende Chrome-Abnahme: Mitgliederdossier aus bereits gefilterter
+Liste geoeffnet, Tab Benutzerzugriff geladen. Vorhandene Selbstzuordnung mit
+Freigabe und Lesen/Aenderungsantrag angezeigt. Beide seitlichen Editoren
+geoeffnet, Felder/aktuellen Benutzer kontrolliert und ohne Speichern abgebrochen.
+Keine reale Freigabe, Rolle, Zugangsdaten oder Mitgliederdaten veraendert.
+
+Desktop und responsive390px geprueft: Tabelle innerhalb343px breitem Container
+lokal scrollbar, Dokumentbreite390px bei Viewport390px. Nach Groessenwechsel
+alten Desktop-Tooltip geschlossen, um nicht dessen Position als Tabellen-
+ueberlauf zu messen. Temporaeren Viewport anschliessend aufgehoben.
+Screenshots nur lokal unter storage/framework/testing/member-personal-access-
+desktop.png bzw. member-personal-access-mobile.png, nicht im Repository.
+Trainer/TL-Elternfall und Schreibaktionen mit synthetischen Rollbacktests
+abgenommen; Browserpruefung mit bestehendem Adminkonto ohne reale Schreibaktion.
+PHPMaker DEV/PROD und parallele API-/Mobile-Arbeitsdateien unveraendert.

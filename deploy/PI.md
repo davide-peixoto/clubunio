@@ -2,11 +2,15 @@
 
 ## Benutzerzugriff im Mitgliederdossier (03.11.2026)
 
-Geplantes schmales Delta auf compact-shell: persoenliche Benutzerzuordnungen
+Ausgeliefert20261103-clubunio-member-access ausdea1ab8 auf compact-shell
+(Rueckweg erhalten): persoenliche Benutzerzuordnungen
 im Dossier, pruefbar ueber vorhandene Services; Benutzereditor weiterhin Admin.
 Trainer/TL-Elternzuordnungen bleiben sichtbar, keine pauschalen Rollenzugriffe.
 Keine Migration/Freischaltung/PHPMaker-Aenderung. Nachweis:
-CLUBUNIO-MEMBER-PERSONAL-ACCESS.md.
+CLUBUNIO-MEMBER-PERSONAL-ACCESS.md. Elf Gates/vier Laufzeitdateihashes gruen,
+6 neue Tests/61 Assertions plus4 bestehende Regressionen/36 Assertions.
+Angemeldete Desktop-/Mobilabnahme390px, beide Editoren ohne Speichern geprueft.
+Keine Migration, reale Daten-/Rechteaenderung oder PHPMaker-DEV-/PROD-Aktion.
 
 ## Kompakte Navigation/Dashboard (02.11.2026)
 
