@@ -138,6 +138,11 @@ class Member extends Model
         return $this->hasMany(MemberDocument::class);
     }
 
+    public function personalAccessLinks()
+    {
+        return $this->hasMany(AccountMemberLink::class);
+    }
+
     public function getDisplayNameAttribute(): string
     {
         return trim($this->company ?: $this->first_name.' '.$this->last_name).' (#'.($this->member_number ?? $this->legacy_id ?? $this->id).')';

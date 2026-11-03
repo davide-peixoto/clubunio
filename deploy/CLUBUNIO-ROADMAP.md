@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Persoenlicher Benutzerzugriff im Mitgliederdossier (03.11.2026)
+
+Eigener Tab fuer explizite Selbst-/Elternzuordnungen, Wirksamkeitsanzeige und
+vorhandene Pruef-/Benutzereditoren. Keine Rollenauflistung statt Elternzugriff;
+Trainer als Elternteil bleibt sichtbar. Bestehende Rechte/Services unveraendert,
+keine DB-Migration. CLUBUNIO-MEMBER-PERSONAL-ACCESS.md.
+
 ## Kompakte Navigation und Dashboard (02.11.2026)
 
 Suchfeld nur ueber Lupe, Desktop-Menuebreite per ziehbarem Rand mit bestehender

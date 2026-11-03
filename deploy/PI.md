@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+## Benutzerzugriff im Mitgliederdossier (03.11.2026)
+
+Geplantes schmales Delta auf compact-shell: persoenliche Benutzerzuordnungen
+im Dossier, pruefbar ueber vorhandene Services; Benutzereditor weiterhin Admin.
+Trainer/TL-Elternzuordnungen bleiben sichtbar, keine pauschalen Rollenzugriffe.
+Keine Migration/Freischaltung/PHPMaker-Aenderung. Nachweis:
+CLUBUNIO-MEMBER-PERSONAL-ACCESS.md.
+
 ## Kompakte Navigation/Dashboard (02.11.2026)
 
 Ausgeliefert20261102-clubunio-compact-shell ausb595257 auf

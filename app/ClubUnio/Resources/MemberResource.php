@@ -225,6 +225,7 @@ class MemberResource extends Resource
             Relations\RegistrationsRelationManager::class, Relations\FunctionsRelationManager::class,
             Relations\NotesRelationManager::class, Relations\KeysRelationManager::class,
             Relations\SponsorshipsRelationManager::class, Relations\EventGuestsRelationManager::class,
-            Relations\MaterialReceiptsRelationManager::class, Relations\LegacyMaterialReceiptsRelationManager::class];
+            Relations\MaterialReceiptsRelationManager::class, Relations\LegacyMaterialReceiptsRelationManager::class,
+            Relations\PersonalAccessRelationManager::class];
     }
 }
