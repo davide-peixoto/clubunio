@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Persoenliche Statistik/Anwesenheit (03.11.2026)
+
+Aktiv20261103-clubunio-planning-statistics-v2, Rueckweg mobile-season-scope.
+Sechs-Dateien-Delta204d1c6, atomare Aktivierung auf parallelem Saisonrelease
+nach Versionswechsel neu abgeglichen. Keine Migration/Env-Aenderung, Saison-
+korrekturen erhalten.12 Bestandsgates plus Saison-/Planungsgates, persoenliche
+HTTP-Kernablaeufe und alle Quellhashes erfolgreich. Statistik401 anonym.
+Details: CLUBUNIO-MOBILE-PLANNING-STATISTICS.md. Gesamtmigration weiter aktiv.
+
 ## App current-season scope (03.11.2026)
 
 Aktiv20261103-clubunio-mobile-season-scope ausa9e056e auf mobile-planning.

@@ -66,7 +66,10 @@ class TeamPlanningTest extends TestCase
         foreach ([[$this->player, $this->member], [$this->trainer, $this->otherMember]] as [$actor,$member]) {
             $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
         }
-        $season = $this->db->table('seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture season']);
+        $season = $this->db->table('seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture season',
+            'starts_on' => now('Europe/Zurich')->subMonth()->toDateString(), 'ends_on' => now('Europe/Zurich')->addMonths(2)->toDateString()]);
+        $this->db->table('tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'general', 'key' => 'SaisonID', 'label' => 'Synthetic season',
+            'value_type' => 'integer', 'encrypted_value' => Crypt::encryptString((string) $season), 'is_secret' => false]);
         $team = $this->db->table('teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture team']);
         $this->team = $this->db->table('team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Fixture team / season']);
         $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $this->member]);
@@ -587,6 +590,35 @@ class TeamPlanningTest extends TestCase
         $this->get($base.'/options')->assertForbidden();
         auth('portal')->logout();
         $this->get($base)->assertRedirect('/portal/login');
+    }
+
+    public function test_personal_planning_capabilities_keep_operation_rights_distinct_without_numeric_roles(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['kind' => 'MEISTERSCHAFT']));
+        $profile = $this->db->table('access_profiles')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic mobile capabilities',
+            'permissions' => json_encode(['planning.view', 'planning.update']), 'active' => true]);
+        $actor = $this->account('member');
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $actor->id)->update(['role' => 'profile', 'access_profile_id' => $profile, 'portal_enabled' => false]);
+        $login = fn ($account) => $this->postJson('/api/mobile/v1/session', ['username' => $account->username, 'password' => 'fixture', 'device_name' => 'Capabilities fixture'])->assertOk()->json('data.token');
+        // Backoffice-only profiles must not gain portal/mobile login from presentation hints.
+        $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Capabilities fixture'])->assertUnauthorized();
+        $base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/';
+        $read = fn () => app(\App\ClubUnio\Mobile\MobilePlanningData::class)->event($actor, $this->tenant, $event);
+        $response = $read();
+        foreach (['CanEdit' => true, 'CanAddPeople' => false, 'CanCancel' => false, 'CanRemove' => false, 'CanShareSquad' => false, 'CanSendSquadPush' => false] as $key => $value) {
+            $this->assertSame($value, $response[$key]);
+        }
+        $teams = app(\App\ClubUnio\Mobile\MobilePlanningData::class)->teams(\Illuminate\Http\Request::create('/'), $actor, $this->tenant);
+        $this->assertTrue($teams['Teams'][0]['CanManage']); $this->assertFalse($teams['Teams'][0]['CanCreate']);
+        $this->db->table('access_profiles')->where('id', $profile)->update(['permissions' => json_encode(['planning.view', 'planning.create', 'planning.cancel', 'planning.deactivate'])]);
+        $response = $read();
+        foreach (['CanEdit' => false, 'CanAddPeople' => true, 'CanCancel' => true, 'CanRemove' => true, 'CanShareSquad' => false] as $key => $value) {
+            $this->assertSame($value, $response[$key]);
+        }
+        $teams = app(\App\ClubUnio\Mobile\MobilePlanningData::class)->teams(\Illuminate\Http\Request::create('/'), $actor, $this->tenant);
+        $this->assertFalse($teams['Teams'][0]['CanManage']); $this->assertTrue($teams['Teams'][0]['CanCreate']);
+        $this->withToken($login($this->trainer))->getJson($base.'events/'.$event)->assertOk()->assertJsonPath('data.TeamTermin.CanShareSquad', true)->assertJsonPath('data.TeamTermin.CanSendSquadPush', false);
     }
 
     public function test_personal_statistics_preserves_player_history_scope_and_completed_event_counts(): void

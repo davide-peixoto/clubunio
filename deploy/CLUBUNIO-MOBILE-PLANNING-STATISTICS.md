@@ -33,6 +33,16 @@ Absenzen und Entfernen bestanden; synthetische Transaktionen zurueckgerollt.
 Schemafixtures beruecksichtigen die inzwischen permanenten Migrationen84-87:
 Tests veraendern deren bereits vorhandene Bestands-DDL nicht erneut.
 
-Keine neue Migration. DEV-Nachweis wird nach Bereitstellung ergaenzt.
+Keine neue Migration. DEV20261103-clubunio-planning-statistics-v2 aus204d1c6
+aktiv; Rueckweg20261103-clubunio-mobile-season-scope ausa9e056e.
+Der erste vorbereitete Kandidat wurde absichtlich nicht aktiviert, weil der
+aktive Stand waehrend der Tests durch einen anderen Chat wechselte. V2 kopiert
+die neue Saisonversion vollstaendig und ueberlagert ausschliesslich sechs
+gepruefte Dateien. Vier Baselinehashes gegena9e056e und sechs Ergebnisdateien
+identisch; Saisondateien erhalten. Kein fremder Commit zurueckgesetzt.
+Zwoelf bestehende Gates plus Saison-/17-Routen-Freigabegate erfolgreich;
+persoenlicher synthetischer HTTP-Kerneltest einschliesslich Statistik und
+zweimaligem Anwesenheitsstapel direkt auf DEV bestanden und zurueckgerollt.
+HTTPS Statistik401 anonym, PHP-FPM aktiv; Quellhashes nach Wechsel bestaetigt.
 SFV, Managerfaehigkeiten und persoenliche Dossiers sind im parallelen Anschluss;
 native Gesamtfreischaltung und Gesamtauftrag bleiben offen.

@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 /** Explicit SVS presentation DTOs over existing personal planning policies. */
 final class MobilePlanningData
 {
-    public function __construct(private TeamPlanningService $planning) {}
+    public function __construct(private TeamPlanningService $planning, private MobilePlanningCapabilities $capabilities) {}
 
     private function page(Request $request): array
     {
@@ -80,13 +80,14 @@ final class MobilePlanningData
         $total = (clone $query)->count();
         $managed = $p->teams($actor, $tenant, true)->pluck('id')->map(fn ($id) => (int) $id)->all();
         $own = app(MemberAccessService::class)->represented($actor, $tenant)->get(['id', 'first_name', 'last_name']);
-        $rows = $query->orderBy('id')->offset($start)->limit($limit)->get()->map(function ($team) use ($p, $tenant, $managed, $own) {
+        $rows = $query->orderBy('id')->offset($start)->limit($limit)->get()->map(function ($team) use ($p, $tenant, $managed, $own, $actor) {
             $members = collect();
             foreach (['team_players', 'team_staff'] as $table) {
                 $members = $members->merge($p->table($tenant, $table)->where('team_season_id', $team->id)->where('active', true)->pluck('member_id'));
             }
             return ['TeamSaisonID' => (int) $team->id, 'TeamSaisonLabel' => $team->label,
                 'CanManage' => in_array((int) $team->id, $managed, true),
+                'CanCreate' => $this->capabilities->allows($actor, $tenant, (int) $team->id, 'create'),
                 'MeineMitglieder' => $own->whereIn('id', $members)->map(fn ($m) => ['MitgliederID' => (int) $m->id,
                     'Vorname' => $m->first_name, 'Nachname' => $m->last_name])->values()->all()];
         })->all();
@@ -156,6 +157,7 @@ final class MobilePlanningData
             'Ort' => $event->location, 'Beschreibung' => $event->description, 'MaxTeilnehmer' => $event->capacity,
             ...($seriesSnapshot ? ['SeriesRevision' => $manager ? app(MobilePlanningSeries::class)->revision($tenant, $event) : null] : []),
             'SerieID' => $event->series_key, 'CanManage' => $manager,
+            ...$this->capabilities->event($actor, $tenant, $event),
             'Teilnahmen' => $all->all(), 'MeineTeilnahmen' => $people->whereIn('MitgliederID', $own)->values()->all(),
             'DabeiCount' => $all->where('TeilnahmeStatus', 'DABEI')->count(),
             'AbwesendCount' => $all->where('TeilnahmeStatus', 'ABWESEND')->count(),
