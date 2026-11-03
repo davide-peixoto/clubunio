@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Allgemeine Parameter-Lookups (03.11.2026)
+
+Aktiv20261103-clubunio-setting-lookups, Rueckweg finance-season-parameter.
+Gezieltes Delta4afbe3e; aktuelle Saison per vereinseigenem Lookup, Altwerte klar
+gekennzeichnet, Verwendung/Freigabe statt pauschalem Aktivsymbol.5 Tests/32
+Assertions und vier Servergates gruen. Angemeldeter Lookupdialog ohne Speichern
+visuell geprueft. Keine Migration, Parameter-/Rechte-/Env-Aenderung oder
+PHPMaker-DEV-/PROD-Aktion. CLUBUNIO-SETTING-LOOKUPS.md.
+
 ## Finanzlisten ueber SaisonID (03.11.2026)
 
 Aktiv20261103-clubunio-finance-season-parameter aus6994bd5 auf

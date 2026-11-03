@@ -25,3 +25,9 @@ Vereinskontext. Vertrauliche Werte bleiben maskiert. Keine Schema-/Datenmigratio
 5 synthetische Rollbacktests/32 Assertions einschliesslich Livewire-Editor,
 ungueltiger/fremder/inaktiver Auswahl und Altwert-Schreibsperre erfolgreich.
 PHPMaker DEV/PROD unveraendert; parallele Mobile-Entwicklungen ausgeschlossen.
+
+Release20261103-clubunio-setting-lookups auf finance-season-parameter aktiviert.
+Vier Servergates gruen, keine Migration; Env und composer.lock unveraendert.
+Angemeldete Sichtpruefung: Allgemein zeigt2026/2027(38), Sommer(S), Offen(O)/
+Gesperrt(G) mit Verwendet/Altbestand. Suchbare Saisonliste oeffnet mit korrekter
+Vorauswahl; ohne Speichern abgebrochen. Keine Bestandswerte veraendert.

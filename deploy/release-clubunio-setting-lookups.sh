@@ -4,12 +4,14 @@ base=/var/www/svs-laravel
 previous="$base/releases/20261103-clubunio-finance-season-parameter"
 release="$base/releases/20261103-clubunio-setting-lookups"
 test "$(readlink -f "$base/current")" = "$previous"
-test ! -e "$release"
-sudo cp -a "$previous" "$release"
+if [ ! -e "$release" ]; then
+ sudo cp -a "$previous" "$release"
+fi
 sudo chown -R admin:www-data "$release"
 tar -xzf "$base/shared/clubunio-setting-lookups.tar.gz" -C "$release" --no-same-owner
 cd "$release"
-test "$(readlink -f .env)" = "$(readlink -f "$previous/.env")"
+cmp --silent .env "$previous/.env"
+cmp --silent composer.lock "$previous/composer.lock"
 test "$(readlink -f storage)" = "$(readlink -f "$previous/storage")"
 php -l app/ClubUnio/Resources/SettingResource.php
 php -l app/ClubUnio/Services/SettingsService.php
