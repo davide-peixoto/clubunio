@@ -21,6 +21,57 @@ final class MobilePlanningData
         return [(int) ($d['start'] ?? 0), (int) ($d['recperpage'] ?? 20)];
     }
 
+    public function absences(Request $request, Account $actor, Tenant $tenant): array
+    {
+        [$start, $limit] = $this->page($request);
+        $d = $request->validate(['MitgliederID' => 'nullable|integer|min:1']);
+        $q = $this->planning->absences($actor, $tenant);
+        if (isset($d['MitgliederID'])) { $q->where('member_id', $d['MitgliederID']); }
+        $total = (clone $q)->count();
+        $rows = $this->absenceRows($actor, $tenant, $q->orderByDesc('starts_on')->orderBy('id')->offset($start)->limit($limit)->get());
+        return ['success' => true, 'TeamAbsenzen' => $rows, 'totalRecordCount' => $total];
+    }
+
+    public function absence(Account $actor, Tenant $tenant, int $id): array
+    {
+        $p = $this->planning;
+        $row = $p->absences($actor, $tenant)->where('id', $id)->first();
+        abort_unless($row, 404);
+        return $this->absenceRows($actor, $tenant, collect([$row]))[0];
+    }
+
+    private function absenceRows(Account $actor, Tenant $tenant, \Illuminate\Support\Collection $rows): array
+    {
+        if ($rows->isEmpty()) { return []; }
+        $p = $this->planning;
+        $ids = $rows->pluck('member_id')->unique()->all();
+        $names = $p->table($tenant, 'members')->whereIn('id', $ids)->get(['id', 'first_name', 'last_name'])->keyBy('id');
+        $editable = $deletable = [];
+        try {
+            $editable = array_fill_keys($p->absenceMembers($actor, $tenant, 'update')->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() !== 403) { throw $e; }
+        }
+        try {
+            $p->authorizeOperation($actor, $tenant, 'deactivate');
+            $access = app(MemberAccessService::class);
+            $members = app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'planning', 'deactivate')
+                ? $access->activeMembers($tenant) : $access->represented($actor, $tenant);
+            $deletable = array_fill_keys($members->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            if ($e->getStatusCode() !== 403) { throw $e; }
+        }
+        return $rows->map(function ($row) use ($names, $editable, $deletable) {
+            $member = $names->get($row->member_id);
+            return ['AbsenzID' => (int) $row->id, 'MitgliederID' => (int) $row->member_id,
+                'Vorname' => $member?->first_name ?? '', 'Nachname' => $member?->last_name ?? '',
+                'DatumVon' => $row->starts_at ?? \Carbon\CarbonImmutable::parse($row->starts_on, 'Europe/Zurich')->startOfDay()->toIso8601String(),
+                'DatumBis' => $row->ends_at ?? \Carbon\CarbonImmutable::parse($row->ends_on, 'Europe/Zurich')->endOfDay()->toIso8601String(),
+                'Absenzart' => $row->kind, 'Bemerkung' => $row->note_encrypted ? Crypt::decryptString($row->note_encrypted) : '',
+                'Revision' => (int) $row->revision, 'CanEdit' => isset($editable[$row->member_id]), 'CanDelete' => isset($deletable[$row->member_id])];
+        })->values()->all();
+    }
+
     public function teams(Request $request, Account $actor, Tenant $tenant): array
     {
         [$start, $limit] = $this->page($request);

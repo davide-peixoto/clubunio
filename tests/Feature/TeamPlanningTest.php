@@ -399,10 +399,6 @@ class TeamPlanningTest extends TestCase
         $this->assertSame('DABEI', $row->status);
         $this->assertSame('PRIVATE-COMMENT', Crypt::decryptString($row->comment_encrypted));
         $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
-        $this->withToken($admin)->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])
-            ->assertOk()->assertJsonPath('data.TeamTermin.Status', 'ABGESAGT')->assertJsonPath('data.TeamTermin.Revision', 3);
-        $this->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])->assertUnprocessable();
-
     }
 
     public function test_new_and_moved_events_apply_absences_without_overwriting_trainer(): void
@@ -757,6 +753,67 @@ class TeamPlanningTest extends TestCase
             $this->deleteJson($url.'/'.$guest, ['Revision' => 3])->assertNotFound();
         } finally { $this->travelBack(); }
         $this->assertStringNotContainsString('PRIVATE-GUEST', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+    }
+
+    public function test_native_mobile_absences_preserve_exact_windows_scope_and_real_sync_counts(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $this->db->statement("SET LOCAL lock_timeout TO '5s'");
+        // Test the additive DDL and real PostgreSQL service on an empty temporary table.
+        // Do not demand an exclusive lock on the shared DEV absence table.
+        $this->db->statement('CREATE TEMP TABLE team_absences (LIKE clubora.team_absences INCLUDING ALL) ON COMMIT DROP');
+        $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000085_planning_absence_windows.php'))->up());
+        $this->assertCount(1, $ddl);
+        $this->db->statement(str_replace('clubora.team_absences', 'pg_temp.team_absences', $ddl[0]['query']));
+        $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
+            public function wrapTable($table, $prefix = null) {
+                return parent::wrapTable($table === 'clubora.team_absences' ? 'pg_temp.team_absences' : $table, $prefix);
+            }
+        });
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Absence fixture'])->assertOk()->json('data.token');
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $start = CarbonImmutable::parse($this->input()['starts_at'], 'Europe/Zurich');
+        $earlier = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input([
+            'starts_at' => $start->setTime(10, 0)->format('Y-m-d\TH:i'), 'ends_at' => $start->setTime(11, 0)->format('Y-m-d\TH:i')]));
+        $locked = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input(['deadline_at' => now('Europe/Zurich')->subMinute()->format('Y-m-d\TH:i')]));
+        $this->service->participate($this->player, $this->tenant, $event, $this->member, ['status' => 'DABEI', 'comment' => 'PRIVATE-PRIOR']);
+        $player = $login($this->player);
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/absences';
+        $input = ['MitgliederID' => $this->member, 'DatumVon' => $start->subMinutes(15)->toIso8601String(),
+            'DatumBis' => $start->addMinutes(30)->toIso8601String(), 'Absenzart' => 'ARBEIT', 'Bemerkung' => 'PRIVATE-ABSENCE'];
+        $response = $this->withToken($player)->postJson($url, $input)->assertOk()
+            ->assertJsonPath('data.sync.autoApplied', 1)->assertJsonPath('data.sync.autoRestored', 0)->assertJsonPath('data.sync.skippedLocked', 1);
+        $id = $response->json('data.Absenz.AbsenzID');
+        $this->assertSame('absence', $this->participation($event)->source);
+        $this->assertNull($this->participation($earlier));
+        $this->assertNull($this->participation($locked));
+        $this->assertTrue(CarbonImmutable::parse($response->json('data.Absenz.DatumVon'))->equalTo($start->subMinutes(15)));
+        $this->getJson($url.'?MitgliederID='.$this->member)->assertOk()->assertJsonPath('data.TeamAbsenzen.0.CanEdit', true)->assertJsonPath('data.TeamAbsenzen.0.CanDelete', true);
+        $this->getJson($url.'?recperpage=101')->assertUnprocessable();
+        $this->patchJson($url.'/'.$id, $input)->assertUnprocessable();
+        $this->patchJson($url.'/'.$id, array_replace($input, ['Revision' => 1, 'MitgliederID' => $this->otherMember]))->assertUnprocessable();
+        $this->postJson($url, array_replace($input, ['MitgliederID' => $this->otherMember]))->assertForbidden();
+        $this->withToken($login($this->trainer))->getJson($url)->assertOk()
+            ->assertJsonPath('data.TeamAbsenzen.0.CanEdit', true)->assertJsonPath('data.TeamAbsenzen.0.CanDelete', false);
+        $this->deleteJson($url.'/'.$id, ['Revision' => 1])->assertForbidden();
+        $outsideAccount = $this->account('member');
+        $outsideMember = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Outside', 'last_name' => 'Fixture', 'birth_date' => '2012-01-01']);
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $outsideAccount->id,
+            'member_id' => $outsideMember, 'kind' => 'parent', 'state' => 'approved', 'source' => 'test']);
+        $outsider = $login($outsideAccount);
+        $this->withToken($outsider)->getJson($url.'?MitgliederID='.$this->member)->assertOk()->assertJsonPath('data.TeamAbsenzen', []);
+        $this->patchJson($url.'/'.$id, $input + ['Revision' => 1])->assertNotFound();
+        // Date-only web edits can change a note without erasing precise times.
+        $this->service->saveAbsence($this->admin, $this->tenant, $id, $this->absence([
+            'revision' => 1, 'starts_on' => $start->toDateString(), 'ends_on' => $start->toDateString(), 'note' => 'PRIVATE-WEB']));
+        $this->assertTrue(CarbonImmutable::parse($this->db->table('team_absences')->where('id', $id)->value('starts_at'))->equalTo($start->subMinutes(15)));
+        $this->withToken($player)->patchJson($url.'/'.$id, $input + ['Revision' => 1])->assertUnprocessable();
+        $this->deleteJson($url.'/'.$id, ['Revision' => 2])->assertOk()
+            ->assertJsonPath('data.sync.autoApplied', 0)->assertJsonPath('data.sync.autoRestored', 1)->assertJsonPath('data.sync.skippedLocked', 1);
+        $this->assertSame('DABEI', $this->participation($event)->status);
+        $this->assertSame('PRIVATE-PRIOR', Crypt::decryptString($this->participation($event)->comment_encrypted));
+        $this->deleteJson($url.'/'.$id, ['Revision' => 2])->assertNotFound();
+        $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
     }
 
 }

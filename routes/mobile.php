@@ -17,6 +17,9 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);
+        Route::get('planning/absences', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'absences']);
+        Route::post('planning/absences', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'saveAbsence']);
+        Route::match(['PATCH', 'DELETE'], 'planning/absences/{absence}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'saveAbsence'])->whereNumber('absence');
         Route::get('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'events']);
         Route::get('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'event'])->whereNumber('event');
         Route::post('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'save']);

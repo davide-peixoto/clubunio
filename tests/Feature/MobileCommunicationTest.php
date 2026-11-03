@@ -573,4 +573,52 @@ CREATE TABLE clubora.team_guests (id integer PRIMARY KEY AUTOINCREMENT, tenant_i
             ->assertOk()->assertJsonPath('data.TeamTermin.CanManage', true);
     }
 
+    public function test_personal_absence_http_preserves_partial_day_and_restores_real_participation(): void
+    {
+        foreach (['starts_at text', 'ends_at text', 'deadline_at text', 'mode text', 'status text'] as $column) {
+            $this->db->statement('ALTER TABLE clubora.team_events ADD COLUMN '.$column);
+        }
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations (tenant_id integer, event_id integer, member_id integer);
+CREATE TABLE clubora.team_absences (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, member_id integer, starts_on text, ends_on text, starts_at text, ends_at text, kind text, note_encrypted text, revision integer, deleted_at text, updated_at text);
+CREATE TABLE clubora.team_participations (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, event_id integer, member_id integer, source text, status text, attendance text, comment_encrypted text, original_status text, original_comment_encrypted text, revision integer, updated_at text);
+CREATE TABLE clubora.planning_options (tenant_id integer, category text, code text, active boolean);
+CREATE TABLE clubora.object_changes (tenant_id integer, actor_id integer, object_type text, object_id integer, before_value text, after_value text);');
+        $this->db->table('clubora.planning_options')->insert(['tenant_id' => $this->tenant->id, 'category' => 'absence', 'code' => 'ARBEIT', 'active' => true]);
+        $member = $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->value('member_id');
+        $start = \Carbon\CarbonImmutable::now('Europe/Zurich')->addDays(4)->setTime(18, 0);
+        $events = [];
+        foreach ([[$start, $start->addHour(), false], [$start->setTime(10, 0), $start->setTime(11, 0), false], [$start, $start->addHour(), true]] as [$from, $to, $locked]) {
+            $events[] = $this->db->table('clubora.team_events')->insertGetId(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team,
+                'starts_at' => $from->toIso8601String(), 'ends_at' => $to->toIso8601String(), 'mode' => 'ANMELDEN', 'status' => 'AKTIV',
+                'deadline_at' => ($locked ? $start->subDays(5) : $start->subDay())->toIso8601String()]);
+        }
+        $this->db->table('clubora.team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $events[0], 'member_id' => $member,
+            'source' => 'manual', 'status' => 'DABEI', 'revision' => 1, 'comment_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('PRIVATE-PRIOR')]);
+        $parent = $this->token($this->parent);
+        $input = ['MitgliederID' => $member, 'DatumVon' => $start->subMinutes(15)->toIso8601String(), 'DatumBis' => $start->addMinutes(30)->toIso8601String(),
+            'Absenzart' => 'ARBEIT', 'Bemerkung' => 'PRIVATE-ABSENCE'];
+        $url = $this->url('planning/absences');
+        $r = $this->withToken($parent)->postJson($url, $input)->assertOk()->assertJsonPath('data.sync.autoApplied', 1)
+            ->assertJsonPath('data.sync.autoRestored', 0)->assertJsonPath('data.sync.skippedLocked', 1);
+        $id = $r->json('data.Absenz.AbsenzID');
+        $this->getJson($url)->assertOk()->assertJsonPath('data.TeamAbsenzen.0.Revision', 1)->assertJsonPath('data.TeamAbsenzen.0.CanDelete', true);
+        $this->assertSame(1, $this->db->table('clubora.team_participations')->count());
+        $this->patchJson($url.'/'.$id, $input + ['Revision' => 2])->assertUnprocessable();
+        $this->withToken($this->token($this->trainer))->getJson($url)->assertOk()
+            ->assertJsonPath('data.TeamAbsenzen.0.CanEdit', true)->assertJsonPath('data.TeamAbsenzen.0.CanDelete', false);
+        $this->deleteJson($url.'/'.$id, ['Revision' => 1])->assertForbidden();
+        $outsideAccount = $this->account('member');
+        $outsideMember = $this->member('Outside', '2012-01-01');
+        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $outsideAccount->id,
+            'member_id' => $outsideMember, 'kind' => 'parent', 'state' => 'approved']);
+        $outsider = $this->token($outsideAccount);
+        $this->withToken($outsider)->getJson($url.'?MitgliederID='.$member)->assertOk()->assertJsonPath('data.TeamAbsenzen', []);
+        $this->deleteJson($url.'/'.$id, ['Revision' => 1])->assertNotFound();
+        $this->withToken($parent)->deleteJson($url.'/'.$id, ['Revision' => 1])->assertOk()->assertJsonPath('data.sync.autoRestored', 1);
+        $part = $this->db->table('clubora.team_participations')->where('event_id', $events[0])->first();
+        $this->assertSame('DABEI', $part->status);
+        $this->assertSame('PRIVATE-PRIOR', \Illuminate\Support\Facades\Crypt::decryptString($part->comment_encrypted));
+        $this->assertStringNotContainsString('PRIVATE', $this->db->table('clubora.object_changes')->get()->toJson());
+    }
+
 }

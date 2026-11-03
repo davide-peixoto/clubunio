@@ -20,6 +20,47 @@ final class MobilePlanningController
     public function event(Request $r) {
         return response()->json(['data' => ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('event'))]]);
     }
+    public function absences(Request $r) {
+        return response()->json(['data' => app(MobilePlanningData::class)->absences($r, $r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'))]);
+    }
+
+    public function saveAbsence(Request $r)
+    {
+        return $this->write($r, function ($actor, $tenant, $p) use ($r) {
+            $id = $r->route('absence') ? (int) $r->route('absence') : null;
+            $delete = $r->isMethod('DELETE');
+            // Scope the old record before accepting any client-supplied person or revision.
+            $old = $id ? $p->absences($actor, $tenant)->where('id', $id)->first() : null;
+            abort_if($id && ! $old, 404);
+            $d = $r->validate(['MitgliederID' => $delete ? 'prohibited' : 'required|integer|min:1',
+                'DatumVon' => $delete ? 'prohibited' : 'required|date', 'DatumBis' => $delete ? 'prohibited' : 'required|date|after:DatumVon',
+                'Absenzart' => $delete ? 'prohibited' : 'required|string|max:40', 'Bemerkung' => 'nullable|string|max:1000',
+                'Revision' => $id ? 'required|integer|min:1' : 'prohibited']);
+            abort_if($old && isset($d['MitgliederID']) && (int) $d['MitgliederID'] !== (int) $old->member_id, 422, 'Person einer Absenz nicht austauschbar.');
+            $member = (int) ($old->member_id ?? $d['MitgliederID']);
+            $snapshot = fn () => $p->table($tenant, 'team_participations')->where('member_id', $member)
+                ->whereIn('event_id', $p->table($tenant, 'team_events')->where('ends_at', '>', now()->toIso8601String())->select('id'))
+                ->pluck('source', 'event_id')->all();
+            $before = $snapshot();
+            $input = ['member_id' => $member, 'revision' => $d['Revision'] ?? 0];
+            if (! $delete) {
+                $from = Time::parse($d['DatumVon'], 'Europe/Zurich')->setTimezone('Europe/Zurich');
+                $to = Time::parse($d['DatumBis'], 'Europe/Zurich')->setTimezone('Europe/Zurich');
+                $input += ['starts_on' => $from->toDateString(), 'ends_on' => $to->toDateString(),
+                    'starts_at' => $from->toIso8601String(), 'ends_at' => $to->toIso8601String(),
+                    'kind' => $d['Absenzart'], 'note' => $d['Bemerkung'] ?? ''];
+            }
+            $saved = $p->saveAbsence($actor, $tenant, $id, $input, $delete);
+            $after = $snapshot();
+            $applied = $restored = 0;
+            foreach (array_unique(array_merge(array_keys($before), array_keys($after))) as $event) {
+                if (($before[$event] ?? null) !== 'absence' && ($after[$event] ?? null) === 'absence') { $applied++; }
+                if (($before[$event] ?? null) === 'absence' && ($after[$event] ?? null) !== 'absence') { $restored++; }
+            }
+            return ['success' => true, 'sync' => ['autoApplied' => $applied, 'autoRestored' => $restored, 'skippedLocked' => $saved['skipped']]]
+                + ($delete ? ['removed_absence_id' => $id] : ['Absenz' => app(MobilePlanningData::class)->absence($actor, $tenant, (int) $saved['id'])]);
+        });
+    }
     private function write(Request $r, callable $operation)
     {
         return DB::connection('clubunio')->transaction(function () use ($r, $operation) {
