@@ -98,3 +98,8 @@ Endpunkt liefert503, der bestehende Editor bleibt manuell bedienbar; es werden
 keine KI-Vorschlaege erfunden. HEIC-Dateiuebernahme, reale persoenliche Azure-
 Uebertragung auf DEV und native Kamera-/Datei-/Gesamtabnahme sind noch offen.
 Diese Grenzen verhindern eine pauschale Vollabnahme des Spesenpakets.
+
+Release-Gate:14 native gesperrte Routen plus2 vorhandene persoenliche Leserouten.
+Index/Optionen behalten bei geschlossenem nativen Schalter den bisherigen
+Lesevertrag; bei Freigabe delegieren sie an die nativen DTO-/Optionsdienste.
+Keine doppelten GET-Routen, die sich je nach Registrierungsfolge ueberschreiben.

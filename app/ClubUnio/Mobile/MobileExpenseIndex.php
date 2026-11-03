@@ -10,6 +10,9 @@ final class MobileExpenseIndex
 {
     public function index(Request $request)
     {
+        if (config('clubunio-mobile.native_expenses_enabled', false)) {
+            return app(MobileExpenseController::class)->index($request);
+        }
         $d = $request->validate(['status' => 'nullable|in:O,F,Z,B,R', 'start' => 'nullable|integer|min:0|max:100000', 'limit' => 'nullable|integer|min:1|max:100']);
         $actor = $request->attributes->get('mobile.actor');
         $tenant = $request->attributes->get('mobile.tenant');

@@ -24,7 +24,7 @@ if not re.fullmatch(r'/var/www/svs-laravel/releases/[a-zA-Z0-9-]+', previous):
     raise RuntimeError('Unexpected DEV release path')
 paths = git('diff-tree', '--no-commit-id', '--name-only', '-r', '943f114').decode().splitlines()
 paths = [p for p in paths if not p.startswith(('tests/', 'deploy/CLUBUNIO-'))]
-paths += ['deploy/release-clubunio-native-followups.sh', 'deploy/check-mobile-expenses.php']
+paths += ['deploy/release-clubunio-native-followups.sh', 'deploy/check-mobile-expenses.php', 'app/ClubUnio/Mobile/MobileExpenseIndex.php', 'app/ClubUnio/Mobile/MobileExpenseOptions.php']
 before, after, added, verified = [], [], [], {}
 with tarfile.open(OUT / 'native-followups.tar.gz', 'w:gz') as archive:
     for path in paths:

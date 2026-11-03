@@ -12,6 +12,9 @@ final class MobileExpenseOptions
 {
     public function index(Request $request)
     {
+        if (config('clubunio-mobile.native_expenses_enabled', false)) {
+            return app(MobileExpenseController::class)->options($request);
+        }
         return response()->json(['data' => $this->read($request->attributes->get('mobile.actor'), $request->attributes->get('mobile.tenant'))]);
     }
 

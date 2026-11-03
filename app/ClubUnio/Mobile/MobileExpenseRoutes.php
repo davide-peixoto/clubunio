@@ -9,8 +9,6 @@ final class MobileExpenseRoutes
     // Register inside the existing personal clubs/{tenant} group only.
     public static function register(): void {
         Route::prefix('expenses')->group(function () {
-            Route::get('/', [MobileExpenseController::class, 'index']);
-            Route::get('options', [MobileExpenseController::class, 'options']);
             Route::get('banks', [MobileExpenseController::class, 'banks']);
             Route::post('banks', [MobileExpenseController::class, 'bank']);
             Route::match(['PATCH','DELETE'], 'banks/{bank}', [MobileExpenseController::class, 'bank'])->whereNumber('bank');

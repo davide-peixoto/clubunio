@@ -16,7 +16,11 @@ try {
             $count++;
         }
     }
-    if ($count !== 16) { throw new LogicException('Unexpected expense route inventory'); }
+    if ($count !== 14) { throw new LogicException('Unexpected expense route inventory'); }
+    foreach (['expenses' => App\ClubUnio\Mobile\MobileExpenseIndex::class, 'expenses/options' => App\ClubUnio\Mobile\MobileExpenseOptions::class] as $suffix => $controller) {
+        $matches = array_filter(iterator_to_array(Illuminate\Support\Facades\Route::getRoutes()), fn ($route) => $route->uri() === 'api/mobile/v1/clubs/{tenant}/'.$suffix && in_array('GET', $route->methods(), true) && $route->getActionName() === $controller.'@index' && in_array(App\ClubUnio\Mobile\MobileMiddleware::class, $route->gatherMiddleware(), true));
+        if (count($matches) !== 1) { throw new LogicException('Missing compatible expense read route'); }
+    }
     if ($enabled) {
         $db = Illuminate\Support\Facades\DB::connection('clubunio');
         foreach (['mobile_expense_receipts', 'mobile_expense_commands'] as $table) {
@@ -24,7 +28,7 @@ try {
         }
         if (! $db->table('clubora.migrations')->where('migration', '2026_11_03_000088_mobile_expense_receipts')->exists()) { throw new LogicException('Missing expense ledger'); }
     }
-    echo 'Personal expenses16 protected routes and '.($enabled ? 'enabled schema' : 'closed foundation')." verified; no provider or payment called.\n";
+    echo 'Personal expenses14 protected native routes plus2 compatible read routes and '.($enabled ? 'enabled schema' : 'closed foundation')." verified; no provider or payment called.\n";
 } catch (Throwable $error) {
     fwrite(STDERR, 'Expense release gate failed: '.get_class($error)." (contents suppressed).\n"); exit(1);
 }
