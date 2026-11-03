@@ -21,3 +21,13 @@ its budget was not relaxed and backend authorization was not changed here.
 Release: 20261103-clubunio-preview-zoom, based on mobile-account-shell.
 Rollback: restore previous current symlink and reload PHP-FPM; no DB rollback.
 Existing PHPMaker DEV/PROD remain unchanged. Browser acceptance recorded below.
+
+Release acceptance: all twelve release gates and the synthetic account rollback
+check passed; fifteen archive paths verified before/after activation. Actual
+authenticated Bexio sandbox PDF rendered (two pages), height fit 772px, width
+fit 937px, zoom in/out changed canvas dimensions. Raster member preview rendered,
+height fit 772px and zoom 967.68px, with no record changes. Mobile 390x844 PDF
+preview: toolbar wraps, document fits width, root scroll width remains390px.
+No browser errors observed. Temporary viewport reset; document dialogs closed.
+Screenshots are local ignored test artifacts (preview-zoom-mobile/desktop.png),
+only the synthetic invoice screenshot is suitable for sharing.
