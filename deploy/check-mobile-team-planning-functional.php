@@ -29,6 +29,8 @@ try {
     $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
     $season = $db->table('clubora.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture season',
         'starts_on' => now('Europe/Zurich')->subMonth()->toDateString(), 'ends_on' => now('Europe/Zurich')->addMonths(2)->toDateString()]);
+    $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant->id, 'area' => 'general', 'key' => 'SaisonID', 'label' => 'Synthetic season',
+        'value_type' => 'integer', 'encrypted_value' => Illuminate\Support\Facades\Crypt::encryptString((string) $season), 'is_secret' => false]);
     $team = $db->table('clubora.teams')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture team']);
     $team = $db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic fixture']);
     $member = $db->table('clubora.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Player', 'birth_date' => '2012-01-01']);
@@ -83,6 +85,25 @@ try {
         [$status] = $call('DELETE', $eventUrl, ['Revision' => 1, 'scope' => 'single'], $token); $expect($status, 200);
     }
     [$status, $removed] = $call('DELETE', $base.'my-teams/'.$team.'/players/'.$assignment['TeamlistID'], ['_version' => $assignment['_version']], $token); $expect($status, 200); $expect($removed['data']['removed'], true);
+    $otherSeason = $db->table('clubora.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Synthetic other season']);
+    $invoiceIds = [];
+    foreach ([$season, $otherSeason] as $selected) {
+        $invoice = $db->table('clubora.invoices')->insertGetId(['tenant_id' => $tenant->id, 'member_id' => $member, 'season_id' => $selected]);
+        $invoiceIds[] = $invoice;
+        $db->table('clubora.invoice_lines')->insert(['tenant_id' => $tenant->id, 'invoice_id' => $invoice, 'net_amount' => '10.02']);
+        $db->table('clubora.expenses')->insert(['tenant_id' => $tenant->id, 'member_id' => $member, 'season_id' => $selected]);
+    }
+    [$status, $list] = $call('GET', $base.'invoices?limit=1&all_seasons=1', [], $token); $expect($status, 200);
+    $expect($list['data']['total'], 1); $expect($list['data']['rows'][0]['id'], $invoiceIds[0]);
+    [$status, $options] = $call('GET', $base.'invoices/options', [], $token); $expect($status, 200);
+    $expect($options['data']['seasons'][0]['id'], $season);
+    [$status, $list] = $call('GET', $base.'expenses?limit=1', [], $token); $expect($status, 200); $expect($list['data']['total'], 1);
+    [$status, $options] = $call('GET', $base.'expenses/options', [], $token); $expect($status, 200);
+    $expect($options['data']['seasons'][0]['id'], $season);
+    $db->table('clubora.tenant_settings')->where('tenant_id', $tenant->id)->where('area', 'general')->where('key', 'SaisonID')
+        ->update(['encrypted_value' => Illuminate\Support\Facades\Crypt::encryptString((string) $otherSeason)]);
+    [$status, $list] = $call('GET', $base.'invoices', [], $token); $expect($status, 200);
+    $expect($list['data']['total'], 1); $expect($list['data']['rows'][0]['id'], $invoiceIds[1]);
     echo 'Personal My Teams and '.($enabled ? 'enabled native planning' : 'closed native planning foundation')." HTTP-kernel checks passed; synthetic transaction rolled back.\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Functional gate failed at '.$stage.': '.get_class($e)." (record contents suppressed).\n");

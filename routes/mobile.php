@@ -55,6 +55,10 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('events/{event}', [Mobile::class, 'event'])->whereNumber('event');
         Route::post('events/{event}/participate', [Mobile::class, 'participate'])->whereNumber('event');
         Route::post('events/{event}/chat', [Mobile::class, 'eventChat'])->whereNumber('event');
+        Route::get('invoices', [\App\ClubUnio\Mobile\MobileInvoiceController::class, 'index']);
+        Route::get('invoices/options', [\App\ClubUnio\Mobile\MobileInvoiceController::class, 'options']);
+        Route::get('expenses/options', [\App\ClubUnio\Mobile\MobileExpenseOptions::class, 'index']);
+        Route::get('expenses', [\App\ClubUnio\Mobile\MobileExpenseIndex::class, 'index']);
         Route::get('invoices/{invoice}', [Mobile::class, 'invoice'])->whereNumber('invoice');
         Route::get('invoices/{invoice}/pdf', [Mobile::class, 'invoicePdf'])->whereNumber('invoice');
         Route::get('inbox', [Mobile::class, 'inbox']);

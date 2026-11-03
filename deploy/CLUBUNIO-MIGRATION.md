@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 App finance season: general/SaisonID replaces calendar selection.
+Legacy season reference mapped tenant-locally to native ID; expenses, invoice
+lists and dependent lookups share the SQL scope. No parameter/schema/data change.
+Read routes only, no parallel expense-upload migration or write rollout.
+CLUBUNIO-MOBILE-FINANCE-SEASON.md supersedes date-based selection below.
+
 03.11.2026 personal App API current-season scope: SQL restriction before lists,
 counts and direct team/event access. No schema/data/rights migration. Seasonal
 metadata must have one current active dated record per tenant. Web/integration

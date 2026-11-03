@@ -1,10 +1,11 @@
 # ClubUnio Kommunikation: Implementierung und API
 
 03.11.2026: Persoenliche App-Abfragen fuer Teams/Teamchats/Teamplanung sind
-serverseitig auf die eindeutig aktuelle datierte Saison begrenzt, auch bei
+serverseitig auf die mit general/SaisonID konfigurierte Saison begrenzt, auch bei
 Admin- und direkten ID-Aufrufen. Keine Client-Filter erforderlich. Genaue
 Grenzen (saisonunabhaengige Dokumente/Finanzlinks), Tests und Migration:
 [App-Saisonfilter](CLUBUNIO-MOBILE-SEASON-SCOPE.md).
+Spesen-/Rechnungslisten und Lookups: [Finanz-Saisonfilter](CLUBUNIO-MOBILE-FINANCE-SEASON.md).
 
 Stand02.11.2026. Implementierter Entwicklungsstand, noch kein Server-Release.
 Folgepaket: [Chatkontrolle und private Dateien](CLUBUNIO-COMMUNICATION-PACKAGE2.md).

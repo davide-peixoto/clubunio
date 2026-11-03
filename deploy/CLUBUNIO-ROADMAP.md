@@ -2,9 +2,9 @@
 
 ## App-API auf aktuelle Saison begrenzen (03.11.2026)
 
-Zentraler serverseitiger SQL-Scope fuer persoenliche Team-/Planungsabfragen,
-Totals und direkte IDs. Rechte unveraendert, Web-/Integrationshistorie erhalten;
-keine DB-/Datenmigration. CLUBUNIO-MOBILE-SEASON-SCOPE.md.
+Zentraler SQL-Scope fuer Teamplanung und Finanzen ueber general/SaisonID,
+nicht ueber Kalenderdatum. Spesen-/Rechnungslisten und zugehoerige Lookups;
+Rechte/Webhistorie erhalten, keine Datenmigration. CLUBUNIO-MOBILE-FINANCE-SEASON.md.
 
 ## Dokumentvorschau mit Zoom (03.11.2026)
 

@@ -50,7 +50,8 @@ CREATE TABLE clubora.tenant_accounts (tenant_id integer, account_id integer, rol
 CREATE TABLE clubora.members (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, first_name text, last_name text, birth_date text, exit_date text, archived_at text, status_id integer, UNIQUE(tenant_id,id));
 CREATE TABLE clubora.member_statuses (id integer PRIMARY KEY, tenant_id integer, ends_membership boolean);
 CREATE TABLE clubora.account_member_links (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, account_id integer, member_id integer, state text, kind text);
-CREATE TABLE clubora.seasons (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, name text, active boolean DEFAULT 1, starts_on text, ends_on text);
+CREATE TABLE clubora.seasons (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, legacy_id integer, name text, active boolean DEFAULT 1, starts_on text, ends_on text);
+CREATE TABLE clubora.tenant_settings (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, area text, key text, encrypted_value text, enabled boolean DEFAULT 0);
 CREATE TABLE clubora.teams (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, name text, active boolean DEFAULT 1);
 CREATE TABLE clubora.team_seasons (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_id integer, season_id integer, label text, active boolean DEFAULT 1, UNIQUE(tenant_id,id));
 CREATE TABLE clubora.team_players (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, member_id integer, active boolean DEFAULT 1);
@@ -85,6 +86,8 @@ SQL);
         }
         $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Current fixture',
             'starts_on' => now('Europe/Zurich')->subMonth()->toDateString(), 'ends_on' => now('Europe/Zurich')->addMonths(2)->toDateString()]);
+        $this->db->table('clubora.tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'general', 'key' => 'SaisonID',
+            'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $season)]);
         $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Junioren']);
         $this->team = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Junioren 26/27']);
         $this->db->table('clubora.team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $child]);
@@ -115,6 +118,83 @@ SQL);
     {
         $this->withToken($this->token($actor))->getJson($this->url('chats'))->assertOk();
         return (int) $this->db->table('clubora.chat_conversations')->where('tenant_id', $this->tenant->id)->where('kind', 'team')->where('team_season_id', $this->team)->value('id');
+    }
+
+    public function test_saison_parameter_maps_legacy_id_before_native_collision_without_date_guessing(): void
+    {
+        $current = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');
+        $this->db->table('clubora.seasons')->where('id', $current)->update(['legacy_id' => 700, 'starts_on' => '2000-01-01', 'ends_on' => '2001-01-01']);
+        $this->db->table('clubora.seasons')->insert(['id' => 700, 'tenant_id' => $this->tenant->id, 'name' => 'Native collision']);
+        $settings = $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->where('key', 'SaisonID');
+        $settings->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('700')]);
+        $this->withToken($this->token($this->admin))->getJson($this->url('teams'))
+            ->assertOk()->assertJsonPath('data.teams.0.id', $this->team);
+        $this->db->table('clubora.seasons')->where('id', $current)->update(['active' => false]);
+        // An inactive imported season cannot be replaced by an unrelated native ID.
+        $this->getJson($this->url('teams'))->assertOk()->assertJsonCount(0, 'data.teams');
+    }
+
+    private function financeSchema(): void
+    {
+        foreach (['season_id integer', "tax_mode text DEFAULT 'exclusive'", 'cash_rounding boolean DEFAULT 0'] as $column) {
+            $this->db->statement('ALTER TABLE clubora.invoices ADD COLUMN '.$column);
+        }
+        $this->db->statement('ALTER TABLE clubora.invoice_statuses ADD COLUMN active boolean DEFAULT 1');
+        $this->db->statement('ALTER TABLE clubora.teams ADD COLUMN laundry_allowance numeric DEFAULT 25');
+        $this->db->unprepared('CREATE TABLE clubora.invoice_lines (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, invoice_id integer, net_amount numeric, active boolean DEFAULT 1);
+CREATE TABLE clubora.expenses (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, member_id integer, season_id integer, team_season_id integer, active boolean DEFAULT 1, revision integer DEFAULT 1, bank_account_id integer, status_id integer, round_id integer, notes text);
+CREATE TABLE clubora.expense_statuses (id integer PRIMARY KEY, tenant_id integer, code text, name text, active boolean DEFAULT 1);
+CREATE TABLE clubora.expense_rounds (id integer PRIMARY KEY, tenant_id integer, code text, name text, active boolean DEFAULT 1);
+CREATE TABLE clubora.expense_types (id integer PRIMARY KEY, tenant_id integer, name text, active boolean DEFAULT 1, receipt_required boolean, amount_source text);
+CREATE TABLE clubora.game_types (id integer PRIMARY KEY, tenant_id integer, code text, name text, active boolean DEFAULT 1);
+CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text, active boolean DEFAULT 1);');
+    }
+
+    public function test_financial_lists_totals_lookups_and_personal_permissions_use_configured_season(): void
+    {
+        $this->financeSchema();
+        $season = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');
+        $other = $this->member('Other invoice owner', '1980-01-01');
+        $child = $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->value('member_id');
+        $old = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Other season']);
+        $this->db->table('clubora.invoice_statuses')->insert(['id' => 1, 'tenant_id' => $this->tenant->id, 'name' => 'Offen', 'code' => 'O']);
+        $ids = [];
+        foreach ([[$child, $season, 100.05], [$child, $old, 200], [$other, $season, 300], [$other, null, 400]] as [$member, $selected, $amount]) {
+            $id = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->tenant->id, 'member_id' => $member, 'season_id' => $selected, 'status_id' => 1]);
+            $this->db->table('clubora.invoice_lines')->insert(['tenant_id' => $this->tenant->id, 'invoice_id' => $id, 'net_amount' => $amount]);
+            $this->db->table('clubora.expenses')->insert(['tenant_id' => $this->tenant->id, 'member_id' => $member, 'season_id' => $selected]);
+            $ids[] = $id;
+        }
+        $this->withToken($this->token($this->parent))->getJson($this->url('invoices?limit=1&season_id='.$old.'&all_seasons=1'))
+            ->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.rows.0.id', $ids[0])->assertJsonPath('data.rows.0.total_cents', 10005);
+        $this->getJson($this->url('invoices/options'))->assertOk()->assertJsonCount(1, 'data.members')
+            ->assertJsonPath('data.members.0.id', $child)->assertJsonPath('data.seasons.0.id', $season);
+        $this->getJson($this->url('invoices?member_id='.$other))->assertOk()->assertJsonPath('data.total', 0);
+        $this->withToken($this->token($this->admin))->getJson($this->url('invoices?limit=1'))
+            ->assertOk()->assertJsonPath('data.total', 2)->assertJsonCount(1, 'data.rows');
+        $this->getJson($this->url('expenses?limit=1&season_id='.$old))->assertOk()->assertJsonPath('data.total', 2)->assertJsonCount(1, 'data.rows');
+        $expenses = app(\App\ClubUnio\Services\ExpenseService::class)->visible($this->admin, $this->tenant);
+        $this->assertSame(2, $expenses->count());
+        $this->assertSame(0, (clone $expenses)->where('season_id', $old)->count());
+        $this->getJson($this->url('invoices?limit=101'))->assertUnprocessable();
+        $this->getJson('/api/mobile/v1/clubs/999999/invoices')->assertNotFound();
+        $this->app->instance('request', \Illuminate\Http\Request::create('/invoices'));
+        $this->assertSame(4, app(\App\ClubUnio\Services\ExpenseService::class)->visible($this->admin, $this->tenant)->count());
+    }
+
+    public function test_expense_options_only_offer_own_staff_teams_in_parameter_season(): void
+    {
+        $this->financeSchema();
+        $coach = $this->db->table('clubora.account_member_links')->where('account_id', $this->trainer->id)->value('member_id');
+        $original = $this->db->table('clubora.team_seasons')->where('id', $this->team)->first();
+        $old = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Old']);
+        $oldTeam = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $original->team_id, 'season_id' => $old, 'label' => 'Old']);
+        $this->db->table('clubora.team_staff')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $oldTeam, 'member_id' => $coach]);
+        $this->withToken($this->token($this->trainer))->getJson($this->url('expenses/options?season_id='.$old))
+            ->assertOk()->assertJsonCount(1, 'data.teams')->assertJsonPath('data.teams.0.id', $this->team)
+            ->assertJsonPath('data.seasons.0.id', $original->season_id)->assertJsonPath('data.capabilities.create', true);
+        $this->withToken($this->token($this->parent))->getJson($this->url('expenses/options'))
+            ->assertOk()->assertJsonCount(0, 'data.teams')->assertJsonPath('data.capabilities.create', false);
     }
 
     public function test_mobile_season_scope_filters_sql_counts_direct_ids_and_chats_for_all_roles(): void
@@ -155,7 +235,7 @@ SQL);
         }
     }
 
-    public function test_mobile_season_boundaries_roll_over_without_client_filter_and_fail_closed(): void
+    public function test_mobile_season_parameter_overrides_calendar_and_fails_closed(): void
     {
         $original = $this->db->table('clubora.team_seasons')->where('id', $this->team)->first();
         $this->db->table('clubora.seasons')->where('id', $original->season_id)->update(['starts_on' => '2026-07-01', 'ends_on' => '2027-06-30']);
@@ -165,18 +245,20 @@ SQL);
             'season_id' => $nextSeason, 'label' => 'Next']);
         $token = $this->token($this->admin);
         try {
-            foreach (['2027-06-30 23:59:59' => $this->team, '2027-07-01 00:00:00' => $next] as $time => $expected) {
+            foreach (['2027-06-30 23:59:59', '2027-07-01 00:00:00'] as $time) {
                 $this->travelTo(\Carbon\CarbonImmutable::parse($time, 'Europe/Zurich'));
                 // Renew fixture session rather than bypassing real expiration checks.
                 $token = $this->token($this->admin);
                 $this->withToken($token)->getJson($this->url('teams?season_id='.$original->season_id.'&all_seasons=1'))
-                    ->assertOk()->assertJsonCount(1, 'data.teams')->assertJsonPath('data.teams.0.id', $expected);
+                    ->assertOk()->assertJsonCount(1, 'data.teams')->assertJsonPath('data.teams.0.id', $this->team);
             }
-            $this->db->table('clubora.seasons')->where('id', $nextSeason)->update(['starts_on' => null]);
-            $this->getJson($this->url('teams'))->assertOk()->assertJsonCount(0, 'data.teams');
-            $this->db->table('clubora.seasons')->where('id', $nextSeason)->update(['starts_on' => '2027-07-01']);
-            $this->db->table('clubora.seasons')->where('id', $original->season_id)->update(['ends_on' => '2027-07-01']);
-            $this->getJson($this->url('teams'))->assertOk()->assertJsonCount(0, 'data.teams');
+            $settings = $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->where('key', 'SaisonID');
+            $settings->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $nextSeason)]);
+            $this->getJson($this->url('teams'))->assertOk()->assertJsonPath('data.teams.0.id', $next);
+            foreach (['0', 'bad', '999999', ''] as $invalid) {
+                $settings->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString($invalid)]);
+                $this->getJson($this->url('teams'))->assertOk()->assertJsonCount(0, 'data.teams');
+            }
         } finally { $this->travelBack(); }
     }
 
@@ -202,7 +284,7 @@ SQL);
         $this->db->flushQueryLog();
         $this->assertSame((int) $current->id, (int) $scope->current($this->tenant)->id);
         $scope->current($this->tenant);
-        $this->assertCount(1, $this->db->getQueryLog());
+        $this->assertCount(2, $this->db->getQueryLog());
         $this->db->disableQueryLog();
         $this->assertSame(1, $planning->table($this->tenant, 'team_events')->count());
         $this->assertSame(1, $planning->table($this->tenant, 'team_events', true)->count());

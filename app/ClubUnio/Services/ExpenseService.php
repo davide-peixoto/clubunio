@@ -31,6 +31,7 @@ class ExpenseService
     public function visible(Account $actor, Tenant $tenant): Builder
     {
         $q = Expense::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
+        app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($q, $tenant);
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'view')) {
             return $q;
         }
@@ -168,7 +169,9 @@ class ExpenseService
                 // Personal claims only for a team on which the member is active staff.
                 abort_unless(DB::connection('clubunio')->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $data['member_id'])->where('team_season_id', $data['team_season_id'])->exists(), 403);
             }
-            $team = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->findOrFail($data['team_season_id']);
+            $teamQuery = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true));
+            app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($teamQuery, $tenant);
+            $team = $teamQuery->findOrFail($data['team_season_id']);
             if (! $access->activeMembers($tenant)->whereKey($data['member_id'])->exists()) {
                 throw ValidationException::withMessages(['member_id' => 'Bitte ein aktives Mitglied wählen.']);
             }

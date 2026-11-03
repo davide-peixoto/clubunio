@@ -16,4 +16,8 @@ foreach ($tenants as $tenant) {
     if (! $season && $query->exists()) { throw new LogicException('Missing season exposes rows'); }
     if ($season && (clone $query)->where('season_id', '!=', $season->id)->exists()) { throw new LogicException('Historical season exposed'); }
 }
-echo "Personal mobile current-season SQL scope verified; no data changed.\n";
+foreach (['expenses', 'expenses/options', 'invoices', 'invoices/options'] as $path) {
+    $route = Illuminate\Support\Facades\Route::getRoutes()->match(Illuminate\Http\Request::create('/api/mobile/v1/clubs/4/'.$path));
+    if (! in_array(App\ClubUnio\Mobile\MobileMiddleware::class, $route->gatherMiddleware(), true)) { throw new LogicException('Unguarded financial read route'); }
+}
+echo "Personal mobile SaisonID SQL scope and four financial read routes verified; no data changed.\n";
