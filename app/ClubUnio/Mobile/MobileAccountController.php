@@ -56,6 +56,15 @@ final class MobileAccountController
             'Trainingsplaner' => 'training', 'BusReservationen' => 'bus', 'Dokumente' => 'documents',
             'Sponsorenlauf' => 'sponsor_runs'];
         $modules = [];
+        $busAllowed = false;
+        if (config('clubunio-mobile.native_bus_enabled')) {
+            try {
+                app(\App\ClubUnio\Services\BusReservationService::class)->enter($actor, $tenant);
+                $busAllowed = true;
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+                if ($error->getStatusCode() !== 403) { throw $error; }
+            }
+        }
         $visibleKeys = app(\App\ClubUnio\Services\MobileModuleSettings::class)->visibleKeys($actor, $tenant);
         // Presentation compatibility only; feature claims never grant permissions.
         $supported = explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
@@ -63,12 +72,17 @@ final class MobileAccountController
             if (! in_array($key, $visibleKeys, true)) { continue; }
             $allowed = app(ModulePermissionService::class)->allows($actor, $tenant, $permission, 'view')
                 || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
+                || ($key === 'Dokumente' && config('clubunio-mobile.native_documents_enabled') && app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant)->exists())
+                || ($key === 'BusReservationen' && $busAllowed)
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true));
             if ($allowed) {
                 $native = match ($key) {
                     'Teamplanung' => config('clubunio-mobile.native_planning_enabled') && in_array('svs-planning-v1', $supported, true),
                     'Teams' => config('clubunio-mobile.native_my_teams_enabled') && in_array('my-teams-v1', $supported, true),
-                    'Spesen' => config('clubunio-mobile.native_expenses_enabled') && in_array('expenses-v1', $supported, true), default => false,
+                    'Spesen' => config('clubunio-mobile.native_expenses_enabled') && in_array('expenses-v1', $supported, true),
+                    'Platzverfugbarkeit' => config('clubunio-mobile.native_facilities_enabled') && in_array('facilities-v1', $supported, true),
+                    'BusReservationen' => config('clubunio-mobile.native_bus_enabled') && in_array('bus-v1', $supported, true),
+                    'Dokumente' => config('clubunio-mobile.native_documents_enabled') && in_array('member-documents-v1', $supported, true), default => false,
                 };
                 $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native];
             }

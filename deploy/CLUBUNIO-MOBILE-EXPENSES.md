@@ -87,19 +87,44 @@ Dateirechten. Providergrenze ausschliesslich synthetisch, keine echten Uploads,
 Zahlungen oder E-Mails. Flutter prueft die originalen Listen-/Bank-/Positionsmasken,
 persoenlichen Transport, ungewisse UUIDs und unbestaetigte Antworten.
 
-Finaler Backendnachweis:3 Tests/112 Assertions bestanden. Migration88 fuehrt
+Finaler Backendnachweis:3 Tests/129 Assertions bestanden. Produktive Original-
+Index-/Optionsrouten delegieren bei nativer Freigabe nachweislich korrekt;
+bei geschlossenem Schalter bleiben Legacy-Lesen200 und native Writes503.
+Migration88 fuehrt
 in den Tests nur DDL fuer leere private Temp-Tabellen aus, einschliesslich
 tenantgebundener Ergebnis-FKs und echter Service-/Workflowaktionen.
 Flutter:18 gezielte Faelle bestanden (7 neue persoenliche Adapter-/Original-
 Maskenfaelle sowie11 bestehende Teamoptionen-/Dateiregressionen).
 
-Beleg-KI besitzt noch keinen freigegebenen ClubUnio-OCR-Vertrag. Der persoenliche
-Endpunkt liefert503, der bestehende Editor bleibt manuell bedienbar; es werden
-keine KI-Vorschlaege erfunden. HEIC-Dateiuebernahme, reale persoenliche Azure-
+Der persoenliche optionale OCR-Vertrag ist separat implementiert und lokal
+geprueft: CLUBUNIO-MOBILE-EXPENSE-OCR.md. Ohne ausdruecklich gepruefte
+Mandanten-/Anbieter-/Kostenkonfiguration bleibt er503; der Originaleditor ist
+manuell bedienbar. Analyse erfordert Einwilligung und Vorschauuebernahme. HEIC-Dateiuebernahme, reale persoenliche Azure-
 Uebertragung auf DEV und native Kamera-/Datei-/Gesamtabnahme sind noch offen.
 Diese Grenzen verhindern eine pauschale Vollabnahme des Spesenpakets.
 
 Release-Gate:14 native gesperrte Routen plus2 vorhandene persoenliche Leserouten.
 Index/Optionen behalten bei geschlossenem nativen Schalter den bisherigen
 Lesevertrag; bei Freigabe delegieren sie an die nativen DTO-/Optionsdienste.
+
+## Synthetisches DEV-Funktionsgate
+
+`php deploy/check-mobile-expenses-functional.php --synthetic-rollback --foundation`
+verlangt CLI, exakt `https://dev.clubunio.ch`, die freigegebene PostgreSQL-Datenbank
+und den Migration88-Nachweis. Es verwendet echten HTTP-Kernel und persoenlichen
+Login sowie echte lokale Bank-/Spesen-/Statusdienste. Synthetische Mandanten,
+Konten und Datensaetze werden vollstaendig zurueckgerollt.
+
+Foundation prueft die weiterhin erreichbaren Original-Leserouten und geschlossene
+Writes. Danach wird der native Ablauf ausschliesslich im Gateprozess fuer seine
+synthetischen Daten freigeschaltet und anschliessend zurueckgesetzt. Dies ist
+keine Live-Aktivierungsabnahme. `--enabled` verlangt stattdessen eine bereits
+aktivierte native Konfiguration. Geprueft werden Entwurf, CallerUUID-Replay,
+Position, Stale-Versionen, persoenliche Bankgrenzen und Trainer-/TL-Statusrechte.
+StatusB bleibt gesperrt; es erfolgt keine Zahlung.
+
+Fremd-HTTP, Mailtransport und externe Blob-/Azure-/Bexio-Clients werden gesperrt.
+Das Gate uebt bewusst keinen Upload aus und behauptet keine Providerabnahme.
+Scanner/Upload/Blob und echte Geraete bleiben gesondert abzunehmen. Quelle ist
+vorbereitet/lintgeprueft; Ausfuehrung erst im abgestimmten seriellen PG-Fenster.
 Keine doppelten GET-Routen, die sich je nach Registrierungsfolge ueberschreiben.

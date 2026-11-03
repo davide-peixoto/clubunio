@@ -125,4 +125,32 @@ class MobileFacilitiesBusTest extends TestCase
         $this->withToken($this->token($this->outsider))->getJson($this->base().'/bus/reservations')->assertOk()->assertJsonPath('data.total', 0);
         Http::assertNothingSent();
     }
+    public function test_native_menu_requires_client_support_and_keeps_personal_bus_and_document_access(): void
+    {
+        config(['clubunio-mobile.native_documents_enabled' => true]);
+        foreach (['Platzverfugbarkeit', 'BusReservationen', 'Dokumente'] as $key) {
+            $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key, 'name' => $key]);
+        }
+        $this->withToken($this->token($this->admin));
+        $headers = ['X-ClubUnio-Mobile-Features' => 'facilities-v1,bus-v1,member-documents-v1'];
+        $menu = $this->getJson($this->base().'/modules', $headers)->assertOk()->json('data.modules');
+        foreach (['Platzverfugbarkeit', 'BusReservationen', 'Dokumente'] as $key) {
+            $this->assertTrue(collect($menu)->firstWhere('key', $key)['native']);
+        }
+        $old = $this->getJson($this->base().'/modules', ['X-ClubUnio-Mobile-Features' => ''])->assertOk()->json('data.modules');
+        foreach (['Platzverfugbarkeit', 'BusReservationen', 'Dokumente'] as $key) {
+            $this->assertFalse(collect($old)->firstWhere('key', $key)['available']);
+        }
+        $this->withToken($this->token($this->trainer));
+        $personal = $this->getJson($this->base().'/modules', $headers)->assertOk()->json('data.modules');
+        $this->assertTrue(collect($personal)->firstWhere('key', 'BusReservationen')['native']);
+        $this->assertTrue(collect($personal)->firstWhere('key', 'Dokumente')['native']);
+        $this->assertNull(collect($personal)->firstWhere('key', 'Platzverfugbarkeit'));
+        config(['clubunio-mobile.native_bus_enabled' => false, 'clubunio-mobile.native_documents_enabled' => false]);
+        $closed = $this->getJson($this->base().'/modules', $headers)->assertOk()->json('data.modules');
+        $this->assertNull(collect($closed)->firstWhere('key', 'BusReservationen'));
+        $this->assertNull(collect($closed)->firstWhere('key', 'Dokumente'));
+        Http::assertNothingSent();
+    }
+
 }

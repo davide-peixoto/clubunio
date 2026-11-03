@@ -84,3 +84,9 @@ bestehende Dialoglayout besitzt den Controller jetzt bis zum echten Unmount.
 Ein spaeter Keybox-Read konnte zuvor Hintergrunddaten erneut anzeigen;
 Requestgeneration und Timer werden nun beim Hintergrundwechsel entwertet.
 Native Android-/iPhone- und Hardware-Gesamtabnahme weiterhin offen.
+
+Nach dem gemeinsamen Modulprofilumbau: bisherige3 PG-Faelle/76 Assertions
+und neuer persoenlicher Menuevertrag1/19 separat gruen. Der Menuevertrag
+prueft alte Clients, echte Trainer-/Eigenzugriffe auf Bus/Dokumente sowie
+fehlende Anlagenrechte. Das neue Server-Kernelgate verwendet ausschliesslich
+synthetische Daten mit Rollback und laesst reale Keyboxausgabe geschlossen.

@@ -103,7 +103,13 @@ class MobileExpensesTest extends TestCase
     private function pdf(string $marker = 'Synthetic'): UploadedFile { return UploadedFile::fake()->createWithContent('receipt.pdf', "%PDF-1.4\n".$marker."\n%%EOF\n"); }
     public function test_personal_expense_core_preserves_visibility_versions_bank_privacy_and_workflow(): void {
         $expense = $this->expense();
-        $this->getJson($this->url.'/options')->assertOk()->assertJsonPath('data.teams.0.id', $this->team)->assertJsonPath('data.capabilities.ai', false);
+        // Match the production index/options registrations, not a test-only replacement route.
+        $routes = Route::getRoutes();
+        $this->assertSame(\App\ClubUnio\Mobile\MobileExpenseIndex::class.'@index', $routes->match(\Illuminate\Http\Request::create($this->url, 'GET'))->getActionName());
+        $this->assertSame(\App\ClubUnio\Mobile\MobileExpenseOptions::class.'@index', $routes->match(\Illuminate\Http\Request::create($this->url.'/options', 'GET'))->getActionName());
+        $this->getJson($this->url)->assertOk()->assertJsonPath('data.rows.0.SpesenID', $expense)->assertJsonPath('data.rows.0.Revision', 1)->assertJsonPath('data.rows.0.CanAddPosition', true);
+        $this->getJson($this->url.'/options')->assertOk()->assertJsonPath('data.teams.0.id', $this->team)->assertJsonPath('data.capabilities.ai', false)
+            ->assertJsonStructure(['data'=>['institutions'=>[['clearing_number']]]]);
         $lineInput = ['command_key' => (string) Str::uuid(), 'expense_revision' => 1, 'expense_type_id' => $this->type, 'amount' => '12.50', 'notes' => 'Synthetic position'];
         $line = $this->postJson($this->url.'/'.$expense.'/lines', $lineInput)->assertOk()->assertJsonPath('data.receipt.Revision', 2)->json('data.line_id');
         $this->postJson($this->url.'/'.$expense.'/lines', array_replace($lineInput, ['expense_revision' => '1', 'amount' => '12.5000']))->assertOk()->assertJsonPath('data.line_id', $line)->assertJsonPath('data.replayed', true);
@@ -121,7 +127,12 @@ class MobileExpensesTest extends TestCase
         $this->postJson($this->url.'/'.$expense.'/transition', ['revision' => 4, 'status' => 'B', 'reason' => 'No real payment in tests'])->assertUnprocessable();
         $this->deleteJson($this->url.'/'.$expense.'/lines/'.$line, ['expense_revision' => 4, 'revision' => 1])->assertForbidden();
         config(['clubunio-mobile.native_expenses_enabled' => false]);
-        $this->getJson($this->url)->assertStatus(503);
+        // The compatible read index/options intentionally survive a closed native feature.
+        $this->getJson($this->url)->assertOk()->assertJsonPath('data.rows.0.SpesenID', $expense);
+        $this->getJson($this->url.'/options')->assertOk()->assertJsonStructure(['data'=>['seasons']]);
+        $this->getJson($this->url.'/'.$expense)->assertStatus(503);
+        $this->getJson($this->url.'/banks')->assertStatus(503);
+        $this->postJson($this->url, [])->assertStatus(503);
     }
     public function test_scanned_receipt_binding_is_scoped_atomic_idempotent_and_removes_duplicate_cipherbytes(): void {
         $expense = $this->expense(); $client = (string) Str::uuid();
