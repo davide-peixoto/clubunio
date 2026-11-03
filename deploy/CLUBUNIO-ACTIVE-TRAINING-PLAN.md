@@ -47,4 +47,8 @@ Rollback-Fixtures pruefen Auswahl, Audit, Adminpflicht, inaktive/unbekannte Wert
 Livewire-Dialog, Trainingszeiten-Kopf, Vorschau, unveraenderte Designwerte,
 idempotente Migration und den oeffentlichen Signage-Abruf ohne URL-Uebersteuerung.
 
-Release- und Sichtpruefung werden nach Aktivierung in PI.md festgehalten.
+Release20261103-clubunio-active-training-plan aktiviert, Migration000090 einzeln
+ausgefuehrt, vier Servergates erfolgreich. Angemeldete Desktop-Sichtpruefung:
+Dropdown Sommer/Winter/Nicht festgelegt, Trainingszeiten-Kopf und zentrale
+Signage-Vorschau korrekt; Design nur Farbe/Name/Logo. Keine Werte beim Browsertest
+gespeichert. Vorher/nachher Setting14255, Periode22/Sommer. Siehe PI.md.

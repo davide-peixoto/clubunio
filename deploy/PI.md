@@ -1,5 +1,20 @@
 # Pi staging: dev.clubunio.ch
 
+## Zentraler Trainingsplan (03.11.2026)
+
+Aktiv: 20261103-clubunio-active-training-plan, gezieltes Delta681833e aus
+setting-lookups. Migration000090 einzeln ausgefuehrt. Setting14255 nach general
+verschoben, Periode22/Sommer und Datensatz-ID unveraendert. Keine Trainingszeiten,
+Rechte, Env-/Composer-Dateien oder PHPMaker-Umgebungen geaendert.
+Config/Route/View-Cache aufgebaut, PHP-FPM neu geladen; vier Gates erfolgreich
+(Grundpruefung, Rollen, Simulation, Mobile-Saison). Angemeldete Desktoppruefung:
+Allgemein-Lookup bietet Nicht festgelegt/Sommer/Winter, Trainingszeiten zeigen
+Sommer, Signage folgt zentral, Vereinsdesign ohne zweite Periodenauswahl.
+Dialoge ohne Speichern geschlossen. Screenshot lokal unter
+storage/app/active-training-plan-20261103.png (nicht versioniert).
+Rollback: Migration000090 gezielt zuruecknehmen, dann Release setting-lookups.
+Details: CLUBUNIO-ACTIVE-TRAINING-PLAN.md.
+
 ## Saisonreferenz-Audit (03.11.2026)
 
 READ ONLY / REPEATABLE READ gegen ClubUnio und legacy_prod-Snapshot unter
