@@ -124,7 +124,7 @@ final class SfvApiActions
                 $planning->lock($c->tenant);
                 $data = $this->validate($c, $action, $objectId, $data);
                 $matchId = $planning->table($c->tenant, 'sfv_schedule')->where('id', $objectId)->value('match_id');
-                $old = $planning->table($c->tenant, 'team_events')->where('team_season_id', $data['team_season_id'])
+                $old = $planning->table($c->tenant, 'team_events', true)->where('team_season_id', $data['team_season_id'])
                     ->where('sfv_match_id', $matchId)->first();
                 $scopes = $this->planningScopes($old, $data);
                 $eventId = app(SfvPlanningService::class)->import($c->actor, $c->tenant, $objectId, $data);
@@ -162,10 +162,11 @@ final class SfvApiActions
         if (! $sfvTeam || ! in_array($sfvTeam, [(int) $match->team_a_id, (int) $match->team_b_id], true)) {
             throw ValidationException::withMessages(['team_season_id' => 'The team SFV identity does not match this schedule entry.']);
         }
-        $events = $planning->table($c->tenant, 'team_events')->where('team_season_id', $team->id)
+        $events = $planning->table($c->tenant, 'team_events', true)->where('team_season_id', $team->id)
             ->where('sfv_match_id', $match->match_id)->limit(2)->get();
         abort_if($events->count() > 1, 409);
         $old = $events->first();
+        abort_if(($old->deleted_at ?? null) !== null, 409, 'This SFV event was removed and cannot be recreated.');
         $planning->conflict($old, ['revision' => $data['event_revision']]);
         abort_if(! $old && $data['event_revision'] !== 0, 409);
         foreach ($this->planningScopes($old, $data) as $scope => [$module, $function]) {

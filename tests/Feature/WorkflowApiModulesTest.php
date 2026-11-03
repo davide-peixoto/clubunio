@@ -14,6 +14,7 @@ use Tests\TestCase;
 
 class WorkflowApiModulesTest extends TestCase
 {
+    use \Tests\Concerns\TemporaryPlanningRemovalSchema;
     private $db;
     private WorkflowApiModules $api;
     private ApiContext $context;
@@ -628,6 +629,20 @@ class WorkflowApiModulesTest extends TestCase
             $this->rejects(fn () => $this->api->list($this->context, 'families', $input));
         }
         $this->rejects(fn () => $this->api->action($this->context, 'invoices', 1, 'add_line', ['revision' => 1, 'line_id' => 4]));
+    }
+
+    public function test_removed_planning_events_are_hidden_from_technical_api_reads(): void
+    {
+        $this->fixture();
+        $event = $this->api->create($this->context, 'team_events', ['team_season_id' => $this->team, 'title' => 'Removed API fixture',
+            'kind' => 'TRAINING', 'mode' => 'ANMELDEN', 'status' => 'AKTIV',
+            'starts_at' => '2090-11-10T18:00', 'ends_at' => '2090-11-10T20:00', 'deadline_at' => '2090-11-09T18:00']);
+        $this->temporaryPlanningRemovalSchema($this->db, $this->context->tenant->id);
+        $this->db->table('pg_temp.team_events')->where('id', $event['id'])->update(['deleted_at' => now()->toIso8601String()]);
+        $this->assertSame([], $this->api->list($this->context, 'team_events')['data']);
+        $this->rejects(fn () => $this->api->show($this->context, 'team_events', $event['id']), \Illuminate\Database\RecordNotFoundException::class);
+        $this->assertSame(1, $this->db->table('pg_temp.team_events')->count());
+        $this->noDelivery();
     }
 
     public function test_fresh_profile_revocation_roles_and_secondary_scopes(): void

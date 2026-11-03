@@ -233,7 +233,8 @@ class TeamPlanningController
         $team = $data['teams']->firstWhere('id', (int) $request->query('team')) ?? $data['teams']->first();
         $teamChoices = $data['teams'];
         $data['teams'] = $data['teams']->where('id', $team->id);
-        $existing = $this->service->table($tenant, 'team_events')->where('team_season_id', $team->id)->where('sfv_match_id', $sfv->match_id)->first();
+        $existing = $this->service->table($tenant, 'team_events', true)->where('team_season_id', $team->id)->where('sfv_match_id', $sfv->match_id)->first();
+        abort_if(($existing->deleted_at ?? null) !== null, 409, 'Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.');
         $record = $existing ? clone $existing : (object) ['id' => null, 'revision' => 0, 'team_season_id' => $team->id, 'kind' => 'MEISTERSCHAFT', 'mode' => 'ANMELDEN', 'status' => 'AKTIV', 'capacity' => 18, 'description' => '', 'deadline_at' => null];
         $record->title = $sfv->title;
         if (! $existing) {

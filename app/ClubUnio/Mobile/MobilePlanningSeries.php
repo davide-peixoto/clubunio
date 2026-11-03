@@ -20,14 +20,9 @@ final class MobilePlanningSeries
             ->where('series_key', $event->series_key)->orderBy('id')->get();
     }
 
-    private function fingerprint(Tenant $tenant, object $event, $rows): string
-    {
-        return hash('sha256', json_encode([$tenant->id, $event->team_season_id, $event->series_key, $rows->all()], JSON_THROW_ON_ERROR));
-    }
-
     public function revision(Tenant $tenant, object $event): ?string
     {
-        return $event->series_key ? $this->fingerprint($tenant, $event, $this->rows($tenant, $event)) : null;
+        return $this->planning->seriesRevision($tenant, $event);
     }
 
     // Caller holds the tenant/session transaction. Every save rechecks current rights.
@@ -40,7 +35,7 @@ final class MobilePlanningSeries
         abort_if($event->status !== 'AKTIV', 409, 'Abgesagten Termin nicht als Serienvorlage verwenden.');
         abort_unless((int) ($input['team_season_id'] ?? 0) === (int) $event->team_season_id, 422, 'Mannschaft einer Serie nicht austauschbar.');
         $rows = $this->rows($tenant, $event);
-        abort_unless(hash_equals($this->fingerprint($tenant, $event, $rows), $revision), 409, 'Die Serie hat sich geaendert. Bitte neu laden.');
+        abort_unless(hash_equals($p->seriesRevision($tenant, $event, $rows), $revision), 409, 'Die Serie hat sich geaendert. Bitte neu laden.');
         Validator::make($input, ['starts_at' => 'required|date_format:Y-m-d\TH:i', 'ends_at' => 'required|date_format:Y-m-d\TH:i|after:starts_at',
             'deadline_at' => 'required|date_format:Y-m-d\TH:i|before_or_equal:starts_at'])->validate();
         $start = Time::parse($input['starts_at'], 'Europe/Zurich');

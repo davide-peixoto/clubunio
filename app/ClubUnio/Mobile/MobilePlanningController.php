@@ -155,6 +155,17 @@ final class MobilePlanningController
         });
     }
 
+    public function remove(Request $r)
+    {
+        return $this->write($r, function ($actor, $tenant, $p) use ($r) {
+            $d = $r->validate(['Revision' => 'required|integer|min:1', 'scope' => 'required|in:single,future,all',
+                'SeriesRevision' => 'nullable|regex:/^[0-9a-f]{64}$/']);
+            $ids = $p->removeEvent($actor, $tenant, (int) $r->route('event'), ['revision' => $d['Revision'],
+                'scope' => $d['scope'], 'series_revision' => $d['SeriesRevision'] ?? null]);
+            return ['success' => true, 'removed_event_ids' => $ids, 'removed_count' => count($ids), 'pushWarning' => false];
+        });
+    }
+
     public function participate(Request $r)
     {
         return $this->write($r, function ($actor, $tenant, $p) use ($r) {

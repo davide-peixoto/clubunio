@@ -161,7 +161,8 @@ final class WorkflowApiModules
     private function baseQuery(ApiContext $context, string $resource): Builder|QueryBuilder
     {
         $d = $this->definition($resource);
-        $q = $d['model'] ? $d['model']::withoutGlobalScopes() : DB::connection('clubunio')->table('clubora.'.(self::LOOKUP_TABLES[$resource] ?? $resource));
+        $q = $resource === 'team_events' ? app(TeamPlanningService::class)->table($context->tenant, 'team_events')
+            : ($d['model'] ? $d['model']::withoutGlobalScopes() : DB::connection('clubunio')->table('clubora.'.(self::LOOKUP_TABLES[$resource] ?? $resource)));
         $q->where('tenant_id', $context->tenant->id);
         if ($resource === 'contributions') {
             $q->whereNull('archived_at');

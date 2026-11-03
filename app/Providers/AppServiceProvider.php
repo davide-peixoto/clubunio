@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
     {
         config(['database.connections.clubunio' => config('clubunio.connection')]);
         $this->app->scoped(StatusStyleService::class);
+        $this->app->scoped(\App\ClubUnio\Services\TeamPlanningService::class);
         $this->app->singleton(HandleComponents::class, BackofficeHandleComponents::class);
     }
 

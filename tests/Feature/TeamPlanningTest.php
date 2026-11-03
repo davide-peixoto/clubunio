@@ -24,6 +24,7 @@ class TeamPlanningTest extends TestCase
 {
     use WorkspaceForm;
     use \Tests\Concerns\PlanningTableRequests;
+    use \Tests\Concerns\TemporaryPlanningRemovalSchema;
 
     private $db;
 
@@ -908,6 +909,56 @@ class TeamPlanningTest extends TestCase
         $this->assertSame('Keep individual exception', $this->db->table('team_events')->where('id', $ids[1])->value('title'));
         $this->assertSame('Fixture training', $this->db->table('team_events')->where('id', $ids[3])->value('title'));
         $this->patchJson($base.$ids[0], $input)->assertUnprocessable();
+    }
+
+    public function test_native_mobile_removal_hides_series_without_deleting_history_or_sending_messages(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $start = CarbonImmutable::now('Europe/Zurich')->subDay()->setTime(18, 0);
+        $ids = $this->service->createSeries($this->admin, $this->tenant, $this->input(['repeat_count' => 3,
+            'starts_at' => $start->format('Y-m-d\TH:i'), 'ends_at' => $start->addHour()->format('Y-m-d\TH:i'),
+            'deadline_at' => $start->subHour()->format('Y-m-d\TH:i')]));
+        $this->service->participate($this->trainer, $this->tenant, $ids[1], $this->member,
+            ['status' => 'DABEI', 'attendance' => 'OFFEN', 'comment' => 'PRIVATE-RETAINED']);
+        $this->db->table('team_events')->where('id', $ids[1])->update(['series_exception' => true]);
+        $this->db->table('team_events')->where('id', $ids[2])->update(['deadline_at' => now()->subMinute()->toIso8601String()]);
+        $this->service = $this->temporaryPlanningRemovalSchema($this->db, $this->tenant->id);
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Removal fixture'])->assertOk()->json('data.token');
+        $admin = $login($this->admin);
+        $base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events';
+        $event = $this->withToken($admin)->getJson($base.'/'.$ids[0])->assertOk()->json('data.TeamTermin');
+        $input = ['Revision' => 1, 'scope' => 'future', 'SeriesRevision' => $event['SeriesRevision']];
+        $this->withToken($login($this->player))->deleteJson($base.'/'.$ids[1], ['Revision' => 1, 'scope' => 'single'])->assertNotFound();
+        $this->withToken($admin)->deleteJson($base.'/'.$ids[0], ['Revision' => 1, 'scope' => 'future'])->assertUnprocessable();
+        $this->db->table('team_events')->where('id', $ids[2])->increment('revision');
+        $this->deleteJson($base.'/'.$ids[0], $input)->assertConflict();
+        $input['SeriesRevision'] = $this->getJson($base.'/'.$ids[0])->assertOk()->json('data.TeamTermin.SeriesRevision');
+        $messages = $this->db->table('team_planning_messages')->where('tenant_id', $this->tenant->id)->count();
+        $this->deleteJson($base.'/'.$ids[0], $input)->assertOk()->assertJsonPath('data.removed_count', 2)->assertJsonPath('data.pushWarning', false);
+        $this->assertSame(2, $this->db->table('pg_temp.team_events')->whereNotNull('deleted_at')->count());
+        $this->getJson($base.'/'.$ids[1])->assertNotFound();
+        $this->getJson($base)->assertOk()->assertJsonPath('data.totalRecordCount', 1);
+        $this->assertSame('PRIVATE-RETAINED', Crypt::decryptString($this->db->table('team_participations')->where('event_id', $ids[1])->value('comment_encrypted')));
+        $this->assertSame($messages, $this->db->table('team_planning_messages')->where('tenant_id', $this->tenant->id)->count());
+        $snapshot = $this->getJson($base.'/'.$ids[0])->assertOk()->json('data.TeamTermin.SeriesRevision');
+        $this->deleteJson($base.'/'.$ids[0], array_replace($input, ['SeriesRevision' => $snapshot]))->assertConflict();
+        $this->deleteJson($base.'/'.$ids[0], ['Revision' => 1, 'scope' => 'all', 'SeriesRevision' => $snapshot])->assertOk()->assertJsonPath('data.removed_count', 1);
+        $this->getJson($base)->assertOk()->assertJsonPath('data.totalRecordCount', 0);
+        $this->deleteJson($base.'/'.$ids[0], ['Revision' => 1, 'scope' => 'single'])->assertNotFound();
+        $this->get('/planning/calendar?date='.$start->toDateString())->assertOk()->assertDontSee('Fixture training');
+        $this->assertSame(0, $this->service->reminders($this->tenant));
+        $this->assertSame($messages, $this->db->table('team_planning_messages')->where('tenant_id', $this->tenant->id)->count());
+        $team = $this->db->table('team_seasons')->where('id', $this->team)->value('team_id');
+        $this->db->table('teams')->where('id', $team)->update(['sfv_team_id' => 123]);
+        $schedule = $this->db->table('sfv_schedule')->insertGetId(['tenant_id' => $this->tenant->id, 'match_id' => 987654,
+            'season_id' => 2027, 'team_a_id' => 123, 'team_b_id' => 456, 'title' => 'Removed SFV fixture', 'home' => true]);
+        $this->db->table('team_events')->where('id', $ids[1])->update(['sfv_match_id' => 987654]);
+        try {
+            app(SfvPlanningService::class)->import($this->admin, $this->tenant, $schedule, $this->input() + ['sfv_revision' => 1]);
+            $this->fail('Removed SFV event was recreated');
+        } catch (HttpException $e) { $this->assertSame(409, $e->getStatusCode()); }
+        $this->assertSame(3, $this->db->table('pg_temp.team_events')->count());
+        $this->assertStringNotContainsString('PRIVATE-RETAINED', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
     }
 
 }

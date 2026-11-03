@@ -208,3 +208,64 @@ ist noch nicht auf DEV ausgeliefert.
 
 Weiter offen: Entfernen/Serienentfernen, Statistik/SFV, Anwesenheitsstapel,
 vollstaendiger Managerkontext und My Teams; Gesamtauftrag bleibt aktiv.
+
+## Fortschritt: Termine und Serien entfernen
+
+Bestehende Auswahl single/future/all und Bestaetigung bleiben erhalten.
+Future bedeutet wie in SVS alle noch nicht begonnenen Serientermine, nicht
+erst ab dem angeklickten Termin. All umfasst auch vergangene Termine.
+Bewusstes Entfernen umfasst hier auch individuelle Ausnahmen/fristgesperrte
+Termine; anders als eine allgemeine Serienaenderung ist das eine explizit
+bestaetigte Entfernen-Aktion. Kein Absage-Push, kein Loeschen von Teilnahmen,
+Gaesten, Einladungen oder Auditdaten.
+
+Additive Migration87 vorbereitet: team_events.deleted_at. removeEvent prueft
+aktuelle deactivate-Rechte, verwaltbare Mannschaft, Einzelrevision und fuer
+Serien den vollen Serien-Snapshot unter Vereinslock. Kein passender Termin
+ist409, keine positive Leermeldung. Pro Termin nur Entfernen-Zeitpunkt,
+Revision und Metadatenaudit. Wiederholtes Entfernen und alte Serienstaende
+koennen keine neuen Datensaetze erzeugen. Route DELETE planning/events/{id}.
+
+TeamPlanningService.table blendet entfernte Termine zentral aus. Die
+Schemafaehigkeit wird im request-scoped Service einmal ermittelt: bestehende
+Lesepfade funktionieren vor87 weiter, Entfernen bleibt vorher503.
+Nach87 gelten dieselben Grenzen fuer Mobile, Weblisten/Kalender/Export,
+Serienaenderungen und Erinnerungen. Technische Workflow-API-Listen/Details
+verwenden fuer Termine ebenfalls diesen Scope. SFV-Import erkennt vorhandene
+entfernte Datensaetze einschliesslich ihres Unique-Schluessels und antwortet409,
+statt sie erneut anzulegen oder unbeabsichtigt wiederherzustellen.
+
+Serienrevision ist in den Fachservice verschoben und wird von Bearbeiten und
+Entfernen identisch berechnet. Keine Abhaengigkeit des Fachservices von einem
+Mobile-Controller. Der App-Transport verwirft alle betroffenen Event-/Serien-/
+Teilnehmer-/Gastsnapshots. Entfernte IDs bleiben in dieser Repository-Instanz
+gesperrt: auch ein spaeterer Read oder expliziter alter Formularstand kann
+keinen weiteren Write freigeben. Fehlende/widerspruechliche Entfernenzaehler
+bestaetigen keinen Erfolg; keine automatische Wiederholung.
+
+Nachweise:35 Flutterfaelle fuer persoenlichen Transport und bestehenden
+Anwesenheits-/Entfernenablauf bestanden, Analyse ohne Befund. Mobile-Gruppe29
+Tests/340 Assertions; persoenlicher PG-Entfernentest31 Assertions mit erhaltenen
+Privatkommentaren, Scope, Revision, Webkalender, Erinnerungen und SFV-Sperre.
+Zwei technische API-Fachtests25 Assertions einschliesslich entfernten
+Listen-/Detailobjekten bestanden. Vorhandene Serien-/SFV-Regressionen mit
+diesem Stand:3 Tests/78 Assertions bestanden.
+
+Migration87 wurde nur auf einer temporaeren Tabelle mit den zuvor neu
+angelegten synthetischen Fixtures ausgefuehrt. Gemeinsamer Testhelfer leitet
+ausschliesslich team_events-Queries und qualifizierte Spalten dorthin um.
+Schemafaehigkeit ist im Test an die echte temporaere DDL gebunden, keine
+Rechte werden gefaked. Bestandsdaten/Schema bleiben unveraendert.
+Fuenf zusaetzliche SFV-Provider-Importregressionen mit84 Assertions bestanden,
+einschliesslich bedingter Rechte, veralteter Staende und Rueckrollen nach
+Rechteentzug. Keine externen Provideraufrufe oder reale Terminbearbeitung.
+
+Releaseplanung:84/85/86/87 sind noch nicht dauerhaft angewendet. Vor dem
+ersten echten Entfernen muss auch der vorgesehene Rollbackstand den neuen
+Sichtbarkeitsscope enthalten; ein alter Release ohne diesen Scope wuerde
+entfernte Termine wieder anzeigen. Deshalb zuerst schema-/scopefaehige
+Grundlage bereitstellen und erst mit geeignetem Rueckweg Writes freigeben.
+Keine DEV-Freischaltung oder native Gesamtabnahme dieses Zwischenstands.
+
+Fortsetzung mit My Teams und den verbleibenden Planungsaktionen
+(Statistik/SFV, Anwesenheitsstapel und Managerfaehigkeiten). Gesamtauftrag aktiv.

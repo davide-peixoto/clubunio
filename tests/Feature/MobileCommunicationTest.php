@@ -56,7 +56,7 @@ CREATE TABLE clubora.team_seasons (id integer PRIMARY KEY AUTOINCREMENT, tenant_
 CREATE TABLE clubora.team_players (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, member_id integer, active boolean DEFAULT 1);
 CREATE TABLE clubora.team_staff (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, member_id integer, active boolean DEFAULT 1);
 CREATE TABLE clubora.technical_leads (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, member_id integer, active boolean DEFAULT 1);
-CREATE TABLE clubora.team_events (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, UNIQUE(tenant_id,id));
+CREATE TABLE clubora.team_events (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, team_season_id integer, deleted_at text, UNIQUE(tenant_id,id));
 CREATE TABLE clubora.invoices (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, member_id integer, active boolean DEFAULT 1, status_id integer, workflow_status_id integer, bexio_invoice_id integer, legacy_id integer, UNIQUE(tenant_id,id));
 CREATE TABLE clubora.invoice_workflow_statuses (id integer PRIMARY KEY, tenant_id integer, code text, name text);
 CREATE TABLE clubora.invoice_statuses (id integer PRIMARY KEY, tenant_id integer, code text, name text);

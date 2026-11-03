@@ -155,7 +155,8 @@ class SfvPlanningService
             if (! $sfvTeam || ! in_array($sfvTeam, [(int) $match->team_a_id, (int) $match->team_b_id], true)) {
                 throw ValidationException::withMessages(['team_season_id' => 'Die SFV-Team-ID passt nicht zu diesem Spiel.']);
             }
-            $old = $p->table($tenant, 'team_events')->where('team_season_id', $team->id)->where('sfv_match_id', $match->match_id)->first();
+            $old = $p->table($tenant, 'team_events', true)->where('team_season_id', $team->id)->where('sfv_match_id', $match->match_id)->first();
+            abort_if(($old->deleted_at ?? null) !== null, 409, 'Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.');
             if ($old) {
                 $p->conflict($old, ['revision' => $input['event_revision'] ?? 0]);
             } elseif (! empty($input['event_revision'])) {

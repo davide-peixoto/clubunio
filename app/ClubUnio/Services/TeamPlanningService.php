@@ -15,6 +15,12 @@ use Illuminate\Validation\ValidationException;
 
 class TeamPlanningService
 {
+    private ?bool $eventRemovalSchema = null;
+
+    protected function removalSchemaAvailable(): bool
+    {
+        return $this->eventRemovalSchema ??= \Illuminate\Support\Facades\Schema::connection('clubunio')->hasColumn('clubora.team_events', 'deleted_at');
+    }
     public static function seedOptions(int $tenant): void
     {
         $groups = [
@@ -32,9 +38,49 @@ class TeamPlanningService
         }
     }
 
-    public function table(Tenant $tenant, string $table)
+    public function table(Tenant $tenant, string $table, bool $withRemoved = false)
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        $query = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        if ($table === 'team_events' && ! $withRemoved && $this->removalSchemaAvailable()) { $query->whereNull('clubora.team_events.deleted_at'); }
+        return $query;
+    }
+
+    public function seriesRevision(Tenant $tenant, object $event, ?Collection $rows = null): ?string
+    {
+        if (! $event->series_key) { return null; }
+        $rows ??= $this->table($tenant, 'team_events')->where('team_season_id', $event->team_season_id)
+            ->where('series_key', $event->series_key)->orderBy('id')->get();
+        return hash('sha256', json_encode([$tenant->id, $event->team_season_id, $event->series_key, $rows->all()], JSON_THROW_ON_ERROR));
+    }
+
+    public function removeEvent(Account $actor, Tenant $tenant, int $id, array $input): array
+    {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+            $this->lock($tenant);
+            $this->authorizeOperation($actor, $tenant, 'deactivate');
+            abort_unless($this->removalSchemaAvailable(), 503, 'Terminentfernung noch nicht freigeschaltet.');
+            $event = $this->event($actor, $tenant, $id, true, 'deactivate');
+            $d = Validator::make($input, ['revision' => 'required|integer|min:1', 'scope' => 'required|in:single,future,all',
+                'series_revision' => 'nullable|regex:/^[0-9a-f]{64}$/'])->validate();
+            $this->conflict($event, $d);
+            $query = $this->table($tenant, 'team_events')->where('team_season_id', $event->team_season_id);
+            if ($d['scope'] === 'single') { $query->where('id', $id); }
+            else {
+                abort_unless($event->series_key && isset($d['series_revision']), 422, 'Serienstand fehlt.');
+                $revision = $this->seriesRevision($tenant, $event);
+                abort_unless(hash_equals($revision, $d['series_revision']), 409, 'Serie wurde inzwischen geaendert.');
+                $query->where('series_key', $event->series_key);
+                if ($d['scope'] === 'future') { $query->where('starts_at', '>', now()->toIso8601String()); }
+            }
+            $rows = $query->orderBy('id')->get(['id', 'revision']);
+            abort_if($rows->isEmpty(), 409, 'Keine passenden Termine zum Entfernen vorhanden.');
+            foreach ($rows as $row) {
+                $this->table($tenant, 'team_events')->where('id', $row->id)->update([
+                    'deleted_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String(), 'revision' => $row->revision + 1]);
+                $this->audit($actor, $tenant, 'team_events', (int) $row->id, (int) $row->revision, (int) $row->revision + 1);
+            }
+            return $rows->pluck('id')->map(fn ($v) => (int) $v)->all();
+        });
     }
 
     public function enter(Account $actor, Tenant $tenant): void
