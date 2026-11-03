@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Saisonreferenzen gegen Migrationsbestand geprueft (03.11.2026)
+
+23 Saisonfelder,17 Importzuordnungen/26746 Vergleiche und451 Planungsteilnahmen
+ohne Mappingfehler.37 Saisonlabels und aktuelle Parameteraufloesung korrekt.
+14 Beleg-/Teamsaison-Widersprueche bereits unveraendert im Quellbestand; keine
+ungefragte Finanzkorrektur. Read-only-Nachweis: CLUBUNIO-SEASON-REFERENCE-AUDIT.md.
+
 ## App-API auf aktuelle Saison begrenzen (03.11.2026)
 
 Zentraler SQL-Scope fuer Teamplanung und Finanzen ueber general/SaisonID,

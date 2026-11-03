@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 season-reference audit:23 fields/17 import groups/26746 comparisons
+match the imported PROD snapshot, including dependent financial lines and451
+planning participation pairs. No migration/refresh/repair.14 source financial
+season/team inconsistencies intentionally preserved pending business review.
+Reproducible READ ONLY check and evidence: CLUBUNIO-SEASON-REFERENCE-AUDIT.md.
+
 03.11.2026 general-setting lookups: explicit tenant-scoped choices, preserved
 season legacy-ID contract, archived field/period settings no longer editable.
 No schema/value/enabled changes; usage labels replace misleading active icon.

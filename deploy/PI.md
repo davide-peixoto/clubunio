@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Saisonreferenz-Audit (03.11.2026)
+
+READ ONLY / REPEATABLE READ gegen ClubUnio und legacy_prod-Snapshot unter
+shared/season-audit ausgefuehrt.23 Referenzfelder und17 Importgruppen ohne
+Mapping-/Mandantenfehler;451 Teilnahmezuordnungen vorhanden.14 fachliche
+Spesen-/Teamsaison-Widersprueche bereits identisch in der Quelle, nicht geaendert.
+Kein Runtime-Release, Schemaeingriff oder PHPMaker-Zugriff. Nachweis und
+Wiederholung: CLUBUNIO-SEASON-REFERENCE-AUDIT.md.
+
 ## Allgemeine Parameter-Lookups (03.11.2026)
 
 Aktiv20261103-clubunio-setting-lookups, Rueckweg finance-season-parameter.
