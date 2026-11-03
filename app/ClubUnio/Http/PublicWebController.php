@@ -24,7 +24,7 @@ class PublicWebController
         $periods = TrainingOption::where('tenant_id', $tenant->id)->where('category', 'period')->where('active', true)->orderBy('sort_order')->get();
         $brand = app(SignageBrandService::class)->read($tenant);
         $configured = $periods->firstWhere('id', $brand['period_id'])?->id;
-        $periodId = $request->query('period_id', $configured ?? ($periods->count() === 1 ? $periods->first()->id : null));
+        $periodId = $configured;
         $data = app(SignageService::class)->publicDisplay($tenant, ['period_id' => $periodId]);
 
         return response()->view('clubunio.public.signage', $data + compact('tenant', 'periods', 'periodId', 'brand'))->header('Cache-Control', 'no-store')->header('X-Robots-Tag', 'noindex, nofollow');

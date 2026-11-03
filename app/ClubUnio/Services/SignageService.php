@@ -39,11 +39,14 @@ class SignageService
     {
         app(PublicWebService::class)->authorize($tenant, 'signage');
 
-        return $this->display($tenant, ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => $input['period_id'] ?? null]);
+        return $this->display($tenant, ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => null]);
     }
 
     private function display(Tenant $tenant, array $input): array
     {
+        if (empty($input['period_id'])) {
+            $input['period_id'] = app(ActiveTrainingPlan::class)->period($tenant)?->id;
+        }
         $data = Validator::make($input, [
             'date' => 'required|date_format:Y-m-d',
             'period_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true)->where('category', 'period'))],

@@ -1242,6 +1242,22 @@ class ClubUnioTest extends TestCase
         }
         $service = app(SignageService::class);
         $input = ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => $ids['period']['S']];
+        $plan = $this->db->table('clubora.tenant_settings')->insertGetId([
+            'tenant_id' => $this->own->id, 'area' => 'general', 'key' => 'SIGNAGE_PERIOD_ID',
+            'label' => 'Aktiver Trainingsplan', 'value_type' => 'integer', 'enabled' => true, 'is_secret' => false,
+            'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $ids['period']['S']),
+        ]);
+        $this->db->table('clubora.tenant_settings')->insert([
+            'tenant_id' => $this->own->id, 'area' => 'public', 'key' => 'SIGNAGE_PUBLIC_ENABLED',
+            'label' => 'Signage', 'value_type' => 'boolean', 'enabled' => true,
+            'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('1'),
+        ]);
+        // A bookmarked old display URL must not override the central plan.
+        $this->assertSame(['all_fields'], $service->publicDisplay($this->own, ['period_id' => 99999999])['trainings']->pluck('hall')->all());
+        $this->assertSame(['all_fields'], $service->preview($this->actor, $this->own, ['date' => $input['date']])['trainings']->pluck('hall')->all());
+        $this->db->table('clubora.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('0')]);
+        $this->assertCount(0, $service->publicDisplay($this->own, $input)['trainings']);
+        $this->db->table('clubora.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $ids['period']['S'])]);
         foreach (['all_fields' => null, 'without_main' => 'H', 'synthetic_only' => 'T'] as $expected => $close) {
             if ($close) {
                 $this->db->table('clubora.field_availabilities')->where('tenant_id', $this->own->id)->where('field_id', $ids['field'][$close])->update(['status_id' => $ids['status']['G']]);

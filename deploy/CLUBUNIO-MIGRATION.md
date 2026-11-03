@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 active training plan: move SIGNAGE_PERIOD_ID to general, preserving
+native period ID and audit row. Admin lookup controls training-slot heading and
+public signage; preview-only overrides remain isolated. Migration000090 only;
+no legacy refresh, rights changes or PHPMaker deployment. See
+CLUBUNIO-ACTIVE-TRAINING-PLAN.md for tests and targeted rollback.
+
 03.11.2026 season-reference audit:23 fields/17 import groups/26746 comparisons
 match the imported PROD snapshot, including dependent financial lines and451
 planning participation pairs. No migration/refresh/repair.14 source financial

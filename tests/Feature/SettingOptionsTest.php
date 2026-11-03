@@ -92,6 +92,52 @@ class SettingOptionsTest extends TestCase
         $this->assertSame('••••••••',app(SettingOptions::class)->display($setting));
     }
 
+    public function test_active_training_plan_changes_are_scoped_audited_and_shared_by_signage(): void
+    {
+        $summer = $this->db->table('clubora.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'S','name'=>'Sommer','active'=>true]);
+        $winter = $this->db->table('clubora.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'W','name'=>'Winter','active'=>true]);
+        $setting = $this->setting(\App\ClubUnio\Services\ActiveTrainingPlan::KEY, (string) $summer);
+        $service = app(\App\ClubUnio\Services\ActiveTrainingPlan::class);
+        $this->assertSame($summer, $service->period($this->tenant)->id);
+        $this->assertSame('Sommer ('.$summer.')', app(SettingOptions::class)->display($setting));
+        app(SettingsService::class)->update($this->admin, $this->tenant, $setting->id, (string) $winter);
+        $this->assertSame($winter, app(\App\ClubUnio\Services\SignageBrandService::class)->read($this->tenant)['period_id']);
+        $this->assertSame(1, $this->db->table('clubora.setting_changes')->where('setting_id', $setting->id)->count());
+        $this->db->table('clubora.training_options')->where('id', $winter)->update(['active'=>false]);
+        $this->assertNull($service->period($this->tenant));
+        foreach ([(string) $winter, '99999999'] as $invalid) {
+            try { app(SettingsService::class)->update($this->admin,$this->tenant,$setting->id,$invalid); $this->fail('Invalid plan accepted'); }
+            catch (ValidationException $e) { $this->assertArrayHasKey('value',$e->errors()); }
+        }
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        $this->actingAs($this->admin, 'clubunio');
+        \Filament\Facades\Filament::setTenant($this->tenant);
+        \Livewire\Livewire::test(\App\ClubUnio\Resources\SettingResource\Pages\ListSettings::class)
+            ->callTableAction('change', $setting, data: ['value'=>(string) $summer])->assertHasNoTableActionErrors();
+        \Livewire\Livewire::test(\App\ClubUnio\Resources\TrainingSlotResource\Pages\ManageSlots::class)
+            ->assertSee('Aktiver Trainingsplan: Sommer');
+        \Livewire\Livewire::test(\App\ClubUnio\Pages\SignagePreview::class)->assertSee('Aktiver Trainingsplan: Sommer');
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id',$this->tenant->id)->where('account_id',$this->admin->id)->update(['role'=>'office']);
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        app(SettingsService::class)->update($this->admin->fresh(),$this->tenant,$setting->id,'0');
+    }
+
+    public function test_training_plan_migration_preserves_value_row_id_and_is_idempotent(): void
+    {
+        $setting = $this->setting(\App\ClubUnio\Services\ActiveTrainingPlan::KEY, '123');
+        $setting->forceFill(['area'=>'signage', 'enabled'=>true])->save();
+        $cipher = $setting->encrypted_value;
+        $migration = require base_path('database/clubunio/2026_11_03_000090_active_training_plan.php');
+        $migration->up();
+        $migration->up();
+        $this->assertSame('general', $setting->fresh()->area);
+        $this->assertSame($cipher, $setting->fresh()->encrypted_value);
+        $this->assertSame('Aktiver Trainingsplan', $setting->fresh()->label);
+        $migration->down();
+        $this->assertSame('signage', $setting->fresh()->area);
+        $this->assertSame($cipher, $setting->fresh()->encrypted_value);
+    }
+
     public function test_web_editor_saves_lookup_and_hides_archived_edit_action(): void
     {
         \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));

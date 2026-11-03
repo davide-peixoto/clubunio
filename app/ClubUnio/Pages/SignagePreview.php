@@ -13,7 +13,6 @@ use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -24,23 +23,21 @@ class SignagePreview extends Page
     protected function getHeaderActions(): array
     {
         return [Action::make('publicDisplay')->label('Öffentliche Signage')->icon('heroicon-o-arrow-top-right-on-square')
-            ->url(fn () => route('clubunio.public.signage', ['tenant' => Filament::getTenant()->slug, 'period_id' => $this->periodId]))->openUrlInNewTab(),
+            ->url(fn () => route('clubunio.public.signage', ['tenant' => Filament::getTenant()->slug]))->openUrlInNewTab(),
             Action::make('design')->label('Vereinsdesign')->icon('heroicon-o-swatch')
                 ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
                 ->fillForm(function () {
                     $data = app(SignageBrandService::class)->read(Filament::getTenant());
-                    $data['period_id'] = $data['period_id'] ?: null;
+                    unset($data['period_id']);
 
                     return $data + ['version' => app(SignageBrandService::class)->version(Filament::getTenant())];
                 })
                 ->schema([ColorPicker::make('color')->label('Vereinsfarbe')->required(), TextInput::make('title')->label('Vereinsname im Display')->required()->maxLength(100),
                     TextInput::make('logo')->label('Logo-Bildadresse')->required()->maxLength(2048),
-                    Select::make('period_id')->label('Standard-Trainingsperiode')->options(fn () => TrainingSlotResource::choices('period'))->placeholder('Keine Standardperiode'),
                     Hidden::make('version')->required()])
                 ->action(function (array $data) {
                     FormMutation::run($this, fn () => app(SignageBrandService::class)->save(Filament::auth()->user(), Filament::getTenant(), $data));
                     $this->brandValues = null;
-                    $this->periodId = $data['period_id'] ? (string) $data['period_id'] : null;
                     Notification::make()->title('Vereinsdesign gespeichert')->success()->send();
                 }),
             Action::make('checkInstagram')->label('Instagram prüfen')->icon('heroicon-o-check-circle')
@@ -119,8 +116,7 @@ class SignagePreview extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->date = now('Europe/Zurich')->toDateString();
-        $period = $this->brand()['period_id'];
-        $this->periodId = isset($this->periods()[$period]) ? (string) $period : null;
+        $this->periodId = null;
     }
 
     protected function getViewData(): array
@@ -133,6 +129,7 @@ class SignagePreview extends Page
             $data = ['competitions' => collect(), 'clubs' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => 'Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.'];
         }
 
-        return $data + ['periods' => $this->periods(), 'tenant' => Filament::getTenant(), 'brand' => $this->brand()];
+        return $data + ['periods' => $this->periods(), 'tenant' => Filament::getTenant(), 'brand' => $this->brand(),
+            'activePlan' => app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period(Filament::getTenant())?->name ?? 'Nicht festgelegt'];
     }
 }

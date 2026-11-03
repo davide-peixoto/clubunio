@@ -53,7 +53,7 @@ class SignageDesignTest extends TestCase
 
     private function input(): array
     {
-        return ['color' => '#ffffff', 'logo' => '/images/svs-logo.png', 'title' => 'Synthetic team', 'period_id' => $this->period,
+        return ['color' => '#ffffff', 'logo' => '/images/svs-logo.png', 'title' => 'Synthetic team',
             'version' => app(SignageBrandService::class)->version($this->tenant)];
     }
 
@@ -64,8 +64,8 @@ class SignageDesignTest extends TestCase
         $this->assertSame('#ffffff', $data['color']);
         $this->assertSame('#16191e', $data['ink']);
         $this->assertSame('/images/svs-logo.png', $data['logo']);
-        $this->assertSame($this->period, $data['period_id']);
-        $this->assertSame(4, $this->db->table('clubora.setting_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $data['period_id']);
+        $this->assertSame(3, $this->db->table('clubora.setting_changes')->where('tenant_id', $this->tenant->id)->count());
         $other = Tenant::create(['slug' => 'other-'.Str::random(8), 'name' => 'Other club']);
         $this->assertSame('#164b8a', app(SignageBrandService::class)->read($other)['color']);
     }
@@ -101,7 +101,12 @@ class SignageDesignTest extends TestCase
 
     public function test_foreign_training_period_is_rejected(): void
     {
-        Livewire::test(SignagePreview::class)->callAction('design', data: array_replace($this->input(), ['period_id' => 99999999]))->assertHasActionErrors(['period_id']);
+        try {
+            app(SignageBrandService::class)->save($this->actor, $this->tenant, array_replace($this->input(), ['period_id' => $this->period]));
+            $this->fail('Design must not change the central training plan');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('period_id', $e->errors());
+        }
         $this->assertSame(0, $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->count());
     }
 }

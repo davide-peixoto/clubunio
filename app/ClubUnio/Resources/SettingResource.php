@@ -86,6 +86,7 @@ class SettingResource extends Resource
                     }),
                 Action::make('change')->label('Wert ersetzen')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Wert ersetzen')
                     ->visible(fn (Setting $record) => ! app(SettingOptions::class)->archived($record) && $record->key !== BexioConnectionService::CONNECTION_KEY
+                        && ($record->key !== \App\ClubUnio\Services\ActiveTrainingPlan::KEY || BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
                         && (! in_array($record->key, ['BEXIO_CLIENT_ID', 'BEXIO_CLIENT_SECRET', 'BEXIO_AUTHORIZE_SCOPES'], true)
                             || BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant())))
                     ->fillForm(fn (Setting $record) => ['value' => $record->is_secret ? '' : Crypt::decryptString($record->encrypted_value)])

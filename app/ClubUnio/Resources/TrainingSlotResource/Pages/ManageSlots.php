@@ -11,4 +11,10 @@ class ManageSlots extends ManageRecords
     use HasSavedViews;
 
     protected static string $resource = TrainingSlotResource::class;
+
+    public function getSubheading(): ?string
+    {
+        $period = app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period(\Filament\Facades\Filament::getTenant());
+        return 'Aktiver Trainingsplan: '.($period?->name ?? 'Nicht festgelegt');
+    }
 }

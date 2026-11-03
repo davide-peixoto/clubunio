@@ -18,6 +18,11 @@ class SettingOptions
     {
         if ($setting->is_secret || $setting->area !== 'general') { return null; }
         $db = DB::connection('clubunio');
+        if ($setting->key === ActiveTrainingPlan::KEY) {
+            return [0 => 'Nicht festgelegt'] + $db->table('clubora.training_options')
+                ->where('tenant_id', $setting->tenant_id)->where('category', 'period')
+                ->where('active', true)->orderBy('name')->pluck('name', 'id')->all();
+        }
         if ($setting->key === 'SaisonID') {
             $rows = $db->table('clubora.seasons')->where('tenant_id', $setting->tenant_id)->orderByDesc('id')->get();
             $options = [];
@@ -50,15 +55,18 @@ class SettingOptions
     public function usage(Setting $setting): string
     {
         if ($this->archived($setting)) { return 'Altbestand'; }
-        if ($setting->area === 'general' && $setting->key === 'SaisonID') { return 'Verwendet'; }
+        if ($setting->area === 'general' && in_array($setting->key, ['SaisonID', ActiveTrainingPlan::KEY], true)) { return 'Verwendet'; }
         return $setting->enabled ? 'Freigegeben' : 'Nicht freigegeben';
     }
 
     public function hint(Setting $setting): string
     {
+        if ($setting->area === 'general' && $setting->key === ActiveTrainingPlan::KEY) {
+            return 'Aktiver Trainingsplan für Trainingszeiten und Signage.';
+        }
         if ($this->archived($setting)) {
             return $setting->key === 'SommerWinter'
-                ? 'Importierter Altwert. Die aktuelle Trainingsperiode wird im Signage-Design verwaltet.'
+                ? 'Importierter Altwert. Massgebend ist Aktiver Trainingsplan unter Allgemein.'
                 : 'Importierter Altwert. Den aktuellen Platzstatus unter Platzverfügbarkeit ändern.';
         }
         return $setting->area === 'general' && $setting->key === 'SaisonID'

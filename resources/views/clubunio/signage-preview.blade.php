@@ -4,7 +4,7 @@
     <div class="sg-preview-controls">
         <label><input type="checkbox" wire:model.live="followToday"> Heute</label>
         <label>Datum <input type="date" wire:model.live="date" required></label>
-        <label>Trainingsperiode <select wire:model.live="periodId"><option value="">Periode wählen</option>@foreach($periods as $id=>$name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</select></label>
+        <label>Vorschauperiode <select wire:model.live="periodId"><option value="">Aktiver Trainingsplan: {{ $activePlan }}</option>@foreach($periods as $id=>$name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</select></label>
     </div>
     @if(!empty($selectionError))<p role="alert">{{ $selectionError }}</p>@endif
     <div class="sg-preview" wire:poll.60s="refreshDisplay">

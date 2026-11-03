@@ -37,7 +37,7 @@ class SettingsService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $setting = Setting::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail();
             app(SettingOptions::class)->validate($setting, $value);
-            if (in_array($setting->area, ['public', 'signage'], true)) {
+            if (in_array($setting->area, ['public', 'signage'], true) || $setting->key === ActiveTrainingPlan::KEY) {
                 abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
             }
             abort_if($setting->key === BexioConnectionService::CONNECTION_KEY, 403);

@@ -9,7 +9,6 @@
     <header class="sg-header">
         <div class="sg-brand"><img src="{{ $brand['logo'] }}" alt="{{ $brand['title'] }}" width="48" height="48"><h1>{{ $brand['title'] }} <span>– Info-Display</span></h1></div>
         <div class="sg-meta"><span class="sg-test">TEST</span><time class="sg-clock">{{ now('Europe/Zurich')->format('H:i:s') }}</time><span class="sg-date">{{ now('Europe/Zurich')->format('d.m.Y') }}</span>
-        @if($publicDisplay)<details class="sg-settings"><summary aria-label="Display-Einstellungen" title="Display-Einstellungen">@svg('heroicon-o-cog-6-tooth')</summary><form method="get"><label>Trainingsperiode<select name="period_id"><option value="">Bitte wählen</option>@foreach($periods as $period)<option value="{{ $period->id }}" @selected((string)$periodId===(string)$period->id)>{{ $period->name }}</option>@endforeach</select></label><button type="submit" aria-label="Übernehmen" title="Übernehmen">@svg('heroicon-o-check')</button></form></details>@endif
         </div>
     </header>
     <div class="sg-layout"><div class="sg-main">

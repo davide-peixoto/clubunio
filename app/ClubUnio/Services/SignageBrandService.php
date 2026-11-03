@@ -8,14 +8,13 @@ use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class SignageBrandService
 {
-    public const KEYS = ['color' => 'SIGNAGE_BRAND_COLOR', 'logo' => 'SIGNAGE_BRAND_LOGO', 'title' => 'SIGNAGE_BRAND_TITLE', 'period_id' => 'SIGNAGE_PERIOD_ID'];
+    public const KEYS = ['color' => 'SIGNAGE_BRAND_COLOR', 'logo' => 'SIGNAGE_BRAND_LOGO', 'title' => 'SIGNAGE_BRAND_TITLE'];
 
-    public const LABELS = ['color' => 'Vereinsfarbe', 'logo' => 'Vereinslogo', 'title' => 'Signage-Titel', 'period_id' => 'Signage-Trainingsperiode'];
+    public const LABELS = ['color' => 'Vereinsfarbe', 'logo' => 'Vereinslogo', 'title' => 'Signage-Titel'];
 
     public function read(Tenant $tenant): array
     {
@@ -34,7 +33,7 @@ class SignageBrandService
         $data['ink'] = $rgb[0] * .2126 + $rgb[1] * .7152 + $rgb[2] * .0722 > .179 ? '#16191e' : '#ffffff';
         $data['logo'] = $this->safeLogo($data['logo']) ? $data['logo'] : '/brand/blue-v1/clubunio-symbol.svg';
         $data['title'] = mb_substr(trim($data['title']), 0, 100) ?: $tenant->name;
-        $data['period_id'] = ctype_digit((string) $data['period_id']) ? (int) $data['period_id'] : 0;
+        $data['period_id'] = app(ActiveTrainingPlan::class)->period($tenant)?->id ?? 0;
 
         return $data;
     }
@@ -72,7 +71,7 @@ class SignageBrandService
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
         $data = Validator::make($input, ['color' => ['required', 'regex:/^#[a-f0-9]{6}$/iD'], 'logo' => 'required|string|max:2048',
             'title' => 'required|string|max:100', 'version' => 'required|string|size:64',
-            'period_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true)->where('category', 'period'))]])->validate();
+            'period_id' => 'prohibited'])->validate();
         if (! $this->safeLogo($data['logo'])) {
             throw ValidationException::withMessages(['logo' => 'Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Bild unter /images bzw. /brand verwenden.']);
         }
@@ -85,7 +84,7 @@ class SignageBrandService
             foreach (self::KEYS as $field => $key) {
                 $row = Setting::where('tenant_id', $tenant->id)->where('area', 'signage')->where('key', $key)->first() ?? new Setting;
                 $row->forceFill(['tenant_id' => $tenant->id, 'area' => 'signage', 'key' => $key, 'label' => self::LABELS[$field],
-                    'enabled' => true, 'is_secret' => false, 'value_type' => $field === 'period_id' ? 'integer' : 'string',
+                    'enabled' => true, 'is_secret' => false, 'value_type' => 'string',
                     'encrypted_value' => Crypt::encryptString((string) ($data[$field] ?? 0))])->save();
                 DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'setting_id' => $row->id]);
             }
