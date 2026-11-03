@@ -1706,3 +1706,33 @@ Vereinsdomains bleiben fuer Plattformzugriffe gesperrt. Alte API-/Support-
 Funktionen erhalten, Cache releasebezogen neu. Keine echten Domain-/DNS-/TLS-
 Aenderungen, Abos, Bankzahlungen oder PHPMaker-DEV-/PROD-Aenderung.
 Abnahme und noch offene angemeldete Sichtpruefung: CLUBUNIO-PLATFORM-ADMINISTRATION.md.
+
+
+## Mobile Folgepakete: geschlossene DEV-Grundlage03.11.2026
+
+Aktiviert20261103-clubunio-native-followups-foundation-v3 aus dbba405;
+Rueckweg20261103-clubunio-parameter-modernization.38 Fach-/Releasequelldateien
+plus aktualisierte synthetische Kernfixture (39 Dateihashes), Baseline aller8
+vorhandenen Dateien gegen bekannte Gitstaende und exakte Bytes geprueft.
+Die bestehenden parallelen Parameter-/Profil-/Saisonanpassungen bleiben erhalten.
+Composer installierte ausschliesslich die gesperrten Versionen FPDI2.6.9,
+FPDF1.9.0 und MIME7.4.22.14 bestehende Freigabegates,21 Planungsrouten,
+14 native Spesenrouten+2 kompatible Leserouten,12 Dokumentrouten und2/7
+Anlagen-/Busrouten erfolgreich. Persoenliche Konto-, Planungs-/My-Teams-/
+Dossierablaeufe sowie geschlossener Dokumentzugriff durch echte HTTP-Kerneltests
+mit anschliessendem Rollback bestanden.
+
+Nur Migration88 und89 atomar angewendet: drei neue leere Tabellen sowie
+additiver Archivindex fuer mandantengebundene Signaturnachweise. Bestehende
+Archivfelder und Indizes byte-/metadatengeprueft unveraendert. Kein pauschaler
+Migrationslauf und keine Migration100/200/300. Vorher privater verschluesselter
+Archiv-/Migrationsledgerexport, vollstaendig entschluesselt und digestgeprueft:
+shared/backups/mobile-before-88-89-20261103.cuenc,0600, SHA256
+6eb89b20a2e97401a16ca360ef2577c6000dc510381a64ddef940e9cf195bf57.
+Dies ist eine begrenzte Archiv-/Ledgersicherung, kein vollstaendiger DB-Restore.
+
+Planung/My Teams bleiben aktiv; Spesen/Dokumente/Anlagen/Bus weiterhinfalse,
+OCR ohne ausdrueckliche Konfiguration geschlossen. Training/Sponsor/Anmeldungen
+nicht ausgeliefert. Naechster Schritt: persoenliche Fachregressionen und eigene
+Aktivierungsgates. Kein realer Upload/Providerauftrag, keine Signatur echter
+Dokumente, keine Bankzahlung, PHPMaker-/Store-/Betriebsumstellung.
