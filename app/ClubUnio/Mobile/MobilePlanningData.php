@@ -117,11 +117,11 @@ final class MobilePlanningData
         }
         $total = (clone $query)->count();
         $rows = $query->orderBy('starts_at')->orderBy('id')->offset($start)->limit($limit)->get()
-            ->map(fn ($event) => $this->event($actor, $tenant, (int) $event->id))->all();
+            ->map(fn ($event) => $this->event($actor, $tenant, (int) $event->id, false))->all();
         return ['success' => true, 'TeamTermine' => $rows, 'totalRecordCount' => $total];
     }
 
-    public function event(Account $actor, Tenant $tenant, int $id): array
+    public function event(Account $actor, Tenant $tenant, int $id, bool $seriesSnapshot = true): array
     {
         $p = $this->planning;
         $event = $p->event($actor, $tenant, $id);
@@ -154,6 +154,7 @@ final class MobilePlanningData
             'DatumVon' => $event->starts_at, 'DatumBis' => $event->ends_at, 'AnmeldeFrist' => $event->deadline_at,
             'TeilnahmeModus' => $event->mode, 'Status' => $event->status, 'Revision' => (int) $event->revision,
             'Ort' => $event->location, 'Beschreibung' => $event->description, 'MaxTeilnehmer' => $event->capacity,
+            ...($seriesSnapshot ? ['SeriesRevision' => $manager ? app(MobilePlanningSeries::class)->revision($tenant, $event) : null] : []),
             'SerieID' => $event->series_key, 'CanManage' => $manager,
             'Teilnahmen' => $all->all(), 'MeineTeilnahmen' => $people->whereIn('MitgliederID', $own)->values()->all(),
             'DabeiCount' => $all->where('TeilnahmeStatus', 'DABEI')->count(),

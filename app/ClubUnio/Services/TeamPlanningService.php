@@ -150,6 +150,10 @@ class TeamPlanningService
             if ($old && (int) $old->team_season_id !== (int) $data['team_season_id']) {
                 throw ValidationException::withMessages(['team_season_id' => 'Für eine andere Mannschaft bitte einen neuen Termin erstellen.']);
             }
+            if ($old && ($data['capacity'] ?? null) && (int) $data['capacity'] !== (int) $old->capacity
+                && $this->effectiveCount($tenant, $old) > $data['capacity']) {
+                throw ValidationException::withMessages(['capacity' => 'Die neue Kapazitaet ist kleiner als die Anzahl bestehender Anmeldungen.']);
+            }
             foreach (['starts_at', 'ends_at', 'deadline_at'] as $field) {
                 $data[$field] = Time::parse($data[$field], 'Europe/Zurich')->toIso8601String();
             }

@@ -79,7 +79,7 @@ final class MobilePlanningController
             'Terminart' => 'sometimes|required|string|max:40', 'TeilnahmeModus' => 'sometimes|required|string|max:40',
             'DatumVon' => 'sometimes|required|date', 'DatumBis' => 'sometimes|required|date', 'AnmeldeFrist' => 'sometimes|required|date',
             'Ort' => 'nullable|string|max:255', 'Beschreibung' => 'nullable|string|max:4000', 'MaxTeilnehmer' => 'nullable|integer|min:1|max:1000',
-            'Revision' => $old ? 'required|integer|min:1' : 'prohibited', 'SerieID' => 'prohibited', 'scope' => 'nullable|in:single']);
+            'Revision' => $old ? 'required|integer|min:1' : 'prohibited', 'SerieID' => 'prohibited', 'scope' => $old ? 'nullable|in:single,future' : 'prohibited']);
         $map = ['TeamSaisonID' => 'team_season_id', 'Titel' => 'title', 'Terminart' => 'kind', 'TeilnahmeModus' => 'mode',
             'Ort' => 'location', 'Beschreibung' => 'description', 'MaxTeilnehmer' => 'capacity', 'Revision' => 'revision'];
         $result = $old ? array_intersect_key((array) $old, array_flip(['team_season_id', 'title', 'kind', 'mode', 'location', 'description', 'capacity', 'starts_at', 'ends_at', 'deadline_at', 'status', 'revision'])) : ['status' => 'AKTIV'];
@@ -99,6 +99,11 @@ final class MobilePlanningController
             $id = $r->route('event') ? (int) $r->route('event') : null;
             $old = $id ? $p->event($actor, $tenant, $id, true) : null;
             $input = $this->input($r, $old);
+            if ($r->input('scope') === 'future') {
+                $d = $r->validate(['SeriesRevision' => 'required|regex:/^[0-9a-f]{64}$/']);
+                $result = app(MobilePlanningSeries::class)->update($actor, $tenant, $old, $input, $d['SeriesRevision']);
+                return ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $id), 'series' => $result];
+            }
             $id = $p->saveEvent($actor, $tenant, $id, $input);
             return ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $id)];
         });
@@ -133,7 +138,7 @@ final class MobilePlanningController
                 $p->table($tenant, 'mobile_planning_commands')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
                     'command_key' => $d['command_key'], 'operation' => 'batch_create', 'fingerprint' => $fingerprint, 'event_ids' => json_encode($ids)]);
             }
-            return ['success' => true, 'TeamTermine' => array_map(fn ($id) => app(MobilePlanningData::class)->event($actor, $tenant, (int) $id), $ids),
+            return ['success' => true, 'TeamTermine' => array_map(fn ($id) => app(MobilePlanningData::class)->event($actor, $tenant, (int) $id, false), $ids),
                 'replayed' => (bool) $old];
         });
     }

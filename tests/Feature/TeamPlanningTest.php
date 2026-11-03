@@ -867,4 +867,47 @@ class TeamPlanningTest extends TestCase
         $this->assertSame(2, $this->db->table('pg_temp.mobile_planning_commands')->count());
     }
 
+    public function test_native_mobile_future_series_checks_full_snapshot_and_preserves_exceptions(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $ids = $this->service->createSeries($this->admin, $this->tenant, $this->input(['repeat_count' => 5]));
+        $exception = $this->service->event($this->admin, $this->tenant, $ids[1], true);
+        $exceptionInput = array_intersect_key((array) $exception, array_flip(['team_season_id', 'title', 'kind', 'mode', 'status', 'capacity', 'location', 'description', 'revision']));
+        foreach (['starts_at', 'ends_at', 'deadline_at'] as $field) { $exceptionInput[$field] = CarbonImmutable::parse($exception->$field)->tz('Europe/Zurich')->format('Y-m-d\TH:i'); }
+        $this->service->saveEvent($this->admin, $this->tenant, $ids[1], array_replace($exceptionInput, ['title' => 'Keep individual exception']));
+        $this->db->table('team_events')->where('id', $ids[3])->update(['deadline_at' => now()->subMinute()->toIso8601String()]);
+        foreach ([$this->member, $this->otherMember] as $member) {
+            $this->service->participate($this->trainer, $this->tenant, $ids[2], $member, ['status' => 'DABEI', 'attendance' => 'OFFEN']);
+        }
+        $token = $this->postJson('/api/mobile/v1/session', ['username' => $this->admin->username, 'password' => 'fixture', 'device_name' => 'Series update fixture'])->assertOk()->json('data.token');
+        $base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/events/';
+        $event = $this->withToken($token)->getJson($base.$ids[0])->assertOk()->json('data.TeamTermin');
+        $from = CarbonImmutable::parse($event['DatumVon'])->tz('Europe/Zurich')->addDay()->setTime(19, 0);
+        $input = ['Revision' => 1, 'scope' => 'future', 'Titel' => 'Updated future series', 'DatumVon' => $from->toIso8601String(),
+            'DatumBis' => $from->addMinutes(90)->toIso8601String(), 'AnmeldeFrist' => $from->subHours(2)->toIso8601String(), 'Ort' => '', 'Beschreibung' => '', 'MaxTeilnehmer' => 3];
+        $this->patchJson($base.$ids[0], $input)->assertUnprocessable();
+        $input['SeriesRevision'] = $event['SeriesRevision'];
+        $this->patchJson($base.$ids[0], array_replace($input, ['TeamSaisonID' => $this->team + 100000]))->assertUnprocessable();
+        $this->db->table('team_events')->where('id', $ids[4])->increment('revision');
+        $this->patchJson($base.$ids[0], $input)->assertConflict();
+        $event = $this->getJson($base.$ids[0])->assertOk()->json('data.TeamTermin');
+        $input['SeriesRevision'] = $event['SeriesRevision'];
+        $this->patchJson($base.$ids[0], array_replace($input, ['MaxTeilnehmer' => 1]))->assertUnprocessable();
+        $this->assertSame('Fixture training', $this->db->table('team_events')->where('id', $ids[0])->value('title'));
+        $this->assertSame(1, $this->db->table('team_events')->where('id', $ids[0])->value('revision'));
+        $response = $this->patchJson($base.$ids[0], $input)->assertOk()->assertJsonPath('data.series.changed', 3)->assertJsonPath('data.series.skipped', 2)->assertJsonPath('data.series.unchanged', 0);
+        foreach ([$ids[0], $ids[2], $ids[4]] as $id) {
+            $row = $this->db->table('team_events')->where('id', $id)->first();
+            $start = CarbonImmutable::parse($row->starts_at)->tz('Europe/Zurich');
+            $this->assertSame('19:00', $start->format('H:i'));
+            $this->assertSame(90.0, $start->diffInMinutes(CarbonImmutable::parse($row->ends_at)));
+            $this->assertSame(120.0, CarbonImmutable::parse($row->deadline_at)->diffInMinutes($start));
+            $this->assertFalse($row->series_exception);
+        }
+        $this->assertSame(CarbonImmutable::parse($event['DatumVon'])->tz('Europe/Zurich')->toDateString(), CarbonImmutable::parse($response->json('data.TeamTermin.DatumVon'))->tz('Europe/Zurich')->toDateString());
+        $this->assertSame('Keep individual exception', $this->db->table('team_events')->where('id', $ids[1])->value('title'));
+        $this->assertSame('Fixture training', $this->db->table('team_events')->where('id', $ids[3])->value('title'));
+        $this->patchJson($base.$ids[0], $input)->assertUnprocessable();
+    }
+
 }

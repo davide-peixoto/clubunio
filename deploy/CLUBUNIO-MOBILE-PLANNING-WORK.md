@@ -161,3 +161,50 @@ ClubUnio-Tabellen. Alles zurueckgerollt, kein dauerhaftes Schema/DEV-Release.
 
 Offen: Serien aendern/entfernen, Statistik/SFV, Anwesenheitsstapel, Managerkontext
 und My Teams. Schema84/85/86 und vollstaendiger Planungsrelease weiterhin offen.
+
+## Fortschritt: Serie ab hier
+
+Bestehender Bearbeitungsdialog und Scopeauswahl bleiben erhalten. Der
+persoenliche PATCH-Vertrag akzeptiert jetzt future mit Pflicht-Snapshot
+SeriesRevision. Dieser SHA256 umfasst die aktuelle Serie innerhalb genau
+eines Vereins/einer Mannschaft. Fremde Serien-/Mannschaftsparameter und
+fehlende/veraltete Snapshots fuehren zu Abweisung, niemals zum Neulesen und
+versteckten Ueberschreiben. Detail-DTOs liefern den Snapshot nur fuer aktuelle
+Manager; Listen-/Batchantworten erzeugen keine vermeintliche Serienfreigabe.
+
+MobilePlanningSeries verwendet die bestehenden Fachservices unter der
+persoenlichen Schreibtransaktion: Kalendertage ab dem gewaehlten Termin
+bleiben erhalten (SVS-Verhalten), Uhrzeit/Dauer werden aus dem Formular
+uebernommen. Fristen werden relativ zum jeweiligen Termin berechnet.
+Einzelausnahmen, abgesagte und zeit-/fristgesperrte Termine bleiben nach den
+bestehenden ClubUnio-Regeln unveraendert. Abgesagte Termine sind keine
+Serienvorlage. Geaenderte, geschuetzte und unveraenderte Termine werden getrennt
+gezaehlt und im bestehenden Erfolgsfeedback angezeigt. Keine Scheinerfolge
+bei malformed/negativer Antwort. Eine fehlgeschlagene Serie rollt alle Writes
+inklusive Audit und interner Nachrichten zurueck.
+
+Kapazitaetsverkleinerung unter bereits zugesagte Teilnehmer ist auch im
+allgemeinen saveEvent gesperrt, nicht nur in der Web-Serienvorschau. Gleiche
+Kapazitaet blockiert keine reine Metadatenaenderung. Ort/Beschreibung/Limit
+koennen im vorhandenen Editor explizit geleert werden; eine entfernte Frist
+schliesst zum Terminbeginn. Kein Uebertragen einer absoluten Frist auf alle
+nachfolgenden Wochen.
+
+Terminmodelle tragen nun die gelesenen Einzel-/Serienrevisionen. Der echte
+Editor gibt diesen eingefrorenen Formularstand an das Repository weiter.
+Ein spaeterer Detailread darf die Version eines bereits offenen Formulars
+nicht austauschen. Der Transport respektiert explizite erwartete Versionen;
+bei Konflikten keine automatische Wiederholung.
+
+Pruefung:21 Flutterfaelle (10 persoenlicher Transport/Originalscreens und11
+bestehende Identitaets-/Fristfaelle), Analyse ohne Befund. Vier gezielte
+PostgreSQL-Fachtests/49 Assertions pruefen neue Serienaktion, vorhandene
+Web-Serienregressionen und Kapazitaetskonflikte. Teilweise begonnene
+Kapazitaetsverkleinerung rollt zurueck; Einzelausnahmen/gesperrte Termine,
+fremde Mannschaft, alte Serienrevision und Kalenderdaten nachgewiesen.
+Mobile-Regression29 Tests/340 Assertions erfolgreich. Nur synthetische,
+zurueckgerollte Fixtures; diese Stufe braucht keine neue Migration und
+ist noch nicht auf DEV ausgeliefert.
+
+Weiter offen: Entfernen/Serienentfernen, Statistik/SFV, Anwesenheitsstapel,
+vollstaendiger Managerkontext und My Teams; Gesamtauftrag bleibt aktiv.
