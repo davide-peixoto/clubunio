@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+03.11.2026 retired general parameters: migration000091 removes only general/
+SommerWinter and StatusPlatz1/2/3 after verified private encrypted-row/audit
+backup. SaisonID, SIGNAGE_PERIOD_ID and actual field availability stay intact.
+Foundation import no longer recreates retired keys. Tests and reviewed restore:
+CLUBUNIO-RETIRED-GENERAL-PARAMETERS.md. ClubUnio only, no legacy refresh.
+
 03.11.2026 active training plan: move SIGNAGE_PERIOD_ID to general, preserving
 native period ID and audit row. Admin lookup controls training-slot heading and
 public signage; preview-only overrides remain isolated. Migration000090 only;
