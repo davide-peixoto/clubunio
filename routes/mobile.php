@@ -16,8 +16,16 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         Route::get('teams', [Mobile::class, 'teams']);
+        Route::get('members/{member}', [\App\ClubUnio\Mobile\MobileMemberController::class, 'show'])->whereNumber('member');
+        Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
+        Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
+        Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
+        Route::get('members/{member}/contact-options', [\App\ClubUnio\Mobile\MobileMemberController::class, 'options'])->whereNumber('member');
+        Route::post('members/{member}/contact', [\App\ClubUnio\Mobile\MobileMemberController::class, 'contact'])->whereNumber('member');
         Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);
         Route::get('planning/statistics', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'statistics']);
+        Route::get('planning/federation-matches', [\App\ClubUnio\Mobile\MobilePlanningFederationController::class, 'index']);
+        Route::post('planning/federation-matches/{match}/accept', [\App\ClubUnio\Mobile\MobilePlanningFederationController::class, 'accept'])->whereNumber('match');
         Route::get('my-teams', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'index']);
         Route::get('my-teams/members', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'members']);
         Route::get('my-teams/staff-functions', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'functions']);
@@ -30,6 +38,8 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::match(['PATCH', 'DELETE'], 'planning/absences/{absence}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'saveAbsence'])->whereNumber('absence');
         Route::get('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'events']);
         Route::get('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'event'])->whereNumber('event');
+        Route::get('planning/events/{event}/member-options', [\App\ClubUnio\Mobile\MobilePlanningInvitationsController::class, 'members'])->whereNumber('event');
+        Route::match(['POST', 'DELETE'], 'planning/events/{event}/invitations/{member}', [\App\ClubUnio\Mobile\MobilePlanningInvitationsController::class, 'save'])->whereNumber('event')->whereNumber('member');
         Route::post('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'save']);
         Route::post('planning/event-batches', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'batch']);
         Route::patch('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'save'])->whereNumber('event');

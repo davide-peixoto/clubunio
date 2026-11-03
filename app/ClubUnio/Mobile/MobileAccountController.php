@@ -56,11 +56,19 @@ final class MobileAccountController
             'Trainingsplaner' => 'training', 'BusReservationen' => 'bus', 'Dokumente' => 'documents',
             'Sponsorenlauf' => 'sponsor_runs'];
         $modules = [];
+        // Presentation compatibility only; feature claims never grant permissions.
+        $supported = explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
         foreach ($map as $key => $permission) {
             $allowed = app(ModulePermissionService::class)->allows($actor, $tenant, $permission, 'view')
+                || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true));
             if ($allowed) {
-                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung'];
+                $native = match ($key) {
+                    'Teamplanung' => config('clubunio-mobile.native_planning_enabled') && in_array('svs-planning-v1', $supported, true),
+                    'Teams' => config('clubunio-mobile.native_my_teams_enabled') && in_array('my-teams-v1', $supported, true),
+                    'Spesen' => config('clubunio-mobile.native_expenses_enabled') && in_array('expenses-v1', $supported, true), default => false,
+                };
+                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native];
             }
         }
         $modules[] = ['key' => 'Profil', 'available' => true];

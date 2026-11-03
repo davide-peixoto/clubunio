@@ -83,7 +83,8 @@ final class MobileTeamsData
         $members = Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('id', $ids)->get(['id', 'first_name', 'last_name',
             'email', 'mobile', 'city', 'birth_date', 'street', 'house_number', 'postal_code', 'phone_private', 'phone_business',
             'mother_name', 'mother_email', 'mother_mobile', 'father_name', 'father_email', 'father_mobile'])->mapWithKeys(function ($m) use ($visible, $own, $full) {
-            $d = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name];
+            $d = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
+                'CanOpenDossier' => isset($visible[$m->id]) || $full];
             if (isset($visible[$m->id]) || $full) {
                 $d += ['Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city];
             }

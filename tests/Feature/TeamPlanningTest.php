@@ -592,6 +592,42 @@ class TeamPlanningTest extends TestCase
         $this->get($base)->assertRedirect('/portal/login');
     }
 
+    public function test_personal_planning_keeps_unregistered_players_and_staff_counters_separate_without_creating_replies(): void
+    {
+        $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
+        $read = fn () => app(\App\ClubUnio\Mobile\MobilePlanningData::class)->event($this->admin, $this->tenant, $event);
+        $dto = $read();
+        $this->assertSame([$this->member], array_column($dto['NichtAngemeldet'], 'MitgliederID'));
+        $this->assertSame(1, $dto['OffenCount']);
+        $this->assertSame(0, $dto['StaffDabeiCount']);
+        $this->assertSame(0, $this->db->table('team_participations')->where('event_id', $event)->count());
+        foreach ([$this->member, $this->otherMember] as $member) {
+            $this->service->participate($this->admin, $this->tenant, $event, $member, ['status' => 'DABEI', 'attendance' => 'OFFEN', 'revision' => 0]);
+        }
+        $dto = $read();
+        $this->assertSame([], $dto['NichtAngemeldet']);
+        $this->assertSame(1, $dto['DabeiCount']);
+        $this->assertSame(1, $dto['StaffDabeiCount']);
+        $this->assertSame(0, $dto['OffenCount']);
+    }
+
+    public function test_native_module_catalog_requires_individual_feature_activation_and_personal_access(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array', 'clubunio-mobile.native_my_teams_enabled' => false,
+            'clubunio-mobile.native_expenses_enabled' => false]);
+        $token = $this->postJson('/api/mobile/v1/session', ['username' => $this->trainer->username, 'password' => 'fixture', 'device_name' => 'Module fixture'])->assertOk()->json('data.token');
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/modules';
+        $this->withToken($token)->getJson($url)->assertOk()->assertJsonFragment(['key' => 'Teams', 'available' => false, 'native' => false]);
+        config(['clubunio-mobile.native_my_teams_enabled' => true, 'clubunio-mobile.native_expenses_enabled' => true]);
+        $this->getJson($url)->assertOk()->assertJsonFragment(['key' => 'Teams', 'available' => false, 'native' => false]);
+        $this->withHeader('X-ClubUnio-Mobile-Features', 'svs-planning-v1,my-teams-v1,expenses-v1');
+        $this->getJson($url)->assertOk()->assertJsonFragment(['key' => 'Teams', 'available' => true, 'native' => true])
+            ->assertJsonFragment(['key' => 'Teamplanung', 'available' => true, 'native' => true])
+            ->assertJsonFragment(['key' => 'Spesen', 'available' => true, 'native' => true]);
+        $foreign = Tenant::create(['slug' => 'module-foreign-'.bin2hex(random_bytes(4)), 'name' => 'Foreign']);
+        $this->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules')->assertForbidden();
+    }
+
     public function test_personal_planning_capabilities_keep_operation_rights_distinct_without_numeric_roles(): void
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);

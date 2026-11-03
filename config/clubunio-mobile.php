@@ -5,6 +5,11 @@ return [
     'enabled' => (bool) env('CLUBUNIO_MOBILE_ENABLED', false),
     // Enable only after migrations84-87 and check-mobile-planning --enabled.
     'native_planning_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_PLANNING_ENABLED', false),
+    'native_expenses_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_EXPENSES_ENABLED', false),
+    'native_my_teams_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MY_TEAMS_ENABLED', false),
+    'native_facilities_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_FACILITIES_ENABLED', false),
+    'native_bus_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_BUS_ENABLED', false),
+    'native_documents_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_DOCUMENTS_ENABLED', false),
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [

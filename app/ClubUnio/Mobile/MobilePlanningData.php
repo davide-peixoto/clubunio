@@ -126,13 +126,16 @@ final class MobilePlanningData
     {
         $p = $this->planning;
         $event = $p->event($actor, $tenant, $id);
+        $invitationMeta = app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
+        $capabilities = $this->capabilities->event($actor, $tenant, $event);
         $manager = $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
         $own = app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();
         $parts = $p->table($tenant, 'team_participations')->where('event_id', $id)->get()->keyBy('member_id');
-        $people = $p->roster($tenant, $event)->get(['id', 'first_name', 'last_name'])->map(function ($member) use ($parts, $event, $manager, $own) {
+        $people = $p->roster($tenant, $event)->get(['id', 'first_name', 'last_name'])->map(function ($member) use ($parts, $event, $manager, $own, $invitationMeta) {
             $part = $parts->get($member->id);
             $private = $manager || in_array((int) $member->id, $own, true);
             return ['TeamTerminTeilnahmeID' => (int) ($part->id ?? 0), 'MitgliederID' => (int) $member->id,
+                ...($invitationMeta['members'][$member->id] ?? []),
                 'Vorname' => $member->first_name, 'Nachname' => $member->last_name,
                 'TeilnahmeStatus' => $part->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN'),
                 'AnwesenheitsStatus' => $part->attendance ?? 'OFFEN', 'Revision' => (int) ($part->revision ?? 0),
@@ -149,6 +152,11 @@ final class MobilePlanningData
             'AnwesenheitUpdatedAt' => $guest->attendance_updated_at ?? null,
         ]);
         $all = $people->concat($guests)->values();
+        $staffIds = $p->table($tenant, 'team_staff')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
+        $playerIds = $p->table($tenant, 'team_players')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
+        $counted = $all->reject(fn ($person) => isset($person['MitgliederID']) && in_array($person['MitgliederID'], $staffIds, true));
+        $pending = $people->filter(fn ($person) => in_array($person['MitgliederID'], $playerIds, true)
+            && ! in_array($person['MitgliederID'], $staffIds, true) && $person['TeilnahmeStatus'] === 'OFFEN')->values()->all();
         $team = $p->table($tenant, 'team_seasons')->where('id', $event->team_season_id)->first();
         return ['TeamTerminID' => (int) $event->id, 'TeamSaisonID' => (int) $event->team_season_id,
             'TeamSaisonLabel' => $team->label, 'Titel' => $event->title, 'Terminart' => $event->kind,
@@ -157,15 +165,19 @@ final class MobilePlanningData
             'Ort' => $event->location, 'Beschreibung' => $event->description, 'MaxTeilnehmer' => $event->capacity,
             ...($seriesSnapshot ? ['SeriesRevision' => $manager ? app(MobilePlanningSeries::class)->revision($tenant, $event) : null] : []),
             'SerieID' => $event->series_key, 'CanManage' => $manager,
-            ...$this->capabilities->event($actor, $tenant, $event),
+            ...$capabilities,
+            'CanAddGuests' => $capabilities['CanAddPeople'], 'CanInviteMembers' => $invitationMeta['CanInviteMembers'],
+            'CanAddPeople' => $capabilities['CanAddPeople'] || $invitationMeta['CanInviteMembers'],
             'Teilnahmen' => $all->all(), 'MeineTeilnahmen' => $people->whereIn('MitgliederID', $own)->values()->all(),
-            'DabeiCount' => $all->where('TeilnahmeStatus', 'DABEI')->count(),
-            'AbwesendCount' => $all->where('TeilnahmeStatus', 'ABWESEND')->count(),
-            'VielleichtCount' => $all->where('TeilnahmeStatus', 'VIELLEICHT')->count(),
-            'OffenCount' => $all->where('TeilnahmeStatus', 'OFFEN')->count(),
-            'AnwesendCount' => $all->where('AnwesenheitsStatus', 'ANWESEND')->count(),
-            'OhneAbmeldungCount' => $all->where('AnwesenheitsStatus', 'FEHLT')->count(),
-            'AbgemeldetCount' => $all->where('AnwesenheitsStatus', 'ENTSCHULDIGT')->count(),
-            'AnwesenheitOffenCount' => $all->where('AnwesenheitsStatus', 'OFFEN')->count()];
+            ...($manager && $event->mode === 'ANMELDEN' ? ['NichtAngemeldet' => $pending] : []),
+            'StaffDabeiCount' => $people->whereIn('MitgliederID', $staffIds)->where('TeilnahmeStatus', 'DABEI')->count(),
+            'DabeiCount' => $counted->where('TeilnahmeStatus', 'DABEI')->count(),
+            'AbwesendCount' => $counted->where('TeilnahmeStatus', 'ABWESEND')->count(),
+            'VielleichtCount' => $counted->where('TeilnahmeStatus', 'VIELLEICHT')->count(),
+            'OffenCount' => $counted->where('TeilnahmeStatus', 'OFFEN')->count(),
+            'AnwesendCount' => $counted->where('AnwesenheitsStatus', 'ANWESEND')->count(),
+            'OhneAbmeldungCount' => $counted->where('AnwesenheitsStatus', 'FEHLT')->count(),
+            'AbgemeldetCount' => $counted->where('AnwesenheitsStatus', 'ENTSCHULDIGT')->count(),
+            'AnwesenheitOffenCount' => $counted->where('AnwesenheitsStatus', 'OFFEN')->count()];
     }
 }
