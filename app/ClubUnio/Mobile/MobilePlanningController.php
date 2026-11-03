@@ -88,6 +88,8 @@ final class MobilePlanningController
             if (isset($d[$from])) { $result[$to] = Time::parse($d[$from], 'Europe/Zurich')->setTimezone('Europe/Zurich')->format('Y-m-d\TH:i'); }
             elseif (isset($result[$to])) { $result[$to] = Time::parse($result[$to])->setTimezone('Europe/Zurich')->format('Y-m-d\TH:i'); }
         }
+        // The SVS flow permits an omitted deadline; participation then closes at start.
+        if (empty($result['deadline_at']) && ! empty($result['starts_at'])) { $result['deadline_at'] = $result['starts_at']; }
         return $result;
     }
 
@@ -99,6 +101,40 @@ final class MobilePlanningController
             $input = $this->input($r, $old);
             $id = $p->saveEvent($actor, $tenant, $id, $input);
             return ['success' => true, 'TeamTermin' => app(MobilePlanningData::class)->event($actor, $tenant, $id)];
+        });
+    }
+
+    public function batch(Request $r)
+    {
+        return $this->write($r, function ($actor, $tenant, $p) use ($r) {
+            $d = $r->validate(['command_key' => 'required|uuid', 'events' => 'required|array|min:1|max:104', 'events.*' => 'required|array']);
+            $p->authorizeOperation($actor, $tenant, 'create');
+            $rows = [];
+            foreach ($d['events'] as $row) {
+                $input = $this->input(Request::create('/', 'POST', $row));
+                ksort($input);
+                $rows[] = $input;
+            }
+            $team = $rows[0]['team_season_id'] ?? 0;
+            abort_unless($team && $p->teams($actor, $tenant, true, 'create')->where('id', $team)->exists(), 403);
+            abort_if(count(array_unique(array_column($rows, 'team_season_id'))) !== 1, 422, 'Eine Serie gehoert zu einer Mannschaft.');
+            abort_if(count(array_unique(array_column($rows, 'starts_at'))) !== count($rows), 422, 'Doppelte Serienzeitpunkte.');
+            $fingerprint = hash('sha256', json_encode($rows, JSON_THROW_ON_ERROR));
+            $commands = $p->table($tenant, 'mobile_planning_commands')->where('account_id', $actor->id)->where('command_key', $d['command_key']);
+            $old = (clone $commands)->first();
+            if ($old) {
+                abort_unless($old->operation === 'batch_create' && hash_equals($old->fingerprint, $fingerprint), 409, 'Der Auftrag gehoert zu anderen Daten.');
+                $ids = json_decode($old->event_ids, true, 512, JSON_THROW_ON_ERROR);
+            } else {
+                $ids = [];
+                foreach ($rows as $input) { $ids[] = $p->saveEvent($actor, $tenant, null, $input); }
+                $key = count($ids) > 1 ? (string) \Illuminate\Support\Str::uuid() : null;
+                $p->table($tenant, 'team_events')->whereIn('id', $ids)->update(['series_key' => $key]);
+                $p->table($tenant, 'mobile_planning_commands')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
+                    'command_key' => $d['command_key'], 'operation' => 'batch_create', 'fingerprint' => $fingerprint, 'event_ids' => json_encode($ids)]);
+            }
+            return ['success' => true, 'TeamTermine' => array_map(fn ($id) => app(MobilePlanningData::class)->event($actor, $tenant, (int) $id), $ids),
+                'replayed' => (bool) $old];
         });
     }
 

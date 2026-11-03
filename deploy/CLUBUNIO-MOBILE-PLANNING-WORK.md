@@ -119,3 +119,45 @@ Dauerhafte Schemaanwendung84/85 und DEV-Release bleiben ausstehend.
 Naechster fachlicher Schritt: Serien/Batchanlage, Statistik/SFV, vollstaendiger
 Managerkontext und My Teams. Planung noch nicht im persoenlichen Einstieg auf
 den teilweise angebundenen Originalscreen umgeschaltet. Gesamtauftrag aktiv.
+
+
+## Fortschritt: atomare Serienanlage
+
+Die bestehende Wochentags-/Bis-Datum-Auswahl verwendet im persoenlichen
+Repository jetzt einen Batch-Writer. Bestehender Screen, Formular und
+Rueckmeldung bleiben erhalten. Der alte sequenzielle PHPMaker-Transport wird
+hier nicht benutzt. Kalenderfortschaltung verwendet DateTime(Jahr, Monat, Tag+1)
+statt 24-Stunden-Spruengen; der letzte Tag einer Serie darf nach der
+Sommerzeitumstellung nicht verschwinden. Explizite UTC-Zeitpunkte im Vertrag.
+Maximal104 Termine pro Auftrag, lokal vor HTTP und serverseitig begrenzt.
+
+POST planning/event-batches validiert alle Termine und speichert sie unter dem
+bestehenden Vereins-/Sitzungslock ueber TeamPlanningService in einer Transaktion.
+Ein Fehler rollt Termine, Audit, interne Nachrichten und Auftrag gemeinsam
+zurueck. Keine vom Client frei uebernommene SerieID; Server erzeugt den Serien-
+schluessel und begrenzt den Auftrag auf eine aktuell verwaltbare Mannschaft.
+Ohne explizite Frist schliesst die Teilnahme zum Terminbeginn, wie im SVS-Ablauf.
+
+Additive Migration86 vorbereitet: mobile_planning_commands mit persoenlichem
+Vereins-/Konto-/UUID-Schluessel, Operation, SHA256 des normalisierten Vertrags
+und Ergebnis-IDs. Keine Passwoerter, Teilnehmergruende oder Formulartexte darin.
+Gleicher Schluessel und gleiche Daten liefern dieselben Termin-IDs; andere Daten
+unter demselben Schluessel409. Rechte werden auch bei Wiederholung frisch
+geprueft. Entfernte Termine duerfen durch Wiederholung nicht neu entstehen.
+Der App-Writer behaelt eine fehlgeschlagene Auftragskennung waehrend seiner
+Repository-Lebensdauer fuer einen ausdruecklichen erneuten Versuch; niemals
+automatische Wiederholung. Nach bestaetigtem Erfolg ist eine neue identische
+Serienanlage ein neuer bewusster Auftrag. Persistente Entwurfswiederaufnahme
+nach App-Beendigung und Laufzeitmessung grosser Serien auf DEV noch offen.
+
+Nachweise:8 persoenliche Transport-/Originalscreenfaelle, darunter unterbrochene
+Antwort mit gleicher Auftragskennung und kalenderbasierte Wochentage;11
+bestehende Identitaets-/Fristfaelle bestanden. PostgreSQL-HTTP-Test mit27
+Assertions prueft Atomaritaet, Wiederholung, geaenderte Auftragsdaten,
+Kontentrennung, Rechte, doppelte Zeitpunkte, Grenzen und Standardfrist.
+Migration86-DDL auf temporaerer Auftragstabelle mit temporaeren FK-Eltern fuer
+nur die synthetischen IDs; echte Benutzer-/Teamrechte verwenden die bestehenden
+ClubUnio-Tabellen. Alles zurueckgerollt, kein dauerhaftes Schema/DEV-Release.
+
+Offen: Serien aendern/entfernen, Statistik/SFV, Anwesenheitsstapel, Managerkontext
+und My Teams. Schema84/85/86 und vollstaendiger Planungsrelease weiterhin offen.

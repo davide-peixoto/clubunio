@@ -816,4 +816,55 @@ class TeamPlanningTest extends TestCase
         $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
     }
 
+    public function test_native_mobile_series_batch_is_atomic_idempotent_and_actor_scoped(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $this->db->statement("SET LOCAL lock_timeout TO '5s'");
+        $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000086_mobile_planning_commands.php'))->up());
+        $this->assertCount(1, $ddl);
+        $this->db->statement('CREATE TEMP TABLE batch_test_tenants (id bigint PRIMARY KEY) ON COMMIT DROP');
+        $this->db->statement('CREATE TEMP TABLE batch_test_accounts (id bigint PRIMARY KEY) ON COMMIT DROP');
+        $this->db->table('pg_temp.batch_test_tenants')->insert(['id' => $this->tenant->id]);
+        $this->db->table('pg_temp.batch_test_accounts')->insert(array_map(fn ($actor) => ['id' => $actor->id], [$this->admin, $this->player, $this->trainer]));
+        $this->db->statement(str_replace(['CREATE TABLE clubora.mobile_planning_commands', 'REFERENCES clubora.tenants', 'REFERENCES clubora.accounts'],
+            ['CREATE TEMP TABLE mobile_planning_commands', 'REFERENCES pg_temp.batch_test_tenants', 'REFERENCES pg_temp.batch_test_accounts'], $ddl[0]['query']).' ON COMMIT DROP');
+        $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
+            public function wrapTable($table, $prefix = null) {
+                return parent::wrapTable($table === 'clubora.mobile_planning_commands' ? 'pg_temp.mobile_planning_commands' : $table, $prefix);
+            }
+        });
+        $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Series fixture'])->assertOk()->json('data.token');
+        $admin = $login($this->admin);
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/event-batches';
+        $input = $this->input();
+        $first = ['TeamSaisonID' => $this->team, 'Titel' => 'Batch fixture', 'Terminart' => 'TRAINING', 'TeilnahmeModus' => 'ANMELDEN',
+            'DatumVon' => $input['starts_at'], 'DatumBis' => $input['ends_at']]; // Omitted SVS deadline closes at start.
+        $second = array_replace($first, ['DatumVon' => CarbonImmutable::parse($input['starts_at'])->addWeek()->format('Y-m-d\TH:i'),
+            'DatumBis' => CarbonImmutable::parse($input['ends_at'])->addWeek()->format('Y-m-d\TH:i')]);
+        $key = (string) \Illuminate\Support\Str::uuid();
+        $body = ['command_key' => $key, 'events' => [$first, $second]];
+        $created = $this->withToken($admin)->postJson($url, $body)->assertOk()->assertJsonPath('data.replayed', false)->json('data.TeamTermine');
+        $this->assertCount(2, $created);
+        $this->assertNotEmpty($created[0]['SerieID']);
+        $this->assertSame($created[0]['SerieID'], $created[1]['SerieID']);
+        $this->assertTrue(CarbonImmutable::parse($created[0]['DatumVon'])->equalTo(CarbonImmutable::parse($created[0]['AnmeldeFrist'])));
+        $again = $this->postJson($url, $body)->assertOk()->assertJsonPath('data.replayed', true)->json('data.TeamTermine');
+        $this->assertSame(array_column($created, 'TeamTerminID'), array_column($again, 'TeamTerminID'));
+        $this->assertSame(2, $this->db->table('team_events')->where('tenant_id', $this->tenant->id)->count());
+        $changed = $body;
+        $changed['events'][0]['Titel'] = 'Changed after uncertain response';
+        $this->postJson($url, $changed)->assertConflict();
+        $bad = ['command_key' => (string) \Illuminate\Support\Str::uuid(), 'events' => [$first, array_replace($second, ['DatumBis' => $second['DatumVon']])]];
+        $this->postJson($url, $bad)->assertUnprocessable();
+        $this->assertSame(2, $this->db->table('team_events')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('pg_temp.mobile_planning_commands')->count());
+        $this->assertSame(2, $this->db->table('team_planning_messages')->where('tenant_id', $this->tenant->id)->count());
+        $this->postJson($url, ['command_key' => (string) \Illuminate\Support\Str::uuid(), 'events' => [$first, $first]])->assertUnprocessable();
+        $this->postJson($url, ['command_key' => (string) \Illuminate\Support\Str::uuid(), 'events' => array_fill(0, 105, $first)])->assertUnprocessable();
+        $this->withToken($login($this->player))->postJson($url, $body)->assertForbidden();
+        $this->withToken($login($this->trainer))->postJson($url, $body)->assertOk()->assertJsonPath('data.replayed', false);
+        $this->assertSame(4, $this->db->table('team_events')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(2, $this->db->table('pg_temp.mobile_planning_commands')->count());
+    }
+
 }
