@@ -911,6 +911,99 @@ class TeamPlanningTest extends TestCase
         $this->patchJson($base.$ids[0], $input)->assertUnprocessable();
     }
 
+    public function test_personal_my_teams_preserves_team_scope_contacts_current_season_and_training_variant(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $this->db->table('members')->where('id', $this->member)->update(['email' => 'child@example.invalid', 'mother_name' => 'PRIVATE-CHILD-MOTHER']);
+        $this->db->table('members')->where('id', $this->otherMember)->update(['email' => 'coach@example.invalid', 'mother_name' => 'PRIVATE-COACH-MOTHER', 'ahv_encrypted' => Crypt::encryptString('PRIVATE-AHV')]);
+        $other = $this->db->table('teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Other team']);
+        $season = $this->db->table('team_seasons')->where('id', $this->team)->value('season_id');
+        $otherTeam = $this->db->table('team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $other, 'season_id' => $season, 'label' => 'Foreign team fixture']);
+        $past = $this->db->table('seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Past', 'starts_on' => now()->subYears(2)->toDateString(), 'ends_on' => now()->subYear()->toDateString()]);
+        $pastTeam = $this->db->table('team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $other, 'season_id' => $past, 'label' => 'Past assigned team']);
+        $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $pastTeam, 'member_id' => $this->member]);
+        foreach ([[$this->team, true, false], [$this->team, false, true], [$otherTeam, false, true]] as [$team, $all, $synthetic]) {
+            $this->db->table('training_slots')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $team, 'starts_at' => '18:00', 'ends_at' => '19:30', 'all_fields' => $all, 'synthetic_only' => $synthetic]);
+        }
+        $login = fn ($a) => $this->postJson('/api/mobile/v1/session', ['username' => $a->username, 'password' => 'fixture', 'device_name' => 'Teams fixture'])->assertOk()->json('data.token');
+        $base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/my-teams';
+        $parent = $this->account('member');
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $parent->id, 'member_id' => $this->member, 'kind' => 'parent', 'state' => 'approved', 'source' => 'test']);
+        $this->withToken($login($parent))->getJson($base)->assertOk()->assertJsonPath('data.totalRecordCount', 1)->assertJsonPath('data.Teams.0.TeamSaisonID', $this->team);
+        $details = $this->getJson($base.'/'.$this->team)->assertOk()->assertJsonPath('data.Team.CanAddAssignments', false)->assertJsonPath('data.Team.CanRemoveAssignments', false)->assertJsonCount(1, 'data.Trainings');
+        $this->assertStringContainsString('PRIVATE-CHILD-MOTHER', $details->getContent());
+        $this->assertStringNotContainsString('coach@example.invalid', $details->getContent());
+        $this->assertStringNotContainsString('PRIVATE-COACH-MOTHER', $details->getContent());
+        $this->assertStringNotContainsString('PRIVATE-AHV', $details->getContent());
+        $this->getJson($base.'/'.$otherTeam)->assertNotFound();
+        $this->getJson($base.'/'.$pastTeam)->assertNotFound();
+        $this->getJson($base.'?recperpage=101')->assertUnprocessable();
+        $this->getJson($base.'/members?q=Player')->assertForbidden();
+        $trainer = $this->withToken($login($this->trainer))->getJson($base.'/'.$this->team)->assertOk();
+        $this->assertStringContainsString('child@example.invalid', $trainer->getContent());
+        $this->assertStringNotContainsString('PRIVATE-CHILD-MOTHER', $trainer->getContent());
+        $this->assertStringContainsString('PRIVATE-COACH-MOTHER', $trainer->getContent());
+        $this->withToken($login($this->admin))->getJson($base.'/'.$this->team)->assertOk()->assertJsonPath('data.Team.CanAddAssignments', true)->assertJsonPath('data.Team.CanRemoveAssignments', true);
+    }
+
+    public function test_personal_my_teams_assignments_preserve_versions_audit_and_current_permissions(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $token = $this->postJson('/api/mobile/v1/session', ['username' => $this->admin->username, 'password' => 'fixture', 'device_name' => 'Assignment fixture'])->assertOk()->json('data.token');
+        $base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/my-teams';
+        $function = $this->db->table('staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'TRAINER', 'name' => 'Fixture coach']);
+        $this->withToken($token)->getJson($base.'/staff-functions')->assertOk()->assertJsonPath('data.Functions.0.TeamSatffFunktionID', $function);
+        $this->db->table('members')->where('id', $this->member)->update(['email' => 'lookup@example.invalid']);
+        $search = $this->getJson($base.'/members?q=Player')->assertOk();
+        $this->assertSame('lookup@example.invalid', $search->json('data.0.Email'));
+        $player = $this->postJson($base.'/'.$this->team.'/players', ['MitgliederID' => $this->otherMember])->assertOk()->json('data.Assignment');
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $player['_version']);
+        $this->postJson($base.'/'.$this->team.'/players', ['MitgliederID' => $this->otherMember])->assertUnprocessable();
+        $staff = $this->postJson($base.'/'.$this->team.'/staff', ['MitgliederID' => $this->member, 'TeamSatffFunktionID' => $function])->assertOk()->json('data.Assignment');
+        $staffUrl = $base.'/'.$this->team.'/staff/'.$staff['TeamStaffID'];
+        $this->deleteJson($staffUrl, [])->assertUnprocessable();
+        $this->db->table('team_staff')->where('id', $staff['TeamStaffID'])->update(['updated_at' => now()->addMinute()->toIso8601String()]);
+        $this->deleteJson($staffUrl, ['_version' => $staff['_version']])->assertUnprocessable();
+        $fresh = $this->getJson($base.'/'.$this->team)->assertOk()->json('data.Staff');
+        $this->assertTrue(collect($fresh)->firstWhere('TeamStaffID', $staff['TeamStaffID'])['IsTrainer']);
+        $version = collect($fresh)->firstWhere('TeamStaffID', $staff['TeamStaffID'])['_version'];
+        $this->deleteJson($staffUrl, ['_version' => $version])->assertOk()->assertJsonPath('data.removed', true);
+        $this->deleteJson($staffUrl, ['_version' => $version])->assertNotFound();
+        $this->assertFalse($this->db->table('team_staff')->where('id', $staff['TeamStaffID'])->value('active'));
+        $this->deleteJson($base.'/'.$this->team.'/players/'.$player['TeamlistID'], ['_version' => $player['_version']])->assertOk();
+        $this->assertFalse($this->db->table('team_players')->where('id', $player['TeamlistID'])->value('active'));
+        $this->assertGreaterThanOrEqual(4, $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id,
+            'member_id' => $this->member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
+        $this->db->table('tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->admin->id)->update(['role' => 'member']);
+        $this->getJson($base.'/'.$this->team)->assertOk()->assertJsonPath('data.Team.CanAddAssignments', false)->assertJsonPath('data.Team.CanRemoveAssignments', false);
+        $this->postJson($base.'/'.$this->team.'/players', ['MitgliederID' => $this->otherMember])->assertForbidden();
+        $this->getJson($base.'/staff-functions')->assertForbidden();
+    }
+
+    public function test_personal_my_teams_registration_details_require_actual_review_scope(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $status = $this->db->table('registration_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'REV', 'name' => 'Review', 'workflow_key' => 'review']);
+        $this->db->table('registrations')->insert(['tenant_id' => $this->tenant->id, 'legacy_id' => 900001, 'team_season_id' => $this->team,
+            'first_name' => 'Applicant', 'last_name' => 'Fixture', 'email' => 'applicant@example.invalid', 'birth_date' => '2012-01-01',
+            'status_id' => $status, 'active' => true, 'applicant_encrypted' => Crypt::encryptString(json_encode([
+                'mother_name' => 'PRIVATE-APPLICANT-MOTHER', 'notes' => 'PRIVATE-APPLICANT-NOTE', 'ahv' => 'PRIVATE-NOT-FOR-TEAM-DTO']))]);
+        $login = fn ($a) => $this->postJson('/api/mobile/v1/session', ['username' => $a->username, 'password' => 'fixture', 'device_name' => 'Registration fixture'])->assertOk()->json('data.token');
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/my-teams/'.$this->team;
+        $this->withToken($login($this->player))->getJson($url)->assertOk()->assertJsonPath('data.Registrations', []);
+        $this->withToken($login($this->trainer))->getJson($url)->assertOk()->assertJsonPath('data.Registrations', []);
+        $leader = $this->account('technical_lead');
+        $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $leader->id, 'member_id' => $this->otherMember, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
+        $this->db->table('technical_leads')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $this->otherMember]);
+        $response = $this->withToken($login($leader))->getJson($url)->assertOk()->assertJsonPath('data.Registrations.0.StatusText', 'Review');
+        $this->assertStringContainsString('PRIVATE-APPLICANT-MOTHER', $response->getContent());
+        $this->assertStringContainsString('PRIVATE-APPLICANT-NOTE', $response->getContent());
+        $this->assertStringNotContainsString('PRIVATE-NOT-FOR-TEAM-DTO', $response->getContent());
+        $this->db->table('technical_leads')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+        $this->getJson($url)->assertOk()->assertJsonPath('data.Registrations', []); // Still own staff team, no review grant.
+    }
+
     public function test_native_mobile_removal_hides_series_without_deleting_history_or_sending_messages(): void
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);

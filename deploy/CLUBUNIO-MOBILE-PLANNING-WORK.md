@@ -269,3 +269,8 @@ Keine DEV-Freischaltung oder native Gesamtabnahme dieses Zwischenstands.
 
 Fortsetzung mit My Teams und den verbleibenden Planungsaktionen
 (Statistik/SFV, Anwesenheitsstapel und Managerfaehigkeiten). Gesamtauftrag aktiv.
+
+My-Teams-Kernvertrag und vorhandene Team-/Kontaktansicht inzwischen angebunden:
+CLUBUNIO-MOBILE-MY-TEAMS.md. Teamzuordnungen, Rechte-/Versionskonflikte, Trainings und Anmeldesicht
+geprueft. Persoenliche Dossier-/Anmeldelinks, DEV-Release und Gesamtfreischaltung
+bleiben offen; keine pauschale Fertigmeldung fuer den Gesamtauftrag.

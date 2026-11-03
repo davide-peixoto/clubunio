@@ -17,6 +17,13 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);
+        Route::get('my-teams', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'index']);
+        Route::get('my-teams/members', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'members']);
+        Route::get('my-teams/staff-functions', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'functions']);
+        Route::get('my-teams/{team}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'show'])->whereNumber('team');
+        Route::get('my-teams/{team}/trainings', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'trainings'])->whereNumber('team');
+        Route::post('my-teams/{team}/{kind}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'assignment'])->whereNumber('team')->whereIn('kind', ['staff', 'players']);
+        Route::delete('my-teams/{team}/{kind}/{assignment}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'assignment'])->whereNumber('team')->whereIn('kind', ['staff', 'players'])->whereNumber('assignment');
         Route::get('planning/absences', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'absences']);
         Route::post('planning/absences', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'saveAbsence']);
         Route::match(['PATCH', 'DELETE'], 'planning/absences/{absence}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'saveAbsence'])->whereNumber('absence');

@@ -17,6 +17,17 @@ use Illuminate\Validation\Rule;
 
 class SignageService
 {
+    private function variant(Collection $fields): string
+    {
+        $blocked = fn ($code) => ! $fields->contains(fn ($f) => $f->field->code === $code && $f->status?->active && ! $f->status->blocks_training);
+        return $blocked('H') ? ($blocked('T') ? 'synthetic_only' : 'without_main') : 'all_fields';
+    }
+
+    public function trainingVariant(Tenant $tenant): string
+    {
+        return $this->variant(FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)
+            ->whereHas('field', fn ($q) => $q->where('active', true))->with(['field', 'status'])->get());
+    }
     public function preview(Account $actor, Tenant $tenant, array $input): array
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'view');
@@ -40,8 +51,7 @@ class SignageService
         $date = CarbonImmutable::createFromFormat('!Y-m-d', $data['date'], 'Europe/Zurich');
         $fields = FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)->whereHas('field', fn ($q) => $q->where('active', true))->with(['field', 'status'])->get();
         // Unknown/inactive status is not interpreted as an open field.
-        $blocked = fn ($code) => ! $fields->contains(fn ($f) => $f->field->code === $code && $f->status?->active && ! $f->status->blocks_training);
-        $flag = $blocked('H') ? ($blocked('T') ? 'synthetic_only' : 'without_main') : 'all_fields';
+        $flag = $this->variant($fields);
         $trainings = collect();
         if (! empty($data['period_id'])) {
             $trainings = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $data['period_id'])
