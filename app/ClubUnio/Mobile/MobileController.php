@@ -69,6 +69,11 @@ final class MobileController
         return $this->write($r, fn () => $this->data(app(ChatService::class)->conversations($this->actor($r), $this->tenant($r))));
     }
 
+    public function chat(Request $r)
+    {
+        return $this->write($r, fn () => $this->data(app(ChatService::class)->conversation($this->actor($r), $this->tenant($r), (int) $r->route('chat'))));
+    }
+
     public function contacts(Request $r) { return $this->data(app(MobileAccess::class)->contacts($this->actor($r), $this->tenant($r))); }
 
     public function direct(Request $r)

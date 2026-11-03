@@ -44,6 +44,7 @@ class MobileCommunicationTest extends TestCase
         Http::preventStrayRequests();
         $this->db->unprepared(<<<'SQL'
 CREATE TABLE clubora.tenants (id integer PRIMARY KEY AUTOINCREMENT, slug text UNIQUE, name text, created_at text, updated_at text);
+CREATE TABLE clubora.mobile_module_options (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, key text, name text, active boolean DEFAULT 1, sort_order integer DEFAULT 0);
 CREATE TABLE clubora.tenant_domains (id integer PRIMARY KEY, tenant_id integer, host text, active boolean, ownership_verified boolean, dns_verified boolean, tls_verified boolean);
 CREATE TABLE clubora.accounts (id integer PRIMARY KEY AUTOINCREMENT, username text UNIQUE, password text, display_name text, active boolean DEFAULT 1, api_only boolean DEFAULT 0, created_at text, updated_at text);
 CREATE TABLE clubora.tenant_accounts (tenant_id integer, account_id integer, role text, portal_enabled boolean DEFAULT 1, access_profile_id integer, PRIMARY KEY(tenant_id,account_id));
@@ -75,6 +76,9 @@ SQL);
         $this->db->unprepared($sql);
         }
         $this->tenant = Tenant::create(['slug' => 'mobile-test', 'name' => 'Mobile fixture']);
+        foreach (\App\ClubUnio\Services\MobileModuleSettings::MODULES as $key => $name) {
+            $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key, 'name' => $name]);
+        }
         $this->admin = $this->account('admin');
         $this->player = $this->account('member');
         $this->parent = $this->account('parent');
@@ -325,6 +329,20 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->withToken($this->token($this->parent))->getJson($this->url('chats/'.$staff.'/messages'))->assertNotFound();
         $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
         $this->withToken($this->token($this->admin))->getJson($this->url('chats'))->assertOk();
+    }
+
+    public function test_notification_chat_detail_is_independent_of_list_limit_and_rechecks_access(): void
+    {
+        $id = $this->teamChat($this->parent);
+        $service = app(ChatService::class);
+        for ($i = 0; $i < 201; $i++) { $service->ensure($this->tenant, 'announcements', key: 'qa-limit-'.$i); }
+        $this->withToken($this->token($this->parent));
+        $list = $this->getJson($this->url('chats'))->assertOk()->json('data');
+        $this->assertNotContains($id, array_column($list, 'id'));
+        $this->getJson($this->url('chats/'.$id))->assertOk()->assertJsonPath('data.id', $id)->assertJsonPath('data.kind', 'team');
+        $this->getJson($this->url('chats/2147483647'))->assertNotFound();
+        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'pending']);
+        $this->getJson($this->url('chats/'.$id))->assertForbidden();
     }
 
     public function test_messages_are_encrypted_idempotent_and_replay_conflicts_fail(): void

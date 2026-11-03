@@ -115,31 +115,44 @@ final class ChatService
                 $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', $actor->id)->update(['left_at' => now()->toIso8601String()]);
                 continue;
             }
-            $membership = $this->membership($actor, $tenant, $chat);
-            $team = $teams->firstWhere('id', $chat->team_season_id);
-            $title = match ($chat->kind) {
-                'team' => ($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
-                'staff' => 'Trainer · '.($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
-                'announcements' => 'Vereinsankündigungen', 'event' => 'Terminbesprechung', default => 'Direktnachricht',
-            };
-            if ($chat->kind === 'direct') {
-                $other = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', '<>', $actor->id)->value('account_id');
-                $title = Account::whereKey($other)->value('display_name') ?? $title;
-            }
-            $result[] = ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
-                'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
-                'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
-                'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
-                'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
-                'can_write' => $chat->kind !== 'announcements' || $access->admin($actor, $tenant),
-                'can_poll' => $chat->kind !== 'announcements' && ($access->admin($actor, $tenant)
-                    || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists())),
-                'muted' => (bool) $membership->muted,
-                'unread' => $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)
-                    ->where('id', '>', max($membership->joined_after, $membership->read_message_id))->where('account_id', '<>', $actor->id)->whereNull('deleted_at')->count()];
+            $result[] = $this->conversationDto($actor, $tenant, $chat, $teams);
         }
 
         return $result;
+    }
+
+    public function conversation(Account $actor, Tenant $tenant, int $id): array
+    {
+        $chat = $this->chat($actor, $tenant, $id);
+        $teams = app(MobileAccess::class)->teams($actor, $tenant)->where('ts.id', $chat->team_season_id ?? 0)->get();
+        return $this->conversationDto($actor, $tenant, $chat, $teams);
+    }
+
+    private function conversationDto(Account $actor, Tenant $tenant, object $chat, $teams): array
+    {
+        $access = app(MobileAccess::class);
+        $membership = $this->membership($actor, $tenant, $chat);
+        $team = $teams->firstWhere('id', $chat->team_season_id);
+        $title = match ($chat->kind) {
+            'team' => ($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
+            'staff' => 'Trainer · '.($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
+            'announcements' => 'Vereinsankündigungen', 'event' => 'Terminbesprechung', default => 'Direktnachricht',
+        };
+        if ($chat->kind === 'direct') {
+            $other = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', '<>', $actor->id)->value('account_id');
+            $title = Account::whereKey($other)->value('display_name') ?? $title;
+        }
+        return ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
+            'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
+            'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
+            'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
+            'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
+            'can_write' => $chat->kind !== 'announcements' || $access->admin($actor, $tenant),
+            'can_poll' => $chat->kind !== 'announcements' && ($access->admin($actor, $tenant)
+                || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists())),
+            'muted' => (bool) $membership->muted,
+            'unread' => $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)
+                ->where('id', '>', max($membership->joined_after, $membership->read_message_id))->where('account_id', '<>', $actor->id)->whereNull('deleted_at')->count()];
     }
 
     public function direct(Account $actor, Tenant $tenant, int $other): object
