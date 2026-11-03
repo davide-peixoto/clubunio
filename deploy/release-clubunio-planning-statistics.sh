@@ -2,8 +2,8 @@
 set -euo pipefail
 umask 027
 base=/var/www/svs-laravel
-previous=$base/releases/20261103-clubunio-mobile-planning
-release=$base/releases/20261103-clubunio-planning-statistics
+previous=$base/releases/20261103-clubunio-mobile-season-scope
+release=$base/releases/20261103-clubunio-planning-statistics-v2
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 cd "$previous"
@@ -27,6 +27,7 @@ sudo -u www-data php artisan view:cache
 for check in check-tenant-navigation check-clubunio check-access-profiles check-season-planning check-sponsor-documents check-api check-impersonation check-tenant-api-release check-administration-ui check-platform-administration check-mobile check-mobile-account-shell; do
  sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $e) { fwrite(STDERR, get_class($e).PHP_EOL); exit(1); }' "deploy/$check.php"
 done
+sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $e) { fwrite(STDERR, get_class($e).PHP_EOL); exit(1); }' deploy/check-mobile-season-scope.php
 sudo -u www-data php -r 'try { require $argv[1]; } catch (Throwable $e) { fwrite(STDERR, get_class($e).PHP_EOL); exit(1); }' deploy/check-mobile-planning.php --enabled
 sudo -u www-data php deploy/check-mobile-account-functional.php --synthetic-rollback
 sudo -u www-data php deploy/check-mobile-team-planning-functional.php --synthetic-rollback
