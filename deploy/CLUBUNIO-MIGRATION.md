@@ -642,3 +642,35 @@ OCR ohne ausdrueckliche Konfiguration geschlossen. Training/Sponsor/Anmeldungen
 nicht ausgeliefert. Naechster Schritt: persoenliche Fachregressionen und eigene
 Aktivierungsgates. Kein realer Upload/Providerauftrag, keine Signatur echter
 Dokumente, keine Bankzahlung, PHPMaker-/Store-/Betriebsumstellung.
+
+
+## Native Folgepakete aktiviert04.11.2026
+
+Aktiv20261103-clubunio-native-followups-v4, Rueckweg
+20261103-clubunio-native-followups-foundation-v3. Quellrevision7a0d8c2,
+Routensnapshot bewusstc0b4551: parallel vorbereitete Training-/Sponsor-/
+Directory-/Anmeldungsquellen sind NICHT Bestandteil dieser Aktivierung.
+Neun ausgelieferte Dateihashes nach Wechsel verifiziert; bestehender letzter
+Parameter-/Profil-/Saisonstand bleibt aus der unveraenderten Vorversion erhalten.
+Nur releaseeigene Schalter Spesen/Dokumente/Anlagen/Bus auftrue; Planung und
+My Teams weitertrue. Keine weitere Schema-/Composer-/Providerkonfigurationsaenderung.
+
+Vor Wechsel:13 gemeinsame Struktur-/Schemaguards plus explizites Kerngate,
+21 Planungsrouten,14 native Spesenrouten+2 kompatible Leserouten,12 private
+Dokumentrouten sowie2 Anlagen-/7 Busrouten erfolgreich. Echte DEV-HTTP-Kernel-
+Pruefungen mit synthetischen Daten und Rollback: Dokument-Scan/Upload,
+unveraendertes Original, gezeichnete Signatur, Replay und beide PDF-Hashes;
+Anlagenstatus/Stale-Sperre, Busanlage/Genehmigung/Storno und geschlossene Keybox;
+47 persoenliche Spesenpruefungen fuer Bank/Beleg/Position/Workflow/Privatsphaere;
+Konto/Passwort/11 Module sowie gesamte Planung/My Teams/Dossier/Saisonwechsel.
+Private Chatdetails jetzt frisch berechtigt ohne Abhaengigkeit vom Listenlimit.
+HTTPS nach Wechsel: Spesen/Dokumente/Anlagen/Bus/Chatdetail anonym jeweils401,
+php8.3-fpm aktiv. Die native Spesenoption behaelt den bisherigen seasons-Vertrag;
+gezielter PG-Nachweis1/55 gruen, vorab gesamte Kommunikation37/535 gruen.
+
+Noch offene externe Abnahme: echte Azure-Belege, Kamera/Dateiauswahl und
+Android-/iPhone-Gesamtabnahme, Hardware-Keybox und echte Pushzustellung.
+OCR ohne ausdrueckliche Mandanten-/Kosten-/Anbieterkonfiguration geschlossen.
+Kerneltests umgehen den HTTP-Frontserver; dessen reale Uploadgroessen werden
+separat geprueft (bisher ClubUnio-Nginx10m, eigener FPM-Socket svs-laravel).
+Keine echten Geschaeftsunterlagen, Providerauftraege, Nachrichten oder Zahlungen.

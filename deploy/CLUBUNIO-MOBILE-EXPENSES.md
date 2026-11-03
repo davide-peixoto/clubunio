@@ -128,3 +128,8 @@ Das Gate uebt bewusst keinen Upload aus und behauptet keine Providerabnahme.
 Scanner/Upload/Blob und echte Geraete bleiben gesondert abzunehmen. Quelle ist
 vorbereitet/lintgeprueft; Ausfuehrung erst im abgestimmten seriellen PG-Fenster.
 Keine doppelten GET-Routen, die sich je nach Registrierungsfolge ueberschreiben.
+
+DEV-Freigabe04.11.2026:20261103-clubunio-native-followups-v4,
+persoenliche Originalvertraege aktiviert. Synthetische reale Kernelablaeufe
+mit Rollback erfolgreich; externe Provider-/Dateigroessen-/Geraeteabnahme
+weiter offen. Gemeinsamer Auslieferungsnachweis in PI.md.

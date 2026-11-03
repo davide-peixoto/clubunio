@@ -90,3 +90,8 @@ und neuer persoenlicher Menuevertrag1/19 separat gruen. Der Menuevertrag
 prueft alte Clients, echte Trainer-/Eigenzugriffe auf Bus/Dokumente sowie
 fehlende Anlagenrechte. Das neue Server-Kernelgate verwendet ausschliesslich
 synthetische Daten mit Rollback und laesst reale Keyboxausgabe geschlossen.
+
+DEV-Freigabe04.11.2026:20261103-clubunio-native-followups-v4,
+persoenliche Originalvertraege aktiviert. Synthetische reale Kernelablaeufe
+mit Rollback erfolgreich; externe Provider-/Dateigroessen-/Geraeteabnahme
+weiter offen. Gemeinsamer Auslieferungsnachweis in PI.md.

@@ -104,3 +104,8 @@ Noch offen: DEV-Auslieferung einschliesslich89 und
 Abhaengigkeiten, echte Android-/iPhone-Abnahme und Benachrichtigungszustellung.
 Offene historische Unterschriftsanforderungen verwenden den oben beschriebenen
 expliziten Fortfuehrungsvertrag; keine implizite Neuerteilung durch Lesen.
+
+DEV-Freigabe04.11.2026:20261103-clubunio-native-followups-v4,
+persoenliche Originalvertraege aktiviert. Synthetische reale Kernelablaeufe
+mit Rollback erfolgreich; externe Provider-/Dateigroessen-/Geraeteabnahme
+weiter offen. Gemeinsamer Auslieferungsnachweis in PI.md.
