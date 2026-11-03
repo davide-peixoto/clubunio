@@ -25,7 +25,7 @@ class MobileCommunicationTest extends TestCase
     {
         parent::setUp();
         config(['database.default' => 'clubunio', 'database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
-            'clubunio-mobile.enabled' => true, 'clubunio-mobile.ai.enabled' => false, 'cache.default' => 'array', 'hashing.bcrypt.rounds' => 4]);
+            'clubunio-mobile.enabled' => true, 'clubunio-mobile.native_planning_enabled' => true, 'clubunio-mobile.ai.enabled' => false, 'cache.default' => 'array', 'hashing.bcrypt.rounds' => 4]);
         DB::purge('clubunio');
         $this->app->instance(\Illuminate\Cache\RateLimiter::class, new \Illuminate\Cache\RateLimiter(new \Illuminate\Cache\Repository(new \Illuminate\Cache\ArrayStore)));
         \Illuminate\Support\Facades\RateLimiter::clearResolvedInstance(\Illuminate\Cache\RateLimiter::class);
@@ -531,6 +531,14 @@ SQL);
             ->assertJsonMissing(['key' => 'Spesen'])->assertJsonFragment(['key' => 'Teamplanung', 'available' => true]);
         $foreign = Tenant::create(['slug' => 'other-mobile-fixture', 'name' => 'Foreign']);
         $this->withToken($token)->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules')->assertForbidden();
+    }
+
+    public function test_unreleased_native_planning_is_closed_without_disabling_existing_personal_routes(): void
+    {
+        config(['clubunio-mobile.native_planning_enabled' => false]);
+        $this->withToken($this->token($this->parent))->getJson($this->url('planning/teams'))->assertStatus(503);
+        $this->getJson('/api/mobile/v1/profile')->assertOk();
+        $this->getJson($this->url('teams'))->assertOk();
     }
 
     public function test_native_planning_dtos_preserve_visibility_and_private_comments(): void

@@ -3,6 +3,8 @@
 return [
     // Explicit activation after additive migration and review. No external delivery by default.
     'enabled' => (bool) env('CLUBUNIO_MOBILE_ENABLED', false),
+    // Enable only after migrations84-87 and check-mobile-planning --enabled.
+    'native_planning_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_PLANNING_ENABLED', false),
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [

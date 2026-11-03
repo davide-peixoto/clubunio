@@ -47,6 +47,7 @@ class TeamPlanningTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['clubunio-mobile.native_planning_enabled' => true]);
         if (getenv('CLUBUNIO_TEST_DB') !== '1') {
             $this->markTestSkipped('Opt-in rolled-back DB tests');
         }

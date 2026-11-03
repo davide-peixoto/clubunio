@@ -9,8 +9,9 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\TeamPlanningService;
 use Carbon\CarbonImmutable as Time;
 
-final class MobilePlanningController
+final class MobilePlanningController implements \Illuminate\Routing\Controllers\HasMiddleware
 {
+    public static function middleware(): array { return [MobilePlanningReady::class]; }
     public function teams(Request $r) {
         return response()->json(['data' => app(MobilePlanningData::class)->teams($r, $r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'))]);
     }
