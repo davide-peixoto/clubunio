@@ -69,7 +69,9 @@ final class MobileExpenseData
         app(MobileSeasonScope::class)->teams($teams, $tenant, 'ts.season_id');
         $teams = $teams->orderBy('ts.label')->get(['ts.id','ts.label','ts.team_id','t.laundry_allowance'])
             ->map(fn ($t) => ['id' => (int) $t->id, 'label' => $t->label, 'team_id' => (int) $t->team_id, 'laundry' => $t->laundry_allowance])->all();
+        $season = app(MobileSeasonScope::class)->current($tenant);
         return ['members' => $members, 'teams' => $teams,
+            'seasons' => $season ? [['id' => (int) $season->id, 'label' => $season->name]] : [],
             'rounds' => $this->table($tenant, 'expense_rounds')->where('active', true)->orderBy('id')->get(['id','code','name'])->all(),
             'types' => $this->table($tenant, 'expense_types')->where('active', true)->orderBy('name')->get(['id','name','receipt_required','amount_source'])->all(),
             'game_types' => $this->table($tenant, 'game_types')->where('active', true)->orderBy('id')->get(['id','code','name'])->all(),

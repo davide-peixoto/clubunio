@@ -109,6 +109,8 @@ class MobileExpensesTest extends TestCase
         $this->assertSame(\App\ClubUnio\Mobile\MobileExpenseOptions::class.'@index', $routes->match(\Illuminate\Http\Request::create($this->url.'/options', 'GET'))->getActionName());
         $this->getJson($this->url)->assertOk()->assertJsonPath('data.rows.0.SpesenID', $expense)->assertJsonPath('data.rows.0.Revision', 1)->assertJsonPath('data.rows.0.CanAddPosition', true);
         $this->getJson($this->url.'/options')->assertOk()->assertJsonPath('data.teams.0.id', $this->team)->assertJsonPath('data.capabilities.ai', false)
+            ->assertJsonPath('data.seasons.0.id', (int) $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id'))
+            ->assertJsonPath('data.seasons.0.label', 'Fixture season')
             ->assertJsonStructure(['data'=>['institutions'=>[['clearing_number']]]]);
         $lineInput = ['command_key' => (string) Str::uuid(), 'expense_revision' => 1, 'expense_type_id' => $this->type, 'amount' => '12.50', 'notes' => 'Synthetic position'];
         $line = $this->postJson($this->url.'/'.$expense.'/lines', $lineInput)->assertOk()->assertJsonPath('data.receipt.Revision', 2)->json('data.line_id');

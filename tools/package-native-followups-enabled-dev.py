@@ -25,7 +25,7 @@ if not re.fullmatch(r'/var/www/svs-laravel/releases/[a-zA-Z0-9-]+', previous):
 paths = ['app/ClubUnio/Mobile/MobileAccountController.php', 'deploy/check-mobile-native-core.php',
  'deploy/check-mobile-facilities-bus-functional.php', 'deploy/check-mobile-expenses-functional.php',
  'deploy/release-clubunio-native-followups-enabled.sh', 'app/ClubUnio/Mobile/ChatService.php',
- 'app/ClubUnio/Mobile/MobileController.php', 'routes/mobile.php']
+ 'app/ClubUnio/Mobile/MobileController.php', 'app/ClubUnio/Mobile/MobileExpenseData.php', 'routes/mobile.php']
 # Sponsor/Training/Registration source packages remain outside this reviewed activation.
 sources = {'routes/mobile.php': 'c0b4551'}
 before, after, added, verified = [], [], [], {}
