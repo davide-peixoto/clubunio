@@ -4,7 +4,7 @@ umask 027
 base=/var/www/svs-laravel
 previous=$(cat "$base/shared/native-followups-enabled.previous")
 [[ "$previous" =~ ^/var/www/svs-laravel/releases/[a-zA-Z0-9-]+$ ]]
-release=$base/releases/20261103-clubunio-native-followups-v2
+release=$base/releases/20261103-clubunio-native-followups-v3
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 cd "$previous"

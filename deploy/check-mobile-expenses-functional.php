@@ -115,7 +115,10 @@ try {
     [$status, $leadBanks] = $call('GET', $base.'/banks', [], $tokens['technical_lead']); $expect($status, 200); $expect($leadBanks['data']['rows'], []);
     [$status, $released] = $call('POST', $base.'/'.$id.'/transition', ['revision'=>2,'status'=>'F','reason'=>'Synthetic release validation'], $trainer);
     $expect($status, 200); $expect($released['data']['receipt']['Revision'], 3);
-    [$status] = $call('POST', $base.'/'.$id.'/transition', ['revision'=>2,'status'=>'F','reason'=>'Synthetic stale revision'], $trainer); $expect($status, 409);
+    [$status, $stale] = $call('POST', $base.'/'.$id.'/transition', ['revision'=>2,'status'=>'F','reason'=>'Synthetic stale revision'], $trainer); $expect($status, 422);
+    $expect($stale['error']['code'] ?? null, 'validation_failed');
+    $expect(array_key_exists('revision', $stale['error']['fields'] ?? []), true);
+    $expect((int) $db->table('clubora.expenses')->where('tenant_id', $tenant->id)->where('id', $id)->value('revision'), 3);
     [$status] = $call('POST', $base.'/'.$id.'/transition', ['revision'=>3,'status'=>'Z','reason'=>'Synthetic forbidden approval'], $trainer); $expect($status, 403);
     [$status, $approved] = $call('POST', $base.'/'.$id.'/transition', ['revision'=>3,'status'=>'Z','reason'=>'Synthetic lead approval'], $tokens['technical_lead']);
     $expect($status, 200); $expect($approved['data']['receipt']['Revision'], 4); $expect($approved['data']['receipt']['Status'], 'Z');
@@ -131,7 +134,7 @@ try {
     echo 'Expense HTTP-kernel gate: '.$checks.' checks, '.($originalNative?'configured enabled native workflow':'closed foundation plus process-local native workflow')." passed; all synthetic records rolled back.\n";
     echo "Scanner/upload/blob/real provider and device acceptance remain explicitly open; no payment, mail or external request performed.\n";
 } catch (Throwable $error) {
-    fwrite(STDERR, 'Expense functional gate failed at '.$stage.': '.get_class($error)." (record contents suppressed).\n"); $failed=true;
+    fwrite(STDERR, 'Expense functional gate failed after '.($checks ?? 0).' checks at '.$stage.': '.get_class($error)." (record contents suppressed).\n"); $failed=true;
 } finally {
     if ($db) while ($db->transactionLevel()) $db->rollBack();
     if ($originalNative !== null) config(['clubunio-mobile.native_expenses_enabled'=>$originalNative]);
