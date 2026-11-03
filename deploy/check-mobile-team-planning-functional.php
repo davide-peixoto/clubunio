@@ -24,6 +24,9 @@ $expect = function ($actual, $expected) { if ($actual !== $expected) { throw new
 $db->beginTransaction();
 try {
     $tenant = App\ClubUnio\Models\Tenant::create(['slug' => 'qa-mobile-release-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic release fixture']);
+    foreach (App\ClubUnio\Services\MobileModuleSettings::MODULES as $key => $name) {
+        $db->table('clubora.mobile_module_options')->insert(['tenant_id' => $tenant->id, 'key' => $key, 'name' => $name]);
+    }
     $password = bin2hex(random_bytes(16));
     $actor = new App\ClubUnio\Models\Account;
     $actor->forceFill(['username' => 'qa-team-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic fixture', 'password' => Illuminate\Support\Facades\Hash::make($password), 'active' => true, 'api_only' => false])->save();

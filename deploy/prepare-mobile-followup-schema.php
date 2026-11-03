@@ -76,7 +76,7 @@ try {
         throw new LogicException('Backup scope/digest mismatch');
     }
     if ($apply) {
-        if (realpath('/var/www/svs-laravel/current') !== realpath(base_path()) || basename(base_path()) !== '20261103-clubunio-native-followups-foundation-v2'
+        if (realpath('/var/www/svs-laravel/current') !== realpath(base_path()) || basename(base_path()) !== '20261103-clubunio-native-followups-foundation-v3'
             || time() - strtotime($header['created_at']) > 3600) { throw new LogicException('Active reviewed foundation and fresh backup required'); }
         $db->transaction(function () use ($db, $schema, $fresh, $indices, $digest, $header, $footer, $migrations, $tables) {
             $db->statement("SET LOCAL lock_timeout TO '5s'"); $db->statement("SET LOCAL statement_timeout TO '20s'");
