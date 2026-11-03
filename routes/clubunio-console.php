@@ -208,7 +208,8 @@ Artisan::command('clubunio:import-foundation', function () {
             }
             $ini = $db->table('legacy_prod.iniParameter')->where('iniID', 1)->first();
             if ($ini) {
-                foreach (['SaisonID', 'SommerWinter', 'StatusPlatz1', 'StatusPlatz2', 'StatusPlatz3'] as $key) {
+                // Training period and field availability now have dedicated controls.
+                foreach (['SaisonID'] as $key) {
                     $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => 'general', 'key' => $key,
                         'label' => $key, 'value_type' => $key === 'SaisonID' ? 'integer' : 'string',
                         'encrypted_value' => Crypt::encryptString((string) $ini->$key), 'is_secret' => false, 'enabled' => false]);
