@@ -18,3 +18,25 @@ Keine produktiven Daten oder Datenbankmigration veraendert.
 Offene Schreib-/Revisions-/Serien-/Statistik-/SFV-/MyTeams-Arbeit und
 Weiterarbeitsnotizen: mobile/docs/PLANNING-MIGRATION-WORK.md. Keine Behauptung,
 dass die bisherigen API-/Store-/Geraeteabnahmen damit ersetzt waeren.
+
+
+## Erste versionierte Schreibaktionen (weiterhin Entwicklungsstand)
+
+Anlage/Aenderung/Einzelabsage, Teilnahme und Anwesenheit ueber bestehende Services
+implementiert; Tenant-Lock, gemeinsame Sitzungssperre und erneute Identitaets-/
+Vereinspruefung vor jedem Write. Aktuelles Passwort/technische Tokens spielen
+im Fachvertrag keine Rolle. Erwartete Revision ist Pflicht, kein Auto-Refresh.
+Anwesenheit erst ab Terminbeginn, keine fremde Person durch Elternzugriff.
+
+Additive Migration84 vorbereitet: attendance_comment_encrypted und
+attendance_updated_at fuer team_participations/team_guests. Keine dauerhafte
+Schemaanwendung, kein Deploy. Neuer Test auf echter ClubUnio-PG-Verbindung mit
+synthetischen Fixtures und vollstaendigem Rollback einschliesslich Test-DDL.
+Er bewahrt Teilnahmegruende beim Anwesenheitswechsel und prueft private
+Auditgrenzen, Rollen, Fristen und alte Revisionen. Weitere Aktionen folgen,
+bevor die bestehende native Planung freigeschaltet wird.
+
+PG-Schreibtest mit26 Assertions erfolgreich; Rueckpruefung bestaetigt, dass auf
+beiden Tabellen keine Testspalte verblieben ist. Bestehende Mobile-Gruppe:
+28 Tests/316 Assertions erfolgreich. App:3 native Transport-/Screenfaelle und
+19 Transportchecks erfolgreich, Analyse ohne Befund. Migration84 bleibt vorbereitet.

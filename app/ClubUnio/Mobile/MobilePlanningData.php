@@ -85,12 +85,16 @@ final class MobilePlanningData
                 'TeilnahmeStatus' => $part->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN'),
                 'AnwesenheitsStatus' => $part->attendance ?? 'OFFEN', 'Revision' => (int) ($part->revision ?? 0),
                 'Kommentar' => $private && ($part->comment_encrypted ?? null) ? Crypt::decryptString($part->comment_encrypted) : '',
-                'UpdatedAt' => $part->updated_at ?? null];
+                'UpdatedAt' => $part->updated_at ?? null,
+                'AnwesenheitsKommentar' => $private && ($part->attendance_comment_encrypted ?? null) ? Crypt::decryptString($part->attendance_comment_encrypted) : '',
+                'AnwesenheitUpdatedAt' => $part->attendance_updated_at ?? null];
         });
         $guests = $p->table($tenant, 'team_guests')->where('event_id', $id)->whereNull('deleted_at')->orderBy('id')->get()->map(fn ($guest) => [
             'GastID' => (int) $guest->id, 'Vorname' => $guest->first_name, 'Nachname' => $guest->last_name,
             'TeilnahmeStatus' => $guest->status, 'AnwesenheitsStatus' => $guest->attendance,
             'Revision' => (int) $guest->revision, 'Kommentar' => $manager && $guest->comment_encrypted ? Crypt::decryptString($guest->comment_encrypted) : '',
+            'AnwesenheitsKommentar' => $manager && ($guest->attendance_comment_encrypted ?? null) ? Crypt::decryptString($guest->attendance_comment_encrypted) : '',
+            'AnwesenheitUpdatedAt' => $guest->attendance_updated_at ?? null,
         ]);
         $all = $people->concat($guests)->values();
         $team = $p->table($tenant, 'team_seasons')->where('id', $event->team_season_id)->first();

@@ -19,6 +19,12 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);
         Route::get('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'events']);
         Route::get('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'event'])->whereNumber('event');
+        Route::post('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'save']);
+        Route::patch('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'save'])->whereNumber('event');
+        Route::post('planning/events/{event}/cancel', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'cancel'])->whereNumber('event');
+        Route::post('planning/events/{event}/participation', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'participate'])->whereNumber('event');
+        Route::post('planning/events/{event}/attendance', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'attendance'])->whereNumber('event');
+
 
         Route::get('contacts', [Mobile::class, 'contacts']);
         Route::get('chats', [Mobile::class, 'chats']);

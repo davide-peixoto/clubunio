@@ -399,6 +399,10 @@ class TeamPlanningTest extends TestCase
         $this->assertSame('DABEI', $row->status);
         $this->assertSame('PRIVATE-COMMENT', Crypt::decryptString($row->comment_encrypted));
         $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+        $this->withToken($admin)->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])
+            ->assertOk()->assertJsonPath('data.TeamTermin.Status', 'ABGESAGT')->assertJsonPath('data.TeamTermin.Revision', 3);
+        $this->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])->assertUnprocessable();
+
     }
 
     public function test_new_and_moved_events_apply_absences_without_overwriting_trainer(): void
@@ -677,4 +681,48 @@ class TeamPlanningTest extends TestCase
         $this->assertSame(6, $this->db->table('notifications')->where('tenant_id', $this->tenant->id)->count());
         $this->assertStringNotContainsString('PRIVATE', $this->db->table('notifications')->where('tenant_id', $this->tenant->id)->get()->toJson());
     }
+    public function test_native_mobile_writes_require_revisions_and_preserve_two_private_comments(): void
+    {
+        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
+        $this->db->statement("SET LOCAL lock_timeout TO '5s'");
+        $migration = require database_path('clubunio/2026_11_03_000084_planning_attendance_notes.php');
+        $migration->up(); // This entire test transaction, including DDL, is rolled back.
+        $login = function ($actor) {
+            return $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Native fixture'])
+                ->assertOk()->json('data.token');
+        };
+        $admin = $login($this->admin);
+        $url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/planning/';
+        $input = $this->input();
+        $native = ['TeamSaisonID' => $this->team, 'Titel' => 'Native fixture event', 'Terminart' => 'TRAINING', 'TeilnahmeModus' => 'ANMELDEN',
+            'DatumVon' => $input['starts_at'], 'DatumBis' => $input['ends_at'], 'AnmeldeFrist' => $input['deadline_at']];
+        $id = $this->withToken($admin)->postJson($url.'events', $native)->assertOk()->json('data.TeamTermin.TeamTerminID');
+        $this->patchJson($url.'events/'.$id, ['Titel' => 'stale'])->assertUnprocessable();
+        $this->patchJson($url.'events/'.$id, ['Titel' => 'Native updated', 'Revision' => 1])->assertOk()->assertJsonPath('data.TeamTermin.Revision', 2);
+        $this->patchJson($url.'events/'.$id, ['Titel' => 'stale', 'Revision' => 1])->assertUnprocessable();
+        $player = $login($this->player);
+        $this->withToken($player)->postJson($url.'events', $native)->assertUnprocessable();
+        $this->assertSame(1, $this->db->table('team_events')->where('tenant_id', $this->tenant->id)->count());
+        $this->patchJson($url.'events/'.$id, ['Titel' => 'forbidden', 'Revision' => 2])->assertNotFound();
+        $this->withToken($player)->postJson($url.'events/'.$id.'/participation', ['MitgliederID' => $this->member, 'TeilnahmeStatus' => 'DABEI', 'Kommentar' => 'PRIVATE-PARTICIPATION', 'Revision' => 0])->assertOk();
+        $this->postJson($url.'events/'.$id.'/attendance', ['MitgliederID' => $this->member, 'AnwesenheitsStatus' => 'ANWESEND', 'Revision' => 1])->assertNotFound();
+        $this->postJson($url.'events/'.$id.'/participation', ['MitgliederID' => $this->otherMember, 'TeilnahmeStatus' => 'DABEI', 'Revision' => 0])->assertForbidden();
+        $this->withToken($admin)->postJson($url.'events/'.$id.'/attendance', ['MitgliederID' => $this->member, 'AnwesenheitsStatus' => 'ANWESEND', 'Revision' => 1])->assertConflict();
+        $this->travelTo(\Carbon\CarbonImmutable::parse($input['starts_at'])->addMinute());
+        try {
+            $this->withToken($player)->postJson($url.'events/'.$id.'/participation', ['MitgliederID' => $this->member, 'TeilnahmeStatus' => 'ABWESEND', 'Revision' => 1])->assertUnprocessable();
+            $this->withToken($admin)->postJson($url.'events/'.$id.'/attendance', ['MitgliederID' => $this->member, 'AnwesenheitsStatus' => 'ANWESEND', 'AnwesenheitsKommentar' => 'PRIVATE-ATTENDANCE', 'Revision' => 1])->assertOk();
+            $row = $this->db->table('team_participations')->where('event_id', $id)->where('member_id', $this->member)->first();
+            $this->assertSame('PRIVATE-PARTICIPATION', Crypt::decryptString($row->comment_encrypted));
+            $this->assertSame('PRIVATE-ATTENDANCE', Crypt::decryptString($row->attendance_comment_encrypted));
+            $this->assertSame(2, $row->revision);
+            $this->postJson($url.'events/'.$id.'/attendance', ['MitgliederID' => $this->member, 'AnwesenheitsStatus' => 'FEHLT', 'Revision' => 1])->assertUnprocessable();
+        } finally { $this->travelBack(); }
+        $this->assertStringNotContainsString('PRIVATE', $this->db->table('object_changes')->where('tenant_id', $this->tenant->id)->get()->toJson());
+        $this->withToken($admin)->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])
+            ->assertOk()->assertJsonPath('data.TeamTermin.Status', 'ABGESAGT')->assertJsonPath('data.TeamTermin.Revision', 3);
+        $this->postJson($url.'events/'.$id.'/cancel', ['Revision' => 2, 'scope' => 'single'])->assertUnprocessable();
+
+    }
+
 }
