@@ -533,4 +533,44 @@ SQL);
         $this->withToken($token)->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules')->assertForbidden();
     }
 
+    public function test_native_planning_dtos_preserve_visibility_and_private_comments(): void
+    {
+        foreach (['title text', 'kind text', 'starts_at text', 'ends_at text', 'deadline_at text', 'mode text',
+            'status text', 'revision integer DEFAULT 1', 'location text', 'description text', 'capacity integer', 'series_key text'] as $column) {
+            $this->db->statement('ALTER TABLE clubora.team_events ADD COLUMN '.$column);
+        }
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations (tenant_id integer, event_id integer, member_id integer);
+CREATE TABLE clubora.team_participations (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, event_id integer, member_id integer, status text, attendance text, comment_encrypted text, revision integer, updated_at text);
+CREATE TABLE clubora.team_guests (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, event_id integer, first_name text, last_name text, status text, attendance text, comment_encrypted text, revision integer, deleted_at text);');
+        $own = $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->value('member_id');
+        $other = $this->member('Other player', '2012-01-01');
+        $this->db->table('clubora.team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'member_id' => $other]);
+        $id = $this->db->table('clubora.team_events')->insertGetId(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team,
+            'title' => 'Native DTO fixture', 'kind' => 'TRAINING', 'starts_at' => now()->addDays(2)->toIso8601String(),
+            'ends_at' => now()->addDays(2)->addHour()->toIso8601String(), 'deadline_at' => now()->addDay()->toIso8601String(),
+            'mode' => 'ABMELDEN', 'status' => 'AKTIV']);
+        foreach ([[$own, 'own-private-comment'], [$other, 'other-private-comment']] as [$member, $comment]) {
+            $this->db->table('clubora.team_participations')->insert(['tenant_id' => $this->tenant->id, 'event_id' => $id,
+                'member_id' => $member, 'status' => 'DABEI', 'attendance' => 'OFFEN', 'revision' => 1,
+                'comment_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString($comment)]);
+        }
+        $this->withToken($this->token($this->parent))->getJson($this->url('planning/teams'))
+            ->assertOk()->assertJsonPath('data.Teams.0.TeamSaisonID', $this->team)->assertJsonPath('data.Teams.0.CanManage', false);
+        $response = $this->getJson($this->url('planning/events/'.$id))->assertOk()
+            ->assertJsonPath('data.TeamTermin.TeamTerminID', $id)->assertJsonPath('data.TeamTermin.CanManage', false);
+        $this->assertStringContainsString('own-private-comment', $response->getContent());
+        $this->assertStringNotContainsString('other-private-comment', $response->getContent());
+        $this->getJson($this->url('planning/events?recperpage=1'))->assertOk()->assertJsonPath('data.totalRecordCount', 1);
+        $this->getJson($this->url('planning/events?recperpage=101'))->assertUnprocessable();
+        $otherTeam = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => 999, 'season_id' => 1, 'label' => 'Other team']);
+        $otherEvent = $this->db->table('clubora.team_events')->insertGetId(['tenant_id' => $this->tenant->id, 'team_season_id' => $otherTeam,
+            'title' => 'Forbidden native DTO', 'kind' => 'TRAINING', 'starts_at' => now()->addDays(3)->toIso8601String(),
+            'ends_at' => now()->addDays(3)->addHour()->toIso8601String(), 'mode' => 'ANMELDEN', 'status' => 'AKTIV']);
+        $this->getJson($this->url('planning/events/'.$otherEvent))->assertNotFound();
+        $this->getJson($this->url('planning/events?TeamSaisonID='.$otherTeam))->assertOk()->assertJsonPath('data.totalRecordCount', 0);
+
+        $this->withToken($this->token($this->admin))->getJson($this->url('planning/events/'.$id))
+            ->assertOk()->assertJsonPath('data.TeamTermin.CanManage', true);
+    }
+
 }

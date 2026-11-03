@@ -16,6 +16,10 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         Route::get('teams', [Mobile::class, 'teams']);
+        Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);
+        Route::get('planning/events', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'events']);
+        Route::get('planning/events/{event}', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'event'])->whereNumber('event');
+
         Route::get('contacts', [Mobile::class, 'contacts']);
         Route::get('chats', [Mobile::class, 'chats']);
         Route::post('direct', [Mobile::class, 'direct']);
