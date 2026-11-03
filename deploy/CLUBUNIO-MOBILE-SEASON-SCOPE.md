@@ -52,3 +52,13 @@ No provider request, bank payment, real account or record change.
 Target release20261103-clubunio-mobile-season-scope on mobile-planning.
 Rollback to that previous schema-aware release; no database rollback required.
 Release verification is recorded below after activation.
+
+Activated from a9e056e;12 packaged paths verified before/after switching current.
+Thirteen release gates passed, plus the existing native15-route gate and two
+PostgreSQL personal HTTP-kernel suites with fully rolled-back synthetic data.
+All six changed/new runtime/gate source hashes match the pinned commit. HTTPS
+login200 and anonymous App teams401 after activation. No schema or env changes.
+Parallel attendance/statistics work committed independently as204d1c6 was not
+included in this delta; its shared planning queries inherit the same season scope
+when it is separately deployed. Further financial/mobile adapters remain separate
+work and must explicitly adopt this policy for their seasonal list/lookups.

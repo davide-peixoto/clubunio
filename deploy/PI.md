@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## App current-season scope (03.11.2026)
+
+Aktiv20261103-clubunio-mobile-season-scope ausa9e056e auf mobile-planning.
+Zentrale SQL-Begrenzung der persoenlichen Team-/Planungsabfragen; keine Schema-,
+Env- oder Rechteaenderung.13 Gates, native15-Routenpruefung und zwei synthetische
+PG-HTTP-Kernelpruefungen gruen, Fixtures vollstaendig zurueckgerollt.
+33 lokale Regressionen/481 Assertions; HTTPS login200/App anonym401.
+PHPMaker DEV/PROD unveraendert; CLUBUNIO-MOBILE-SEASON-SCOPE.md.
+
 ## Mobile Teamplanung/My Teams (03.11.2026)
 
 Aktiv20261103-clubunio-mobile-planning, Rueckweg mobile-foundation mit
