@@ -29,6 +29,8 @@ Artisan::command('clubunio:planning-reminders', function () {
     }
 });
 Schedule::command('clubunio:planning-reminders')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('clubunio:expire-mobile-expense-receipts')->hourly()->withoutOverlapping();
+Schedule::command('clubunio:expire-mobile-expense-ocr')->hourly()->withoutOverlapping();
 
 Artisan::command('clubunio:bexio-preview {tenant} {actor} {--type=invoice} {--after=0} {--limit=10}', function () {
     $tenant = Tenant::where('slug', $this->argument('tenant'))->firstOrFail();

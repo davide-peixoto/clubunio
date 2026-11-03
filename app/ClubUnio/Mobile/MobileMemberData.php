@@ -48,11 +48,14 @@ final class MobileMemberData
         $editable = ($direct || $own) && ! $m->archived_at;
         $fields = $editable ? array_keys(self::CONTACT) : [];
         if (! $direct) { $fields = array_values(array_diff($fields, ['Homepage'])); }
+        $features = explode(',', substr((string) request()->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
+        $documents = (bool) config('clubunio-mobile.native_documents_enabled', false) && in_array('member-documents-v1', $features, true)
+            && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view'));
         $dto = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
             'Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city, 'CanEdit' => $editable,
             'ChangeMode' => $editable ? ($direct ? 'direct' : 'request') : 'none', 'EditableFields' => $fields,
             'CanReadChangeRequests' => app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),
-            'CanReadInvoices' => $own || app(MobileAccess::class)->admin($actor, $tenant), 'CanReadDocuments' => false, 'CanReadIdCard' => false];
+            'CanReadInvoices' => $own || app(MobileAccess::class)->admin($actor, $tenant), 'CanReadDocuments' => $documents, 'CanReadIdCard' => false];
         if (! $full) { return $dto; }
         $dto += ['Firma' => $m->company, 'Geburtsdatum' => $m->birth_date?->format('Y-m-d'), 'Passnummer' => $m->pass_number,
             '_version' => MemberService::version($m)];

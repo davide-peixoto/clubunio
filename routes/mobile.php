@@ -20,6 +20,17 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
         Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
+        \App\ClubUnio\Mobile\MobileExpenseRoutes::register();
+        \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
+        Route::get('facilities/fields', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'index']);
+        Route::patch('facilities/fields/{field}', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'update'])->whereNumber('field');
+        Route::get('bus/reservations', [\App\ClubUnio\Mobile\MobileBusController::class, 'index']);
+        Route::post('bus/reservations', [\App\ClubUnio\Mobile\MobileBusController::class, 'create']);
+        Route::get('bus/reservations/{reservation}', [\App\ClubUnio\Mobile\MobileBusController::class, 'show'])->whereNumber('reservation');
+        Route::post('bus/reservations/{reservation}/{action}', [\App\ClubUnio\Mobile\MobileBusController::class, 'decide'])->whereNumber('reservation')->whereIn('action', ['approve', 'reject', 'cancel']);
+        Route::get('bus/reservations/{reservation}/keybox', [\App\ClubUnio\Mobile\MobileBusController::class, 'keybox'])->whereNumber('reservation');
+        Route::get('bus/options', [\App\ClubUnio\Mobile\MobileBusController::class, 'options']);
+        Route::get('bus/members', [\App\ClubUnio\Mobile\MobileBusController::class, 'members']);
         Route::get('members/{member}/contact-options', [\App\ClubUnio\Mobile\MobileMemberController::class, 'options'])->whereNumber('member');
         Route::post('members/{member}/contact', [\App\ClubUnio\Mobile\MobileMemberController::class, 'contact'])->whereNumber('member');
         Route::get('planning/teams', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'teams']);

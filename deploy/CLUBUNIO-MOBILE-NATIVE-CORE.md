@@ -35,4 +35,14 @@ Private Dateitransporte haben gesonderte MIME-/Signatur-/Groessen-/Sitzungstests
 Keine zusaetzliche Migration fuer dieses Kernpaket. Spesen88 und echte
 Dokumentsignaturen89 werden getrennt vorbereitet; keine pauschale Fertigmeldung
 fuer alle Fachpakete oder echte Android-/iPhone-/Push-/Storeabnahme.
-DEV-Aktivierung wird nach bestandenem Serverlauf separat ergaenzt.
+DEV aktiviert am03.11.2026 als20261103-clubunio-native-planning-teams,
+Quellrevision b54b2c6; direkte Vorversion20261103-clubunio-active-training-plan.
+Alle15 ausgelieferten Quelldateihashes,14 gemeinsame Gates,21 geschuetzte
+Planungsrouten und synthetische persoenliche Konto-/Planungs-/Dossierablaeufe
+auf DEV erfolgreich. Die funktionalen Pruefungen wurden zurueckgerollt.
+Planung und My Teams aktiviert; Spesen/Dokumente/Anlagen/Bus weiter geschlossen.
+Keine Schema- oder Abhaengigkeitsaenderung durch dieses Kernrelease.
+Der nachfolgende parallele Release20261103-clubunio-retired-parameters erhielt
+nachweislich alle15 Kernhashes und bestand das Kernfreigabegate erneut.
+Weitere Releasewechsel koennen den aktuellen Symlink inzwischen fortfuehren;
+diese Angabe bezeichnet den geprueften Auslieferungsstand.
