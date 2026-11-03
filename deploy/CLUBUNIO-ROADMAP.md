@@ -4,8 +4,10 @@
 
 23 Saisonfelder,17 Importzuordnungen/26746 Vergleiche und451 Planungsteilnahmen
 ohne Mappingfehler.37 Saisonlabels und aktuelle Parameteraufloesung korrekt.
-14 Beleg-/Teamsaison-Widersprueche bereits unveraendert im Quellbestand; keine
-ungefragte Finanzkorrektur. Read-only-Nachweis: CLUBUNIO-SEASON-REFERENCE-AUDIT.md.
+14 urspruengliche Beleg-/Teamsaison-Widersprueche nach Benutzerfreigabe nur in
+ClubUnio korrigiert,191 Positionen unveraendert. Verbindliche Schritte fuer
+spaetere Uebernahmen: CLUBUNIO-MIGRATION.md. Audit und Korrekturprotokoll:
+CLUBUNIO-SEASON-REFERENCE-AUDIT.md und CLUBUNIO-EXPENSE-SEASON-CORRECTION.md.
 
 ## App-API auf aktuelle Saison begrenzen (03.11.2026)
 

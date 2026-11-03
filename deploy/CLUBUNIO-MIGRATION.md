@@ -1,5 +1,49 @@
 # ClubUnio migration work packages
 
+## Verbindlich: Saison-IDs und freigegebene Bestandskorrekturen
+
+Die folgenden Regeln gehoeren zur Datenmigration, nicht nur zum aktuellen
+Release. Bestehendes PHPMaker DEV/PROD bleibt bis zu einer separat freigegebenen
+Umstellung unveraendert. Keine automatische Auffrischung oder Neuuebernahme.
+
+1. Original-IDs als legacy_id erhalten. Alle season_id-/team_season_id-FKs und
+   Lookups auf die mandanteneigenen nativen ClubUnio-IDs aufloesen; niemals die
+   Originalzahl ungeprueft in einen neuen Fremdschluessel kopieren.
+2. general/SaisonID ist der uebernommene iniParameter-Wert und die massgebliche
+   App-Auswahl, kein Datumsfallback: SV Sissach38 -> legacy_id38 -> interne id37
+   (2026/2027). Diese interne37 ist kein allgemeiner Migrationsstandard; bei einer
+   neuen Zieldatenbank das Mapping neu ermitteln. SFV-Saisonnummern bleiben extern.
+3. Nach einer separat freigegebenen Uebernahme den READ-ONLY-Saisonreferenz-Audit
+   ausfuehren: direkte FKs, Mandantentrennung, Quellreferenzen, Lookupbezeichnungen
+   und abgeleitete Finanz-/Planungsverknuepfungen. Den verwendeten Quell-Snapshot
+   und das Ergebnis festhalten; ein alter Snapshot belegt keine spaeteren Live-Daten.
+4. Freigegebenes Datenbereinigungsdelta: Bei Original-Spesenbelegen102,133,224,294,
+   319,337,369,371,374,375,376,419,420,502 ist die Belegsaison verbindlich richtig.
+   Dieselbe Mannschaft muss in dieser Saison zugeordnet sein. Der unveraenderte
+   Quell-Snapshot enthaelt die14 alten Widersprueche und darf sie bei einer
+   spaeteren Migration nicht wieder einspielen. Ist die Quelle bereits bereinigt,
+   nur verifizieren; keine doppelte Korrektur ausfuehren.
+5. Vor jeder erforderlichen Wiederanwendung Original-Beleg-ID und TeamID auf das
+   neue Ziel abbilden, genau eine passende TeamSaison verlangen, sichern und einen
+   Rollbacktest ausfuehren. Das vorhandene Reparaturmanifest enthaelt native IDs
+   der aktuellen Datenbank und darf NICHT blind auf eine neue DB angewendet werden.
+6. Nur die Verknuepfung sowie Revision/Auditmetadaten aendern. Belegsaison,
+   Mitglieder, Betraege, Positionen, Anhaenge, Zahlungs-/Bexio-Daten erhalten;
+   keine Nachrichten, Provideraktionen oder echten Zahlungen ausloesen.
+7. Abnahme: keine verwaisten/mandantenfremden Saison-FKs, keine unerklaerten
+   Mappingabweichungen, keine Beleg-/Teamsaison-Widersprueche der14 Belege.
+   Urspruengliche und korrigierte Nachweise getrennt erhalten. Ruecknahme nur
+   gezielt nach Freigabe und Ist-Abgleich, nie durch kompletten Finanzdaten-Restore.
+
+Nachweise: [urspruenglicher Audit](CLUBUNIO-SEASON-REFERENCE-AUDIT.md),
+[Parameter und Finanzlookups](CLUBUNIO-MOBILE-FINANCE-SEASON.md),
+[ausgefuehrte Korrektur mit Sicherung und Rueckweg](CLUBUNIO-EXPENSE-SEASON-CORRECTION.md).
+Die Korrektur wurde03.11.2026 nur in ClubUnio ausgefuehrt:14 Auditereignisse,
+191 unveraenderte Positionen,0 verbleibende Widersprueche. Urspruengliche und
+nachgelagerte aggregierte JSON-Nachweise sind in den verlinkten Protokollen enthalten.
+
+## Chronologischer Nachweis
+
 03.11.2026 approved historical expense correction: receipt season retained;
 fourteen same-team links moved to the corresponding TeamSeason only in ClubUnio.
 Encrypted verified backup, revision/audit events;191 lines and financial fields
@@ -20,8 +64,9 @@ CLUBUNIO-ACTIVE-TRAINING-PLAN.md for tests and targeted rollback.
 
 03.11.2026 season-reference audit:23 fields/17 import groups/26746 comparisons
 match the imported PROD snapshot, including dependent financial lines and451
-planning participation pairs. No migration/refresh/repair.14 source financial
-season/team inconsistencies intentionally preserved pending business review.
+planning participation pairs. Initial audit made no changes. The14 source financial
+season/team inconsistencies were subsequently corrected in ClubUnio after explicit
+approval; preserve the approved delta described above, not the obsolete source links.
 Reproducible READ ONLY check and evidence: CLUBUNIO-SEASON-REFERENCE-AUDIT.md.
 
 03.11.2026 general-setting lookups: explicit tenant-scoped choices, preserved
@@ -42,9 +87,9 @@ Read routes only, no parallel expense-upload migration or write rollout.
 CLUBUNIO-MOBILE-FINANCE-SEASON.md supersedes date-based selection below.
 
 03.11.2026 personal App API current-season scope: SQL restriction before lists,
-counts and direct team/event access. No schema/data/rights migration. Seasonal
-metadata must have one current active dated record per tenant. Web/integration
-history unchanged. CLUBUNIO-MOBILE-SEASON-SCOPE.md.
+counts and direct team/event access. No schema/data/rights migration. Initial dated
+selection superseded by general/SaisonID; date alone must not switch the App season.
+Web/integration history unchanged. CLUBUNIO-MOBILE-SEASON-SCOPE.md.
 
 03.11.2026 document preview zoom: shared PDF/image toolbar, width/height fit and
 in-memory redraw. No database, permission or storage migration. Protected reads
