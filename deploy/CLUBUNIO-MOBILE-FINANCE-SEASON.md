@@ -59,3 +59,9 @@ financial lists/options and selection change; all fixtures roll back.
 
 Target20261103-clubunio-finance-season-parameter on planning-statistics-v2.
 Rollback: previous schema-aware release; no down migration or data restoration.
+
+Activated from6994bd5. Fourteen packaged paths and seven runtime/gate Git hashes
+verified.13 release gates plus the native17-route gate passed; both real PG
+HTTP-kernel suites passed with complete fixture rollback, including finance
+lists/options and SaisonID selection change. HTTPS login200; all four financial
+read endpoints401 without personal authentication. No schema/env/parameter change.

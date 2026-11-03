@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Finanzlisten ueber SaisonID (03.11.2026)
+
+Aktiv20261103-clubunio-finance-season-parameter aus6994bd5 auf
+planning-statistics-v2. general/SaisonID statt Kalenderauswahl; Parameter38 wird
+auf die interne Saison37 aufgeloest. Spesen/Rechnungslisten und Lookups SQL-seitig
+begrenzt, Rechte erhalten, explizite Rechnungs-/PDF-Links unveraendert.
+36 lokale Tests/525 Assertions,13 Gates plus native17-Routen und zwei synthetische
+PG-Kerneltests erfolgreich; alle Testdaten zurueckgerollt.14 Archiveintraege und
+sieben Quellhashes bestaetigt; Login200/Finanz-GETs anonym401. Keine Migration,
+Env-/Parameteraenderung oder PHPMaker-DEV-/PROD-Aktion.
+CLUBUNIO-MOBILE-FINANCE-SEASON.md; vorheriger Release bleibt Rueckweg.
+
 ## Persoenliche Statistik/Anwesenheit (03.11.2026)
 
 Aktiv20261103-clubunio-planning-statistics-v2, Rueckweg mobile-season-scope.
