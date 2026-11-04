@@ -30,4 +30,30 @@ Die KI prüft die aktuelle Sprachfreigabe zusätzlich bei jedem bestehenden fris
 - Neue Gate direkt ausführbar: `php deploy/check-mobile-language-policy.php --synthetic-rollback`. Funktioniert ebenso bei CLI-Require-Wrappern; Klassen-only-Include ausschließlich über explizite Testkonstante. Keine PHPUnit-Abhängigkeit auf DEV. Prüft die tatsächliche zentrale DE/EN-Freigabe und verändert diese nicht. Nur für den synthetischen Negativnachweis wird der KI-Schalter prozesslokal unter HTTP-/Mail-/Queue-Fakes angehoben und im finally zurückgesetzt; keine externe Zustellung oder Providerarbeit.
 - Bestehende `check-mobile-chat-experience.php` prüft die erweiterte Defaultantwort und führt ihre französische Fachprobe mit ausdrücklich prozesslokaler Testfreigabe innerhalb der Rollbackklammer durch. Die originale zentrale Konfiguration wird danach wiederhergestellt; keine Configdateiänderung.
 
-Runtimepaket: neue `app/ClubUnio/Mobile/MobileLanguages.php`, gezielte bestehende `MobileController.php`, `MobileAccountController.php`, `ChatPreferences.php`, `MobileAiService.php`, bestehende Chat-Experience-Gate und neue Language-Policy-Gate. Doku und Tests getrennt. DEV-Bereitstellung, echte Gateausführung, Commit und Sync erfolgen durch die Releasekoordination; keine Schema-/Provider-/Produktionsfreigabe.
+Runtimepaket: neue `app/ClubUnio/Mobile/MobileLanguages.php`, gezielte bestehende `MobileController.php`, `MobileAccountController.php`, `ChatPreferences.php`, `MobileAiService.php`, bestehende Chat-Experience-Gate und neue Language-Policy-Gate. Doku und Tests getrennt. DEV-Bereitstellung erfolgreich wie unten protokolliert; keine Schema-/Provider-/Produktionsfreigabe.
+
+
+## Bestätigte App-/DEV-Endabnahme
+
+App:617/617 Tests im vollständigen Schlusslauf bestanden, Analyse ohne Befund.
+Darunter21 gezielte Policy-/Shelltests (inklusive echter Profilwahl/Bestätigung,
+frischer Entfreigabe, fehlender Serverpolicy und Chat-Save mit anschließendem
+explizitem Reload). Gesamte bisherigen Fachregressionen mitgeprüft.1917 lokale
+Schlüssel vollständig in allen fünf Katalogen, Offline-/AST-Prüfung erfolgreich.
+Keine zusätzliche Sprachenroute oder Chat-Pollingabfrage. Nur lokale Texte.
+
+DEV aktiv: `/var/www/svs-laravel/releases/20261104-clubunio-language-policy-v1`.
+Runtime6ee1afa, geprüfte Paket-/Auslieferungskoordination2f35e8c. Rollback:
+`20261104-clubunio-language-autoswitch`, dessen parallele Webänderungen erhalten
+bleiben. Der erste Paketversuch gegen reviewed wurde wegen inzwischen neuem
+aktivem Webrelease vor Staging abgebrochen; Basis anschließend lesend geprüft
+und auf das aktuelle autoswitch-Release gesetzt. Sieben erlaubte Dateien aus
+committed Gitblobs, Roh-SHAs vor/nach Aktivierung geprüft. Alle bestehenden
+Release-Gates und die neue echte28er-Policygate bestanden, Fixtures zurückgerollt.
+PHP-FPM aktiv, HTTPS/up200 und anonymer persönlicher Context401. Config-/ENV-/
+Composer-Dateien und Schema unverändert; zentrale Sprachen weiterhin DE/EN.
+
+App muss auf dem Mac neu gebaut werden. Keine native Store-/SaaS-Veröffentlichung
+oder zusätzliche Providerfreigabe; fremde Repositoryänderungen nicht mitcommitted.
+
+Synchronisierter App-Commit: `81b097e` (clubunio_mobile/main).

@@ -1536,3 +1536,24 @@ Backend Kommunikation49/768, PG-Probe1/3 plus29 Kernelprüfungen grün.
 Keine echten Vereinsnachrichten oder Provideraktionen für die Abnahme.
 Mac nach Pull neu bauen; echte iPhone-Kameraaufnahme bleibt separat zu prüfen.
 Details: deploy/MOBILE-CHAT-COMPOSER.md, App docs/CHAT-FEATURES.md und CHAT-CAMERA.md.
+
+
+## 04.11.2026: zentrale Sprachfreigabe der App
+
+Aktiv auf DEV:20261104-clubunio-language-policy-v1; Runtime6ee1afa,
+Paket-/Basisprüfung2f35e8c. Rollback:20261104-clubunio-language-autoswitch.
+App81b097e synchronisiert. Einzige Freigabequelle bleibt
+config/clubunio-languages.php über LanguagePreferences::enabled(), unverändert
+DE/EN. Fünf lokale Appkataloge sind Fähigkeiten, keine eigenständige Freigabe.
+Context/Profil/Chat-Präferenzen liefern language_policy+wirksame Sprache.
+Fehlende/ungültige/leere Policy sperrt Auswahl/Save. Gesperrte Altwerte nur
+wirksam aufgelöst, keine GET-Mutation; keine Chat-Zustimmung für Ersatzsprache.
+API validiert Freigabe frisch beim Schreiben und vor KI-/Providerarbeit.
+
+617/617 App-Tests grün, Analyse und1917/5-Katalog-/AST-Prüfung sauber.
+Backend58/820 plus28 echte PostgreSQL-/Kernelprüfungen; alle DEV-Gates bestanden,
+Fixtures zurückgerollt, Rohdatei-SHAs und PHP-FPM/HTTPS200/401 bestätigt.
+Sieben gezielte Dateien aus Gitblobs bereitgestellt, parallele Webänderungen
+über aktuelle Basiskopie erhalten. Keine neue Sprach-/Providerfreigabe,
+Schema-/ENV-/Composeränderung, echten Nachrichten oder Bankzahlungen.
+Mac-App vollständig neu bauen; Doku:MOBILE-LANGUAGE-POLICY.md und App docs/I18N.md.
