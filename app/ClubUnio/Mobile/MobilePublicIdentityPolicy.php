@@ -19,7 +19,7 @@ final class MobilePublicIdentityPolicy
         $parts = parse_url($origin);
         abort_unless(is_array($parts) && ($parts['scheme'] ?? '') === 'https' && !empty($parts['host'])
             && !isset($parts['user']) && !isset($parts['pass']) && !isset($parts['path']) && !isset($parts['query']) && !isset($parts['fragment'])
-            && in_array($origin, config('clubunio-mobile.public_identity.origins', []), true), 503, 'Ã–ffentliche Anmeldung noch nicht freigeschaltet.');
+            && in_array($origin, config('clubunio-mobile.public_identity.origins', []), true), 503, 'Öffentliche Anmeldung noch nicht freigeschaltet.');
     }
     public function bound(string $origin): ?Tenant
     {
@@ -42,11 +42,12 @@ final class MobilePublicIdentityPolicy
     public function enabled(Tenant $tenant, string $surface): bool
     {
         if (!config('clubunio-mobile.public_identity.enabled', false) || !in_array($tenant->slug, config('clubunio-mobile.public_identity.tenant_slugs', []), true)) { return false; }
+        if ($surface === 'registration' && !app(MobileBootstrapState::class)->registrationActive($tenant)) { return false; }
         if ($surface === 'membership') {
             return config('clubunio-mobile.public_identity.membership_enabled', false) && app(PublicWebService::class)->enabled($tenant, 'registration');
         }
         return in_array($surface, ['registration','password_reset','email_enrollment'], true) && config('clubunio-mobile.public_identity.'.$surface.'_enabled', false)
             && app(MobileIdentityMailGuard::class)->configured();
     }
-    public function authorize(Tenant $tenant, string $surface): void { abort_unless($this->enabled($tenant, $surface), 503, 'Dieser Ã¶ffentliche Ablauf ist noch nicht freigeschaltet.'); }
+    public function authorize(Tenant $tenant, string $surface): void { abort_unless($this->enabled($tenant, $surface), 503, 'Dieser öffentliche Ablauf ist noch nicht freigeschaltet.'); }
 }

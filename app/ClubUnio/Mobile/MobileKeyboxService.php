@@ -18,7 +18,7 @@ final class MobileKeyboxService
         if (!$actor->fresh()?->active || !$box->active) return false;
         app(MobileAccess::class)->enter($actor,$tenant);
         if (BexioConnectionService::canManage($actor->fresh(),$tenant)) return true;
-        if ($box->bus_id && app(MemberAccessService::class)->membership($actor,$tenant)?->role!=='technical_lead') return false;
+        if ($box->bus_id && !in_array(app(MemberAccessService::class)->membership($actor,$tenant)?->role,['office','technical_lead'],true)) return false;
         return $this->table('grants')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('account_id',$actor->id)->where('active',true)->exists();
     }
     private function box(Account $actor,Tenant $tenant,int $id): object
@@ -27,7 +27,7 @@ final class MobileKeyboxService
     }
     private function operational(Tenant $tenant,object $box,bool $checkStale=true): bool
     {
-        if (!config('clubunio-mobile.native_keybox_enabled',false)||!config('clubunio-mobile.keybox.issuance_enabled',false)
+        if (!config('clubunio-mobile.enabled',false)||!config('clubunio-mobile.native_keybox_enabled',false)||!config('clubunio-mobile.keybox.issuance_enabled',false)
             ||!config('clubunio-mobile.keybox.operations_reviewed',false)||!config('clubunio-mobile.keybox.offline_revocation_acknowledged',false)
             ||!in_array((int)$box->id,config('clubunio-mobile.keybox.approved_keybox_ids.'.$tenant->slug,[]),true)) return false;
         // A known offline PIN cannot be made invalid by deleting a database row.
@@ -210,6 +210,14 @@ final class MobileKeyboxService
     {
         $this->table('commands')->whereIn('id',$ids)->update(['state'=>'invalidated','pin_encrypted'=>null,'invalidated_at'=>now()->toIso8601String(),
             'remote_revocation_state'=>$physical?'required':'not_available']);
+    }
+    /** Administrative box/grant changes run inside the same tenant-locked transaction. */
+    public function invalidateBox(Tenant $tenant,int $keybox,?int $account=null): void
+    {
+        abort_unless(DB::connection('clubunio')->transactionLevel()>0,500);
+        $rows=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$keybox)->where('state','<>','invalidated')
+            ->when($account!==null,fn ($q)=>$q->where('account_id',$account))->get();
+        foreach($rows as $row) $this->invalidateRows([$row->id],$row->provider_started_at!==null||in_array($row->state,['issued','attention'],true));
     }
     /** No-op while the separate native feature is closed. Never sends a physical revoke. */
     public function invalidateReservation(Tenant $tenant,int $reservationId): void

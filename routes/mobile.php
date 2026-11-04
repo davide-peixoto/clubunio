@@ -16,7 +16,9 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::delete('sessions/{session}', [Mobile::class, 'revoke'])->whereUuid('session')->name('revoke');
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
+        \App\ClubUnio\Mobile\MobileBootstrapRoutes::personalRoutes();
         \App\ClubUnio\Mobile\MobilePushRoutes::registerTenant();
+        \App\ClubUnio\Mobile\MobileAdminNoticeRoutes::register();
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('members/{member}', [\App\ClubUnio\Mobile\MobileMemberController::class, 'show'])->whereNumber('member');
         Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
@@ -113,3 +115,4 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
 });
 
 \App\ClubUnio\Mobile\MobilePublicIdentityRoutes::register();
+\App\ClubUnio\Mobile\MobileBootstrapRoutes::publicRoutes();

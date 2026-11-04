@@ -30,7 +30,7 @@ final class MobileKeyboxProvider
         abort_unless(preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$device)&&$until->greaterThan($from)&&$until->diffInHours($from,true)<=672,422);
         $token=Http::timeout(15)->connectTimeout(5)->withoutRedirecting()->asForm()->acceptJson()->withBasicAuth($credentials['id'],$credentials['secret'])
             ->post('https://auth.igloohome.co/oauth2/token',['grant_type'=>'client_credentials','scope'=>'igloohomeapi/algopin-hourly']);
-        abort_unless($token->successful()&&strlen($token->body())<=16384&&is_string($token->json('access_token'))&&strlen($token->json('access_token'))<=8192,503);
+        abort_unless($token->successful()&&strlen($token->body())<=16384&&is_string($token->json('access_token'))&&strlen($token->json('access_token'))>=1&&strlen($token->json('access_token'))<=8192,503);
         $base=$credentials['protocol']==='home'?'https://api.igloohome.co/home':'https://api.igloodeveloper.co/igloohome';
         $response=Http::timeout(20)->connectTimeout(5)->withoutRedirecting()->acceptJson()->withToken($token->json('access_token'))
             ->post($base.'/devices/'.rawurlencode($device).'/algopin/hourly',['variance'=>1,'startDate'=>$from->format('Y-m-d\TH:00:00P'),

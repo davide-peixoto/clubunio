@@ -328,6 +328,16 @@ class Tenant extends Model
         return $this->hasMany(TenantAccount::class);
     }
 
+    public function mobileAppAnnouncements()
+    {
+        return $this->hasMany(MobileAppAnnouncement::class);
+    }
+
+    public function mobileKeyboxes()
+    {
+        return $this->hasMany(MobileKeybox::class);
+    }
+
     public function footballClubs()
     {
         return $this->hasMany(FootballClub::class);

@@ -63,6 +63,10 @@ class MobileKeyboxTest extends TestCase {
                 if(is_string($table)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $table=str_replace('clubora.'.$own,'pg_temp.'.$own,$table);
                 return parent::wrapTable($table,$prefix);
             }
+            public function wrap($value) {
+                if(is_string($value)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $value=str_replace('clubora.'.$own,'pg_temp.'.$own,$value);
+                return parent::wrap($value);
+            }
         });
     }
     protected function tearDown(): void { if(isset($this->db)) { if($this->db->transactionLevel()) $this->db->rollBack(); if($this->grammar) $this->db->setQueryGrammar($this->grammar); } parent::tearDown(); }
@@ -120,5 +124,45 @@ class MobileKeyboxTest extends TestCase {
         $this->fakeProvider(false); app(MobileKeyboxService::class)->execute($id); app(MobileKeyboxService::class)->execute($id);
         $this->getJson($url.'/'.$id)->assertOk()->assertJsonPath('data.state','attention')->assertJsonMissingPath('data.pin'); Http::assertSentCount(2);
         $this->getJson($url)->assertOk()->assertJsonPath('data.issuanceEnabled',false); Mail::assertNothingSent();
+    }
+    public function test_actual_admin_configuration_forms_create_private_boxes_and_versioned_grants_without_provider_calls(): void {
+        $service=app(\App\ClubUnio\Mobile\MobileKeyboxAdministration::class);
+        $this->assertFalse($service->allowed($this->owner,$this->tenant));
+        config(['clubunio-mobile.keybox.administration_enabled'=>true]);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        $this->actingAs($this->owner,'clubunio'); \Filament\Facades\Filament::setTenant($this->tenant);
+        $page=\Livewire\Livewire::test(\App\ClubUnio\Resources\MobileKeyboxResource\Pages\ManageRecords::class)->assertSuccessful();
+        $input=['name'=>'Actual admin form box','provider_device_id'=>'fixture-admin-device','bus_id'=>null,'active'=>false,'revision'=>0,'reason'=>'Synthetic administration reason'];
+        $page->callTableAction('create',data:$input)->assertHasNoActionErrors();
+        $box=\App\ClubUnio\Models\MobileKeybox::where('tenant_id',$this->tenant->id)->where('name',$input['name'])->firstOrFail();
+        $this->assertSame('fixture-admin-device',Crypt::decryptString($box->provider_device_cipher)); $this->assertArrayNotHasKey('provider_device_cipher',$box->toArray());
+        $page->callTableAction('edit',$box,data:array_replace($input,['provider_device_id'=>null,'active'=>true,'revision'=>1]))->assertHasNoActionErrors();
+        $this->assertTrue($box->refresh()->active); $this->assertSame(2,$box->revision);
+        $grant=['account_id'=>$this->trainer->id,'active'=>true,'revision'=>0,'box_revision'=>2,'reason'=>'Synthetic explicit personal grant'];
+        $page->callTableAction('grant',$box,data:$grant)->assertHasNoActionErrors();
+        $snapshot=$service->grantSnapshot($this->owner,$this->tenant,$box->id,$this->trainer->id); $this->assertSame(['revision'=>1,'active'=>true],$snapshot);
+        try { $service->saveGrant($this->owner,$this->tenant,$box->id,$grant); $this->fail('Grant version must be shown'); }
+        catch(\Symfony\Component\HttpKernel\Exception\HttpException $e) { $this->assertSame(409,$e->getStatusCode()); }
+        $this->actingAs($this->trainer,'clubunio'); $this->assertFalse(\App\ClubUnio\Resources\MobileKeyboxResource::canViewAny());
+        Http::assertNothingSent(); Mail::assertNothingSent();
+    }
+    public function test_box_grant_and_provider_revisions_invalidate_real_local_outputs_and_preserve_offline_revocation_evidence(): void {
+        config(['clubunio-mobile.keybox.administration_enabled'=>true]); $service=app(\App\ClubUnio\Mobile\MobileKeyboxAdministration::class);
+        $this->withToken($this->tokens[$this->trainer->id]); $url=$this->base().'/keyboxes/'.$this->box.'/codes';
+        $id=$this->postJson($url,['request_key'=>(string)Str::uuid(),'keybox_revision'=>1])->assertStatus(202)->json('data.id');
+        $this->fakeProvider(); app(MobileKeyboxService::class)->execute($id);
+        $service->saveGrant($this->owner,$this->tenant,$this->box,['account_id'=>$this->trainer->id,'active'=>false,'revision'=>1,'box_revision'=>1,'reason'=>'Synthetic access withdrawal']);
+        $row=$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->first();
+        $this->assertSame('invalidated',$row->state);$this->assertSame('required',$row->remote_revocation_state);$this->assertNull($row->pin_encrypted);
+        $this->getJson($url.'/'.$id)->assertNotFound();
+        $box=$service->saveBox($this->owner,$this->tenant,$this->box,['name'=>'Revised device binding','provider_device_id'=>'fixture-rebound-device','bus_id'=>null,'active'=>false,'revision'=>1,'reason'=>'Synthetic device replacement']);
+        $this->assertSame(2,$box->revision);
+        $provider=$service->providerSnapshot($this->owner,$this->tenant);
+        $service->saveProvider($this->owner,$this->tenant,['fingerprint'=>$provider['fingerprint'],'client_id'=>'fixture-revised-client','client_secret'=>'fixture-revised-secret','reason'=>'Synthetic provider credential rotation']);
+        $this->assertNotSame($provider['fingerprint'],$service->providerSnapshot($this->owner,$this->tenant)['fingerprint']);
+        try { $service->saveProvider($this->owner,$this->tenant,['fingerprint'=>$provider['fingerprint'],'client_id'=>'stale','reason'=>'Synthetic stale provider update']); $this->fail('Provider snapshot must match'); }
+        catch(\Symfony\Component\HttpKernel\Exception\HttpException $e) { $this->assertSame(409,$e->getStatusCode()); }
+        $this->assertSame('required',$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->value('remote_revocation_state'));
+        Http::assertSentCount(2); Mail::assertNothingSent();
     }
 }

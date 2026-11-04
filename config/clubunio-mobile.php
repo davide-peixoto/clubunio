@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'bootstrap' => require __DIR__.'/clubunio-bootstrap.php',
+    'native_role_guide_enabled' => filter_var(env('CLUBUNIO_MOBILE_NATIVE_ROLE_GUIDE_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true,
     'native_push_admin_enabled' => filter_var(env('CLUBUNIO_MOBILE_NATIVE_PUSH_ADMIN_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true,
     // Explicit activation after additive migration and review. No external delivery by default.
     'enabled' => (bool) env('CLUBUNIO_MOBILE_ENABLED', false),
@@ -11,10 +13,7 @@ return [
     'native_facilities_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_FACILITIES_ENABLED', false),
     'native_bus_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_BUS_ENABLED', false),
     'native_keybox_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_KEYBOX_ENABLED', false),
-    'keybox' => ['issuance_enabled' => false, 'provider_enabled' => false,
-        'operations_reviewed' => false, 'offline_revocation_acknowledged' => false,
-        'tenant_slugs' => [], 'approved_keybox_ids' => [], 'protocol' => 'legacy',
-        'dispatch_after_response' => true],
+    'keybox' => require __DIR__.'/clubunio-keybox.php',
     'native_penalty_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_PENALTY_ENABLED', false),
     'native_members_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MEMBERS_ENABLED', false),
     'native_member_id_card_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MEMBER_ID_CARD_ENABLED', false),

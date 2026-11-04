@@ -14,6 +14,7 @@ final class MobileSessions
 {
     public function login(Request $request): array
     {
+        app(MobileBootstrapState::class)->authorizeLogin($request);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096', 'device_name' => 'required|string|max:100']);
         $username = mb_strtolower(trim($data['username']));
         $keys = ['mobile-login:'.hash('sha256', $request->ip().'|'.$username) => 5,

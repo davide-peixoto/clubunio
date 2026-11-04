@@ -191,6 +191,8 @@ class ClubUnioPanelProvider extends PanelProvider
                 FamilyResource::class, FamilyMemberResource::class,
                 MemberDocumentResource::class,
                 MemberResource::class, SettingResource::class,
+                \App\ClubUnio\Resources\MobileAppAnnouncementResource::class,
+                \App\ClubUnio\Resources\MobileKeyboxResource::class,
                 TeamResource::class, TeamSeasonResource::class,
                 SeasonResource::class, RegistrationResource::class,
                 MemberStatusResource::class, MemberTypeResource::class,

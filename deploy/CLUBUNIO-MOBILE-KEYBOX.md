@@ -11,7 +11,8 @@ ueber den inzwischen bestaetigten Schema-/DEV-Stand.
 
 
 Stand04.11.2026: Quellen lokal getestet, noch keine Betriebsfreigabe. Migration
-700 ist sichtbar reserviert, nicht angewandt. Keine echte PIN-, Schluessel-,
+700 wurde durch Root als geschlossene DEV-Foundation angewandt; Verwaltungsdelta
+und echte Ausgabe bleiben separat freizugeben. Keine echte PIN-, Schluessel-,
 Igloo-, BLE-, Bridge- oder Hardwareaktion durch Entwicklungstools.
 
 ## Original und Provider
@@ -45,7 +46,7 @@ Protokoll-/Geraetekompatibilitaet sind vor echter Freigabe zu pruefen.
 Alle sechs Routen unter persoenlichem clubs/{tenant}, bestehende
 MobileMiddleware plus MobileKeyboxReady. Origin-/Custom-/Tenant-/Sessiongrenzen
 bleiben erhalten. Profil zeigt nur aktuell erlaubte aktive Boxen: echte
-bestehende Admin-/Office-Verwaltungsrechte oder explizite versionierte
+bestehende Admin-Verwaltungsrechte oder explizite versionierte
 accountgebundene Freigabe. Busboxen ausserhalb Reservationskontext nur fuer
 Verwaltung bzw. explizit freigegebene technische Leitung. Kein Rollenname aus
 der App, keine Kontakt-/Familiengleichheit als Schluesselfreigabe.
@@ -95,7 +96,45 @@ PersonalBusRepository nutzt den neuen reservationsgebundenen Vertrag; geschlosse
 Ausgabe deaktiviert den Originalbutton. Keine Notfallcode-Herleitung aus
 fehlgeschlagenen persoenlichen Provideraufrufen.
 
-Tests: neue4 HTTP-/TEMP700-Faelle73Assertions gruen, bestehendes geschlossenes
+## Echte Einrichtung und versionierte Freigaben
+
+Eigene Backendresource **Persoenliche Schluesselboxen** unter Anlagen und
+Spielbetrieb; getrennt von der bisherigen reinen Bus-Simulation. Nur echte
+mandantengebundene Admins und ausdruecklich aktivierte administration_enabled-
+Konfiguration. Neue Box mit Name, verschluesselter Providergeraetezuordnung,
+optionalem eigenem Bus, Aktivzustand und Begruendung anlegen. Aendern/
+Deaktivieren verlangt die angezeigte Boxrevision; leere Geraeteeingabe behaelt
+die gespeicherte Zuordnung. Providergeraet und rohe Chiffre erscheinen nicht
+in persoenlichen DTOs. Logische Box-ID ist fuer die enge Betreiberallowlist
+sichtbar. Keine SQL-Handeintraege als Produktbedienweg.
+
+Die Aktion **Persoenliche Freigabe** waehlt ein echtes eigenes Vereinskonto,
+zeigt aktuelle Grant- und Boxrevision und erfasst Aktivzustand/Begruendung.
+Neue Freigaben setzen echten persoenlichen Vereinszugang voraus. Auch alte
+Freigaben inzwischen inaktiver Konten koennen widerrufen werden. Profilzugriff
+auf Busboxen bleibt auf Admin/ausdruecklich freigegebene Geschaeftsstelle bzw.
+technische Leitung begrenzt; Trainer erhalten Buszugriff reservationsgebunden.
+Keine erfundenen UserLevels oder automatische Eltern-/Trainerfreigabe.
+
+Headeraktion **Providerzugang** erfasst geheime OAuthwerte verschluesselt im
+Tenantsetting, gebunden an den angezeigten Konfigurationsfingerprint. Alte
+Secrets werden nicht an die Maske zurueckgegeben; leer behaelt bestehende
+Werte. Angezeigt wird nur, ob Werte hinterlegt sind, keine behauptete
+Provider-/Hardwareabnahme. Box-, Grant- und Credentialaenderungen laufen unter
+Tenant-/Actorlock, sind versioniert/auditiert und invalidieren lokale Ausgabe;
+begonnene/ausgegebene Offlinecodes bleiben wahrheitsgemaess physisch zu widerrufen.
+
+config/clubunio-keybox.php unterstuetzt getrennte ausdrueckliche
+CLUBUNIO_KEYBOX_ADMINISTRATION_ENABLED/ISSUANCE_ENABLED/PROVIDER_ENABLED/
+OPERATIONS_REVIEWED/OFFLINE_REVOCATION_ACKNOWLEDGED-Schalter sowie TENANT_SLUGS,
+APPROVED_IDS(JSON je Slug mit ganzzahligen Box-IDs) und PROTOCOL, jeweils mit
+demselben CLUBUNIO_KEYBOX_-Prefix. Ungueltige Flags/Allowlists bleiben geschlossen.
+Alle Defaultsfalse, keine aktuelle Env/Providerfreigabe durch Agenten.
+
+Finale Tests: Keybox6 HTTP-/TEMP700-Faelle122Assertions gruen, einschliesslich
+echter Filament-Boxanlage/-Aenderung/Grantform und PINinvalidierung bei Grant-/
+Box-/Credentialrevision, ohne zusaetzliche Providerwirkung. Runtime-Konfiguration
+2/13 gruen. Bestehendes geschlossenes
 MobileFacilitiesBus4/95 und gemeinsame BusReservation/Simulation17/128 gruen.
 TEMP-DDL referenziert ausschliesslich TEMP-Eltern; synthetische Fachfixtures
 werden zurueckgerollt. Echte persoenliche Stornierung testet zentralen

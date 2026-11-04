@@ -16,7 +16,9 @@ final class MobileMiddleware
     {
         $request->attributes->set('clubunio.api.request_id', (string) Str::uuid());
         try {
-            abort_unless(config('clubunio-mobile.enabled'), 503);
+            $logout = $request->isMethod('DELETE')
+                && $request->routeIs('clubunio.mobile.logout', 'clubunio.mobile.revoke');
+            abort_unless(config('clubunio-mobile.enabled') || $logout, 503);
             $bound = app(TenantDomainService::class)->resolve($request);
             if ($request->routeIs('clubunio.mobile.login')) {
                 return $this->protect($next($request));
@@ -30,6 +32,7 @@ final class MobileMiddleware
                 $tenant = Tenant::whereKey($request->route('tenant'))->firstOrFail();
                 abort_if($bound && ! $bound->is($tenant), 404);
                 app(MobileAccess::class)->enter($actor, $tenant);
+                app(MobileBootstrapState::class)->authorizeTenant($request, $tenant);
                 $request->attributes->set('mobile.tenant', $tenant);
                 $request->attributes->set('mobile.season_scope', true);
             }
