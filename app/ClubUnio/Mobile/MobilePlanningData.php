@@ -128,6 +128,7 @@ final class MobilePlanningData
         $event = $p->event($actor, $tenant, $id);
         $invitationMeta = app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
         $capabilities = $this->capabilities->event($actor, $tenant, $event);
+        $pushSnapshot = $capabilities['CanSendSquadPush'] ? app(MobilePushSquad::class)->snapshot($actor, $tenant, $id) : null;
         $manager = $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
         $own = app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();
         $parts = $p->table($tenant, 'team_participations')->where('event_id', $id)->get()->keyBy('member_id');
@@ -166,6 +167,7 @@ final class MobilePlanningData
             ...($seriesSnapshot ? ['SeriesRevision' => $manager ? app(MobilePlanningSeries::class)->revision($tenant, $event) : null] : []),
             'SerieID' => $event->series_key, 'CanManage' => $manager,
             ...$capabilities,
+            ...($pushSnapshot ? ['PushRevision' => $pushSnapshot['revision'], 'PushRecipientFingerprint' => $pushSnapshot['recipient_fingerprint']] : []),
             'CanAddGuests' => $capabilities['CanAddPeople'], 'CanInviteMembers' => $invitationMeta['CanInviteMembers'],
             'CanAddPeople' => $capabilities['CanAddPeople'] || $invitationMeta['CanInviteMembers'],
             'Teilnahmen' => $all->all(), 'MeineTeilnahmen' => $people->whereIn('MitgliederID', $own)->values()->all(),

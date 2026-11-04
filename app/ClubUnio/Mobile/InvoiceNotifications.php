@@ -56,6 +56,9 @@ final class InvoiceNotifications
                 }
                 $db->table('clubora.mobile_inbox')->insertOrIgnore(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
                     'event_key' => 'invoice.available:'.$invoice->id, 'kind' => 'invoice', 'object_id' => $invoice->id, 'created_at' => now()->toIso8601String()]);
+                if (config('clubunio-mobile-push.enabled', false)) {
+                    app(MobilePushOutbox::class)->enqueue($actor, $tenant, 'invoice', (int) $invoice->id, 'invoice.available:'.$invoice->id);
+                }
             }
         });
     }

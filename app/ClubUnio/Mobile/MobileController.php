@@ -37,7 +37,7 @@ final class MobileController
         return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name, 'username' => $actor->username],
             'language' => DB::connection('clubunio')->table('clubora.mobile_preferences')->where('account_id', $actor->id)->value('language') ?? 'de',
             'tenants' => $tenants->filter(fn ($t) => ! $bound || $bound->is($t))->map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name])->values(),
-            'capabilities' => ['push' => false, 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
+            'capabilities' => ['push' => app(MobilePushReady::class)->available($r), 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
     }
 
     public function sessions(Request $r)
@@ -196,11 +196,13 @@ final class MobileController
             try {
                 if ($row->kind === 'invoice') {
                     app(MobileAccess::class)->invoice($a, $t, $row->object_id);
-                } else {
+                } elseif (in_array($row->kind, ['chat','announcement'], true)) {
                     $s->chat($a, $t, $row->object_id);
+                } else {
+                    app(MobilePushTargets::class)->authorize($a, $t, $row->kind, (int) $row->object_id);
                 }
                 $result[] = ['id' => (int) $row->id, 'kind' => $row->kind, 'object_id' => (int) $row->object_id, 'read' => (bool) $row->read_at,
-                    'title' => $row->kind === 'invoice' ? 'Eine neue Rechnung ist verfügbar' : 'Neue Vereinsankündigung', 'created_at' => $row->created_at];
+                    'title' => $row->kind === 'invoice' ? 'Eine neue Rechnung ist verfügbar' : ($row->kind === 'announcement' ? 'Neue Vereinsankündigung' : 'Neue Mitteilung'), 'created_at' => $row->created_at];
             } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface|\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
                 // Removed permissions never reveal historic content through the inbox.
             }
@@ -292,7 +294,8 @@ final class MobileController
             $q = $s->table($t, 'mobile_inbox')->where('account_id', $a->id)->where('id', $r->route('notice'));
             $row = (clone $q)->firstOrFail();
             if ($row->kind === 'invoice') { app(MobileAccess::class)->invoice($a, $t, $row->object_id); }
-            else { $s->chat($a, $t, (int) $row->object_id); }
+            elseif (in_array($row->kind, ['chat','announcement'], true)) { $s->chat($a, $t, (int) $row->object_id); }
+            else { app(MobilePushTargets::class)->authorize($a, $t, $row->kind, (int) $row->object_id); }
             $q->whereNull('read_at')->update(['read_at' => now()->toIso8601String()]);
             return $this->data(['read' => true]);
         });

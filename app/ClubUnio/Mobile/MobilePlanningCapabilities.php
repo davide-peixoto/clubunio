@@ -24,7 +24,6 @@ final class MobilePlanningCapabilities
         return ['CanEdit' => $active && $can('update'), 'CanAddPeople' => $active && $can('create'),
             'CanCancel' => $active && $can('cancel'), 'CanRemove' => $can('deactivate'),
             'CanShareSquad' => $active && $can('update') && $can('export'),
-            // Native delivery is still unavailable; no false "sent" action in personal views.
-            'CanSendSquadPush' => false];
+            'CanSendSquadPush' => $active && $can('update') && $can('export') && app(MobilePushReady::class)->available()];
     }
 }

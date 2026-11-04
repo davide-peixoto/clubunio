@@ -10,6 +10,7 @@
         "azure-oss/storage": "1.9",
         "dompdf/dompdf": "^3.1",
         "filament/filament": "~5.0",
+        "google/auth": "1.55.3",
         "jumbojett/openid-connect-php": "^1.0",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "~4.3",

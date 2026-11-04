@@ -269,6 +269,9 @@ final class ChatService
             $this->table($tenant, 'chat_attachments')->where('id', $data['attachment_id'])->update(['message_id' => $id]);
         }
         app(ChatControls::class)->record($actor, $tenant, $row, 'send');
+        if (config('clubunio-mobile-push.enabled', false)) {
+            app(MobilePushOutbox::class)->chatMessage($actor, $tenant, $row);
+        }
         return $row;
     }
 
