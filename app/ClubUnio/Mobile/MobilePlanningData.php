@@ -98,8 +98,9 @@ final class MobilePlanningData
     {
         [$start, $limit] = $this->page($request);
         $d = $request->validate(['TeamSaisonID' => 'nullable|integer|min:1', 'MitgliederID' => 'nullable|integer|min:1',
-            'Terminart' => 'nullable|string|max:40', 'from' => 'nullable|date', 'to' => 'nullable|date']);
+            'Terminart' => 'nullable|string|max:40', 'from' => 'nullable|date', 'to' => 'nullable|date', 'active_only' => 'nullable|boolean']);
         $query = app(PlanningCalendarService::class)->visible($actor, $tenant);
+        if ($d['active_only'] ?? false) { $query->where('status', 'AKTIV'); }
         if (isset($d['TeamSaisonID'])) { $query->where('team_season_id', $d['TeamSaisonID']); }
         if (isset($d['Terminart'])) { $query->where('kind', $d['Terminart']); }
         foreach (['from' => '>=', 'to' => '<'] as $key => $operator) {
