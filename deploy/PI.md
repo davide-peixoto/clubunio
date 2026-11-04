@@ -2078,3 +2078,15 @@ Sieben gezielte Dateien aus Gitblobs bereitgestellt, parallele Webänderungen
 über aktuelle Basiskopie erhalten. Keine neue Sprach-/Providerfreigabe,
 Schema-/ENV-/Composeränderung, echten Nachrichten oder Bankzahlungen.
 Mac-App vollständig neu bauen; Doku:MOBILE-LANGUAGE-POLICY.md und App docs/I18N.md.
+
+
+## 04.11.2026: Direktchatkontakte und Suchperformance
+
+Aktiv20261104-clubunio-direct-contacts-v1, Quellstand956af46; Rückweg
+20261104-clubunio-language-policy-v1. Vier explizite PHP-Dateien samt Gate aus
+Git-/Roh-SHA-Baselines geprüft. Alle bestehenden Gates plus272 neue Prüfungen
+bestanden, FPM aktiv, HTTPSup200/context401, Env/Composerbytes unverändert.
+Konstante1/100-Kontobudgets Spieler14/14, Trainer17/17, Eltern15/15 SQL;
+synthetische Kernelzeiten ungefähr0,35–0,55s. Keine native Simulatorzeit.
+Keine Migration, Providerfreigabe oder PHPMaker-Änderung.
+MOBILE-DIRECT-CONTACTS.md; Mobile8e38148,640 App-Tests grün.

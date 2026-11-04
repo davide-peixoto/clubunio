@@ -1,6 +1,6 @@
 # Persönliche Direktchatkontakte (04.11.2026)
 
-Backend und synthetische Abnahme implementiert; keine Migration oder automatische Freischaltung/Zustellung. Der Bereitstellungsnachweis wird nach der geprüften DEV-Aktivierung ergänzt.
+Auf DEV aktiviert: `20261104-clubunio-direct-contacts-v1`, Quellstand `956af46`. Keine Migration oder automatische Freischaltung/Zustellung.
 
 ## Kontaktregeln
 
@@ -41,3 +41,27 @@ Diese Werte stammen aus dem lokalen PHP-Kernel gegen die Remote-PostgreSQL-Verbi
 Bestehende Kommunikations- und ReadContext-Regressionssuite:56 Tests/896 Assertions grün. Die SQLite-Kommunikationsfixture wurde ausschließlich um die vorhandene staff_functions-Struktur und eine explizite TRAINER-Zuordnung ergänzt; keine Fachassertion entfernt oder abgeschwächt. PHP-Syntaxprüfung aller Produkt-/Gate-/neuen Testdateien und gezieltes git diff --check erfolgreich. PostgreSQL-Fenster nach Abschluss freigegeben, alle synthetischen Zeilen zurückgerollt und Cleanup nachgeprüft. Kein Provider, keine echte Nachricht und keine Daten-/Rollenänderung außerhalb der synthetischen Transaktion.
 
 Geänderte Runtime: MobileAccess.php, ausschließlich contacts() in MobileController.php und ausschließlich Sichtbarkeit private→public von MemberTeamAccessService.trainerTeams(). Neue Dateien: dieses Dokument, deploy/check-mobile-direct-contacts.php und tests/Feature/MobileDirectContactsTest.php. Alle anderen Runtimequellen bleiben erhalten. Noch kein Commit oder DEV-Release durch den Fachagenten; Root ergänzt den Bereitstellungsnachweis.
+
+
+## DEV-Bereitstellung und App-Abschluss
+
+Aktiv ist `/var/www/svs-laravel/releases/20261104-clubunio-direct-contacts-v1`.
+Rückweg: `20261104-clubunio-language-policy-v1`. Vier explizite Dateien aus dem
+geprüften Gitstand956af46 paketiert; vorhandene Rohdateien gegen bekannte
+Gitbaselines und vor/nach Installation gegen SHA256-Manifeste geprüft.
+Die bestehende Trainerfunktionsabfrage wird unverändert wiederverwendet.
+
+Alle bisherigen Releasegates plus neuer272-Check bestanden. Der echte DEV-Kernel
+misst bei1/100 passenden Konten Spieler14/14 SQL347,57/391,59ms,
+Trainer17/17 SQL453,46/541,63ms, Eltern15/15 SQL369,24/414,79ms.
+Dies sind synthetische Servermessungen, keine native iPhone-Messung.
+FPM aktiv, HTTPS `/up`200 und anonymer persönlicher Context401; Hashes nach
+Aktivierung nochmals bestätigt. Env-/Composerbytes unverändert, keine Migration,
+Provideraktivierung, Datenübernahme oder PHPMaker-Änderung.
+
+App: sofortiger neuer Nachrichtenbildschirm mit serverseitiger Namenssuche,
+40er-Grenze, Debounce, gebundenen späten Antworten und Originalchat nach Auswahl.
+640/640 App-Tests, vollständige Analyse und zentrale1921-Schlüssel-i18n-Prüfung
+bestanden. Sechs neue Such-/Einstiegsfälle einschließlich nicht blockierender
+fehlgeschlagener Benachrichtigung im selben Konto/Verein.
+App-Quellstand `8e38148`, Details im Mobile-Repository `docs/DIRECT-CHAT.md`.

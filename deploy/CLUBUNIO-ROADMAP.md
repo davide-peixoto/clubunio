@@ -1557,3 +1557,14 @@ Sieben gezielte Dateien aus Gitblobs bereitgestellt, parallele Webänderungen
 über aktuelle Basiskopie erhalten. Keine neue Sprach-/Providerfreigabe,
 Schema-/ENV-/Composeränderung, echten Nachrichten oder Bankzahlungen.
 Mac-App vollständig neu bauen; Doku:MOBILE-LANGUAGE-POLICY.md und App docs/I18N.md.
+
+
+## 04.11.2026: Sofortiger Direktchateinstieg und rollenabhängige Kontaktsuche
+
+Spieler eigene Mannschaften; Eltern ausschließlich Kinderteamstaff; Trainer
+kanonische eigene Trainer-/Assistenztrainerteams samt bestätigten Spielereltern,
+zusätzlich vereinsweite Teamstaffs und eigener Kinderstaff. TL/Admin/Office alle
+aktiven persönlichen Vereinschatkonten. Gerichtet suchen, bestehende berechtigte
+Zweierchats beantworten; Rechtewiderruf/Blockierung bleiben frisch.
+DEV direct-contacts-v1 aus956af46 aktiv,272 Serverchecks und640 App-Tests grün.
+Keine Schema-/Provider-/PHPMaker-Umstellung. MOBILE-DIRECT-CONTACTS.md.

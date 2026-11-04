@@ -997,3 +997,14 @@ Sieben gezielte Dateien aus Gitblobs bereitgestellt, parallele Webänderungen
 über aktuelle Basiskopie erhalten. Keine neue Sprach-/Providerfreigabe,
 Schema-/ENV-/Composeränderung, echten Nachrichten oder Bankzahlungen.
 Mac-App vollständig neu bauen; Doku:MOBILE-LANGUAGE-POLICY.md und App docs/I18N.md.
+
+
+## 04.11.2026: Direktchatkontakte mit aktueller Team- und Elternfreigabe
+
+Keine Datenmigration. Bestehende bestätigte Selbst-/Elternlinks und kanonische
+Trainerfunktionen bleiben maßgeblich; keine Ableitung aus Eltern-E-Mailadressen.
+Neue Rollengrenzen gelten bei Suche, Direktanlage und bestehenden Nachrichten.
+Begrenzte serverseitige Namenssuche ersetzt die personenbezogene Abfrageschleife.
+DEV20261104-clubunio-direct-contacts-v1 aus956af46; Rollback language-policy-v1.
+App640/640, Backend272 Kernelchecks und56/896 Bestandsregression grün.
+Abnahme und frische Antwortrechte: MOBILE-DIRECT-CONTACTS.md.
