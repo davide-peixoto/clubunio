@@ -21,7 +21,7 @@ Menue-/Konten-/Planungsablaeufe werden zurueckgerollt, keine echten Provider-
 oder Zahlungsaktionen. Erst erfolgreiche Gates erlauben den atomaren Wechsel.
 
 `deploy/prepare-mobile-packages-schema.php` ist ausschliesslich fuer die exakte
-aktive Linuxbasis `/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation-v2`
+aktive Linuxbasis `/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation-v3`
 und deren current-Link vorbereitet. API aktiv, DEV-Origin exakt
 https://dev.clubunio.ch, PostgreSQL db_acdf8d_dclubora. Native Training-,
 Sponsorenlauf- und Anmeldungsflags muessen in allen Stufen false sein.
@@ -73,3 +73,9 @@ Erster Staginglauf ab44083 wurde vor Aktivierung durch das Trainings-Routengate
 gestoppt: Der Paketfilter hatte routes/ ausgelassen. Aktives DEV unveraendert,
 keine Migration. Korrigierter Filter umfasst routes/ ausdruecklich; neuer
 Stagingpfad foundation-v2, altes inaktives Staging bleibt erhalten.
+
+Zweiter Staginglauf f95523c: Routeninventare gruen; vor Aktivierung durch
+striktes Sponsor-Argumentgate gestoppt. Der PHP-Wrapper hatte den Gatepfad als
+Nutzargument behalten. Korrigierter Wrapper normalisiert argv wie ein direkter
+CLI-Aufruf; neuer unveraenderlicher Stagingpfad foundation-v3. DEV weiterhin
+v4 aktiv, bis alle Gates gruen sind; keine permanente Schemaaenderung.

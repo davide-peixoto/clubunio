@@ -6,6 +6,7 @@ import json
 import re
 import shlex
 import subprocess
+import sys
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,7 +30,27 @@ for commit in ['2851c65', 'c1258cf', '972338c', '327e081']:
             paths.add(path)
 paths.update(['deploy/mobile-followup-menu-probe.php', 'deploy/prepare-mobile-packages-schema.php',
               'deploy/check-mobile-sponsor.php', 'deploy/release-clubunio-mobile-packages-foundation.sh'])
+if 'routes/mobile.php' not in paths or 'config/clubunio-mobile.php' not in paths:
+    raise RuntimeError('Route and feature contract must be packaged together')
+reuse = sys.argv[1:] == ['--reuse-baseline']
+if sys.argv[1:] and not reuse:
+    raise RuntimeError('Unexpected packaging arguments')
 before, after, added, verified = [], [], [], {}
+if reuse:
+    old = json.loads((OUT / 'mobile-packages.metadata.json').read_text(encoding='utf-8'))
+    if old['previous'] != previous:
+        raise RuntimeError('Recorded baseline differs from actual active DEV')
+    before = (OUT / 'mobile-packages.before.manifest').read_text(encoding='utf-8').splitlines()
+    added = (OUT / 'mobile-packages.new-files').read_text(encoding='utf-8').splitlines()
+    existing = set()
+    for line in before:
+        match = re.fullmatch(r'[a-f0-9]{64}  ([a-zA-Z0-9_./-]+)', line)
+        if not match:
+            raise RuntimeError('Invalid captured baseline manifest')
+        existing.add(match[1])
+    verified = old['verified']
+    if existing & set(added) or existing | set(added) != paths or set(verified) != existing:
+        raise RuntimeError('Reuse requires the exact already verified file inventory')
 with tarfile.open(OUT / 'mobile-packages.tar.gz', 'w:gz') as archive:
     for path in sorted(paths):
         if not re.fullmatch(r'[a-zA-Z0-9_./-]+', path) or '..' in path.split('/'):
@@ -39,6 +60,8 @@ with tarfile.open(OUT / 'mobile-packages.tar.gz', 'w:gz') as archive:
         entry.mode, entry.size = 0o644, len(data)
         archive.addfile(entry, io.BytesIO(data))
         after.append(hashlib.sha256(data).hexdigest() + '  ' + path)
+        if reuse:
+            continue  # Deployment rechecks every captured baseline SHA before any copy.
         remote = previous + '/' + path
         state = ssh('if test -f ' + shlex.quote(remote) + '; then printf present; else printf absent; fi').decode()
         if state == 'absent':
