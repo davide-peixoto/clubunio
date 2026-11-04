@@ -85,4 +85,47 @@ einen eigenen verschlüsselten und verifizierten Backup-Export sowie
 unveränderte Elternzeilen/-definitionen unter Sperren vor dem Apply. Es gibt
 keinen allgemeinen Migrationslauf und kein Refresh/Import. Das Paket belässt
 Umgebung, Abhängigkeiten und externe Betriebsflags unverändert.
-Der ausführliche Test- und Aktivierungsnachweis wird nach dem Release ergänzt.
+
+### Aktiviert und nachgeprüft
+
+DEV zeigt auf `20261104-clubunio-mobile-functional-v2`, Runtimequelle
+`9cf83de` mit dem Produktstand `c7de5b4`; App `546844e`, auf `main`
+synchronisiert. Das begrenzte Paket enthält **21** committete Dateien, deren
+rohe Ausgangs-/Zielhashes gegen bekannte Gitquellen geprüft wurden. Alle
+21 Zielhashes nach Aktivierung erneut bestätigt; PHP-FPM aktiv.
+Umgebung, Composer, externe Betriebsflags und bestehendes PHPMaker unverändert.
+Runtime-Rollback: `20261104-clubunio-mobile-modules-performance-v1`.
+
+Das unveränderlich erhaltene Staging `functional-v1` wurde wegen eines Fehlers
+im letzten Prüfschritt nicht aktiviert: `MailFake::sent/queued` benötigen die
+Mailable-Klasse. Der korrigierte Prüfschritt verwendet diese echte Schnittstelle
+ohne PHPUnit auf dem Server. Schema1100 war bereits erfolgreich hinzugefügt;
+`functional-v2` hat es ausschliesslich lesend gegen die gepinnte verschlüsselte
+v1-Sicherung geprüft, inklusive unveränderter Elternzeilen/-definitionen,
+einzigem neuen Ledger, Spalten, PK/FK, Checks und ausgeschlossenen PUBLIC-Rechten.
+Kein erneutes Schema-Apply und kein Refresh. Beide Stagingstände und die
+privaten Sicherungen bleiben erhalten.
+
+Nachweise:
+
+- **525/525 Fluttertests**, vollständige Analyse ohne Befund.
+- Kommunikation/Opt-in/Cache-/Reaktionsschutz: **46 Tests/710 Assertions**,
+  ausschliesslich isolierte SQLite-Fixtures und gefälschte externe Antworten.
+- Gezielte PostgreSQL-Regression: Mitglieder/MyTeams **12/254**; Einstieg
+  **3/49**, Bus **2/57**, Keybox **6/122**, Challenge **4/134**.
+- Alle bestehenden DEV-Gates und die neue Chat-HTTP-Kernelprüfung bestanden,
+  einschliesslich idempotenter Reaktionen, frischem Feed, Opt-in-Revision und
+  verweigertem fremdem Direktchat. Alle synthetischen Daten zurückgerollt.
+- Tatsächliches betroffenes Konto nach Aktivierung mit temporärer,
+  zurückgerollter Sitzung geprüft: persönliche Liste exakt drei Datensätze;
+  alle drei Dossiers mit Anfrage-/Dokument-/Rechnungs-/Ausweisfähigkeit;
+  alle drei Rechnungs- und Ausweis-Endpunkte HTTP200; My Teams und Bus HTTP200;
+  Challenge nativ/verfügbar; Keybox-Einstieg sichtbar. Keine privaten
+  Felder/Token exportiert und keine Sitzung hinterlassen.
+- HTTPS: Health200, private anonyme API401, geschlossene öffentliche
+  Identitätsfunktion503. Keine echten Nachrichten, Dateien, Übersetzungen,
+  PINs, Pushs, Importe oder Bankzahlungen durch die Prüfungen.
+
+Die iPhone-Simulatoransicht kann hier unter Windows nicht nativ abgenommen
+werden. Die App muss mit dem neuen App-Stand neu gestartet/gebaut werden;
+ein Backend-Release allein aktualisiert keine bereits laufenden Flutterwidgets.

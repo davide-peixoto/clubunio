@@ -30,7 +30,11 @@ Die Keybox zeigt einen ehrlichen Leerstand. Boxen/Freigaben werden ueber die
 bestehende Keyboxverwaltung konfiguriert; physische Igloo-Ausgabe bleibt separat
 geschlossen. Ein fehlender `Penalty`-Katalogeintrag erfordert eine ausdrueckliche
 Vereinskonfiguration; das vorhandene App-Modulprofil kann nur vorhandene
-Katalogoptionen auswaehlen. Diese Korrektur fuehrt keine Konfiguration aus.
+Katalogoptionen auswaehlen. Nach der getrennten ausdruecklichen Freigabe des
+Benutzers wurde der fehlende Penalty-Eintrag auf SV-Sissach-DEV gezielt
+aktiviert, verschluesselt gesichert und auditiert; keine Rollen oder
+persoenlichen App-Modulprofile wurden geaendert. Die physische Keybox bleibt
+wegen fehlender Einrichtung und geschlossener Betriebsfreigabe unveraendert.
 
 Root integriert die praesentationsgebundenen Profilwidgets in die persoenliche
 Shell und entfernt die ohne freigegebene Public-Identity-Capability angebotene

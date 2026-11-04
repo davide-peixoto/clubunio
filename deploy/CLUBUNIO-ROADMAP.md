@@ -1432,3 +1432,32 @@ Diagnosering; keine Headertexte/URLs/IDs/Token exportiert. HTTPSnachlauf200/
 401/503 korrekt,17Hashes erneut bestaetigt, PHP-FPM aktiv. iOS-Simulator selbst
 hier nicht gemessen. Details:PERFORMANCE-MODULES-RELEASE.md und
 PERFORMANCE-API-MEASUREMENTS.md; App:mobile/docs/PERFORMANCE-ALL-MODULES.md.
+
+
+## 04.11.2026: Mobile Funktionsparität, Rechte und Chat auf DEV
+
+Aktiv: 20261104-clubunio-mobile-functional-v2 (Runtime9cf83de, Produktc7de5b4),
+App546844e. 21 committete Runtime-/Gate-/Schema-Dateien mit exakten Git-/SHA-
+Baselines und Nachprüfung, PHP-FPM aktiv. Alle DEV-Gates inklusive neuer Chat-
+HTTP-Prüfung grün. V1-Staging blieb wegen MailFake-Prüfskriptfehler inaktiv;
+1100 war bereits additiv angewendet. V2 prüfte das Schema ausschliesslich lesend
+gegen die private verschlüsselte V1-Sicherung; keine erneute Anwendung.
+Runtime-Rollback:20261104-clubunio-mobile-modules-performance-v1.
+
+525 Fluttertests grün, Analyse ohne Befund; Kommunikation46/710;
+PG Mitglieder/MyTeams12/254, Einstieg3/49, Bus2/57, Keybox6/122, Challenge4/134.
+Trainerverzeichnis privat, frische Dossiers mit Ausweis/Rechnungen/Antrag,
+verantwortliche Probetrainings, Busleerlisten und Profil-/Keyboxeinstiege
+korrigiert. ChatPlus mit Bild/Datei/Termin/Poll, Emoji-Reaktionen und Opt-in-
+Übersetzungseinstellungen; Posteingang oben, Chat fest mittig, MyTeams unten.
+
+Genau zwei bestehende Elternvorschläge und SV-Sissach-Challenge nach getrennten
+expliziten Benutzerbestätigungen auf DEV gesichert/auditiert freigegeben;
+Trainerrolle, andere Konten und App-Modulprofile unverändert. Nachprüfung am
+betroffenen Konto: exakt drei persönliche Mitglieder, drei Rechnungs-/Ausweis-
+Endpunkte200 und frische Dossierfähigkeiten; Bus/MyTeams200, Challenge sichtbar,
+Keybox-Einstieg vorhanden. Temporäre Prüfsitzung vollständig zurückgerollt.
+HTTPS200/401/503 korrekt. Keine Provider-/PHPMaker-/PROD-/SaaS-/Storeumstellung.
+Übersetzungsanbieter weiterhin aus; Keyboxen nicht eingerichtet, physische
+Ausgabe geschlossen. Windowsprüfungen ersetzen keinen nativen iPhone-Lauf.
+Details:CLUBUNIO-MOBILE-FUNCTIONAL-PARITY.md.
