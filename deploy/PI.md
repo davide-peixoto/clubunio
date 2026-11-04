@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## DE/EN Fachoberflaechen (04.11.2026)
+
+Aktiv `20261104-clubunio-languages-complete` auf `20261104-clubunio-languages`.
+Sprachdelta ae7feb3,370 Dateihashes geprueft;2487 Katalogschluessel ohne offene
+historische Ausnahme. Migrationen001300/001400 gezielt und transaktional nach
+verschluesselter Sicherung; Bestandsvorlagen/Revisionen unveraendert.
+368 Vorlagen gerendert, vier Servergates erfolgreich, Caches aufgebaut/FPM reload.
+HTTPS EN/DE und Login Desktop/Mobil geprueft; angemeldete manuelle Fachsicht noch
+offen wegen abgelaufener Browsersitzung. Keine Env-/Rechte-/PHPMaker-Aenderung.
+Rueckweg vorheriger Code mit erhaltenen additiven Sprachdaten. Details:
+CLUBUNIO-LANGUAGE-COMPLETION.md und CLUBUNIO-MESSAGE-LANGUAGES.md.
+
 ## Freigegebene historische Spesenkorrektur (03.11.2026)
 
 14 Mannschaftssaison-Verknuepfungen ausd5cb1f2 korrigiert, nur ClubUnio. Belegsaison

@@ -86,6 +86,30 @@ Lokale Abnahme vom 04.11.2026:
   korrigierter Test44 Assertions, letzte3 Tests73 Assertions sowie4 separate
   Mannschaftszugriffstests106 Assertions erfolgreich. Testdaten zurueckgerollt.
 
-Release-/Browsernachweis wird nach Aktivierung unten nachgefuehrt.
 Automatische Katalogabdeckung beweist nicht, dass beliebige kundeneigene Texte
 uebersetzt wurden. Fachliche Daten und bestehende Dokumentinhalte bleiben original.
+
+## Release und Nachkontrolle
+
+Aktiv auf `https://dev.clubunio.ch`: `20261104-clubunio-languages-complete`,
+gezieltes Delta `ae7feb3` auf `20261104-clubunio-languages`. Alle370 ausgelieferten
+Dateien per Git-Objekthash mit dem Commit verglichen, ohne Unterschiede. Kein
+Env-/Composer-/Storage-Austausch, keine Aenderung an PHPMaker DEV/PROD.
+
+Migrationen001300/001400 nach verschluesseltem Export gemeinsam transaktional
+ausgefuehrt. Vorhandene Vorlagen und Revisionen anschliessend bytegleich im
+JSON-Snapshot,368 Vorlagen erfolgreich gerendert. Sicherung0600 im privaten
+Serverordner `shared/language-backups`, nicht im Git oder Webroot.
+Config-/Route-/View-Cache erstellt, PHP-FPM neu geladen. Grundpruefung,
+Rollenpruefung, Mobile-Saisonfilter und Simulationsschutz erfolgreich.
+
+Anonymer HTTPS-Sprachwechsel EN/DE erfolgreich. Englische Loginseite visuell auf
+Desktop1440x1000 und Mobil390x844 geprueft, keine horizontale Ueberbreite.
+Sprachauswahl und Viewport danach zurueckgesetzt. Lokale Nachweise ausserhalb Git:
+`storage/app/language-completion-login-en-desktop.png` und
+`storage/app/language-completion-login-en-mobile.png`.
+
+Angemeldete manuelle Sichtpruefung der Fachmasken noch offen: vorhandene
+Browsersitzung war abgelaufen, erneute Anmeldung angefragt. Die synthetischen
+Dialog-/Rollen-/Lookup-/Nachrichtentests sind davon unabhaengig erfolgreich.
+Keine echten Nachrichten, Zahlungen oder Datenauffrischung ausgelöst.
