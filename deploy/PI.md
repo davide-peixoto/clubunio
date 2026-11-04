@@ -1,5 +1,14 @@
 # Pi staging: dev.clubunio.ch
 
+## Angemeldete DE/EN-Sichtabnahme (04.11.2026)
+
+Nachlauf `20261104-clubunio-languages-reviewed-v2`, auf reviewed/complete.
+Einstellungen, Lookup-/Vorlagendialoge, englische Vorlagenvorschau Desktop/Mobil,
+Teamplanung, Bus und Signage geprueft. Resttexte in eingebetteten Ansichten und
+Menuehilfen korrigiert;2523 Katalogschluessel, Ressourcenpruefung erweitert.
+Keine Migration oder Fachdatenmutation. Sprache nach Pruefung wieder Deutsch;
+PHPMaker DEV/PROD und Benutzerrechte unveraendert. CLUBUNIO-LANGUAGE-COMPLETION.md.
+
 ## DE/EN Fachoberflaechen (04.11.2026)
 
 Aktiv `20261104-clubunio-languages-complete` auf `20261104-clubunio-languages`.

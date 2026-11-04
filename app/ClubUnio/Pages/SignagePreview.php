@@ -127,10 +127,13 @@ class SignagePreview extends Page
         try {
             $data = app(SignageService::class)->preview(Filament::auth()->user(), Filament::getTenant(), ['date' => $this->date, 'period_id' => $this->periodId]);
         } catch (ValidationException $e) {
-            $data = ['competitions' => collect(), 'clubs' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => 'Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.'];
+            $data = ['competitions' => collect(), 'clubs' => collect(), 'notices' => collect(), 'fields' => collect(), 'trainings' => collect(), 'selectionError' => __('Bitte ein gültiges Datum und eine verfügbare Trainingsperiode auswählen.')];
         }
 
-        return $data + ['periods' => $this->periods(), 'tenant' => Filament::getTenant(), 'brand' => $this->brand(),
-            'activePlan' => app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period(Filament::getTenant())?->name ?? 'Nicht festgelegt'];
+        $periods = $this->periods();
+        $active = app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period(Filament::getTenant());
+
+        return $data + ['periods' => $periods, 'tenant' => Filament::getTenant(), 'brand' => $this->brand(),
+            'activePlan' => $active ? ($periods[$active->id] ?? $active->name) : __('Nicht festgelegt')];
     }
 }

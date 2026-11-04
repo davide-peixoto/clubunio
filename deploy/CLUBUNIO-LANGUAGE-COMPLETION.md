@@ -109,7 +109,25 @@ Sprachauswahl und Viewport danach zurueckgesetzt. Lokale Nachweise ausserhalb Gi
 `storage/app/language-completion-login-en-desktop.png` und
 `storage/app/language-completion-login-en-mobile.png`.
 
-Angemeldete manuelle Sichtpruefung der Fachmasken noch offen: vorhandene
-Browsersitzung war abgelaufen, erneute Anmeldung angefragt. Die synthetischen
-Dialog-/Rollen-/Lookup-/Nachrichtentests sind davon unabhaengig erfolgreich.
-Keine echten Nachrichten, Zahlungen oder Datenauffrischung ausgelöst.
+## Angemeldete Sichtpruefung und Nachtrag (04.11.2026)
+
+Nach erneuter Benutzeranmeldung direkt auf dev.clubunio.ch geprueft:
+Einstellungen und Vereinssprachdialog, Mitgliederstatus-Lookups (Member,
+Left the club usw.), Lookup-Uebersetzungsdialog, DE-/EN-Nachrichtenvorlagen und
+englische Bus-Vorlagenvorschau, Teamplanung, Busverwaltung und Signage.
+Vorlageneditor auf Desktop und390px Mobilbreite ohne horizontale Ueberbreite.
+Alle Dialoge ohne Speichern geschlossen, keine Testnachricht versendet.
+
+Gefundene Reststellen in eingebetteten Livewire-Ansichten nachgezogen: Planungs-
+und Busueberschriften, SFV-/Absenzaktionen, Signage-Feedhinweise/Wettertexte,
+Untermenue-Tooltip/Barrierefreiheitslabel sowie zwei App-Einstellungslabels.
+Aktiver Sommer-/Winterplan nutzt auch in der Signage-Auswahl den lokalisierten
+Lookup. Wetter-Icon-Vergleiche, Statuswerte und Instagram-Nutzertexte unveraendert.
+Katalogpruefung umfasst jetzt alle resources/views, auch Framework-Overrides.
+Aktueller Umfang2523 Schluessel; gezielte Tests und Blade-Kompilierung erfolgreich.
+
+Nachtrag als `20261104-clubunio-languages-reviewed-v2`, Rueckweg reviewed/complete.
+Keine weitere Datenmigration, Env-, Rechte- oder PHPMaker-DEV-/PROD-Aenderung.
+Die Screenshots liegen unversioniert unter storage/app/language-review-template-
+en.png und language-review-template-en-mobile.png. Dies ist eine gezielte
+Sprach-/Dialogabnahme, keine erneute vollstaendige Fachprozessabnahme.

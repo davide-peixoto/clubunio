@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 base=/var/www/svs-laravel
-previous="$base/releases/20261104-clubunio-languages-complete"
-release="$base/releases/20261104-clubunio-languages-reviewed"
+previous="$base/releases/20261104-clubunio-languages-reviewed"
+release="$base/releases/20261104-clubunio-languages-reviewed-v2"
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 sudo cp -a "$previous" "$release"
