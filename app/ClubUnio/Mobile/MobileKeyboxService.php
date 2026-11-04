@@ -50,6 +50,7 @@ final class MobileKeyboxService
     private function dto(object $box,bool $issue): array { return ['id'=>(int)$box->id,'name'=>$box->name,'revision'=>(int)$box->revision,'issuanceEnabled'=>$issue,'reservationOnly'=>false]; }
     public function index(Account $actor,Tenant $tenant): array
     {
+        app(MobileAccess::class)->enter($actor,$tenant);
         $rows=[]; foreach ($this->boxes($tenant)->where('active',true)->orderBy('name')->get() as $box) {
             if ($this->allowed($actor,$tenant,$box)) $rows[]=$this->dto($box,$this->operational($tenant,$box));
         }
@@ -61,7 +62,12 @@ final class MobileKeyboxService
         $ids=[];
         foreach ($actor->tenants()->get() as $tenant) {
             if ($bound && !$bound->is($tenant)) continue;
-            try { if ($this->index($actor,$tenant)['boxes']) $ids[]=(int)$tenant->id; }
+            try {
+                // The existing index authorizes personal entry and filters every individual box.
+                // A legal empty view is still a valid profile destination; it grants no PIN rights.
+                $this->index($actor,$tenant);
+                $ids[]=(int)$tenant->id;
+            }
             catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) { if (!in_array($error->getStatusCode(),[403,404],true)) throw $error; }
         }
         return $ids;

@@ -33,14 +33,19 @@ try {
     $expect($profile['data']['id'], (int) $actor->id, 'profile owner');
     [$status, $menu] = $call('GET', 'clubs/'.$tenant->id.'/modules', [], $token);
     $expect($status, 200, 'modules');
-    $expect(count($menu['data']['modules']), 11, 'module inventory');
+    $expectedKeys = array_values(array_intersect(array_keys(app(\App\ClubUnio\Services\MobileModuleSettings::class)->options($tenant)),
+        array_keys(\App\ClubUnio\Services\MobileModuleSettings::MODULES)));
+    $expectedKeys[] = 'Profil';
+    $actualKeys = array_column($menu['data']['modules'], 'key');
+    sort($expectedKeys); sort($actualKeys);
+    $expect($actualKeys, $expectedKeys, 'configured module inventory');
     [$status] = $call('POST', 'password', ['current_password' => $password, 'password' => $changed, 'password_confirmation' => $changed], $token);
     $expect($status, 200, 'password');
     [$status] = $call('GET', 'profile', [], $token);
     $expect($status, 401, 'old session revoked');
     [$status] = $call('POST', 'session', ['username' => $actor->username, 'password' => $changed, 'device_name' => 'Synthetic replacement']);
     $expect($status, 200, 'replacement login');
-    echo "PG synthetic login/profile/11 modules/password/revocation/relogin passed; transaction rolled back.\n";
+    echo "PG synthetic login/profile/configured modules/password/revocation/relogin passed; transaction rolled back.\n";
 } catch (Throwable $e) {
     fwrite(STDERR, 'Synthetic gate failed: '.get_class($e).': '.$e->getMessage()."\n");
     $failed = true;

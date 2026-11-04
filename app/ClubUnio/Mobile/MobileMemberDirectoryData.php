@@ -2,8 +2,8 @@
 
 namespace App\ClubUnio\Mobile;
 
-use App\ClubUnio\Models\{Account, MemberChangeRequest, Tenant};
-use App\ClubUnio\Services\{MemberChangeService, ModulePermissionService};
+use App\ClubUnio\Models\{Account, Member, MemberChangeRequest, Tenant};
+use App\ClubUnio\Services\{MemberAccessService, MemberChangeService, ModulePermissionService};
 use Illuminate\Http\Request;
 
 final class MobileMemberDirectoryData
@@ -11,7 +11,12 @@ final class MobileMemberDirectoryData
     public function index(Request $request, Account $actor, Tenant $tenant): array
     {
         $data = $request->validate(['q' => 'nullable|string|max:120', 'start' => 'nullable|integer|min:0|max:100000', 'recperpage' => 'nullable|integer|min:1|max:50']);
-        $query = app(MobileMemberData::class)->scope($actor, $tenant);
+        app(MobileAccess::class)->enter($actor, $tenant);
+        // The original personal directory lists self/represented children.
+        // Trainer roster contact visibility belongs to the team detail route.
+        $query = app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view')
+            ? Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)
+            : app(MemberAccessService::class)->represented($actor, $tenant);
         $search = trim($data['q'] ?? '');
         if ($search !== '') {
             // Literal search: wildcard characters must not broaden the requested name.
@@ -21,10 +26,13 @@ final class MobileMemberDirectoryData
         $total = (clone $query)->count();
         $rows = $query->orderBy('last_name')->orderBy('first_name')->orderBy('id')
             ->offset($data['start'] ?? 0)->limit($data['recperpage'] ?? 20)->get(['id', 'first_name', 'last_name', 'email', 'mobile', 'city']);
+        $pending=\Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.account_member_links')->where('tenant_id',$tenant->id)
+            ->where('account_id',$actor->id)->where('state','pending')->where('kind','parent')->count();
         return ['Members' => $rows->map(fn ($member) => ['MitgliederID' => (int) $member->id,
             'Vorname' => $member->first_name, 'Nachname' => $member->last_name, 'Email' => $member->email,
                 'Mobile' => $member->mobile, 'Ort' => $member->city, 'CanOpenDossier' => true])->all(), 'totalRecordCount' => $total,
-            'CanReviewChangeRequests' => app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view')];
+            'CanReviewChangeRequests' => app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),
+            'PendingParentLinks'=>(int)$pending];
     }
     public function changes(Request $request, Account $actor, Tenant $tenant): array
     {

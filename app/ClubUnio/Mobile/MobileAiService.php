@@ -17,6 +17,9 @@ final class MobileAiService
             app(MobileSessions::class)->authenticate(request());
         }
         app(MobileAccess::class)->enter($actor, $tenant);
+        if ($data['operation'] === 'translate') {
+            app(ChatPreferences::class)->allowTranslation($actor, $tenant, $data['language']);
+        }
         if (! empty($data['message_id'])) {
             $s = app(ChatService::class);
             $row = $s->table($tenant, 'chat_messages')->where('id', $data['message_id'])->whereNull('deleted_at')->first();
@@ -43,9 +46,13 @@ final class MobileAiService
         abort_if($provider === 'azure_translator' && $data['operation'] !== 'translate', 422);
         $fingerprint = hash('sha256', json_encode([$data['operation'], $text, $revision, $data['language'], $data['message_id'] ?? null, 'prompt-v1'], JSON_THROW_ON_ERROR));
         $db = DB::connection('clubunio');
-        $work = $db->transaction(function () use ($db, $tenant, $actor, $data, $fingerprint, $provider, $revision) {
+        $work = $db->transaction(function () use ($db, $tenant, $actor, $data, $fingerprint, $provider, $revision, $text) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            app(MobileAccess::class)->enter($actor, $tenant);
+            // Preferences and content may have changed while waiting for this
+            // same lock held by preference/message writes. Check before cache
+            // selection or reservation, not only after a paid provider call.
+            [$lockedText, $lockedRevision] = $this->source($actor, $tenant, $data);
+            abort_unless($lockedRevision === $revision && hash_equals($text, $lockedText), 409);
             $query = $db->table('clubora.mobile_ai_work')->where('tenant_id', $tenant->id);
             $old = (clone $query)->where('account_id', $actor->id)->where('request_key', $data['request_key'])->first();
             if ($old) {
@@ -75,10 +82,13 @@ final class MobileAiService
             return $query->where('id', $id)->first();
         });
         if ($work->state === 'succeeded') {
-            $this->source($actor, $tenant, $data);
+            [$cachedText, $cachedRevision] = $this->source($actor, $tenant, $data);
+            abort_unless($cachedRevision === $revision && hash_equals($text, $cachedText), 409);
             return ['text' => Crypt::decryptString($work->result_encrypted), 'language' => $data['language'], 'cached' => true];
         }
         try {
+            [$dispatchText, $dispatchRevision] = $this->source($actor, $tenant, $data);
+            abort_unless($dispatchRevision === $revision && hash_equals($text, $dispatchText), 409);
             $adapter = match ($work->provider) {
                 'openai' => new OpenAiTextProvider,
                 'azure_openai' => new OpenAiTextProvider(true),

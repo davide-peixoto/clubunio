@@ -122,6 +122,7 @@ final class ChatService
         $permittedTeams = (clone $teamQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
         $permittedStaff = (clone $staffQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
         $admin = $access->admin($actor, $tenant);
+        $preferences = app(ChatPreferences::class)->get($actor, $tenant);
         $accepted = collect(); $denied = [];
         foreach ($rows as $chat) {
             $allowed = match ($chat->kind) {
@@ -157,6 +158,7 @@ final class ChatService
             ->where('m.account_id', '<>', $actor->id)->whereNull('m.deleted_at')->groupBy('m.conversation_id')->selectRaw('m.conversation_id,count(*) as total')->pluck('total','m.conversation_id');
         return $accepted->map(fn ($chat) => $this->conversationDto($actor, $tenant, $chat, $teams, [
             'membership' => $memberships[$chat->id], 'admin' => $admin, 'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
+            'chat_preferences' => $preferences,
             'unread' => (int) ($unread[$chat->id] ?? 0),
         ]))->all();
     }
@@ -183,10 +185,12 @@ final class ChatService
             $title = Account::whereKey($other)->value('display_name') ?? $title;
         }
         return ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
+            'chat_preferences' => $projection['chat_preferences'] ?? app(ChatPreferences::class)->get($actor, $tenant),
             'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
             'can_moderate' => $projection !== null ? ($chat->kind !== 'direct' && ($projection['admin'] || $projection['staff'])) : app(ChatControls::class)->moderator($actor, $tenant, $chat),
             'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
             'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
+            'can_link_event' => in_array($chat->kind, ['team', 'staff'], true) && (bool) $chat->team_season_id,
             'can_write' => $chat->kind !== 'announcements' || ($projection['admin'] ?? $access->admin($actor, $tenant)),
             'can_poll' => $chat->kind !== 'announcements' && ($projection !== null ? ($projection['admin'] || $projection['staff'])
                 : ($access->admin($actor, $tenant) || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()))),
@@ -240,6 +244,7 @@ final class ChatService
         $visible = $rows->filter(fn ($row) => !$row->deleted_at);
         $attachments = app(ChatAttachments::class)->forMessages($tenant, $visible->pluck('id')->all());
         $polls = $this->pollDtos($actor, $tenant, $visible->where('kind', 'poll')->pluck('object_id')->unique()->all());
+        $reactions = $this->table($tenant, 'chat_reactions')->whereIn('message_id', $visible->pluck('id'))->get(['message_id', 'account_id', 'emoji'])->groupBy('message_id');
         $moderated = [];
         $foreign = $visible->filter(fn ($row) => (int) $row->account_id !== (int) $actor->id)->pluck('conversation_id')->unique()->all();
         if ($foreign) foreach ($this->table($tenant, 'chat_conversations')->whereIn('id', $foreign)->get() as $chat) {
@@ -251,6 +256,10 @@ final class ChatService
                 'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
                 'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
                 'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
+                'can_react' => !$row->deleted_at,
+                'reactions' => ($reactions[(int) $row->id] ?? collect())->groupBy('emoji')->map(fn ($group, $emoji) => [
+                    'emoji' => $emoji, 'count' => $group->count(), 'mine' => $group->contains(fn ($reaction) => (int) $reaction->account_id === (int) $actor->id),
+                ])->values()->all(),
                 'poll' => $row->kind === 'poll' && !$row->deleted_at ? $polls[(int) $row->object_id] : null,
                 'event_id' => !$row->deleted_at && $row->kind === 'event' ? (int) $row->object_id : null,
                 'can_edit' => !$row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)

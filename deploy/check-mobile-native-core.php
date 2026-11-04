@@ -10,6 +10,7 @@ foreach (['expenses', 'documents', 'facilities', 'bus'] as $module) {
 }
 $routes = collect(Illuminate\Support\Facades\Route::getRoutes())->keyBy(fn ($route) => $route->uri());
 foreach (['members/{member}', 'members/{member}/invoices', 'members/{member}/contact',
+    'my-teams/{team}/registrations', 'my-teams/{team}/registrations/{registration}',
     'members/{member}/change-requests', 'members/{member}/change-requests/{change}/decide'] as $suffix) {
     $route = $routes->get('api/mobile/v1/clubs/{tenant}/'.$suffix);
     if (! $route || ! in_array(App\ClubUnio\Mobile\MobileMiddleware::class, $route->gatherMiddleware(), true)) { throw new LogicException('Missing personal dossier guard'); }

@@ -54,6 +54,8 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('my-teams/staff-functions', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'functions']);
         Route::get('my-teams/{team}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'show'])->whereNumber('team');
         Route::get('my-teams/{team}/trainings', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'trainings'])->whereNumber('team');
+        Route::get('my-teams/{team}/registrations', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'registrations'])->whereNumber('team');
+        Route::get('my-teams/{team}/registrations/{registration}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'registration'])->whereNumber('team')->whereNumber('registration');
         Route::post('my-teams/{team}/{kind}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'assignment'])->whereNumber('team')->whereIn('kind', ['staff', 'players']);
         Route::delete('my-teams/{team}/{kind}/{assignment}', [\App\ClubUnio\Mobile\MobileTeamsController::class, 'assignment'])->whereNumber('team')->whereIn('kind', ['staff', 'players'])->whereNumber('assignment');
         Route::get('planning/absences', [\App\ClubUnio\Mobile\MobilePlanningController::class, 'absences']);
@@ -78,6 +80,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
 
         Route::get('contacts', [Mobile::class, 'contacts']);
         Route::get('chats', [Mobile::class, 'chats']);
+        Route::match(['GET', 'POST'], 'chat-preferences', [Mobile::class, 'chatPreferences']);
         Route::post('direct', [Mobile::class, 'direct']);
         Route::get('chats/{chat}', [Mobile::class, 'chat'])->whereNumber('chat');
         Route::get('chats/{chat}/messages', [Mobile::class, 'messages'])->whereNumber('chat');
@@ -98,6 +101,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('inbox', [Mobile::class, 'inbox']);
         Route::get('chats/{chat}/changes', [Mobile::class, 'changes'])->whereNumber('chat');
         Route::post('messages/{message}/edit', [Mobile::class, 'editMessage'])->whereNumber('message');
+        Route::post('messages/{message}/reaction', [Mobile::class, 'reaction'])->whereNumber('message');
         Route::post('messages/{message}/delete', [Mobile::class, 'deleteMessage'])->whereNumber('message');
         Route::post('messages/{message}/report', [Mobile::class, 'reportMessage'])->whereNumber('message');
         Route::get('chats/{chat}/reports', [Mobile::class, 'reports'])->whereNumber('chat');

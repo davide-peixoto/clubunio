@@ -59,10 +59,26 @@ final class ChatControls
         }
         if ($text === null) {
             $s->table($tenant, 'chat_attachments')->where('message_id', $id)->update(['state' => 'removed', 'bytes_encrypted' => null]);
+            $s->table($tenant, 'chat_reactions')->where('message_id', $id)->delete();
         }
         $fresh = $s->table($tenant, 'chat_messages')->where('id', $id)->first();
         $this->record($actor, $tenant, $fresh, $text === null ? 'delete' : 'edit');
         return $fresh;
+    }
+
+    public function react(Account $actor, Tenant $tenant, int $id, int $revision, ?string $emoji): object
+    {
+        $row = $this->visible($actor, $tenant, $id);
+        abort_if($row->deleted_at || (int) $row->revision !== $revision, 409);
+        abort_unless($emoji === null || in_array($emoji, ['👍', '❤️', '😂', '😮', '😢', '🙏'], true), 422);
+        $query = $this->service()->table($tenant, 'chat_reactions')->where('message_id', $id)->where('account_id', $actor->id);
+        $old = (clone $query)->value('emoji');
+        if ($old === $emoji) return $row;
+        if ($emoji === null) $query->delete();
+        else $query->updateOrInsert(['tenant_id' => $tenant->id, 'message_id' => $id, 'account_id' => $actor->id],
+            ['emoji' => $emoji, 'updated_at' => now()->toIso8601String()]);
+        $this->record($actor, $tenant, $row, 'reaction');
+        return $row;
     }
 
     public function changes(Account $actor, Tenant $tenant, int $chatId, int $after): array

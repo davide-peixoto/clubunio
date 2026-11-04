@@ -14,7 +14,7 @@ final class MobilePenaltyAccess
         if (! config('clubunio-mobile.native_penalty_enabled', false)) return false;
         try { app(MobileAccess::class)->enter($actor, $tenant); }
         catch (HttpException $error) { if ($error->getStatusCode() !== 403) throw $error; return false; }
-        return array_key_exists('Penalty', app(MobileModuleSettings::class)->options($tenant));
+        return in_array('Penalty', app(MobileModuleSettings::class)->visibleKeys($actor, $tenant), true);
     }
     public function authorize(Account $actor, Tenant $tenant): void
     {

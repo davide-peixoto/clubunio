@@ -98,6 +98,14 @@ final class FollowupMenuProbe
                 $this->expect($status, $enabled ? 200 : 503, 'direct readiness '.$path);
             }
             if ($enabled) {
+                [$status,$directory]=$this->call('GET',$base.'/members',[],$tokens['trainer']);
+                $this->expect($status,200,'trainer personal directory status');
+                $this->expect(array_column($directory['data']['Members'],'MitgliederID'),[$members['trainer']],'trainer directory excludes unrelated roster');
+                $this->expect($directory['data']['PendingParentLinks'],0,'trainer pending parents own account only');
+                [$status,$directory]=$this->call('GET',$base.'/members',[],$tokens['parent']);
+                $this->expect($status,200,'parent personal directory status');
+                $actual=array_column($directory['data']['Members'],'MitgliederID');sort($actual);$expected=[$members['parent'],$child];sort($expected);
+                $this->expect($actual,$expected,'parent directory includes approved own child');
                 $trainer = $menu('trainer');
                 $this->expect($trainer['Mitglieder']['native'] ?? false, true, 'trainer real directory scope');
                 $this->expect($trainer['Trainingsplaner']['native'] ?? false, true, 'trainer actual training team');

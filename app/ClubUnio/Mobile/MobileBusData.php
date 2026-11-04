@@ -55,7 +55,7 @@ final class MobileBusData
         $labels = ['buses' => $bus->table($tenant, 'buses')->whereIn('id', $rows->pluck('bus_id'))->pluck('name', 'id')->all(),
             'teams' => $bus->table($tenant, 'team_seasons')->whereIn('id', $rows->pluck('team_season_id'))->pluck('label', 'id')->all()];
         return ['reservations' => $rows->map(fn ($row) => $this->row($actor, $tenant, $row, $labels, $rights))->all(), 'total' => $total,
-            'counts' => $counts, 'capabilities' => $this->capabilities($actor, $tenant)];
+            'counts' => (object) $counts, 'capabilities' => $this->capabilities($actor, $tenant)];
     }
     public function capabilities(Account $actor, Tenant $tenant): array
     {

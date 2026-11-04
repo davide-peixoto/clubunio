@@ -17,10 +17,28 @@ final class MobileAccountController
         $actor = $request->attributes->get('mobile.actor');
         return response()->json(['data' => ['id' => (int) $actor->id,
             'username' => $actor->username, 'name' => $actor->display_name,
+            'recovery_tenants' => $this->recoveryTenants($request, $actor),
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
             'password_change' => true, 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
             'password_reset' => false]]);
+    }
+
+    private function recoveryTenants(Request $request, Account $actor): array
+    {
+        if (!config('clubunio-mobile.public_identity.enabled', false)) return [];
+        $policy = app(MobilePublicIdentityPolicy::class);
+        try { $origin = $policy->origin($request); }
+        catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) { return []; }
+        $result = [];
+        foreach ($actor->tenants()->limit(100)->get() as $tenant) {
+            try {
+                $policy->tenant($origin, (int) $tenant->id);
+                app(MobileAccess::class)->enter($actor, $tenant);
+                if ($policy->enabled($tenant, 'email_enrollment')) $result[] = (int) $tenant->id;
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface|\Illuminate\Database\Eloquent\ModelNotFoundException $error) { }
+        }
+        return $result;
     }
 
     public function password(Request $request)

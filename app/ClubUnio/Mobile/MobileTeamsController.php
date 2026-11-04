@@ -18,6 +18,12 @@ final class MobileTeamsController
     public function trainings(Request $r) {
         return response()->json(['data' => app(MobileTeamsData::class)->trainings($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('team'))]);
     }
+    public function registrations(Request $r) {
+        return response()->json(['data'=>['Registrations'=>app(MobileTeamsData::class)->registrations($r->attributes->get('mobile.actor'),$r->attributes->get('mobile.tenant'),(int)$r->route('team'))]]);
+    }
+    public function registration(Request $r) {
+        return response()->json(['data'=>['Registration'=>app(MobileTeamsData::class)->registration($r->attributes->get('mobile.actor'),$r->attributes->get('mobile.tenant'),(int)$r->route('team'),(int)$r->route('registration'))]]);
+    }
     public function members(Request $r) {
         $actor = $r->attributes->get('mobile.actor'); $tenant = $r->attributes->get('mobile.tenant');
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'create');

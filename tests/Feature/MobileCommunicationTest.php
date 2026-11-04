@@ -65,7 +65,7 @@ CREATE TABLE clubora.invoice_statuses (id integer PRIMARY KEY, tenant_id integer
 CREATE TABLE clubora.bexio_checks (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, object_type text, object_id integer, state text, remote_status text, remote_id text, applied_at text);
 CREATE TABLE clubora.bexio_balances (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, object_type text, object_id integer, remote_status text, remote_id text);
 SQL);
-        foreach (['2026_11_02_000082_mobile_communication.php', '2026_11_02_000083_mobile_chat_controls.php'] as $migration) {
+        foreach (['2026_11_02_000082_mobile_communication.php', '2026_11_02_000083_mobile_chat_controls.php', '2026_11_04_001100_chat_experience.php'] as $migration) {
         $source = file_get_contents(database_path('clubunio/'.$migration));
         preg_match("/<<<'SQL'\n(.*?)\nSQL/s", str_replace("\r\n", "\n", $source), $match);
         $sql = preg_replace('/REVOKE ALL.*?FROM PUBLIC;/s', '', $match[1]);
@@ -548,6 +548,94 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->assertSame($expected, $ids);
     }
 
+    public function test_translation_requires_own_tenant_opt_in_target_and_each_request_consent(): void
+    {
+        config(['clubunio-mobile.ai.enabled' => true]);
+        Http::fake();
+        $token = $this->token($this->parent);
+        $this->withToken($token)->getJson($this->url('chat-preferences'))->assertOk()
+            ->assertJsonPath('data.translation_enabled', false)->assertJsonPath('data.revision', 0);
+        $input = ['request_key' => (string) Str::uuid(), 'operation' => 'translate', 'text' => 'Hallo', 'language' => 'fr', 'consent' => true];
+        $this->postJson($this->url('ai'), $input)->assertForbidden();
+        $preference = ['revision' => 0, 'translation_enabled' => true, 'target_language' => 'fr'];
+        $this->postJson($this->url('chat-preferences'), $preference)->assertOk()->assertJsonPath('data.revision', 1);
+        $this->postJson($this->url('chat-preferences'), $preference)->assertConflict();
+        $this->postJson($this->url('ai'), array_replace($input, ['language' => 'de']))->assertConflict();
+        $this->postJson($this->url('ai'), array_replace($input, ['consent' => false]))->assertUnprocessable();
+        $this->withToken($this->token($this->player))->getJson($this->url('chat-preferences'))->assertOk()->assertJsonPath('data.translation_enabled', false);
+        $this->withToken($token)->postJson($this->url('chat-preferences'), array_replace($preference, ['revision' => 1, 'translation_enabled' => false]))->assertOk();
+        $this->postJson($this->url('ai'), $input)->assertForbidden();
+        Http::assertNothingSent();
+    }
+
+    public function test_reactions_are_private_scoped_idempotent_and_sent_through_change_feed(): void
+    {
+        $chat = $this->teamChat($this->parent);
+        $this->teamChat($this->player);
+        $parentToken = $this->token($this->parent);
+        $message = $this->withToken($parentToken)->postJson($this->url('chats/'.$chat.'/messages'), ['client_id' => (string) Str::uuid(), 'text' => 'Training'])->assertCreated()->json('data');
+        $url = $this->url('messages/'.$message['id'].'/reaction');
+        $this->postJson($url, ['revision' => 1, 'emoji' => '👍'])->assertOk()->assertJsonPath('data.reactions.0.count', 1)->assertJsonPath('data.reactions.0.mine', true)->assertJsonPath('data.revision', 1);
+        $cursor = $this->db->table('clubora.chat_changes')->max('id');
+        $this->postJson($url, ['revision' => 1, 'emoji' => '👍'])->assertOk();
+        $this->assertSame($cursor, $this->db->table('clubora.chat_changes')->max('id'));
+        $this->withToken($this->token($this->player))->postJson($url, ['revision' => 1, 'emoji' => '👍'])->assertOk()->assertJsonPath('data.reactions.0.count', 2);
+        $this->withToken($parentToken)->getJson($this->url('chats/'.$chat.'/changes?after='.$cursor))->assertOk()->assertJsonPath('data.0.message.reactions.0.count', 2);
+        $this->postJson($url, ['revision' => 1, 'emoji' => null])->assertOk()->assertJsonPath('data.reactions.0.mine', false);
+        $this->postJson($url, ['revision' => 2, 'emoji' => '👍'])->assertConflict();
+        $this->postJson($url, ['revision' => 1, 'emoji' => 'arbitrary'])->assertUnprocessable();
+        $outsider = $this->account('member');
+        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $outsider->id,
+            'member_id' => $this->member('Outside reaction', '2000-01-01'), 'kind' => 'self', 'state' => 'approved']);
+        $this->withToken($this->token($outsider))->postJson($url, ['revision' => 1, 'emoji' => '👍'])->assertNotFound();
+        $this->withToken($parentToken)->postJson($this->url('messages/'.$message['id'].'/delete'), ['revision' => 1])->assertOk()->assertJsonPath('data.reactions', []);
+        $this->postJson($url, ['revision' => 2, 'emoji' => '👍'])->assertConflict();
+    }
+
+    public function test_translation_rechecks_opt_in_after_waiting_for_tenant_lock(): void
+    {
+        config(['clubunio-mobile.ai.enabled' => true]);
+        Http::fake();
+        $token = $this->token($this->parent);
+        $this->withToken($token)->postJson($this->url('chat-preferences'), ['revision' => 0, 'translation_enabled' => true, 'target_language' => 'fr'])->assertOk();
+        $readPreference = false; $revoked = false;
+        $this->db->listen(function ($query) use (&$readPreference, &$revoked): void {
+            if (str_starts_with($query->sql, 'select') && str_contains($query->sql, 'chat_preferences')) $readPreference = true;
+            // SQLite omits FOR UPDATE. This hook simulates the competing
+            // preference write finishing between first source read and lock.
+            if ($readPreference && !$revoked && str_starts_with($query->sql, 'select') && str_contains($query->sql, '"clubora"."tenants"')) {
+                $revoked = true;
+                $this->db->table('clubora.chat_preferences')->where('account_id', $this->parent->id)->update(['translation_enabled' => false, 'revision' => 2]);
+            }
+        });
+        $this->postJson($this->url('ai'), ['request_key' => (string) Str::uuid(), 'operation' => 'translate', 'text' => 'Hallo', 'language' => 'fr', 'consent' => true])->assertForbidden();
+        $this->assertTrue($revoked);
+        $this->assertSame(0, $this->db->table('clubora.mobile_ai_work')->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_cached_translation_rechecks_message_after_cache_selection(): void
+    {
+        config(['clubunio-mobile.ai.enabled' => true, 'clubunio-mobile.ai.openai.key' => 'synthetic-test-key']);
+        Http::fake(['api.openai.com/*' => Http::response(['status' => 'completed', 'output' => [['content' => [['type' => 'output_text', 'text' => 'Bonjour']]]], 'usage' => ['input_tokens' => 20, 'output_tokens' => 10]])]);
+        $chat = $this->teamChat($this->parent);
+        $token = $this->token($this->parent);
+        $this->withToken($token)->postJson($this->url('chat-preferences'), ['revision' => 0, 'translation_enabled' => true, 'target_language' => 'fr'])->assertOk();
+        $row = $this->postJson($this->url('chats/'.$chat.'/messages'), ['client_id' => (string) Str::uuid(), 'text' => 'Hallo'])->assertCreated()->json('data');
+        $input = ['request_key' => (string) Str::uuid(), 'operation' => 'translate', 'language' => 'fr', 'message_id' => $row['id'], 'consent' => true];
+        $this->postJson($this->url('ai'), $input)->assertOk();
+        $edited = false;
+        $this->db->listen(function ($query) use (&$edited, $row): void {
+            if (!$edited && str_starts_with($query->sql, 'select') && str_contains($query->sql, 'mobile_ai_work') && str_contains($query->sql, 'fingerprint')) {
+                $edited = true;
+                app(\App\ClubUnio\Mobile\ChatControls::class)->edit($this->parent, $this->tenant, $row['id'], 1, 'Changed after cache read');
+            }
+        });
+        $this->postJson($this->url('ai'), array_replace($input, ['request_key' => (string) Str::uuid()]))->assertConflict();
+        $this->assertTrue($edited);
+        Http::assertSentCount(1);
+    }
+
     public function test_ai_cache_budget_and_provider_switch_do_not_change_chat_messages(): void
     {
         config(['clubunio-mobile.ai.enabled' => true, 'clubunio-mobile.ai.openai.key' => 'synthetic-test-key']);
@@ -555,6 +643,7 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
             'usage' => ['input_tokens' => 100, 'output_tokens' => 30]])]);
         $chat = $this->teamChat($this->parent);
         $token = $this->token($this->parent);
+        $this->withToken($token)->postJson($this->url('chat-preferences'), ['revision' => 0, 'translation_enabled' => true, 'target_language' => 'pt-PT'])->assertOk();
         $row = $this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'), ['client_id' => (string) Str::uuid(), 'text' => 'Hallo Mannschaft'])->assertCreated()->json('data');
         $input = ['request_key' => (string) Str::uuid(), 'operation' => 'translate', 'language' => 'pt-PT', 'message_id' => $row['id'], 'consent' => true];
         $this->withToken($token)->postJson($this->url('ai'), $input)->assertOk()->assertJsonPath('data.text', 'Olá equipa')->assertJsonPath('data.cached', false);
@@ -746,6 +835,7 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
     {
         config(['clubunio-mobile.ai.enabled' => true, 'clubunio-mobile.ai.openai.key' => 'synthetic-test-key']);
         $chat = $this->teamChat($this->parent);
+        app(\App\ClubUnio\Mobile\ChatPreferences::class)->save($this->parent, $this->tenant, ['revision' => 0, 'translation_enabled' => true, 'target_language' => 'en']);
         $m = app(ChatService::class)->send($this->parent, $this->tenant, $chat, ['client_id' => (string) Str::uuid(), 'text' => 'Before edit']);
         Http::fake(function () use ($m) {
             app(\App\ClubUnio\Mobile\ChatControls::class)->edit($this->parent, $this->tenant, $m->id, 1, 'After edit');

@@ -44,6 +44,10 @@ try {
     $nativeTeams = collect($menu['data']['modules'])->firstWhere('key', 'Teams');
     $expect($nativeTeams['native'], (bool) config('clubunio-mobile.native_my_teams_enabled'));
     [$status, $dossier] = $call('GET', $base.'members/'.$member, [], $token); $expect($status, 200);
+    $expect($dossier['data']['Member']['CanReadInvoices'], true);
+    $expect($dossier['data']['Member']['CanEdit'], true);
+    $expect($dossier['data']['Member']['ChangeMode'], 'direct');
+    $expect($dossier['data']['Member']['CanReadIdCard'], false); // This older core client deliberately sends no id-card feature marker.
     [$status] = $call('POST', $base.'members/'.$member.'/contact', ['_version' => $dossier['data']['Member']['_version'], 'Mobile' => '+41790000000'], $token); $expect($status, 200);
     [$status] = $call('POST', $base.'members/'.$member.'/contact', ['_version' => $dossier['data']['Member']['_version'], 'Mobile' => '+41790000001'], $token); $expect($status, 422);
     [$status, $teams] = $call('GET', $base.'my-teams', [], $token); $expect($status, 200); $expect($teams['data']['totalRecordCount'], 1);

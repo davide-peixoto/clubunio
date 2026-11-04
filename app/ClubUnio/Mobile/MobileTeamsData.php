@@ -2,7 +2,7 @@
 
 namespace App\ClubUnio\Mobile;
 
-use App\ClubUnio\Models\{Account, Member, Tenant, TeamPlayer, TeamStaff};
+use App\ClubUnio\Models\{Account, Member, Tenant, TeamPlayer, TeamStaff, Registration};
 use App\ClubUnio\Services\{FamilyService, MemberAccessService, ModulePermissionService, RegistrationDataService, RegistrationReviewService, SignageService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -103,17 +103,50 @@ final class MobileTeamsData
             + ($kind === 'staff' ? ['Bezeichnung' => $functions->get($row->staff_function_id)?->name ?? '',
                 'IsTrainer' => strtoupper($functions->get($row->staff_function_id)?->code ?? '') === 'TRAINER'
                     || mb_strtolower(trim($functions->get($row->staff_function_id)?->name ?? '')) === 'trainer'] : []))->all();
-        $records = app(RegistrationReviewService::class)->visible($actor, $tenant)->where('team_season_id', $id)
+        $registrations = $this->registrationRows($actor,$tenant,$team);
+        return ['Team' => $this->teamDto($actor, $tenant, $team), 'Staff' => $merge($staff, 'staff'), 'Players' => $merge($players, 'players'),
+            'Trainings' => $this->trainingsForAuthorizedTeam($tenant, $id), 'Registrations' => $registrations, 'Members' => $members->values()->all()];
+    }
+
+    private function privateRegistrations(Account $actor,Tenant $tenant): bool
+    {
+        return app(ModulePermissionService::class)->allows($actor,$tenant,'registrations','view')
+            || app(MemberAccessService::class)->membership($actor,$tenant)?->role==='technical_lead';
+    }
+
+    private function teamRegistrations(Account $actor,Tenant $tenant,int $team)
+    {
+        $access=app(MemberAccessService::class);
+        if (!$this->privateRegistrations($actor,$tenant) && $access->membership($actor,$tenant)?->role==='trainer'
+            && in_array($team,$access->responsibleTeams($actor,$tenant),true)) {
+            return Registration::withoutGlobalScopes()->where('tenant_id',$tenant->id)->where('active',true)->where('team_season_id',$team);
+        }
+        return app(RegistrationReviewService::class)->visible($actor,$tenant)->where('team_season_id',$team);
+    }
+
+    private function basicRegistration(Registration $registration,object $team): array
+    {
+        return ['AnmeldungID'=>(int)$registration->id,'TeamSaisonID'=>(int)$team->id,'TeamSaisonLabel'=>$team->label,
+            'Vorname'=>$registration->first_name,'Nachname'=>$registration->last_name,'Revision'=>(int)$registration->revision,
+            'AnmeldungStatusText'=>$registration->status?->name,'StatusText'=>$registration->status?->name,
+            'CanReadPrivateDetails'=>false,'CanEdit'=>false,'CanReview'=>false,'CanUpload'=>false];
+    }
+
+    private function registrationRows(Account $actor,Tenant $tenant,object $team): array
+    {
+        $private=$this->privateRegistrations($actor,$tenant);
+        $records = $this->teamRegistrations($actor, $tenant, (int)$team->id)
             ->with(['status' => fn ($q) => $q->withoutGlobalScopes()->where('tenant_id', $tenant->id)])->orderBy('id')->get();
         $catalogs = [];
-        if ($records->isNotEmpty()) {
+        if ($private && $records->isNotEmpty()) {
             foreach (['countries', 'genders', 'billing_recipients'] as $table) { $catalogs[$table] = $this->table($tenant, $table)->pluck('name', 'id'); }
         }
-        $registrations = $records->map(function ($r) use ($team, $catalogs) {
+        return $records->map(function ($r) use ($team, $catalogs, $private) {
+            if (!$private) return $this->basicRegistration($r,$team);
             $v = app(RegistrationDataService::class)->values($r);
             $dto = ['AnmeldungID' => (int) $r->id, 'TeamSaisonID' => (int) $team->id, 'TeamSaisonLabel' => $team->label,
                 'Vorname' => $r->first_name, 'Nachname' => $r->last_name, 'Email' => $r->email, 'Ort' => $r->city,
-                'Geburtsdatum' => $v['birth_date'] ?? null, 'Revision' => $r->revision, 'StatusText' => $r->status?->name,
+                'Geburtsdatum' => $v['birth_date'] ?? null, 'Revision' => $r->revision, 'StatusText' => $r->status?->name, 'CanReadPrivateDetails' => true,
                 'LandText' => $catalogs['countries']->get($v['country_id'] ?? 0), 'NationalitaetText' => $catalogs['countries']->get($v['nationality_id'] ?? 0),
                 'GeschlechtText' => $catalogs['genders']->get($v['gender_id'] ?? 0), 'RechnungAnText' => $catalogs['billing_recipients']->get($v['billing_recipient_id'] ?? 0),
                 'EingereichtAm' => $r->submitted_at?->toIso8601String(), 'GeprueftAm' => $r->reviewed_at?->toIso8601String(), 'AkzeptiertAm' => $r->accepted_at?->toIso8601String()];
@@ -122,8 +155,21 @@ final class MobileTeamsData
                 'father_email' => 'EmailVater', 'father_mobile' => 'MobileVater', 'birth_place' => 'Geburtsort', 'notes' => 'Bemerkung'] as $from => $to) { $dto[$to] = $v[$from] ?? null; }
             return $dto;
         })->all();
-        return ['Team' => $this->teamDto($actor, $tenant, $team), 'Staff' => $merge($staff, 'staff'), 'Players' => $merge($players, 'players'),
-            'Trainings' => $this->trainingsForAuthorizedTeam($tenant, $id), 'Registrations' => $registrations, 'Members' => $members->values()->all()];
+    }
+
+    public function registrations(Account $actor,Tenant $tenant,int $team): array
+    {
+        return $this->registrationRows($actor,$tenant,$this->team($actor,$tenant,$team));
+    }
+
+    public function registration(Account $actor,Tenant $tenant,int $team,int $registration): array
+    {
+        $resolved=$this->team($actor,$tenant,$team);
+        $row=$this->teamRegistrations($actor,$tenant,$team)->with(['status'=>fn($q)=>$q->withoutGlobalScopes()->where('tenant_id',$tenant->id)])
+            ->whereKey($registration)->firstOrFail();
+        if (!$this->privateRegistrations($actor,$tenant)) return $this->basicRegistration($row,$resolved);
+        abort_unless(config('clubunio-mobile.native_registrations_enabled',false),503);
+        return app(MobileRegistrationData::class)->details($actor,$tenant,$registration)+['CanReadPrivateDetails'=>true];
     }
 
     public function trainings(Account $actor, Tenant $tenant, int $id): array

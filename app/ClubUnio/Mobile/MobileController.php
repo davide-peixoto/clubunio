@@ -79,7 +79,7 @@ final class MobileController
     public function direct(Request $r)
     {
         $d = $r->validate(['account_id' => 'required|integer|min:1']);
-        return $this->write($r, fn () => $this->data(['id' => app(ChatService::class)->direct($this->actor($r), $this->tenant($r), (int) $d['account_id'])->id, 'other_account_id' => (int) $d['account_id'], 'uploads' => (bool) config('clubunio-mobile.uploads_enabled')]));
+        return $this->write($r, fn () => $this->data(['id' => app(ChatService::class)->direct($this->actor($r), $this->tenant($r), (int) $d['account_id'])->id, 'other_account_id' => (int) $d['account_id'], 'chat_preferences' => app(ChatPreferences::class)->get($this->actor($r), $this->tenant($r)), 'uploads' => (bool) config('clubunio-mobile.uploads_enabled')]));
     }
 
     public function messages(Request $r)
@@ -217,6 +217,21 @@ final class MobileController
         DB::connection('clubunio')->table('clubora.mobile_preferences')->updateOrInsert(['account_id' => $actor->id],
             ['language' => $d['language'], 'updated_at' => now()->toIso8601String()]);
         return $this->data(['language' => $d['language']]);
+    }
+
+    public function chatPreferences(Request $r)
+    {
+        if ($r->isMethod('GET')) return $this->data(app(ChatPreferences::class)->get($this->actor($r), $this->tenant($r)));
+        return $this->write($r, fn () => $this->data(app(ChatPreferences::class)->save($this->actor($r), $this->tenant($r), $r->all())));
+    }
+
+    public function reaction(Request $r)
+    {
+        $d = $r->validate(['revision' => 'required|integer|min:1', 'emoji' => 'present|nullable|string|max:16']);
+        return $this->write($r, function () use ($r, $d) {
+            $row = app(ChatControls::class)->react($this->actor($r), $this->tenant($r), (int) $r->route('message'), (int) $d['revision'], $d['emoji']);
+            return $this->data(app(ChatService::class)->messageDto($this->actor($r), $this->tenant($r), $row));
+        });
     }
 
     public function changes(Request $r)
