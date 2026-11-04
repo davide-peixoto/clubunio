@@ -887,3 +887,17 @@ HTTPS200/401/503 korrekt. Keine Provider-/PHPMaker-/PROD-/SaaS-/Storeumstellung.
 Übersetzungsanbieter weiterhin aus; Keyboxen nicht eingerichtet, physische
 Ausgabe geschlossen. Windowsprüfungen ersetzen keinen nativen iPhone-Lauf.
 Details:CLUBUNIO-MOBILE-FUNCTIONAL-PARITY.md.
+
+
+## 04.11.2026: priorisierte Mobile-Hauptnavigation
+
+App3792e56:Spesen,Mitglieder,zentraler Chat,Termine,Mehr nach SVS-Vorbild.
+Fachmodule nur bei frischem persönlichem Modulrecht; Chat bleibt auch bei
+fehlenden Modulen exakt mittig. Spesen/Mitglieder im Hauptbereich mit sichtbarer
+Leiste, weitere Funktionen und Profil über Mehr; Posteingang oben. Farben aus
+AppBrand/Theme, keine feste Referenzfarbe. Bestehende Screens/Adapter und
+Konto-/Mandantenwechsel weiterverwendet.535/535 Fluttertests bestanden,
+Analyse ohne Befund; echte Modulwechsel/Rechteentzug und alle8 Kombinationen
+bei320px sowie grosse Schrift320/390/1024 geprüft. Reine Appänderung,
+keine Backend-/Schema-/DEV-Betriebsänderung. DEV weiterhinfunctional-v2.
+Details:CLUBUNIO-MOBILE-PRIMARY-NAVIGATION.md; App:docs/PRIMARY-NAVIGATION.md.
