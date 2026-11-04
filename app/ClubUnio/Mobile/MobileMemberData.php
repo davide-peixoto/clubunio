@@ -55,7 +55,9 @@ final class MobileMemberData
             'Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city, 'CanEdit' => $editable,
             'ChangeMode' => $editable ? ($direct ? 'direct' : 'request') : 'none', 'EditableFields' => $fields,
             'CanReadChangeRequests' => app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),
-            'CanReadInvoices' => $own || app(MobileAccess::class)->admin($actor, $tenant), 'CanReadDocuments' => $documents, 'CanReadIdCard' => false];
+            'CanReadInvoices' => $own || app(MobileAccess::class)->admin($actor, $tenant), 'CanReadDocuments' => $documents, 'CanReadIdCard' => (bool) config('clubunio-mobile.native_member_id_card_enabled', false)
+                && in_array('member-id-card-v1', $features, true)
+                && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view'))];
         if (! $full) { return $dto; }
         $dto += ['Firma' => $m->company, 'Geburtsdatum' => $m->birth_date?->format('Y-m-d'), 'Passnummer' => $m->pass_number,
             '_version' => MemberService::version($m)];

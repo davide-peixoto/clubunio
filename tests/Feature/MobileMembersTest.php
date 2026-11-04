@@ -28,6 +28,7 @@ class MobileMembersTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
+        $this->db->statement("SET LOCAL application_name = 'mobile-member-id-card-regression'");
         $this->db->statement('SET LOCAL search_path TO clubora');
         $this->tenant = Tenant::create(['slug' => 'mobile-dossier-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic dossier']);
         $this->admin = $this->account('admin'); $this->parent = $this->account('member'); $this->trainer = $this->account('trainer');
@@ -155,4 +156,45 @@ class MobileMembersTest extends TestCase
         $this->getJson($this->url().'/invoices')->assertForbidden();
         $this->getJson('/api/mobile/v1/clubs/'.$this->tenant->id.'/invoices/'.$invoice.'/pdf')->assertNotFound();
     }
+    public function test_personal_id_card_projects_only_real_fields_and_requires_full_member_access(): void
+    {
+        config(['clubunio-mobile.native_member_id_card_enabled' => true]);
+        $status = $this->db->table('member_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic active', 'code' => 'CARD']);
+        $type = $this->db->table('member_types')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic junior', 'code' => 'CARD']);
+        $this->child->forceFill(['status_id' => $status, 'type_id' => $type, 'honorary' => true])->save();
+        $this->withToken($this->token($this->parent));
+        $this->getJson($this->url())->assertOk()->assertJsonPath('data.Member.CanReadIdCard', false);
+        $this->withHeader('X-ClubUnio-Mobile-Features', 'member-id-card-v1');
+        $this->getJson($this->url())->assertOk()->assertJsonPath('data.Member.CanReadIdCard', true);
+        $response = $this->getJson($this->url().'/id-card')->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertJsonPath('data.Card.TenantID', (int) $this->tenant->id)
+            ->assertJsonPath('data.Card.TenantName', $this->tenant->name)
+            ->assertJsonPath('data.Card.StatusText', 'Synthetic active')
+            ->assertJsonPath('data.Card.MitgliederartText', 'Synthetic junior')
+            ->assertJsonPath('data.Card.Ehrenmitglied', true)
+            ->assertJsonMissingPath('data.Card.Email')->assertJsonMissingPath('data.Card.Mutter')
+            ->assertJsonMissingPath('data.Card.Passnummer')->assertJsonMissingPath('data.Card.ahv_encrypted')
+            ->assertDontSee('PRIVATE-PARENT')->assertDontSee('PRIVATE-AHV');
+        $version = $response->json('data.Card.SourceVersion');
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $version);
+        $this->db->table('member_types')->where('id', $type)->update(['name' => 'Changed real type']);
+        $this->assertNotSame($version, $this->getJson($this->url().'/id-card')->assertOk()->json('data.Card.SourceVersion'));
+        $this->withToken($this->token($this->trainer))->getJson($this->url().'/id-card')->assertForbidden();
+        $this->withToken($this->token($this->admin))->getJson($this->url().'/id-card')->assertOk();
+    }
+
+    public function test_personal_id_card_closes_for_readiness_and_revoked_or_adult_parent_links(): void
+    {
+        $this->withToken($this->token($this->parent));
+        $this->getJson($this->url().'/id-card')->assertStatus(503);
+        config(['clubunio-mobile.native_member_id_card_enabled' => true]);
+        $this->getJson($this->url().'/id-card')->assertOk();
+        $this->db->table('account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        $this->getJson($this->url().'/id-card')->assertForbidden();
+        $this->db->table('account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $this->parent->id)->update(['state' => 'approved']);
+        $this->child->forceFill(['birth_date' => now()->subYears(18)->toDateString()])->save();
+        $this->getJson($this->url().'/id-card')->assertForbidden();
+    }
+
 }

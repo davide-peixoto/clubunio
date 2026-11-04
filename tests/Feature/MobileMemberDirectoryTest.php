@@ -13,7 +13,7 @@ class MobileMemberDirectoryTest extends TestCase
     public function test_directory_uses_personal_scope_literal_search_and_minimal_rows(): void
     {
         if (getenv('CLUBUNIO_TEST_DB') !== '1') { $this->markTestSkipped('Opt-in synthetic rollback required'); }
-        config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array', 'hashing.bcrypt.rounds' => 4]);
+        config(['clubunio-mobile.enabled' => true, 'clubunio-mobile.native_members_enabled' => true, 'cache.default' => 'array', 'hashing.bcrypt.rounds' => 4]);
         Http::preventStrayRequests(); $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction(); $this->db->statement("SET LOCAL application_name TO 'clubunio-mobile-directory-test'");

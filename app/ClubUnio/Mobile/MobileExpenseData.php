@@ -29,12 +29,19 @@ final class MobileExpenseData
     public function line(Tenant $tenant, ExpenseLine $line, int $pending = 0): array {
         $line->loadMissing(['expenseType','gameType']);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
+        $attachments = array_map(function ($file, $index) use ($line) {
+            // Expose only an ordinal and safe file metadata, never private blob references.
+            $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            $mime = ['pdf' => 'application/pdf', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg'][$extension] ?? null;
+            return ['index' => $index, 'name' => $index === 0 ? ($line->filename ?: 'Beleg') : 'Beleg '.($index + 1).($mime ? '.'.$extension : ''),
+                'type' => $index === 0 ? ($line->content_type ?: $mime) : $mime, 'length' => $index === 0 ? $line->file_size : null];
+        }, $files, array_keys($files));
         return ['SpesenPositionenID' => (int) $line->id, 'SpesenID' => (int) $line->expense_id, 'Revision' => (int) $line->revision,
             'SpesenTypID' => (int) $line->expense_type_id, '_TypeLabel' => $line->expenseType?->name ?? '',
             'Spieltyp' => $line->gameType?->code ?? '', 'Gegner' => $line->opponent ?? '', 'Betrag' => (string) $line->amount,
             'BemerkungenPos' => $line->notes ?? '', 'AiBetragUebernommen' => null, 'PendingUploadCount' => $pending,
             ...($files ? ['FileUploadName' => ['url' => '', 'name' => $line->filename ?: 'Beleg', 'type' => $line->content_type ?? ''],
-                'BelegLength' => $line->file_size, 'AttachmentCount' => count($files)] : [])];
+                'BelegLength' => $line->file_size, 'AttachmentCount' => count($files), 'Attachments' => $attachments] : [])];
     }
     public function detail(Account $actor, Tenant $tenant, int $id): array {
         $e = app(ExpenseService::class)->visible($actor, $tenant)->with(['activeLines.expenseType','activeLines.gameType'])->findOrFail($id);

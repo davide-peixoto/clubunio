@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 final class MobileSponsorRoutes {
     public static function register(): void {
         Route::prefix('sponsor-run')->group(function () {
+            MobileSponsorBillingRoutes::register();
             Route::get('events', [MobileSponsorController::class, 'events']);
             Route::post('events', [MobileSponsorController::class, 'saveEvent']);
             Route::get('teams', [MobileSponsorController::class, 'teams']);

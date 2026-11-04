@@ -133,3 +133,19 @@ DEV-Freigabe04.11.2026:20261103-clubunio-native-followups-v4,
 persoenliche Originalvertraege aktiviert. Synthetische reale Kernelablaeufe
 mit Rollback erfolgreich; externe Provider-/Dateigroessen-/Geraeteabnahme
 weiter offen. Gemeinsamer Auslieferungsnachweis in PI.md.
+
+
+## Paritaetsnachtrag: mehrere Positionsbelege (04.11.2026)
+
+Bestehende Positionen mit mehreren privaten Dateien geben jetzt sichere indizierte
+Metadaten aus. Die originale Belegansicht erlaubt die Auswahl jedes Anhangs; der
+persoenliche Adapter bindet den Download an dieselbe Position und den konkreten
+Index 0..9. Blobpfade werden nicht ausgegeben, unbekannte Dateimetadaten nicht
+erfunden. Beim Wechsel wird der vorherige PDF-/Bildzustand verworfen. Die bisherige
+Einzelbelegdarstellung bleibt kompatibel. Keine neuen Schreib-, Zahlungs- oder
+Mitgliedsrechte. Nachweis: ein PHP-Unitfall mit neun Assertions und drei neue
+Flutterfaelle; bestehende persoenliche Spesen-/Dateitests weiter geprueft.
+
+Weitere externe Abnahmen bleiben offen: echte native Kamera-/Dateiwege, HEIC,
+Azure-/Scanner-/Blobkonfiguration und ausdruecklich freigeschaltete OCR. Die
+App zeichnet weiterhin keine Auszahlung als bezahlt auf.
