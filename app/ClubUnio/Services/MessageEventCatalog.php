@@ -34,6 +34,13 @@ class MessageEventCatalog
         $add('invoice.open', 'Rechnung: neu offen', 'Eine neue Rechnung wurde erstellt', 'Für dich wurde eine neue Rechnung über {{ betrag }} erstellt.', ['verein', 'mitglied', 'betrag', 'saison'], ['push']);
         $add('invoice.status', 'Rechnung: Statusänderung', 'Rechnung aktualisiert', 'Deine Rechnung hat den Status {{ status }}.', ['verein', 'mitglied', 'betrag', 'saison', 'status'], ['push']);
         $add('pitch.changed', 'Platz: Statusänderung', '{{ platz }}: {{ status }}', '{{ platz }} wurde {{ status }}! Bitte Trainings anpassen.', ['verein', 'platz', 'status'], ['push']);
+        $pitch = ['verein', 'mannschaft', 'datum'];
+        $add('pitch.friendly.requested', 'Platzplanung: Testspielanfrage', 'Neue Testspielanfrage', 'Eine neue Testspielanfrage für {{ mannschaft }} am {{ datum }} wartet bei {{ verein }} auf Prüfung.', $pitch, ['email', 'push']);
+        $add('pitch.friendly.approved', 'Platzplanung: Testspiel bestätigt', 'Testspielanfrage bestätigt', 'Deine Testspielanfrage für {{ mannschaft }} am {{ datum }} wurde bestätigt.', $pitch, ['push']);
+        $add('pitch.friendly.rejected', 'Platzplanung: Testspiel abgelehnt', 'Testspielanfrage abgelehnt', 'Deine Testspielanfrage für {{ mannschaft }} am {{ datum }} wurde abgelehnt. Bitte prüfe die Rückmeldung in der Platzplanung.', $pitch, ['push']);
+        $add('pitch.booking.moved', 'Platzplanung: Belegung verschoben', 'Platzbelegung verschoben', 'Die Platzbelegung für {{ mannschaft }} wurde verschoben. Bisher: {{ previous_field }}, {{ previous_date }}, {{ previous_time }}. Neu: {{ new_field }}, {{ new_date }}, {{ new_time }}.', [...$pitch, 'previous_field', 'previous_date', 'previous_time', 'new_field', 'new_date', 'new_time'], ['push']);
+        $add('pitch.booking.created', 'Platzplanung: Belegung erstellt', 'Neue Platzbelegung', 'Eine Platzbelegung für {{ mannschaft }} wurde erstellt: {{ new_field }}, {{ new_date }}, {{ new_time }}.', [...$pitch, 'new_field', 'new_date', 'new_time'], ['push']);
+        $add('pitch.booking.cancelled', 'Platzplanung: Belegung abgesagt', 'Platzbelegung abgesagt', 'Die Platzbelegung für {{ mannschaft }} auf {{ new_field }} am {{ new_date }}, {{ new_time }} wurde abgesagt.', [...$pitch, 'new_field', 'new_date', 'new_time'], ['push']);
         $add('bus.requested', 'Bus: neue Anfrage', 'Neue Busreservierungsanfrage', '{{ mitglied }} hat den Bus für {{ mannschaft }} am {{ datum }} angefragt.', ['verein', 'mitglied', 'mannschaft', 'datum'], ['push']);
         $add('bus.approved', 'Bus: bestätigt', 'Busreservierung bestätigt', 'Deine Busreservierung am {{ datum }} für {{ mannschaft }} ist bestätigt.', ['verein', 'mitglied', 'mannschaft', 'datum'], ['push']);
         $add('bus.rejected', 'Bus: abgelehnt', 'Busreservierung abgelehnt', 'Deine Busreservierung am {{ datum }} für {{ mannschaft }} wurde abgelehnt.', ['verein', 'mitglied', 'mannschaft', 'datum'], ['push']);
@@ -79,11 +86,15 @@ class MessageEventCatalog
             return ['verein' => 'Example Club', 'mitglied' => 'Alex Example', 'saison' => '2026/2027', 'runde' => 'First round',
                 'mannschaft' => 'Juniors Ba', 'betrag' => 'CHF 85.00', 'status' => 'closed', 'platz' => 'Main pitch',
                 'datum' => '15.10.2026, 18:00', 'termin' => 'Training', 'titel' => 'Club information',
-                'nachricht' => 'Our club day takes place on Saturday.', 'link' => 'https://example.invalid/confirm', 'code' => '123456'];
+                'nachricht' => 'Our club day takes place on Saturday.', 'link' => 'https://example.invalid/confirm', 'code' => '123456',
+                'previous_field' => 'Main pitch', 'previous_date' => '2026-11-04', 'previous_time' => '18:00-20:00',
+                'new_field' => 'Artificial pitch', 'new_date' => '2026-11-05', 'new_time' => '19:00-21:00'];
         }
         return ['verein' => 'Beispielverein', 'mitglied' => 'Alex Beispiel', 'saison' => '2026/2027', 'runde' => 'Vorrunde',
             'mannschaft' => 'Junioren Ba', 'betrag' => 'CHF 85.00', 'status' => 'gesperrt', 'platz' => 'Hauptplatz',
             'datum' => '15.10.2026, 18:00', 'termin' => 'Training', 'titel' => 'Vereinsinformation',
-            'nachricht' => 'Am Samstag findet unser Vereinstag statt.', 'link' => 'https://example.invalid/bestaetigen', 'code' => '123456'];
+            'nachricht' => 'Am Samstag findet unser Vereinstag statt.', 'link' => 'https://example.invalid/bestaetigen', 'code' => '123456',
+            'previous_field' => 'Hauptplatz', 'previous_date' => '2026-11-04', 'previous_time' => '18:00-20:00',
+            'new_field' => 'Kunstrasen', 'new_date' => '2026-11-05', 'new_time' => '19:00-21:00'];
     }
 }

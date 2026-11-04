@@ -1,0 +1,9 @@
+{
+    "Die Platzplanung ist noch nicht verfügbar.": "Pitch planning is not available yet.",
+    "Bitte höchstens 42 Tage auswählen.": "Choose a maximum of 42 days.",
+    "Über diesen Antrag wurde bereits entschieden.": "This request has already been decided.",
+    "Die Teilfläche muss innerhalb des Spielfelds liegen.": "The area must fit inside the field.",
+    "Eine belegte Teilfläche kann nicht verändert werden. Bitte eine neue Teilfläche anlegen.": "An occupied area cannot be reshaped. Create a new area.",
+    "Das ausgewählte Spielfeld oder die Teilfläche ist nicht verfügbar.": "The selected field or area is unavailable.",
+    "Die Belegung wurde geändert. Bitte die Platzplanung neu laden.": "The booking has changed. Reload the planner."
+}

@@ -37,13 +37,18 @@ final class ApiErrors
             logger()->error('ClubUnio API failure', ['request_id' => $id, 'exception' => $error::class,
                 'file' => basename($error->getFile()), 'line' => $error->getLine()]);
         }
-        $response = response()->json(['error' => array_filter(['code' => $code,
-            'message' => $accessPending ? $error->getMessage() : match ($status) {
+        $message = $accessPending ? $error->getMessage() : match ($status) {
                 400 => 'Ungültige Anfrage.', 401 => 'Authentifizierung erforderlich.', 403 => 'Zugriff nicht erlaubt.', 404 => 'Nicht gefunden.',
                 405 => 'Diese Aktion wird nicht unterstützt.', 409 => 'Konflikt. Daten neu laden und Vorgang prüfen.',
                 413 => 'Anfrage zu gross.', 415 => 'Nicht unterstütztes Datenformat.', 422 => 'Eingaben prüfen.',
                 429 => 'Zu viele Anfragen. Bitte später erneut versuchen.', default => 'Anfrage fehlgeschlagen.',
-            }, 'request_id' => $id, 'fields' => $error instanceof ValidationException ? $error->errors() : null], fn ($v) => $v !== null)], $status);
+            };
+        if (! $accessPending && $request->routeIs('clubunio.mobile.pitch.*')) {
+            $message = __($message, [], $request->attributes->get('mobile.pitch.locale'));
+        }
+        $response = response()->json(['error' => array_filter(['code' => $code,
+            'message' => $message, 'request_id' => $id,
+            'fields' => $error instanceof ValidationException ? $error->errors() : null], fn ($v) => $v !== null)], $status);
         $response->headers->set('X-Request-ID', $id);
         $response->headers->set('Cache-Control', 'no-store');
         $response->headers->set('X-Content-Type-Options', 'nosniff');

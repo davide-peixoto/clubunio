@@ -172,12 +172,18 @@ class SfvCompetitionService
             if ($fresh['before'] == $fresh['after']) {
                 return $record->id;
             }
+            $pitchReady = app(PitchPlanningProjection::class)->ready();
+            $pitchBefore = $pitchReady && $record->exists && $record->field_id && $record->starts_at
+                ? app(PitchPlanningService::class)->resolve($tenant, 'competition:'.$record->id) : null;
             $data = $fresh['after'] + ['synced_at' => now('UTC')->format('Y-m-d H:i:s'), 'revision' => ($record->revision ?? 0) + 1];
             if (! $record->exists) {
                 $data += ['tenant_id' => $tenant->id, 'active' => true, 'show_on_signage' => true, 'imported_at' => now('UTC')->format('Y-m-d H:i:s')];
             }
             // Local rooms and other local metadata remain untouched; reviewed withdrawals only hide Signage.
             $record->forceFill($data)->save();
+            if ($pitchReady) {
+                app(PitchPlanningService::class)->sfvUpdated($actor, $tenant, $record, $pitchBefore, ($fresh['kind'] ?? '') === 'withdrawal');
+            }
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'competitions', 'object_id' => $record->id,
                 'before_value' => $fresh['before'] ? json_encode($fresh['before']) : null, 'after_value' => json_encode($data + ['action' => ($fresh['kind'] ?? '') === 'withdrawal' ? 'sfv_withdrawal' : 'sfv_import', 'reason' => $fresh['reason'] ?? null])]);
 

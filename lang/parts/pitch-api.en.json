@@ -1,0 +1,15 @@
+{
+    "Die Platzplanung ist noch nicht freigeschaltet.": "Pitch planning has not been enabled yet.",
+    "Platzplanung API": "Pitch planning API",
+    "Ungültige Anfrage.": "Invalid request.",
+    "Authentifizierung erforderlich.": "Authentication required.",
+    "Zugriff nicht erlaubt.": "Access denied.",
+    "Nicht gefunden.": "Not found.",
+    "Diese Aktion wird nicht unterstützt.": "This action is not supported.",
+    "Konflikt. Daten neu laden und Vorgang prüfen.": "Conflict. Reload the data and review the operation.",
+    "Anfrage zu gross.": "Request too large.",
+    "Nicht unterstütztes Datenformat.": "Unsupported media type.",
+    "Eingaben prüfen.": "Check your input.",
+    "Zu viele Anfragen. Bitte später erneut versuchen.": "Too many requests. Please try again later.",
+    "Anfrage fehlgeschlagen.": "Request failed."
+}

@@ -61,6 +61,10 @@ class SignageService
                 ->where($flag, true)->whereHas('weekday', fn ($q) => $q->where('active', true)->where('code', (string) ($date->dayOfWeek + 1)))
                 ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $data['date'])->where('ends_on', '>=', $data['date'])))
                 ->with('teamSeason.team')->orderBy('starts_at')->orderBy('id')->get();
+            $pitch = app(PitchPlanningProjection::class);
+            if ($pitch->ready()) {
+                $trainings = $pitch->trainingModels($tenant, $data['date'], (int) $data['period_id']);
+            }
         }
 
         $competitions = Competition::where('tenant_id', $tenant->id)->where('active', true)->where('show_on_signage', true)->where('plays_on', $data['date'])->orderBy('starts_at')->orderBy('id')->get();

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\{Crypt, DB};
 final class MobileNotificationService
 {
     private const SOURCES = ['expense' => 'expense', 'registration' => 'registration', 'bus_reservation' => 'bus',
-        'member_change_request' => 'member_change', 'team_event' => 'planning'];
+        'member_change_request' => 'member_change', 'team_event' => 'planning', 'pitch_planning' => 'pitch_planning'];
 
     private function rows(Account $actor, Tenant $tenant)
     {
@@ -48,7 +48,7 @@ final class MobileNotificationService
             ->whereColumn('source.object_id', 'inbox.object_id')->whereRaw("inbox.event_key = 'notification:' || source.id::text")
             ->whereRaw("inbox.kind = CASE source.object_type
                 WHEN 'expense' THEN 'expense' WHEN 'registration' THEN 'registration' WHEN 'bus_reservation' THEN 'bus'
-                WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' END")
+                WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' WHEN 'pitch_planning' THEN 'pitch_planning' END")
             ->whereNotNull('source.read_at');
         DB::connection('clubunio')->table('clubora.mobile_inbox as inbox')->where('inbox.tenant_id', $tenant->id)->where('inbox.account_id', $actor->id)
             ->whereNull('inbox.read_at')->whereExists((clone $source)->selectRaw('1'))

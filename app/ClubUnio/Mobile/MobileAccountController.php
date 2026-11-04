@@ -90,6 +90,14 @@ final class MobileAccountController
         $visibleKeys = app(\App\ClubUnio\Services\MobileModuleSettings::class)->visibleKeys($actor, $tenant);
         // Presentation compatibility only; feature claims never grant permissions.
         $supported = explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
+        $pitchAllowed = in_array('Platzverfugbarkeit', $visibleKeys, true)
+            && config('clubunio-mobile.native_pitch_planning_enabled', false)
+            && app(\App\ClubUnio\Services\PitchPlanningProjection::class)->ready()
+            && app(\App\ClubUnio\Services\PitchPlanningService::class)->canView($actor, $tenant);
+        $pitchNative = $pitchAllowed && in_array('pitch-planning-v1', $supported, true);
+        $facilitiesNative = config('clubunio-mobile.native_facilities_enabled')
+            && in_array('facilities-v1', $supported, true)
+            && app(ModulePermissionService::class)->allows($actor, $tenant, 'field_availability', 'view');
         foreach ($map as $key => $permission) {
             if (! in_array($key, $visibleKeys, true)) { continue; }
             $followupAllowed = app(MobileFollowupModules::class)->allowed($key, $actor, $tenant);
@@ -98,6 +106,7 @@ final class MobileAccountController
                 || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
                 || ($key === 'Dokumente' && config('clubunio-mobile.native_documents_enabled') && app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant)->exists())
                 || ($key === 'BusReservationen' && $busAllowed)
+                || ($key === 'Platzverfugbarkeit' && $pitchAllowed)
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true))
                 || $followupAllowed || $penaltyAllowed;
             if ($allowed) {
@@ -109,11 +118,12 @@ final class MobileAccountController
                     'Teamplanung' => config('clubunio-mobile.native_planning_enabled') && in_array('svs-planning-v1', $supported, true),
                     'Teams' => config('clubunio-mobile.native_my_teams_enabled') && in_array('my-teams-v1', $supported, true),
                     'Spesen' => config('clubunio-mobile.native_expenses_enabled') && in_array('expenses-v1', $supported, true),
-                    'Platzverfugbarkeit' => config('clubunio-mobile.native_facilities_enabled') && in_array('facilities-v1', $supported, true),
+                    'Platzverfugbarkeit' => $facilitiesNative || $pitchNative,
                     'BusReservationen' => config('clubunio-mobile.native_bus_enabled') && in_array('bus-v1', $supported, true),
                     'Dokumente' => config('clubunio-mobile.native_documents_enabled') && in_array('member-documents-v1', $supported, true), default => false,
                 };
-                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native];
+                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native]
+                    + ($key === 'Platzverfugbarkeit' ? ['pitch_planning' => $pitchNative, 'facilities' => $facilitiesNative] : []);
             }
         }
         $modules[] = ['key' => 'Profil', 'available' => true];

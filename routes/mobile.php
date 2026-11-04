@@ -34,6 +34,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         \App\ClubUnio\Mobile\MobileSponsorRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDirectoryRoutes::register();
         \App\ClubUnio\Mobile\MobileRegistrationRoutes::register();
+        \App\ClubUnio\Mobile\MobilePitchRoutes::register();
         Route::get('facilities/fields', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'index']);
         Route::patch('facilities/fields/{field}', [\App\ClubUnio\Mobile\MobileFacilitiesController::class, 'update'])->whereNumber('field');
         Route::get('bus/reservations', [\App\ClubUnio\Mobile\MobileBusController::class, 'index']);

@@ -17,7 +17,7 @@ final class ApiDocumentationController
     {
         $tenant = $this->authorize($request);
 
-        return response()->view('clubunio.api-docs', ['tenant' => $tenant])
+        return response()->view('clubunio.api-docs', ['tenant' => $tenant, 'pitch' => $this->pitch($request)])
             ->header('Cache-Control', 'private, no-store')
             ->header('Referrer-Policy', 'no-referrer')
             ->header('X-Content-Type-Options', 'nosniff');
@@ -27,10 +27,17 @@ final class ApiDocumentationController
     {
         $this->authorize($request);
 
-        return response()->json(app(ApiDocumentation::class)->specification())
+        $documentation = $this->pitch($request) ? app(\App\ClubUnio\Mobile\MobilePitchDocumentation::class) : app(ApiDocumentation::class);
+        return response()->json($documentation->specification())
             ->header('Cache-Control', 'private, no-store')
             ->header('Referrer-Policy', 'no-referrer')
             ->header('X-Content-Type-Options', 'nosniff');
+    }
+
+    private function pitch(Request $request): bool
+    {
+        $data = $request->validate(['surface' => 'sometimes|in:pitch-planning']);
+        return ($data['surface'] ?? null) === 'pitch-planning';
     }
 
     private function authorize(Request $request): Tenant

@@ -11,6 +11,7 @@ return [
     'native_expenses_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_EXPENSES_ENABLED', false),
     'native_my_teams_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MY_TEAMS_ENABLED', false),
     'native_facilities_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_FACILITIES_ENABLED', false),
+    'native_pitch_planning_enabled' => filter_var(env('CLUBUNIO_MOBILE_NATIVE_PITCH_PLANNING_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true,
     'native_bus_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_BUS_ENABLED', false),
     'native_keybox_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_KEYBOX_ENABLED', false),
     'keybox' => require __DIR__.'/clubunio-keybox.php',

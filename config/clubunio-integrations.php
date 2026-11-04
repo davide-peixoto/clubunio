@@ -10,6 +10,7 @@ $values = is_file($file) ? Dotenv::parse(file_get_contents($file)) : [];
 
 return [
     'test_mail_enabled' => ($values['TEST_MAIL_ENABLED'] ?? '0') === '1',
+    'pitch_planning_test_mail_enabled' => ($values['PITCH_PLANNING_TEST_MAIL_ENABLED'] ?? '0') === '1',
     'smtp' => [
         'transport' => 'smtp', 'scheme' => $values['SMTP_SCHEME'] ?? 'smtp',
         'host' => $values['SMTP_HOST'] ?? '', 'port' => (int) ($values['SMTP_PORT'] ?? 587),

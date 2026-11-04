@@ -21,14 +21,16 @@
     <header>
         <h1>{{ __('ClubUnio API') }}</h1>
         <span>{{ $tenant->name }}</span>
-        <a href="{{ url('/api-docs/openapi.json') }}">{{ __('OpenAPI JSON') }}</a>
+        <a href="{{ url('/api-docs/openapi.json').($pitch ? '?surface=pitch-planning' : '') }}">{{ __('OpenAPI JSON') }}</a>
+        <a href="{{ url('/api-docs?surface=pitch-planning') }}">{{ __('Platzplanung API') }}</a>
         <a href="{{ url('/') }}">{{ __('ClubUnio') }}</a>
     </header>
     <main id="swagger-ui"></main>
     <script src="{{ url('/assets/swagger-ui/swagger-ui-bundle.js') }}"></script>
     <script>
         window.addEventListener('DOMContentLoaded', function () {
-            const specificationUrl = new URL(@json(url('/api-docs/openapi.json')), window.location.origin);
+            const specificationUrl = new URL(@json(url('/api-docs/openapi.json').($pitch ? '?surface=pitch-planning' : '')), window.location.origin);
+            const apiPrefix = @json($pitch ? '/api/mobile/v1/clubs/' : '/api/v1/');
             SwaggerUIBundle({
                 url: specificationUrl.href,
                 dom_id: '#swagger-ui',
@@ -48,7 +50,7 @@
                         throw new Error(@js(__('Domainübergreifende API-Anfragen sind deaktiviert.')));
                     }
                     const isSpecification = target.pathname === specificationUrl.pathname;
-                    if (!isSpecification && !target.pathname.startsWith('/api/v1/')) {
+                    if (!isSpecification && !target.pathname.startsWith(apiPrefix)) {
                         throw new Error(@js(__('Nur ClubUnio-API-Anfragen sind erlaubt.')));
                     }
                     request.credentials = isSpecification ? 'same-origin' : 'omit';
