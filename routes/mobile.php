@@ -9,20 +9,25 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
     Route::get('profile', [\App\ClubUnio\Mobile\MobileAccountController::class, 'profile'])->name('profile');
+    \App\ClubUnio\Mobile\MobilePushRoutes::registerAccount();
     Route::post('password', [\App\ClubUnio\Mobile\MobileAccountController::class, 'password'])->name('password');
     Route::get('sessions', [Mobile::class, 'sessions'])->name('sessions');
     Route::delete('session', [Mobile::class, 'revoke'])->name('logout');
     Route::delete('sessions/{session}', [Mobile::class, 'revoke'])->whereUuid('session')->name('revoke');
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
+        \App\ClubUnio\Mobile\MobilePushRoutes::registerTenant();
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('members/{member}', [\App\ClubUnio\Mobile\MobileMemberController::class, 'show'])->whereNumber('member');
         Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
         Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
+        \App\ClubUnio\Mobile\MobilePublicIdentityRoutes::registerPersonal();
         \App\ClubUnio\Mobile\MobileExpenseRoutes::register();
-        \App\ClubUnio\Mobile\MobileMemberIdCardRoutes::register();
+        \App\ClubUnio\Mobile\MobileKeyboxRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
+        \App\ClubUnio\Mobile\MobileMemberIdCardRoutes::register();
+        \App\ClubUnio\Mobile\MobilePenaltyRoutes::register();
         \App\ClubUnio\Mobile\MobileTrainingRoutes::register();
         \App\ClubUnio\Mobile\MobileSponsorRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDirectoryRoutes::register();
@@ -106,3 +111,5 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::post('ai', [Mobile::class, 'ai']);
     });
 });
+
+\App\ClubUnio\Mobile\MobilePublicIdentityRoutes::register();
