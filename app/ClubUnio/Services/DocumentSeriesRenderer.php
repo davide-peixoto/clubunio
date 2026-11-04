@@ -41,12 +41,12 @@ class DocumentSeriesRenderer
         // Parse only the template, never re-interpret braces supplied by a member.
         $remainder = preg_replace('/\{\{[^{}]+\}\}/u', '', $text);
         if (str_contains($remainder, '{{') || str_contains($remainder, '}}')) {
-            throw ValidationException::withMessages(['template' => 'Ungültiger Platzhalter.']);
+            throw ValidationException::withMessages(['template' => __('Ungültiger Platzhalter.')]);
         }
 
         return preg_replace_callback('/\{\{([^{}]+)\}\}/u', function ($m) use ($values) {
             if (! in_array($m[1], self::FIELDS, true) || trim((string) ($values[$m[1]] ?? '')) === '') {
-                throw ValidationException::withMessages(['template' => 'Unbekannter oder fehlender Platzhalter: '.$m[1]]);
+                throw ValidationException::withMessages(['template' => __('Unbekannter oder fehlender Platzhalter: :value1', ['value1' => $m[1]])]);
             }
 
             return (string) $values[$m[1]];
@@ -58,7 +58,7 @@ class DocumentSeriesRenderer
         foreach (['title', 'text'] as $field) {
             $d[$field] = $this->substitute($d[$field], $values);
         }
-        abort_if(mb_strlen($d['title']) > 200, 422, 'Personalisierter Titel zu lang.');
+        abort_if(mb_strlen($d['title']) > 200, 422, __('Personalisierter Titel zu lang.'));
         foreach ($d['items'] as &$item) {
             foreach (['description', 'reference', 'size', 'initials', 'brand'] as $field) {
                 $item[$field] = $this->substitute($item[$field] ?? '', $values);

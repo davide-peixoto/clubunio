@@ -16,7 +16,7 @@ class TenantDomainService
     {
         $host = strtolower($request->getHost());
         $rawHost = trim(preg_replace('/:\d+$/', '', strtolower($request->headers->get('host', ''))), '[]');
-        abort_unless($host === $rawHost, 400, 'Host und weitergeleiteter Host stimmen nicht überein.');
+        abort_unless($host === $rawHost, 400, __('Host und weitergeleiteter Host stimmen nicht überein.'));
         $hosts = config('clubunio-domains.hosts', []);
         if (array_key_exists($host, $hosts)) {
             abort_unless(preg_match('/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/D', $host)

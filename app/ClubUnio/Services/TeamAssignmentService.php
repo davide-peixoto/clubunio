@@ -50,12 +50,12 @@ class TeamAssignmentService
             }
             foreach ($rows as $row) {
                 if (! isset($members[$row['member_id']], $teams[$row['team_season_id']]) || ($model === TeamStaff::class && ! isset($functions[$row['staff_function_id']]))) {
-                    throw ValidationException::withMessages(['plan' => 'Eine Zuordnung hat keine gültigen Vereinsreferenzen.']);
+                    throw ValidationException::withMessages(['plan' => __('Eine Zuordnung hat keine gültigen Vereinsreferenzen.')]);
                 }
                 if ($row['active']) {
                     $key = $identity($row);
                     if (isset($seen[$key])) {
-                        throw ValidationException::withMessages(['plan' => 'Diese aktive Zuordnung besteht bereits.']);
+                        throw ValidationException::withMessages(['plan' => __('Diese aktive Zuordnung besteht bereits.')]);
                     }
                     $seen[$key] = true;
                 }
@@ -109,12 +109,12 @@ class TeamAssignmentService
             }
             $data = Validator::make($input, $rules)->validate();
             if ($id && ! hash_equals(FamilyService::version($record), $data['_version'])) {
-                throw ValidationException::withMessages(['active' => 'Datensatz wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['active' => __('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             if ($id && ($model === TeamSeason::class || ($model === TeamPlayer::class && $record->legacy_invoice_position_id))) {
                 foreach (array_keys($references) as $field) {
                     if ((int) $data[$field] !== (int) $record->$field) {
-                        throw ValidationException::withMessages([$field => 'Bestehende Verknüpfung bleibt erhalten. Zuordnung deaktivieren und neu erfassen.']);
+                        throw ValidationException::withMessages([$field => __('Bestehende Verknüpfung bleibt erhalten. Zuordnung deaktivieren und neu erfassen.')]);
                     }
                 }
             }
@@ -129,7 +129,7 @@ class TeamAssignmentService
                     $changed = $changed || (int) $record->$field !== (int) $data[$field];
                 }
                 if ($changed && $duplicate->exists()) {
-                    throw ValidationException::withMessages([array_key_first($references) => 'Diese aktive Zuordnung besteht bereits.']);
+                    throw ValidationException::withMessages([array_key_first($references) => __('Diese aktive Zuordnung besteht bereits.')]);
                 }
             }
             $data = array_intersect_key($data, array_flip(array_merge(['active'], array_keys($references))));

@@ -153,7 +153,7 @@ final class SeasonPlanningService
             abort_if($id && ! $old, 404);
             $this->authorize($actor, $tenant, true);
             if ($old && ($old->state !== 'draft' || $old->revision !== $revision)) {
-                throw ValidationException::withMessages(['plan' => 'Der Entwurf wurde geändert oder abgeschlossen. Bitte neu öffnen; deine Änderungen wurden nicht überschrieben.']);
+                throw ValidationException::withMessages(['plan' => __('Der Entwurf wurde geändert oder abgeschlossen. Bitte neu öffnen; deine Änderungen wurden nicht überschrieben.')]);
             }
             if ($old && json_decode(Crypt::decryptString($old->document_encrypted), true, 128, JSON_THROW_ON_ERROR) === $doc) {
                 return $this->get($actor, $tenant, $id);
@@ -225,7 +225,7 @@ final class SeasonPlanningService
                     }
                 }
                 if (isset($keys[$row['key']])) {
-                    throw ValidationException::withMessages(['plan' => 'Entwurfskennungen müssen eindeutig sein.']);
+                    throw ValidationException::withMessages(['plan' => __('Entwurfskennungen müssen eindeutig sein.')]);
                 }
                 $keys[$row['key']] = true;
             }
@@ -251,7 +251,7 @@ final class SeasonPlanningService
 
     public function memberLabel(object $member): string
     {
-        return trim($member->last_name.' '.$member->first_name) ?: (trim($member->company ?? '') ?: 'Mitglied #'.$member->id);
+        return trim($member->last_name.' '.$member->first_name) ?: (trim($member->company ?? '') ?: __('Mitglied #:id', ['id' => $member->id]));
     }
 
     public function review(Account $actor, Tenant $tenant, int $id): array
@@ -263,53 +263,53 @@ final class SeasonPlanningService
         $warnings = [];
         $season = $doc['season'];
         if (empty($season['name']) || empty($season['starts_on']) || empty($season['ends_on']) || $season['ends_on'] < $season['starts_on']) {
-            $errors[] = 'Saisonbezeichnung und gültiger Zeitraum sind erforderlich.';
+            $errors[] = __('Saisonbezeichnung und gültiger Zeitraum sind erforderlich.');
         }
         if (DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('name', $season['name'] ?? '')->exists()) {
-            $errors[] = 'Eine Saison mit dieser Bezeichnung besteht bereits.';
+            $errors[] = __('Eine Saison mit dieser Bezeichnung besteht bereits.');
         }
         $teams = collect($doc['teams'])->keyBy('key');
         $prices = collect($doc['prices'])->keyBy('key');
         $rules = collect($doc['rules'])->keyBy('key');
         if ($teams->isEmpty()) {
-            $errors[] = 'Mindestens eine Mannschaft ist erforderlich.';
+            $errors[] = __('Mindestens eine Mannschaft ist erforderlich.');
         }
         $seen = [];
         foreach ($teams as $team) {
             if (! empty($team['team_id']) ? ! isset($facts['teams'][$team['team_id']]) : empty($team['name'])) {
-                $errors[] = 'Eine Mannschaft fehlt oder ist nicht aktiv.';
+                $errors[] = __('Eine Mannschaft fehlt oder ist nicht aktiv.');
             }
             $identity = ! empty($team['team_id']) ? 'id:'.$team['team_id'] : 'name:'.mb_strtolower(trim($team['name'] ?? ''));
             if (isset($seen[$identity])) {
-                $errors[] = 'Eine Mannschaft ist mehrfach im Entwurf enthalten.';
+                $errors[] = __('Eine Mannschaft ist mehrfach im Entwurf enthalten.');
             }
             $seen[$identity] = true;
             if (empty($team['team_id']) && collect($facts['teams'])->contains(fn ($t) => mb_strtolower(trim($t->name)) === mb_strtolower(trim($team['name'] ?? '')))) {
-                $errors[] = 'Neue Mannschaft besteht bereits; bitte die bestehende auswählen.';
+                $errors[] = __('Neue Mannschaft besteht bereits; bitte die bestehende auswählen.');
             }
             if (! empty($team['rule_key']) && ! $rules->has($team['rule_key'])) {
-                $errors[] = 'Eine Mannschaft verweist auf eine entfernte Beitragsregel.';
+                $errors[] = __('Eine Mannschaft verweist auf eine entfernte Beitragsregel.');
             }
             $range = $this->range($team, $doc);
             if (empty($range['year_from']) || empty($range['year_to'])) {
-                $warnings[] = ($team['name'] ?? 'Mannschaft').': kein Jahrgangsbereich für Spielervorschläge.';
+                $warnings[] = __(':value1: kein Jahrgangsbereich für Spielervorschläge.', ['value1' => $team['name'] ?? __('Mannschaft')]);
             } elseif ($range['year_from'] > $range['year_to'] || (! empty($range['gender_id']) && ! isset($facts['genders'][$range['gender_id']]))) {
-                $errors[] = 'Ungültiger Jahrgangsbereich oder Geschlechtswert bei einer Mannschaft.';
+                $errors[] = __('Ungültiger Jahrgangsbereich oder Geschlechtswert bei einer Mannschaft.');
             }
         }
         foreach ($prices as $price) {
             if (empty($price['name']) || ! isset($price['amount'])) {
-                $errors[] = 'Bei einem Beitragspreis fehlen Name oder Betrag.';
+                $errors[] = __('Bei einem Beitragspreis fehlen Name oder Betrag.');
             }
         }
         foreach ($rules as $rule) {
             if (! $prices->has($rule['price_key'] ?? '') || ! isset($facts['genders'][$rule['gender_id'] ?? 0]) || empty($rule['year_from']) || empty($rule['year_to']) || $rule['year_from'] > $rule['year_to']) {
-                $errors[] = 'Eine Beitragsregel ist unvollständig.';
+                $errors[] = __('Eine Beitragsregel ist unvollständig.');
             }
             foreach ($rules as $other) {
                 if ($rule['key'] !== $other['key'] && ($rule['gender_id'] ?? null) == ($other['gender_id'] ?? null)
                     && ($rule['year_from'] ?? 0) <= ($other['year_to'] ?? 0) && ($rule['year_to'] ?? 0) >= ($other['year_from'] ?? 0)) {
-                    $errors[] = 'Beitragsregeln desselben Geschlechts überschneiden sich.';
+                    $errors[] = __('Beitragsregeln desselben Geschlechts überschneiden sich.');
                 }
             }
         }
@@ -319,50 +319,50 @@ final class SeasonPlanningService
             $member = $facts['members'][$assignment['member_id']] ?? null;
             $team = $teams->get($assignment['team_key']);
             if (! $member || ! $team) {
-                $errors[] = 'Eine Zuordnung verweist auf ein ausgetretenes, archiviertes oder fehlendes Mitglied beziehungsweise eine fehlende Mannschaft.';
+                $errors[] = __('Eine Zuordnung verweist auf ein ausgetretenes, archiviertes oder fehlendes Mitglied beziehungsweise eine fehlende Mannschaft.');
 
                 continue;
             }
             if ($assignment['kind'] === 'staff' && ! isset($facts['staff_functions'][$assignment['function_id'] ?? 0])) {
-                $errors[] = 'Bei einer Staff-Zuordnung fehlt eine aktive Funktion.';
+                $errors[] = __('Bei einer Staff-Zuordnung fehlt eine aktive Funktion.');
             }
             $key = $assignment['kind'].':'.$assignment['team_key'].':'.$assignment['member_id'].':'.($assignment['kind'] === 'staff' ? ($assignment['function_id'] ?? '') : '');
             if (isset($seen[$key])) {
-                $errors[] = 'Eine Zuordnung ist doppelt enthalten.';
+                $errors[] = __('Eine Zuordnung ist doppelt enthalten.');
             }
             $seen[$key] = true;
             if ($assignment['kind'] === 'player') {
                 $players[$assignment['member_id']][] = $team['name'];
                 if (! $this->matches($member, $team, $doc)) {
-                    $warnings[] = $this->memberLabel($member).': Jahrgang/Geschlecht für '.$team['name'].' nicht passend oder nicht definiert.';
+                    $warnings[] = __(':value1: Jahrgang/Geschlecht für :value2 nicht passend oder nicht definiert.', ['value1' => $this->memberLabel($member), 'value2' => $team['name']]);
                 }
             }
         }
         foreach ($players as $member => $assigned) {
             if (count($assigned) > 1) {
-                $warnings[] = 'Mitglied #'.$member.' ist mehreren Mannschaften zugeordnet.';
+                $warnings[] = __('Mitglied #:value1 ist mehreren Mannschaften zugeordnet.', ['value1' => $member]);
             }
         }
         foreach ($teams as $team) {
             $assignments = collect($doc['assignments'])->where('team_key', $team['key']);
             if (! $assignments->contains('kind', 'staff')) {
-                $warnings[] = $team['name'].': kein Staff zugeordnet.';
+                $warnings[] = __(':value1: kein Staff zugeordnet.', ['value1' => $team['name']]);
             }
             if (! $assignments->contains('kind', 'lead')) {
-                $warnings[] = $team['name'].': keine technische Leitung zugeordnet.';
+                $warnings[] = __(':value1: keine technische Leitung zugeordnet.', ['value1' => $team['name']]);
             }
             if (! empty($team['capacity']) && $assignments->where('kind', 'player')->count() > $team['capacity']) {
-                $warnings[] = $team['name'].': Zielgrösse überschritten.';
+                $warnings[] = __(':value1: Zielgrösse überschritten.', ['value1' => $team['name']]);
             }
         }
         foreach ($doc['slots'] as $slot) {
             if (! $teams->has($slot['team_key'] ?? '') || empty($slot['starts_at']) || empty($slot['ends_at']) || $slot['ends_at'] <= $slot['starts_at'] || (empty($slot['field_id']) && empty($slot['hall']))) {
-                $errors[] = 'Eine Trainingszeit ist unvollständig oder ungültig.';
+                $errors[] = __('Eine Trainingszeit ist unvollständig oder ungültig.');
             }
             foreach (['period', 'weekday', 'field', 'room', 'side'] as $category) {
                 $option = $facts['training_options'][$slot[$category.'_id'] ?? 0] ?? null;
                 if ((! empty($slot[$category.'_id']) || in_array($category, ['period', 'weekday'])) && (! $option || $option->category !== $category)) {
-                    $errors[] = 'Bei einer Trainingszeit fehlt ein gültiger Auswahlwert ('.$category.').';
+                    $errors[] = __('Bei einer Trainingszeit fehlt ein gültiger Auswahlwert (:value1).', ['value1' => $category]);
                 }
             }
             foreach ($doc['slots'] as $other) {
@@ -371,7 +371,7 @@ final class SeasonPlanningService
                 }
                 $samePlace = (! empty($slot['field_id']) && $slot['field_id'] == ($other['field_id'] ?? null)) || (! empty($slot['hall']) && $slot['hall'] === ($other['hall'] ?? null));
                 if (($samePlace || ($slot['team_key'] ?? null) === ($other['team_key'] ?? null)) && ($slot['starts_at'] ?? '') < ($other['ends_at'] ?? '') && ($slot['ends_at'] ?? '') > ($other['starts_at'] ?? '')) {
-                    $warnings[] = 'Trainingszeiten überschneiden sich am selben Ort oder für dieselbe Mannschaft; Platzaufteilung prüfen.';
+                    $warnings[] = __('Trainingszeiten überschneiden sich am selben Ort oder für dieselbe Mannschaft; Platzaufteilung prüfen.');
                 }
             }
         }
@@ -391,7 +391,7 @@ final class SeasonPlanningService
                     $sameTeam = ! empty($team['team_id']) && $team['team_id'] == $existing->team_id;
                     if (($samePlace || $sameTeam) && ($slot['period_id'] ?? null) == $existing->period_id && ($slot['weekday_id'] ?? null) == $existing->weekday_id
                         && ($slot['starts_at'] ?? '') < $existing->ends_at && ($slot['ends_at'] ?? '') > $existing->starts_at) {
-                        $warnings[] = 'Trainingszeit überschneidet sich mit einer bestehenden Belegung einer zeitlich überlappenden Saison; Belegung und Platzaufteilung prüfen.';
+                        $warnings[] = __('Trainingszeit überschneidet sich mit einer bestehenden Belegung einer zeitlich überlappenden Saison; Belegung und Platzaufteilung prüfen.');
                     }
                 }
             }
@@ -424,7 +424,7 @@ final class SeasonPlanningService
                 ->whereIn('id', collect($document['assignments'])->pluck('member_id')->unique()->all())->orderBy('id')->sharedLock()->get(['id']);
             $review = $this->review($actor, $tenant, $id);
             if ($review['errors'] || ! hash_equals($review['token'], $token) || ($review['warnings'] && ! $acknowledge)) {
-                throw ValidationException::withMessages(['plan' => 'Bitte aktuelle Prüfung und Hinweise bestätigen; bei geänderten Daten erneut prüfen.']);
+                throw ValidationException::withMessages(['plan' => __('Bitte aktuelle Prüfung und Hinweise bestätigen; bei geänderten Daten erneut prüfen.')]);
             }
             $doc = $this->get($actor, $tenant, $id)->document;
             $catalog = app(CatalogService::class);

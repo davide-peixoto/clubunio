@@ -2,6 +2,10 @@
 
 04.11.2026, ClubUnio lokal/Pi. PHPMaker DEV/PROD unveraendert.
 
+Folgepaket fuer Fachdialoge, Lookups, Nachrichten und Abbau der514 Bestandslabels:
+[CLUBUNIO-LANGUAGE-COMPLETION.md](CLUBUNIO-LANGUAGE-COMPLETION.md).
+Die nachfolgenden offenen Punkte beschreiben den historischen ersten Basisrelease.
+
 ## Gelieferte Sprachbasis
 
 - Aktivierte Sprachen in config/clubunio-languages.php: de, en; Standard de.

@@ -16,7 +16,7 @@ class BusReservationController
         $data = $request->validate(['revision' => 'required|integer|min:1']);
         app(BusKeyboxAccessService::class)->issueSimulation($request->user(), $tenant, $reservation, (int) $data['revision']);
 
-        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', 'Simulation geprüft. Der Testcode öffnet keine echte Schlüsselbox.');
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', __('Simulation geprüft. Der Testcode öffnet keine echte Schlüsselbox.'));
     }
 
     public function __construct(private BusReservationService $service) {}
@@ -92,7 +92,7 @@ class BusReservationController
     {
         $id = $this->service->create($request->user(), $tenant, $request->all());
 
-        return redirect()->route('clubunio.bus.show', [$tenant->slug, $id])->with('notice', 'Reservation gespeichert.');
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $id])->with('notice', __('Reservation gespeichert.'));
     }
 
     public function show(Request $request, Tenant $tenant, int $reservation)
@@ -126,7 +126,7 @@ class BusReservationController
     {
         $this->service->reschedule($request->user(), $tenant, $reservation, $request->all());
 
-        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', 'Reservation gespeichert.');
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', __('Reservation gespeichert.'));
     }
 
     public function options(Request $request, Tenant $tenant)
@@ -152,14 +152,14 @@ class BusReservationController
     {
         $this->service->assignImported($request->user(), $tenant, $reservation, $request->all());
 
-        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', 'Historische Zuordnung ergänzt.');
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', __('Historische Zuordnung ergänzt.'));
     }
 
     public function saveOption(Request $request, Tenant $tenant)
     {
         $this->service->saveOption($request->user(), $tenant, $request->all());
 
-        return redirect()->route('clubunio.bus.options', $tenant->slug)->with('notice', 'Auswahl gespeichert.');
+        return redirect()->route('clubunio.bus.options', $tenant->slug)->with('notice', __('Auswahl gespeichert.'));
     }
 
     public function decide(Request $request, Tenant $tenant, int $reservation)
@@ -167,6 +167,6 @@ class BusReservationController
         $input = $request->validate(['revision' => 'required|integer|min:1', 'status' => 'required|string', 'note' => 'nullable|string|max:1000']);
         $this->service->decide($request->user(), $tenant, $reservation, (int) $input['revision'], $input['status'], $input['note'] ?? null);
 
-        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', 'Entscheid gespeichert.');
+        return redirect()->route('clubunio.bus.show', [$tenant->slug, $reservation])->with('notice', __('Entscheid gespeichert.'));
     }
 }

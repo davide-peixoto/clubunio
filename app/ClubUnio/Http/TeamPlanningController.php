@@ -115,7 +115,7 @@ class TeamPlanningController
         $id = $event ? $this->service->saveEvent($request->user(), $tenant, $event, $request->all())
             : $this->service->createSeries($request->user(), $tenant, $request->all())[0];
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $id])->with('notice', 'Termin gespeichert.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $id])->with('notice', __('Termin gespeichert.'));
     }
 
     public function show(Request $request, Tenant $tenant, int $event)
@@ -156,7 +156,7 @@ class TeamPlanningController
         $this->service->authorizeOperation($request->user(), $tenant, $request->isMethod('DELETE') ? 'deactivate' : ($guest ? 'update' : 'create'));
         app(PlanningGuestService::class)->save($request->user(), $tenant, $event, $guest, $request->all(), $request->isMethod('DELETE'));
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', 'Gastspieler gespeichert.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', __('Gastspieler gespeichert.'));
     }
 
     public function invite(Request $request, Tenant $tenant, int $event, int $member)
@@ -164,7 +164,7 @@ class TeamPlanningController
         $this->service->authorizeOperation($request->user(), $tenant, $request->isMethod('DELETE') ? 'cancel' : 'send');
         app(PlanningGuestService::class)->invite($request->user(), $tenant, $event, $member, $request->isMethod('DELETE'));
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', 'Einladung aktualisiert.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', __('Einladung aktualisiert.'));
     }
 
     public function series(Request $request, Tenant $tenant, int $event)
@@ -191,7 +191,7 @@ class TeamPlanningController
         abort_unless(is_string($fingerprint), 409);
         $count = app(PlanningSeriesService::class)->apply($request->user(), $tenant, $event, $request->all(), $fingerprint);
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', $count.' Serientermine aktualisiert.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', __(':count Serientermine aktualisiert.', ['count' => $count]));
     }
 
     public function sfv(Request $request, Tenant $tenant)
@@ -218,7 +218,7 @@ class TeamPlanningController
     {
         $count = app(SfvPlanningService::class)->refresh($request->user(), $tenant, $request->all());
 
-        return redirect()->route('clubunio.planning.sfv', [$tenant->slug] + $request->only('from', 'to'))->with('notice', $count.' SFV-Spiele abgerufen.');
+        return redirect()->route('clubunio.planning.sfv', [$tenant->slug] + $request->only('from', 'to'))->with('notice', __(':count SFV-Spiele abgerufen.', ['count' => $count]));
     }
 
     public function sfvForm(Request $request, Tenant $tenant, int $match)
@@ -234,7 +234,7 @@ class TeamPlanningController
         $teamChoices = $data['teams'];
         $data['teams'] = $data['teams']->where('id', $team->id);
         $existing = $this->service->table($tenant, 'team_events', true)->where('team_season_id', $team->id)->where('sfv_match_id', $sfv->match_id)->first();
-        abort_if(($existing->deleted_at ?? null) !== null, 409, 'Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.');
+        abort_if(($existing->deleted_at ?? null) !== null, 409, __('Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.'));
         $record = $existing ? clone $existing : (object) ['id' => null, 'revision' => 0, 'team_season_id' => $team->id, 'kind' => 'MEISTERSCHAFT', 'mode' => 'ANMELDEN', 'status' => 'AKTIV', 'capacity' => 18, 'description' => '', 'deadline_at' => null];
         $record->title = $sfv->title;
         if (! $existing) {
@@ -253,14 +253,14 @@ class TeamPlanningController
     {
         $id = app(SfvPlanningService::class)->import($request->user(), $tenant, $match, $request->all());
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $id])->with('notice', 'SFV-Spiel übernommen.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $id])->with('notice', __('SFV-Spiel übernommen.'));
     }
 
     public function participate(Request $request, Tenant $tenant, int $event, int $member)
     {
         $this->service->participate($request->user(), $tenant, $event, $member, $request->all());
 
-        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', 'Teilnahme gespeichert.');
+        return redirect()->route('clubunio.planning.show', [$tenant->slug, $event])->with('notice', __('Teilnahme gespeichert.'));
     }
 
     public function absences(Request $request, Tenant $tenant)
@@ -308,7 +308,7 @@ class TeamPlanningController
     {
         $result = $this->service->saveAbsence($request->user(), $tenant, $absence, $request->all(), $request->isMethod('DELETE'));
 
-        return redirect()->route('clubunio.planning.absences', $tenant->slug)->with('notice', 'Absenz gespeichert.'.($result['skipped'] ? ' '.$result['skipped'].' fristgesperrte Termine blieben unverändert. Bitte das Trainerteam kontaktieren.' : ''));
+        return redirect()->route('clubunio.planning.absences', $tenant->slug)->with('notice', __('Absenz gespeichert.').($result['skipped'] ? ' '.__(':count fristgesperrte Termine blieben unverändert. Bitte das Trainerteam kontaktieren.', ['count' => $result['skipped']]) : ''));
     }
 
     public function options(Request $request, Tenant $tenant)
@@ -343,6 +343,6 @@ class TeamPlanningController
             $this->service->table($tenant, 'object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $request->user()->id, 'object_type' => 'planning_options', 'object_id' => $id, 'after_value' => json_encode($data)]);
         });
 
-        return redirect()->route('clubunio.planning.options', $tenant->slug)->with('notice', 'Auswahlwert gespeichert.');
+        return redirect()->route('clubunio.planning.options', $tenant->slug)->with('notice', __('Auswahlwert gespeichert.'));
     }
 }

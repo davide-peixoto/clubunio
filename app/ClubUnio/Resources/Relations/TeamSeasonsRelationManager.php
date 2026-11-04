@@ -38,7 +38,7 @@ class TeamSeasonsRelationManager extends DossierRelationManager
 
         return $table->headerActions([...$table->getHeaderActions(), Action::make('transferSeason')
             ->label('In andere Saison übernehmen')->icon('heroicon-o-document-duplicate')->slideOver()->modalWidth('5xl')
-            ->modalSubmitActionLabel('Vorschau übernehmen')
+            ->modalSubmitActionLabel(__('Vorschau übernehmen'))
             ->modalSubmitAction(fn (Action $action) => $action->disabled(empty($this->seasonTransferPreview) || collect($this->seasonTransferPreview['rows'] ?? [])->contains('state', 'blockiert')))
             ->fillForm(function () {
                 $this->seasonTransferPreview = [];
@@ -47,7 +47,7 @@ class TeamSeasonsRelationManager extends DossierRelationManager
             })
             ->schema([
                 Select::make('target_season_id')->label('Zielsaison')->required()->live()
-                    ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->whereKeyNot($this->getOwnerRecord()->id)->orderByDesc('name')->pluck('name', 'id'))
+                    ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->whereKeyNot($this->getOwnerRecord()->id)->orderByDesc('name')->localizedPluck('name', 'id'))
                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         $set('confirmed', false);
                         $this->seasonTransferPreview = [];
@@ -71,7 +71,7 @@ class TeamSeasonsRelationManager extends DossierRelationManager
                     abort_unless(($this->seasonTransferPreview['target'] ?? null) === (int) $data['target_season_id'], 422);
                     $count = app(SeasonAssignmentTransferService::class)->apply(Filament::auth()->user(), Filament::getTenant(), $this->getOwnerRecord()->id, (int) $data['target_season_id'], $this->seasonTransferPreview['token'], $data['team_season_ids']);
                     $this->seasonTransferPreview = [];
-                    Notification::make()->title($count.' Zuordnungen übernommen')->success()->send();
+                    Notification::make()->title(__(':count Zuordnungen übernommen', ['count' => $count]))->success()->send();
                 });
             })]);
     }

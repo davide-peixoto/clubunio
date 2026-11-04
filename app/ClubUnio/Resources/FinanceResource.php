@@ -63,15 +63,15 @@ abstract class FinanceResource extends CatalogResource
                 $items[] = TextEntry::make($field)->label($label)->date('d.m.Y')->placeholder('–');
             }
         } else {
-            $items[] = TextEntry::make('category.name')->label('Kategorie')->placeholder('Nicht zugeordnet');
-            $items[] = TextEntry::make('tax_mode')->label('Steuerbehandlung')->formatStateUsing(fn ($state) => $state === 'inclusive' ? 'Endpreise inklusive Steuer' : 'Steuerbefreit');
+            $items[] = TextEntry::make('category.name')->label('Kategorie')->placeholder(__('Nicht zugeordnet'));
+            $items[] = TextEntry::make('tax_mode')->label('Steuerbehandlung')->formatStateUsing(fn ($state) => $state === 'inclusive' ? __('Endpreise inklusive Steuer') : __('Steuerbefreit'));
             $items[] = TextEntry::make('rounding_cents')->label('Rundung CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2, '.', "'"));
             $items[] = TextEntry::make('included_tax')->label('Enthaltene Steuer CHF')->state(fn ($record) => $record->tax_mode === 'inclusive' ? app(InvoiceTaxService::class)->summary($record)['tax'] : '0.00')->money('CHF', locale: 'de_CH');
-            $items[] = TextEntry::make('workflowStatus.name')->label('Bearbeitungsstatus')->badge()->color(fn ($state) => StatusAppearance::palette($state))->placeholder('Importiert');
+            $items[] = TextEntry::make('workflowStatus.name')->label('Bearbeitungsstatus')->badge()->color(fn ($state) => StatusAppearance::palette($state))->placeholder(__('Importiert'));
             $items[] = TextEntry::make('bexio_invoice_id')->label('Bexio-Nr.')->placeholder('–');
         }
         foreach (['paid_cents' => 'Bexio bezahlt', 'credit_cents' => 'Bexio Gutschriften', 'remaining_cents' => 'Bexio Restbetrag', 'overpaid_cents' => 'Bexio Guthaben', 'cash_received_cents' => 'Zahlungsliste Eingänge', 'cash_excess_cents' => 'Zahlungsliste Guthaben'] as $field => $label) {
-            $items[] = TextEntry::make('bexioBalance.'.$field)->label($label)->placeholder('Noch nicht abgeglichen')
+            $items[] = TextEntry::make('bexioBalance.'.$field)->label($label)->placeholder(__('Noch nicht abgeglichen'))
                 ->formatStateUsing(fn ($state) => 'CHF '.number_format((int) $state / 100, 2, '.', "'"));
         }
         $items[] = TextEntry::make('bexioBalance.observed_at')->label('Finanzabgleich vom')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->placeholder('–');

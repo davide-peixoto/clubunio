@@ -23,16 +23,16 @@ class TrainingOptionResource extends ContributionTrainingResource
 
     protected static ?string $tenantRelationshipName = 'trainingOptions';
 
-    public const CATEGORIES = ['period' => 'Sommer / Winter', 'weekday' => 'Wochentag', 'field' => 'Spielfeld', 'room' => 'Garderobe', 'side' => 'Seite'];
+    public const CATEGORIES = ['period' => 'Sommer / Winter', 'weekday' => 'Wochentag', 'field' => 'Spielfeld', 'room' => 'Garderobe', 'side' => 'Anlagenseite'];
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([Hidden::make('revision'), Select::make('category')->label('Kategorie')->options(self::CATEGORIES)->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null), TextInput::make('code')->label('Code')->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null), TextInput::make('name')->label('Bezeichnung')->required(), TextInput::make('sort_order')->label('Reihenfolge')->numeric()->default(0)->required(), Toggle::make('active')->label('Aktiv')->default(true)]);
+        return $schema->components([Hidden::make('revision'), Select::make('category')->label('Kategorie')->options(array_map(fn ($name) => __($name), self::CATEGORIES))->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null), TextInput::make('code')->label('Code')->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null), TextInput::make('name')->label('Bezeichnung')->required(), TextInput::make('sort_order')->label('Reihenfolge')->numeric()->default(0)->required(), Toggle::make('active')->label('Aktiv')->default(true)]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table->columns([TextColumn::make('category')->label('Kategorie')->formatStateUsing(fn ($state) => self::CATEGORIES[$state] ?? $state), TextColumn::make('code')->label('Code'), TextColumn::make('name')->label('Bezeichnung')->searchable(), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([SelectFilter::make('category')->label('Kategorie')->options(self::CATEGORIES)])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
+        return $table->columns([TextColumn::make('category')->label('Kategorie')->formatStateUsing(fn ($state) => __(self::CATEGORIES[$state] ?? $state)), TextColumn::make('code')->label('Code'), TextColumn::make('name')->label('Bezeichnung')->searchable(), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([SelectFilter::make('category')->label('Kategorie')->options(array_map(fn ($name) => __($name), self::CATEGORIES))])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 
     public static function getPages(): array

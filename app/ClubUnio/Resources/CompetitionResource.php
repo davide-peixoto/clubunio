@@ -76,7 +76,7 @@ class CompetitionResource extends FacilityResource
                 }
             })),
             Filter::make('date')->schema([DatePicker::make('from')->label('Von'), DatePicker::make('until')->label('Bis')])
-                ->indicateUsing(fn (array $data) => array_filter([empty($data['from']) ? null : 'Von '.$data['from'], empty($data['until']) ? null : 'Bis '.$data['until']]))
+                ->indicateUsing(fn (array $data) => array_filter([empty($data['from']) ? null : __('Von :date', ['date' => $data['from']]), empty($data['until']) ? null : __('Bis :date', ['date' => $data['until']])]))
                 ->query(function ($query, array $data) {
                     if (Validator::make($data, ['from' => 'nullable|date_format:Y-m-d', 'until' => 'nullable|date_format:Y-m-d'])->fails()) {
                         return $query->whereRaw('1=0');

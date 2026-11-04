@@ -14,7 +14,10 @@ class InvoicesByStatus extends ChartWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('invoices');
     }
 
-    protected ?string $heading = 'Rechnungen nach Positionsstatus';
+    public function getHeading(): string
+    {
+        return __('Rechnungen nach Positionsstatus');
+    }
 
     protected ?string $pollingInterval = null;
 
@@ -30,7 +33,11 @@ class InvoicesByStatus extends ChartWidget
         abort_unless(static::canView(), 403);
         $rows = app(DashboardService::class)->invoicesByStatus(Filament::auth()->user(), Filament::getTenant());
         $labels = array_column($rows, 'status');
+        $colors = array_map(StatusAppearance::hex(...), $labels);
+        // These are computed aggregate categories, not editable lookup records.
+        $display = ['Ohne Position' => __('Ohne Position'), 'Teilbezahlt' => __('Teilbezahlt'),
+            'Offen' => __('Offen'), 'Bezahlt' => __('Bezahlt'), 'Teilweise' => __('Teilweise')];
 
-        return ['labels' => $labels, 'datasets' => [['label' => 'Rechnungen', 'data' => array_column($rows, 'total'), 'backgroundColor' => array_map(StatusAppearance::hex(...), $labels)]]];
+        return ['labels' => array_map(fn ($label) => $display[$label] ?? $label, $labels), 'datasets' => [['label' => __('Rechnungen'), 'data' => array_column($rows, 'total'), 'backgroundColor' => $colors]]];
     }
 }

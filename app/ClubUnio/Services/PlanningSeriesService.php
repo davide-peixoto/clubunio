@@ -39,13 +39,13 @@ class PlanningSeriesService
             $beforeTimes = [];
             foreach (['starts_at', 'ends_at', 'deadline_at'] as $field) {
                 if (! $row->$field) {
-                    throw ValidationException::withMessages(['from' => 'Ein Serientermin hat keine Frist. Bitte zuerst einzeln ergänzen.']);
+                    throw ValidationException::withMessages(['from' => __('Ein Serientermin hat keine Frist. Bitte zuerst einzeln ergänzen.')]);
                 }
                 $original = Time::parse($row->$field)->tz('Europe/Zurich');
                 $beforeTimes[$field] = $original->format('Y-m-d\TH:i');
                 $time = $original->addMinutes((int) $data['shift_minutes']);
                 if ($time->isPast()) {
-                    throw ValidationException::withMessages(['shift_minutes' => 'Die Verschiebung würde einen Termin oder seine Frist in die Vergangenheit legen.']);
+                    throw ValidationException::withMessages(['shift_minutes' => __('Die Verschiebung würde einen Termin oder seine Frist in die Vergangenheit legen.')]);
                 }
                 $next[$field] = $time->format('Y-m-d\TH:i');
             }
@@ -58,7 +58,7 @@ class PlanningSeriesService
             if ($data['change_capacity'] ?? false) {
                 $next['capacity'] = $data['capacity'] ?? null;
                 if ($next['capacity'] && $p->effectiveCount($tenant, $row) > $next['capacity']) {
-                    throw ValidationException::withMessages(['capacity' => 'Die neue Kapazität ist kleiner als die Anzahl bestehender Anmeldungen.']);
+                    throw ValidationException::withMessages(['capacity' => __('Die neue Kapazität ist kleiner als die Anzahl bestehender Anmeldungen.')]);
                 }
             }
             if ($data['cancel'] ?? false) {
@@ -88,7 +88,7 @@ class PlanningSeriesService
             $this->planning->lock($tenant);
             $preview = $this->preview($actor, $tenant, $id, $input);
             if (! hash_equals($preview['fingerprint'], $fingerprint)) {
-                throw ValidationException::withMessages(['revision' => 'Die Serie hat sich geändert. Bitte eine neue Vorschau erstellen.']);
+                throw ValidationException::withMessages(['revision' => __('Die Serie hat sich geändert. Bitte eine neue Vorschau erstellen.')]);
             }
             foreach ($preview['changes'] as $change) {
                 $this->planning->saveEvent($actor, $tenant, $change['id'], $change['input'], true);

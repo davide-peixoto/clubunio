@@ -44,7 +44,7 @@ class FacilityService
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
             }
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $record->revision) {
-                throw ValidationException::withMessages(['revision' => 'Der Datensatz wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde geändert. Bitte neu laden.')]);
             }
             $rules = ['active' => 'required|boolean', 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:1'];
             $option = fn ($category, $required = false) => [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->where('active', true))];
@@ -75,7 +75,7 @@ class FacilityService
             }
             // Source identifiers and sync timestamps never come from an edit form.
             if (array_diff(array_keys($input), array_keys($rules))) {
-                throw ValidationException::withMessages(['form' => 'Unbekannte oder geschützte Felder.']);
+                throw ValidationException::withMessages(['form' => __('Unbekannte oder geschützte Felder.')]);
             }
             $data = Validator::make($input, $rules)->validate();
             if ($model === Competition::class) {
@@ -83,12 +83,12 @@ class FacilityService
                     // Historical unknown/inactive numbers may remain, but cannot be assigned anew.
                     if (! empty($data[$field]) && (! $id || (int) $data[$field] !== (int) $record->$field)
                         && ! FootballClub::where('tenant_id', $tenant->id)->where('club_number', $data[$field])->where('active', true)->exists()) {
-                        throw ValidationException::withMessages([$field => 'Bitte einen aktiven Verein aus dem Vereinsstamm auswählen.']);
+                        throw ValidationException::withMessages([$field => __('Bitte einen aktiven Verein aus dem Vereinsstamm auswählen.')]);
                     }
                 }
             }
             if ($model === FieldAvailability::class && FieldAvailability::where('tenant_id', $tenant->id)->where('field_id', $data['field_id'])->where('id', '!=', $id ?? 0)->exists()) {
-                throw ValidationException::withMessages(['field_id' => 'Für diesen Platz ist bereits ein Anlagenstatus vorhanden.']);
+                throw ValidationException::withMessages(['field_id' => __('Für diesen Platz ist bereits ein Anlagenstatus vorhanden.')]);
             }
             unset($data['revision']);
             if ($model === Competition::class && app(ModulePermissionService::class)->isProfile($actor, $tenant)

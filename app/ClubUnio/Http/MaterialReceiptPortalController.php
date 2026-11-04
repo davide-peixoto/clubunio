@@ -31,6 +31,6 @@ class MaterialReceiptPortalController
         $data = $request->validate(['revision' => 'required|integer|min:1', 'accepted' => 'required|accepted']);
         $service->transition($request->user('portal'), $tenant, $receipt, $data['revision'], 'confirm', $data);
 
-        return redirect()->route('clubunio.portal.material.show', [$tenant->slug, $receipt])->with('status', 'Empfang bestätigt.');
+        return redirect()->route('clubunio.portal.material.show', [$tenant->slug, $receipt])->with('status', __('Empfang bestätigt.'));
     }
 }

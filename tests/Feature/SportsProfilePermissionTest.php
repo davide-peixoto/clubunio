@@ -158,6 +158,8 @@ class SportsProfilePermissionTest extends TestCase
             'actor' => $this->actor, 'tenant' => $this->tenant,
             'teams' => $service->teams($this->admin, $this->tenant)->get(),
             'managed' => [$this->team], 'own' => collect(), 'colors' => [],
+            'absenceMembers' => $data['own'] ?? collect(),
+            'absenceEditableIds' => ($data['own'] ?? collect())->pluck('id')->all(),
             'options' => $service->options($this->tenant), 'errors' => new \Illuminate\Support\ViewErrorBag,
         ])->render();
     }

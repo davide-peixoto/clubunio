@@ -25,7 +25,7 @@ class PortalController
             'portal-login-ip:'.hash('sha256', $request->ip()) => 30];
         foreach ($keys as $key => $limit) {
             if (RateLimiter::tooManyAttempts($key, $limit)) {
-                throw ValidationException::withMessages(['username' => 'Zu viele Versuche. Bitte in einer Minute erneut versuchen.']);
+                throw ValidationException::withMessages(['username' => __('Zu viele Versuche. Bitte in einer Minute erneut versuchen.')]);
             }
             RateLimiter::hit($key, 60);
         }
@@ -41,7 +41,7 @@ class PortalController
             }
             $guard->logout();
         }
-        throw ValidationException::withMessages(['username' => 'Anmeldung nicht möglich. Zugangsdaten oder Mitgliedsfreigabe prüfen.']);
+        throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich. Zugangsdaten oder Mitgliedsfreigabe prüfen.')]);
     }
 
     public function members(Request $request, Tenant $tenant, MemberAccessService $access)
@@ -57,7 +57,7 @@ class PortalController
             ->when($data['status'] ?? null, fn ($query, $status) => $query->where('status_id', $status))
             ->orderBy('last_name')->orderBy('first_name')->orderBy('id')->paginate(25)->withQueryString();
         $tenants = $actor->tenants()->get()->filter(fn ($t) => $access->canEnter($actor, $t));
-        $statuses = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->get(['id', 'name']);
+        $statuses = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->get(['id', 'tenant_id', 'name']);
         $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubora.members.id')->all();
 
         return response()->view('clubunio.portal.members', compact('tenant', 'tenants', 'members', 'q', 'statuses', 'editableMemberIds'))

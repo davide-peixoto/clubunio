@@ -98,7 +98,7 @@ class DashboardService
     {
         return DB::connection('clubunio')->query()->fromSub($this->invoiceTotals($actor, $tenant), 'totals')
             ->leftJoin('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'totals.season_id')->where('s.tenant_id', $tenant->id)->where('s.active', true))
-            ->selectRaw("COALESCE(s.name,'Ohne Saison') as season, count(*) as total, sum(amount) as amount, sum(open_amount) as open_amount")
+            ->selectRaw("s.id as season_id, COALESCE(s.name,'Ohne Saison') as season, count(*) as total, sum(amount) as amount, sum(open_amount) as open_amount")
             ->groupBy('s.id', 's.name')->orderByDesc('s.id')->limit(10)->get()->map(fn ($row) => (array) $row)->all();
     }
 

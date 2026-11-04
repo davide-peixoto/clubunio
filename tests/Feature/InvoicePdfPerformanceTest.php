@@ -105,7 +105,7 @@ class InvoicePdfPerformanceTest extends TestCase
         $this->assertStringContainsString($url.'?download=1', $html);
         $this->assertStringNotContainsString('blob:', $html);
         $standalone = view('clubunio.invoices.viewer', compact('url'))->render();
-        $this->assertStringContainsString('pdf-viewer.js?v=3', $standalone);
+        $this->assertStringContainsString('pdf-viewer.js?v=4', $standalone);
         $this->assertStringContainsString('data-pdf-control="pdf"', $standalone);
     }
 

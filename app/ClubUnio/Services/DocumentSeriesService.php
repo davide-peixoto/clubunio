@@ -77,7 +77,7 @@ class DocumentSeriesService
                 }
                 $type = DocumentType::where('tenant_id', $tenant->id)->where('active', true)->where('code', $d['type_code'])->first();
                 if (! $type) {
-                    throw ValidationException::withMessages(['template' => 'Aktiver Dokumenttyp '.$d['type_code'].' fehlt. Bitte in den Stammdaten durch eine berechtigte Person ergänzen lassen oder eine eigene Vorlage mit einem vorhandenen Typ erstellen.']);
+                    throw ValidationException::withMessages(['template' => __('Aktiver Dokumenttyp :value1 fehlt. Bitte in den Stammdaten durch eine berechtigte Person ergänzen lassen oder eine eigene Vorlage mit einem vorhandenen Typ erstellen.', ['value1' => $d['type_code']])]);
                 }
                 $d['type_id'] = $type->id;
                 unset($d['type_code']);
@@ -91,7 +91,7 @@ class DocumentSeriesService
         $this->authorize($actor, $tenant);
 
         return ['templates' => $this->templates($actor, $tenant),
-            'types' => DocumentType::where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->pluck('name', 'id'),
+            'types' => DocumentType::where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id'),
             'teams' => TeamSeason::where('tenant_id', $tenant->id)->where('active', true)->with(['team', 'season'])->orderByDesc('season_id')->get(),
         ];
     }
@@ -119,10 +119,10 @@ class DocumentSeriesService
                 ->whereIn('team_season_id', $input['teams'])->orderBy('team_season_id')->get(['member_id', 'team_season_id']));
         }
         $people = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->whereIn('id', $links->pluck('member_id')->unique())->orderBy('id')->get();
-        abort_if($people->count() > 500 || $people->isEmpty(), 422, '1 bis 500 Empfänger erforderlich.');
+        abort_if($people->count() > 500 || $people->isEmpty(), 422, __('1 bis 500 Empfänger erforderlich.'));
         $members = array_map('intval', $input['members'] ?? $people->modelKeys());
         sort($members);
-        abort_unless(count(array_diff($members, $people->modelKeys())) === 0, 422, 'Fremde Empfänger.');
+        abort_unless(count(array_diff($members, $people->modelKeys())) === 0, 422, __('Fremde Empfänger.'));
         $common = $this->extras($input['common'] ?? []);
         $individual = $input['individual'] ?? [];
         foreach ($individual as $id => $extra) {
@@ -155,7 +155,7 @@ class DocumentSeriesService
     private function extras(array $values): array
     {
         foreach ($values as $key => $value) {
-            abort_unless(in_array($key, DocumentSeriesRenderer::EXTRA, true) && is_string($value) && mb_strlen($value) <= 160, 422, 'Individuelle Angabe ungültig.');
+            abort_unless(in_array($key, DocumentSeriesRenderer::EXTRA, true) && is_string($value) && mb_strlen($value) <= 160, 422, __('Individuelle Angabe ungültig.'));
         }
 
         return $values;
@@ -175,7 +175,7 @@ class DocumentSeriesService
                 return $old;
             }
             $preview = $this->preview($actor, $tenant, $input);
-            abort_unless($preview['can_create'] && hash_equals($preview['hash'], $hash), 409, 'Vorschau veraltet. Bitte erneut prüfen.');
+            abort_unless($preview['can_create'] && hash_equals($preview['hash'], $hash), 409, __('Vorschau veraltet. Bitte erneut prüfen.'));
             $snapshot = $preview['snapshot'];
             $people = $snapshot['recipients'];
             unset($snapshot['recipients']);
@@ -327,9 +327,9 @@ class DocumentSeriesService
             $this->authorize($actor, $tenant, 'upload', 'update');
             $row = $this->recipient($actor, $tenant, $series, $recipient);
             abort_unless($row->document_id && $row->snapshot['definition']['signature_required'] && hash_equals($row->original_sha256, $originalHash), 409);
-            abort_if(hash_equals($row->original_sha256, $sha), 422, 'Rückgabe ist identisch mit dem Original.');
+            abort_if(hash_equals($row->original_sha256, $sha), 422, __('Rückgabe ist identisch mit dem Original.'));
             if ($row->signed_upload_id) {
-                abort_unless(hash_equals($row->signed_sha256, $sha), 409, 'Andere Rückgabe bereits vorhanden.');
+                abort_unless(hash_equals($row->signed_sha256, $sha), 409, __('Andere Rückgabe bereits vorhanden.'));
 
                 return $row;
             }
@@ -359,7 +359,7 @@ class DocumentSeriesService
             $this->authorize($actor, $tenant, 'upload', 'update');
             $row = $this->recipient($actor, $tenant, $series, $recipient);
             $doc = $this->document($tenant, $row, $document, $row->signed_sha256);
-            abort_unless((int) $doc->created_by === (int) $row->checked_by, 409, 'Uploadernachweis stimmt nicht.');
+            abort_unless((int) $doc->created_by === (int) $row->checked_by, 409, __('Uploadernachweis stimmt nicht.'));
             if (! $row->signed_document_id) {
                 $row->forceFill(['signed_document_id' => $document])->save();
                 $this->audit($actor, $tenant, 'document_series_recipients', $row->id, 'checked_return_published');
@@ -390,7 +390,7 @@ class DocumentSeriesService
         $hash = $signed ? $row->signed_sha256 : $row->original_sha256;
         $this->document($tenant, $row, $id, $hash);
         $response = $portal ? app(MemberDocumentService::class)->openPortal($actor, $tenant, $id) : app(MemberDocumentService::class)->open($actor, $tenant, $id);
-        abort_unless(hash_equals($hash, hash('sha256', $response->getContent())), 409, 'Dateipruefsumme stimmt nicht.');
+        abort_unless(hash_equals($hash, hash('sha256', $response->getContent())), 409, __('Dateipruefsumme stimmt nicht.'));
 
         return $response;
     }

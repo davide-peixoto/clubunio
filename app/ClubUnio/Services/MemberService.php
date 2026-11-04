@@ -43,7 +43,7 @@ class MemberService
         $values = app(RegistrationDataService::class)->values($registration);
         $status = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->where('restores_membership', true)->get();
         if ($status->count() !== 1) {
-            throw ValidationException::withMessages(['status_id' => 'Genau ein aktiver Mitgliedstatus für den Wiedereintritt muss konfiguriert sein.']);
+            throw ValidationException::withMessages(['status_id' => __('Genau ein aktiver Mitgliedstatus für den Wiedereintritt muss konfiguriert sein.')]);
         }
         $input = array_intersect_key($values, array_flip([...RegistrationDataService::CORE,
             ...array_intersect(RegistrationDataService::DETAILS, self::FIELDS)]));
@@ -125,12 +125,12 @@ class MemberService
                 'billing_recipient_id' => 'Rechnung an', 'exit_date' => 'Austrittsdatum',
             ])->validate();
             if ($id && ! hash_equals(self::version($member), $data['_version'])) {
-                throw ValidationException::withMessages(['company' => 'Dieser Datensatz wurde inzwischen geändert. Bitte schliessen und erneut öffnen.']);
+                throw ValidationException::withMessages(['company' => __('Dieser Datensatz wurde inzwischen geändert. Bitte schliessen und erneut öffnen.')]);
             }
             if ($data['billing_recipient_id'] ?? null) {
                 $field = $lookups['billing_recipients']->get($data['billing_recipient_id'])->email_field;
                 if (empty($data[$field])) {
-                    throw ValidationException::withMessages([$field => 'Für den gewählten Rechnungsempfänger wird eine E-Mail-Adresse benötigt.']);
+                    throw ValidationException::withMessages([$field => __('Für den gewählten Rechnungsempfänger wird eine E-Mail-Adresse benötigt.')]);
                 }
             }
             $status = $lookups['member_statuses']->get($data['status_id'] ?? null);
@@ -143,7 +143,7 @@ class MemberService
                 }
             }
             if ($status?->ends_membership && empty($data['exit_date'])) {
-                throw ValidationException::withMessages(['exit_date' => 'Für diesen Status ist ein Austrittsdatum erforderlich.']);
+                throw ValidationException::withMessages(['exit_date' => __('Für diesen Status ist ein Austrittsdatum erforderlich.')]);
             }
             $data = array_intersect_key($data, array_flip(self::FIELDS));
             if ($id && ! $registration) {
@@ -195,7 +195,7 @@ class MemberService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', 'deactivate');
             $member = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->whereKey($id)->lockForUpdate()->firstOrFail();
             if (! hash_equals(self::version($member), $version)) {
-                throw ValidationException::withMessages(['version' => 'Datensatz geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['version' => __('Datensatz geändert. Bitte neu laden.')]);
             }
             $member->forceFill(['archived_at' => now()])->save();
             $this->audit($actor, $tenant, $member, ['archived_at' => null], ['archived_at' => $member->archived_at]);

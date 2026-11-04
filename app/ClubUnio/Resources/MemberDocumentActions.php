@@ -24,7 +24,7 @@ class MemberDocumentActions
                     ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])
                     ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%'))
                     ->orderBy('last_name')->limit(50)->get()->mapWithKeys(fn ($m) => [$m->id => $m->display_name.' · '.$m->member_number]))]),
-            Select::make('document_type_id')->label('Dokumententyp')->required()->searchable()->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->pluck('name', 'id')),
+            Select::make('document_type_id')->label('Dokumententyp')->required()->searchable()->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id')),
             Toggle::make('portal_visible')->label('Für Mitglied und berechtigte Eltern sichtbar')->default(false)->required(),
             FileUpload::make('file')->label('Datei')->storeFiles(false)->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])->maxSize(12288)->required(),
         ])->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberDocumentMaintenanceService::class)->add(Filament::auth()->user(), Filament::getTenant(), $member ?? (int) $data['member_id'], (int) $data['document_type_id'], (bool) $data['portal_visible'], $data['file'])));
@@ -32,7 +32,7 @@ class MemberDocumentActions
 
     public static function manage(?int $member = null): Action
     {
-        return Action::make('manageDocument')->label('Freigabe bearbeiten')->icon('heroicon-o-adjustments-horizontal')->iconButton()->tooltip('Freigabe und Aktivstatus bearbeiten')->slideOver()
+        return Action::make('manageDocument')->label('Freigabe bearbeiten')->icon('heroicon-o-adjustments-horizontal')->iconButton()->tooltip(__('Freigabe und Aktivstatus bearbeiten'))->slideOver()
             ->fillForm(fn ($record) => $record->only(['revision', 'active', 'portal_visible']))
             ->schema([Hidden::make('revision')->required(), Toggle::make('active')->label('Aktiv')->required(), Toggle::make('portal_visible')->label('Für Mitglied und berechtigte Eltern sichtbar')->required()])
             ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberDocumentMaintenanceService::class)->update(Filament::auth()->user(), Filament::getTenant(), $record->id, $member ?? $record->member_id, (int) $data['revision'], (bool) $data['active'], (bool) $data['portal_visible'])));

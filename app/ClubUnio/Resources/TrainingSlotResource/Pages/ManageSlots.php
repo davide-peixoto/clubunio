@@ -15,6 +15,6 @@ class ManageSlots extends ManageRecords
     public function getSubheading(): ?string
     {
         $period = app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period(\Filament\Facades\Filament::getTenant());
-        return 'Aktiver Trainingsplan: '.($period?->name ?? 'Nicht festgelegt');
+        return __('Aktiver Trainingsplan: :period', ['period' => $period ? app(\App\ClubUnio\Services\LookupTranslations::class)->label('training_options', $period) : __('Nicht festgelegt')]);
     }
 }

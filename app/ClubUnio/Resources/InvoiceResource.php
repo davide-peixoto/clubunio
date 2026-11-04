@@ -28,12 +28,12 @@ class InvoiceResource extends FinanceResource
         $table = parent::table($table);
 
         return $table->columns(array_merge(array_values($table->getColumns()), [
-            TextColumn::make('workflowStatus.name')->label('Bearbeitungsstatus')->placeholder('Importiert')->badge()
+            TextColumn::make('workflowStatus.name')->label('Bearbeitungsstatus')->placeholder(__('Importiert'))->badge()
                 ->color(fn ($state) => StatusAppearance::palette($state)),
-            TextColumn::make('category.name')->label('Kategorie')->placeholder('Nicht zugeordnet')->searchable(),
+            TextColumn::make('category.name')->label('Kategorie')->placeholder(__('Nicht zugeordnet'))->searchable(),
         ]))->filters(array_merge(array_values($table->getFilters()), [
-            SelectFilter::make('workflow_status_id')->label('Bearbeitungsstatus')->options(fn () => InvoiceWorkflowStatus::where('tenant_id', Filament::getTenant()->id)->pluck('name', 'id')),
-            SelectFilter::make('invoice_category_id')->label('Kategorie')->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->pluck('name', 'id')),
+            SelectFilter::make('workflow_status_id')->label('Bearbeitungsstatus')->options(fn () => InvoiceWorkflowStatus::where('tenant_id', Filament::getTenant()->id)->localizedPluck('name', 'id')),
+            SelectFilter::make('invoice_category_id')->label('Kategorie')->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->localizedPluck('name', 'id')),
         ]));
     }
 

@@ -63,12 +63,12 @@ class BexioCatalogFixtureService
         }
         $prior = BexioCatalogEntry::where('tenant_id', $tenant->id)->where('connection_hash', $hash)
             ->where('kind', 'article')->where('code', self::CODE)->get();
-        abort_if($prior->count() > 1, 409, 'Mehrere Testartikel gefunden. Keine Neuanlage.');
+        abort_if($prior->count() > 1, 409, __('Mehrere Testartikel gefunden. Keine Neuanlage.'));
         $priorId = $prior->first()?->remote_id;
         $pick = function (string $path, string $field, mixed $value) use ($client, $token): int {
             $rows = array_values(array_filter($client->get($token, $path), fn ($row) => ($row[$field] ?? null) === $value
                 && (! array_key_exists('is_active', $row) || $row['is_active'] === true)));
-            abort_unless(count($rows) === 1 && (int) ($rows[0]['id'] ?? 0) > 0, 422, 'Testartikel-Grundlage nicht eindeutig.');
+            abort_unless(count($rows) === 1 && (int) ($rows[0]['id'] ?? 0) > 0, 422, __('Testartikel-Grundlage nicht eindeutig.'));
 
             return (int) $rows[0]['id'];
         };
@@ -80,7 +80,7 @@ class BexioCatalogFixtureService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
             abort_unless(hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
-            abort_if((clone $table)->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, 'Testartikel-Auftrag bereits vorhanden.');
+            abort_if((clone $table)->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, __('Testartikel-Auftrag bereits vorhanden.'));
 
             return $table->insertGetId(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'connection_hash' => $hash,
                 'state' => $priorId ? 'uncertain' : 'running', 'remote_id' => $priorId]);
@@ -118,11 +118,11 @@ class BexioCatalogFixtureService
                     break;
                 }
             }
-            abort_unless($finished, 502, 'Testartikel-Suche überschreitet das Limit.');
+            abort_unless($finished, 502, __('Testartikel-Suche überschreitet das Limit.'));
         }
         abort_unless(count($rows) === 1 && ($rows[0]['intern_code'] ?? '') === self::CODE && ($rows[0]['remarks'] ?? '') === self::MARKER
             && ($rows[0]['intern_name'] ?? '') === 'ClubUnio Sandbox Testartikel' && (int) ($rows[0]['article_type_id'] ?? 0) === 2
-            && ($rows[0]['is_stock'] ?? null) === false && (int) ($rows[0]['id'] ?? 0) > 0, 409, 'Testartikel noch nicht eindeutig bestätigt. Kein erneuter POST.');
+            && ($rows[0]['is_stock'] ?? null) === false && (int) ($rows[0]['id'] ?? 0) > 0, 409, __('Testartikel noch nicht eindeutig bestätigt. Kein erneuter POST.'));
         $table->update(['remote_id' => $rows[0]['id'], 'state' => 'accepted', 'checked_at' => now()]);
 
         return (int) $rows[0]['id'];

@@ -56,10 +56,10 @@ class FamilyService
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'families', $id ? 'update' : 'create');
             }
             if ($id && ! hash_equals(self::version($record), $data['_version'])) {
-                throw ValidationException::withMessages([$model === Family::class ? 'name' : 'notes' => 'Datensatz wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages([$model === Family::class ? 'name' : 'notes' => __('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             if ($model === FamilyMember::class && FamilyMember::where('tenant_id', $tenant->id)->where('family_id', $data['family_id'])->where('member_id', $data['member_id'])->when($id, fn ($q) => $q->whereKeyNot($id))->exists()) {
-                throw ValidationException::withMessages(['member_id' => 'Dieses Mitglied ist bereits zugeordnet. Bestehende Zuordnung bearbeiten.']);
+                throw ValidationException::withMessages(['member_id' => __('Dieses Mitglied ist bereits zugeordnet. Bestehende Zuordnung bearbeiten.')]);
             }
             $data = array_diff_key($data, array_flip(['_version', 'tenant_id', 'id', 'legacy_id']));
             $before = $record->exists ? $record->only(array_keys($data)) : null;

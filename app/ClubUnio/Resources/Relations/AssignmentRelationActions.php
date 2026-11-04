@@ -42,7 +42,7 @@ trait AssignmentRelationActions
         return array_map(fn (bool $active) => BulkAction::make($active ? 'restoreAssignments' : 'deactivateAssignments')
             ->label($active ? 'Auswahl wiederherstellen' : 'Auswahl deaktivieren')
             ->icon($active ? 'heroicon-o-arrow-path' : 'heroicon-o-archive-box')->requiresConfirmation()
-            ->modalDescription('Maximal 100 Zuordnungen. Bei einem Konflikt wird die gesamte Auswahl unverändert gelassen.')
+            ->modalDescription(__('Maximal 100 Zuordnungen. Bei einem Konflikt wird die gesamte Auswahl unverändert gelassen.'))
             ->schema([Hidden::make('selection_count')])
             ->fillForm(function ($records) {
                 $this->assignmentBulkSnapshot = [];
@@ -64,7 +64,7 @@ trait AssignmentRelationActions
                             $record = $locked->get($selected->id);
                             $data = $this->assignmentData($record);
                             if (! hash_equals($this->assignmentBulkSnapshot[$record->id] ?? '', hash('sha256', json_encode($data, JSON_THROW_ON_ERROR)))) {
-                                throw ValidationException::withMessages(['active' => 'Auswahl wurde inzwischen geändert. Bitte neu auswählen.']);
+                                throw ValidationException::withMessages(['active' => __('Auswahl wurde inzwischen geändert. Bitte neu auswählen.')]);
                             }
                             $this->saveAssignment($record->id, array_replace($data, ['active' => $active]));
                         }
@@ -175,7 +175,7 @@ trait AssignmentRelationActions
             Action::make('addAssignment')->label('Hinzufügen')->icon('heroicon-o-plus')
                 ->schema($schema)->action(fn (array $data) => $save(null, $data)),
         ])->recordActions([
-            Action::make('restoreAssignment')->label('Wiederherstellen')->icon('heroicon-o-arrow-path')->iconButton()->tooltip('Wiederherstellen')
+            Action::make('restoreAssignment')->label('Wiederherstellen')->icon('heroicon-o-arrow-path')->iconButton()->tooltip(__('Wiederherstellen'))
                 ->visible(fn (Model $record) => ! $record->active)->requiresConfirmation()
                 ->schema([Hidden::make('_version'), Hidden::make('revision')])
                 ->fillForm(fn (Model $record) => $this->assignmentData($record))
@@ -186,15 +186,15 @@ trait AssignmentRelationActions
                     $save($record->id, ['active' => true] + $values);
                 }),
             ...$table->getRecordActions(),
-            Action::make('editAssignment')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')
+            Action::make('editAssignment')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Bearbeiten'))
                 ->schema($schema)->fillForm(fn (Model $record) => $this->assignmentData($record))
                 ->action(fn (Model $record, array $data) => $save($record->id, $data)),
-            Action::make('copyAssignment')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Kopieren')
+            Action::make('copyAssignment')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Kopieren'))
                 ->schema(fn () => $this->assignmentSchema(true))->fillForm(fn (Model $record) => $this->assignmentData($record, true))
                 ->action(fn (array $data) => $save(null, $data)),
-            Action::make('deactivateAssignment')->label('Deaktivieren')->icon('heroicon-o-archive-box')->color('danger')->iconButton()->tooltip('Deaktivieren')
+            Action::make('deactivateAssignment')->label('Deaktivieren')->icon('heroicon-o-archive-box')->color('danger')->iconButton()->tooltip(__('Deaktivieren'))
                 ->visible(fn (Model $record) => $record->active)->requiresConfirmation()
-                ->modalDescription('Die Zuordnung wird deaktiviert. Bestehende Belege und die Historie bleiben erhalten.')
+                ->modalDescription(__('Die Zuordnung wird deaktiviert. Bestehende Belege und die Historie bleiben erhalten.'))
                 ->schema([Hidden::make('_version'), Hidden::make('revision')])
                 ->fillForm(fn (Model $record) => $this->assignmentData($record))
                 ->action(function (Model $record, array $data) use ($save) {

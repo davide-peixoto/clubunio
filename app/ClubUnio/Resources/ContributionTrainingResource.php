@@ -19,11 +19,11 @@ abstract class ContributionTrainingResource extends CatalogResource
 
     public static function editAction(): EditAction
     {
-        return EditAction::make()->iconButton()->tooltip('Bearbeiten')->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(ContributionTrainingService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
+        return EditAction::make()->iconButton()->tooltip(__('Bearbeiten'))->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(ContributionTrainingService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
     }
 
     public static function options(string $model, string $label = 'name'): array
     {
-        return $model::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy($label)->pluck($label, 'id')->all();
+        return $model::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy($label)->localizedPluck($label, 'id')->all();
     }
 }

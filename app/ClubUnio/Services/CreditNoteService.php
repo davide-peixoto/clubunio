@@ -72,7 +72,7 @@ class CreditNoteService
     {
         $id = FinancialAdjustmentStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', $code)->value('id');
         if (! $id) {
-            $this->fail('Status fehlt oder ist inaktiv: '.$code);
+            $this->fail(__('Status fehlt oder ist inaktiv: :value1', ['value1' => $code]));
         }
 
         return $id;
@@ -115,10 +115,10 @@ class CreditNoteService
             }
             $invoice = $this->invoice($tenant, $invoiceId);
             if ((int) $invoice->revision !== (int) $data['revision']) {
-                $this->fail('Rechnung wurde geändert. Bitte neu laden.');
+                $this->fail(__('Rechnung wurde geändert. Bitte neu laden.'));
             }
             // Imported amounts without a reviewed tax snapshot cannot become new accounting corrections.
-            abort_unless(! $invoice->legacy_id && in_array($invoice->workflowStatus?->code, ['released', 'cancelled'], true), 409, 'Eigene freigegebene Rechnung erforderlich.');
+            abort_unless(! $invoice->legacy_id && in_array($invoice->workflowStatus?->code, ['released', 'cancelled'], true), 409, __('Eigene freigegebene Rechnung erforderlich.'));
             $summary = app(InvoiceTaxService::class)->summary($invoice, true);
             $sources = $invoice->activeLines()->where('tenant_id', $tenant->id)->orderBy('id')->get();
             $raw = $summary['unrounded_cents'];
@@ -152,7 +152,7 @@ class CreditNoteService
                     ->selectRaw('COALESCE(SUM(l.amount_cents),0) AS amount, COALESCE(SUM(l.included_tax),0) AS tax')->first();
                 $capacity = $capacities[$line->id];
                 if ($amount > $capacity - (int) $prior->amount) {
-                    $this->fail('Gutschrift übersteigt den noch verfügbaren Positionsbetrag.');
+                    $this->fail(__('Gutschrift übersteigt den noch verfügbaren Positionsbetrag.'));
                 }
                 $originalTax = $taxCaps[$line->id];
                 $lineTax = $amount === $capacity - (int) $prior->amount ? $originalTax->minus($prior->tax)
@@ -186,7 +186,7 @@ class CreditNoteService
         if ($operation === 'confirm') {
             Validator::make($input, ['external_reference' => 'required|string|max:120|regex:/^[A-Za-z0-9][A-Za-z0-9._\/-]{0,119}$/', 'attestation' => 'accepted'])->validate();
             $note = CreditNote::where('tenant_id', $tenant->id)->findOrFail($id);
-            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Zuordnung über das Kundenguthaben durchführen.');
+            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, __('Zuordnung über das Kundenguthaben durchführen.'));
             $remote = $this->remote($actor, $tenant, $note->invoice_id);
         }
 
@@ -197,7 +197,7 @@ class CreditNoteService
             });
             $note = CreditNote::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $note->revision !== $revision) {
-                $this->fail('Gutschrift wurde geändert. Bitte neu laden.');
+                $this->fail(__('Gutschrift wurde geändert. Bitte neu laden.'));
             }
             $before = $note->only(['status_id', 'revision']);
             $code = $note->status->code;
@@ -205,35 +205,35 @@ class CreditNoteService
                 abort_unless($code === 'draft', 409);
                 $invoice = $this->invoice($tenant, $note->invoice_id);
                 if ((int) $invoice->revision !== (int) $note->source_snapshot['revision']) {
-                    $this->fail('Rechnung wurde seit der Erfassung geändert. Entwurf stornieren und neu erfassen.');
+                    $this->fail(__('Rechnung wurde seit der Erfassung geändert. Entwurf stornieren und neu erfassen.'));
                 }
                 $note->forceFill(['status_id' => $this->status($tenant, 'released'), 'released_by' => $actor->id, 'released_at' => now()]);
             } elseif ($operation === 'cancel') {
-                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Kundenguthaben separat klären; keine Stornierung mit gebundenem Guthaben.');
-                abort_unless(in_array($code, ['draft', 'released'], true), 409, 'Bestätigte Gutschriften bleiben erhalten.');
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, __('Kundenguthaben separat klären; keine Stornierung mit gebundenem Guthaben.'));
+                abort_unless(in_array($code, ['draft', 'released'], true), 409, __('Bestätigte Gutschriften bleiben erhalten.'));
                 $data = Validator::make($input, ['reason' => 'required|string|min:3|max:1000'])->validate();
                 $note->forceFill(['status_id' => $this->status($tenant, 'cancelled'), 'cancellation_reason' => $data['reason']]);
             } else {
                 abort_unless($code === 'released', 409);
-                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Zuordnung über das Kundenguthaben durchführen.');
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, __('Zuordnung über das Kundenguthaben durchführen.'));
                 abort_unless(hash_equals($remote['connection_hash'], app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
-                abort_unless((string) ($note->source_snapshot['bexio_invoice_id'] ?? '') === (string) $remote['remote_id'], 409, 'Ursprüngliche Bexio-Rechnung stimmt nicht überein.');
+                abort_unless((string) ($note->source_snapshot['bexio_invoice_id'] ?? '') === (string) $remote['remote_id'], 409, __('Ursprüngliche Bexio-Rechnung stimmt nicht überein.'));
                 $reference = strtoupper(trim($input['external_reference']));
                 $matches = array_values(array_filter($remote['credit_allocations'], fn ($allocation) => $allocation['reference'] !== null && $allocation['reference'] === $reference));
                 if (count($matches) !== 1 || $matches[0]['amount_cents'] !== (int) $note->amount_cents) {
-                    $this->fail('Bexio bestätigt diese Gutschriftsnummer mit diesem Betrag nicht für diese Rechnung.');
+                    $this->fail(__('Bexio bestätigt diese Gutschriftsnummer mit diesem Betrag nicht für diese Rechnung.'));
                 }
                 $allocated = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)
                     ->whereNotIn('id', CustomerCredit::where('tenant_id', $tenant->id)->select('credit_note_id'))
                     ->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->sum('amount_cents');
                 $allocated += CustomerCreditAllocation::where('tenant_id', $tenant->id)->where('invoice_id', $note->invoice_id)->sum('amount_cents');
                 if ($remote['balance']['credit_cents'] < (int) $allocated + (int) $note->amount_cents) {
-                    $this->fail('Bexio bestätigt noch keine ausreichende Gutschrift.');
+                    $this->fail(__('Bexio bestätigt noch keine ausreichende Gutschrift.'));
                 }
                 abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
-                    ->where(fn ($q) => $q->whereRaw('upper(external_reference)=?', [$reference])->orWhereRaw("external_snapshot->'allocation'->>'voucher_id' = ?", [$matches[0]['voucher_id']]))->exists(), 409, 'Bexio-Gutschrift ist bereits zugeordnet.');
+                    ->where(fn ($q) => $q->whereRaw('upper(external_reference)=?', [$reference])->orWhereRaw("external_snapshot->'allocation'->>'voucher_id' = ?", [$matches[0]['voucher_id']]))->exists(), 409, __('Bexio-Gutschrift ist bereits zugeordnet.'));
                 abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
-                    ->where(fn ($q) => $q->where('external_reference', $reference)->orWhere('voucher_id', $matches[0]['voucher_id']))->exists(), 409, 'Gutschrift ist als Kundenguthaben gebunden.');
+                    ->where(fn ($q) => $q->where('external_reference', $reference)->orWhere('voucher_id', $matches[0]['voucher_id']))->exists(), 409, __('Gutschrift ist als Kundenguthaben gebunden.'));
                 $note->forceFill(['status_id' => $this->status($tenant, 'confirmed'), 'external_reference' => $reference,
                     'connection_hash' => $remote['connection_hash'], 'external_snapshot' => $remote + ['allocation' => $matches[0]], 'confirmed_by' => $actor->id, 'confirmed_at' => now()]);
             }
@@ -257,7 +257,7 @@ class CreditNoteService
             $reference = (string) Str::uuid();
             Log::warning('clubunio.credit.read_failed', ['reference' => $reference, 'tenant_id' => $tenant->id,
                 'invoice_id' => $invoiceId, 'actor_id' => $actor->id, 'provider_status' => (int) $error->getCode()]);
-            $this->fail('Bexio-Abgleich nicht verfügbar. Bitte später erneut versuchen. Referenz: '.$reference);
+            $this->fail(__('Bexio-Abgleich nicht verfügbar. Bitte später erneut versuchen. Referenz: :value1', ['value1' => $reference]));
         }
     }
 
@@ -309,14 +309,14 @@ class CreditNoteService
             $amount = app(BexioBalanceService::class)->cents((string) $data['amount']);
             $reserved = Refund::where('tenant_id', $tenant->id)->where('invoice_id', $invoiceId)->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->sum('amount_cents');
             if ($amount > $remote['balance']['cash_excess_cents'] - (int) $reserved) {
-                $this->fail('Kein ausreichendes bestätigtes Guthaben für die Rückerstattung.');
+                $this->fail(__('Kein ausreichendes bestätigtes Guthaben für die Rückerstattung.'));
             }
             if (! empty($data['credit_note_id'])) {
                 $note = CreditNote::where('tenant_id', $tenant->id)->where('invoice_id', $invoiceId)->whereHas('status', fn ($q) => $q->where('code', 'confirmed'))->findOrFail($data['credit_note_id']);
-                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, 'Verrechnetes Kundenguthaben ist keine auszahlbare Geldzahlung.');
+                abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $note->id)->exists(), 409, __('Verrechnetes Kundenguthaben ist keine auszahlbare Geldzahlung.'));
                 $used = $note->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->sum('amount_cents');
                 if ($amount > (int) $note->amount_cents - (int) $used) {
-                    $this->fail('Gutschrift ist bereits zur Rückerstattung vorgesehen.');
+                    $this->fail(__('Gutschrift ist bereits zur Rückerstattung vorgesehen.'));
                 }
             }
             $refund = new Refund;
@@ -342,7 +342,7 @@ class CreditNoteService
             });
             $refund = Refund::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $refund->revision !== $revision) {
-                $this->fail('Rückerstattung wurde geändert. Bitte neu laden.');
+                $this->fail(__('Rückerstattung wurde geändert. Bitte neu laden.'));
             }
             abort_unless($refund->status->code === 'draft', 409);
             $before = $refund->only(['status_id', 'revision']);
@@ -352,7 +352,7 @@ class CreditNoteService
             } else {
                 $data = Validator::make($input, ['paid_on' => 'required|date_format:Y-m-d|before_or_equal:'.now('Europe/Zurich')->toDateString(),
                     'proof_reference' => 'required|string|max:120|regex:/^[A-Za-z0-9][A-Za-z0-9._\/-]{0,119}$/', 'attestation' => 'accepted'])->validate();
-                abort_if(Refund::where('tenant_id', $tenant->id)->where('proof_reference', $data['proof_reference'])->exists(), 409, 'Nachweis ist bereits erfasst.');
+                abort_if(Refund::where('tenant_id', $tenant->id)->where('proof_reference', $data['proof_reference'])->exists(), 409, __('Nachweis ist bereits erfasst.'));
                 $refund->forceFill(['status_id' => $this->status($tenant, 'confirmed'), 'paid_on' => $data['paid_on'], 'proof_reference' => $data['proof_reference'], 'confirmed_by' => $actor->id, 'confirmed_at' => now()]);
             }
             $refund->revision++;

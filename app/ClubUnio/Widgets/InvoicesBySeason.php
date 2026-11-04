@@ -14,7 +14,10 @@ class InvoicesBySeason extends ChartWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('invoices');
     }
 
-    protected ?string $heading = 'Rechnungsbeträge nach Saison';
+    public function getHeading(): string
+    {
+        return __('Rechnungsbeträge nach Saison');
+    }
 
     protected ?string $pollingInterval = null;
 
@@ -30,9 +33,9 @@ class InvoicesBySeason extends ChartWidget
         abort_unless(static::canView(), 403);
         $rows = app(DashboardService::class)->invoicesBySeason(Filament::auth()->user(), Filament::getTenant());
 
-        return ['labels' => array_column($rows, 'season'), 'datasets' => [
-            ['label' => 'Gesamt CHF', 'data' => array_column($rows, 'amount'), 'backgroundColor' => '#164B8A'],
-            ['label' => 'Offen CHF', 'data' => array_column($rows, 'open_amount'), 'backgroundColor' => StatusAppearance::hex('Offen')],
+        return ['labels' => array_map(fn ($row) => $row['season_id'] === null ? __('Ohne Saison') : $row['season'], $rows), 'datasets' => [
+            ['label' => __('Gesamt CHF'), 'data' => array_column($rows, 'amount'), 'backgroundColor' => '#164B8A'],
+            ['label' => __('Offen CHF'), 'data' => array_column($rows, 'open_amount'), 'backgroundColor' => StatusAppearance::hex('Offen')],
         ]];
     }
 }

@@ -25,9 +25,9 @@ class BusKeyboxAccessService
             abort_unless(app(BusReservationService::class)->table($tenant, 'buses')->where('id', $data['bus_id'])->where('active', true)->exists(), 404);
             $row = $id ? BusKeybox::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new BusKeybox;
             if ($id && (int) $row->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Testzuordnung wurde geändert.']);
+                throw ValidationException::withMessages(['revision' => __('Testzuordnung wurde geändert.')]);
             }
-            abort_if(BusKeybox::where('tenant_id', $tenant->id)->where('bus_id', $data['bus_id'])->when($id, fn ($q) => $q->where('id', '<>', $id))->exists(), 409, 'Bus hat bereits eine Testzuordnung.');
+            abort_if(BusKeybox::where('tenant_id', $tenant->id)->where('bus_id', $data['bus_id'])->when($id, fn ($q) => $q->where('id', '<>', $id))->exists(), 409, __('Bus hat bereits eine Testzuordnung.'));
             if ($id) {
                 $this->codes($tenant)->where('keybox_id', $id)->where('state', 'issued')->update(['state' => 'invalidated', 'invalidated_at' => now()->toIso8601String()]);
             }
@@ -97,10 +97,10 @@ class BusKeyboxAccessService
             abort_unless($row, 404);
             abort_unless($this->authorized($actor, $tenant, $row), 403);
             if ((int) $row->revision !== $revision) {
-                throw ValidationException::withMessages(['revision' => 'Reservation wurde geändert.']);
+                throw ValidationException::withMessages(['revision' => __('Reservation wurde geändert.')]);
             }
             $preview = $this->inspect($actor, $tenant, $id);
-            abort_unless($preview['simulationEnabled'] && $preview['inWindow'], 409, 'Simulation ist nicht eingerichtet oder ausserhalb des Zeitfensters.');
+            abort_unless($preview['simulationEnabled'] && $preview['inWindow'], 409, __('Simulation ist nicht eingerichtet oder ausserhalb des Zeitfensters.'));
             $box = BusKeybox::where('tenant_id', $tenant->id)->where('bus_id', $row->bus_id)->where('active', true)->firstOrFail();
             $scope = $this->scope($row, $box);
             $old = $this->codes($tenant)->where('scope_key', $scope)->first();

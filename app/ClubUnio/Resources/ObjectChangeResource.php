@@ -55,7 +55,7 @@ class ObjectChangeResource extends CatalogResource
             TextColumn::make('actor.display_name')->label('Geändert von')->searchable(),
             TextColumn::make('object_type')->label('Objekt')->searchable(), TextColumn::make('object_id')->label('Datensatz-ID')->searchable(),
         ])->filters([SelectFilter::make('object_type')->label('Objekt')->options(fn () => ObjectChange::where('tenant_id', Filament::getTenant()->id)->distinct()->orderBy('object_type')->pluck('object_type', 'object_type'))])
-            ->recordActions([ViewAction::make()->slideOver()->iconButton()->tooltip('Änderungsdetails')])
+            ->recordActions([ViewAction::make()->slideOver()->iconButton()->tooltip(__('Änderungsdetails'))])
             ->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }
 

@@ -24,14 +24,14 @@ class MobileAppAnnouncementResource extends CatalogResource {
     public static function form(Schema $schema): Schema {
         return $schema->components([TextInput::make('revision')->label('Angezeigte Version')->default(0)->readOnly()->required(),
             TextInput::make('title')->label('Titel')->required()->maxLength(255),Textarea::make('body')->label('Bannertext (Klartext)')->required()->maxLength(10000),
-            Select::make('audience')->label('Sichtbarkeit')->options(['members'=>'Nur angemeldete berechtigte Vereinsmitglieder','public'=>'Öffentlich auf der verifizierten Vereinsdomain'])->default('members')->required(),
+            Select::make('audience')->label('Sichtbarkeit')->options(['members'=>__('Nur angemeldete berechtigte Vereinsmitglieder'),'public'=>__('Öffentlich auf der verifizierten Vereinsdomain')])->default('members')->required(),
             DateTimePicker::make('starts_at')->label('Sichtbar ab')->timezone('Europe/Zurich')->required(),DateTimePicker::make('ends_at')->label('Sichtbar bis')->timezone('Europe/Zurich')->required(),
             Toggle::make('active')->label('Veröffentlichen')->default(false)->required(),
             Checkbox::make('public_acknowledged')->label('Ich bestätige die anonyme Veröffentlichung, falls Öffentlichkeit gewählt ist.')->default(false)]);
     }
     public static function table(Table $table): Table {
         $save=fn ($record,$data,$livewire)=>FormMutation::run($livewire,fn ()=>app(MobileAppAnnouncements::class)->save(Filament::auth()->user(),Filament::getTenant(),$record?->id,$data));
-        return $table->columns([TextColumn::make('title')->label('Titel')->wrap(),TextColumn::make('audience')->label('Sichtbarkeit')->formatStateUsing(fn ($state)=>$state==='public'?'Öffentlich':'Nur Mitglieder'),
+        return $table->columns([TextColumn::make('title')->label('Titel')->wrap(),TextColumn::make('audience')->label('Sichtbarkeit')->formatStateUsing(fn ($state)=>$state==='public'?__('Öffentlich'):__('Nur Mitglieder')),
             TextColumn::make('starts_at')->label('Ab')->dateTime('d.m.Y H:i','Europe/Zurich'),TextColumn::make('ends_at')->label('Bis')->dateTime('d.m.Y H:i','Europe/Zurich'),
             IconColumn::make('active')->label('Veröffentlicht')->boolean(),TextColumn::make('revision')->label('Version')])
             ->headerActions([CreateAction::make()->using(fn ($data,$livewire)=>$save(null,$data,$livewire))])

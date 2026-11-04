@@ -53,20 +53,20 @@ class LegacyTrainingPlanResource extends CatalogResource
         $actor = fn () => Filament::auth()->user();
         $tenant = fn () => Filament::getTenant();
 
-        return $table->columns([TextColumn::make('source_id')->label('Quelle')->sortable(), TextColumn::make('title')->label('Training')->searchable()->wrap()->placeholder('Kein fertiger Plan'),
+        return $table->columns([TextColumn::make('source_id')->label('Quelle')->sortable(), TextColumn::make('title')->label('Training')->searchable()->wrap()->placeholder(__('Kein fertiger Plan')),
             TextColumn::make('source_username')->label('Ursprünglicher Besitzer')->searchable()->wrap(), TextColumn::make('source_team_name')->label('Ursprüngliches Team')->wrap(),
-            TextColumn::make('requires_quality_review')->label('Qualitätsprüfung')->formatStateUsing(fn ($state, $record) => $record->state === 'excluded' ? 'Nicht bewertet' : ($state ? 'Ausstehend' : 'Kriterien vorhanden'))->badge()->color(fn ($state, $record) => $record->state === 'excluded' ? 'gray' : ($state ? 'warning' : 'success')),
-            TextColumn::make('state')->label('Übernahme')->badge()->formatStateUsing(fn ($state) => ['review' => 'Zuordnen', 'excluded' => 'Ausgeschlossen', 'imported' => 'Übernommen'][$state])
+            TextColumn::make('requires_quality_review')->label('Qualitätsprüfung')->formatStateUsing(fn ($state, $record) => $record->state === 'excluded' ? __('Nicht bewertet') : ($state ? __('Ausstehend') : __('Kriterien vorhanden')))->badge()->color(fn ($state, $record) => $record->state === 'excluded' ? 'gray' : ($state ? 'warning' : 'success')),
+            TextColumn::make('state')->label('Übernahme')->badge()->formatStateUsing(fn ($state) => __(['review' => 'Zuordnen', 'excluded' => 'Ausgeschlossen', 'imported' => 'Übernommen'][$state]))
                 ->color(fn ($state) => ['review' => 'warning', 'excluded' => 'gray', 'imported' => 'success'][$state]),
-            TextColumn::make('error_code')->label('Prüfung')->formatStateUsing(fn ($state) => ['not_success' => 'Fehler/Zwischenstand', 'invalid_contract' => 'Inhalt prüfen'][$state] ?? $state)->placeholder('Bereit zur Zuordnung')])
-            ->filters([SelectFilter::make('state')->label('Übernahme')->options(['review' => 'Zuordnen', 'excluded' => 'Ausgeschlossen', 'imported' => 'Übernommen'])])->deferFilters(false)
+            TextColumn::make('error_code')->label('Prüfung')->formatStateUsing(fn ($state) => __(['not_success' => 'Fehler/Zwischenstand', 'invalid_contract' => 'Inhalt prüfen'][$state] ?? $state))->placeholder(__('Bereit zur Zuordnung'))])
+            ->filters([SelectFilter::make('state')->label('Übernahme')->options(['review' => __('Zuordnen'), 'excluded' => __('Ausgeschlossen'), 'imported' => __('Übernommen')])])->deferFilters(false)
             ->persistSearchInSession()->persistFiltersInSession()->defaultSort('source_id')->headerActions([
                 Action::make('stage')->label('Altbestand prüfen')->icon('heroicon-o-arrow-path')->requiresConfirmation()->action(function () use ($service, $actor, $tenant) {
                     $counts = $service()->stage($actor(), $tenant());
-                    Notification::make()->title('Altbestand geprüft')->body($counts['added'].' neue Prüfeinträge, '.$counts['changed'].' geänderte Quellen.')->success()->send();
+                    Notification::make()->title(__('Altbestand geprüft'))->body(__(':added neue Prüfeinträge, :changed geänderte Quellen.', ['added' => $counts['added'], 'changed' => $counts['changed']]))->success()->send();
                 })])->recordActions([
-                    Action::make('inspect')->label('Inhalt ansehen')->icon('heroicon-o-eye')->iconButton()->tooltip('Inhalt ansehen')->slideOver()->modalSubmitAction(false)
-                        ->modalCancelActionLabel('Schliessen')->modalContent(fn ($record) => view('clubunio.training.legacy-preview', ['row' => $record])),
+                    Action::make('inspect')->label('Inhalt ansehen')->icon('heroicon-o-eye')->iconButton()->tooltip(__('Inhalt ansehen'))->slideOver()->modalSubmitAction(false)
+                        ->modalCancelActionLabel(__('Schliessen'))->modalContent(fn ($record) => view('clubunio.training.legacy-preview', ['row' => $record])),
                     Action::make('import')->label('Zuordnen und übernehmen')->icon('heroicon-o-arrow-down-tray')->visible(fn ($record) => $record->state === 'review')
                         ->fillForm(fn ($record) => ['revision' => $record->revision, 'owner_id' => $record->suggested_owner_id, 'team_season_id' => $record->suggested_team_season_id])
                         ->schema([TextInput::make('revision')->label('Version')->readOnly()->required(), Select::make('owner_id')->label('Besitzer')->required()->searchable()->live()->options(fn () => $service()->owners($actor(), $tenant())),

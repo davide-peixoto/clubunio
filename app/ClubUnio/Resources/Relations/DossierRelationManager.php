@@ -90,8 +90,8 @@ abstract class DossierRelationManager extends RelationManager
         $table = parent::getTable();
         if (! array_key_exists('dossierHistory', $table->getFlatRecordActions())) {
             $table->recordActions([...$table->getRecordActions(), Action::make('dossierHistory')
-                ->label('Änderungsverlauf')->icon('heroicon-o-clock')->iconButton()->tooltip('Änderungsverlauf')->slideOver()
-                ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')
+                ->label('Änderungsverlauf')->icon('heroicon-o-clock')->iconButton()->tooltip(__('Änderungsverlauf'))->slideOver()
+                ->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen'))
                 ->modalContent(function ($record) {
                     $this->authorizeOwner();
                     $scoped = $this->getRelationship()->where('tenant_id', Filament::getTenant()->id)->findOrFail($record->id);

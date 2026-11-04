@@ -34,7 +34,7 @@ class OpenInvoiceResource extends InvoiceResource
             TextColumn::make('open_amount')->label('Offener Betrag')->money('CHF', locale: 'de_CH')->sortable(),
         ])->headerActions([Action::make('export')->label('CSV exportieren')->icon('heroicon-o-arrow-down-tray')
             ->action(fn ($livewire) => app(FinanceExportService::class)->download(Filament::auth()->user(), Filament::getTenant(), 'invoices', $livewire->getFilteredSortedTableQuery()))])
-            ->recordActions([ViewAction::make()->iconButton()->tooltip('Rechnungsdetails')
+            ->recordActions([ViewAction::make()->iconButton()->tooltip(__('Rechnungsdetails'))
                 ->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record]))]);
     }
 

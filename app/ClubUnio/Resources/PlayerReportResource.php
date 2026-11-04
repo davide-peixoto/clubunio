@@ -52,7 +52,7 @@ class PlayerReportResource extends TeamPlayerResource
         ])->headerActions([ReportExportService::action('players'),
             Action::make('exportContacts')->label('Kontaktliste exportieren')->icon('heroicon-o-arrow-down-tray')->requiresConfirmation()
                 ->action(fn ($livewire) => app(ReportExportService::class)->download(Filament::auth()->user(), Filament::getTenant(), 'player_contacts', $livewire->getFilteredSortedTableQuery())),
-        ])->recordActions([ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')
+        ])->recordActions([ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))
             ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record->member_id]))]);
     }
 

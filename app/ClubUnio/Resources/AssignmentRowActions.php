@@ -41,7 +41,7 @@ trait AssignmentRowActions
 
     public static function copyAction(): Action
     {
-        return Action::make('copyRow')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Kopieren')
+        return Action::make('copyRow')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Kopieren'))
             ->schema(function ($livewire) {
                 $fields = static::form(Schema::make($livewire))->getComponents(withHidden: true);
                 foreach ($fields as $field) {
@@ -60,9 +60,9 @@ trait AssignmentRowActions
 
     public static function deactivateAction(): Action
     {
-        return Action::make('deactivateRow')->label('Deaktivieren')->icon('heroicon-o-archive-box')->color('danger')->iconButton()->tooltip('Deaktivieren')
+        return Action::make('deactivateRow')->label('Deaktivieren')->icon('heroicon-o-archive-box')->color('danger')->iconButton()->tooltip(__('Deaktivieren'))
             ->visible(fn (Model $record) => $record->active)->requiresConfirmation()
-            ->modalDescription('Der Eintrag wird deaktiviert. Bestehende Verknüpfungen und die Historie bleiben erhalten.')
+            ->modalDescription(__('Der Eintrag wird deaktiviert. Bestehende Verknüpfungen und die Historie bleiben erhalten.'))
             ->schema([Hidden::make('_version'), Hidden::make('revision')])
             ->fillForm(fn (Model $record, $livewire) => static::rowValues($record, $livewire))
             ->action(function (Model $record, array $data, $livewire) {

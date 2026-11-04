@@ -59,9 +59,9 @@ class FamilyReportResource extends FamilyMemberResource
                 ->options(fn () => MemberResource::lookupOptions(MemberType::class, null))
                 ->query(fn (Builder $query, array $data) => static::filterMember($query, 'type_id', $data['value'] ?? null)),
         ])->headerActions([ReportExportService::action('families')])->recordActions([
-            ViewAction::make('member')->iconButton()->tooltip('Mitgliederdossier')
+            ViewAction::make('member')->iconButton()->tooltip(__('Mitgliederdossier'))
                 ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record->member_id])),
-            ViewAction::make('family')->icon('heroicon-o-user-group')->iconButton()->tooltip('Familiendossier')
+            ViewAction::make('family')->icon('heroicon-o-user-group')->iconButton()->tooltip(__('Familiendossier'))
                 ->url(fn ($record) => FamilyResource::getUrl('view', ['record' => $record->family_id])),
         ])->paginated([25, 50, 100]);
     }

@@ -38,7 +38,7 @@ class NotesRelationManager extends DossierRelationManager
                 ->action(fn (array $data) => FormMutation::run($this, fn () => $save(null, $data))),
         ])->recordActions([
             ...ActiveRecordActions::make(fn ($record, $data, $active) => FormMutation::run($this, fn () => $save($record->id, ['body' => $record->body, 'revision' => $data['revision'], 'active' => $active]))),
-            Action::make('changeNote')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bemerkung bearbeiten')
+            Action::make('changeNote')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Bemerkung bearbeiten'))
                 ->fillForm(fn ($record) => $record->only(['body', 'active', 'revision']))->schema($fields)
                 ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save($record->id, $data))),
         ]);

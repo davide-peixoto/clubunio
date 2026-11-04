@@ -20,7 +20,7 @@ class MemberNoteService
             Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')->whereKey($memberId)->lockForUpdate()->firstOrFail();
             $note = $id ? MemberNote::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('member_id', $memberId)->whereKey($id)->lockForUpdate()->firstOrFail() : new MemberNote;
             if ($id && (int) ($data['revision'] ?? 0) !== (int) $note->revision) {
-                throw ValidationException::withMessages(['body' => 'Die Bemerkung wurde inzwischen geändert. Bitte neu öffnen.']);
+                throw ValidationException::withMessages(['body' => __('Die Bemerkung wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             $values = ['body' => $data['body'] ?? '', 'active' => $data['active'] ?? ($id ? $note->active : true)];
             Validator::make($values, ['body' => ['required', 'string', 'max:10000'], 'active' => ['required', 'boolean']])->validate();

@@ -56,7 +56,7 @@ class SpotsRecipientResource extends CatalogResource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('kind')->label('Empfänger')->formatStateUsing(fn ($state) => $state === 'family' ? 'Familie' : 'Einzelmitglied')->badge(),
+            TextColumn::make('kind')->label('Empfänger')->formatStateUsing(fn ($state) => $state === 'family' ? __('Familie') : __('Einzelmitglied'))->badge(),
             TextColumn::make('company')->label('Firma')->searchable()->toggleable(),
             TextColumn::make('name')->label('Name')->searchable()->sortable(),
             TextColumn::make('street')->label('Strasse')->searchable(),
@@ -66,9 +66,9 @@ class SpotsRecipientResource extends CatalogResource
             TextColumn::make('member_type')->label('Mitgliederart')->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('member_status')->label('Mitgliederstatus')->toggleable(isToggledHiddenByDefault: true),
         ])->filters([
-            SelectFilter::make('kind')->label('Empfänger')->options(['member' => 'Einzelmitglied', 'family' => 'Familie']),
+            SelectFilter::make('kind')->label('Empfänger')->options(['member' => __('Einzelmitglied'), 'family' => __('Familie')]),
         ])->headerActions([ReportExportService::action('spots')])->recordActions([
-            ViewAction::make()->iconButton()->tooltip('Dossier')->url(fn ($record) => $record->kind === 'family'
+            ViewAction::make()->iconButton()->tooltip(__('Dossier'))->url(fn ($record) => $record->kind === 'family'
                 ? FamilyResource::getUrl('view', ['record' => $record->family_id])
                 : MemberResource::getUrl('view', ['record' => $record->member_id])),
         ])->defaultSort('name')->paginated([25, 50, 100])

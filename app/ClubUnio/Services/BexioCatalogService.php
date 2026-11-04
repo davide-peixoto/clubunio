@@ -20,14 +20,14 @@ class BexioCatalogService
         }
 
         return BexioCatalogEntry::where('tenant_id', $tenant->id)->where('kind', 'article')->where('active', true)->where('provider_active', true)
-            ->where('connection_hash', $hash)->orderBy('name')->pluck('name', 'id')->all();
+            ->where('connection_hash', $hash)->orderBy('name')->localizedPluck('name', 'id')->all();
     }
 
     public function invoiceArticle(Tenant $tenant, int $id): BexioCatalogEntry
     {
         $record = BexioCatalogEntry::where('tenant_id', $tenant->id)->where('kind', 'article')->where('active', true)->where('provider_active', true)
             ->where('connection_hash', app(BexioSandboxFixtureService::class)->connectionHash($tenant))->find($id);
-        abort_unless($record, 422, 'Artikel ist nicht für diese Verbindung freigegeben.');
+        abort_unless($record, 422, __('Artikel ist nicht für diese Verbindung freigegeben.'));
 
         return $record;
     }
@@ -37,15 +37,15 @@ class BexioCatalogService
         foreach (array_unique(array_filter(array_column($positions, 'article_id'))) as $id) {
             $entry = BexioCatalogEntry::where('tenant_id', $tenant->id)->where('kind', 'article')->where('remote_id', $id)
                 ->where('connection_hash', app(BexioSandboxFixtureService::class)->connectionHash($tenant))->first();
-            abort_unless($entry, 422, 'Artikel muss zuerst im Katalog abgeglichen werden.');
+            abort_unless($entry, 422, __('Artikel muss zuerst im Katalog abgeglichen werden.'));
             $this->invoiceArticle($tenant, $entry->id);
             $remote = app(BexioSandboxClient::class)->get($token, '/2.0/article/'.$id);
             abort_unless((int) ($remote['id'] ?? 0) === (int) $entry->remote_id
                 && (string) ($remote['intern_code'] ?? '') === $entry->code
-                && (string) ($remote['intern_name'] ?? '') === $entry->provider_name, 409, 'Bexio-Artikel wurde geändert. Katalog neu abgleichen.');
+                && (string) ($remote['intern_name'] ?? '') === $entry->provider_name, 409, __('Bexio-Artikel wurde geändert. Katalog neu abgleichen.'));
             foreach (['unit_id', 'currency_id', 'tax_income_id', 'account_id'] as $field) {
                 if (array_key_exists($field, $entry->provider_data)) {
-                    abort_unless((string) ($remote[$field] ?? '') === (string) ($entry->provider_data[$field] ?? ''), 409, 'Bexio-Artikelzuordnung wurde geändert. Katalog neu abgleichen.');
+                    abort_unless((string) ($remote[$field] ?? '') === (string) ($entry->provider_data[$field] ?? ''), 409, __('Bexio-Artikelzuordnung wurde geändert. Katalog neu abgleichen.'));
                 }
             }
         }
@@ -56,7 +56,7 @@ class BexioCatalogService
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
         $hash = app(BexioSandboxFixtureService::class)->connectionHash($tenant);
         $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
-        abort_unless($binding && hash_equals($hash, $binding->connection_hash), 409, 'Sandbox-Verbindung zuerst bestätigen.');
+        abort_unless($binding && hash_equals($hash, $binding->connection_hash), 409, __('Sandbox-Verbindung zuerst bestätigen.'));
 
         return $hash;
     }
@@ -77,7 +77,7 @@ class BexioCatalogService
         $client = app(BexioSandboxClient::class);
         $client->verify($token);
         $taxes = $client->get($token, '/3.0/taxes');
-        abort_unless(array_is_list($taxes) && count($taxes) <= 5000, 502, 'Ungültiger Steuerkatalog.');
+        abort_unless(array_is_list($taxes) && count($taxes) <= 5000, 502, __('Ungültiger Steuerkatalog.'));
         $rows = [];
         foreach ($taxes as $tax) {
             if (! in_array($tax['type'] ?? '', ['sales_tax', 'not_taxable_turnover'], true)) {
@@ -88,7 +88,7 @@ class BexioCatalogService
         $finished = false;
         for ($offset = 0; $offset < 10000; $offset += 500) {
             $articles = $client->get($token, '/2.0/article', ['limit' => 500, 'offset' => $offset]);
-            abort_unless(array_is_list($articles) && count($articles) <= 500, 502, 'Ungültiger Artikelkatalog.');
+            abort_unless(array_is_list($articles) && count($articles) <= 500, 502, __('Ungültiger Artikelkatalog.'));
             foreach ($articles as $article) {
                 $rows[] = $this->article($article);
             }
@@ -97,13 +97,13 @@ class BexioCatalogService
                 break;
             }
         }
-        abort_unless($finished, 502, 'Artikelkatalog überschreitet das Importlimit.');
+        abort_unless($finished, 502, __('Artikelkatalog überschreitet das Importlimit.'));
         $keys = array_map(fn ($row) => $row['kind'].':'.$row['remote_id'], $rows);
-        abort_unless(count(array_unique($keys)) === count($keys), 502, 'Doppelte Katalog-IDs.');
+        abort_unless(count(array_unique($keys)) === count($keys), 502, __('Doppelte Katalog-IDs.'));
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $hash, $rows) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            abort_unless(hash_equals($hash, $this->binding($actor, $tenant)), 409, 'Verbindung während Import geändert.');
+            abort_unless(hash_equals($hash, $this->binding($actor, $tenant)), 409, __('Verbindung während Import geändert.'));
             $query = BexioCatalogEntry::where('tenant_id', $tenant->id)->where('connection_hash', $hash);
             $existing = (clone $query)->lockForUpdate()->get()->keyBy(fn ($row) => $row->kind.':'.$row->remote_id);
             foreach ($rows as $row) {
@@ -125,7 +125,7 @@ class BexioCatalogService
 
     private function id(array $row): int
     {
-        abort_unless(preg_match('/^[1-9][0-9]{0,9}$/D', (string) ($row['id'] ?? '')), 502, 'Ungültige Katalog-ID.');
+        abort_unless(preg_match('/^[1-9][0-9]{0,9}$/D', (string) ($row['id'] ?? '')), 502, __('Ungültige Katalog-ID.'));
 
         return (int) $row['id'];
     }
@@ -133,12 +133,12 @@ class BexioCatalogService
     public function normalizeTax(array $row): array
     {
         $rate = (string) ($row['value'] ?? '');
-        abort_unless(preg_match('/^([0-9]{1,3})(?:\.([0-9]{1,2}))?$/D', $rate, $parts), 502, 'Ungültiger Steuersatz.');
+        abort_unless(preg_match('/^([0-9]{1,3})(?:\.([0-9]{1,2}))?$/D', $rate, $parts), 502, __('Ungültiger Steuersatz.'));
         $basis = (int) $parts[1] * 100 + (int) str_pad($parts[2] ?? '', 2, '0');
-        abort_unless($basis <= 10000 && is_bool($row['is_active'] ?? null) && is_string($row['code'] ?? null) && trim($row['code']) !== '', 502, 'Ungültige Steuerdaten.');
+        abort_unless($basis <= 10000 && is_bool($row['is_active'] ?? null) && is_string($row['code'] ?? null) && trim($row['code']) !== '', 502, __('Ungültige Steuerdaten.'));
         $from = $this->period($row, 'start', false);
         $until = $this->period($row, 'end', true);
-        abort_unless(! $from || ! $until || $until >= $from, 502, 'Ungültige Steuergültigkeit.');
+        abort_unless(! $from || ! $until || $until >= $from, 502, __('Ungültige Steuergültigkeit.'));
 
         return ['kind' => 'tax', 'remote_id' => $this->id($row), 'code' => $row['code'],
             'provider_name' => $row['code'].' / '.($basis / 100).' %', 'provider_active' => $row['is_active'],
@@ -153,7 +153,7 @@ class BexioCatalogService
         if ($year === null && $month === null) {
             return null;
         }
-        abort_unless(is_int($year) && $year >= 1900 && $year <= 2200 && is_int($month) && $month >= 1 && $month <= 12, 502, 'Ungültiger Steuerzeitraum.');
+        abort_unless(is_int($year) && $year >= 1900 && $year <= 2200 && is_int($month) && $month >= 1 && $month <= 12, 502, __('Ungültiger Steuerzeitraum.'));
         $date = CarbonImmutable::create($year, $month, 1);
 
         return ($end ? $date->endOfMonth() : $date)->toDateString();
@@ -161,7 +161,7 @@ class BexioCatalogService
 
     private function article(array $row): array
     {
-        abort_unless(is_string($row['intern_name'] ?? null) && trim($row['intern_name']) !== '', 502, 'Ungültiger Artikelname.');
+        abort_unless(is_string($row['intern_name'] ?? null) && trim($row['intern_name']) !== '', 502, __('Ungültiger Artikelname.'));
 
         return ['kind' => 'article', 'remote_id' => $this->id($row), 'code' => (string) ($row['intern_code'] ?? $row['id']),
             'provider_name' => mb_substr($row['intern_name'], 0, 500), 'provider_active' => true,
@@ -173,7 +173,7 @@ class BexioCatalogService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');
         $hash = $this->binding($actor, $tenant);
-        abort_unless(array_diff(array_keys($input), ['name', 'active', 'revision']) === [], 422, 'Providerwerte sind nicht manuell änderbar.');
+        abort_unless(array_diff(array_keys($input), ['name', 'active', 'revision']) === [], 422, __('Providerwerte sind nicht manuell änderbar.'));
         $data = Validator::make($input, ['name' => 'required|string|max:160', 'active' => 'required|boolean', 'revision' => 'required|integer|min:1'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $hash, $id, $data) {
@@ -181,7 +181,7 @@ class BexioCatalogService
             abort_unless(hash_equals($hash, $this->binding($actor, $tenant)), 409);
             $record = BexioCatalogEntry::where('tenant_id', $tenant->id)->where('connection_hash', $hash)->lockForUpdate()->findOrFail($id);
             if ((int) $record->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Katalog wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Katalog wurde geändert. Bitte neu laden.')]);
             }
             $before = $record->only(['name', 'active', 'revision']);
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'update');

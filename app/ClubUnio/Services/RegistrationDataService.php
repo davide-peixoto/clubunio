@@ -61,7 +61,7 @@ class RegistrationDataService
     private function persist(?Account $actor, Tenant $tenant, ?int $id, array $input): Registration
     {
         if (array_diff(array_keys($input), [...self::CORE, ...self::DETAILS, 'revision'])) {
-            throw ValidationException::withMessages(['first_name' => 'Nicht erlaubte Eingabefelder.']);
+            throw ValidationException::withMessages(['first_name' => __('Nicht erlaubte Eingabefelder.')]);
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
@@ -74,10 +74,10 @@ class RegistrationDataService
             }
             $r = $id ? Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id) : new Registration;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $r->revision) {
-                throw ValidationException::withMessages(['revision' => 'Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             if ($id && $r->status?->workflow_key === 'accepted') {
-                throw ValidationException::withMessages(['first_name' => 'Akzeptierte Anmeldungen bleiben unverändert; bitte das Mitglied bearbeiten.']);
+                throw ValidationException::withMessages(['first_name' => __('Akzeptierte Anmeldungen bleiben unverändert; bitte das Mitglied bearbeiten.')]);
             }
             $old = $id ? $this->values($r) : [];
             $values = array_replace($old, array_diff_key($input, ['revision' => true]));
@@ -103,7 +103,7 @@ class RegistrationDataService
             $valid = Validator::make($values, $rules)->validate();
             $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $valid['billing_recipient_id'])->value('email_field');
             if (empty($valid[$emailField])) {
-                throw ValidationException::withMessages([$emailField => 'Für den Rechnungsempfänger fehlt eine E-Mail-Adresse.']);
+                throw ValidationException::withMessages([$emailField => __('Für den Rechnungsempfänger fehlt eine E-Mail-Adresse.')]);
             }
             $details = array_intersect_key($valid, array_flip(self::DETAILS));
             if (isset($old['ahv'])) {
@@ -113,7 +113,7 @@ class RegistrationDataService
             if (! $id) {
                 $status = DB::connection('clubunio')->table('clubora.registration_statuses')->where('tenant_id', $tenant->id)->where('active', true)->where('workflow_key', 'submitted')->value('id');
                 if (! $status) {
-                    throw ValidationException::withMessages(['first_name' => 'Der initiale Anmeldestatus ist nicht konfiguriert.']);
+                    throw ValidationException::withMessages(['first_name' => __('Der initiale Anmeldestatus ist nicht konfiguriert.')]);
                 }
                 $r->forceFill(['tenant_id' => $tenant->id, 'status_id' => $status, 'submitted_at' => now(), 'active' => true]);
             }

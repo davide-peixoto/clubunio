@@ -21,7 +21,7 @@ class MemberChangePortalController
         $lookups = [];
         foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
             $lookups[$field] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)
-                ->where(fn ($q) => $q->where('active', true)->orWhere('id', $values[$field] ?? -1))->orderBy('name')->pluck('name', 'id');
+                ->where(fn ($q) => $q->where('active', true)->orWhere('id', $values[$field] ?? -1))->orderBy('name')->localizedPluck('name', 'id');
         }
         $requests = MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('requested_by', $actor->id)->with('status')->latest()->limit(30)->get();
         $documents = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('active', true)->where('portal_visible', true)->with('documentType')->latest('id')->get();
@@ -36,7 +36,7 @@ class MemberChangePortalController
     {
         $service->submit($request->user('portal'), $tenant, $member, $request->except('_token'));
 
-        return redirect()->route('clubunio.portal.member.edit', ['tenant' => $tenant->slug, 'member' => $member])->with('message', 'Änderungsantrag eingereicht. Die Geschäftsstelle prüft deine Angaben.');
+        return redirect()->route('clubunio.portal.member.edit', ['tenant' => $tenant->slug, 'member' => $member])->with('message', __('Änderungsantrag eingereicht. Die Geschäftsstelle prüft deine Angaben.'));
     }
 
     public function withdraw(Request $request, Tenant $tenant, int $change, MemberChangeService $service)
@@ -45,6 +45,6 @@ class MemberChangePortalController
         $r = MemberChangeRequest::where('tenant_id', $tenant->id)->where('requested_by', $request->user('portal')->id)->findOrFail($change);
         $service->withdraw($request->user('portal'), $tenant, $change, $data['revision']);
 
-        return redirect()->route('clubunio.portal.member.edit', ['tenant' => $tenant->slug, 'member' => $r->member_id])->with('message', 'Antrag zurückgezogen.');
+        return redirect()->route('clubunio.portal.member.edit', ['tenant' => $tenant->slug, 'member' => $r->member_id])->with('message', __('Antrag zurückgezogen.'));
     }
 }

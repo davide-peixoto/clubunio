@@ -38,7 +38,7 @@ abstract class TeamAssignmentResource extends CatalogResource
 
     public static function editAction(): EditAction
     {
-        return EditAction::make()->iconButton()->tooltip('Zuordnung bearbeiten')
+        return EditAction::make()->iconButton()->tooltip(__('Zuordnung bearbeiten'))
             ->mutateRecordDataUsing(fn (array $data, CatalogModel $record) => array_merge($data, ['_version' => FamilyService::version($record)]))
             ->using(fn (CatalogModel $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(TeamAssignmentService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
     }
@@ -68,7 +68,7 @@ abstract class TeamAssignmentResource extends CatalogResource
 
         return $table->columns($columns)->filters([
             SelectFilter::make('team_season_id')->label('Mannschaft / Saison')->searchable()->options(fn () => TeamSeason::where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->pluck('label', 'id')),
-            SelectFilter::make('season')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id'))
+            SelectFilter::make('season')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->localizedPluck('name', 'id'))
                 ->query(fn ($query, array $data) => $query->when($data['value'] ?? null, fn ($q, $value) => $q->whereHas('teamSeason', fn ($q) => $q->where('season_id', $value)))),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
         ])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])

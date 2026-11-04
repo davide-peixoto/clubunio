@@ -56,7 +56,7 @@ class MemberDocumentService
         } catch (\Throwable $error) {
             $reference = (string) Str::uuid();
             Log::warning('clubunio.document.read_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'document_id' => $document->id, 'object_type' => $objectType, 'actor_id' => $actor->id, 'code' => $error->getCode() === 404 ? 404 : 503]);
-            abort($error->getCode() === 404 ? 404 : 503, 'Dokument nicht verfügbar. Referenz: '.$reference);
+            abort($error->getCode() === 404 ? 404 : 503, __('Dokument nicht verfügbar. Referenz: :value1', ['value1' => $reference]));
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: 'application/octet-stream';
         $inline = ! $download && in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);

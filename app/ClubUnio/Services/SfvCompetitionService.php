@@ -38,14 +38,14 @@ class SfvCompetitionService
         $records = Competition::where('tenant_id', $tenant->id)->where('association_match_id', $match->match_id)->get();
         $record = $records->first();
         if ($records->count() !== 1 || ! $record->active || $record->plays_on->toDateString() < now('Europe/Zurich')->toDateString()) {
-            throw ValidationException::withMessages(['match' => 'Keine eindeutige aktive zukünftige Wettkampfverknüpfung für die Ausblendung.']);
+            throw ValidationException::withMessages(['match' => __('Keine eindeutige aktive zukünftige Wettkampfverknüpfung für die Ausblendung.')]);
         }
         $state = mb_strtolower(trim((string) $match->state));
         $cancelled = in_array($state, ['abgesagt', 'annulliert', 'abgebrochen', 'verschoben'], true);
         $located = trim((string) $match->location) !== '';
         $moved = $located && ! preg_match('/Tannenbrunn\s*(?:-\s*([123])\s*,\s*Sissach|,\s*Sissach\s*-\s*([123]))\s*$/iu', trim($match->location));
         if (! $cancelled && ! (in_array($state, ['angesetzt', 'neu angesetzt', 'noch nicht ausgetragen'], true) && $moved)) {
-            throw ValidationException::withMessages(['match' => 'Kein eindeutiger SFV-Grund zur Ausblendung.']);
+            throw ValidationException::withMessages(['match' => __('Kein eindeutiger SFV-Grund zur Ausblendung.')]);
         }
         $before = $record->only(['plays_on', 'starts_at', 'host_name', 'guest_name', 'field_id', 'association_match_id', 'source', 'show_on_signage']);
         $before['plays_on'] = $record->plays_on->toDateString();
@@ -64,7 +64,7 @@ class SfvCompetitionService
         $matches = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)
             ->whereRaw("(starts_at AT TIME ZONE 'Europe/Zurich')::date BETWEEN ? AND ?", [$from, $to])->orderBy('starts_at')->orderBy('id')->limit(101)->get();
         if ($matches->count() > 100) {
-            throw ValidationException::withMessages(['to' => 'Maximal 100 Spiele pro Prüfung. Bitte Zeitraum eingrenzen.']);
+            throw ValidationException::withMessages(['to' => __('Maximal 100 Spiele pro Prüfung. Bitte Zeitraum eingrenzen.')]);
         }
         $entries = [];
         $issues = [];
@@ -107,39 +107,39 @@ class SfvCompetitionService
         $match = $db->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
         abort_unless($match, 404);
         if (! $match->starts_at || ! $match->host_name || ! $match->guest_name) {
-            throw ValidationException::withMessages(['match' => 'Datum oder Teamnamen fehlen. Bitte SFV-Daten neu abrufen.']);
+            throw ValidationException::withMessages(['match' => __('Datum oder Teamnamen fehlen. Bitte SFV-Daten neu abrufen.')]);
         }
         $date = Time::parse($match->starts_at)->tz('Europe/Zurich');
         if ($date->toDateString() < now('Europe/Zurich')->toDateString()) {
-            throw ValidationException::withMessages(['match' => 'Vergangene Spiele bleiben unverändert.']);
+            throw ValidationException::withMessages(['match' => __('Vergangene Spiele bleiben unverändert.')]);
         }
         // Only a mapped venue qualifies for Signage, not merely the club being the home team.
         if (! preg_match('/Tannenbrunn\s*(?:-\s*([123])\s*,\s*Sissach|,\s*Sissach\s*-\s*([123]))\s*$/iu', trim((string) $match->location), $parts)) {
-            throw ValidationException::withMessages(['match' => 'Kein eindeutig zugeordnetes Spielfeld in Tannenbrunn. Keine Übernahme.']);
+            throw ValidationException::withMessages(['match' => __('Kein eindeutig zugeordnetes Spielfeld in Tannenbrunn. Keine Übernahme.')]);
         }
         $code = ['1' => 'H', '2' => 'K', '3' => 'T'][$parts[1] ?: ($parts[2] ?? '')] ?? null;
         $field = $db->table('clubora.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('code', $code)->where('active', true)->first();
         if (! $field) {
-            throw ValidationException::withMessages(['match' => 'Die Spielfeldzuordnung fehlt oder ist inaktiv.']);
+            throw ValidationException::withMessages(['match' => __('Die Spielfeldzuordnung fehlt oder ist inaktiv.')]);
         }
         if (! in_array(mb_strtolower(trim((string) $match->state)), ['angesetzt', 'neu angesetzt', 'noch nicht ausgetragen'], true)) {
-            throw ValidationException::withMessages(['match' => 'Dieses Spiel benötigt wegen seines SFV-Status eine manuelle Prüfung: '.$match->state]);
+            throw ValidationException::withMessages(['match' => __('Dieses Spiel benötigt wegen seines SFV-Status eine manuelle Prüfung: :value1', ['value1' => $match->state])]);
         }
         $base = Competition::where('tenant_id', $tenant->id);
         $linked = (clone $base)->where('association_match_id', $match->match_id)->get();
         if ($linked->count() > 1 || ($linked->isNotEmpty() && ! $linked->first()->active)) {
-            throw ValidationException::withMessages(['match' => 'Mehrfache oder archivierte SFV-Verknüpfung. Bitte fachlich bereinigen.']);
+            throw ValidationException::withMessages(['match' => __('Mehrfache oder archivierte SFV-Verknüpfung. Bitte fachlich bereinigen.')]);
         }
         $record = $linked->first();
         if ($target) {
             $chosen = (clone $base)->findOrFail($target);
             if (! $chosen->active || ($record && $record->id !== $chosen->id) || ($chosen->association_match_id && (int) $chosen->association_match_id !== (int) $match->match_id)) {
-                throw ValidationException::withMessages(['target' => 'Dieser Wettkampf kann nicht mit dem Spiel verknüpft werden.']);
+                throw ValidationException::withMessages(['target' => __('Dieser Wettkampf kann nicht mit dem Spiel verknüpft werden.')]);
             }
             $record = $chosen;
         }
         if (! $record && ! $separate && (clone $base)->where('active', true)->whereNull('association_match_id')->whereDate('plays_on', $date->toDateString())->exists()) {
-            throw ValidationException::withMessages(['target' => 'Es gibt manuelle Wettkämpfe an diesem Tag. Bitte den passenden Eintrag auswählen oder zuerst fachlich prüfen.']);
+            throw ValidationException::withMessages(['target' => __('Es gibt manuelle Wettkämpfe an diesem Tag. Bitte den passenden Eintrag auswählen oder zuerst fachlich prüfen.')]);
         }
         $after = ['plays_on' => $date->toDateString(), 'starts_at' => $date->format('H:i:s'), 'host_name' => $match->host_name, 'guest_name' => $match->guest_name, 'field_id' => $field->id,
             'association_match_id' => $match->match_id, 'source' => 'SFV'];
@@ -166,7 +166,7 @@ class SfvCompetitionService
                 ? $this->previewWithdrawal($actor, $tenant, (int) $preview['match_id'])
                 : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false);
             if (! hash_equals($fresh['fingerprint'], (string) $preview['fingerprint'])) {
-                throw ValidationException::withMessages(['match' => 'SFV-Daten oder Wettkampf wurden geändert. Bitte eine neue Vorschau erstellen.']);
+                throw ValidationException::withMessages(['match' => __('SFV-Daten oder Wettkampf wurden geändert. Bitte eine neue Vorschau erstellen.')]);
             }
             $record = $fresh['target_id'] ? Competition::where('tenant_id', $tenant->id)->findOrFail($fresh['target_id']) : new Competition;
             if ($fresh['before'] == $fresh['after']) {

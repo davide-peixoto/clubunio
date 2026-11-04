@@ -5,5 +5,5 @@
         && \App\ClubUnio\Resources\ProfileUi::profileAllows($pdfActor, $pdfTenant, 'invoices', 'download'));
 @endphp
 @if($canReadPdf)
-@include('clubunio.documents.viewer-content', ['mediaType' => 'application/pdf', 'downloadLabel' => 'PDF herunterladen'])
+@include('clubunio.documents.viewer-content', ['mediaType' => 'application/pdf', 'downloadLabel' => __('PDF herunterladen')])
 @endif

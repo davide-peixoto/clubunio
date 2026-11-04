@@ -1,0 +1,9 @@
+{
+  "neu": "new",
+  "vorhanden": "existing",
+  "Mannschaft inaktiv oder Zielzuordnung inaktiv/mehrdeutig": "Team inactive or target assignment inactive/ambiguous",
+  "Mannschaft blockiert": "Team blocked",
+  "Staff-Funktion fehlt oder ist inaktiv": "Staff function missing or inactive",
+  "Mitglied ausgetreten oder archiviert": "Member has left the club or is archived",
+  "Inaktive Zielzuordnung bleibt unverändert": "Inactive target assignment remains unchanged"
+}

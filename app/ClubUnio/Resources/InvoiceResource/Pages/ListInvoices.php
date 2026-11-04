@@ -33,9 +33,9 @@ class ListInvoices extends ListRecords
                     ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)
                         ->select(['id', 'member_number', 'legacy_id', 'company', 'first_name', 'last_name'])->find($value)?->display_name),
                 Select::make('invoice_category_id')->label('Kategorie')->required()
-                    ->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('sort_order')->pluck('name', 'id')),
+                    ->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('sort_order')->localizedPluck('name', 'id')),
                 Select::make('tax_mode')->label('Steuerbehandlung')->required()
-                    ->options(['exempt' => 'Steuerbefreit', 'inclusive' => 'Endpreise inklusive Steuer']),
+                    ->options(['exempt' => __('Steuerbefreit'), 'inclusive' => __('Endpreise inklusive Steuer')]),
                 Textarea::make('notes')->label('Bemerkungen')->maxLength(4000),
             ])->action(function (array $data) {
                 $invoice = FormMutation::run($this, fn () => app(InvoiceWorkflowService::class)

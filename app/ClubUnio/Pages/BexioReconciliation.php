@@ -72,10 +72,10 @@ class BexioReconciliation extends Page implements HasTable
             TextColumn::make('remote_reference')->label('Bexio-Referenz')->state(fn ($record) => $record->{$this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id'})
                 ->wrap()->searchable(query: fn (Builder $query, string $search) => $query->where($this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id', 'ilike', '%'.mb_substr($search, 0, 100).'%')),
         ])->recordActions([
-            Action::make('sync')->label('Status prüfen')->icon('heroicon-o-arrow-path')->iconButton()->tooltip('Status prüfen')
+            Action::make('sync')->label('Status prüfen')->icon('heroicon-o-arrow-path')->iconButton()->tooltip(__('Status prüfen'))
                 ->visible(fn () => static::canSync($this->type))->action(fn ($record) => $this->check($record->id)),
         ])->paginationPageOptions([15, 25, 50])->defaultPaginationPageOption(15)->defaultSort('id', 'desc')
-            ->emptyStateHeading('Keine verknüpften Dokumente gefunden.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine verknüpften Dokumente gefunden.'))->emptyStateDescription(null);
     }
 
     protected function documentsQuery(): Builder
@@ -117,7 +117,7 @@ class BexioReconciliation extends Page implements HasTable
         abort_unless(static::canAccess(), 403);
         $this->validate(['type' => 'required|in:invoice,expense', 'search' => 'string|max:100']);
         app(BexioReconciliationService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $this->type, $id);
-        Notification::make()->title('Prüfung abgeschlossen')->send();
+        Notification::make()->title(__('Prüfung abgeschlossen'))->send();
     }
 
     public function apply(int $id): void
@@ -129,7 +129,7 @@ class BexioReconciliation extends Page implements HasTable
         abort_unless($check && static::canSync($check->object_type), 403);
         try {
             app(BexioReconciliationService::class)->apply(Filament::auth()->user(), Filament::getTenant(), $id);
-            Notification::make()->title('Status in ClubUnio übernommen')->success()->send();
+            Notification::make()->title(__('Status in ClubUnio übernommen'))->success()->send();
         } catch (ValidationException $e) {
             Notification::make()->title($e->getMessage())->warning()->send();
         }

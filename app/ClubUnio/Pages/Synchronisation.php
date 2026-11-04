@@ -115,19 +115,19 @@ class Synchronisation extends Page implements HasTable
             ->query(fn (): Builder => $this->workQuery())
             ->columns([
                 TextColumn::make('operation')->label('Auftrag')->wrap()->sortable()
-                    ->formatStateUsing(fn (string $state): string => SyncWorkService::LABELS[$state] ?? $state)
-                    ->description(fn (SyncWorkItem $record): string => 'Objekt '.$record->object_id.' · Auftrag '.$record->id.($record->context ? ' · '.$record->context : ''))
+                    ->formatStateUsing(fn (string $state): string => __(SyncWorkService::LABELS[$state] ?? $state))
+                    ->description(fn (SyncWorkItem $record): string => __('Objekt :object · Auftrag :job', ['object' => $record->object_id, 'job' => $record->id]).($record->context ? ' · '.$record->context : ''))
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        $operations = array_keys(array_filter(SyncWorkService::LABELS, fn ($label) => str_contains(mb_strtolower($label), mb_strtolower($search))));
+                        $operations = array_keys(array_filter(SyncWorkService::LABELS, fn ($label) => str_contains(mb_strtolower(__($label)), mb_strtolower($search))));
 
                         return $query->where(fn (Builder $query) => $query->where('operation', 'ilike', '%'.$search.'%')
                             ->orWhereIn('operation', $operations)->orWhereRaw('CAST(object_id AS TEXT) ILIKE ?', ['%'.$search.'%'])
                             ->orWhereRaw('CAST(id AS TEXT) ILIKE ?', ['%'.$search.'%']));
                     }),
                 TextColumn::make('state')->label('Status')->badge()->sortable()
-                    ->formatStateUsing(fn (string $state): string => $stateLabels[$state] ?? $state)
+                    ->formatStateUsing(fn (string $state): string => __($stateLabels[$state] ?? $state))
                     ->color(fn (string $state) => StatusAppearance::palette($stateLabels[$state] ?? $state))
-                    ->description(fn (SyncWorkItem $record): ?string => $record->error_code ? (SyncWorkService::ERRORS[$record->error_code] ?? 'Ausführung prüfen') : null),
+                    ->description(fn (SyncWorkItem $record): ?string => $record->error_code ? __(SyncWorkService::ERRORS[$record->error_code] ?? 'Ausführung prüfen') : null),
                 TextColumn::make('error_code')->label('Fehlercode')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('attempts')->label('Versuche')->numeric()->sortable(),
                 TextColumn::make('updated_at')->label('Letzter Versuch')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->sortable(),
@@ -141,7 +141,7 @@ class Synchronisation extends Page implements HasTable
                         default => $query,
                     }),
                 SelectFilter::make('provider')->label('Verbindung')
-                    ->options(['all' => 'Alle', 'bexio' => 'Bexio', 'sfv' => 'SFV', 'ai' => 'KI-Training', 'azure' => 'Azure-Dokumente'])
+                    ->options(['all' => __('Alle'), 'bexio' => __('Bexio'), 'sfv' => __('SFV'), 'ai' => __('KI-Training'), 'azure' => __('Azure-Dokumente')])
                     ->default('all')->selectablePlaceholder(false)
                     ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? 'all') {
                         'sfv' => $query->where('operation', 'sfv_schedule'),
@@ -168,11 +168,11 @@ class Synchronisation extends Page implements HasTable
                     ->mountUsing(function (SyncWorkItem $record): void {
                         $this->reviewedItem = ['id' => $record->id, 'revision' => $record->revision, 'action' => 'sync'];
                     })
-                    ->modalDescription('Diesen Auftrag mit den bestehenden Zuordnungen erneut prüfen beziehungsweise ausführen? Unklare Bexio-Anlagen werden nur abgeglichen.')
+                    ->modalDescription(__('Diesen Auftrag mit den bestehenden Zuordnungen erneut prüfen beziehungsweise ausführen? Unklare Bexio-Anlagen werden nur abgeglichen.'))
                     ->action(fn (SyncWorkItem $record) => $this->retry($record->id, $this->reviewedRevision($record, 'sync'))),
                 Action::make('closeItem')->label('Manuell abschliessen')->icon('heroicon-o-check')->color('gray')
                     ->visible(fn (SyncWorkItem $record): bool => in_array($record->state, ['pending', 'attention'], true))
-                    ->modalDescription('Auftrag mit Begründung abschliessen? Ein offener Dokumentupload wird damit verworfen, aber verschlüsselt aufbewahrt. Dies bestätigt keine erfolgreiche Synchronisation.')
+                    ->modalDescription(__('Auftrag mit Begründung abschliessen? Ein offener Dokumentupload wird damit verworfen, aber verschlüsselt aufbewahrt. Dies bestätigt keine erfolgreiche Synchronisation.'))
                     ->schema([Textarea::make('note')->label('Begründung')->required()->minLength(5)->maxLength(1000)])
                     ->mountUsing(function (SyncWorkItem $record, ?Schema $schema): void {
                         $this->reviewedItem = ['id' => $record->id, 'revision' => $record->revision, 'action' => 'closeItem'];
@@ -185,7 +185,7 @@ class Synchronisation extends Page implements HasTable
             ])
             ->defaultSort(fn (Builder $query): Builder => $query->orderByDesc('updated_at')->orderByDesc('id'))
             ->paginationPageOptions([20, 50, 100])->defaultPaginationPageOption(20)
-            ->emptyStateHeading('Keine Aufträge in dieser Auswahl.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Aufträge in dieser Auswahl.'))->emptyStateDescription(null);
     }
 
     private function reviewedRevision(SyncWorkItem $record, string $action): int
@@ -217,8 +217,8 @@ class Synchronisation extends Page implements HasTable
     {
         $counts = $this->counts();
 
-        return ['open' => 'Offen ('.(($counts['pending'] ?? 0) + ($counts['attention'] ?? 0) + ($counts['running'] ?? 0)).')',
-            'succeeded' => 'Erfolgreich ('.($counts['succeeded'] ?? 0).')', 'closed' => 'Manuell abgeschlossen ('.($counts['closed'] ?? 0).')', 'all' => 'Alle'];
+        return ['open' => __('Offen (:count)', ['count' => ($counts['pending'] ?? 0) + ($counts['attention'] ?? 0) + ($counts['running'] ?? 0)]),
+            'succeeded' => __('Erfolgreich (:count)', ['count' => $counts['succeeded'] ?? 0]), 'closed' => __('Manuell abgeschlossen (:count)', ['count' => $counts['closed'] ?? 0]), 'all' => __('Alle')];
     }
 
     public function updatedPaginators($page, $pageName): void
@@ -254,7 +254,7 @@ class Synchronisation extends Page implements HasTable
         $count = app(SyncWorkService::class)->importOutstanding(Filament::auth()->user(), Filament::getTenant());
         $this->stateCounts = null;
         $this->flushCachedTableRecords();
-        Notification::make()->title($count.' neue Prüfaufträge übernommen')->success()->send();
+        Notification::make()->title(__(':count neue Prüfaufträge übernommen', ['count' => $count]))->success()->send();
     }
 
     public function retry(int $id, int $revision): void
@@ -263,10 +263,10 @@ class Synchronisation extends Page implements HasTable
         try {
             app(SyncWorkService::class)->retry(Filament::auth()->user(), Filament::getTenant(), $id, $revision);
             $row = app(SyncWorkService::class)->table()->where('tenant_id', Filament::getTenant()->id)->find($id);
-            Notification::make()->title($row->state === 'succeeded' ? 'Abgleich abgeschlossen' : 'Manuelle Prüfung erforderlich')
+            Notification::make()->title($row->state === 'succeeded' ? __('Abgleich abgeschlossen') : __('Manuelle Prüfung erforderlich'))
                 ->status($row->state === 'succeeded' ? 'success' : 'warning')->send();
         } catch (\Throwable) {
-            Notification::make()->title('Abgleich nicht abgeschlossen')->body('Auftrag und Protokoll bleiben erhalten. Verbindung, Berechtigungen oder Quelldaten prüfen.')->warning()->send();
+            Notification::make()->title(__('Abgleich nicht abgeschlossen'))->body(__('Auftrag und Protokoll bleiben erhalten. Verbindung, Berechtigungen oder Quelldaten prüfen.'))->warning()->send();
         }
         $this->stateCounts = null;
         $this->flushCachedTableRecords();
@@ -280,7 +280,7 @@ class Synchronisation extends Page implements HasTable
         $this->note = '';
         $this->stateCounts = null;
         $this->flushCachedTableRecords();
-        Notification::make()->title('Auftrag mit Begründung abgeschlossen')->send();
+        Notification::make()->title(__('Auftrag mit Begründung abgeschlossen'))->send();
     }
 
     protected function getViewData(): array

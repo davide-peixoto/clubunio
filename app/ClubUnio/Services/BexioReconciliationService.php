@@ -102,7 +102,7 @@ class BexioReconciliationService
                 'state' => $proposal['change'] ? 'ready' : 'unchanged', 'message' => $proposal['label']];
         } catch (\Throwable $error) {
             $row += ['state' => 'failed', 'provider_status' => (int) $error->getCode(),
-                'message' => $error instanceof ValidationException ? $error->getMessage() : 'Bexio-Abgleich nicht möglich. Referenz: '.$reference];
+                'message' => $error instanceof ValidationException ? $error->getMessage() : __('Bexio-Abgleich nicht möglich. Referenz: :reference', ['reference' => $reference])];
             Log::warning('clubunio.bexio.reconciliation_failed', ['reference' => $reference, 'tenant_id' => $tenant->id,
                 'type' => $type, 'object_id' => $id, 'status' => (int) $error->getCode()]);
         }
@@ -133,7 +133,7 @@ class BexioReconciliationService
             $mapping = InvoiceStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', $status)->first();
             $lineStatus = $mapping ? InvoiceLineStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', $mapping->position_code)->first() : null;
             if (! $mapping || ! $lineStatus) {
-                throw ValidationException::withMessages(['mapping' => 'Für diesen Bexio-Status fehlt eine aktive Rechnungs-/Positionszuordnung.']);
+                throw ValidationException::withMessages(['mapping' => __('Für diesen Bexio-Status fehlt eine aktive Rechnungs-/Positionszuordnung.')]);
             }
 
             return ['status_id' => $mapping->id, 'line_status_id' => $lineStatus->id, 'position_code' => $mapping->position_code,
@@ -145,17 +145,17 @@ class BexioReconciliationService
             return ['change' => $balanceChanged, 'status_id' => $document->status_id, 'label' => 'Bexio: '.$status.'; kein Zahlungseingang bestätigt.'];
         }
         if (array_key_exists('pending_amount', $data) && (! is_numeric($data['pending_amount']) || abs((float) $data['pending_amount']) >= 0.005)) {
-            throw ValidationException::withMessages(['balance' => 'Bexio meldet bezahlt mit widersprüchlichem Restbetrag.']);
+            throw ValidationException::withMessages(['balance' => __('Bexio meldet bezahlt mit widersprüchlichem Restbetrag.')]);
         }
         if ($document->status?->code === 'B') {
             return ['change' => $balanceChanged, 'status_id' => $document->status_id, 'label' => 'Bereits bezahlt'];
         }
         if ($document->status?->code !== 'Z') {
-            throw ValidationException::withMessages(['status' => 'Nur zur Zahlung freigegebene Spesen dürfen als bezahlt übernommen werden.']);
+            throw ValidationException::withMessages(['status' => __('Nur zur Zahlung freigegebene Spesen dürfen als bezahlt übernommen werden.')]);
         }
         $target = ExpenseStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', 'B')->first();
         if (! $target) {
-            throw ValidationException::withMessages(['mapping' => 'Der aktive Spesenstatus Bezahlt fehlt.']);
+            throw ValidationException::withMessages(['mapping' => __('Der aktive Spesenstatus Bezahlt fehlt.')]);
         }
 
         return ['status_id' => $target->id, 'label' => $target->name, 'change' => true];
@@ -165,7 +165,7 @@ class BexioReconciliationService
     {
         $this->authorize($actor, $tenant);
         if (! $this->enabled($tenant)) {
-            throw ValidationException::withMessages(['check' => 'Bexio kein Update - Deaktiviert']);
+            throw ValidationException::withMessages(['check' => __('Bexio kein Update - Deaktiviert')]);
         }
         $saved = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->first();
         abort_unless($saved && $saved->actor_id === $actor->id, 404);
@@ -173,7 +173,7 @@ class BexioReconciliationService
             return;
         }
         if ($saved->state !== 'ready' || ! $saved->financials || CarbonImmutable::parse($saved->created_at)->lt(now()->subMinutes(10))) {
-            throw ValidationException::withMessages(['check' => 'Diese Vorschau ist nicht mehr gültig. Bitte erneut aus Bexio laden.']);
+            throw ValidationException::withMessages(['check' => __('Diese Vorschau ist nicht mehr gültig. Bitte erneut aus Bexio laden.')]);
         }
         $document = $this->document($actor, $tenant, $saved->object_type, $saved->object_id);
         $provider = $this->sandbox($tenant)
@@ -186,7 +186,7 @@ class BexioReconciliationService
         ksort($savedFinancials);
         if ((string) ($provider['id'] ?? '') !== $saved->remote_id || $providerStatus !== $saved->remote_status
             || $financials !== $savedFinancials) {
-            throw ValidationException::withMessages(['check' => 'Bexio wurde inzwischen geändert. Bitte erneut prüfen.']);
+            throw ValidationException::withMessages(['check' => __('Bexio wurde inzwischen geändert. Bitte erneut prüfen.')]);
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $checkId, $financials, $provider) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -196,11 +196,11 @@ class BexioReconciliationService
                 return;
             }
             if ($check->state !== 'ready' || CarbonImmutable::parse($check->created_at)->lt(now()->subMinutes(10))) {
-                throw ValidationException::withMessages(['check' => 'Diese Vorschau ist nicht mehr gültig. Bitte erneut aus Bexio laden.']);
+                throw ValidationException::withMessages(['check' => __('Diese Vorschau ist nicht mehr gültig. Bitte erneut aus Bexio laden.')]);
             }
             $document = $this->document($actor, $tenant, $check->object_type, $check->object_id, true);
             if (! hash_equals($check->fingerprint, $this->fingerprint($document, $check->object_type))) {
-                throw ValidationException::withMessages(['check' => 'Der Datensatz wurde inzwischen geändert. Bitte erneut prüfen.']);
+                throw ValidationException::withMessages(['check' => __('Der Datensatz wurde inzwischen geändert. Bitte erneut prüfen.')]);
             }
             $proposal = json_decode($check->proposal, true, 32, JSON_THROW_ON_ERROR);
             // Revalidate lookups before committing; configuration may have changed since preview.
@@ -208,7 +208,7 @@ class BexioReconciliationService
             ksort($fresh);
             ksort($proposal);
             if ($fresh !== $proposal) {
-                throw ValidationException::withMessages(['check' => 'Die Statuszuordnung wurde geändert. Bitte erneut prüfen.']);
+                throw ValidationException::withMessages(['check' => __('Die Statuszuordnung wurde geändert. Bitte erneut prüfen.')]);
             }
             $before = $document->only($check->object_type === 'invoice' ? ['status_id', 'revision', 'workflow_status_id'] : ['status_id', 'revision']);
             $previousPosition = $check->object_type === 'invoice' ? $document->status?->position_code : null;
@@ -253,16 +253,18 @@ class BexioReconciliationService
     private function invoiceNotification(Tenant $tenant, Invoice $invoice, string $status, bool $new): void
     {
         $db = DB::connection('clubunio');
-        $push = app(MessageTemplateService::class)->render($tenant, $new ? 'invoice.open' : 'invoice.status', 'push', ['verein' => $tenant->name,
+        $values = ['verein' => $tenant->name,
             'mitglied' => $invoice->member?->display_name ?? '', 'saison' => $invoice->season?->name ?? '',
-            'betrag' => 'CHF '.number_format(app(InvoiceTaxService::class)->summary($invoice)['total_cents'] / 100, 2, '.', "'"), 'status' => $status]);
-        if (! $push) {
-            return;
-        }
+            'betrag' => 'CHF '.number_format(app(InvoiceTaxService::class)->summary($invoice)['total_cents'] / 100, 2, '.', "'"),
+            'status' => new MessageLookupValue('invoice_statuses', ['id' => $invoice->status_id, 'tenant_id' => $tenant->id, 'name' => $status])];
         $accounts = $db->table('clubora.account_member_links as l')->join('clubora.tenant_accounts as ta', fn ($j) => $j->on('ta.account_id', '=', 'l.account_id')->on('ta.tenant_id', '=', 'l.tenant_id'))
             ->join('clubora.accounts as a', 'a.id', '=', 'l.account_id')->where('l.tenant_id', $tenant->id)->where('l.member_id', $invoice->member_id)
             ->where('l.state', 'approved')->where('l.kind', 'self')->where('ta.portal_enabled', true)->where('a.active', true)->distinct()->pluck('l.account_id');
-        foreach ($accounts as $account) {
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $new ? 'invoice.open' : 'invoice.status', 'push', $values, $accounts->all());
+        foreach ($messages as $account => $push) {
+            if (! $push) {
+                continue;
+            }
             $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                 'title' => $push['title'], 'body' => $push['body'], 'object_type' => 'invoice', 'object_id' => $invoice->id]);
         }

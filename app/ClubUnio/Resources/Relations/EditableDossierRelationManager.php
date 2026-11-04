@@ -30,7 +30,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
         return array_map(fn (bool $active) => BulkAction::make($active ? 'restoreItems' : 'deactivateItems')
             ->label($active ? 'Auswahl wiederherstellen' : 'Auswahl deaktivieren')
             ->icon($active ? 'heroicon-o-arrow-path' : 'heroicon-o-archive-box')->visible($canEdit)->requiresConfirmation()
-            ->modalDescription('Maximal 100 Einträge. Bei einem Konflikt bleibt die gesamte Auswahl unverändert.')
+            ->modalDescription(__('Maximal 100 Einträge. Bei einem Konflikt bleibt die gesamte Auswahl unverändert.'))
             ->schema([Hidden::make('selection_count')])
             ->fillForm(function ($records) {
                 $this->itemBulkSnapshot = [];
@@ -52,7 +52,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
                             $record = $locked->get($selected->id);
                             $data = $this->itemValues($record);
                             if (! hash_equals($this->itemBulkSnapshot[$record->id] ?? '', hash('sha256', json_encode($data, JSON_THROW_ON_ERROR)))) {
-                                throw ValidationException::withMessages(['active' => 'Auswahl wurde inzwischen geändert. Bitte neu auswählen.']);
+                                throw ValidationException::withMessages(['active' => __('Auswahl wurde inzwischen geändert. Bitte neu auswählen.')]);
                             }
                             $save($record->id, array_replace($data, ['active' => $active]));
                         }
@@ -92,11 +92,11 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
         $save = fn ($id, $data, $copyFrom = null) => app(DossierMaintenanceService::class)->save(Filament::auth()->user(), Filament::getTenant(), DossierMaintenanceService::MEMBER_MODELS[static::$kind], $this->getOwnerRecord()->id, $id, $data, $copyFrom);
 
         return parent::table($table)->toolbarActions($this->bulkItemActions($save, $canEdit))->headerActions([Action::make('addItem')->label('Hinzufügen')->icon('heroicon-o-plus')->visible($canEdit)->slideOver()->schema(fn () => DossierMaintenanceFields::make(static::$kind))->action(fn (array $data) => FormMutation::run($this, fn () => $save(null, $data)))])
-            ->recordActions([Action::make('editItem')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Bearbeiten')->visible($canEdit)->slideOver()
+            ->recordActions([Action::make('editItem')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Bearbeiten'))->visible($canEdit)->slideOver()
                 ->fillForm(fn ($record) => $this->itemValues($record))
                 ->schema(fn () => DossierMaintenanceFields::make(static::$kind))->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save($record->id, $data))),
                 ...(in_array(static::$kind, ['functions', 'sponsorships', 'eventGuests'], true) ? [
-                    Action::make('copyItem')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Kopieren')->visible($canEdit)->slideOver()
+                    Action::make('copyItem')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Kopieren'))->visible($canEdit)->slideOver()
                         ->fillForm(function ($record) {
                             $data = $this->itemValues($record);
                             $data['revision'] = 0;
@@ -113,9 +113,9 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
                         ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save(null, array_replace($data, ['revision' => 0, 'active' => true]), $record->id))),
                     ...array_map(fn (bool $active) => Action::make($active ? 'restoreItem' : 'deactivateItem')
                         ->label($active ? 'Wiederherstellen' : 'Deaktivieren')->icon($active ? 'heroicon-o-arrow-path' : 'heroicon-o-archive-box')
-                        ->iconButton()->tooltip($active ? 'Wiederherstellen' : 'Deaktivieren')->color($active ? 'primary' : 'danger')
+                        ->iconButton()->tooltip($active ? __('Wiederherstellen') : __('Deaktivieren'))->color($active ? 'primary' : 'danger')
                         ->visible(fn ($record) => $canEdit() && (bool) $record->active !== $active)->requiresConfirmation()
-                        ->modalDescription($active ? 'Die Zuordnung wird erneut aktiviert. Bestehende aktive Zuordnungen werden geprüft.' : 'Der Eintrag bleibt mit seiner Historie erhalten.')
+                        ->modalDescription($active ? __('Die Zuordnung wird erneut aktiviert. Bestehende aktive Zuordnungen werden geprüft.') : __('Der Eintrag bleibt mit seiner Historie erhalten.'))
                         ->fillForm(fn ($record) => ['revision' => $record->revision])->schema([Hidden::make('revision')->required()])
                         ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $save($record->id,
                             array_replace($this->itemValues($record), ['revision' => $data['revision'], 'active' => $active])))), [false, true]),

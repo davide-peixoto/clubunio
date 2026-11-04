@@ -84,18 +84,18 @@ class PersonalAccessRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('account.display_name')->label('Name')->searchable(),
                 TextColumn::make('account.username')->label('Benutzer')->searchable()->wrap(),
-                TextColumn::make('kind')->label('Zuordnung')->formatStateUsing(fn ($state) => AccountMemberLinkResource::KINDS[$state] ?? $state),
-                TextColumn::make('state')->label('Freigabe')->badge()->formatStateUsing(fn ($state) => AccountMemberLinkResource::STATES[$state] ?? $state),
+                TextColumn::make('kind')->label('Zuordnung')->formatStateUsing(fn ($state) => __(AccountMemberLinkResource::KINDS[$state] ?? $state)),
+                TextColumn::make('state')->label('Freigabe')->badge()->formatStateUsing(fn ($state) => __(AccountMemberLinkResource::STATES[$state] ?? $state)),
                 TextColumn::make('capability')->label('Persönlicher Zugriff')
                     ->state(fn ($record) => app(MemberPersonalAccessService::class)->capability($record, $member, $active))->wrap(),
-            ])->filters([SelectFilter::make('state')->label('Freigabe')->options(AccountMemberLinkResource::STATES)])
+            ])->filters([SelectFilter::make('state')->label('Freigabe')->options(array_map(fn ($name) => __($name), AccountMemberLinkResource::STATES))])
             ->recordActions([
-                Action::make('review')->label('Zugriff prüfen')->icon('heroicon-o-shield-check')->iconButton()->tooltip('Zuordnung prüfen')->slideOver()
+                Action::make('review')->label('Zugriff prüfen')->icon('heroicon-o-shield-check')->iconButton()->tooltip(__('Zuordnung prüfen'))->slideOver()
                     ->schema(AccountMemberLinkResource::fields(true))
                     ->fillForm(fn ($record) => $this->scopedLink($record->id)->only(['account_id', 'member_id', 'kind', 'state', 'revision']))
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountLinkService::class)
                         ->save(Filament::auth()->user(), Filament::getTenant(), $this->scopedLink($record->id)->id, $data))),
-                Action::make('manage')->label('Benutzer bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Benutzer und Rolle bearbeiten')->slideOver()
+                Action::make('manage')->label('Benutzer bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Benutzer und Rolle bearbeiten'))->slideOver()
                     ->visible(fn () => app(AccountAdministrationService::class)->allowed(Filament::auth()->user(), Filament::getTenant()))
                     ->schema(TenantAccountResource::fields(true))
                     ->fillForm(function ($record) {
@@ -107,6 +107,6 @@ class PersonalAccessRelationManager extends RelationManager
                     })
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)
                         ->save(Filament::auth()->user(), Filament::getTenant(), $this->membership($record->id)->id, $data))),
-            ])->defaultSort('id', 'desc')->paginated([10, 25, 50])->emptyStateHeading('Keine persönlichen Benutzerzuordnungen')->emptyStateDescription(null);
+            ])->defaultSort('id', 'desc')->paginated([10, 25, 50])->emptyStateHeading(__('Keine persönlichen Benutzerzuordnungen'))->emptyStateDescription(null);
     }
 }

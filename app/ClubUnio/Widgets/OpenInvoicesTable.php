@@ -16,13 +16,16 @@ class OpenInvoicesTable extends TableWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('invoices');
     }
 
-    protected static ?string $heading = 'Offene Rechnungen';
+    protected function getTableHeading(): string
+    {
+        return __('Offene Rechnungen');
+    }
 
     public function table(Table $table): Table
     {
         abort_unless(static::canView(), 403);
         return $table->query(app(DashboardService::class)->openInvoices(Filament::auth()->user(), Filament::getTenant())->with(['member', 'season']))
-            ->columns([TextColumn::make('legacy_id')->label('Nr.'), TextColumn::make('member.display_name')->label('Mitglied'), TextColumn::make('season.name')->label('Saison'), TextColumn::make('open_amount')->label('Offen')->money('CHF')])
+            ->columns([TextColumn::make('legacy_id')->label(__('Nr.')), TextColumn::make('member.display_name')->label(__('Mitglied')), TextColumn::make('season.name')->label(__('Saison')), TextColumn::make('open_amount')->label(__('Offen'))->money('CHF')])
             ->recordUrl(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record]))->defaultSort('id', 'desc')->paginated([5, 10])->defaultPaginationPageOption(5);
     }
 }

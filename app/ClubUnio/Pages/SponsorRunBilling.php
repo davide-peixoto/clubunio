@@ -73,9 +73,9 @@ class SponsorRunBilling extends Page implements HasTable
             if (isset($mapping[$key])) {
                 $fields[] = Select::make($key)->label($label)->searchable()->options(fn () => collect($this->catalogs[$mapping[$key]] ?? [])
                     ->mapWithKeys(fn ($r) => [$r['id'] => ($r['name'] ?? $r['name_1'] ?? $r['number'] ?? $r['id']).' · '.$r['id']])->all())
-                    ->getOptionLabelUsing(fn ($value) => $value ? 'Zuordnung #'.$value : null);
+                    ->getOptionLabelUsing(fn ($value) => $value ? __('Zuordnung #:id', ['id' => $value]) : null);
             } elseif ($key === 'mwst_type') {
-                $fields[] = Select::make($key)->label($label)->options([0 => 'Inklusive MWST', 1 => 'Steuerbefreit', 2 => 'Ohne MWST']);
+                $fields[] = Select::make($key)->label($label)->options([0 => __('Inklusive MWST'), 1 => __('Steuerbefreit'), 2 => __('Ohne MWST')]);
             } else {
                 $fields[] = TextInput::make($key)->label($label)->integer()->minValue(0)->maxValue(365);
             }
@@ -107,14 +107,14 @@ class SponsorRunBilling extends Page implements HasTable
                 ...(($operation ?? $arguments['action'] ?? '') === 'link-contact' ? [TextInput::make('contact_id')->label('Bestätigte Bexio-Kontakt-ID')->integer()->minValue(1)->required()] : []),
                 ...(($operation ?? $arguments['action'] ?? '') === 'confirm-sent' ? [Textarea::make('reason')->label('Nachweis der manuellen Versandprüfung')->required()->minLength(10)->maxLength(1000)] : [])])
             ->modalDescription(fn (array $arguments) => ($operation ?? $arguments['action'] ?? '') === 'send'
-                ? 'Die Testrechnung wird ausschliesslich an admin@svsissach.ch versendet.' : 'Bestehende Zuordnungen und aktuellen Beleg prüfen und Aktion bestätigen.')
+                ? __('Die Testrechnung wird ausschliesslich an admin@svsissach.ch versendet.') : __('Bestehende Zuordnungen und aktuellen Beleg prüfen und Aktion bestätigen.'))
             ->action(function (array $arguments, array $data, ?array $record) use ($operation) {
                 try {
                     app(SponsorRunBillingService::class)->execute(Filament::auth()->user(), Filament::getTenant(),
                         (int) ($record['id'] ?? $arguments['id']), (int) $data['revision'], (string) ($operation ?? $arguments['action']), $data);
-                    Notification::make()->title('Rechnungsaktion abgeschlossen')->success()->send();
+                    Notification::make()->title(__('Rechnungsaktion abgeschlossen'))->success()->send();
                 } catch (\Throwable) {
-                    Notification::make()->title('Aktion nicht bestätigt')->body('Prüfauftrag bleibt in Synchronisation erhalten. Keine ungeprüfte Neuerstellung.')->warning()->send();
+                    Notification::make()->title(__('Aktion nicht bestätigt'))->body(__('Prüfauftrag bleibt in Synchronisation erhalten. Keine ungeprüfte Neuerstellung.'))->warning()->send();
                 }
             });
     }
@@ -126,7 +126,7 @@ class SponsorRunBilling extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $actions = [Action::make('pdf')->label('Bexio-PDF öffnen')->icon('heroicon-o-document-text')->iconButton()->tooltip('Bexio-PDF öffnen')
+        $actions = [Action::make('pdf')->label('Bexio-PDF öffnen')->icon('heroicon-o-document-text')->iconButton()->tooltip(__('Bexio-PDF öffnen'))
             ->visible(fn (array $record) => $record['remote_id'] && ProfileUi::allows('sponsor_runs', 'download'))
             ->url(fn (array $record) => route('clubunio.sponsor.billing.pdf', ['invoice' => $record['id']]))->openUrlInNewTab()];
         foreach ([
@@ -140,7 +140,7 @@ class SponsorRunBilling extends Page implements HasTable
             'refresh-preview' => ['Empfängersnapshot und Buchhaltung neu prüfen', 'arrow-path-rounded-square', ['prepared', 'contact_ready']],
             'sync' => ['Ergebnis und Zahlungsstatus abgleichen', 'arrow-path', null],
         ] as $operation => [$label, $icon, $states]) {
-            $actions[] = $this->operationAction($operation)->label($label)->icon('heroicon-o-'.$icon)->iconButton()->tooltip($label)
+            $actions[] = $this->operationAction($operation)->label($label)->icon('heroicon-o-'.$icon)->iconButton()->tooltip(__($label))
                 ->visible(fn (array $record) => $this->canOperate() && ($states === null || in_array($record['state'], $states, true)));
         }
 
@@ -172,19 +172,19 @@ class SponsorRunBilling extends Page implements HasTable
         })->columns([
             TextColumn::make('sponsor')->label('Zusage')->description(fn (array $record) => $record['event_title'])->searchable(),
             TextColumn::make('total_cents')->label('Betrag')->formatStateUsing(fn ($state) => SponsorRunMoney::format($state))->sortable(),
-            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn ($state) => SponsorRunBillingService::STATES[$state] ?? $state)
+            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn ($state) => __(SponsorRunBillingService::STATES[$state] ?? $state))
                 ->color(fn ($state) => StatusAppearance::palette(SponsorRunBillingService::STATES[$state] ?? $state))->sortable(),
             TextColumn::make('remote_id')->label('Bexio')->prefix('#')->placeholder('-'),
             TextColumn::make('paid_cents')->label('Bezahlt')->formatStateUsing(fn ($state) => SponsorRunMoney::format($state))->placeholder('-'),
         ])->filters([
             SelectFilter::make('event_id')->label('Anlass')->default(fn () => $this->event)->options(fn () => DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->pluck('title', 'id')->all()),
-            SelectFilter::make('state')->label('Status')->options(SponsorRunBillingService::STATES),
+            SelectFilter::make('state')->label('Status')->options(array_map(fn ($name) => __($name), SponsorRunBillingService::STATES)),
         ])->deferFilters(false)->headerActions([
             $this->prepareAction(),
             Action::make('loadCatalogs')->label('Bexio-Kataloge laden')->icon('heroicon-o-arrow-path')
                 ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))->action(fn () => $this->loadCatalogs()),
             $this->configureAction(),
             Action::make('sponsorRuns')->label('Sponsorenlauf')->icon('heroicon-o-arrow-left')->url(url('/sponsor-runs'))->color('gray'),
-        ])->recordActions($actions)->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading('Keine vorbereiteten Sponsorenrechnungen.');
+        ])->recordActions($actions)->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading(__('Keine vorbereiteten Sponsorenrechnungen.'));
     }
 }

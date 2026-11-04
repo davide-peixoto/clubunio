@@ -28,18 +28,18 @@ class AccountLinkService
             ])->validate();
             if ($id) {
                 if ((int) $record->revision !== (int) $data['revision']) {
-                    throw ValidationException::withMessages(['state' => 'Die Zuordnung wurde inzwischen geändert. Bitte neu öffnen.']);
+                    throw ValidationException::withMessages(['state' => __('Die Zuordnung wurde inzwischen geändert. Bitte neu öffnen.')]);
                 }
                 foreach (['account_id', 'member_id', 'kind'] as $field) {
                     if ((string) $record->$field !== (string) $data[$field]) {
-                        throw ValidationException::withMessages([$field => 'Bestehende Zuordnung widerrufen und neu erfassen.']);
+                        throw ValidationException::withMessages([$field => __('Bestehende Zuordnung widerrufen und neu erfassen.')]);
                     }
                 }
             }
             $duplicate = AccountMemberLink::withoutGlobalScopes()->where('tenant_id', $tenant->id)->when($id, fn ($q) => $q->whereKeyNot($id))
                 ->where('account_id', $data['account_id'])->where('member_id', $data['member_id'])->where('kind', $data['kind'])->exists();
             if ($duplicate) {
-                throw ValidationException::withMessages(['member_id' => 'Diese Zuordnung existiert bereits.']);
+                throw ValidationException::withMessages(['member_id' => __('Diese Zuordnung existiert bereits.')]);
             }
             if ($data['state'] === 'approved') {
                 $member = app(MemberAccessService::class)->activeMembers($tenant)->find($data['member_id']);
@@ -47,11 +47,11 @@ class AccountLinkService
                 $minor = $member?->birth_date && $member->birth_date->toDateString() <= $today
                     && $member->birth_date->copy()->addYearsNoOverflow(18)->toDateString() > $today;
                 if (! $member || ($data['kind'] === 'parent' && ! $minor)) {
-                    throw ValidationException::withMessages(['member_id' => 'Aktive Mitgliedschaft erforderlich; Elternzugriff nur für Minderjährige mit Geburtsdatum.']);
+                    throw ValidationException::withMessages(['member_id' => __('Aktive Mitgliedschaft erforderlich; Elternzugriff nur für Minderjährige mit Geburtsdatum.')]);
                 }
                 if ($data['kind'] === 'self' && AccountMemberLink::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('account_id', $data['account_id'])
                     ->where('kind', 'self')->where('state', 'approved')->when($id, fn ($q) => $q->whereKeyNot($id))->exists()) {
-                    throw ValidationException::withMessages(['member_id' => 'Der Benutzer hat bereits eine eigene Mitgliedszuordnung.']);
+                    throw ValidationException::withMessages(['member_id' => __('Der Benutzer hat bereits eine eigene Mitgliedszuordnung.')]);
                 }
             }
             $before = $record->exists ? $record->only(['account_id', 'member_id', 'kind', 'state', 'revision']) : null;

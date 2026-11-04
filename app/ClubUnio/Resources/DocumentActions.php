@@ -11,11 +11,11 @@ class DocumentActions
     public static function make(): array
     {
         return [
-            Action::make('previewDocument')->label('Vorschau')->icon('heroicon-o-eye')->iconButton()->tooltip('Dokument ansehen')
-                ->visible(fn (MemberDocument $record) => $record->active)->slideOver()->modalHeading('Dokument')
-                ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')->modalWidth('5xl')
+            Action::make('previewDocument')->label('Vorschau')->icon('heroicon-o-eye')->iconButton()->tooltip(__('Dokument ansehen'))
+                ->visible(fn (MemberDocument $record) => $record->active)->slideOver()->modalHeading(__('Dokument'))
+                ->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen'))->modalWidth('5xl')
                 ->modalContent(fn (MemberDocument $record) => view('clubunio.documents.preview', ['url' => self::url($record), 'name' => $record->original_filename ?: 'Dokument', 'mediaType' => $record->content_type ?: (in_array(strtolower(pathinfo($record->original_filename ?? '', PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true) ? 'image/jpeg' : 'application/pdf')])),
-            Action::make('downloadDocument')->label('Herunterladen')->icon('heroicon-o-arrow-down-tray')->iconButton()->tooltip('Dokument herunterladen')
+            Action::make('downloadDocument')->label('Herunterladen')->icon('heroicon-o-arrow-down-tray')->iconButton()->tooltip(__('Dokument herunterladen'))
                 ->visible(fn (MemberDocument $record) => $record->active)->url(fn (MemberDocument $record) => self::url($record, true))->openUrlInNewTab(),
         ];
     }

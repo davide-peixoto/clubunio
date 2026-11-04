@@ -22,7 +22,7 @@ class InvoiceCreditsRelationManager extends RelationManager
     {
         return $table->columns([TextColumn::make('id')->label('Nr.'), TextColumn::make('status.name')->label('Status')->badge()->color(fn ($state) => StatusAppearance::palette($state)),
             TextColumn::make('amount_cents')->label('Betrag CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2, '.', "'")),
-            TextColumn::make('external_reference')->label('Bexio-Referenz')->placeholder('Noch nicht zugeordnet'), TextColumn::make('reason')->label('Begründung')->wrap()])
+            TextColumn::make('external_reference')->label('Bexio-Referenz')->placeholder(__('Noch nicht zugeordnet')), TextColumn::make('reason')->label('Begründung')->wrap()])
             ->recordActions([FinancialDossierDialog::make(EmbeddedCreditNote::class, fn () => $this->getOwnerRecord()->id)]);
     }
 }

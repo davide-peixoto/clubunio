@@ -2777,7 +2777,9 @@ class ClubUnioTest extends TestCase
         $this->assertSame(3, $query->firstOrFail()->revision);
         $this->assertSame($template->title, $query->firstOrFail()->title);
         $this->assertSame(3, $template->revisions()->count());
-        $french = $service->save($this->actor, $this->own, null, ['event_key' => 'expense.review', 'channel' => 'push', 'locale' => 'fr-CH', 'title' => 'Contrôle', 'body' => 'Bonjour', 'active' => false]);
+        // Historical disabled variants remain readable; new FR variants are no longer enabled.
+        $french = new MessageTemplate;
+        $french->forceFill(['tenant_id' => $this->own->id, 'event_key' => 'expense.review', 'channel' => 'push', 'locale' => 'fr-CH', 'title' => 'Contrôle', 'body' => 'Bonjour', 'active' => false, 'revision' => 1])->save();
         $this->assertNull($service->render($this->own, 'expense.review', 'push', [], 'fr-CH'));
         $this->assertSame($this->own->id, $french->tenant_id);
     }
@@ -2923,9 +2925,12 @@ class ClubUnioTest extends TestCase
             }
         }
         $data = ['event_key' => 'announcement.manual', 'channel' => 'push', 'locale' => 'en-GB', 'title' => 'Announcement', 'body' => '{{ nachricht }}', 'active' => true];
+        $existing = MessageTemplate::where('tenant_id', $this->own->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->where('locale', 'en-GB')->firstOrFail();
+        $existing->revisions()->delete();
+        $existing->delete();
         Livewire::test(ListMessageTemplates::class)
             ->callTableAction('newVariant', data: $data)->assertHasNoTableActionErrors();
-        $this->assertSame(1, MessageTemplate::where('tenant_id', $this->own->id)->where('locale', 'en-GB')->count());
+        $this->assertSame(1, MessageTemplate::where('tenant_id', $this->own->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->where('locale', 'en-GB')->count());
         foreach ([$data, array_replace($data, ['event_key' => 'registration.review', 'channel' => 'email'])] as $invalid) {
             try {
                 $service->save($this->actor, $this->own, null, $invalid);

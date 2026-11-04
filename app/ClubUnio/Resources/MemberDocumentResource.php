@@ -47,7 +47,7 @@ class MemberDocumentResource extends CatalogResource
             IconColumn::make('portal_visible')->label('Portal-Freigabe')->boolean(),
             TextColumn::make('source_created_at')->label('Erstellt')->dateTime('d.m.Y H:i'),
         ])->filters([
-            SelectFilter::make('document_type_id')->label('Dokumententyp')->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
+            SelectFilter::make('document_type_id')->label('Dokumententyp')->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
         ])->headerActions([MemberDocumentActions::upload()])->recordActions([...DocumentActions::make(), MemberDocumentActions::manage()])->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
     }

@@ -34,9 +34,9 @@ class BexioInvoiceTransferService
             }
             $dispatchId = $existing->id;
         } else {
-            abort_unless((int) $invoice->revision === $revision && ! $invoice->bexio_invoice_id && $invoice->workflowStatus?->code === 'released', 409, 'Rechnung zuerst intern freigeben oder neu laden.');
+            abort_unless((int) $invoice->revision === $revision && ! $invoice->bexio_invoice_id && $invoice->workflowStatus?->code === 'released', 409, __('Rechnung zuerst intern freigeben oder neu laden.'));
             $recipient = app(BexioSandboxRecipientService::class)->prepare($actor, $tenant, $invoice);
-            abort_unless((int) $invoice->fresh()->revision === $revision, 409, 'Rechnung wurde inzwischen geändert.');
+            abort_unless((int) $invoice->fresh()->revision === $revision, 409, __('Rechnung wurde inzwischen geändert.'));
             $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $id, $recipient);
             $dispatchId = $dispatch->prepareTrial($actor, $tenant, $trial);
             $dispatch->send($actor, $tenant, $dispatchId);

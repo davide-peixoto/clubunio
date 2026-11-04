@@ -333,6 +333,36 @@ class SponsorRunTest extends TestCase
         $this->assertHttpStatus(403, fn () => $this->core->addPledge($this->parent, $this->tenant, $p->id, $this->pledgeInput()));
     }
 
+    public function test_public_confirmation_uses_recipient_or_tenant_language_not_operator(): void
+    {
+        $translations = json_decode(file_get_contents(lang_path('parts/messages.en.json')), true, 512, JSON_THROW_ON_ERROR);
+        foreach (['Sponsorenlauf bestätigen', 'Testbestätigung Sponsorenlauf'] as $key) {
+            app('translator')->addLines(['*.'.$key => $translations[$key]], 'en');
+        }
+        $this->admin->forceFill(['preferred_locale' => 'en'])->save();
+        $p = $this->participant($this->event());
+        [$public, $token] = $this->publicLink($p);
+        foreach ([[$this->admin->username, 'de', 'de', 'Confirm sponsored run'],
+            ['unknown-en@example.invalid', 'en', 'de', 'Confirm sponsored run'],
+            ['unknown-de@example.invalid', 'de', 'en', 'Sponsorenlauf bestätigen']] as [$email, $tenantLanguage, $operatorLanguage, $title]) {
+            $this->tenant->forceFill(['default_locale' => $tenantLanguage])->save();
+            app()->setLocale($operatorLanguage);
+            // Use an email-shaped account name solely within this rollback fixture.
+            if ($email === $this->admin->username) {
+                $email = 'language-recipient@example.invalid';
+                $this->admin->forceFill(['username' => $email])->save();
+            }
+            $public->submit($token, $this->pledgeInput(['consent' => true, 'email' => $email]));
+            $row = $this->db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->orderByDesc('id')->first();
+            $payload = json_decode(Crypt::decryptString($row->payload_encrypted), true);
+            $this->assertSame($title, $payload['title']);
+            $this->assertSame(TestMailGuard::RECIPIENT, $payload['to']);
+            $this->assertStringContainsString($title === 'Confirm sponsored run' ? 'Sponsored run test confirmation' : 'Testbestätigung Sponsorenlauf', $payload['body']);
+            $this->assertMatchesRegularExpression('/#confirm=[a-f0-9]{64}$/', $payload['body']);
+        }
+        Mail::assertNothingSent();
+    }
+
     public function test_public_pending_is_not_a_pledge_and_confirmation_is_idempotent(): void
     {
         $p = $this->participant($this->event());

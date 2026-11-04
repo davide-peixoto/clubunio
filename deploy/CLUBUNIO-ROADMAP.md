@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DE/EN Fachoberflaechen (04.11.2026)
+
+514 Bestandslabels, Fachdialoge, Lookup-Anzeigevarianten und Empfaengersprachen
+nachgezogen. Katalogpruefung ohne historische Ausnahmen; kundeneigene Freitexte
+bleiben original. Migration, Abnahme und Release: CLUBUNIO-LANGUAGE-COMPLETION.md.
+
 ## Saisonreferenzen gegen Migrationsbestand geprueft (03.11.2026)
 
 23 Saisonfelder,17 Importzuordnungen/26746 Vergleiche und451 Planungsteilnahmen

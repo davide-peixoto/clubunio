@@ -174,7 +174,7 @@ class SeasonPlanning extends Page
         $this->seasonId = $this->service()->complete(Filament::auth()->user(), Filament::getTenant(), $this->planId,
             $this->revision, $this->review['token'], $this->acknowledge);
         $this->openPlan($this->planId);
-        Notification::make()->title('Saison vollständig erstellt')->success()->send();
+        Notification::make()->title(__('Saison vollständig erstellt'))->success()->send();
     }
 
     public function discard(): void
@@ -258,7 +258,7 @@ class SeasonPlanning extends Page
         abort_unless(isset($facts['members'][$member]), 422);
         $function = $kind === 'staff' ? ($function ?? $this->functionId) : null;
         if ($kind === 'staff' && ! isset($facts['staff_functions'][$function ?? 0])) {
-            $this->addError('assignment', 'Bitte eine aktive Staff-Funktion auswählen.');
+            $this->addError('assignment', __('Bitte eine aktive Staff-Funktion auswählen.'));
 
             return;
         }

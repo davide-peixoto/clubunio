@@ -22,6 +22,6 @@ abstract class FacilityResource extends ContributionTrainingResource
 
     public static function editAction(): EditAction
     {
-        return EditAction::make()->iconButton()->tooltip('Bearbeiten')->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(FacilityService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
+        return EditAction::make()->iconButton()->tooltip(__('Bearbeiten'))->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(FacilityService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
     }
 }

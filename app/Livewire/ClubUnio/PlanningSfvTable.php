@@ -58,8 +58,8 @@ class PlanningSfvTable extends WorkspaceScopedTable
                 TextColumn::make('starts_at')->label('Datum')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->sortable(),
                 TextColumn::make('title')->label('Spiel')->wrap()->searchable(),
                 TextColumn::make('location')->label('Ort')->wrap()->searchable(),
-                TextColumn::make('home')->label('Heim/Auswärts')->formatStateUsing(fn ($state) => $state ? 'Heim' : 'Auswärts'),
-                TextColumn::make('state')->label('Verbandstatus')->badge()->color(fn ($state) => StatusAppearance::palette($state)),
+                TextColumn::make('home')->label('Heim/Auswärts')->formatStateUsing(fn ($state) => $state ? __('Heim') : __('Auswärts')),
+                TextColumn::make('state')->label('Verbandstatus')->badge()->formatStateUsing(fn ($state) => $state === null ? null : __($state))->color(fn ($state) => StatusAppearance::palette($state)),
                 ViewColumn::make('import')->label('Übernahme')->view('livewire.clubunio.workspace-sfv-actions')->viewData($this->context()),
             ])
             ->deferFilters(false)->filters([
@@ -76,7 +76,7 @@ class PlanningSfvTable extends WorkspaceScopedTable
                 }),
             ])
             ->defaultSort('starts_at')->paginationPageOptions([10, 25, 50, 100])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Spiele im gewählten Zeitraum.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Spiele im gewählten Zeitraum.'))->emptyStateDescription(null);
     }
 
     public function render()

@@ -39,14 +39,14 @@ class SignagePreview extends Page
                 ->action(function (array $data) {
                     FormMutation::run($this, fn () => app(SignageBrandService::class)->save(Filament::auth()->user(), Filament::getTenant(), $data));
                     $this->brandValues = null;
-                    Notification::make()->title('Vereinsdesign gespeichert')->success()->send();
+                    Notification::make()->title(__('Vereinsdesign gespeichert'))->success()->send();
                 }),
             Action::make('checkInstagram')->label('Instagram prüfen')->icon('heroicon-o-check-circle')
                 ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
                 ->action(function () {
                     $result = app(SignageFeedService::class)->verifyInstagram(Filament::auth()->user(), Filament::getTenant());
-                    $notice = Notification::make()->title($result['state'] === 'ready' ? 'Instagram-Verbindung geprüft' : 'Instagram-Verbindung nicht verfügbar')
-                        ->body($result['state'] === 'ready' ? $result['item_count'].' Beiträge verfügbar.' : 'Zugang prüfen. Referenz: '.$result['reference']);
+                    $notice = Notification::make()->title($result['state'] === 'ready' ? __('Instagram-Verbindung geprüft') : __('Instagram-Verbindung nicht verfügbar'))
+                        ->body($result['state'] === 'ready' ? __(':count Beiträge verfügbar.', ['count' => $result['item_count']]) : __('Zugang prüfen. Referenz: :reference', ['reference' => $result['reference']]));
                     if ($result['state'] === 'ready') {
                         $notice->success();
                     } else {

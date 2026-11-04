@@ -18,7 +18,7 @@ class MemberDocumentMaintenanceService
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', 'upload');
         Validator::make(['file' => $file], ['file' => 'required|file|max:20480|mimetypes:application/pdf,image/jpeg,image/png,image/webp'])->validate();
         if (MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member)->where('document_type_id', $type)->where('active', true)->where('sha256', hash('sha256', $file->get()))->exists()) {
-            throw ValidationException::withMessages(['file' => 'Dieses Dokument ist bereits vorhanden.']);
+            throw ValidationException::withMessages(['file' => __('Dieses Dokument ist bereits vorhanden.')]);
         }
         $uploads = app(DocumentUploadService::class);
         $id = $uploads->stage($actor, $tenant, 'member', $member, ['type' => $type, 'portal_visible' => $portalVisible], $file);
@@ -58,7 +58,7 @@ class MemberDocumentMaintenanceService
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($member);
             $document = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member)->lockForUpdate()->findOrFail($id);
             if ($document->revision !== $revision) {
-                throw ValidationException::withMessages(['revision' => 'Dokument wurde inzwischen geändert. Bitte neu öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Dokument wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             if ((bool) $document->active !== $active) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'documents', $active ? 'restore' : 'deactivate');
@@ -85,13 +85,14 @@ class MemberDocumentMaintenanceService
 
     private function notify(Tenant $tenant, MemberDocument $document): void
     {
-        $message = app(MessageTemplateService::class)->render($tenant, 'member.document.available', 'push', ['verein' => $tenant->name]);
-        if (! $message) {
-            return;
-        }
         $db = DB::connection('clubunio');
         $accounts = Account::where('active', true)->whereIn('id', $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $document->member_id)->where('state', 'approved')->select('account_id'))->get();
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, 'member.document.available', 'push', ['verein' => $tenant->name], $accounts->modelKeys());
         foreach ($accounts as $account) {
+            $message = $messages[$account->id];
+            if (! $message) {
+                continue;
+            }
             if (app(MemberAccessService::class)->canEnter($account, $tenant) && app(MemberAccessService::class)->represented($account, $tenant)->whereKey($document->member_id)->exists()) {
                 $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->id,
                     'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'member_document', 'object_id' => $document->id]);

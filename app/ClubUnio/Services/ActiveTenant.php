@@ -30,7 +30,7 @@ class ActiveTenant
         if ($bound = app(TenantDomainService::class)->current()) {
             abort_unless($actor->fresh()?->canAccessTenant($bound), 403);
             if ($context && ((int) $context['tenant'] !== (int) $bound->id || ($context['host'] ?? null) !== $request->getHost())) {
-                abort_unless($request->isMethodSafe(), 419, 'Der Verein oder die Domain wurde gewechselt. Bitte neu laden.');
+                abort_unless($request->isMethodSafe(), 419, __('Der Verein oder die Domain wurde gewechselt. Bitte neu laden.'));
                 $context = null;
             }
             if (! $context) {
@@ -40,7 +40,7 @@ class ActiveTenant
             return $bound;
         }
         if (isset($context['host'])) {
-            abort_unless($request->isMethodSafe(), 419, 'Die Domain wurde gewechselt. Bitte neu laden.');
+            abort_unless($request->isMethodSafe(), 419, __('Die Domain wurde gewechselt. Bitte neu laden.'));
             $tenant = Tenant::findOrFail($context['tenant']);
             $this->select($request, $tenant);
             $context = $request->session()->get($this->key($request));
@@ -72,7 +72,7 @@ class ActiveTenant
     public function assertSnapshot(Request $request, array $context): void
     {
         $current = $request->session()->get($this->key($request));
-        abort_unless($current && $context === $current, 419, 'Der Verein wurde gewechselt. Bitte die Seite neu laden.');
+        abort_unless($current && $context === $current, 419, __('Der Verein wurde gewechselt. Bitte die Seite neu laden.'));
         $this->resolve($request);
     }
 }

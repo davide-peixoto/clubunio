@@ -8,7 +8,7 @@ function mount(root) {
     const canvas = element('pdf'), status = element('status'), input = element('page');
     canvas.hidden = true;
     status.hidden = false;
-    status.textContent = 'Dokument wird geladen…';
+    status.textContent = root.dataset.loadingText;
     input.value = 1;
     input.disabled = true;
     element('previous').disabled = element('next').disabled = true;
@@ -61,7 +61,7 @@ function mount(root) {
             if (!disposed) {
                 canvas.hidden = true;
                 status.hidden = false;
-                status.textContent = 'Dokument konnte nicht angezeigt werden. Bitte erneut öffnen oder herunterladen.';
+                status.textContent = root.dataset.renderErrorText;
             }
         } finally { task = null; running = false; }
     }
@@ -149,7 +149,7 @@ function mount(root) {
             element('pages').textContent = `/ ${pdf.numPages}`;
             await render();
         } catch {
-            if (!disposed) status.textContent = 'Dokument ist derzeit nicht verfügbar. Bitte erneut öffnen oder herunterladen.';
+            if (!disposed) status.textContent = root.dataset.unavailableText;
         }
     })();
 }

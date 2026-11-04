@@ -100,14 +100,14 @@ class CatalogService
             }
             $data = Validator::make($input, $rules)->validate();
             if ($model === InvoiceLineStatus::class && $id && ! $data['active'] && InvoiceStatus::where('tenant_id', $tenant->id)->where('active', true)->where('position_code', $record->code)->exists()) {
-                throw ValidationException::withMessages(['active' => 'Dieser Positionsstatus wird noch von einer aktiven Bexio-Zuordnung verwendet.']);
+                throw ValidationException::withMessages(['active' => __('Dieser Positionsstatus wird noch von einer aktiven Bexio-Zuordnung verwendet.')]);
             }
             $data = array_diff_key($data, array_flip(['tenant_id', 'legacy_id']));
             if ($id) {
                 $data = array_diff_key($data, array_flip(['code', 'iso3', 'email_field']));
             }
             if ($model === MemberStatus::class && ($data['ends_membership'] ?? $record->ends_membership) && ($data['restores_membership'] ?? $record->restores_membership)) {
-                throw ValidationException::withMessages(['restores_membership' => 'Austritt und Wiedereintritt dürfen nicht gleichzeitig aktiv sein.']);
+                throw ValidationException::withMessages(['restores_membership' => __('Austritt und Wiedereintritt dürfen nicht gleichzeitig aktiv sein.')]);
             }
             $before = $record->exists ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id])->save();

@@ -44,7 +44,7 @@ class PublicWebController
         }
         $choices = [];
         foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-            $choices[$field] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->pluck('name', 'id');
+            $choices[$field] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id');
         }
 
         return response()->view('clubunio.public.registration', compact('tenant', 'form', 'choices'))->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
@@ -59,7 +59,7 @@ class PublicWebController
         $request->validate(['consent' => 'accepted', 'website' => 'prohibited', 'portrait' => 'nullable|file|max:5120|mimetypes:image/jpeg,image/png,image/webp',
             'identity' => 'nullable|array|max:3', 'identity.*' => 'file|max:10240|mimetypes:application/pdf,image/jpeg,image/png,image/webp']);
         if ($form['at'] > time() - 3) {
-            throw ValidationException::withMessages(['first_name' => 'Bitte Eingaben prüfen und erneut absenden.']);
+            throw ValidationException::withMessages(['first_name' => __('Bitte Eingaben prüfen und erneut absenden.')]);
         }
         $allowed = [...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS, '_token', 'request_id', 'consent', 'website', 'portrait', 'identity'];
         abort_if(array_diff(array_keys($request->all()), $allowed), 422);
@@ -84,7 +84,7 @@ class PublicWebController
             $reference = (string) Str::uuid();
             Log::error('clubunio.public_registration.failed', ['tenant_id' => $tenant->id, 'reference' => $reference,
                 'exception_class' => $error::class, 'code' => (string) $error->getCode(), 'origin' => basename($error->getFile()).':'.$error->getLine()]);
-            throw ValidationException::withMessages(['first_name' => 'Anmeldung nicht gespeichert. Bitte erneut versuchen. Referenz: '.$reference]);
+            throw ValidationException::withMessages(['first_name' => __('Anmeldung nicht gespeichert. Bitte erneut versuchen. Referenz: :reference', ['reference' => $reference])]);
         }
 
         // The application and all encrypted files are committed before any external upload.

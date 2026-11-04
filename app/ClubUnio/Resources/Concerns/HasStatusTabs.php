@@ -17,9 +17,9 @@ trait HasStatusTabs
         $query = $model::where('tenant_id', $tenant->id);
         $counts = (clone $query)->selectRaw('status_id, count(*) as total')->groupBy('status_id')->pluck('total', 'status_id');
         $statusModel = (new $model)->status()->getRelated();
-        $tabs = ['all' => Tab::make('Alle ('.$counts->sum().')')];
+        $tabs = ['all' => Tab::make(__('Alle (:count)', ['count' => $counts->sum()]))];
         foreach ($statusModel->newQuery()->where('tenant_id', $tenant->id)->orderBy('sort_order')->get() as $status) {
-            $tabs['status_'.$status->id] = Tab::make($status->name.' ('.($counts[$status->id] ?? 0).')')
+            $tabs['status_'.$status->id] = Tab::make(app(\App\ClubUnio\Services\LookupTranslations::class)->label($status->getTable(), $status).' ('.($counts[$status->id] ?? 0).')')
                 ->badgeColor(StatusAppearance::palette($status->name))
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status_id', $status->id));
         }

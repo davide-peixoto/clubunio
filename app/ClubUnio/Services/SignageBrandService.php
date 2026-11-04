@@ -60,7 +60,7 @@ class SignageBrandService
         $data = Validator::make($input, ['color' => ['required', 'regex:/^#[a-f0-9]{6}$/iD'],
             'logo' => 'required|string|max:2048', 'title' => 'required|string|max:100'])->validate();
         if (! $this->safeLogo($data['logo'])) {
-            throw ValidationException::withMessages(['logo' => 'Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Vereinslogo verwenden.']);
+            throw ValidationException::withMessages(['logo' => __('Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Vereinslogo verwenden.')]);
         }
 
         return $data;
@@ -73,13 +73,13 @@ class SignageBrandService
             'title' => 'required|string|max:100', 'version' => 'required|string|size:64',
             'period_id' => 'prohibited'])->validate();
         if (! $this->safeLogo($data['logo'])) {
-            throw ValidationException::withMessages(['logo' => 'Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Bild unter /images bzw. /brand verwenden.']);
+            throw ValidationException::withMessages(['logo' => __('Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Bild unter /images bzw. /brand verwenden.')]);
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
             if (! hash_equals($this->version($tenant), $data['version'])) {
-                throw ValidationException::withMessages(['title' => 'Vereinsdesign wurde inzwischen geändert. Bitte neu öffnen.']);
+                throw ValidationException::withMessages(['title' => __('Vereinsdesign wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             foreach (self::KEYS as $field => $key) {
                 $row = Setting::where('tenant_id', $tenant->id)->where('area', 'signage')->where('key', $key)->first() ?? new Setting;

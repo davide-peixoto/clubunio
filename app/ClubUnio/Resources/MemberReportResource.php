@@ -33,7 +33,7 @@ class MemberReportResource extends MemberResource
     public static function table(Table $table): Table
     {
         return parent::table($table)->headerActions([ReportExportService::action('member_reports')])->recordActions([
-            ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')
+            ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))
                 ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record])),
         ]);
     }

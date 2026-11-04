@@ -23,7 +23,7 @@ class BindTenantDomain
         $routeTenant = $request->route()?->parameter('tenant');
         abort_if($routeTenant instanceof Tenant && ! $routeTenant->is($tenant), 404);
         abort_if(is_string($routeTenant) && $routeTenant !== $tenant->slug, 404);
-        abort_unless(! config('session.domain'), 503, 'Vereinsdomains benötigen hostgebundene Sitzungscookies.');
+        abort_unless(! config('session.domain'), 503, __('Vereinsdomains benötigen hostgebundene Sitzungscookies.'));
         $actor = $request->hasSession() ? $request->user($request->is('portal/*') ? 'portal' : 'clubunio') : null;
         if ($actor) {
             abort_unless($request->is('portal/*')

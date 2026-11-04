@@ -36,46 +36,46 @@ class AccountAdministrationService
                 'password' => $id ? 'nullable|string|min:12|max:72|confirmed' : 'required|string|min:12|max:72|confirmed',
                 'password_confirmation' => 'nullable|string|max:72'];
             if (array_diff(array_keys($input), array_keys($rules))) {
-                throw ValidationException::withMessages(['role' => 'Unerlaubte Felder.']);
+                throw ValidationException::withMessages(['role' => __('Unerlaubte Felder.')]);
             }
             $data = Validator::make($input, $rules)->validate();
             if (isset($data['password']) && strlen($data['password']) > 72) {
-                throw ValidationException::withMessages(['password' => 'Das Passwort darf höchstens 72 UTF-8-Bytes enthalten.']);
+                throw ValidationException::withMessages(['password' => __('Das Passwort darf höchstens 72 UTF-8-Bytes enthalten.')]);
             }
             $link = $id ? TenantAccount::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new TenantAccount;
             $profileId = $data['access_profile_id'] ?? ($data['role'] === 'profile' ? $link->access_profile_id : null);
             if ($data['role'] === 'profile') {
                 if (! $profileId || $data['portal_enabled'] || ! AccessProfile::where('tenant_id', $tenant->id)
                     ->whereKey($profileId)->where('active', true)->lockForUpdate()->exists()) {
-                    throw ValidationException::withMessages(['access_profile_id' => 'Ein aktives Profil dieses Vereins ist erforderlich. Der Portalzugang muss deaktiviert sein.']);
+                    throw ValidationException::withMessages(['access_profile_id' => __('Ein aktives Profil dieses Vereins ist erforderlich. Der Portalzugang muss deaktiviert sein.')]);
                 }
             } elseif ($profileId !== null) {
-                throw ValidationException::withMessages(['access_profile_id' => 'Ein Profil darf nur der Systemrolle Berechtigungsprofil zugeordnet werden.']);
+                throw ValidationException::withMessages(['access_profile_id' => __('Ein Profil darf nur der Systemrolle Berechtigungsprofil zugeordnet werden.')]);
             }
             $account = $id ? Account::lockForUpdate()->findOrFail($link->account_id) : new Account;
             if ($id && ((int) $link->revision !== (int) $data['revision'] || (int) $account->revision !== (int) $data['account_revision'])) {
-                throw ValidationException::withMessages(['role' => 'Benutzer wurde inzwischen geändert. Bitte neu öffnen.']);
+                throw ValidationException::withMessages(['role' => __('Benutzer wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             $passwordChanged = ! empty($data['password']);
             if ($id && DB::connection('clubunio')->table('clubora.platform_admins')->where('account_id', $account->id)->exists()
                 && ! app(PlatformAdministrationService::class)->allowed($actor)
                 && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
-                throw ValidationException::withMessages(['password' => 'Globale Plattformkonten dürfen nicht durch Vereinsadministratoren geändert werden.']);
+                throw ValidationException::withMessages(['password' => __('Globale Plattformkonten dürfen nicht durch Vereinsadministratoren geändert werden.')]);
             }
             if ($id && $account->tenants()->where('clubora.tenants.id', '<>', $tenant->id)->exists()
                 && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
-                throw ValidationException::withMessages(['active' => 'Vereinsübergreifendes Konto: globale Kontodaten nur nach gesonderter Prüfung ändern.']);
+                throw ValidationException::withMessages(['active' => __('Vereinsübergreifendes Konto: globale Kontodaten nur nach gesonderter Prüfung ändern.')]);
             }
             if ($id && $link->role === 'admin' && $account->active && ($data['role'] !== 'admin' || ! $data['active'])) {
                 $other = TenantAccount::where('tenant_id', $tenant->id)->where('role', 'admin')->whereKeyNot($id)->whereHas('account', fn ($q) => $q->where('active', true))->exists();
                 if (! $other) {
-                    throw ValidationException::withMessages(['role' => 'Der letzte aktive Administrator muss erhalten bleiben.']);
+                    throw ValidationException::withMessages(['role' => __('Der letzte aktive Administrator muss erhalten bleiben.')]);
                 }
             }
             if (! $id) {
                 $name = mb_strtolower(trim($data['username']));
                 if (Account::whereRaw('lower(username) = ?', [$name])->exists()) {
-                    throw ValidationException::withMessages(['username' => 'Dieser Benutzername ist nicht verfügbar.']);
+                    throw ValidationException::withMessages(['username' => __('Dieser Benutzername ist nicht verfügbar.')]);
                 }
                 $account->forceFill(['username' => $name]);
             }

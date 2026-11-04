@@ -47,7 +47,7 @@ final class MobileModuleSettings
             ])->validate();
             $link = \App\ClubUnio\Models\TenantAccount::where('tenant_id',$tenant->id)->lockForUpdate()->findOrFail($membershipId);
             if ((int) $link->revision !== (int) $data['revision']) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['mobile_profile_id'=>'Benutzer wurde inzwischen geändert. Bitte neu öffnen.']);
+                throw \Illuminate\Validation\ValidationException::withMessages(['mobile_profile_id'=>__('Benutzer wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             $before = ['mobile_profile_id'=>$link->mobile_profile_id,'revision'=>$link->revision];
             $link->forceFill(['mobile_profile_id'=>$data['mobile_profile_id'] ?? null,'revision'=>$link->revision+1])->save();

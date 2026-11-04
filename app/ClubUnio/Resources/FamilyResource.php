@@ -53,7 +53,7 @@ class FamilyResource extends CatalogResource
 
     public static function editAction(): EditAction
     {
-        return EditAction::make()->slideOver()->iconButton()->tooltip('Bearbeiten')
+        return EditAction::make()->slideOver()->iconButton()->tooltip(__('Bearbeiten'))
             ->mutateRecordDataUsing(fn (array $data, CatalogModel $record) => array_merge($data, ['_version' => FamilyService::version($record)]))
             ->using(fn (CatalogModel $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(FamilyService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data)));
     }

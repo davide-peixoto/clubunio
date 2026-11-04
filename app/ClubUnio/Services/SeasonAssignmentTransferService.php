@@ -22,13 +22,13 @@ final class SeasonAssignmentTransferService
         Season::where('tenant_id', $tenant->id)->findOrFail($source);
         Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($target);
         if ($source === $target) {
-            throw ValidationException::withMessages(['target_season_id' => 'Bitte eine andere Zielsaison wählen.']);
+            throw ValidationException::withMessages(['target_season_id' => __('Bitte eine andere Zielsaison wählen.')]);
         }
         $sources = TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->with('team')->orderBy('id')->get();
         if ($teamSeasonIds !== null) {
             $teamSeasonIds = array_values(array_unique(array_map('intval', $teamSeasonIds)));
             if (! $teamSeasonIds || array_diff($teamSeasonIds, $sources->pluck('id')->all())) {
-                throw ValidationException::withMessages(['team_season_ids' => 'Bitte gültige Mannschaften dieser Quellsaison auswählen.']);
+                throw ValidationException::withMessages(['team_season_ids' => __('Bitte gültige Mannschaften dieser Quellsaison auswählen.')]);
             }
             $sources = $sources->whereIn('id', $teamSeasonIds)->values();
         }
@@ -85,7 +85,7 @@ final class SeasonAssignmentTransferService
             }
         }
         if (count($rows) > 1000) {
-            throw ValidationException::withMessages(['target_season_id' => 'Maximal 1000 Zuordnungen pro Saisonübernahme.']);
+            throw ValidationException::withMessages(['target_season_id' => __('Maximal 1000 Zuordnungen pro Saisonübernahme.')]);
         }
 
         return ['rows' => $rows, 'token' => hash_hmac('sha256', json_encode([$fingerprint, $rows], JSON_THROW_ON_ERROR), config('app.key'))];
@@ -102,10 +102,10 @@ final class SeasonAssignmentTransferService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'seasons', 'transfer');
             $plan = $this->preview($actor, $tenant, $source, $target, $teamSeasonIds);
             if (! hash_equals($plan['token'], $token)) {
-                throw ValidationException::withMessages(['target_season_id' => 'Die Daten haben sich geändert. Bitte Vorschau erneut erstellen.']);
+                throw ValidationException::withMessages(['target_season_id' => __('Die Daten haben sich geändert. Bitte Vorschau erneut erstellen.')]);
             }
             if (collect($plan['rows'])->contains('state', 'blockiert')) {
-                throw ValidationException::withMessages(['target_season_id' => 'Blockierte Zuordnungen zuerst bereinigen. Es wurde nichts übernommen.']);
+                throw ValidationException::withMessages(['target_season_id' => __('Blockierte Zuordnungen zuerst bereinigen. Es wurde nichts übernommen.')]);
             }
             $teams = TeamSeason::where('tenant_id', $tenant->id)->where('season_id', $target)->where('active', true)->pluck('id', 'team_id')->all();
             $count = 0;

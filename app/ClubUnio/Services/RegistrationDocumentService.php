@@ -40,7 +40,7 @@ class RegistrationDocumentService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
-                throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Anmeldung geändert oder bereits abgeschlossen. Bitte erneut öffnen.')]);
             }
 
             $metadata = compact('kind');
@@ -86,7 +86,7 @@ class RegistrationDocumentService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'deactivate');
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
-                throw ValidationException::withMessages(['revision' => 'Anmeldung geändert oder bereits abgeschlossen.']);
+                throw ValidationException::withMessages(['revision' => __('Anmeldung geändert oder bereits abgeschlossen.')]);
             }
             $changed = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)
                 ->where('id', $document)->where('active', true)->update(['active' => false]);

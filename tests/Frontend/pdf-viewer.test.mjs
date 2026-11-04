@@ -3,10 +3,20 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { SourceTextModule, SyntheticModule, createContext } from 'node:vm';
 
+const catalog = JSON.parse(await readFile(new URL('../../lang/parts/views.en.json', import.meta.url), 'utf8'));
+function messages(locale) {
+    const translate = key => locale === 'en' ? catalog[key] : key;
+    return {
+        loadingText: translate('Dokument wird geladen…'),
+        renderErrorText: translate('Dokument konnte nicht angezeigt werden. Bitte erneut öffnen oder herunterladen.'),
+        unavailableText: translate('Dokument ist derzeit nicht verfügbar. Bitte erneut öffnen oder herunterladen.'),
+    };
+}
+
 test('inline PDF lifecycle uses one read, isolates roots and disposes hidden viewers', async () => {
     const roots = [], requests = [], destroyed = [];
     let changed;
-    function root(url) {
+    function root(url, locale = 'de') {
         const controls = new Map();
         for (const name of ['pdf', 'status', 'page', 'pages', 'zoom', 'document', 'previous', 'next', 'zoom-in', 'zoom-out', 'fit-width', 'fit-height', 'custom-zoom']) {
             const control = new EventTarget();
@@ -14,7 +24,7 @@ test('inline PDF lifecycle uses one read, isolates roots and disposes hidden vie
                 setAttribute() {}, getContext: () => ({}) });
             controls.set(name, control);
         }
-        const result = { dataset: { pdfUrl: url }, isConnected: true, visible: true, controls,
+        const result = { dataset: { pdfUrl: url, ...messages(locale) }, isConnected: true, visible: true, controls,
             getClientRects() { return this.visible ? [{}] : []; },
             querySelector(selector) { return controls.get(selector.match(/"([^"]+)"/)[1]); } };
         roots.push(result);
@@ -33,8 +43,8 @@ test('inline PDF lifecycle uses one read, isolates roots and disposes hidden vie
         this.setExport('getDocument', options => {
             requests.push(options);
             const page = { getViewport: ({ scale }) => ({ width: 600 * scale, height: 800 * scale }),
-                render: () => ({ promise: Promise.resolve(), cancel() {} }) };
-            return { promise: Promise.resolve({ numPages: 2, getPage: async () => page }),
+                render: () => ({ promise: options.url.includes('render-error') ? Promise.reject(new Error('internal rendering error')) : Promise.resolve(), cancel() {} }) };
+            return { promise: options.url.includes('load-error') ? Promise.reject(new Error('internal load error')) : Promise.resolve({ numPages: 2, getPage: async () => page }),
                 destroy() { destroyed.push(options.url); return Promise.resolve(); } };
         });
     }, { context });
@@ -95,6 +105,20 @@ test('inline PDF lifecycle uses one read, isolates roots and disposes hidden vie
     for (const item of roots) item.isConnected = false;
     changed();
     assert.equal(destroyed.length, 4);
+    for (const locale of ['de', 'en']) {
+        const loading = root('https://app.invalid/load-error', locale);
+        changed();
+        assert.equal(loading.controls.get('status').textContent, messages(locale).loadingText);
+        await settle();
+        assert.equal(loading.controls.get('status').textContent, messages(locale).unavailableText);
+        const broken = root('https://app.invalid/render-error', locale);
+        changed();
+        await settle();
+        assert.equal(broken.controls.get('status').textContent, messages(locale).renderErrorText);
+        assert.equal(broken.controls.get('status').hidden, false);
+        loading.isConnected = broken.isConnected = false;
+        changed();
+    }
 });
 
 test('image preview fits either dimension, zooms without rereading and releases its source', async () => {
@@ -108,7 +132,7 @@ test('image preview fits either dimension, zooms without rereading and releases 
             setAttribute() {}, getContext: () => context2d });
         controls.set(name, control);
     }
-    const root = { dataset: { pdfUrl: '/documents/members/1/open', mediaType: 'image' }, isConnected: true, visible: true,
+    const root = { dataset: { pdfUrl: '/documents/members/1/open', mediaType: 'image', ...messages('en') }, isConnected: true, visible: true,
         getClientRects() { return this.visible ? [{}] : []; }, querySelector: selector => controls.get(selector.match(/"([^"]+)"/)[1]) };
     const context = createContext({ document: { documentElement: {}, querySelectorAll: () => [root], addEventListener() {} },
         location: { href: 'https://app.invalid/members/1', origin: 'https://app.invalid' }, window: { devicePixelRatio: 2 },

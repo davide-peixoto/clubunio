@@ -19,7 +19,7 @@ class BillingRecipientResource extends CatalogResource
     public static function form(Schema $schema): Schema
     {
         return parent::form($schema)->components(array_merge(parent::form($schema)->getComponents(), [
-            Select::make('email_field')->label('Adressquelle')->options(['email' => 'Mitglied', 'mother_email' => 'Mutter', 'father_email' => 'Vater'])->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null),
+            Select::make('email_field')->label('Adressquelle')->options(['email' => __('Mitglied'), 'mother_email' => __('Mutter'), 'father_email' => __('Vater')])->required()->disabled(fn ($record) => $record !== null)->dehydrated(fn ($record) => $record === null),
         ]));
     }
 

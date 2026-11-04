@@ -23,7 +23,7 @@ class FinancialAdjustmentActions
                 'lines' => app(CreditNoteService::class)->availableLines(Filament::auth()->user(), Filament::getTenant(), $invoiceId())])
             ->schema([Hidden::make('request_id')->required(), TextInput::make('revision')->label('Rechnungsversion')->readOnly()->required(),
                 Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000),
-                Repeater::make('lines')->label('Gutschriftspositionen')->addActionLabel('Position hinzufügen')->minItems(1)->maxItems(100)->defaultItems(1)->reorderable(false)->schema([
+                Repeater::make('lines')->label('Gutschriftspositionen')->addActionLabel(__('Position hinzufügen'))->minItems(1)->maxItems(100)->defaultItems(1)->reorderable(false)->schema([
                     Select::make('invoice_line_id')->label('Rechnungsposition')->required()->searchable()->options(fn () => Invoice::where('tenant_id', Filament::getTenant()->id)->findOrFail($invoiceId())->activeLines()->pluck('description', 'id')),
                     TextInput::make('amount')->label('Gutschrift CHF')->numeric()->required()->minValue(0.01)->maxValue(999999999.99)])])
             ->action(function (array $data, $livewire) use ($invoiceId) {

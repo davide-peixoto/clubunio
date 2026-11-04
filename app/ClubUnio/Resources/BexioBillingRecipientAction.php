@@ -20,7 +20,7 @@ class BexioBillingRecipientAction
             ->visible(fn (Member $record) => ProfileUi::allows('bexio', 'update')
                 && $record->archived_at === null && (int) $record->tenant_id === (int) Filament::getTenant()?->id
                 && (Filament::auth()->user()?->can('view', $record) ?? false))
-            ->modalHeading('Bexio-Rechnungsempfänger zuordnen')
+            ->modalHeading(__('Bexio-Rechnungsempfänger zuordnen'))
             ->schema([
                 Hidden::make('version'),
                 TextInput::make('recipient')->label('Rechnung an')->readOnly()->dehydrated(false),
@@ -49,7 +49,7 @@ class BexioBillingRecipientAction
             })
             ->action(function (Member $record, array $data, $livewire) {
                 FormMutation::run($livewire, fn () => app(BexioBillingRecipientService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data));
-                Notification::make()->title('Rechnungsempfänger-Zuordnung gespeichert')->success()->send();
+                Notification::make()->title(__('Rechnungsempfänger-Zuordnung gespeichert'))->success()->send();
             });
     }
 }

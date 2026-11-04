@@ -44,9 +44,9 @@ class LegacyMaterialReceiptResource extends CatalogResource
             TextColumn::make('signed_at')->label('Historischer Zeitpunkt')->dateTime('d.m.Y H:i'),
             TextColumn::make('source_id')->label('Alte Quittungs-ID'),
         ])->recordActions([
-            Action::make('signedPdf')->label('Nachweis')->icon('heroicon-o-document-check')->iconButton()->tooltip('Historischen Nachweis öffnen')
+            Action::make('signedPdf')->label('Nachweis')->icon('heroicon-o-document-check')->iconButton()->tooltip(__('Historischen Nachweis öffnen'))
                 ->url(fn ($record) => route('clubunio.material.history.pdf', [Filament::getTenant()->slug, $record->id]))->openUrlInNewTab(),
-            Action::make('originalPdf')->label('Original')->icon('heroicon-o-document-text')->iconButton()->tooltip('Unsigniertes Original öffnen')
+            Action::make('originalPdf')->label('Original')->icon('heroicon-o-document-text')->iconButton()->tooltip(__('Unsigniertes Original öffnen'))
                 ->url(fn ($record) => route('clubunio.material.history.pdf', [Filament::getTenant()->slug, $record->id, 'original' => 1]))->openUrlInNewTab(),
         ])->defaultSort('id', 'desc')->persistSearchInSession();
     }

@@ -57,11 +57,11 @@ class MemberChangeService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $member = $this->requestable($actor, $tenant, $id, true, $teamId);
             if (array_diff(array_keys($input), [...array_diff(array_keys(self::FIELDS), $teamId !== null ? ['billing_recipient_id'] : []), '_version'])) {
-                throw ValidationException::withMessages(['member' => 'Nicht erlaubtes Änderungsfeld.']);
+                throw ValidationException::withMessages(['member' => __('Nicht erlaubtes Änderungsfeld.')]);
             }
             Validator::make($input, ['_version' => 'required|string|size:64'])->validate();
             if (! hash_equals(MemberService::version($member), $input['_version'])) {
-                throw ValidationException::withMessages(['member' => 'Mitglied wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['member' => __('Mitglied wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             $before = $this->values($member);
             $data = array_replace($before, array_intersect_key($input, self::FIELDS));
@@ -96,7 +96,7 @@ class MemberChangeService
             if ($data['billing_recipient_id'] ?? null) {
                 $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
                 if (empty($data[$emailField])) {
-                    throw ValidationException::withMessages([$emailField => 'E-Mail-Adresse für den Rechnungsempfänger erforderlich.']);
+                    throw ValidationException::withMessages([$emailField => __('E-Mail-Adresse für den Rechnungsempfänger erforderlich.')]);
                 }
             }
             $changes = [];
@@ -106,7 +106,7 @@ class MemberChangeService
                 }
             }
             if (! $changes || MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $id)->where('state', 'pending')->exists()) {
-                throw ValidationException::withMessages(['member' => $changes ? 'Für dieses Mitglied ist bereits ein Antrag in Prüfung.' : 'Keine Änderungen vorhanden.']);
+                throw ValidationException::withMessages(['member' => $changes ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
             }
             $request = new MemberChangeRequest;
             $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor->id,
@@ -135,10 +135,10 @@ class MemberChangeService
                 try {
                     $member = $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
                 } catch (ModelNotFoundException|\Illuminate\Database\RecordNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
-                    throw ValidationException::withMessages(['revision' => 'Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.']);
+                    throw ValidationException::withMessages(['revision' => __('Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.')]);
                 }
                 if (! hash_equals($r->member_version, MemberService::version($member))) {
-                    throw ValidationException::withMessages(['revision' => 'Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.']);
+                    throw ValidationException::withMessages(['revision' => __('Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.')]);
                 }
                 app(MemberService::class)->update($actor, $tenant, $member->id, $this->snapshot($r)['changes'] + ['_version' => $r->member_version]);
             }
@@ -189,7 +189,7 @@ class MemberChangeService
     private function pending(MemberChangeRequest $r, int $revision): void
     {
         if ($r->state !== 'pending' || $r->revision !== $revision) {
-            throw ValidationException::withMessages(['revision' => 'Antrag wurde inzwischen bearbeitet. Bitte neu öffnen.']);
+            throw ValidationException::withMessages(['revision' => __('Antrag wurde inzwischen bearbeitet. Bitte neu öffnen.')]);
         }
     }
 
@@ -210,9 +210,9 @@ class MemberChangeService
         $db = DB::connection('clubunio');
         $accounts = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
         $office ? $accounts->whereIn('ta.role', ['admin', 'office']) : $accounts->where('a.id', $r->requested_by);
-        $message = app(MessageTemplateService::class)->render($tenant, $event, 'push', ['verein' => $tenant->name]);
-        if ($message) {
-            foreach ($accounts->pluck('a.id') as $account) {
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $event, 'push', ['verein' => $tenant->name], $accounts->pluck('a.id')->all());
+        foreach ($messages as $account => $message) {
+            if ($message) {
                 $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                     'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'member_change_request', 'object_id' => $r->id]);
             }

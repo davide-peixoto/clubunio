@@ -8,7 +8,7 @@ class BexioInvoiceCashService
 {
     public function fromPayments(array $payments, string $remoteId, array $balance): array
     {
-        abort_unless(array_is_list($payments) && count($payments) < 500, 409, 'Zahlungsliste ist nicht vollständig.');
+        abort_unless(array_is_list($payments) && count($payments) < 500, 409, __('Zahlungsliste ist nicht vollständig.'));
         $seen = [];
         $cash = 0;
         foreach ($payments as $payment) {
@@ -53,7 +53,7 @@ class BexioInvoiceCashService
             $amount = app(BexioBalanceService::class)->cents($payment['value'] ?? null);
             abort_unless($amount > 0, 409);
             if (isset($allocations[$voucher])) {
-                abort_unless($allocations[$voucher]['reference'] === $reference, 409, 'Widersprüchliche Gutschriftsnummer.');
+                abort_unless($allocations[$voucher]['reference'] === $reference, 409, __('Widersprüchliche Gutschriftsnummer.'));
                 $allocations[$voucher]['amount_cents'] += $amount;
                 $allocations[$voucher]['payment_ids'][] = (string) $payment['id'];
             } else {
@@ -61,7 +61,7 @@ class BexioInvoiceCashService
             }
             $total += $amount;
         }
-        abort_unless($total === $balance['credit_cents'], 409, 'Gutschriftsliste und Rechnungssaldo stimmen nicht überein.');
+        abort_unless($total === $balance['credit_cents'], 409, __('Gutschriftsliste und Rechnungssaldo stimmen nicht überein.'));
 
         return ['cash' => $cash, 'credit_allocations' => array_values($allocations)];
     }

@@ -41,7 +41,7 @@ class RegistrationFields
         $fields[] = DatePicker::make('birth_date')->label('Geburtsdatum')->required()->maxDate(now());
         foreach (['country_id' => ['Land', Country::class], 'nationality_id' => ['Nationalität', Country::class],
             'gender_id' => ['Geschlecht', Gender::class], 'billing_recipient_id' => ['Rechnung an', BillingRecipient::class]] as $field => [$label, $model]) {
-            $fields[] = Select::make($field)->label($label)->searchable()->required()->options(fn () => $model::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->pluck('name', 'id'));
+            $fields[] = Select::make($field)->label($label)->searchable()->required()->options(fn () => $model::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id'));
         }
         $fields[] = Textarea::make('notes')->label('Bemerkung')->maxLength(10000)->columnSpanFull();
 
@@ -51,7 +51,7 @@ class RegistrationFields
     public static function acceptance(): array
     {
         return [
-            MemberResource::memberSelect('member_id')->label('Bestehendes Mitglied')->placeholder('Neues Mitglied')->live()
+            MemberResource::memberSelect('member_id')->label('Bestehendes Mitglied')->placeholder(__('Neues Mitglied'))->live()
                 ->afterStateUpdated(function ($state, Set $set) {
                     $member = Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')->find($state);
                     $set('member_version', $member ? MemberService::version($member) : null);
@@ -63,10 +63,10 @@ class RegistrationFields
             TextEntry::make('member_comparison')->label('Ausgewähltes Mitglied')->state(function (Get $get) {
                 $m = Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')->find($get('member_id'));
 
-                return $m ? implode(' · ', array_filter([$m->display_name, $m->birth_date?->format('d.m.Y'), trim($m->street.' '.$m->house_number), trim($m->postal_code.' '.$m->city), $m->status?->name])) : 'Neues Mitglied';
+                return $m ? implode(' · ', array_filter([$m->display_name, $m->birth_date?->format('d.m.Y'), trim($m->street.' '.$m->house_number), trim($m->postal_code.' '.$m->city), $m->status ? app(\App\ClubUnio\Services\LookupTranslations::class)->label($m->status->getTable(), $m->status) : null])) : __('Neues Mitglied');
             }),
-            Select::make('member_type_id')->label('Mitgliederart')->searchable()->options(fn () => MemberType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
-            Select::make('document_type_id')->label('Dokumententyp Ausweise')->searchable()->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
+            Select::make('member_type_id')->label('Mitgliederart')->searchable()->options(fn () => MemberType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
+            Select::make('document_type_id')->label('Dokumententyp Ausweise')->searchable()->options(fn () => DocumentType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
         ];
     }
 }

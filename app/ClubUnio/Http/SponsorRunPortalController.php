@@ -82,7 +82,7 @@ class SponsorRunPortalController
         $data = $request->validate(['action' => 'required|in:show,create,rotate,revoke', 'alias' => 'nullable|string|max:80', 'consent' => 'nullable|accepted']);
         $result = $service->share($this->actor($request), $tenant, $participant, $data['action'], $data);
 
-        return back()->with('sponsor_run_share', $result)->with('sponsor_run_message', $result['active'] ? 'Sponsorenlink bereit.' : 'Sponsorenlink nicht aktiv.');
+        return back()->with('sponsor_run_share', $result)->with('sponsor_run_message', $result['active'] ? __('Sponsorenlink bereit.') : __('Sponsorenlink nicht aktiv.'));
     }
 
     private function view(string $view, array $data)

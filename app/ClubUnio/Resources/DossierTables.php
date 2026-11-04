@@ -20,7 +20,7 @@ class DossierTables
         $filters = [TernaryFilter::make('active')->label('Aktiv')->default(true)];
         $actions = [];
         $columns = match ($kind) {
-            'trainingSlots' => [$text('period.name', 'Periode'), $text('weekday.name', 'Wochentag'), $text('starts_at', 'Von'), $text('ends_at', 'Bis'), $text('field.name', 'Spielfeld'), $text('room.name', 'Garderobe'), $text('side.name', 'Seite'), $text('hall', 'Halle')],
+            'trainingSlots' => [$text('period.name', 'Periode'), $text('weekday.name', 'Wochentag'), $text('starts_at', 'Von'), $text('ends_at', 'Bis'), $text('field.name', 'Spielfeld'), $text('room.name', 'Garderobe'), $text('side.name', 'Anlagenseite'), $text('hall', 'Halle')],
             'teamSeasons' => [$text('team.name', 'Mannschaft')->searchable(), $text('season.name', 'Saison')->sortable()],
             'bankAccounts' => [$text('bank.name', 'Bank')->searchable(), $text('bank.city', 'Ort'), $text('masked_iban', 'IBAN')],
             'notes' => [$text('body', 'Bemerkung')->searchable()],
@@ -37,14 +37,14 @@ class DossierTables
             'invoiceLines' => [$text('description', 'Bezeichnung')->searchable(), $money('gross_amount', 'Brutto'), $money('discount', 'Rabatt'), $money('net_amount', 'Endbetrag'), $text('tax_snapshot.code', 'Steuercode'), $text('status.name', 'Status')->badge(), $text('notes', 'Bemerkungen')],
             'expenseLines' => [$text('expenseType.name', 'Spesentyp'), $text('gameType.name', 'Spieltyp'), $text('opponent', 'Gegner')->searchable(), $money('amount', 'Betrag'), $money('suggested_amount', 'Vorschlag'),
                 IconColumn::make('suggestion_accepted')->label('Prüfstatus')->boolean()->trueIcon('heroicon-s-check-circle')->falseIcon('heroicon-s-exclamation-circle')->trueColor('success')->falseColor('warning')
-                    ->tooltip(fn ($record) => $record->suggestion_accepted === null ? 'Kein Prüfstatus vorhanden' : ($record->suggestion_accepted ? 'Vorschlagsbetrag übernommen' : 'Betrag vom Vorschlag abweichend')),
+                    ->tooltip(fn ($record) => $record->suggestion_accepted === null ? __('Kein Prüfstatus vorhanden') : ($record->suggestion_accepted ? __('Vorschlagsbetrag übernommen') : __('Betrag vom Vorschlag abweichend'))),
                 $text('filename', 'Beleg'), $text('notes', 'Bemerkungen')],
         };
         if ($kind === 'teamStaff') {
             $columns[] = $text('staffFunction.name', 'Funktion');
         }
         if (in_array($kind, ['teamPlayers', 'teamStaff', 'technicalLeads', 'invoices', 'expenses'], true)) {
-            $filters[] = SelectFilter::make('season')->label('Saison')->options(fn () => Models\Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id'))
+            $filters[] = SelectFilter::make('season')->label('Saison')->options(fn () => Models\Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->localizedPluck('name', 'id'))
                 ->query(fn ($query, array $data) => $query->when($data['value'] ?? null, fn ($q, $value) => in_array($kind, ['invoices', 'expenses'], true) ? $q->where('season_id', $value) : $q->whereHas('teamSeason', fn ($s) => $s->where('season_id', $value))));
         }
         $statusModel = match ($kind) {
@@ -52,14 +52,14 @@ class DossierTables
             'invoices' => Models\InvoiceStatus::class,'expenses' => Models\ExpenseStatus::class,'registrations' => Models\RegistrationStatus::class, default => null
         };
         if ($kind === 'teamSeasons') {
-            $actions[] = ViewAction::make()->iconButton()->tooltip('Mannschaft und Zuordnungen')->url(fn ($record) => TeamSeasonResource::getUrl('view', ['record' => $record]));
+            $actions[] = ViewAction::make()->iconButton()->tooltip(__('Mannschaft und Zuordnungen'))->url(fn ($record) => TeamSeasonResource::getUrl('view', ['record' => $record]));
         }
         if ($statusModel) {
-            $filters[] = SelectFilter::make('status_id')->label('Status')->options(fn () => $statusModel::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id'));
+            $filters[] = SelectFilter::make('status_id')->label('Status')->options(fn () => $statusModel::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id'));
         }
         if (in_array($kind, ['invoices', 'expenses'], true)) {
             $resource = $kind === 'invoices' ? InvoiceResource::class : ExpenseResource::class;
-            $actions[] = ViewAction::make()->iconButton()->tooltip('Details und Positionen')->url(fn ($record) => $resource::getUrl('view', ['record' => $record]));
+            $actions[] = ViewAction::make()->iconButton()->tooltip(__('Details und Positionen'))->url(fn ($record) => $resource::getUrl('view', ['record' => $record]));
         }
         $columns[] = IconColumn::make('active')->label('Aktiv')->boolean()->toggleable(isToggledHiddenByDefault: true);
 

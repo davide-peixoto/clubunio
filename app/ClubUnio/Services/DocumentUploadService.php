@@ -33,7 +33,7 @@ class DocumentUploadService
         $extension = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$mime] ?? null;
         abort_unless($extension && strlen($bytes) > 0 && strlen($bytes) <= AzureDocumentReader::MAX_BYTES, 422);
         if ($kind === 'registration' && ($metadata['kind'] ?? '') === 'portrait' && $mime === 'application/pdf') {
-            throw ValidationException::withMessages(['file' => 'Ein Passfoto muss ein Bild sein.']);
+            throw ValidationException::withMessages(['file' => __('Ein Passfoto muss ein Bild sein.')]);
         }
         $metadata['original_filename'] = mb_substr(preg_replace('/[\x00-\x1f\x7f]/', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))), 0, 255);
         $metadata['storage_fingerprint'] = $this->storageFingerprint();
@@ -50,7 +50,7 @@ class DocumentUploadService
             }
             $existing = $this->table()->where('tenant_id', $tenant->id)->where('deduplication_key', $key)->first(['id', 'state']);
             if ($existing) {
-                abort_if($existing->state === 'cancelled', 409, 'Dieser Upload wurde verworfen. Bitte Quelldaten neu prüfen.');
+                abort_if($existing->state === 'cancelled', 409, __('Dieser Upload wurde verworfen. Bitte Quelldaten neu prüfen.'));
 
                 return (int) $existing->id;
             }
@@ -59,17 +59,17 @@ class DocumentUploadService
                 $publishedCount = count(array_filter(array_map('trim', explode(',', $reference))));
                 $pendingCount = $this->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('object_id', $id)->where('state', 'pending')->count();
                 if ($publishedCount + $pendingCount >= 10) {
-                    throw ValidationException::withMessages(['file' => 'Maximal zehn Anhänge pro Position, inklusive offener Übertragungen.']);
+                    throw ValidationException::withMessages(['file' => __('Maximal zehn Anhänge pro Position, inklusive offener Übertragungen.')]);
                 }
             }
             if ($kind === 'registration' && $metadata['kind'] === 'portrait' && $this->table()->where('tenant_id', $tenant->id)
                 ->where('kind', $kind)->where('object_id', $id)->where('state', 'pending')
                 ->get(['encrypted_metadata'])->contains(fn ($u) => json_decode(Crypt::decryptString($u->encrypted_metadata), true)['kind'] === 'portrait')) {
-                throw ValidationException::withMessages(['file' => 'Ein Passfoto wartet bereits auf die Übertragung. Bitte Synchronisation prüfen.']);
+                throw ValidationException::withMessages(['file' => __('Ein Passfoto wartet bereits auf die Übertragung. Bitte Synchronisation prüfen.')]);
             }
             $held = $this->table()->where('tenant_id', $tenant->id)->whereNotNull('encrypted_bytes');
             if ((clone $held)->count() >= 100 || (int) (clone $held)->sum('byte_count') + strlen($bytes) > 100 * 1024 * 1024) {
-                throw ValidationException::withMessages(['file' => 'Der geschützte Upload-Zwischenspeicher ist voll. Bitte Synchronisation prüfen.']);
+                throw ValidationException::withMessages(['file' => __('Der geschützte Upload-Zwischenspeicher ist voll. Bitte Synchronisation prüfen.')]);
             }
             $namespace = ['member' => 'members', 'registration' => 'registrations', 'expense' => 'expenses'][$kind];
             $upload = $this->table()->insertGetId(['tenant_id' => $tenant->id, 'kind' => $kind, 'object_id' => $id,
@@ -93,11 +93,11 @@ class DocumentUploadService
                     ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('request_id', $publicRequest)->exists(), 403);
             }
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($id);
-            abort_if($r->status?->workflow_key === 'accepted', 409, 'Anmeldung ist bereits abgeschlossen.');
+            abort_if($r->status?->workflow_key === 'accepted', 409, __('Anmeldung ist bereits abgeschlossen.'));
             abort_unless(in_array($metadata['kind'] ?? '', ['portrait', 'identity'], true), 422);
             if ($metadata['kind'] === 'portrait' && DB::connection('clubunio')->table('clubora.registration_documents')
                 ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true)->where('kind', 'portrait')->exists()) {
-                throw ValidationException::withMessages(['file' => 'Vor dem Ersetzen das bestehende Passfoto entfernen.']);
+                throw ValidationException::withMessages(['file' => __('Vor dem Ersetzen das bestehende Passfoto entfernen.')]);
             }
         } elseif ($kind === 'member') {
             abort_unless($actor, 403);
@@ -112,7 +112,7 @@ class DocumentUploadService
             $line = ExpenseLine::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($id);
             $expense = app(ExpenseService::class)->visible($actor->fresh(), $tenant)->findOrFail($line->expense_id);
             abort_unless(app(ExpenseService::class)->editable($actor->fresh(), $tenant, $expense, 'upload'), 403);
-            abort_unless((int) $line->revision === (int) $metadata['revision'] && (int) $expense->revision === (int) $metadata['expense_revision'], 409, 'Spesenposition wurde geändert. Upload zuerst prüfen.');
+            abort_unless((int) $line->revision === (int) $metadata['revision'] && (int) $expense->revision === (int) $metadata['expense_revision'], 409, __('Spesenposition wurde geändert. Upload zuerst prüfen.'));
         } else {
             abort(422);
         }
@@ -134,15 +134,15 @@ class DocumentUploadService
         abort_unless($upload->state === 'pending', 409);
         $actor = $upload->created_by ? Account::findOrFail($upload->created_by) : null;
         $metadata = json_decode(Crypt::decryptString($upload->encrypted_metadata), true, 512, JSON_THROW_ON_ERROR);
-        abort_unless(hash_equals($metadata['storage_fingerprint'], $this->storageFingerprint()), 409, 'Azure-Ziel wurde geändert. Upload zuerst prüfen.');
+        abort_unless(hash_equals($metadata['storage_fingerprint'], $this->storageFingerprint()), 409, __('Azure-Ziel wurde geändert. Upload zuerst prüfen.'));
         $this->authorizeSource($actor, $tenant, $upload->kind, $upload->object_id, $metadata, $upload->public_request_id);
         $bytes = Crypt::decryptString($upload->encrypted_bytes);
-        abort_unless(strlen($bytes) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $bytes)), 409, 'Dateiprüfsumme stimmt nicht überein.');
+        abort_unless(strlen($bytes) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $bytes)), 409, __('Dateiprüfsumme stimmt nicht überein.'));
         $found = false;
         if ($upload->provider_started_at) {
             try {
                 $stored = app(AzureDocumentReader::class)->read($upload->folder, $upload->filename);
-                abort_unless(strlen($stored) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $stored)), 409, 'Datei im Zielsystem stimmt nicht überein.');
+                abort_unless(strlen($stored) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $stored)), 409, __('Datei im Zielsystem stimmt nicht überein.'));
                 $found = true;
             } catch (\Throwable $error) {
                 if ($error->getCode() !== 404) {
@@ -185,7 +185,7 @@ class DocumentUploadService
         try {
             return app(SyncWorkService::class)->runDocument($actor, $tenant, $id);
         } catch (\Throwable) {
-            throw ValidationException::withMessages(['file' => 'Datei geschützt gespeichert; Azure-Übertragung noch offen. Bitte unter Synchronisation prüfen. Referenz: Upload #'.$id]);
+            throw ValidationException::withMessages(['file' => __('Datei geschützt gespeichert; Azure-Übertragung noch offen. Bitte unter Synchronisation prüfen. Referenz: Upload #:value1', ['value1' => $id])]);
         }
     }
 

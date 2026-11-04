@@ -27,7 +27,7 @@ class NavigationStructure
         'Mitglieder & Verein' => ['MemberStatusResource', 'MemberTypeResource', 'RegistrationStatusResource', 'CountryResource', 'GenderResource', 'BillingRecipientResource', 'DocumentTypeResource', 'ClubFunctionResource', 'QualificationResource'],
         'Sport & Anlagen' => ['TeamResource', 'StaffFunctionResource', 'GameTypeResource', 'TrainingOptionResource', 'FootballClubResource', 'FacilityStatusResource', 'BusKeyboxResource'],
         'Finanzen' => ['ContributionPriceResource', 'ContributionRuleResource', 'BankResource', 'ExpenseTypeResource', 'ExpenseRoundResource', 'ExpenseStatusResource', 'InvoiceCategoryResource', 'InvoiceStatusResource', 'InvoiceLineStatusResource', 'InvoiceWorkflowStatusResource', 'FinancialAdjustmentStatusResource', 'BexioCatalogEntryResource', 'BexioDispatchTrials'],
-        'Zugänge & System' => ['TenantAccountResource', 'AccessProfileResource', 'AccountMemberLinkResource', 'ApiIntegrations', 'SettingResource', 'MessageTemplateResource', 'StatusStyleResource', 'Synchronisation', 'ObjectChangeResource'],
+        'Zugänge & System' => ['TenantAccountResource', 'AccessProfileResource', 'AccountMemberLinkResource', 'ApiIntegrations', 'SettingResource', 'MessageTemplateResource', 'LookupTranslationResource', 'StatusStyleResource', 'Synchronisation', 'ObjectChangeResource'],
         'Datenübernahme' => ['LegacyTrainingPlanResource'],
     ];
 

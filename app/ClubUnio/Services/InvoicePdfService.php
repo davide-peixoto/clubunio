@@ -24,7 +24,7 @@ class InvoicePdfService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'download');
         }
         if ($bexio) {
-            abort_unless(preg_match('/^[1-9][0-9]{0,14}$/', (string) $invoice->bexio_invoice_id), 404, 'Keine Bexio-Rechnung zugeordnet.');
+            abort_unless(preg_match('/^[1-9][0-9]{0,14}$/', (string) $invoice->bexio_invoice_id), 404, __('Keine Bexio-Rechnung zugeordnet.'));
             try {
                 $bytes = $this->readBexio($tenant, $invoice);
             } catch (\Throwable $error) {
@@ -36,9 +36,9 @@ class InvoicePdfService
                 return response()->view('clubunio.invoices.pdf-error', [
                     'reference' => $reference,
                     'message' => match ($error->getCode()) {
-                        401 => 'Der Bexio-Zugang ist ungültig oder abgelaufen. Bitte den ClubUnio-Bexio-Zugang erneuern.',
-                        409 => 'Sandbox-Testbetrieb: Diese Rechnung gehört nicht zur bestätigten Testverbindung. Importierte PROD-Rechnungen können hier nicht geöffnet werden.',
-                        default => 'Das Bexio-PDF ist derzeit nicht verfügbar. Bitte später erneut versuchen.',
+                        401 => __('Der Bexio-Zugang ist ungültig oder abgelaufen. Bitte den ClubUnio-Bexio-Zugang erneuern.'),
+                        409 => __('Sandbox-Testbetrieb: Diese Rechnung gehört nicht zur bestätigten Testverbindung. Importierte PROD-Rechnungen können hier nicht geöffnet werden.'),
+                        default => __('Das Bexio-PDF ist derzeit nicht verfügbar. Bitte später erneut versuchen.'),
                     },
                 ], 503)->header('Cache-Control', 'private, no-store')->header('X-Frame-Options', 'SAMEORIGIN');
             }

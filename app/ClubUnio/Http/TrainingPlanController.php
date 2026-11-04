@@ -61,7 +61,7 @@ class TrainingPlanController
     {
         $id = app(TrainingPlanService::class)->generate($request->user(), $tenant, $request->all(), (string) $request->input('request_key'));
 
-        return redirect()->route('clubunio.training.show', [$tenant->slug, $id])->with('notice', 'Trainingsplan erstellt.');
+        return redirect()->route('clubunio.training.show', [$tenant->slug, $id])->with('notice', __('Trainingsplan erstellt.'));
     }
 
     public function show(Request $request, Tenant $tenant, int $plan)
@@ -86,7 +86,7 @@ class TrainingPlanController
         app(TrainingPlanService::class)->archive($request->user(), $tenant, $plan, (int) $data['revision'], $request->boolean('archived'));
         $request->session()->forget($this->key($tenant, $plan));
 
-        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', 'Planstatus gespeichert.');
+        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', __('Planstatus gespeichert.'));
     }
 
     public function copy(Request $request, Tenant $tenant, int $plan)
@@ -94,7 +94,7 @@ class TrainingPlanController
         $data = $request->validate(['revision' => 'required|integer|min:1', 'request_key' => 'required|uuid']);
         $id = app(TrainingPlanService::class)->copy($request->user(), $tenant, $plan, (int) $data['revision'], $data['request_key']);
 
-        return redirect()->route('clubunio.training.show', [$tenant->slug, $id])->with('notice', 'Private Kopie erstellt.');
+        return redirect()->route('clubunio.training.show', [$tenant->slug, $id])->with('notice', __('Private Kopie erstellt.'));
     }
 
     public function save(Request $request, Tenant $tenant, int $plan)
@@ -112,7 +112,7 @@ class TrainingPlanController
         }
         app(TrainingPlanService::class)->save($request->user(), $tenant, $plan, (int) $data['revision'], $data['plan'], $request->boolean('shared'));
 
-        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', 'Trainingsplan gespeichert.');
+        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', __('Trainingsplan gespeichert.'));
     }
 
     public function review(Request $request, Tenant $tenant, int $plan)
@@ -134,7 +134,7 @@ class TrainingPlanController
         $service->save($request->user(), $tenant, $plan, $review['revision'], $review['plan'], $row->shared);
         $request->session()->forget($this->key($tenant, $plan));
 
-        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', 'Prüfvorschlag übernommen.');
+        return redirect()->route('clubunio.training.show', [$tenant->slug, $plan])->with('notice', __('Prüfvorschlag übernommen.'));
     }
 
     public function pdf(Request $request, Tenant $tenant, int $plan)

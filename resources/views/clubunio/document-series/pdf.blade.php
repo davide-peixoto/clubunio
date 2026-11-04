@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head><meta charset="utf-8"><style>
 @page { margin: 17mm; }
 body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; color: #222; }
@@ -16,17 +16,17 @@ tr { page-break-inside: avoid; }
 <h1>{{ $snapshot['definition']['title'] }}</h1>
 <p>{{ $snapshot['member_name'] }}<br>{{ $snapshot['values']['Team.Name'] }}<br>{{ $snapshot['values']['Dokument.Datum'] }}</p>
 @if($snapshot['definition']['items'])
-<table><thead><tr><th style="width:9%">Anzahl</th><th style="width:36%">Artikel</th><th style="width:21%">Grösse / Initialen</th><th>CHF/Stk.</th><th>CHF</th></tr></thead><tbody>
+<table><thead><tr><th style="width:9%">{{ __('Anzahl') }}</th><th style="width:36%">{{ __('Artikel') }}</th><th style="width:21%">{{ __('Grösse / Initialen') }}</th><th>{{ __('CHF/Stk.') }}</th><th>{{ __('CHF') }}</th></tr></thead><tbody>
 @php($total = 0)
 @foreach($snapshot['definition']['items'] as $item)
 @php($sum = $item['quantity'] * $item['price_cents'])
 @php($total += $sum)
 <tr><td>{{ $item['quantity'] }}</td><td>{{ trim(($item['reference'] ?? '').' '.($item['brand'] ?? '').' '.$item['description']) }}</td><td>{{ trim(($item['size'] ?? '').' '.($item['initials'] ?? '')) }}</td><td>{{ number_format($item['price_cents']/100, 2, '.', "'") }}</td><td>{{ number_format($sum/100, 2, '.', "'") }}</td></tr>
 @endforeach
-</tbody><tfoot><tr><td colspan="4">Materialwert CHF</td><td>{{ number_format($total/100, 2, '.', "'") }}</td></tr></tfoot></table>
+</tbody><tfoot><tr><td colspan="4">{{ __('Materialwert CHF') }}</td><td>{{ number_format($total/100, 2, '.', "'") }}</td></tr></tfoot></table>
 @endif
 <div class="text">{{ $snapshot['definition']['text'] }}</div>
 @if($snapshot['definition']['signature_required'])
-<div class="signature">Ort / Datum: __________________________________<br>Unterschrift bei Übernahme: __________________________________<br>Stempel / Unterschrift Verein bei Rückgabe: __________________________________</div>
+<div class="signature">{{ __('Ort / Datum: __________________________________') }}<br>{{ __('Unterschrift bei Übernahme: __________________________________') }}<br>{{ __('Stempel / Unterschrift Verein bei Rückgabe: __________________________________') }}</div>
 @endif
 </body></html>

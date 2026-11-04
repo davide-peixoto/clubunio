@@ -32,23 +32,23 @@ class MemberPersonalAccessService
     public function capability(AccountMemberLink $link, Member $member, bool $activeMember): string
     {
         if ($link->state !== 'approved') {
-            return 'Nicht freigegeben';
+            return __('Nicht freigegeben');
         }
         if (! $link->account?->active || $link->account->api_only) {
-            return 'Kein persönlicher Login';
+            return __('Kein persönlicher Login');
         }
         if ($link->personal_role === 'profile' || (! $link->personal_portal && ! in_array($link->personal_role, ['admin', 'office'], true))) {
-            return 'Portal nicht freigegeben';
+            return __('Portal nicht freigegeben');
         }
         if (! $activeMember) {
-            return 'Mitgliedschaft nicht aktiv';
+            return __('Mitgliedschaft nicht aktiv');
         }
         $today = now('Europe/Zurich')->toDateString();
         if ($link->kind === 'parent' && (! $member->birth_date || $member->birth_date->toDateString() > $today
             || $member->birth_date->copy()->addYearsNoOverflow(18)->toDateString() <= $today)) {
-            return 'Elternvertretung nicht wirksam';
+            return __('Elternvertretung nicht wirksam');
         }
 
-        return in_array($link->kind, ['self', 'parent'], true) ? 'Lesen und Änderungsantrag' : 'Keine persönliche Zuordnung';
+        return in_array($link->kind, ['self', 'parent'], true) ? __('Lesen und Änderungsantrag') : __('Keine persönliche Zuordnung');
     }
 }

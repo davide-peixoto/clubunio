@@ -35,7 +35,7 @@ class BankAccountService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'members', $id ? 'view' : 'create');
         }
         if (array_diff(array_keys($input), ['revision', 'bank_id', 'iban', 'active'])) {
-            throw ValidationException::withMessages(['iban' => 'Nicht erlaubte Eingabefelder.']);
+            throw ValidationException::withMessages(['iban' => __('Nicht erlaubte Eingabefelder.')]);
         }
         $access = app(MemberAccessService::class);
         abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'members', $id ? 'view' : 'create') || ($access->canEnter($actor, $tenant) && $access->represented($actor, $tenant, true)->whereKey($memberId)->exists()), 403);
@@ -44,7 +44,7 @@ class BankAccountService
             Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($memberId);
             $bank = $id ? $this->visible($actor, $tenant)->where('member_id', $memberId)->lockForUpdate()->findOrFail($id) : new MemberBankAccount;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $bank->revision) {
-                throw ValidationException::withMessages(['revision' => 'Das Konto wurde inzwischen geändert.']);
+                throw ValidationException::withMessages(['revision' => __('Das Konto wurde inzwischen geändert.')]);
             }
             $data = Validator::make($input, [
                 'bank_id' => ['required', 'integer', Rule::exists('clubunio.clubora.banks', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
@@ -67,11 +67,11 @@ class BankAccountService
             }
             $used = $id && DB::connection('clubunio')->table('clubora.expenses')->where('tenant_id', $tenant->id)->where('bank_account_id', $id)->exists();
             if ($used && ($iban !== Crypt::decryptString($bank->iban_encrypted) || (int) $data['bank_id'] !== (int) $bank->bank_id)) {
-                throw ValidationException::withMessages(['iban' => 'Dieses Konto ist bereits in Belegen verwendet. Bitte ein neues Konto erfassen.']);
+                throw ValidationException::withMessages(['iban' => __('Dieses Konto ist bereits in Belegen verwendet. Bitte ein neues Konto erfassen.')]);
             }
             foreach ($this->visible($actor, $tenant)->where('member_id', $memberId)->where('active', true)->when($id, fn ($q) => $q->where('id', '!=', $id))->get() as $existing) {
                 if ($this->normalize(Crypt::decryptString($existing->iban_encrypted)) === $iban && $data['active']) {
-                    throw ValidationException::withMessages(['iban' => 'Dieses Konto ist bereits erfasst.']);
+                    throw ValidationException::withMessages(['iban' => __('Dieses Konto ist bereits erfasst.')]);
                 }
             }
             $before = $id ? ['bank_id' => $bank->bank_id, 'active' => $bank->active, 'revision' => $bank->revision, 'iban_last4' => substr(Crypt::decryptString($bank->iban_encrypted), -4)] : null;
@@ -102,7 +102,7 @@ class BankAccountService
             }
         }
         if (! $valid || $remainder !== 1) {
-            throw ValidationException::withMessages(['iban' => 'Die IBAN oder ihre Prüfziffer ist ungültig.']);
+            throw ValidationException::withMessages(['iban' => __('Die IBAN oder ihre Prüfziffer ist ungültig.')]);
         }
     }
 }

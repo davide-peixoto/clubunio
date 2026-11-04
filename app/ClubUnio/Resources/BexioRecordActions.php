@@ -23,16 +23,16 @@ class BexioRecordActions
     {
         return Action::make('bexioStatus')->label('Bexio-Status abgleichen')->icon('heroicon-o-arrow-path')
             ->visible(fn ($livewire) => self::eligible($livewire, $kind))
-            ->requiresConfirmation()->modalDescription('Den aktuellen Bexio-Stand prüfen und bei unverändertem Nachweis in ClubUnio übernehmen.')
+            ->requiresConfirmation()->modalDescription(__('Den aktuellen Bexio-Stand prüfen und bei unverändertem Nachweis in ClubUnio übernehmen.'))
             ->action(function ($livewire) use ($kind) {
                 try {
                     $id = app(SyncWorkService::class)->run(Filament::auth()->user(), Filament::getTenant(), $kind.'_sync', $livewire->getRecord()->id);
                     $state = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', Filament::getTenant()->id)->where('id', $id)->value('state');
-                    Notification::make()->title(in_array($state, ['applied', 'unchanged'], true) ? 'Bexio-Stand abgeglichen' : 'Synchronisation prüfen')->send();
+                    Notification::make()->title(in_array($state, ['applied', 'unchanged'], true) ? __('Bexio-Stand abgeglichen') : __('Synchronisation prüfen'))->send();
                     $resource = $kind === 'invoice' ? InvoiceResource::class : ExpenseResource::class;
                     $livewire->redirect($resource::getUrl('view', ['record' => $livewire->getRecord()->id]));
                 } catch (\Throwable) {
-                    Notification::make()->title('Abgleich offen')->body('Auftrag unter Synchronisation prüfen.')->warning()->send();
+                    Notification::make()->title(__('Abgleich offen'))->body(__('Auftrag unter Synchronisation prüfen.'))->warning()->send();
                 }
             });
     }
@@ -44,7 +44,7 @@ class BexioRecordActions
             ->visible(fn ($livewire) => ($operation === 'issue' ? (string) $livewire->getRecord()->status?->code === '7'
                 : in_array((string) $livewire->getRecord()->status?->code, ['8', '31'], true))
                 && self::eligible($livewire, 'invoice'))
-            ->requiresConfirmation()->modalDescription($operation === 'issue' ? 'Rechnung in der verbundenen Bexio-Organisation freigeben. Kein E-Mail-Versand.' : 'Unbezahlte Rechnung in Bexio stornieren. Belege mit Zahlungen oder Gutschriften bleiben gesperrt.')
+            ->requiresConfirmation()->modalDescription($operation === 'issue' ? __('Rechnung in der verbundenen Bexio-Organisation freigeben. Kein E-Mail-Versand.') : __('Unbezahlte Rechnung in Bexio stornieren. Belege mit Zahlungen oder Gutschriften bleiben gesperrt.'))
             ->action(function ($livewire) use ($operation) {
                 try {
                     app(BexioInvoiceActionService::class)->execute(Filament::auth()->user(), Filament::getTenant(), $livewire->getRecord()->id, $operation);
@@ -53,14 +53,14 @@ class BexioRecordActions
                         ->where('d.tenant_id', Filament::getTenant()->id)->where('d.invoice_id', $livewire->getRecord()->id)
                         ->where('a.operation', $operation)->where('a.state', 'accepted')->exists();
                     if (! $accepted) {
-                        Notification::make()->title('Bexio-Aktion noch unbestätigt')->body('Auftrag unter Synchronisation prüfen.')->warning()->send();
+                        Notification::make()->title(__('Bexio-Aktion noch unbestätigt'))->body(__('Auftrag unter Synchronisation prüfen.'))->warning()->send();
 
                         return;
                     }
-                    Notification::make()->title('Bexio-Aktion abgeschlossen')->success()->send();
+                    Notification::make()->title(__('Bexio-Aktion abgeschlossen'))->success()->send();
                     $livewire->redirect(InvoiceResource::getUrl('view', ['record' => $livewire->getRecord()->id]));
                 } catch (\Throwable) {
-                    Notification::make()->title('Bexio-Aktion nicht abgeschlossen')->body('Auftrag unter Synchronisation prüfen.')->warning()->send();
+                    Notification::make()->title(__('Bexio-Aktion nicht abgeschlossen'))->body(__('Auftrag unter Synchronisation prüfen.'))->warning()->send();
                 }
             });
     }

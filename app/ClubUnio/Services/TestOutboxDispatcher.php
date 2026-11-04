@@ -40,11 +40,22 @@ class TestOutboxDispatcher
             $status = 'failed';
             try {
                 $payload = json_decode(Crypt::decryptString($event->payload_encrypted), true, 512, JSON_THROW_ON_ERROR);
-                $sent = Mail::mailer('clubunio_test')->raw(str_replace('\\n', "\n", $payload['body']), function ($mail) use ($payload) {
-                    $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($payload['title']);
-                });
-                $status = $sent ? 'accepted' : 'failed';
+                $deliveries = $payload['deliveries'] ?? [$payload];
+                if (! is_array($deliveries) || ! $deliveries) {
+                    throw new \UnexpectedValueException('Empty delivery snapshot');
+                }
+                $status = 'accepted';
+                foreach ($deliveries as $delivery) {
+                    $sent = Mail::mailer('clubunio_test')->raw(str_replace('\\n', "\n", $delivery['body']), function ($mail) use ($delivery) {
+                        $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($delivery['title']);
+                    });
+                    if (! $sent) {
+                        $status = 'failed';
+                        break;
+                    }
+                }
             } catch (\Throwable) {
+                $status = 'failed';
                 // Ambiguous SMTP outcomes require review, never automatic replay.
             }
             $db->table($table)->where('id', $event->id)->where('tenant_id', $event->tenant_id)->update([

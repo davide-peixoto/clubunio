@@ -23,7 +23,7 @@ class BexioSandboxRecipientService
         $row = $this->table()->where('tenant_id', $tenant->id)->where('member_id', $invoice->member_id)->where('connection_hash', $hash)
             ->where('state', 'accepted')->when($registryId !== null, fn ($q) => $q->where('id', $registryId))
             ->when($contactId !== null, fn ($q) => $q->where('remote_id', $contactId))->first();
-        abort_unless($row && $row->remote_id > 0, 409, 'Bestätigte Sandbox-Empfängerzuordnung fehlt.');
+        abort_unless($row && $row->remote_id > 0, 409, __('Bestätigte Sandbox-Empfängerzuordnung fehlt.'));
 
         return $row;
     }
@@ -33,7 +33,7 @@ class BexioSandboxRecipientService
         abort_unless((int) ($contact['id'] ?? 0) === (int) $row->remote_id
             && ($contact['name_1'] ?? '') === 'ClubUnio Testmitglied '.$row->id
             && ($contact['remarks'] ?? '') === 'clubunio-sandbox-recipient:'.$row->marker
-            && empty($contact['mail']) && empty($contact['mail_second']), 409, 'Sandbox-Testkontakt wurde geändert.');
+            && empty($contact['mail']) && empty($contact['mail_second']), 409, __('Sandbox-Testkontakt wurde geändert.'));
     }
 
     public function prepare(Account $actor, Tenant $tenant, Invoice $invoice): int
@@ -41,7 +41,7 @@ class BexioSandboxRecipientService
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
         $hash = app(BexioSandboxFixtureService::class)->connectionHash($tenant);
         $token = app(BexioConnectionService::class)->accessToken($tenant);
-        abort_unless(DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, 'Bestätigte Sandbox-Verbindung fehlt.');
+        abort_unless(DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, __('Bestätigte Sandbox-Verbindung fehlt.'));
         $client = app(BexioSandboxClient::class);
         $client->verify($token);
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoice, $hash) {
@@ -66,11 +66,11 @@ class BexioSandboxRecipientService
             return (int) $row->id;
         }
         if ($row->state !== 'ready') {
-            abort_if($row->state === 'running' && CarbonImmutable::parse($row->started_at)->isAfter(now()->subMinutes(3)), 409, 'Testkontakt wird bereits angelegt.');
+            abort_if($row->state === 'running' && CarbonImmutable::parse($row->started_at)->isAfter(now()->subMinutes(3)), 409, __('Testkontakt wird bereits angelegt.'));
             $contacts = $client->get($token, '/2.0/contact', ['limit' => 500]);
             abort_unless(array_is_list($contacts) && count($contacts) < 500, 409);
             $matches = array_values(array_filter($contacts, fn ($c) => ($c['remarks'] ?? '') === 'clubunio-sandbox-recipient:'.$row->marker));
-            abort_unless(count($matches) === 1, 409, 'Testkontakt nicht eindeutig gefunden. Kein erneuter Anlageversuch.');
+            abort_unless(count($matches) === 1, 409, __('Testkontakt nicht eindeutig gefunden. Kein erneuter Anlageversuch.'));
             $row->remote_id = $matches[0]['id'];
             $this->assertContact($row, $matches[0]);
         } else {
@@ -78,10 +78,10 @@ class BexioSandboxRecipientService
             abort_unless($claimed === 1, 409);
             try {
                 abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant)
-                    && hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409, 'Verbindung oder Berechtigung wurde geändert.');
+                    && hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409, __('Verbindung oder Berechtigung wurde geändert.'));
                 $result = $client->createTestRecipient($token, $row->id, $row->marker);
                 $this->table()->where('id', $row->id)->update(['state' => $result['state'] === 'accepted' ? 'uncertain' : $result['state'], 'remote_id' => $result['id']]);
-                abort_unless($result['state'] === 'accepted', 409, 'Testkontakt nicht bestätigt. Nur lesender Abgleich erlaubt.');
+                abort_unless($result['state'] === 'accepted', 409, __('Testkontakt nicht bestätigt. Nur lesender Abgleich erlaubt.'));
                 $row->remote_id = $result['id'];
                 $this->assertContact($row, $client->get($token, '/2.0/contact/'.$row->remote_id));
             } catch (\Throwable $e) {

@@ -20,10 +20,10 @@ class SettingsService
             abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
             $setting = Setting::where('tenant_id', $tenant->id)->where('area', 'integrations')->where('key', 'INSTAGRAM_ACCESS_TOKEN')->lockForUpdate()->findOrFail($id);
             if ((bool) $setting->enabled !== $expected) {
-                throw ValidationException::withMessages(['enabled' => 'Einstellung wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['enabled' => __('Einstellung wurde geändert. Bitte neu laden.')]);
             }
             if ($enabled && trim(Crypt::decryptString($setting->encrypted_value)) === '') {
-                throw ValidationException::withMessages(['enabled' => 'Instagram-Zugang fehlt.']);
+                throw ValidationException::withMessages(['enabled' => __('Instagram-Zugang fehlt.')]);
             }
             $setting->forceFill(['enabled' => $enabled])->save();
             DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $id, 'actor_id' => $actor->id]);

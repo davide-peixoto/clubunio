@@ -47,8 +47,8 @@ abstract class FinancialAdjustmentResource extends CatalogResource
             TextColumn::make('amount_cents')->label('Betrag CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2, '.', "'"))->sortable(),
             TextColumn::make('reason')->label('Begründung')->searchable()->limit(55)->wrap(),
             TextColumn::make('created_at')->label('Erstellt')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->sortable(),
-        ])->filters([SelectFilter::make('status_id')->label('Status')->options(fn () => FinancialAdjustmentStatus::where('tenant_id', Filament::getTenant()->id)->pluck('name', 'id'))])
-            ->recordActions([ViewAction::make()->iconButton()->tooltip('Anzeigen')])->defaultSort('id', 'desc')->deferFilters(false)
+        ])->filters([SelectFilter::make('status_id')->label('Status')->options(fn () => FinancialAdjustmentStatus::where('tenant_id', Filament::getTenant()->id)->localizedPluck('name', 'id'))])
+            ->recordActions([ViewAction::make()->iconButton()->tooltip(__('Anzeigen'))])->defaultSort('id', 'desc')->deferFilters(false)
             ->persistFiltersInSession()->persistSearchInSession();
     }
 

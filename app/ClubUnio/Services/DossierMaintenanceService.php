@@ -72,7 +72,7 @@ class DossierMaintenanceService
                 $rules['club_event_id'] = $reference('club_events', 'club_event_id');
             }
             if (array_diff(array_keys($input), array_keys($rules))) {
-                throw ValidationException::withMessages(['active' => 'Unbekannte oder geschützte Felder.']);
+                throw ValidationException::withMessages(['active' => __('Unbekannte oder geschützte Felder.')]);
             }
             foreach (['name', 'number', 'color', 'location'] as $field) {
                 if (isset($input[$field]) && is_string($input[$field])) {
@@ -95,7 +95,7 @@ class DossierMaintenanceService
                 }
             }
             if ($id && (int) $row->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Datensatz wurde geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Datensatz wurde geändert. Bitte erneut öffnen.')]);
             }
             $qualificationIds = $data['qualification_ids'] ?? [];
             $oldQualifications = $model === MemberFunction::class && $id ? $row->qualifications()->pluck('clubora.qualifications.id')->all() : [];
@@ -103,7 +103,7 @@ class DossierMaintenanceService
                 $valid = Qualification::where('tenant_id', $tenant->id)->whereIn('id', $qualificationIds)
                     ->where(fn ($q) => $q->where('active', true)->orWhereIn('id', $oldQualifications))->count();
                 if ($valid !== count($qualificationIds)) {
-                    throw ValidationException::withMessages(['qualification_ids' => 'Nur aktive Qualifikationen dieses Vereins auswählen.']);
+                    throw ValidationException::withMessages(['qualification_ids' => __('Nur aktive Qualifikationen dieses Vereins auswählen.')]);
                 }
             }
             $duplicateFields = match ($model) {
@@ -118,7 +118,7 @@ class DossierMaintenanceService
                     $changed = $changed || (string) $row->$field !== (string) $data[$field];
                 }
                 if ($changed && $q->exists()) {
-                    throw ValidationException::withMessages([$duplicateFields[0] => 'Diese aktive Zuordnung besteht bereits.']);
+                    throw ValidationException::withMessages([$duplicateFields[0] => __('Diese aktive Zuordnung besteht bereits.')]);
                 }
             }
             unset($data['revision'], $data['qualification_ids']);

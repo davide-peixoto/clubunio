@@ -44,7 +44,7 @@ class SponsorRunPublicService
 
     private function hash(string $token): string
     {
-        abort_unless(preg_match('/^[a-f0-9]{64}$/D', $token), 404, 'Link ist ungültig oder abgelaufen.');
+        abort_unless(preg_match('/^[a-f0-9]{64}$/D', $token), 404, __('Link ist ungültig oder abgelaufen.'));
 
         return hash('sha256', $token);
     }
@@ -125,7 +125,7 @@ class SponsorRunPublicService
         $bucket = hash_hmac('sha256', $kind.'|'.$identity.'|'.now('UTC')->format('Y-m-d-H'), config('app.key'));
         $row = $this->core->db()->selectOne('INSERT INTO clubora.sponsor_run_public_rates(bucket_hash,hits,expires_at) VALUES (?,1,?)
             ON CONFLICT(bucket_hash) DO UPDATE SET hits=clubora.sponsor_run_public_rates.hits+1 RETURNING hits', [$bucket, now()->addHours(2)]);
-        abort_if((int) $row->hits > $limit, 429, 'Zu viele Anfragen. Bitte später erneut versuchen.');
+        abort_if((int) $row->hits > $limit, 429, __('Zu viele Anfragen. Bitte später erneut versuchen.'));
         $this->core->db()->statement('DELETE FROM clubora.sponsor_run_public_rates WHERE bucket_hash IN (SELECT bucket_hash FROM clubora.sponsor_run_public_rates WHERE expires_at<? LIMIT 100)', [now()]);
     }
 
@@ -133,7 +133,7 @@ class SponsorRunPublicService
     {
         $db = $this->core->db();
         $initial = $db->table('clubora.sponsor_run_links')->where('token_hash', $hash)->first();
-        abort_unless($initial, 404, 'Link ist ungültig oder abgelaufen.');
+        abort_unless($initial, 404, __('Link ist ungültig oder abgelaufen.'));
         $bound = app(TenantDomainService::class)->current();
         abort_if($bound && (int) $bound->id !== (int) $initial->tenant_id, 404);
         $this->enabled((int) $initial->tenant_id);
@@ -145,7 +145,7 @@ class SponsorRunPublicService
             $e = $this->core->event($tenant, $initial->event_id);
         }
         $link = $db->table('clubora.sponsor_run_links')->where('id', $initial->id)->where('token_hash', $hash)->when($lock, fn ($q) => $q->lockForUpdate())->first();
-        abort_unless($link && ! $link->revoked_at && CarbonImmutable::parse($link->expires_at)->greaterThan(now()), 404, 'Link ist ungültig oder abgelaufen.');
+        abort_unless($link && ! $link->revoked_at && CarbonImmutable::parse($link->expires_at)->greaterThan(now()), 404, __('Link ist ungültig oder abgelaufen.'));
         $this->core->requireOpen($e, $p);
 
         return [$tenant, $e, $p, $link];
@@ -175,7 +175,7 @@ class SponsorRunPublicService
             $table = $this->core->db()->table('clubora.sponsor_run_public_pending');
             $old = (clone $table)->where('tenant_id', $tenant->id)->where('request_key', $data['request_key'])->lockForUpdate()->first();
             if ($old) {
-                abort_unless(hash_equals($old->payload_hash, $payloadHash), 409, 'Anfragekennung bereits verwendet.');
+                abort_unless(hash_equals($old->payload_hash, $payloadHash), 409, __('Anfragekennung bereits verwendet.'));
 
                 return;
             }
@@ -184,10 +184,11 @@ class SponsorRunPublicService
             $pendingId = $table->insertGetId(['tenant_id' => $tenant->id, 'link_id' => $link->id, 'link_revision' => $link->revision,
                 'request_key' => $data['request_key'], 'payload_hash' => $payloadHash, 'token_hash' => $this->hash($confirm),
                 'payload_encrypted' => Crypt::encryptString(json_encode($data, JSON_THROW_ON_ERROR)), 'expires_at' => $expiry->toIso8601String()]);
-            $body = "Testbestätigung Sponsorenlauf\n".rtrim(config('app.url'), '/').'/sponsor-run#confirm='.$confirm;
+            $language = app(MessageLanguageService::class)->email($tenant, $data['email']);
+            $body = __('Testbestätigung Sponsorenlauf', [], $language)."\n".rtrim(config('app.url'), '/').'/sponsor-run#confirm='.$confirm;
             // Never queue an external recipient. The shared test transport and guard remain mandatory.
             $this->core->db()->table('clubora.sponsor_run_public_outbox')->insert(['tenant_id' => $tenant->id, 'pending_id' => $pendingId,
-                'payload_encrypted' => Crypt::encryptString(json_encode(['to' => TestMailGuard::RECIPIENT, 'title' => 'Sponsorenlauf bestätigen', 'body' => $body], JSON_THROW_ON_ERROR))]);
+                'payload_encrypted' => Crypt::encryptString(json_encode(['to' => TestMailGuard::RECIPIENT, 'title' => __('Sponsorenlauf bestätigen', [], $language), 'body' => $body], JSON_THROW_ON_ERROR))]);
             $this->cleanup();
         });
     }
@@ -232,7 +233,7 @@ class SponsorRunPublicService
         $this->core->authorize($actor, $tenant, 'send');
         abort_unless(app(MemberAccessService::class)->membership($actor, $tenant)?->role === 'admin', 403);
         abort_unless(app()->environment(['local', 'testing', 'staging']) && config('clubunio-integrations.test_mail_enabled'), 409);
-        abort_unless($this->core->db()->transactionLevel() === 0, 409, 'Nur bestätigte Outbox-Eintraege versenden.');
+        abort_unless($this->core->db()->transactionLevel() === 0, 409, __('Nur bestätigte Outbox-Eintraege versenden.'));
         $row = $this->core->db()->transaction(function () use ($tenant, $id) {
             $db = $this->core->db();
             $initial = $db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();

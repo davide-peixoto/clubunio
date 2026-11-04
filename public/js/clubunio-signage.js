@@ -1,11 +1,12 @@
 (() => {
     if (window.ClubUnioSignage) { window.ClubUnioSignage.scan(); return; }
     const mounted = new WeakSet();
-    const clock = new Intl.DateTimeFormat('de-CH', {timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    const date = new Intl.DateTimeFormat('de-CH', {timeZone:'Europe/Zurich',weekday:'long',day:'numeric',month:'long',year:'numeric'});
     function mount(board) {
         if (mounted.has(board)) return;
         mounted.add(board);
+        const locale = board.dataset.locale || document.documentElement.lang || 'de-CH';
+        const clock = new Intl.DateTimeFormat(locale, {timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        const date = new Intl.DateTimeFormat(locale, {timeZone:'Europe/Zurich',weekday:'long',day:'numeric',month:'long',year:'numeric'});
         let groups = [], slide = 0, timer = 0, frame = 0;
         const mobile = () => window.matchMedia('(max-width:700px)').matches;
         function show(group, page) {

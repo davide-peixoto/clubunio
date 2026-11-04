@@ -36,7 +36,7 @@ class FamilyMemberResource extends FamilyResource
     public static function form(Schema $schema): Schema
     {
         return $schema->columns(2)->components([
-            Hidden::make('_version'), Select::make('family_id')->label('Familie')->required()->searchable()->options(fn (?FamilyMember $record) => Family::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->family_id ?? -1))->orderBy('name')->pluck('name', 'id')),
+            Hidden::make('_version'), Select::make('family_id')->label('Familie')->required()->searchable()->options(fn (?FamilyMember $record) => Family::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->family_id ?? -1))->orderBy('name')->localizedPluck('name', 'id')),
             MemberResource::memberSelect('member_id')->required(),
             TextInput::make('discount')->label('Familienrabatt')->numeric()->prefix('CHF')->default(0)->minValue(0)->required(),
             Toggle::make('active')->label('Aktiv')->default(true)->required(), Textarea::make('notes')->label('Bemerkungen')->maxLength(4000)->columnSpanFull(),
@@ -51,7 +51,7 @@ class FamilyMemberResource extends FamilyResource
             TextColumn::make('discount')->label('Rabatt')->money('CHF'), TextColumn::make('notes')->label('Bemerkungen')->limit(80),
             IconColumn::make('active')->label('Aktiv')->boolean(),
         ])->filters([
-            SelectFilter::make('family_id')->label('Familie')->searchable()->options(fn () => Family::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
+            SelectFilter::make('family_id')->label('Familie')->searchable()->options(fn () => Family::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
         ])->headerActions([static::createAction()])->recordActions([static::editAction()])
             ->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();

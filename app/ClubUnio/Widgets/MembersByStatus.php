@@ -11,7 +11,10 @@ class MembersByStatus extends StatusDistribution
         return \App\ClubUnio\Resources\ProfileUi::allows('members');
     }
 
-    protected ?string $heading = 'Mitglieder nach Status';
+    public function getHeading(): string
+    {
+        return __('Mitglieder nach Status');
+    }
 
     protected function modelClass(): string
     {

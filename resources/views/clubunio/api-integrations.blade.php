@@ -24,19 +24,19 @@
 
     @php
         $scopeGroups = collect($scopeLabels)->groupBy(fn ($label, $scope) => explode(':', $scope, 2)[0], preserveKeys: true);
-        $moduleLabels = ['website' => 'Website'] + \App\ClubUnio\Services\PermissionCatalog::MODULES;
+        $moduleLabels = ['website' => __('Website')] + \App\ClubUnio\Services\PermissionCatalog::MODULES;
     @endphp
 
     <div class="api-scopes">
-        <label><x-filament::input.checkbox wire:model.live="readOnly" />Nur Lesen</label>
-        <x-filament::link href="/api-docs" icon="heroicon-o-book-open">API-Dokumentation</x-filament::link>
+        <label><x-filament::input.checkbox wire:model.live="readOnly" />{{ __('Nur Lesen') }}</label>
+        <x-filament::link href="/api-docs" icon="heroicon-o-book-open">{{ __('API-Dokumentation') }}</x-filament::link>
     </div>
 
     @if($issuedToken !== null)
-        <section class="api-section" role="status" aria-label="Neuer Token">
-            <h2>Neuer Token</h2>
+        <section class="api-section" role="status" aria-label="{{ __('Neuer Token') }}">
+            <h2>{{ __('Neuer Token') }}</h2>
             <pre class="api-secret">{{ $issuedToken }}</pre>
-            <x-filament::button wire:click="clearToken" color="gray" icon="heroicon-o-x-mark">Token ausblenden</x-filament::button>
+            <x-filament::button wire:click="clearToken" color="gray" icon="heroicon-o-x-mark">{{ __('Token ausblenden') }}</x-filament::button>
         </section>
     @endif
 
@@ -45,15 +45,15 @@
     @endif
 
     <section class="api-section">
-        <h2>Integration erstellen</h2>
+        <h2>{{ __('Integration erstellen') }}</h2>
         <form wire:submit="createIntegration" class="api-form">
             <div class="api-fields">
-                <label>Name<x-filament::input.wrapper><x-filament::input wire:model="name" required maxlength="120" /></x-filament::input.wrapper></label>
-                <label>Berechtigungsprofil<x-filament::input.wrapper><x-filament::input.select wire:model="accessProfileId" required><option value="">Bitte wählen</option>@foreach($profiles as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
-                <label>Anfragen pro Minute<x-filament::input.wrapper><x-filament::input type="number" wire:model="rateLimit" min="1" max="600" required /></x-filament::input.wrapper></label>
+                <label>{{ __('Name') }}<x-filament::input.wrapper><x-filament::input wire:model="name" required maxlength="120" /></x-filament::input.wrapper></label>
+                <label>{{ __('Berechtigungsprofil') }}<x-filament::input.wrapper><x-filament::input.select wire:model="accessProfileId" required><option value="">{{ __('Bitte wählen') }}</option>@foreach($profiles as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
+                <label>{{ __('Anfragen pro Minute') }}<x-filament::input.wrapper><x-filament::input type="number" wire:model="rateLimit" min="1" max="600" required /></x-filament::input.wrapper></label>
             </div>
-            <div><x-filament::button wire:click="selectWebsiteScopes" color="gray" icon="heroicon-o-globe-alt" wire:loading.attr="disabled">Website-Preset</x-filament::button></div>
-            <fieldset class="api-scope-groups"><legend>Erlaubte Scopes</legend>
+            <div><x-filament::button wire:click="selectWebsiteScopes" color="gray" icon="heroicon-o-globe-alt" wire:loading.attr="disabled">{{ __('Website-Preset') }}</x-filament::button></div>
+            <fieldset class="api-scope-groups"><legend>{{ __('Erlaubte Scopes') }}</legend>
                 @foreach($scopeGroups as $module => $moduleScopes)
                     <details class="api-scope-group" wire:key="api-integration-scopes-{{ $module }}" @if(array_intersect($moduleScopes->keys()->all(), $integrationScopes)) open @endif>
                         <summary><h3>{{ $moduleLabels[$module] ?? $module }}</h3></summary>
@@ -61,20 +61,20 @@
                     </details>
                 @endforeach
             </fieldset>
-            <div><x-filament::button type="submit" icon="heroicon-o-plus" wire:loading.attr="disabled">Integration erstellen</x-filament::button></div>
+            <div><x-filament::button type="submit" icon="heroicon-o-plus" wire:loading.attr="disabled">{{ __('Integration erstellen') }}</x-filament::button></div>
         </form>
     </section>
 
     <section class="api-section">
-        <h2>Token erstellen</h2>
+        <h2>{{ __('Token erstellen') }}</h2>
         @php($selectedIntegration = $integrations->firstWhere('id', $integrationId))
         <form wire:submit="issueToken" class="api-form">
             <div class="api-fields">
-                <label>Integration<x-filament::input.wrapper><x-filament::input.select wire:model.live="integrationId" required><option value="">Bitte wählen</option>@foreach($integrations->where('active', true) as $integration)<option value="{{ $integration->id }}">{{ $integration->name }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
-                <label>Tokenname<x-filament::input.wrapper><x-filament::input wire:model="tokenName" required maxlength="120" autocomplete="off" /></x-filament::input.wrapper></label>
-                <label>Ablauf ({{ config('app.timezone') }})<x-filament::input.wrapper><x-filament::input type="datetime-local" wire:model="expiresAt" min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}" max="{{ now()->addYear()->format('Y-m-d\TH:i') }}" required /></x-filament::input.wrapper></label>
+                <label>{{ __('Integration') }}<x-filament::input.wrapper><x-filament::input.select wire:model.live="integrationId" required><option value="">{{ __('Bitte wählen') }}</option>@foreach($integrations->where('active', true) as $integration)<option value="{{ $integration->id }}">{{ $integration->name }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
+                <label>{{ __('Tokenname') }}<x-filament::input.wrapper><x-filament::input wire:model="tokenName" required maxlength="120" autocomplete="off" /></x-filament::input.wrapper></label>
+                <label>{{ __('Ablauf (') }}{{ config('app.timezone') }})<x-filament::input.wrapper><x-filament::input type="datetime-local" wire:model="expiresAt" min="{{ now()->addMinute()->format('Y-m-d\TH:i') }}" max="{{ now()->addYear()->format('Y-m-d\TH:i') }}" required /></x-filament::input.wrapper></label>
             </div>
-            <fieldset class="api-scope-groups"><legend>Token-Scopes</legend>
+            <fieldset class="api-scope-groups"><legend>{{ __('Token-Scopes') }}</legend>
                 @foreach($scopeGroups as $module => $moduleScopes)
                     @php($allowedScopes = $moduleScopes->only($selectedIntegration?->scopes ?? []))
                     @if($allowedScopes->isNotEmpty())
@@ -85,37 +85,37 @@
                     @endif
                 @endforeach
             </fieldset>
-            <div><x-filament::button type="submit" icon="heroicon-o-key" wire:loading.attr="disabled" :disabled="! $selectedIntegration?->active">Token erstellen</x-filament::button></div>
+            <div><x-filament::button type="submit" icon="heroicon-o-key" wire:loading.attr="disabled" :disabled="! $selectedIntegration?->active">{{ __('Token erstellen') }}</x-filament::button></div>
         </form>
     </section>
 
     <section class="api-section">
-        <h2>Integrationen und Tokens</h2>
+        <h2>{{ __('Integrationen und Tokens') }}</h2>
         {{ $this->table }}
     </section>
 
     <section class="api-section">
-        <h2>API-Synchronisationsaufträge</h2>
-        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>Auftrag</th><th>Integration</th><th>Aktion / Objekt</th><th>Status</th><th>Prüfen</th></tr></thead><tbody>
+        <h2>{{ __('API-Synchronisationsaufträge') }}</h2>
+        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>{{ __('Auftrag') }}</th><th>{{ __('Integration') }}</th><th>{{ __('Aktion / Objekt') }}</th><th>{{ __('Status') }}</th><th>{{ __('Prüfen') }}</th></tr></thead><tbody>
             @forelse($providerWorkRows as $row)
-                <tr wire:key="api-work-{{ $row->id }}"><td>#{{ $row->id }}</td><td>#{{ $row->integration_id }}</td><td>{{ $providerActionLabels[$row->operation] ?? $row->operation }}<br>#{{ $row->object_id }}</td><td>{{ ['pending'=>'Bereit', 'awaiting_approval'=>'Admin-Freigabe ausstehend', 'running'=>'In Ausführung', 'succeeded'=>'Abgeschlossen', 'attention'=>'Prüfung nötig', 'rejected'=>'Abgelehnt'][$row->state] }}@if($row->error_code)<br>{{ $row->error_code }}@endif</td><td><x-filament::icon-button icon="heroicon-o-eye" label="Auftrag prüfen" tooltip="Auftrag prüfen" wire:click="inspectProviderWork({{ $row->id }})" /></td></tr>
-            @empty<tr><td colspan="5">Keine API-Synchronisationsaufträge.</td></tr>@endforelse
+                <tr wire:key="api-work-{{ $row->id }}"><td>#{{ $row->id }}</td><td>#{{ $row->integration_id }}</td><td>{{ $providerActionLabels[$row->operation] ?? $row->operation }}<br>#{{ $row->object_id }}</td><td>{{ ['pending'=>__('Bereit'), 'awaiting_approval'=>__('Admin-Freigabe ausstehend'), 'running'=>__('In Ausführung'), 'succeeded'=>__('Abgeschlossen'), 'attention'=>__('Prüfung nötig'), 'rejected'=>__('Abgelehnt')][$row->state] }}@if($row->error_code)<br>{{ $row->error_code }}@endif</td><td><x-filament::icon-button icon="heroicon-o-eye" label="{{ __('Auftrag prüfen') }}" tooltip="{{ __('Auftrag prüfen') }}" wire:click="inspectProviderWork({{ $row->id }})" /></td></tr>
+            @empty<tr><td colspan="5">{{ __('Keine API-Synchronisationsaufträge.') }}</td></tr>@endforelse
         </tbody></table></div>
         @if($providerWorkDetail)
             <h3>{{ $providerActionLabels[$providerWorkDetail['operation']] ?? $providerWorkDetail['operation'] }} #{{ $providerWorkDetail['id'] }}</h3>
-            <dl><dt>Objekt</dt><dd>#{{ $providerWorkDetail['object_id'] }}</dd><dt>Eingaben</dt><dd><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['input'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></dd></dl>
+            <dl><dt>{{ __('Objekt') }}</dt><dd>#{{ $providerWorkDetail['object_id'] }}</dd><dt>{{ __('Eingaben') }}</dt><dd><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['input'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></dd></dl>
             @if($providerWorkDetail['error_code'])<p>{{ $providerWorkDetail['error_code'] }}</p>@endif
-            @if($providerWorkDetail['result'] !== null)<details><summary>Ergebnis</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></details>@endif
-            <details><summary>Verlauf</summary><ul>@foreach($providerWorkDetail['events'] as $event)<li>{{ \Carbon\CarbonImmutable::parse($event->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}: {{ $event->event }} · Benutzer #{{ $event->actor_id }} @if($event->code)({{ $event->code }})@endif</li>@endforeach</ul></details>
+            @if($providerWorkDetail['result'] !== null)<details><summary>{{ __('Ergebnis') }}</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ json_encode($providerWorkDetail['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre></details>@endif
+            <details><summary>{{ __('Verlauf') }}</summary><ul>@foreach($providerWorkDetail['events'] as $event)<li>{{ \Carbon\CarbonImmutable::parse($event->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}: {{ $event->event }} {{ __('· Benutzer #') }}{{ $event->actor_id }} @if($event->code)({{ $event->code }})@endif</li>@endforeach</ul></details>
             @if($providerWorkDetail['state'] === 'awaiting_approval' && $providerWorkRevision === $providerWorkDetail['revision'])
-                <div class="api-toolbar"><x-filament::button icon="heroicon-o-check" wire:click="executeProviderWork" wire:loading.attr="disabled">Freigeben und ausführen</x-filament::button><x-filament::button color="danger" icon="heroicon-o-x-mark" wire:click="rejectProviderWork" wire:loading.attr="disabled">Ablehnen</x-filament::button></div>
+                <div class="api-toolbar"><x-filament::button icon="heroicon-o-check" wire:click="executeProviderWork" wire:loading.attr="disabled">{{ __('Freigeben und ausführen') }}</x-filament::button><x-filament::button color="danger" icon="heroicon-o-x-mark" wire:click="rejectProviderWork" wire:loading.attr="disabled">{{ __('Ablehnen') }}</x-filament::button></div>
             @endif
         @endif
     </section>
 
     <section class="api-section">
-        <h2>API-Audit</h2>
-        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>Zeit ({{ config('app.timezone') }})</th><th>Integration</th><th>Token-ID</th><th>Ereignis</th><th>Status</th><th>Request-ID</th><th>Dauer (ms)</th></tr></thead><tbody>
+        <h2>{{ __('API-Audit') }}</h2>
+        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>{{ __('Zeit (') }}{{ config('app.timezone') }})</th><th>{{ __('Integration') }}</th><th>{{ __('Token-ID') }}</th><th>{{ __('Ereignis') }}</th><th>{{ __('Status') }}</th><th>{{ __('Request-ID') }}</th><th>{{ __('Dauer (ms)') }}</th></tr></thead><tbody>
             @forelse($auditRows as $row)
                 <tr>
                     <td>{{ \Carbon\CarbonImmutable::parse($row->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}</td>
@@ -123,7 +123,7 @@
                     <td>{{ $row->token_id ?? '-' }}</td><td>{{ $row->event }}</td><td>{{ $row->status ?? '-' }}</td>
                     <td class="api-request-id">{{ $row->request_id }}</td><td>{{ $row->duration_ms ?? '-' }}</td>
                 </tr>
-            @empty<tr><td colspan="7">Keine API-Audit-Einträge.</td></tr>@endforelse
+            @empty<tr><td colspan="7">{{ __('Keine API-Audit-Einträge.') }}</td></tr>@endforelse
         </tbody></table></div>
     </section>
 </x-filament-panels::page>

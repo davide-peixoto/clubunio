@@ -56,10 +56,10 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                 ->fillForm(fn () => ['revision' => $this->getOwnerRecord()->fresh()->revision, 'discount' => 0])->schema($schema)
                 ->action(fn (array $data) => $save($data, null)),
         ])->recordActions([
-            Action::make('copyLine')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Als neue manuelle Position kopieren')->visible(fn ($record) => $editable() && $record->active && ! $record->contribution)
+            Action::make('copyLine')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Als neue manuelle Position kopieren'))->visible(fn ($record) => $editable() && $record->active && ! $record->contribution)
                 ->fillForm(fn ($record) => $record->only(['description', 'gross_amount', 'discount', 'notes', 'bexio_catalog_article_id', 'bexio_catalog_tax_id']) + ['revision' => $this->getOwnerRecord()->fresh()->revision])
                 ->schema($schema)->action(fn (array $data) => $save($data, null)),
-            Action::make('restoreLine')->label('Position wiederherstellen')->icon('heroicon-o-arrow-uturn-left')->iconButton()->tooltip('Position wiederherstellen')
+            Action::make('restoreLine')->label('Position wiederherstellen')->icon('heroicon-o-arrow-uturn-left')->iconButton()->tooltip(__('Position wiederherstellen'))
                 ->visible(fn ($record) => $editable() && ! $record->active && ! $record->contribution)
                 ->fillForm(fn () => ['revision' => $this->getOwnerRecord()->fresh()->revision])
                 ->schema([TextInput::make('revision')->label('Version')->readOnly()->required(), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])
@@ -69,10 +69,10 @@ class InvoiceLinesRelationManager extends DossierRelationManager
                         (int) $data['revision'], 'restore_line', $data + ['line_id' => $record->id]));
                     $this->afterInvoiceChange();
                 }),
-            Action::make('editLine')->label('Position bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Position bearbeiten')->visible(fn ($record) => $editable() && $record->active)
+            Action::make('editLine')->label('Position bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Position bearbeiten'))->visible(fn ($record) => $editable() && $record->active)
                 ->fillForm(fn ($record) => $record->only(['description', 'gross_amount', 'discount', 'notes', 'bexio_catalog_article_id', 'bexio_catalog_tax_id']) + ['revision' => $this->getOwnerRecord()->fresh()->revision])
                 ->schema($schema)->action(fn ($record, array $data) => $save($data, $record->id)),
-            Action::make('removeLine')->label('Position entfernen')->icon('heroicon-o-trash')->iconButton()->tooltip('Position entfernen')->color('danger')
+            Action::make('removeLine')->label('Position entfernen')->icon('heroicon-o-trash')->iconButton()->tooltip(__('Position entfernen'))->color('danger')
                 ->visible(fn ($record) => $editable() && $record->active && ! $record->contribution)
                 ->fillForm(fn () => ['revision' => $this->getOwnerRecord()->fresh()->revision])
                 ->schema([TextInput::make('revision')->label('Version')->readOnly()->required(), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])

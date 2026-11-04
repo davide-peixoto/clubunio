@@ -33,7 +33,7 @@ class SavedViewService
         $data = Validator::make($input, ['name' => 'required|string|max:80', 'is_default' => 'required|boolean', 'revision' => 'nullable|integer|min:1'])->validate();
         Validator::make($state, ['version' => 'required|in:1', 'filters' => 'present|array', 'search' => 'present|nullable|string|max:200', 'sort' => 'nullable|string|max:160', 'tab' => 'nullable|string|max:160', 'columns' => 'present|array'])->validate();
         if (strlen(json_encode($state, JSON_THROW_ON_ERROR)) > 16000 || array_diff(array_keys($state), ['version', 'filters', 'search', 'sort', 'tab', 'columns'])) {
-            throw ValidationException::withMessages(['name' => 'Diese Ansicht ist zu umfangreich oder ungültig.']);
+            throw ValidationException::withMessages(['name' => __('Diese Ansicht ist zu umfangreich oder ungültig.')]);
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $list, $id, $data, $state) {
@@ -42,13 +42,13 @@ class SavedViewService
             $query = $this->query($actor, $tenant, $list);
             $record = $id ? (clone $query)->lockForUpdate()->findOrFail($id) : new SavedView;
             if ($id && $record->revision !== (int) ($data['revision'] ?? 0)) {
-                throw ValidationException::withMessages(['revision' => 'Ansicht wurde geändert. Bitte neu öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Ansicht wurde geändert. Bitte neu öffnen.')]);
             }
             if ((clone $query)->where('name', $data['name'])->when($id, fn ($q) => $q->where('id', '<>', $id))->exists()) {
-                throw ValidationException::withMessages(['name' => 'Eine Ansicht mit diesem Namen existiert bereits.']);
+                throw ValidationException::withMessages(['name' => __('Eine Ansicht mit diesem Namen existiert bereits.')]);
             }
             if (! $id && (clone $query)->count() >= 20) {
-                throw ValidationException::withMessages(['name' => 'Maximal 20 Ansichten je Liste.']);
+                throw ValidationException::withMessages(['name' => __('Maximal 20 Ansichten je Liste.')]);
             }
             if ($data['is_default']) {
                 (clone $query)->where('is_default', true)->when($id, fn ($q) => $q->where('id', '<>', $id))
@@ -66,7 +66,7 @@ class SavedViewService
     {
         $changed = $this->query($actor, $tenant, $list)->whereKey($id)->where('revision', $revision)->delete();
         if (! $changed) {
-            throw ValidationException::withMessages(['view_id' => 'Ansicht wurde geändert oder ist nicht verfügbar.']);
+            throw ValidationException::withMessages(['view_id' => __('Ansicht wurde geändert oder ist nicht verfügbar.')]);
         }
     }
 }

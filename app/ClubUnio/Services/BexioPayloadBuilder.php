@@ -22,10 +22,10 @@ class BexioPayloadBuilder
         try {
             $value = $row ? trim(Crypt::decryptString($row->encrypted_value)) : '';
         } catch (\Throwable) {
-            $this->fail('Bexio-Parameter '.$key.' ist nicht lesbar.');
+            $this->fail(__('Bexio-Parameter :value1 ist nicht lesbar.', ['value1' => $key]));
         }
         if (! preg_match('/^\d{1,10}$/D', $value) || (int) $value < $min || (int) $value > $max) {
-            $this->fail('Bexio-Parameter '.$key.' fehlt oder ist ungültig.');
+            $this->fail(__('Bexio-Parameter :value1 fehlt oder ist ungültig.', ['value1' => $key]));
         }
 
         return (int) $value;
@@ -39,17 +39,17 @@ class BexioPayloadBuilder
             abort(403);
         }
         if (! ($document instanceof Invoice) && (! ctype_digit((string) $member->bexio_contact_id) || (int) $member->bexio_contact_id < 1 || (int) $member->bexio_contact_id > 2147483647)) {
-            $this->fail('Ungültige Bexio-Kontaktzuordnung.');
+            $this->fail(__('Ungültige Bexio-Kontaktzuordnung.'));
         }
         $money = app(InvoiceWorkflowService::class);
         if ($document instanceof Invoice) {
             if (count($positions) > 150) {
-                $this->fail('Maximal 150 Rechnungspositionen pro Versandprüfung.');
+                $this->fail(__('Maximal 150 Rechnungspositionen pro Versandprüfung.'));
             }
             $contactId = $sandboxContactId ?? app(BexioBillingRecipientService::class)->resolve($member);
             $inclusive = $document->tax_mode === 'inclusive';
             if (! $inclusive && $this->integer($tenant, 'BEXIO_MWST_TYPE', 0, 2) !== 2) {
-                $this->fail('Steuerbefreite Rechnungen benötigen BEXIO_MWST_TYPE=2.');
+                $this->fail(__('Steuerbefreite Rechnungen benötigen BEXIO_MWST_TYPE=2.'));
             }
             $payload = ['contact_id' => $contactId, 'title' => 'Rechnung #'.($document->legacy_id ?? $document->id),
                 'api_reference' => 'clubunio:'.$tenant->id.':invoice:'.$document->id, 'mwst_type' => $inclusive ? 0 : 2, 'mwst_is_net' => ! $inclusive, 'show_position_taxes' => $inclusive];
@@ -71,7 +71,7 @@ class BexioPayloadBuilder
                 }
                 if ($line['article'] !== null) {
                     if (! ctype_digit((string) $line['article']) || (int) $line['article'] < 1 || (int) $line['article'] > 2147483647) {
-                        $this->fail('Ungültige Bexio-Artikelzuordnung.');
+                        $this->fail(__('Ungültige Bexio-Artikelzuordnung.'));
                     }
                     $position['type'] = 'KbPositionArticle';
                     $position['article_id'] = (int) $line['article'];
@@ -82,21 +82,21 @@ class BexioPayloadBuilder
             return ['method' => 'POST', 'path' => '/2.0/kb_invoice', 'payload' => $payload];
         }
         if (count($positions) > 100) {
-            $this->fail('Maximal 100 Spesenpositionen pro Bexio-Lieferantenrechnung.');
+            $this->fail(__('Maximal 100 Spesenpositionen pro Bexio-Lieferantenrechnung.'));
         }
         if (! $document->payment_released_on) {
-            $this->fail('Datum der Zahlungsfreigabe fehlt.');
+            $this->fail(__('Datum der Zahlungsfreigabe fehlt.'));
         }
         $country = $member->country;
         if (! $country || ! $country->active || $country->tenant_id != $tenant->id || ! preg_match('/^[A-Z]{2}$/D', (string) $country->code)) {
-            $this->fail('Für die Lieferantenadresse ist ein gültiger ISO-2-Ländercode erforderlich.');
+            $this->fail(__('Für die Lieferantenadresse ist ein gültiger ISO-2-Ländercode erforderlich.'));
         }
         $address = ['firstname_suffix' => trim((string) $member->first_name), 'lastname_company' => trim((string) ($member->company ?: $member->last_name)),
             'address_line' => trim($member->street.' '.$member->house_number), 'postcode' => trim((string) $member->postal_code), 'city' => trim((string) $member->city),
             'country_code' => $country->code, 'type' => 'PRIVATE'];
         foreach (['lastname_company', 'address_line', 'postcode', 'city'] as $field) {
             if ($address[$field] === '' || mb_strlen($address[$field]) > 255) {
-                $this->fail('Lieferantenadresse fehlt oder ist ungültig: '.$field);
+                $this->fail(__('Lieferantenadresse fehlt oder ist ungültig: :value1', ['value1' => $field]));
             }
         }
         $date = CarbonImmutable::parse($document->payment_released_on)->startOfDay();
@@ -107,7 +107,7 @@ class BexioPayloadBuilder
             'address' => $address, 'attachment_ids' => [], 'discounts' => [], 'line_items' => []];
         foreach ($positions as $i => $line) {
             if ((int) $line['account'] > 2147483647) {
-                $this->fail('Ungültiges Buchungskonto.');
+                $this->fail(__('Ungültiges Buchungskonto.'));
             }
             $payload['line_items'][] = ['position' => $i, 'amount' => (float) $money->decimal($line['net']), 'title' => mb_substr($line['description'], 0, 80), 'tax_id' => null, 'booking_account_id' => (int) $line['account']];
         }

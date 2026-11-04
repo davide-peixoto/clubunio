@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de-CH">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,9 @@
     @yield('head')
 </head>
 <body>
-    <header class="public-header"><img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" alt="ClubUnio" width="160" height="40"><strong>{{ $tenant->name }}</strong></header>
+    <header class="public-header"><img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" alt="{{ __('ClubUnio') }}" width="160" height="40"><strong>{{ $tenant->name }}</strong></header>
     <main>@yield('content')</main>
-    <footer>ClubUnio · Testumgebung</footer>
+    <footer>{{ __('ClubUnio · Testumgebung') }}</footer>
     @yield('scripts')
 </body>
 </html>

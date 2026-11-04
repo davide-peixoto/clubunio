@@ -31,7 +31,11 @@ class BusReservationsTable extends WorkspaceScopedTable
         $service = app(BusReservationService::class);
         $teams = $service->teams(auth('clubunio')->user()->fresh(), $tenant)->orderByDesc('season_id')->orderBy('label')->pluck('label', 'id')->all();
         $buses = $service->table($tenant, 'buses')->orderBy('name')->pluck('name', 'id')->all();
-        $statuses = $service->table($tenant, 'bus_statuses')->orderBy('id')->pluck('name', 'code')->all();
+        $statusRows = $service->table($tenant, 'bus_statuses')->orderBy('id')->get();
+        $statuses = $statusRows->pluck('name', 'code')->all();
+        $statusLabels = $statusRows->mapWithKeys(fn ($row) => [
+            $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('bus_statuses', $row),
+        ])->all();
         $teamLabels = $service->table($tenant, 'team_seasons')->whereIn('id', $service->visible(auth('clubunio')->user()->fresh(), $tenant)->select('team_season_id'))->pluck('label', 'id')->all();
 
         return $table->query(fn () => $this->reservations())
@@ -40,14 +44,14 @@ class BusReservationsTable extends WorkspaceScopedTable
                     ->url(fn ($record) => route('clubunio.workspace.bus.show', $record->id)),
                 TextColumn::make('ends_at')->label('Bis')->dateTime('d.m.Y H:i', timezone: 'Europe/Zurich')->sortable(),
                 TextColumn::make('bus_id')->label('Bus')->formatStateUsing(fn ($state) => $buses[$state] ?? ''),
-                TextColumn::make('team_season_id')->label('Mannschaft')->formatStateUsing(fn ($record) => $teamLabels[$record->team_season_id] ?? 'Nicht zugeordnet')->placeholder('Nicht zugeordnet'),
+                TextColumn::make('team_season_id')->label('Mannschaft')->formatStateUsing(fn ($record) => $teamLabels[$record->team_season_id] ?? __('Nicht zugeordnet'))->placeholder(__('Nicht zugeordnet')),
                 TextColumn::make('location')->label('Ziel')->wrap()->searchable(query: fn (Builder $query, string $search) => $query->where(fn ($q) => $q->where('location', 'ilike', '%'.$search.'%')->orWhere('description', 'ilike', '%'.$search.'%'))),
-                TextColumn::make('status')->label('Status')->badge()->formatStateUsing(fn ($state) => $statuses[$state] ?? $state)->color(fn ($state) => StatusAppearance::palette($statuses[$state] ?? $state)),
+                TextColumn::make('status')->label('Status')->badge()->formatStateUsing(fn ($state) => $statusLabels[$state] ?? $state)->color(fn ($state) => StatusAppearance::palette($statuses[$state] ?? $state)),
             ])
             ->deferFilters(false)->filters([
                 SelectFilter::make('bus_id')->label('Bus')->options($buses)->default($this->initialFilters['bus'] ?? null),
                 SelectFilter::make('team_season_id')->label('Mannschaft')->searchable()->options($teams)->default($this->initialFilters['team'] ?? null),
-                SelectFilter::make('status')->label('Status')->options($statuses)->default($this->initialFilters['status'] ?? null),
+                SelectFilter::make('status')->label('Status')->options($statusLabels)->default($this->initialFilters['status'] ?? null),
                 Filter::make('period')->label('Zeitraum')->schema([
                     DatePicker::make('from')->label('Von')->default($this->initialFilters['from'] ?? now('Europe/Zurich')->toDateString()),
                     DatePicker::make('to')->label('Bis')->default($this->initialFilters['to'] ?? null),
@@ -65,7 +69,7 @@ class BusReservationsTable extends WorkspaceScopedTable
                     ->visible(fn () => count($teams) && ProfileUi::profileAllows(auth('clubunio')->user()->fresh(), $this->authorizedTenant(), 'bus', 'create')),
             ])
             ->defaultSort('starts_at')->paginationPageOptions([10, 25, 50, 100])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Reservationen gefunden.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Reservationen gefunden.'))->emptyStateDescription(null);
     }
 
     public function render()

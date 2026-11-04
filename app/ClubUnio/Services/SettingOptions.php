@@ -20,9 +20,9 @@ class SettingOptions
         if ($setting->is_secret || $setting->area !== 'general') { return null; }
         $db = DB::connection('clubunio');
         if ($setting->key === ActiveTrainingPlan::KEY) {
-            return [0 => 'Nicht festgelegt'] + $db->table('clubora.training_options')
+            return [0 => __('Nicht festgelegt')] + $db->table('clubora.training_options')
                 ->where('tenant_id', $setting->tenant_id)->where('category', 'period')
-                ->where('active', true)->orderBy('name')->pluck('name', 'id')->all();
+                ->where('active', true)->orderBy('name')->localizedPluck('name', 'id')->all();
         }
         if ($setting->key === 'SaisonID') {
             $rows = $db->table('clubora.seasons')->where('tenant_id', $setting->tenant_id)->orderByDesc('id')->get();
@@ -37,10 +37,10 @@ class SettingOptions
             return $options;
         }
         if ($setting->key === 'SommerWinter') {
-            return $db->table('clubora.training_options')->where('tenant_id', $setting->tenant_id)->where('category', 'period')->where('active', true)->orderBy('name')->pluck('name', 'code')->all();
+            return $db->table('clubora.training_options')->where('tenant_id', $setting->tenant_id)->where('category', 'period')->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
         }
         if (in_array($setting->key, ['StatusPlatz1', 'StatusPlatz2', 'StatusPlatz3'], true)) {
-            return $db->table('clubora.facility_statuses')->where('tenant_id', $setting->tenant_id)->where('active', true)->orderBy('name')->pluck('name', 'code')->all();
+            return $db->table('clubora.facility_statuses')->where('tenant_id', $setting->tenant_id)->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
         }
         return null;
     }
@@ -50,32 +50,32 @@ class SettingOptions
         if ($setting->is_secret) { return '••••••••'; }
         $value = Crypt::decryptString($setting->encrypted_value);
         $options = $this->options($setting);
-        return $options === null ? $value : ($options[$value] ?? 'Nicht zugeordnet').' ('.$value.')';
+        return $options === null ? $value : ($options[$value] ?? __('Nicht zugeordnet')).' ('.$value.')';
     }
 
     public function usage(Setting $setting): string
     {
-        if ($this->archived($setting)) { return 'Altbestand'; }
-        if ($setting->area === 'general' && in_array($setting->key, ['SaisonID', ActiveTrainingPlan::KEY], true)) { return 'Verwendet'; }
-        return $setting->enabled ? 'Freigegeben' : 'Nicht freigegeben';
+        if ($this->archived($setting)) { return __('Altbestand'); }
+        if ($setting->area === 'general' && in_array($setting->key, ['SaisonID', ActiveTrainingPlan::KEY], true)) { return __('Verwendet'); }
+        return $setting->enabled ? __('Freigegeben') : __('Nicht freigegeben');
     }
 
     public function hint(Setting $setting): string
     {
         if ($setting->area === 'app' && $this->archived($setting)) {
-            return 'Abgelöst durch die App-Modulauswahl in Rollen & Berechtigungen.';
+            return __('Abgelöst durch die App-Modulauswahl in Rollen & Berechtigungen.');
         }
         if ($setting->area === 'general' && $setting->key === ActiveTrainingPlan::KEY) {
-            return 'Aktiver Trainingsplan für Trainingszeiten und Signage.';
+            return __('Aktiver Trainingsplan für Trainingszeiten und Signage.');
         }
         if ($this->archived($setting)) {
             return $setting->key === 'SommerWinter'
-                ? 'Importierter Altwert. Massgebend ist Aktiver Trainingsplan unter Allgemein.'
-                : 'Importierter Altwert. Den aktuellen Platzstatus unter Platzverfügbarkeit ändern.';
+                ? __('Importierter Altwert. Massgebend ist Aktiver Trainingsplan unter Allgemein.')
+                : __('Importierter Altwert. Den aktuellen Platzstatus unter Platzverfügbarkeit ändern.');
         }
         return $setting->area === 'general' && $setting->key === 'SaisonID'
-            ? 'Aktuelle Saison für die App. Wird unabhängig vom technischen Freigabeschalter verwendet.'
-            : 'Technische Freigabe des Parameters; kein allgemeiner Nachweis, ob die gesamte Funktion aktiv ist.';
+            ? __('Aktuelle Saison für die App. Wird unabhängig vom technischen Freigabeschalter verwendet.')
+            : __('Technische Freigabe des Parameters; kein allgemeiner Nachweis, ob die gesamte Funktion aktiv ist.');
     }
 
     public function validate(Setting $setting, string $value): void
@@ -85,7 +85,7 @@ class SettingOptions
         }
         $options = $this->options($setting);
         if ($options !== null && ! array_key_exists($value, $options)) {
-            throw ValidationException::withMessages(['value' => 'Bitte einen gültigen aktiven Wert dieses Vereins auswählen.']);
+            throw ValidationException::withMessages(['value' => __('Bitte einen gültigen aktiven Wert dieses Vereins auswählen.')]);
         }
     }
 }

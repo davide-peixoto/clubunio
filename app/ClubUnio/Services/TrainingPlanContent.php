@@ -35,11 +35,11 @@ class TrainingPlanContent
         $ordered = $sequence;
         sort($ordered);
         if ($sequence !== $ordered || $phases !== ['Einstieg', 'Hauptteil', 'Abschluss'] || array_sum(array_column($data['exercises'], 'durationMinutes')) !== $duration) {
-            throw ValidationException::withMessages(['plan' => 'Einstieg, Hauptteil und Abschluss müssen in dieser Reihenfolge vorkommen. Die Übungszeiten müssen der Gesamtdauer entsprechen.']);
+            throw ValidationException::withMessages(['plan' => __('Einstieg, Hauptteil und Abschluss müssen in dieser Reihenfolge vorkommen. Die Übungszeiten müssen der Gesamtdauer entsprechen.')]);
         }
         $alignment = implode(' ', [...$data['principles'], ...$data['qualityChecks']]);
         if ($requirePhilosophy && (! preg_match('/SV\s*Sissach/iu', $alignment) || ! preg_match('/\bSFV\b/iu', $alignment))) {
-            throw ValidationException::withMessages(['plan' => 'Die Prüfung der SV-Sissach- und SFV-Philosophie fehlt.']);
+            throw ValidationException::withMessages(['plan' => __('Die Prüfung der SV-Sissach- und SFV-Philosophie fehlt.')]);
         }
 
         return $data;

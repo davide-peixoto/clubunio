@@ -58,7 +58,7 @@ class TeamPlanningService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
             $this->lock($tenant);
             $this->authorizeOperation($actor, $tenant, 'deactivate');
-            abort_unless($this->removalSchemaAvailable(), 503, 'Terminentfernung noch nicht freigeschaltet.');
+            abort_unless($this->removalSchemaAvailable(), 503, __('Terminentfernung noch nicht freigeschaltet.'));
             $event = $this->event($actor, $tenant, $id, true, 'deactivate');
             $d = Validator::make($input, ['revision' => 'required|integer|min:1', 'scope' => 'required|in:single,future,all',
                 'series_revision' => 'nullable|regex:/^[0-9a-f]{64}$/'])->validate();
@@ -66,14 +66,14 @@ class TeamPlanningService
             $query = $this->table($tenant, 'team_events')->where('team_season_id', $event->team_season_id);
             if ($d['scope'] === 'single') { $query->where('id', $id); }
             else {
-                abort_unless($event->series_key && isset($d['series_revision']), 422, 'Serienstand fehlt.');
+                abort_unless($event->series_key && isset($d['series_revision']), 422, __('Serienstand fehlt.'));
                 $revision = $this->seriesRevision($tenant, $event);
-                abort_unless(hash_equals($revision, $d['series_revision']), 409, 'Serie wurde inzwischen geaendert.');
+                abort_unless(hash_equals($revision, $d['series_revision']), 409, __('Serie wurde inzwischen geaendert.'));
                 $query->where('series_key', $event->series_key);
                 if ($d['scope'] === 'future') { $query->where('starts_at', '>', now()->toIso8601String()); }
             }
             $rows = $query->orderBy('id')->get(['id', 'revision']);
-            abort_if($rows->isEmpty(), 409, 'Keine passenden Termine zum Entfernen vorhanden.');
+            abort_if($rows->isEmpty(), 409, __('Keine passenden Termine zum Entfernen vorhanden.'));
             foreach ($rows as $row) {
                 $this->table($tenant, 'team_events')->where('id', $row->id)->update([
                     'deleted_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String(), 'revision' => $row->revision + 1]);
@@ -159,7 +159,7 @@ class TeamPlanningService
     public function conflict(?object $row, array $input): void
     {
         if ($row && (int) ($input['revision'] ?? 0) !== $row->revision) {
-            throw ValidationException::withMessages(['revision' => 'Dieser Eintrag wurde inzwischen geändert. Bitte neu öffnen.']);
+            throw ValidationException::withMessages(['revision' => __('Dieser Eintrag wurde inzwischen geändert. Bitte neu öffnen.')]);
         }
     }
 
@@ -194,11 +194,11 @@ class TeamPlanningService
                 'capacity' => 'nullable|integer|min:1|max:1000',
             ])->validate();
             if ($old && (int) $old->team_season_id !== (int) $data['team_season_id']) {
-                throw ValidationException::withMessages(['team_season_id' => 'Für eine andere Mannschaft bitte einen neuen Termin erstellen.']);
+                throw ValidationException::withMessages(['team_season_id' => __('Für eine andere Mannschaft bitte einen neuen Termin erstellen.')]);
             }
             if ($old && ($data['capacity'] ?? null) && (int) $data['capacity'] !== (int) $old->capacity
                 && $this->effectiveCount($tenant, $old) > $data['capacity']) {
-                throw ValidationException::withMessages(['capacity' => 'Die neue Kapazitaet ist kleiner als die Anzahl bestehender Anmeldungen.']);
+                throw ValidationException::withMessages(['capacity' => __('Die neue Kapazitaet ist kleiner als die Anzahl bestehender Anmeldungen.')]);
             }
             foreach (['starts_at', 'ends_at', 'deadline_at'] as $field) {
                 $data[$field] = Time::parse($data[$field], 'Europe/Zurich')->toIso8601String();
@@ -274,7 +274,7 @@ class TeamPlanningService
             abort_unless($manager || app(MemberAccessService::class)->represented($actor, $tenant)->whereKey($member)->exists(), 403);
             abort_unless($event->status === 'AKTIV', 409);
             if (! $manager && $this->locked($event)) {
-                throw ValidationException::withMessages(['status' => 'Die Frist ist abgelaufen. Bitte das Trainerteam kontaktieren.']);
+                throw ValidationException::withMessages(['status' => __('Die Frist ist abgelaufen. Bitte das Trainerteam kontaktieren.')]);
             }
             $query = $this->table($tenant, 'team_participations')->where('event_id', $id)->where('member_id', $member);
             $old = (clone $query)->first();
@@ -294,7 +294,7 @@ class TeamPlanningService
             if ($data['status'] === 'DABEI' && $event->capacity) {
                 $count = $this->effectiveCount($tenant, $event, $member);
                 if ($count >= $event->capacity) {
-                    throw ValidationException::withMessages(['status' => 'Die maximale Teilnehmerzahl ist erreicht.']);
+                    throw ValidationException::withMessages(['status' => __('Die maximale Teilnehmerzahl ist erreicht.')]);
                 }
             }
             $data['comment_encrypted'] = empty($data['comment']) ? null : Crypt::encryptString($data['comment']);
@@ -392,14 +392,14 @@ class TeamPlanningService
                     foreach (['starts_at' => 'starts_on', 'ends_at' => 'ends_on'] as $time => $date) {
                         $value = Time::parse($window[$time])->setTimezone('Europe/Zurich');
                         if ($value->toDateString() !== $data[$date]) {
-                            throw ValidationException::withMessages([$time => 'Datum und Uhrzeit passen nicht zusammen.']);
+                            throw ValidationException::withMessages([$time => __('Datum und Uhrzeit passen nicht zusammen.')]);
                         }
                         $data[$time] = $value->toIso8601String();
                     }
                 } elseif (($old->starts_at ?? null) !== null) {
                     // A date-only editor must not silently expand a precise mobile absence.
                     if ($data['starts_on'] !== $old->starts_on || $data['ends_on'] !== $old->ends_on) {
-                        throw ValidationException::withMessages(['starts_on' => 'Diese Absenz enthaelt Uhrzeiten. Zeitraum in der App bearbeiten.']);
+                        throw ValidationException::withMessages(['starts_on' => __('Diese Absenz enthaelt Uhrzeiten. Zeitraum in der App bearbeiten.')]);
                     }
                 }
                 $data['note_encrypted'] = empty($data['note']) ? null : Crypt::encryptString($data['note']);
@@ -511,10 +511,7 @@ class TeamPlanningService
             return false;
         }
         $team = $this->table($tenant, 'team_seasons')->where('id', $event->team_season_id)->value('label');
-        $message = app(MessageTemplateService::class)->render($tenant, $key, 'push', ['verein' => $tenant->name, 'termin' => $event->title, 'datum' => Time::parse($event->starts_at)->setTimezone('Europe/Zurich')->format('d.m.Y H:i'), 'mannschaft' => $team]);
-        if (! $message) {
-            return true;
-        }
+        $values = ['verein' => $tenant->name, 'termin' => $event->title, 'datum' => Time::parse($event->starts_at)->setTimezone('Europe/Zurich')->format('d.m.Y H:i'), 'mannschaft' => $team];
         $members = $this->roster($tenant, $event)->pluck('id');
         $accounts = $this->table($tenant, 'tenant_accounts')->where('portal_enabled', true)->pluck('account_id');
         $today = now('Europe/Zurich')->toDateString();
@@ -525,7 +522,11 @@ class TeamPlanningService
             ->whereIn('l.member_id', $members)->whereIn('a.id', $accounts)
             ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => $q->where('l.kind', 'parent')->where('m.birth_date', '<=', $today)->whereRaw("m.birth_date + interval '18 years' > CAST(? AS date)", [$today])))
             ->distinct()->pluck('a.id');
-        foreach ($recipients as $account) {
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $key, 'push', $values, $recipients->all());
+        foreach ($messages as $account => $message) {
+            if (! $message) {
+                continue;
+            }
             $this->table($tenant, 'notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account, 'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'team_event', 'object_id' => $event->id]);
         }
 

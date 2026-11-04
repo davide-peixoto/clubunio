@@ -89,6 +89,7 @@ class SfvCompetitions extends Page implements HasTable
                 TextColumn::make('title')->label('SFV-Spiel')->searchable()->sortable()->wrap(),
                 TextColumn::make('location')->label('Spielort')->searchable()->sortable()->wrap(),
                 TextColumn::make('state')->label('Status')->searchable()->sortable()->badge()
+                    ->formatStateUsing(fn ($state) => $state === null ? null : __($state))
                     ->color(fn ($state) => StatusAppearance::palette($state)),
             ])
             ->recordActions([
@@ -102,7 +103,7 @@ class SfvCompetitions extends Page implements HasTable
             ->defaultSort('starts_at')
             ->paginationPageOptions([10, 25, 50, 100])
             ->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine SFV-Spiele gefunden')
+            ->emptyStateHeading(__('Keine SFV-Spiele gefunden'))
             ->emptyStateDescription(null);
     }
 
@@ -136,7 +137,7 @@ class SfvCompetitions extends Page implements HasTable
         $this->preview = null;
         $this->batchPreview = null;
         $count = app(SfvPlanningService::class)->refresh(Filament::auth()->user(), Filament::getTenant(), ['from' => $this->from, 'to' => $this->to]);
-        Notification::make()->title($count.' SFV-Spiele aktualisiert')->success()->send();
+        Notification::make()->title(__(':count SFV-Spiele aktualisiert', ['count' => $count]))->success()->send();
     }
 
     public function inspect(): void
@@ -157,7 +158,7 @@ class SfvCompetitions extends Page implements HasTable
         $this->preview = null;
         $this->target = '';
         $this->separate = false;
-        Notification::make()->title('Wettkampf übernommen')->success()->send();
+        Notification::make()->title(__('Wettkampf übernommen'))->success()->send();
     }
 
     public function inspectBatch(): void
@@ -176,7 +177,7 @@ class SfvCompetitions extends Page implements HasTable
         abort_unless($this->batchPreview, 422);
         $count = app(SfvCompetitionService::class)->applyBatch(Filament::auth()->user(), Filament::getTenant(), $this->batchPreview['entries']);
         $this->batchPreview = null;
-        Notification::make()->title($count.' Wettkämpfe übernommen')->success()->send();
+        Notification::make()->title(__(':count Wettkämpfe übernommen', ['count' => $count]))->success()->send();
     }
 
     protected function getViewData(): array

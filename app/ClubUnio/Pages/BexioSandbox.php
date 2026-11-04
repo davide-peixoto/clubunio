@@ -113,11 +113,11 @@ class BexioSandbox extends Page implements HasTable
         abort_unless(static::canAccess(), 403);
         try {
             $action(app(BexioSandboxDispatchService::class));
-            Notification::make()->title('Prüfung abgeschlossen')->body('Der aktuelle Stand ist im Übertragungsprotokoll sichtbar.')->send();
+            Notification::make()->title(__('Prüfung abgeschlossen'))->body(__('Der aktuelle Stand ist im Übertragungsprotokoll sichtbar.'))->send();
         } catch (\Throwable $error) {
             // Provider responses and secrets never enter Livewire state or flash messages.
             $status = $error instanceof HttpExceptionInterface ? $error->getStatusCode() : (int) $error->getCode();
-            Notification::make()->title('Aktion nicht abgeschlossen')->body('Verbindung, Testbeleg oder Berechtigung prüfen. Prüfcode: '.$status)->danger()->send();
+            Notification::make()->title(__('Aktion nicht abgeschlossen'))->body(__('Verbindung, Testbeleg oder Berechtigung prüfen. Prüfcode: :status', ['status' => $status]))->danger()->send();
         }
     }
 
@@ -134,23 +134,23 @@ class BexioSandbox extends Page implements HasTable
             'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt'];
 
         return $table->records($this->dispatchRecords(...))->columns([
-            TextColumn::make('document')->label('Testbeleg')->state(fn (array $record) => ($record['kind'] === 'invoice' ? 'Rechnung' : 'Spesen').' #'.($record['invoice_id'] ?? $record['expense_id']))
-                ->description(fn (array $record) => $record['source_trial_id'] ? 'Allgemeine Versandprüfung' : 'Fester Testbeleg')->searchable()->sortable(),
+            TextColumn::make('document')->label('Testbeleg')->state(fn (array $record) => $record['kind'] === 'invoice' ? __('Rechnung #:id', ['id' => $record['invoice_id']]) : __('Spesen #:id', ['id' => $record['expense_id']]))
+                ->description(fn (array $record) => $record['source_trial_id'] ? __('Allgemeine Versandprüfung') : __('Fester Testbeleg'))->searchable()->sortable(),
             TextColumn::make('amount')->label('Betrag CHF')->state(fn (array $record) => number_format(($record['expected_cents'] ?? ($record['kind'] === 'invoice' ? 2500 : 1500)) / 100, 2, '.', "'")),
-            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn (string $state) => $stateLabels[$state] ?? $state)
+            TextColumn::make('state')->label('Status')->badge()->formatStateUsing(fn (string $state) => __($stateLabels[$state] ?? $state))
                 ->color(fn (string $state) => StatusAppearance::palette($stateLabels[$state] ?? $state))->sortable(),
             ViewColumn::make('protocol')->label('Übertragungsprotokoll')->view('clubunio.bexio-sandbox-protocol'),
             TextColumn::make('remote_id')->label('Bexio-ID')->placeholder('-')->wrap()->searchable()->sortable(),
             ViewColumn::make('operations')->label('Aktion')->view('clubunio.bexio-sandbox-operations'),
         ])->filters([
-            SelectFilter::make('kind')->label('Dokument')->options(['invoice' => 'Rechnungen', 'expense' => 'Spesen']),
+            SelectFilter::make('kind')->label('Dokument')->options(['invoice' => __('Rechnungen'), 'expense' => __('Spesen')]),
             SelectFilter::make('state')->label('Status')->options([
-                'ready' => 'Bereit', 'running' => 'Gestartet', 'accepted' => 'Angelegt und geprüft',
-                'rejected' => 'Abgelehnt', 'uncertain' => 'Unklar – Wiederholung gesperrt',
+                'ready' => __('Bereit'), 'running' => __('Gestartet'), 'accepted' => __('Angelegt und geprüft'),
+                'rejected' => __('Abgelehnt'), 'uncertain' => __('Unklar – Wiederholung gesperrt'),
             ]),
-            SelectFilter::make('source')->label('Herkunft')->options(['trial' => 'Allgemeine Versandprüfung', 'fixture' => 'Fester Testbeleg']),
+            SelectFilter::make('source')->label('Herkunft')->options(['trial' => __('Allgemeine Versandprüfung'), 'fixture' => __('Fester Testbeleg')]),
         ])->deferFilters(false)->paginated([15, 25, 50])->defaultPaginationPageOption(15)->defaultSort('id', 'asc')
-            ->emptyStateHeading('Noch keine passenden Web-Testbelege.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Noch keine passenden Web-Testbelege.'))->emptyStateDescription(null);
     }
 
     private function dispatchRecords(?string $search, ?array $filters, int $page, int $recordsPerPage, ?string $sortColumn, ?string $sortDirection): LengthAwarePaginator

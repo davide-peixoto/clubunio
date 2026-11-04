@@ -42,7 +42,7 @@ class SponsorRunBexioClient
             $query += ['types' => 'sales_tax', 'scope' => 'active'];
         }
         $rows = $this->read($token, self::CATALOGS[$kind], $query);
-        abort_unless(array_is_list($rows) && count($rows) < 2000, 409, 'Bexio-Katalog nicht vollständig.');
+        abort_unless(array_is_list($rows) && count($rows) < 2000, 409, __('Bexio-Katalog nicht vollständig.'));
 
         return $rows;
     }
@@ -75,7 +75,7 @@ class SponsorRunBexioClient
         $rows = $r->json();
         abort_unless($r->successful() && is_array($rows) && array_is_list($rows) && count($rows) < 2000, 503);
         $matches = array_values(array_filter($rows, fn ($r) => ($r['api_reference'] ?? '') === $reference));
-        abort_unless(count($matches) <= 1, 409, 'Mehrere Bexio-Belege mit gleicher Referenz.');
+        abort_unless(count($matches) <= 1, 409, __('Mehrere Bexio-Belege mit gleicher Referenz.'));
 
         return $matches ? $this->read($token, '/2.0/kb_invoice/'.(int) $matches[0]['id']) : null;
     }
@@ -83,9 +83,9 @@ class SponsorRunBexioClient
     public function findContact(string $token, string $reference): ?array
     {
         $rows = $this->read($token, '/2.0/contact', ['limit' => 2000]);
-        abort_unless(array_is_list($rows) && count($rows) < 2000, 409, 'Kontaktabgleich unvollständig.');
+        abort_unless(array_is_list($rows) && count($rows) < 2000, 409, __('Kontaktabgleich unvollständig.'));
         $matches = array_values(array_filter($rows, fn ($r) => ($r['remarks'] ?? '') === $reference));
-        abort_unless(count($matches) <= 1, 409, 'Mehrere Kontakte mit gleicher Referenz.');
+        abort_unless(count($matches) <= 1, 409, __('Mehrere Kontakte mit gleicher Referenz.'));
 
         return $matches[0] ?? null;
     }

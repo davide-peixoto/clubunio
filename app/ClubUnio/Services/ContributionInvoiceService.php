@@ -28,7 +28,7 @@ class ContributionInvoiceService
     private function cents(string $amount): int
     {
         if (! preg_match('/^(\d{1,12})(?:\.(\d{1,4}))?$/', $amount, $m)) {
-            $this->fail('Ungültiger Betrag in den Stammdaten.');
+            $this->fail(__('Ungültiger Betrag in den Stammdaten.'));
         }
         $fraction = str_pad($m[2] ?? '', 4, '0');
 
@@ -42,10 +42,10 @@ class ContributionInvoiceService
         $season = Season::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($seasonId);
         $players = $member->teamPlayers()->where('active', true)->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->get(['invoice_line_id']);
         if ($players->isEmpty()) {
-            $this->fail('Keine aktive Spielerzuordnung in dieser Saison vorhanden.');
+            $this->fail(__('Keine aktive Spielerzuordnung in dieser Saison vorhanden.'));
         }
         if (! $member->birth_date || ! $member->gender_id) {
-            $this->fail('Geburtsdatum und Geschlecht müssen für die Beitragsberechnung gepflegt sein.');
+            $this->fail(__('Geburtsdatum und Geschlecht müssen für die Beitragsberechnung gepflegt sein.'));
         }
         $rules = ContributionRule::where('tenant_id', $tenant->id)->where('active', true)
             ->where('season_id', $seasonId)->where('gender_id', $member->gender_id)
@@ -102,26 +102,26 @@ class ContributionInvoiceService
     private function result(Member $member, Season $season, Collection $rules, Collection $families, Collection $existing, Collection $players): array
     {
         if ($players->isEmpty()) {
-            $this->fail('Keine aktive Spielerzuordnung in dieser Saison vorhanden.');
+            $this->fail(__('Keine aktive Spielerzuordnung in dieser Saison vorhanden.'));
         }
         if (! $member->birth_date || ! $member->gender_id) {
-            $this->fail('Geburtsdatum und Geschlecht müssen für die Beitragsberechnung gepflegt sein.');
+            $this->fail(__('Geburtsdatum und Geschlecht müssen für die Beitragsberechnung gepflegt sein.'));
         }
         if ($rules->count() !== 1) {
-            $this->fail($rules->isEmpty() ? 'Kein passender Beitragssatz gefunden.' : 'Mehrere passende Beitragssätze: bitte die Regeln bereinigen.');
+            $this->fail($rules->isEmpty() ? __('Kein passender Beitragssatz gefunden.') : __('Mehrere passende Beitragssätze: bitte die Regeln bereinigen.'));
         }
         if ($families->count() > 1) {
-            $this->fail('Mehrere aktive Familienzuordnungen: bitte den Familienrabatt eindeutig klären.');
+            $this->fail(__('Mehrere aktive Familienzuordnungen: bitte den Familienrabatt eindeutig klären.'));
         }
         $rule = $rules->sole();
         $gross = $this->cents((string) $rule->price->amount);
         $exempt = $member->honorary || $member->free_membership;
         $discount = $exempt ? $gross : min($gross, $this->cents((string) ($families->first()?->discount ?? '0')));
         if ($existing->count() > 1) {
-            $this->fail('Mehrere bestehende Beitragspositionen in dieser Saison: bitte zuerst prüfen.');
+            $this->fail(__('Mehrere bestehende Beitragspositionen in dieser Saison: bitte zuerst prüfen.'));
         }
         if ($existing->isEmpty() && $players->contains(fn ($player) => $player->invoice_line_id !== null)) {
-            $this->fail('Eine Spielerzuordnung hat bereits eine abweichende Rechnungsposition. Bitte zuerst prüfen.');
+            $this->fail(__('Eine Spielerzuordnung hat bereits eine abweichende Rechnungsposition. Bitte zuerst prüfen.'));
         }
         $result = ['member_id' => $member->id, 'member' => $member->display_name, 'season_id' => $season->id, 'season' => $season->name,
             'rule_id' => $rule->id, 'price_id' => $rule->price_id, 'price' => $rule->price->name,
@@ -150,12 +150,12 @@ class ContributionInvoiceService
                 return Invoice::where('tenant_id', $tenant->id)->findOrFail($preview['existing_invoice_id']);
             }
             if (! hash_equals($preview['fingerprint'], $fingerprint)) {
-                $this->fail('Die Berechnungsgrundlagen wurden geändert. Bitte erneut berechnen.');
+                $this->fail(__('Die Berechnungsgrundlagen wurden geändert. Bitte erneut berechnen.'));
             }
             // Draft only: no external submission, notification, or payment assertion.
             $status = InvoiceLineStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', 'P')->first();
             if (! $status) {
-                $this->fail('Der aktive Positionsstatus P (Pendent) fehlt.');
+                $this->fail(__('Der aktive Positionsstatus P (Pendent) fehlt.'));
             }
             $invoice = new Invoice;
             $invoice->forceFill(['tenant_id' => $tenant->id, 'member_id' => $memberId, 'season_id' => $seasonId,

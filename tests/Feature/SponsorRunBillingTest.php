@@ -106,6 +106,26 @@ class SponsorRunBillingTest extends TestCase
         }
     }
 
+    public function test_billing_message_uses_tenant_language_and_preserves_provider_placeholder(): void
+    {
+        $key = 'Ihre Rechnung zum Sponsorenlauf: [Network Link]';
+        $translations = json_decode(file_get_contents(lang_path('parts/messages.en.json')), true, 512, JSON_THROW_ON_ERROR);
+        app('translator')->addLines(['*.'.$key => $translations[$key]], 'en');
+        $this->tenant->forceFill(['default_locale' => 'en'])->save();
+        app()->setLocale('de');
+        $id = $this->service->prepare($this->actor, $this->tenant, $this->pledge);
+        $this->action($id, 'create-contact');
+        $this->action($id, 'create-draft');
+        $this->action($id, 'issue');
+        $this->assertSame('sent', $this->action($id, 'send')->state);
+        $send = collect($this->client->writes)->first(fn ($write) => str_ends_with($write[0], '/send'));
+        $this->assertSame('admin@svsissach.ch', $send[1]['recipient_email']);
+        $this->assertSame('Your sponsored run invoice: [Network Link]', $send[1]['message']);
+        $draft = collect($this->client->writes)->first(fn ($write) => $write[0] === '/2.0/kb_invoice');
+        $this->assertSame($this->config['language_id'], $draft[1]['language_id']);
+        Mail::assertNothingSent();
+    }
+
     public function test_snapshot_capped_amount_replay_and_complete_provider_cycle(): void
     {
         $id = $this->service->prepare($this->actor, $this->tenant, $this->pledge);

@@ -108,7 +108,7 @@ class BexioConnectionController
             }
             $service->connect($tenant, (array) $client->getTokenResponse(), $config['fingerprint'], $request->user('clubunio')->id);
 
-            return redirect()->route('clubunio.bexio.show')->with('notice', 'Bexio wurde für '.$tenant->name.' mit ClubUnio verbunden.');
+            return redirect()->route('clubunio.bexio.show')->with('notice', __('Bexio wurde für :tenant mit ClubUnio verbunden.', ['tenant' => $tenant->name]));
         } catch (\Throwable $error) {
             return $this->failure($tenant, $error);
         } finally {
@@ -145,7 +145,7 @@ class BexioConnectionController
         $reference = (string) Str::uuid();
         Log::warning('clubunio.bexio.connection_failed', ['tenant_id' => $tenant->id, 'reference' => $reference, 'status' => (int) $error->getCode()]);
 
-        return redirect()->route('clubunio.bexio.show')->with('connection_error', 'Bexio konnte für '.$tenant->name.' nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: '.$reference)
+        return redirect()->route('clubunio.bexio.show')->with('connection_error', __('Bexio konnte für :tenant nicht verbunden werden. Bitte Zugang und freigegebene Callback-Adresse prüfen. Referenz: :reference', ['tenant' => $tenant->name, 'reference' => $reference]))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 }

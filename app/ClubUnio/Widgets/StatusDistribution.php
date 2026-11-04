@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Widgets;
 
 use App\ClubUnio\Models\Member;
+use App\ClubUnio\Services\LookupTranslations;
 use App\ClubUnio\Services\StatusAppearance;
 use Filament\Facades\Filament;
 use Filament\Widgets\ChartWidget;
@@ -40,8 +41,11 @@ abstract class StatusDistribution extends ChartWidget
             ->select($statusId, 'dashboard_status.name')->selectRaw('count(*) as total')
             ->groupBy($statusId, 'dashboard_status.name')->get();
         $labels = $rows->map(fn ($row) => $row->name ?? 'Ohne Status')->all();
+        $colors = array_map(StatusAppearance::hex(...), $labels);
+        $display = $rows->map(fn ($row) => $row->name === null ? __('Ohne Status')
+            : app(LookupTranslations::class)->label($statusTable, ['id' => $row->status_id, 'tenant_id' => $tenant->id, 'name' => $row->name], tenant: (int) $tenant->id))->all();
 
-        return ['labels' => $labels, 'datasets' => [['label' => 'Anzahl', 'data' => $rows->pluck('total')->all(),
-            'backgroundColor' => array_map(StatusAppearance::hex(...), $labels)]]];
+        return ['labels' => $display, 'datasets' => [['label' => __('Anzahl'), 'data' => $rows->pluck('total')->all(),
+            'backgroundColor' => $colors]]];
     }
 }

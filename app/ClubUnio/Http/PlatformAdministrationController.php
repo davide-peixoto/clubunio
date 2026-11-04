@@ -33,7 +33,7 @@ final class PlatformAdministrationController
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:255']);
         $actor = Account::whereRaw('lower(username) = ?', [mb_strtolower(trim($data['username']))])->first();
         if (! $actor || ! Hash::check($data['password'], $actor->password) || ! $service->allowed($actor)) {
-            throw ValidationException::withMessages(['username' => 'Anmeldung nicht möglich.']);
+            throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich.')]);
         }
         Auth::guard('clubunio')->login($actor);
         $request->session()->regenerate();
@@ -56,14 +56,14 @@ final class PlatformAdministrationController
     {
         $tenant = $service->create($request->user('clubunio'), $request->except('_token'));
 
-        return redirect()->route('clubunio.platform.show', $tenant->id)->with('notice', 'Verein erstellt.');
+        return redirect()->route('clubunio.platform.show', $tenant->id)->with('notice', __('Verein erstellt.'));
     }
 
     public function createAccount(Request $request, PlatformAdministrationService $service)
     {
         $service->createAccount($request->user('clubunio'), $request->except('_token'));
 
-        return redirect()->route('clubunio.platform.index')->with('notice', 'Persönliches Konto erstellt.');
+        return redirect()->route('clubunio.platform.index')->with('notice', __('Persönliches Konto erstellt.'));
     }
 
     public function show(Request $request, int $id)
@@ -87,7 +87,7 @@ final class PlatformAdministrationController
     {
         $service->change($request->user('clubunio'), $id, $request->except('_token'));
 
-        return redirect()->route('clubunio.platform.show', $id)->with('notice', 'Änderung gespeichert.');
+        return redirect()->route('clubunio.platform.show', $id)->with('notice', __('Änderung gespeichert.'));
     }
 
     public function logout(Request $request)

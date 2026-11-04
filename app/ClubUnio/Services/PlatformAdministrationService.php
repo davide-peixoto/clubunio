@@ -56,7 +56,7 @@ final class PlatformAdministrationService
         $actor = Account::whereRaw('lower(username) = ?', [mb_strtolower(trim($username))])
             ->where('active', true)->where('api_only', false)->first();
         if (! $actor) {
-            throw ValidationException::withMessages(['username' => 'Aktives persönliches Konto nicht gefunden.']);
+            throw ValidationException::withMessages(['username' => __('Aktives persönliches Konto nicht gefunden.')]);
         }
 
         return $actor;
@@ -76,14 +76,14 @@ final class PlatformAdministrationService
             'display_name' => 'required|string|max:255', 'password' => 'required|string|min:12|max:72|confirmed',
             'reason' => 'required|string|min:10|max:500'])->validate();
         if (strlen($data['password']) > 72) {
-            throw ValidationException::withMessages(['password' => 'Passwort darf höchstens 72 UTF-8-Bytes enthalten.']);
+            throw ValidationException::withMessages(['password' => __('Passwort darf höchstens 72 UTF-8-Bytes enthalten.')]);
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $data) {
             $this->authorize($actor, true);
             $username = mb_strtolower(trim($data['username']));
             DB::connection('clubunio')->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-account:'.$username]);
             if (Account::whereRaw('lower(username) = ?', [$username])->exists()) {
-                throw ValidationException::withMessages(['username' => 'Benutzername ist bereits vergeben.']);
+                throw ValidationException::withMessages(['username' => __('Benutzername ist bereits vergeben.')]);
             }
             $account = new Account;
             $account->forceFill(['username' => $username, 'display_name' => trim($data['display_name']),
@@ -129,7 +129,7 @@ final class PlatformAdministrationService
         DB::connection('clubunio')->transaction(function () use ($actor, $id, $data, $input) {
             $this->authorize($actor, true);
             $tenant = Tenant::whereKey($id)->lockForUpdate()->firstOrFail();
-            abort_unless((int) $tenant->platform_revision === (int) $data['revision'], 409, 'Verein wurde inzwischen geändert.');
+            abort_unless((int) $tenant->platform_revision === (int) $data['revision'], 409, __('Verein wurde inzwischen geändert.'));
             $details = match ($data['operation']) {
                 'name' => $this->rename($tenant, $input),
                 'brand' => $this->brand($tenant, $input),
@@ -175,16 +175,16 @@ final class PlatformAdministrationService
         $central = [...config('clubunio-domains.central_hosts', []), parse_url(config('app.url'), PHP_URL_HOST), 'localhost'];
         if (in_array($data['host'], $central, true) || filter_var($data['host'], FILTER_VALIDATE_IP)
             || isset(config('clubunio-domains.hosts', [])[$data['host']])) {
-            throw ValidationException::withMessages(['host' => 'Zentrale oder bereits fest konfigurierte Domain ist reserviert.']);
+            throw ValidationException::withMessages(['host' => __('Zentrale oder bereits fest konfigurierte Domain ist reserviert.')]);
         }
         if ($data['active'] && (! $data['ownership_verified'] || ! $data['dns_verified'] || ! $data['tls_verified'])) {
-            throw ValidationException::withMessages(['host' => 'Aktivierung benötigt bestätigten Domainbesitz, DNS und TLS.']);
+            throw ValidationException::withMessages(['host' => __('Aktivierung benötigt bestätigten Domainbesitz, DNS und TLS.')]);
         }
         $table = DB::connection('clubunio')->table('clubora.tenant_domains');
         DB::connection('clubunio')->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-domain:'.$data['host']]);
         $old = (clone $table)->where('host', $data['host'])->lockForUpdate()->first();
         if ($old && (int) $old->tenant_id !== (int) $tenant->id) {
-            throw ValidationException::withMessages(['host' => 'Domain ist bereits einem anderen Verein zugeordnet.']);
+            throw ValidationException::withMessages(['host' => __('Domain ist bereits einem anderen Verein zugeordnet.')]);
         }
         $table->updateOrInsert(['host' => $data['host']], $data + ['tenant_id' => $tenant->id,
             'verified_by' => $actor->id, 'verified_at' => now()]);
@@ -215,7 +215,7 @@ final class PlatformAdministrationService
                 ->where('m.tenant_id', $tenant->id)->where('m.role', 'admin')->where('a.active', true)
                 ->where('a.api_only', false)->where('a.id', '<>', $account->id)->exists();
             if (! $other) {
-                throw ValidationException::withMessages(['role' => 'Der letzte aktive Vereinsadmin muss erhalten bleiben.']);
+                throw ValidationException::withMessages(['role' => __('Der letzte aktive Vereinsadmin muss erhalten bleiben.')]);
             }
         }
         $db->table('clubora.tenant_accounts')->updateOrInsert(['tenant_id' => $tenant->id, 'account_id' => $account->id],

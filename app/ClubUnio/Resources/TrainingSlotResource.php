@@ -35,13 +35,13 @@ class TrainingSlotResource extends ContributionTrainingResource
 
     public static function choices(string $category): array
     {
-        return TrainingOption::where('tenant_id', Filament::getTenant()->id)->where('active', true)->where('category', $category)->orderBy('sort_order')->pluck('name', 'id')->all();
+        return TrainingOption::where('tenant_id', Filament::getTenant()->id)->where('active', true)->where('category', $category)->orderBy('sort_order')->localizedPluck('name', 'id')->all();
     }
 
     public static function form(Schema $schema): Schema
     {
         $fields = [Hidden::make('revision'), Select::make('team_season_id')->label('Mannschaft / Saison')->options(fn () => static::options(TeamSeason::class, 'label'))->searchable()->required()];
-        foreach (['period' => 'Sommer / Winter', 'weekday' => 'Wochentag', 'field' => 'Spielfeld', 'room' => 'Garderobe', 'side' => 'Seite'] as $category => $label) {
+        foreach (['period' => 'Sommer / Winter', 'weekday' => 'Wochentag', 'field' => 'Spielfeld', 'room' => 'Garderobe', 'side' => 'Anlagenseite'] as $category => $label) {
             $fields[] = Select::make($category.'_id')->label($label)->options(fn () => static::choices($category))->required(in_array($category, ['period', 'weekday']));
         }
         $fields[] = TimePicker::make('starts_at')->label('Von')->seconds(false)->required();

@@ -51,7 +51,7 @@ class SfvPlanningService
         $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
         if (Time::parse($data['from'])->diffInDays(Time::parse($data['to'])) > 186) {
-            throw ValidationException::withMessages(['to' => 'Maximal 186 Tage pro Abruf.']);
+            throw ValidationException::withMessages(['to' => __('Maximal 186 Tage pro Abruf.')]);
         }
         try {
             $base = rtrim($this->setting($tenant, 'SFV_API_BASE_URL', 'https://stg-club-api-services.football.ch'), '/');
@@ -133,7 +133,7 @@ class SfvPlanningService
             }
             $reference = (string) Str::uuid();
             Log::warning('clubunio.sfv.refresh_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'provider_status' => (int) $error->getCode()]);
-            throw ValidationException::withMessages(['sfv' => 'SFV-Abruf fehlgeschlagen. Bestehende Termine bleiben unverändert. Referenz: '.$reference]);
+            throw ValidationException::withMessages(['sfv' => __('SFV-Abruf fehlgeschlagen. Bestehende Termine bleiben unverändert. Referenz: :value1', ['value1' => $reference])]);
         }
     }
 
@@ -153,10 +153,10 @@ class SfvPlanningService
             abort_unless($team, 403);
             $sfvTeam = (int) $p->table($tenant, 'teams')->where('id', $team->team_id)->value('sfv_team_id');
             if (! $sfvTeam || ! in_array($sfvTeam, [(int) $match->team_a_id, (int) $match->team_b_id], true)) {
-                throw ValidationException::withMessages(['team_season_id' => 'Die SFV-Team-ID passt nicht zu diesem Spiel.']);
+                throw ValidationException::withMessages(['team_season_id' => __('Die SFV-Team-ID passt nicht zu diesem Spiel.')]);
             }
             $old = $p->table($tenant, 'team_events', true)->where('team_season_id', $team->id)->where('sfv_match_id', $match->match_id)->first();
-            abort_if(($old->deleted_at ?? null) !== null, 409, 'Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.');
+            abort_if(($old->deleted_at ?? null) !== null, 409, __('Dieser SFV-Termin wurde entfernt und wird nicht erneut angelegt.'));
             if ($old) {
                 $p->conflict($old, ['revision' => $input['event_revision'] ?? 0]);
             } elseif (! empty($input['event_revision'])) {

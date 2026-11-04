@@ -47,9 +47,10 @@ final class ApiTokenService
         abort_unless($row, 403);
     }
 
-    public function scopes(): array
+    public function scopes(bool $translateLabels = false): array
     {
-        $scopes = array_map(fn ($row) => $row[2], self::WEBSITE);
+        $label = fn (string $text): string => $translateLabels ? __($text) : $text;
+        $scopes = array_map(fn ($row) => $label($row[2]), self::WEBSITE);
         $functions = [];
         foreach (app(ApiModuleRegistry::class)->definitions() as $definition) {
             $module = $definition['permission_module'];
@@ -75,7 +76,7 @@ final class ApiTokenService
         }
         foreach (app(ProviderApiRegistry::class)->definitions() as $definition) {
             foreach ($definition['scopes'] as $scope => [$module, $function]) {
-                $scopes[$scope] = PermissionCatalog::MODULES[$module].': '.(PermissionCatalog::functions($module)[$function] ?? $function);
+                $scopes[$scope] = $label(PermissionCatalog::MODULES[$module]).': '.$label(PermissionCatalog::functions($module)[$function] ?? $function);
             }
         }
         foreach (['signage' => ['send'], 'documents' => ['send', 'create'], 'training' => ['send'], 'planning' => ['cancel', 'restore'],
@@ -86,7 +87,7 @@ final class ApiTokenService
             foreach (array_unique($enabled) as $function) {
                 $caption = PermissionCatalog::functions($module)[$function] ?? null;
                 if ($caption) {
-                    $scopes[$module.':'.($function === 'view' ? 'read' : $function)] = PermissionCatalog::MODULES[$module].': '.$caption;
+                    $scopes[$module.':'.($function === 'view' ? 'read' : $function)] = $label(PermissionCatalog::MODULES[$module]).': '.$label($caption);
                 }
             }
         }

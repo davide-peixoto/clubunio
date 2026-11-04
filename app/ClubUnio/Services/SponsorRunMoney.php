@@ -12,7 +12,7 @@ class SponsorRunMoney
     {
         return function (string $attribute, mixed $value, Closure $fail): void {
             if (self::parse($value) === null) {
-                $fail('Bitte einen CHF-Betrag zwischen 0.01 und 100000.00 mit höchstens zwei Nachkommastellen eingeben.');
+                $fail(__('Bitte einen CHF-Betrag zwischen 0.01 und 100000.00 mit höchstens zwei Nachkommastellen eingeben.'));
             }
         };
     }
@@ -33,7 +33,7 @@ class SponsorRunMoney
         $data = Validator::make($input, [
             'amount_chf' => ['required', self::rule()],
             'cap_chf' => ['nullable', self::rule()],
-        ], [], ['amount_chf' => 'Betrag (CHF)', 'cap_chf' => 'Obergrenze (CHF)'])->validate();
+        ], [], ['amount_chf' => __('Betrag (CHF)'), 'cap_chf' => __('Obergrenze (CHF)')])->validate();
         // Never trust a separately submitted cents field alongside the CHF input.
         $input['amount_cents'] = self::parse($data['amount_chf']);
         $input['cap_cents'] = isset($data['cap_chf']) && $data['cap_chf'] !== '' ? self::parse($data['cap_chf']) : null;

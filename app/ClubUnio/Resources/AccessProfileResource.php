@@ -63,7 +63,7 @@ class AccessProfileResource extends CatalogResource
             Select::make('mobile_modules')->label('Sichtbare App-Module')->multiple()->searchable()->preload()
                 ->options(fn () => app(\App\ClubUnio\Services\MobileModuleSettings::class)->options(Filament::getTenant()))
                 ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get) => $get('mobile_modules_limited'))->default([]),
-            Select::make('preset')->label('Vorlage')->options(['empty' => 'Ohne Rechte', 'read' => 'Nur Lesen'])
+            Select::make('preset')->label('Vorlage')->options(['empty' => __('Ohne Rechte'), 'read' => __('Nur Lesen')])
                 ->live()->dehydrated(false)->afterStateUpdated(function (?string $state, Set $set) {
                     if (! in_array($state, ['empty', 'read'], true)) {
                         return;
@@ -74,8 +74,8 @@ class AccessProfileResource extends CatalogResource
                 }),
         ];
         foreach (PermissionCatalog::MODULES as $module => $label) {
-            $fields[] = Section::make($label)->collapsible()->collapsed()->schema([
-                CheckboxList::make('modules.'.$module)->label('Berechtigungen')->options(PermissionCatalog::functions($module))
+            $fields[] = Section::make(__($label))->collapsible()->collapsed()->schema([
+                CheckboxList::make('modules.'.$module)->label('Berechtigungen')->options(array_map(fn ($name) => __($name), PermissionCatalog::functions($module)))
                     ->columns(2)->searchable()->default([])->live()
                     ->afterStateUpdated(function (?array $state, Set $set) use ($module) {
                         $state ??= [];
@@ -97,7 +97,7 @@ class AccessProfileResource extends CatalogResource
             $modules[$module][] = $function;
         }
 
-        return ['name' => $copy ? $record->name.' (Kopie)' : $record->name,
+        return ['name' => $copy ? $record->name.' ('.__('Kopie').')' : $record->name,
             'description' => $record->description, 'active' => $record->active,
             'mobile_modules_limited' => $record->mobile_modules !== null, 'mobile_modules' => $record->mobile_modules ?? [],
             'modules' => $modules, 'revision' => $copy ? 0 : $record->revision];
@@ -134,11 +134,11 @@ class AccessProfileResource extends CatalogResource
                 ->schema(self::fields())->action(fn (array $data, $livewire) => FormMutation::run($livewire,
                     fn () => app(AccessProfileService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, self::input($data))))])
             ->recordActions([
-                Action::make('editProfile')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Profil bearbeiten')
+                Action::make('editProfile')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Profil bearbeiten'))
                     ->schema(self::fields())->fillForm(fn (AccessProfile $record) => self::formValues($record))
                     ->action(fn (AccessProfile $record, array $data, $livewire) => FormMutation::run($livewire,
                         fn () => app(AccessProfileService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, self::input($data)))),
-                Action::make('copyProfile')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Profil kopieren')
+                Action::make('copyProfile')->label('Kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Profil kopieren'))
                     ->schema(self::fields())->fillForm(fn (AccessProfile $record) => self::formValues($record, true))
                     ->action(fn (array $data, $livewire) => FormMutation::run($livewire,
                         fn () => app(AccessProfileService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, self::input($data)))),

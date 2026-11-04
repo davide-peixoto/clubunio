@@ -31,7 +31,7 @@ class ContributionTrainingService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $record->revision) {
-                throw ValidationException::withMessages(['revision' => 'Der Datensatz wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde geändert. Bitte neu laden.')]);
             }
             $exists = fn ($table) => Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true));
             $rules = ['active' => 'required|boolean', 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:1'];
@@ -60,7 +60,7 @@ class ContributionTrainingService
                 }
             }
             if (array_diff(array_keys($input), array_keys($rules))) {
-                throw ValidationException::withMessages(['form' => 'Unbekannte oder geschützte Felder.']);
+                throw ValidationException::withMessages(['form' => __('Unbekannte oder geschützte Felder.')]);
             }
             $data = Validator::make($input, $rules)->validate();
             app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
@@ -68,10 +68,10 @@ class ContributionTrainingService
                 app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $data['active'] ? 'restore' : 'deactivate');
             }
             if ($model === TrainingSlot::class && empty($data['field_id']) && empty($data['hall'])) {
-                throw ValidationException::withMessages(['field_id' => 'Bitte Spielfeld oder Halle angeben.']);
+                throw ValidationException::withMessages(['field_id' => __('Bitte Spielfeld oder Halle angeben.')]);
             }
             if ($model === ContributionRule::class && $data['active'] && ContributionRule::where('tenant_id', $tenant->id)->where('season_id', $data['season_id'])->where('gender_id', $data['gender_id'])->where('active', true)->where('id', '!=', $id ?? 0)->where('year_from', '<=', $data['year_to'])->where('year_to', '>=', $data['year_from'])->exists()) {
-                throw ValidationException::withMessages(['year_from' => 'Dieser Jahrgangsbereich überschneidet sich mit einem aktiven Beitragssatz.']);
+                throw ValidationException::withMessages(['year_from' => __('Dieser Jahrgangsbereich überschneidet sich mit einem aktiven Beitragssatz.')]);
             }
             unset($data['revision']);
             $before = $id ? $record->only(array_keys($data)) : null;

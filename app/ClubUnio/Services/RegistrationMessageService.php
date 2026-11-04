@@ -20,13 +20,10 @@ class RegistrationMessageService
             'delivery_state' => $payload ? 'ready' : 'held',
             'payload_encrypted' => $payload ? Crypt::encryptString(json_encode($payload, JSON_THROW_ON_ERROR)) : null,
         ]);
-        $message = app(MessageTemplateService::class)->render($tenant, $event, 'push', [
+        $messageValues = [
             'verein' => $tenant->name, 'mitglied' => trim($r->first_name.' '.$r->last_name),
             'mannschaft' => $db->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('id', $r->team_season_id)->value('label') ?? '',
-        ]);
-        if (! $message) {
-            return;
-        }
+        ];
         $accounts = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')
             ->where('ta.tenant_id', $tenant->id)->where('a.active', true);
         if ($event === 'registration.created') {
@@ -46,6 +43,10 @@ class RegistrationMessageService
                 ->whereIn('member_id', $members->select('clubora.members.id'))->select('account_id'));
         }
         foreach ($accounts->distinct()->pluck('ta.account_id') as $account) {
+            $message = app(MessageTemplateService::class)->renderForAccount($tenant, $event, 'push', $messageValues, $account);
+            if (! $message) {
+                continue;
+            }
             $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                 'registration_event_id' => $id, 'title' => $message['title'], 'body' => $message['body'],
                 'object_type' => 'registration', 'object_id' => $r->id]);
@@ -71,12 +72,24 @@ class RegistrationMessageService
                 ->pluck('email')->map(fn ($email) => mb_strtolower(trim($email ?? '')))
                 ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL) && $email !== mb_strtolower($to))->unique()->values()->all();
         }
-        $message = app(MessageTemplateService::class)->render($tenant, $event, 'email', [
+        $messageValues = [
             'verein' => $tenant->name, 'mitglied' => trim($r->first_name.' '.$r->last_name),
             'mannschaft' => $db->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('id', $r->team_season_id)->value('label') ?? '',
-        ]);
+        ];
+        $templates = app(MessageTemplateService::class);
+        $message = $templates->renderForEmail($tenant, $event, $messageValues, $to);
+        if (! $message) {
+            return null;
+        }
+        $deliveries = [$message + ['intended_to' => $to, 'intended_cc' => []]];
+        foreach ($cc as $email) {
+            $copy = $templates->renderForEmail($tenant, $event, $messageValues, $email);
+            if ($copy) {
+                $deliveries[] = $copy + ['intended_to' => [], 'intended_cc' => [$email]];
+            }
+        }
 
-        return $message ? $message + ['intended_to' => $to, 'intended_cc' => $cc] : null;
+        return $message + ['intended_to' => $to, 'intended_cc' => $cc, 'deliveries' => $deliveries];
     }
 
     public function dispatch(int $limit = 20): array

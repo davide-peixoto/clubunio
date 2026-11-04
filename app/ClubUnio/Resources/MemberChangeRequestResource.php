@@ -50,11 +50,11 @@ class MemberChangeRequestResource extends CatalogResource
             TextColumn::make('status.name')->label('Status')->badge()->color(fn ($state) => StatusAppearance::palette($state)),
             TextColumn::make('created_at')->label('Eingereicht')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             TextColumn::make('reviewed_at')->label('Entscheid')->dateTime('d.m.Y H:i', 'Europe/Zurich'),
-        ])->filters([SelectFilter::make('state')->label('Status')->options(fn () => MemberChangeStatus::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->pluck('name', 'code'))->default('pending')])
+        ])->filters([SelectFilter::make('state')->label('Status')->options(fn () => MemberChangeStatus::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->localizedPluck('name', 'code'))->default('pending')])
             ->recordActions([
-                Action::make('compare')->label('Vergleichen')->icon('heroicon-o-eye')->iconButton()->tooltip('Änderungen vergleichen')->slideOver()->modalContent($comparison)->modalSubmitAction(false),
+                Action::make('compare')->label('Vergleichen')->icon('heroicon-o-eye')->iconButton()->tooltip(__('Änderungen vergleichen'))->slideOver()->modalContent($comparison)->modalSubmitAction(false),
                 ...array_map(fn ($approve) => Action::make($approve ? 'approve' : 'reject')->label($approve ? 'Genehmigen' : 'Ablehnen')
-                    ->icon($approve ? 'heroicon-o-check' : 'heroicon-o-x-mark')->color($approve ? 'success' : 'danger')->iconButton()->tooltip($approve ? 'Genehmigen' : 'Ablehnen')
+                    ->icon($approve ? 'heroicon-o-check' : 'heroicon-o-x-mark')->color($approve ? 'success' : 'danger')->iconButton()->tooltip($approve ? __('Genehmigen') : __('Ablehnen'))
                     ->visible(fn ($record) => $record->state === 'pending')->slideOver()->modalContent($comparison)
                     ->fillForm(fn ($record) => ['revision' => $record->revision])
                     ->schema([Hidden::make('revision')->required(), Textarea::make('note')->label('Rückmeldung')->required(! $approve)->maxLength(2000)])

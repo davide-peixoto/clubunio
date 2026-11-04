@@ -52,7 +52,7 @@ class BankAccountReportResource extends CatalogResource
         return $table->columns([
             TextColumn::make('member.display_name')->label('Mitglied')->searchable(query: fn (Builder $query, string $search) => $query->whereHas('member', fn ($q) => $q->where(fn ($q) => $q
                 ->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%')))),
-            TextColumn::make('bank.name')->label('Bank')->searchable()->sortable()->placeholder('Keine Bank zugeordnet'),
+            TextColumn::make('bank.name')->label('Bank')->searchable()->sortable()->placeholder(__('Keine Bank zugeordnet')),
             TextColumn::make('masked_iban')->label('IBAN'),
             TextColumn::make('bank.city')->label('Bankort')->toggleable(),
             TextColumn::make('bank.swift')->label('SWIFT')->toggleable(),
@@ -70,9 +70,9 @@ class BankAccountReportResource extends CatalogResource
             IconColumn::make('active')->label('Aktiv')->boolean(),
         ])->filters([
             SelectFilter::make('bank_id')->label('Bank')->searchable()
-                ->options(fn () => Bank::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
+                ->options(fn () => Bank::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')),
             SelectFilter::make('staff_season')->label('Staff in Saison')->searchable()
-                ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id'))
+                ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->localizedPluck('name', 'id'))
                 ->query(function (Builder $query, array $data) {
                     $value = $data['value'] ?? null;
                     if ($value === null || $value === '') {
@@ -88,7 +88,7 @@ class BankAccountReportResource extends CatalogResource
                 }),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
         ])->headerActions([ReportExportService::action('banks')])->recordActions([
-            ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')
+            ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))
                 ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record->member_id])),
         ])->defaultSort('id', 'desc')->paginated([25, 50, 100])
             ->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();

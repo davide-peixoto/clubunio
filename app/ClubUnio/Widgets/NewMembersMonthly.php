@@ -13,7 +13,10 @@ class NewMembersMonthly extends ChartWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('members');
     }
 
-    protected ?string $heading = 'Neue Mitglieder pro Monat';
+    public function getHeading(): string
+    {
+        return __('Neue Mitglieder pro Monat');
+    }
 
     protected ?string $pollingInterval = null;
 
@@ -29,6 +32,6 @@ class NewMembersMonthly extends ChartWidget
         abort_unless(static::canView(), 403);
         $data = app(DashboardService::class)->newMembersMonthly(Filament::auth()->user(), Filament::getTenant());
 
-        return ['labels' => array_keys($data), 'datasets' => [['label' => 'Neu erfasst', 'data' => array_values($data), 'backgroundColor' => '#164B8A']]];
+        return ['labels' => array_keys($data), 'datasets' => [['label' => __('Neu erfasst'), 'data' => array_values($data), 'backgroundColor' => '#164B8A']]];
     }
 }

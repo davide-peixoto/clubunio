@@ -56,12 +56,12 @@ class TrainingPlansTable extends PlanningAdminTable
                 TextColumn::make('team_season_id')->label('Mannschaft')->formatStateUsing(fn ($state) => $teams->firstWhere('id', $state)?->label),
                 TextColumn::make('shared')->label('Freigabe')->badge()->sortable()
                     ->color(fn ($state) => StatusAppearance::palette($state ? 'Teamverantwortliche' : 'Privat'))
-                    ->formatStateUsing(fn ($state) => $state ? 'Teamverantwortliche' : 'Privat'),
+                    ->formatStateUsing(fn ($state) => $state ? __('Teamverantwortliche') : __('Privat')),
                 TextColumn::make('updated_at')->label('Geändert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             ])
             ->filters([
                 SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
-                SelectFilter::make('archived')->label('Bestand')->options(['0' => 'Aktuell', '1' => 'Archiv'])->default('0')->selectablePlaceholder(false),
+                SelectFilter::make('archived')->label('Bestand')->options(['0' => __('Aktuell'), '1' => __('Archiv')])->default('0')->selectablePlaceholder(false),
             ])->deferFilters(false)
             ->headerActions([
                 Action::make('legacy')->label('Altpläne prüfen und zuordnen')->icon('heroicon-o-archive-box')->color('gray')
@@ -71,7 +71,7 @@ class TrainingPlansTable extends PlanningAdminTable
                     ->visible(fn () => ProfileUi::profileAllows($actor, $tenant, 'training', 'create')),
             ])
             ->defaultSort('updated_at', 'desc')->paginationPageOptions([10, 20, 50, 100])->defaultPaginationPageOption(20)
-            ->modelLabel('Trainingsplan')->pluralModelLabel('Trainingspläne')
-            ->emptyStateHeading('Keine Trainingspläne vorhanden.')->emptyStateDescription(null);
+            ->modelLabel(__('Trainingsplan'))->pluralModelLabel(__('Trainingspläne'))
+            ->emptyStateHeading(__('Keine Trainingspläne vorhanden.'))->emptyStateDescription(null);
     }
 }

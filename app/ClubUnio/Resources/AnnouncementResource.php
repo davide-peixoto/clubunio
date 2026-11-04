@@ -66,13 +66,13 @@ class AnnouncementResource extends CatalogResource
     {
         return [Hidden::make('revision')->default(0), TextInput::make('title')->label('Titel')->required()->maxLength(200),
             Textarea::make('body')->label('Nachricht')->required()->rows(8)->maxLength(10000),
-            Select::make('target_type')->label('Empfängergruppe')->options(AnnouncementService::TARGETS)->default('all')->required()->live()
+            Select::make('target_type')->label('Empfängergruppe')->options(array_map(fn ($name) => __($name), AnnouncementService::TARGETS))->default('all')->required()->live()
                 ->afterStateUpdated(fn (Set $set) => $set('target_ids', [])),
             Select::make('target_ids')->label('Auswahl')->multiple()->searchable()->default([])->required(fn (Get $get) => $get('target_type') !== 'all')
                 ->key(fn (Get $get) => 'announcement-target-'.($get('target_type') ?? 'all'))
                 ->visible(fn (Get $get) => $get('target_type') !== 'all')->dehydrated(true)
                 ->options(fn (Get $get) => match ($get('target_type')) {
-                    'roles' => AccountRole::where('active', true)->orderBy('name')->pluck('name', 'code')->all(),
+                    'roles' => AccountRole::where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all(),
                     default => [],
                 })
                 ->getSearchResultsUsing(fn (Get $get, string $search) => app(AnnouncementChoices::class)->search(Filament::getTenant(), $get('target_type') ?? '', $search))
@@ -84,37 +84,42 @@ class AnnouncementResource extends CatalogResource
     {
         $save = fn ($id, $data) => app(AnnouncementService::class)->save(Filament::auth()->user(), Filament::getTenant(), $id, $data + ['target_ids' => []]);
         $preview = fn (Announcement $record) => view('clubunio.messages.announcement-preview', app(AnnouncementService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $record->id));
-        $states = AnnouncementService::states(Filament::getTenant());
+        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.announcement_statuses')
+            ->where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->get();
+        $rawStates = $statusRows->pluck('name', 'code')->all();
+        $states = $statusRows->mapWithKeys(fn ($row) => [
+            $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('announcement_statuses', $row),
+        ])->all();
 
         return $table->columns([
             TextColumn::make('title')->label('Titel')->searchable()->wrap(),
             TextColumn::make('state')->label('Status')->formatStateUsing(fn ($state) => $states[$state] ?? $state)->badge()
-                ->color(fn ($state) => StatusAppearance::palette($states[$state] ?? $state)),
-            TextColumn::make('target_type')->label('Empfängergruppe')->formatStateUsing(fn ($state) => AnnouncementService::TARGETS[$state] ?? $state)->wrap(),
+                ->color(fn ($state) => StatusAppearance::palette($rawStates[$state] ?? $state)),
+            TextColumn::make('target_type')->label('Empfängergruppe')->formatStateUsing(fn ($state) => __(AnnouncementService::TARGETS[$state] ?? $state))->wrap(),
             TextColumn::make('recipient_count')->label('Empfänger')->numeric(),
             TextColumn::make('read_count')->label('Als gelesen markiert')->numeric(),
             TextColumn::make('published_at')->label('Veröffentlicht')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
             TextColumn::make('revision')->label('Version'),
         ])->filters([SelectFilter::make('state')->label('Status')->options($states)])
-            ->headerActions([Action::make('newAnnouncement')->label('Entwurf erstellen')->icon('heroicon-o-plus')->slideOver()->modalSubmitActionLabel('Entwurf speichern')->schema(self::fields())
+            ->headerActions([Action::make('newAnnouncement')->label('Entwurf erstellen')->icon('heroicon-o-plus')->slideOver()->modalSubmitActionLabel(__('Entwurf speichern'))->schema(self::fields())
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => $save(null, $data)))])
             ->recordActions([
-                Action::make('duplicate')->label('Als Entwurf kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip('Als neuen Entwurf kopieren')->requiresConfirmation()
+                Action::make('duplicate')->label('Als Entwurf kopieren')->icon('heroicon-o-document-duplicate')->iconButton()->tooltip(__('Als neuen Entwurf kopieren'))->requiresConfirmation()
                     ->action(fn ($record, $livewire) => FormMutation::run($livewire, fn () => app(AnnouncementService::class)->duplicate(Filament::auth()->user(), Filament::getTenant(), $record->id))),
-                Action::make('editDraft')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Entwurf bearbeiten')->slideOver()->visible(fn ($record) => $record->state === 'draft')
+                Action::make('editDraft')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Entwurf bearbeiten'))->slideOver()->visible(fn ($record) => $record->state === 'draft')
                     ->fillForm(fn ($record) => $record->only(['revision', 'title', 'body', 'target_type', 'target_ids']))->schema(self::fields())
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $save($record->id, $data))),
-                Action::make('publish')->label('Vorschau und Veröffentlichung')->icon('heroicon-o-paper-airplane')->iconButton()->tooltip('Vorschau und interne Veröffentlichung')->slideOver()
-                    ->visible(fn ($record) => $record->state === 'draft')->modalHeading('Intern veröffentlichen')->modalSubmitActionLabel('Intern veröffentlichen')
+                Action::make('publish')->label('Vorschau und Veröffentlichung')->icon('heroicon-o-paper-airplane')->iconButton()->tooltip(__('Vorschau und interne Veröffentlichung'))->slideOver()
+                    ->visible(fn ($record) => $record->state === 'draft')->modalHeading(__('Intern veröffentlichen'))->modalSubmitActionLabel(__('Intern veröffentlichen'))
                     ->fillForm(fn ($record, $livewire) => self::publicationAttempt($livewire, fn () => app(AnnouncementService::class)->prepare(Filament::auth()->user(), Filament::getTenant(), $record->id, $record->revision)))
                     ->modalContent($preview)->schema([Hidden::make('revision'), Hidden::make('preview_token'), Checkbox::make('confirmed')->label('Text und Empfänger geprüft; intern veröffentlichen')->accepted()->required()])
                     ->action(function ($record, array $data, $livewire) {
                         $count = self::publicationAttempt($livewire, fn () => app(AnnouncementService::class)->publish(Filament::auth()->user(), Filament::getTenant(), $record->id, (int) $data['revision'], $data['preview_token']));
-                        Notification::make()->title('Intern veröffentlicht: '.$count.' Empfänger')->success()->send();
+                        Notification::make()->title(__('Intern veröffentlicht: :count Empfänger', ['count' => $count]))->success()->send();
                     }),
-                Action::make('details')->label('Details')->icon('heroicon-o-eye')->iconButton()->tooltip('Veröffentlichte Nachricht')->slideOver()->visible(fn ($record) => $record->state !== 'draft')->modalContent($preview)->modalSubmitAction(false),
-                Action::make('withdraw')->label('Zurückziehen')->icon('heroicon-o-archive-box-x-mark')->iconButton()->tooltip('Zurückziehen')->visible(fn ($record) => $record->state !== 'withdrawn')
-                    ->requiresConfirmation()->modalDescription('Der Inhalt wird im Portal und in den internen Benachrichtigungen zurückgezogen. Das Protokoll bleibt erhalten.')
+                Action::make('details')->label('Details')->icon('heroicon-o-eye')->iconButton()->tooltip(__('Veröffentlichte Nachricht'))->slideOver()->visible(fn ($record) => $record->state !== 'draft')->modalContent($preview)->modalSubmitAction(false),
+                Action::make('withdraw')->label('Zurückziehen')->icon('heroicon-o-archive-box-x-mark')->iconButton()->tooltip(__('Zurückziehen'))->visible(fn ($record) => $record->state !== 'withdrawn')
+                    ->requiresConfirmation()->modalDescription(__('Der Inhalt wird im Portal und in den internen Benachrichtigungen zurückgezogen. Das Protokoll bleibt erhalten.'))
                     ->fillForm(fn ($record) => ['revision' => $record->revision])->schema([Hidden::make('revision')])
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AnnouncementService::class)->withdraw(Filament::auth()->user(), Filament::getTenant(), $record->id, (int) $data['revision']))),
             ])->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();
@@ -130,7 +135,7 @@ class AnnouncementResource extends CatalogResource
         try {
             return FormMutation::run($livewire, $work);
         } catch (ValidationException $e) {
-            Notification::make()->title('Veröffentlichung nicht möglich')->body(collect($e->errors())->flatten()->first())->danger()->send();
+            Notification::make()->title(__('Veröffentlichung nicht möglich'))->body(collect($e->errors())->flatten()->first())->danger()->send();
             throw $e;
         }
     }

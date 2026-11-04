@@ -30,7 +30,7 @@ class ExpenseDocumentService
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         $reference = $upload->folder.$upload->filename;
         if (! in_array($reference, $files, true)) {
-            abort_if(count($files) >= 10, 422, 'Maximal zehn Anhänge pro Position.');
+            abort_if(count($files) >= 10, 422, __('Maximal zehn Anhänge pro Position.'));
             $files[] = $reference;
             $line->forceFill(['storage_reference' => implode(',', $files), 'filename' => $line->filename ?: $metadata['original_filename'], 'revision' => $line->revision + 1])->save();
             $line->expense()->increment('revision');

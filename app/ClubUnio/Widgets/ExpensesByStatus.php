@@ -11,7 +11,10 @@ class ExpensesByStatus extends StatusDistribution
         return \App\ClubUnio\Resources\ProfileUi::allows('expenses');
     }
 
-    protected ?string $heading = 'Spesenbelege nach Status';
+    public function getHeading(): string
+    {
+        return __('Spesenbelege nach Status');
+    }
 
     protected function modelClass(): string
     {

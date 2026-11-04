@@ -47,9 +47,9 @@ class LegacyMaterialReceiptService
                     continue;
                 }
                 $document = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('legacy_id', $legacyId)->where('active', true)->sole();
-                abort_unless(preg_match('/^[a-f0-9]{64}$/iD', (string) $sha), 409, 'Historischer Dokumenthash fehlt.');
+                abort_unless(preg_match('/^[a-f0-9]{64}$/iD', (string) $sha), 409, __('Historischer Dokumenthash fehlt.'));
                 $bytes = app(AzureDocumentReader::class)->read($document->storage_path, $document->filename);
-                abort_unless(str_starts_with($bytes, '%PDF-') && hash_equals(strtolower($sha), hash('sha256', $bytes)), 409, 'Historisches Dokument stimmt nicht mit dem Nachweis überein.');
+                abort_unless(str_starts_with($bytes, '%PDF-') && hash_equals(strtolower($sha), hash('sha256', $bytes)), 409, __('Historisches Dokument stimmt nicht mit dem Nachweis überein.'));
                 $documents[$kind] = ['id' => $document->id, 'hash' => strtolower($sha)];
             }
             abort_if($source->Status === 'UNTERSCHRIEBEN' && (! isset($documents['signed']) || ! $source->SigniertAm || ! $source->SigniertName), 409);

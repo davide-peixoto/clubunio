@@ -35,8 +35,8 @@ class SponsorRunService
     {
         $this->authorize($actor, $tenant);
 
-        return ['seasons' => $this->db()->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->pluck('name', 'id')->all(),
-            'statuses' => $this->db()->table('clubora.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->pluck('name', 'code')->all(),
+        return ['seasons' => $this->db()->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->localizedPluck('name', 'id')->all(),
+            'statuses' => $this->db()->table('clubora.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->localizedPluck('name', 'code')->all(),
             'teams' => $season ? $this->teams($tenant, $season)->orderBy('st.label')->pluck('st.label', 'st.id')->all() : []];
     }
 
@@ -66,8 +66,8 @@ class SponsorRunService
             $before = $event->exists ? $event->toArray() : null;
             if ($id) {
                 $this->revision($event, (int) $data['revision']);
-                abort_if($event->status_code === 'cancelled', 409, 'Absage ist endgültig.');
-                abort_unless((int) $event->season_id === (int) $data['season_id'], 409, 'Saison ist unveraenderlich.');
+                abort_if($event->status_code === 'cancelled', 409, __('Absage ist endgültig.'));
+                abort_unless((int) $event->season_id === (int) $data['season_id'], 409, __('Saison ist unveraenderlich.'));
                 abort_if($event->status_code !== 'draft' && $data['status_code'] === 'draft', 409);
                 if ($data['status_code'] === 'cancelled') {
                     $this->authorize($actor, $tenant, 'cancel');
@@ -273,7 +273,7 @@ class SponsorRunService
             } else {
                 $laps = self::integer($value, 0, 10000);
                 if ($action === 'approve') {
-                    abort_unless($p->draft_laps !== null && $p->draft_laps === $laps, 409, 'Aktuellen Rundenentwurf explizit bestätigen.');
+                    abort_unless($p->draft_laps !== null && $p->draft_laps === $laps, 409, __('Aktuellen Rundenentwurf explizit bestätigen.'));
                     $p->forceFill(['final_laps' => $laps, 'approved_at' => now(), 'approved_by' => $actor->id]);
                 } else {
                     $p->forceFill(['draft_laps' => $laps]);
@@ -340,7 +340,7 @@ class SponsorRunService
 
     public function requireOpen(SponsorRunEvent $event, SponsorRunParticipant $p): void
     {
-        abort_unless($event->status_code === 'open' && $event->registration_deadline->toDateString() >= $this->today() && $p->required && $p->approved_at === null, 409, 'Zusagefrist oder Teilnahme ist geschlossen.');
+        abort_unless($event->status_code === 'open' && $event->registration_deadline->toDateString() >= $this->today() && $p->required && $p->approved_at === null, 409, __('Zusagefrist oder Teilnahme ist geschlossen.'));
     }
 
     public function canAddPledge(Account $actor, Tenant $tenant, SponsorRunParticipant $p): bool
@@ -407,7 +407,7 @@ class SponsorRunService
         $hash = hash('sha256', json_encode([$p->id, $actor?->id, $data], JSON_THROW_ON_ERROR));
         $old = SponsorRunPledge::where('tenant_id', $tenant->id)->where('request_key', $data['request_key'])->first();
         if ($old) {
-            abort_unless(hash_equals($old->payload_hash, $hash), 409, 'Anfragekennung bereits verwendet.');
+            abort_unless(hash_equals($old->payload_hash, $hash), 409, __('Anfragekennung bereits verwendet.'));
 
             return $old;
         }
@@ -475,7 +475,7 @@ class SponsorRunService
 
     public function revision(object $row, int $revision): void
     {
-        abort_unless((int) $row->revision === $revision, 409, 'Zwischenzeitlich geändert. Bitte neu laden.');
+        abort_unless((int) $row->revision === $revision, 409, __('Zwischenzeitlich geändert. Bitte neu laden.'));
     }
 
     public function today(): string

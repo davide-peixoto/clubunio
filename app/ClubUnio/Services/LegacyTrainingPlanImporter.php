@@ -173,11 +173,11 @@ class LegacyTrainingPlanImporter
                 return $row->plan_id;
             }
             if ($row->state !== 'review' || (int) $row->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Der Altplan ist geändert oder nicht übernahmefähig.']);
+                throw ValidationException::withMessages(['revision' => __('Der Altplan ist geändert oder nicht übernahmefähig.')]);
             }
             $source = app(LegacyTrainingPlanSource::class);
             $current = $source->rows($tenant)->firstWhere('TrainingPlannerAuditLogID', $row->source_id);
-            abort_unless($current && hash_equals($row->source_hash, $source->hash($current)), 409, 'Altbestand wurde geändert. Übernahme gesperrt.');
+            abort_unless($current && hash_equals($row->source_hash, $source->hash($current)), 409, __('Altbestand wurde geändert. Übernahme gesperrt.'));
             $teams = $this->teams($actor, $tenant, (int) $data['owner_id']);
             abort_unless(isset($teams[$data['team_season_id']]), 403);
             $plan = app(TrainingPlanContent::class)->validate($row->plan_json, $row->input_json['durationMinutes'], false);

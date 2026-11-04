@@ -115,7 +115,7 @@ class SponsorRunBillingService
             }
             $source = app(SponsorRunService::class)->billingSource($actor, $tenant, $pledge);
             abort_unless($this->configuration($tenant)['enabled'] && $source['total_cents'] > 0, 409,
-                'Abrechnung aktivieren und Runden freigeben; Nullbeträge werden nicht fakturiert.');
+                __('Abrechnung aktivieren und Runden freigeben; Nullbeträge werden nicht fakturiert.'));
             $id = $this->table($tenant)->insertGetId(['tenant_id' => $tenant->id, 'pledge_id' => $pledge, 'event_id' => $source['event_id'],
                 'reference' => (string) Str::uuid(), 'connection_hash' => $this->binding($tenant), 'configuration_hash' => $this->fingerprint($tenant),
                 'snapshot_encrypted' => Crypt::encryptString(json_encode($source + ['invoice_date' => now('Europe/Zurich')->toDateString()], JSON_THROW_ON_ERROR)),
@@ -140,9 +140,9 @@ class SponsorRunBillingService
         $this->authorize($actor, $tenant, $this->function($action));
         abort_unless(BexioConnectionService::canManage($actor, $tenant), 403);
         $row = $this->get($actor, $tenant, $id);
-        abort_unless(hash_equals($row->connection_hash, $this->binding($tenant)), 409, 'Bexio-Verbindung wurde geändert.');
+        abort_unless(hash_equals($row->connection_hash, $this->binding($tenant)), 409, __('Bexio-Verbindung wurde geändert.'));
         if (! in_array($action, ['sync', 'refresh-preview'], true)) {
-            abort_unless(hash_equals($row->configuration_hash, $this->fingerprint($tenant)) && $this->configuration($tenant)['enabled'], 409, 'Abrechnungskonfiguration wurde geändert.');
+            abort_unless(hash_equals($row->configuration_hash, $this->fingerprint($tenant)) && $this->configuration($tenant)['enabled'], 409, __('Abrechnungskonfiguration wurde geändert.'));
         }
         $lease = (string) Str::uuid();
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $action, $lease, $row) {
@@ -150,8 +150,8 @@ class SponsorRunBillingService
             $this->authorize($actor, $tenant, $this->function($action));
             abort_unless(BexioConnectionService::canManage($actor, $tenant), 403);
             $current = $this->table($tenant)->where('id', $id)->lockForUpdate()->first();
-            abort_unless($current && (int) $current->revision === $revision, 409, 'Rechnung wurde geändert.');
-            abort_unless(! $current->operation_token || ($action === 'sync' && now()->greaterThan($current->lease_until)), 409, 'Laufende Aktion zuerst abwarten oder Ergebnis prüfen.');
+            abort_unless($current && (int) $current->revision === $revision, 409, __('Rechnung wurde geändert.'));
+            abort_unless(! $current->operation_token || ($action === 'sync' && now()->greaterThan($current->lease_until)), 409, __('Laufende Aktion zuerst abwarten oder Ergebnis prüfen.'));
             if ($current->operation_token && $action === 'sync') {
                 // A crashed writer has no catch/finally result. Preserve that uncertainty
                 // before the read so even a failed reconciliation cannot reopen writes.
@@ -168,7 +168,7 @@ class SponsorRunBillingService
                 'confirm-sent' => ['send_uncertain'], 'sync' => array_keys(self::STATES), default => [],
                 'refresh-preview' => ['prepared', 'contact_ready'],
             };
-            abort_unless(in_array($current->state, $allowed, true) || ($action === 'sync' && $current->operation_token), 409, 'Aktion passt nicht zum Rechnungsstatus.');
+            abort_unless(in_array($current->state, $allowed, true) || ($action === 'sync' && $current->operation_token), 409, __('Aktion passt nicht zum Rechnungsstatus.'));
             $this->table($tenant)->where('id', $id)->update(['state' => $current->state, 'operation_token' => $lease, 'lease_until' => now()->addMinutes(5)->toIso8601String(),
                 'last_operation' => $action, 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String()]);
             $this->audit($actor, $tenant, $id, $action.'_started', $current->state);
@@ -197,7 +197,7 @@ class SponsorRunBillingService
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $lease, $action, $changes, $note) {
             $updated = $this->table($tenant)->where('id', $id)->where('operation_token', $lease)->update($changes +
                 ['operation_token' => null, 'lease_until' => null, 'revision' => DB::connection('clubunio')->raw('revision + 1'), 'updated_at' => now()->toIso8601String()]);
-            abort_unless($updated === 1, 409, 'Ergebnis konnte nicht übernommen werden. Bitte Abgleich öffnen.');
+            abort_unless($updated === 1, 409, __('Ergebnis konnte nicht übernommen werden. Bitte Abgleich öffnen.'));
             $this->audit($actor, $tenant, $id, $action, $changes['state'], $note);
         });
     }
@@ -209,9 +209,9 @@ class SponsorRunBillingService
             'currency_id' => 'currencies', 'payment_type_id' => 'payment_types', 'unit_id' => 'units', 'tax_id' => 'taxes', 'account_id' => 'accounts'];
         foreach ($mapping as $key => $kind) {
             $found = array_values(array_filter($client->catalog($token, $kind), fn ($r) => (int) ($r['id'] ?? 0) === (int) ($c[$key] ?? 0)));
-            abort_unless(count($found) === 1 && ($found[0]['is_active'] ?? true) && ! ($found[0]['is_locked'] ?? false), 409, 'Bexio-Katalogzuordnung ungültig: '.$key);
+            abort_unless(count($found) === 1 && ($found[0]['is_active'] ?? true) && ! ($found[0]['is_locked'] ?? false), 409, __('Bexio-Katalogzuordnung ungültig: :value1', ['value1' => $key]));
             if ($kind === 'currencies') {
-                abort_unless(strtoupper($found[0]['name'] ?? $found[0]['code'] ?? '') === 'CHF', 409, 'Nur CHF wird unterstützt.');
+                abort_unless(strtoupper($found[0]['name'] ?? $found[0]['code'] ?? '') === 'CHF', 409, __('Nur CHF wird unterstützt.'));
             }
         }
 
@@ -221,7 +221,7 @@ class SponsorRunBillingService
     private function recipientCountry(string $token, SponsorRunBexioClient $client, string $iso): int
     {
         $found = array_values(array_filter($client->catalog($token, 'countries'), fn ($r) => strtoupper($r['iso_3166_alpha2'] ?? '') === strtoupper($iso)));
-        abort_unless(count($found) === 1, 409, 'Land im Bexio-Katalog nicht eindeutig.');
+        abort_unless(count($found) === 1, 409, __('Land im Bexio-Katalog nicht eindeutig.'));
 
         return (int) $found[0]['id'];
     }
@@ -241,7 +241,7 @@ class SponsorRunBillingService
     {
         foreach (['contact_type_id', 'name_1', 'name_2', 'street_name', 'house_number', 'postcode', 'city', 'country_id', 'mail'] as $key) {
             $norm = fn ($v) => mb_strtolower(preg_replace('/\s+/u', ' ', trim((string) $v)));
-            abort_unless($norm($remote[$key] ?? '') === $norm($expected[$key] ?? ''), 409, 'Bexio-Kontakt stimmt nicht mit Empfängersnapshot überein.');
+            abort_unless($norm($remote[$key] ?? '') === $norm($expected[$key] ?? ''), 409, __('Bexio-Kontakt stimmt nicht mit Empfängersnapshot überein.'));
         }
     }
 
@@ -258,11 +258,11 @@ class SponsorRunBillingService
         abort_unless(BexioConnectionService::canManage($actor, $tenant)
             && hash_equals($row->connection_hash, $this->binding($tenant))
             && hash_equals($row->configuration_hash, $this->fingerprint($tenant))
-            && $this->configuration($tenant)['enabled'], 409, 'Berechtigung oder Verbindung wurde geändert.');
+            && $this->configuration($tenant)['enabled'], 409, __('Berechtigung oder Verbindung wurde geändert.'));
         if ($action !== 'cancel') {
             $fresh = app(SponsorRunService::class)->billingSource($actor, $tenant, $row->pledge_id);
             foreach (['event_revision', 'participant_revision', 'pledge_revision'] as $key) {
-                abort_unless($fresh[$key] === $row->snapshot[$key], 409, 'Quelldaten wurden geändert; Vorschau zuerst prüfen.');
+                abort_unless($fresh[$key] === $row->snapshot[$key], 409, __('Quelldaten wurden geändert; Vorschau zuerst prüfen.'));
             }
         }
 
@@ -270,7 +270,7 @@ class SponsorRunBillingService
         $result = $client->write($token, $path, $payload);
         if ($result['state'] === 'rejected') {
             $writeAttempted = false;
-            abort(422, 'Bexio hat die Anfrage eindeutig abgelehnt. Angaben korrigieren und erneut prüfen.');
+            abort(422, __('Bexio hat die Anfrage eindeutig abgelehnt. Angaben korrigieren und erneut prüfen.'));
         }
 
         return $result;
@@ -282,7 +282,7 @@ class SponsorRunBillingService
         if ($action === 'refresh-preview') {
             $source = app(SponsorRunService::class)->billingSource($actor, $tenant, $row->pledge_id);
             abort_unless(! $row->remote_id && $this->configuration($tenant)['enabled'] && $source['total_cents'] > 0, 409);
-            abort_if($row->contact_id && $source['recipient'] !== $row->snapshot['recipient'], 409, 'Zugeordneter Empfänger wurde geändert. Fachliche Klärung erforderlich.');
+            abort_if($row->contact_id && $source['recipient'] !== $row->snapshot['recipient'], 409, __('Zugeordneter Empfänger wurde geändert. Fachliche Klärung erforderlich.'));
 
             return ['state' => $row->state, 'configuration_hash' => $this->fingerprint($tenant), 'total_cents' => $source['total_cents'],
                 'snapshot_encrypted' => Crypt::encryptString(json_encode($source + ['invoice_date' => now('Europe/Zurich')->toDateString()], JSON_THROW_ON_ERROR))];
@@ -295,7 +295,7 @@ class SponsorRunBillingService
         if ($action === 'sync') {
             if (! $row->contact_id && $row->state === 'contact_uncertain') {
                 $contact = $client->findContact($token, $ref);
-                abort_unless($contact, 409, 'Kontakt weiterhin unbestätigt. Nicht erneut erstellen.');
+                abort_unless($contact, 409, __('Kontakt weiterhin unbestätigt. Nicht erneut erstellen.'));
                 $expected = $this->contactPayload($row->snapshot['recipient'], $this->configuration($tenant),
                     $this->recipientCountry($token, $client, $row->snapshot['recipient']['country']), $ref);
                 $this->assertContact($contact, $expected);
@@ -303,7 +303,7 @@ class SponsorRunBillingService
                 return ['state' => 'contact_ready', 'contact_id' => (int) $contact['id']];
             }
             $remote = $row->remote_id ? $client->read($token, '/2.0/kb_invoice/'.$row->remote_id) : $client->findInvoice($token, $ref);
-            abort_unless($remote, 409, 'Bexio-Ergebnis weiterhin unbestätigt. Keine erneute Erstellung.');
+            abort_unless($remote, 409, __('Bexio-Ergebnis weiterhin unbestätigt. Keine erneute Erstellung.'));
             $this->assertInvoice($row, $remote, $ref);
             $state = match ((int) ($remote['kb_item_status_id'] ?? 0)) {
                 7 => 'draft', 8, 31 => 'issued', 9 => 'paid', 16 => 'partial', 19 => 'cancelled', default => abort(409)
@@ -330,7 +330,7 @@ class SponsorRunBillingService
                     $contact = $found;
                 } else {
                     $result = $this->providerWrite($actor, $tenant, $row, $action, $token, '/2.0/contact', $expected, $client, $writeAttempted);
-                    abort_unless($result['state'] === 'accepted', 409, 'Kontakterstellung nicht bestätigt; Abgleich verwenden.');
+                    abort_unless($result['state'] === 'accepted', 409, __('Kontakterstellung nicht bestätigt; Abgleich verwenden.'));
                     $contact = $client->read($token, '/2.0/contact/'.$result['id']);
                 }
             }
@@ -352,7 +352,7 @@ class SponsorRunBillingService
                     'amount' => '1', 'unit_id' => $c['unit_id'], 'tax_id' => $c['tax_id'], 'account_id' => $c['account_id'],
                     'unit_price' => app(InvoiceWorkflowService::class)->decimal($row->total_cents)]]];
             $result = $this->providerWrite($actor, $tenant, $row, $action, $token, '/2.0/kb_invoice', $payload, $client, $writeAttempted);
-            abort_unless($result['state'] === 'accepted', 409, 'Rechnungserstellung nicht bestätigt; nur Ergebnis abgleichen.');
+            abort_unless($result['state'] === 'accepted', 409, __('Rechnungserstellung nicht bestätigt; nur Ergebnis abgleichen.'));
             $remote = $client->read($token, '/2.0/kb_invoice/'.$result['id']);
             $this->assertInvoice($row, $remote, $ref);
             abort_unless((int) ($remote['kb_item_status_id'] ?? 0) === 7, 409);
@@ -364,11 +364,11 @@ class SponsorRunBillingService
         $status = (int) ($remote['kb_item_status_id'] ?? 0);
         abort_unless($action === 'issue' ? $status === 7 : in_array($status, [8, 31], true), 409);
         abort_unless($this->cents($remote['total_received_payments'] ?? null) === 0 && $this->cents($remote['total_credit_vouchers'] ?? null) === 0, 409,
-            'Zahlungen oder Gutschriften zuerst separat klären.');
+            __('Zahlungen oder Gutschriften zuerst separat klären.'));
         $payload = $action === 'send' ? ['recipient_email' => TestMailGuard::RECIPIENT, 'subject' => '[ClubUnio TEST] '.$row->snapshot['title'],
-            'message' => 'Ihre Rechnung zum Sponsorenlauf: [Network Link]', 'mark_as_open' => false, 'attach_pdf' => true] : [];
+            'message' => __('Ihre Rechnung zum Sponsorenlauf: [Network Link]', [], app(MessageLanguageService::class)->email($tenant, (string) ($row->snapshot['recipient']['email'] ?? ''))), 'mark_as_open' => false, 'attach_pdf' => true] : [];
         $result = $this->providerWrite($actor, $tenant, $row, $action, $token, '/2.0/kb_invoice/'.$row->remote_id.'/'.$action, $payload, $client, $writeAttempted);
-        abort_unless($result['state'] === 'accepted', 409, 'Bexio-Aktion nicht bestätigt; keine automatische Wiederholung.');
+        abort_unless($result['state'] === 'accepted', 409, __('Bexio-Aktion nicht bestätigt; keine automatische Wiederholung.'));
 
         return ['state' => match ($action) {
             'issue' => 'issued', 'send' => 'sent', 'cancel' => 'cancelled'
@@ -378,10 +378,10 @@ class SponsorRunBillingService
 
     public function cents(mixed $value): int
     {
-        abort_unless(is_scalar($value) && preg_match('/^\d{1,10}(?:\.\d{1,6})?$/D', (string) $value), 409, 'Bexio-Betrag fehlt oder ist ungültig.');
+        abort_unless(is_scalar($value) && preg_match('/^\d{1,10}(?:\.\d{1,6})?$/D', (string) $value), 409, __('Bexio-Betrag fehlt oder ist ungültig.'));
         [$whole, $fraction] = array_pad(explode('.', (string) $value), 2, '');
         $fraction = str_pad($fraction, 6, '0');
-        abort_unless(substr($fraction, 2) === '0000', 409, 'Bexio meldet Bruchteile von Rappen.');
+        abort_unless(substr($fraction, 2) === '0000', 409, __('Bexio meldet Bruchteile von Rappen.'));
 
         return (int) $whole * 100 + (int) substr($fraction, 0, 2);
     }
@@ -390,7 +390,7 @@ class SponsorRunBillingService
     {
         abort_unless(($remote['api_reference'] ?? '') === $reference && (int) ($remote['contact_id'] ?? 0) === (int) $row->contact_id
             && (! $row->remote_id || (int) ($remote['id'] ?? 0) === (int) $row->remote_id)
-            && $this->cents($remote['total'] ?? null) === (int) $row->total_cents, 409, 'Bexio-Beleg stimmt nicht mit dem Snapshot überein.');
+            && $this->cents($remote['total'] ?? null) === (int) $row->total_cents, 409, __('Bexio-Beleg stimmt nicht mit dem Snapshot überein.'));
     }
 
     public function pdf(Account $actor, Tenant $tenant, int $id)

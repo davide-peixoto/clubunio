@@ -25,7 +25,7 @@ class SponsorRunPublicController
         return $this->action($request, $service, 'submit', 20, function () use ($request, $service) {
             $service->submit((string) $request->input('token', ''), SponsorRunMoney::fromWeb($request->all()));
 
-            return ['message' => 'Anfrage gespeichert. Die Bestätigung wird ausschliesslich an die Testadresse zugestellt.'];
+            return ['message' => __('Anfrage gespeichert. Die Bestätigung wird ausschliesslich an die Testadresse zugestellt.')];
         });
     }
 
@@ -34,7 +34,7 @@ class SponsorRunPublicController
         return $this->action($request, $service, 'confirm', 20, function () use ($request, $service) {
             $service->confirm((string) $request->input('token', ''));
 
-            return ['message' => 'Sponsorenzusage bestätigt.'];
+            return ['message' => __('Sponsorenzusage bestätigt.')];
         });
     }
 
@@ -45,9 +45,9 @@ class SponsorRunPublicController
 
             return $this->secure(response()->json($callback()));
         } catch (ValidationException $e) {
-            return $this->secure(response()->json(['message' => 'Bitte die Eingaben prüfen.', 'errors' => $e->errors()], 422));
+            return $this->secure(response()->json(['message' => __('Bitte die Eingaben prüfen.'), 'errors' => $e->errors()], 422));
         } catch (HttpExceptionInterface $e) {
-            return $this->secure(response()->json(['message' => $e->getStatusCode() === 429 ? 'Zu viele Anfragen. Bitte später erneut versuchen.' : 'Anfrage ungültig oder nicht mehr verfuegbar.'], $e->getStatusCode()));
+            return $this->secure(response()->json(['message' => $e->getStatusCode() === 429 ? __('Zu viele Anfragen. Bitte später erneut versuchen.') : __('Anfrage ungültig oder nicht mehr verfuegbar.')], $e->getStatusCode()));
         }
     }
 

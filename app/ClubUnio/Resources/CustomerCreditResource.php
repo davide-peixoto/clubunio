@@ -55,7 +55,7 @@ class CustomerCreditResource extends CatalogResource
 
     public static function table(Table $table): Table
     {
-        return $table->columns(static::columns())->recordActions([ViewAction::make()->iconButton()->tooltip('Guthaben anzeigen')])
+        return $table->columns(static::columns())->recordActions([ViewAction::make()->iconButton()->tooltip(__('Guthaben anzeigen'))])
             ->filters([TernaryFilter::make('remaining')->label('Restguthaben')->queries(
                 true: fn ($q) => $q->whereRaw('amount_cents > (select coalesce(sum(a.amount_cents),0) from clubora.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
                 false: fn ($q) => $q->whereRaw('amount_cents = (select coalesce(sum(a.amount_cents),0) from clubora.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
@@ -72,7 +72,7 @@ class CustomerCreditResource extends CatalogResource
             TextEntry::make('allocated_cents')->label('Bexio-verrechnet CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2)),
             TextEntry::make('remaining_cents')->label('Nicht verrechnet (kein Bankguthaben) CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2)),
             TextEntry::make('creditNote.included_tax')->label('Steuerkorrektur CHF'),
-            TextEntry::make('voucher_id')->label('Verifizierte Bexio-ID')->placeholder('Noch keine Verrechnung nachgewiesen'),
+            TextEntry::make('voucher_id')->label('Verifizierte Bexio-ID')->placeholder(__('Noch keine Verrechnung nachgewiesen')),
             TextEntry::make('revision')->label('Version'),
         ]);
     }

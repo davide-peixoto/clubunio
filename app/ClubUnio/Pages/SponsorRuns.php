@@ -26,6 +26,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
@@ -109,6 +110,8 @@ class SponsorRuns extends Page implements HasTable
     public function table(Table $table): Table
     {
         $choices = $this->service()->choices($this->actor(), Filament::getTenant());
+        $rawStatuses = DB::connection('clubunio')->table('clubora.sponsor_run_statuses')
+            ->where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'code')->all();
 
         return $table->query(fn () => $this->service()->events($this->actor(), Filament::getTenant(), [
             'season_id' => $this->season, 'status_code' => $this->status, 'search' => $this->search,
@@ -117,14 +120,14 @@ class SponsorRuns extends Page implements HasTable
             TextColumn::make('event_date')->label('Datum')->date('d.m.Y')->sortable(),
             TextColumn::make('status_code')->label('Status')->badge()
                 ->formatStateUsing(fn ($state) => $choices['statuses'][$state] ?? $state)
-                ->color(fn ($state) => StatusAppearance::palette($choices['statuses'][$state] ?? $state)),
+                ->color(fn ($state) => StatusAppearance::palette($rawStatuses[$state] ?? $state)),
         ])->filters([
             SelectFilter::make('season_id')->label('Saison')->options($choices['seasons']),
             SelectFilter::make('status_code')->label('Status')->options($choices['statuses']),
         ])->deferFilters(false)->headerActions([$this->newEventAction(), $this->publicConfigurationAction()])
-            ->recordActions([Action::make('view')->label('Anlass öffnen')->icon('heroicon-o-arrow-right')->iconButton()->tooltip('Anlass öffnen')
+            ->recordActions([Action::make('view')->label('Anlass öffnen')->icon('heroicon-o-arrow-right')->iconButton()->tooltip(__('Anlass öffnen'))
                 ->action(fn ($record) => $this->openEvent($record->id))])
-            ->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading('Keine Anlässe.');
+            ->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading(__('Keine Anlässe.'));
     }
 
     protected function afterActionCalled(Action $action): void
@@ -198,12 +201,12 @@ class SponsorRuns extends Page implements HasTable
     public static function pledgeSchema(): array
     {
         return [Hidden::make('request_key')->default(fn () => (string) Str::uuid()), TextInput::make('sponsor_name')->label('Sponsorname')->required()->maxLength(160),
-            Select::make('amount_type')->label('Zusageart')->options(['per_lap' => 'Pro Runde', 'fixed' => 'Fixbetrag'])->required()->default('per_lap'),
+            Select::make('amount_type')->label('Zusageart')->options(['per_lap' => __('Pro Runde'), 'fixed' => __('Fixbetrag')])->required()->default('per_lap'),
             TextInput::make('amount_chf')->label('Betrag')->prefix('CHF')->inputMode('decimal')->rules([fn () => SponsorRunMoney::rule()])->required(),
             TextInput::make('cap_chf')->label('Obergrenze')->prefix('CHF')->inputMode('decimal')->rules([fn () => SponsorRunMoney::rule()]),
-            Select::make('payment_mode')->label('Zahlungsweg')->options(['invoice' => 'Rechnung', 'collective' => 'Sammelzahlung'])->default('invoice')->required(),
+            Select::make('payment_mode')->label('Zahlungsweg')->options(['invoice' => __('Rechnung'), 'collective' => __('Sammelzahlung')])->default('invoice')->required(),
             Checkbox::make('collector_confirmed')->label('Ich übernehme diese Sammelzahlung persönlich'),
-            Select::make('recipient_type')->label('Rechnungsempfaenger')->options(['person' => 'Person', 'company' => 'Firma'])->default('person')->required(),
+            Select::make('recipient_type')->label('Rechnungsempfaenger')->options(['person' => __('Person'), 'company' => __('Firma')])->default('person')->required(),
             TextInput::make('company')->label('Firma')->maxLength(160), TextInput::make('first_name')->label('Vorname / Kontakt')->required()->maxLength(100), TextInput::make('last_name')->label('Nachname')->required()->maxLength(100),
             TextInput::make('street')->label('Strasse')->required()->maxLength(160), TextInput::make('house_number')->label('Hausnummer')->maxLength(20),
             TextInput::make('postal_code')->label('PLZ')->required()->maxLength(20), TextInput::make('city')->label('Ort')->required()->maxLength(100),
@@ -219,7 +222,7 @@ class SponsorRuns extends Page implements HasTable
     public function operationAction(): Action
     {
         return Action::make('operation')->label('Erfassung')->icon('heroicon-o-pencil')->visible(fn () => $this->participantId && ($this->allowed('update') || $this->allowed('approve')))
-            ->schema([Hidden::make('revision'), Select::make('action')->label('Aktion')->options(fn () => array_filter(['checkin' => $this->allowed('update') ? 'Check-in' : null, 'laps' => $this->allowed('update') ? 'Rundenentwurf' : null, 'approve' => $this->allowed('approve') ? 'Runden endgültig freigeben' : null]))->required(),
+            ->schema([Hidden::make('revision'), Select::make('action')->label('Aktion')->options(fn () => array_filter(['checkin' => $this->allowed('update') ? __('Check-in') : null, 'laps' => $this->allowed('update') ? __('Rundenentwurf') : null, 'approve' => $this->allowed('approve') ? __('Runden endgültig freigeben') : null]))->required(),
                 Checkbox::make('checked_in')->label('Eingecheckt'), TextInput::make('laps')->label('Runden')->numeric()->minValue(0)->maxValue(10000),
                 Checkbox::make('confirm_final')->label('Ich bestätige den aktuellen Rundenentwurf endgültig')])
             ->fillForm(function () {
@@ -264,7 +267,7 @@ class SponsorRuns extends Page implements HasTable
     public function shareAction(): Action
     {
         return Action::make('share')->label('Sponsorenlink')->icon('heroicon-o-link')->visible(fn () => $this->participantId && $this->allowed('send'))
-            ->schema([Select::make('action')->label('Aktion')->options(['show' => 'Anzeigen', 'create' => 'Erstellen', 'rotate' => 'Ersetzen', 'revoke' => 'Widerrufen'])->required()->default('show'),
+            ->schema([Select::make('action')->label('Aktion')->options(['show' => __('Anzeigen'), 'create' => __('Erstellen'), 'rotate' => __('Ersetzen'), 'revoke' => __('Widerrufen')])->required()->default('show'),
                 TextInput::make('alias')->label('Öffentlicher Alias')->maxLength(80), Checkbox::make('consent')->label('Diesen Alias ausdruecklich öffentlich freigeben')])
             ->action(function (array $data) {
                 $result = app(SponsorRunPublicService::class)->share($this->actor(), Filament::getTenant(), $this->participantId, $data['action'], $data);
@@ -297,7 +300,7 @@ class SponsorRuns extends Page implements HasTable
     public function testOutboxAction(): Action
     {
         return Action::make('testOutbox')->label('Testmail senden')->icon('heroicon-o-envelope')->visible(fn () => $this->eventId && $this->canTestSend())
-            ->modalHeading('Testmail an admin@svsissach.ch senden')->modalSubmitActionLabel('An Testadresse senden')
+            ->modalHeading(__('Testmail an admin@svsissach.ch senden'))->modalSubmitActionLabel(__('An Testadresse senden'))
             ->schema([Select::make('outbox_id')->label('Bestätigung in Test-Outbox')->required()->options(fn () => $this->outbox()
                 ->where('o.delivery_state', 'held')->whereNotNull('o.payload_encrypted')->whereNull('p.pledge_id')->whereNull('l.revoked_at')
                 ->where('p.expires_at', '>', now()->toIso8601String())->where('l.expires_at', '>', now()->toIso8601String())->whereColumn('p.link_revision', 'l.revision')

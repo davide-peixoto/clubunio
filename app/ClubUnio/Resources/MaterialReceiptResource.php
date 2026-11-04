@@ -66,14 +66,14 @@ class MaterialReceiptResource extends CatalogResource
                 TextInput::make('quantity')->label('Anzahl')->integer()->minValue(1)->maxValue(10000)->default(1)->required(),
                 TextInput::make('reference')->label('Nummer / Grösse')->maxLength(120),
                 Textarea::make('condition')->label('Zustand')->maxLength(500),
-            ])->columns(2)->addActionLabel('Gegenstand hinzufügen'),
+            ])->columns(2)->addActionLabel(__('Gegenstand hinzufügen')),
             Textarea::make('note')->label('Bemerkung')->maxLength(3000),
         ];
     }
 
     public static function createReceipt(?int $member = null): Action
     {
-        return Action::make('newReceipt')->label('Materialübergabe erfassen')->icon('heroicon-o-plus')->slideOver()->modalSubmitActionLabel('Entwurf speichern')->schema(self::fields($member))
+        return Action::make('newReceipt')->label('Materialübergabe erfassen')->icon('heroicon-o-plus')->slideOver()->modalSubmitActionLabel(__('Entwurf speichern'))->schema(self::fields($member))
             ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(MaterialReceiptService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $member ? array_replace($data, ['member_id' => $member]) : $data)));
     }
 
@@ -82,25 +82,32 @@ class MaterialReceiptResource extends CatalogResource
         $tenant = fn () => Filament::getTenant();
         $service = fn () => app(MaterialReceiptService::class);
 
+        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.material_receipt_statuses')
+            ->where('tenant_id', $tenant()->id)->orderBy('sort_order')->get();
+        $rawStates = $statusRows->pluck('name', 'code')->all();
+        $states = $statusRows->mapWithKeys(fn ($row) => [
+            $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('material_receipt_statuses', $row),
+        ])->all();
+
         return $table->columns([
             TextColumn::make('member.display_name')->label('Mitglied')->searchable(query: fn ($q, $search) => $q->whereHas('member', fn ($q) => $q->where(fn ($q) => $q->where('last_name', 'ilike', '%'.$search.'%')->orWhere('first_name', 'ilike', '%'.$search.'%')))),
             TextColumn::make('title')->label('Bezeichnung')->searchable()->wrap(),
             TextColumn::make('handover_on')->label('Übergabe')->date('d.m.Y')->sortable(),
-            TextColumn::make('state')->label('Status')->formatStateUsing(fn ($state) => $service()->states($tenant())[$state] ?? $state)->badge()
-                ->color(fn ($state) => StatusAppearance::palette($service()->states($tenant())[$state] ?? $state)),
+            TextColumn::make('state')->label('Status')->formatStateUsing(fn ($state) => $states[$state] ?? $state)->badge()
+                ->color(fn ($state) => StatusAppearance::palette($rawStates[$state] ?? $state)),
             TextColumn::make('confirmation_name')->label('Bestätigt durch'),
             TextColumn::make('confirmed_at')->label('Bestätigt am')->dateTime('d.m.Y H:i', 'Europe/Zurich'),
-        ])->filters([SelectFilter::make('state')->label('Status')->options(fn () => $service()->states($tenant()))])
+        ])->filters([SelectFilter::make('state')->label('Status')->options($states)])
             ->headerActions([self::createReceipt()])->recordActions([
-                Action::make('editReceipt')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Entwurf bearbeiten')->slideOver()
+                Action::make('editReceipt')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Entwurf bearbeiten'))->slideOver()
                     ->visible(fn ($record) => $record->state === 'draft')->fillForm(fn ($record) => $record->only(['revision', 'member_id', 'title', 'handover_on', 'items', 'note']))->schema(self::fields())
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $service()->save(Filament::auth()->user(), $tenant(), $record->id, $data))),
-                Action::make('issueReceipt')->label('Zur Bestätigung bereitstellen')->icon('heroicon-o-paper-airplane')->iconButton()->tooltip('Zur Bestätigung bereitstellen')
+                Action::make('issueReceipt')->label('Zur Bestätigung bereitstellen')->icon('heroicon-o-paper-airplane')->iconButton()->tooltip(__('Zur Bestätigung bereitstellen'))
                     ->visible(fn ($record) => $record->state === 'draft')->requiresConfirmation()->fillForm(fn ($record) => ['revision' => $record->revision])->schema([Hidden::make('revision')])
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $service()->transition(Filament::auth()->user(), $tenant(), $record->id, (int) $data['revision'], 'issue'))),
-                Action::make('receiptPdf')->label('Quittung')->icon('heroicon-o-document-text')->iconButton()->tooltip('PDF-Quittung öffnen')->visible(fn ($record) => (bool) $record->snapshot)
+                Action::make('receiptPdf')->label('Quittung')->icon('heroicon-o-document-text')->iconButton()->tooltip(__('PDF-Quittung öffnen'))->visible(fn ($record) => (bool) $record->snapshot)
                     ->url(fn ($record) => route('clubunio.material.pdf', [$tenant()->slug, $record->id]))->openUrlInNewTab(),
-                Action::make('cancelReceipt')->label('Stornieren')->icon('heroicon-o-x-circle')->iconButton()->tooltip('Übergabe stornieren')->requiresConfirmation()
+                Action::make('cancelReceipt')->label('Stornieren')->icon('heroicon-o-x-circle')->iconButton()->tooltip(__('Übergabe stornieren'))->requiresConfirmation()
                     ->visible(fn ($record) => in_array($record->state, ['draft', 'issued'], true))->fillForm(fn ($record) => ['revision' => $record->revision])
                     ->schema([Hidden::make('revision'), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])
                     ->action(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $service()->transition(Filament::auth()->user(), $tenant(), $record->id, (int) $data['revision'], 'cancel', $data))),

@@ -181,7 +181,7 @@ class TrainingPlanService
     private function revision(object $row, int $revision): void
     {
         if ($row->revision !== $revision) {
-            throw ValidationException::withMessages(['revision' => 'Der Plan wurde inzwischen geändert. Bitte neu laden.']);
+            throw ValidationException::withMessages(['revision' => __('Der Plan wurde inzwischen geändert. Bitte neu laden.')]);
         }
     }
 
@@ -198,7 +198,7 @@ class TrainingPlanService
                 return;
             }
             if (! $archived && $row->legacy_quality_pending) {
-                throw ValidationException::withMessages(['revision' => 'Altplan braucht eine aktuelle Qualitätsprüfung. Zuerst eine private Kopie erstellen und prüfen.']);
+                throw ValidationException::withMessages(['revision' => __('Altplan braucht eine aktuelle Qualitätsprüfung. Zuerst eine private Kopie erstellen und prüfen.')]);
             }
             DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)
                 ->update(['archived_at' => $archived ? now() : null, 'updated_at' => now(), 'revision' => $revision + 1]);
@@ -247,7 +247,7 @@ class TrainingPlanService
                 if ($old->state === 'completed' && ($kind === 'generate' || str_starts_with($kind, 'copy:')) && $old->kind === $kind) {
                     return $old;
                 }
-                throw ValidationException::withMessages(['request' => 'Diese Anfrage wurde bereits gesendet. Bitte neu laden.']);
+                throw ValidationException::withMessages(['request' => __('Diese Anfrage wurde bereits gesendet. Bitte neu laden.')]);
             }
             $copy = str_starts_with($kind, 'copy:');
             $now = now();
@@ -260,7 +260,7 @@ class TrainingPlanService
             if ($quota->actor_minute >= ($copy ? 10 : 1)
                 || $quota->actor_day >= ($copy ? 100 : 20)
                 || $quota->tenant_day >= ($copy ? 500 : 100)) {
-                throw ValidationException::withMessages(['request' => 'Das Anfragelimit ist erreicht. Bitte später erneut versuchen.']);
+                throw ValidationException::withMessages(['request' => __('Das Anfragelimit ist erreicht. Bitte später erneut versuchen.')]);
             }
             $id = DB::connection('clubunio')->table('clubora.training_plan_requests')->insertGetId([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'request_key' => $key, 'kind' => $kind, 'reference' => (string) Str::uuid(),
@@ -280,7 +280,7 @@ class TrainingPlanService
             DB::connection('clubunio')->table('clubora.training_plan_requests')->where('id', $attempt->id)->update(['provider_status' => (int) $error->getCode()]);
             app(SyncWorkService::class)->remember($actor, $tenant, 'training_review', $attempt->id, ['input' => $input]);
             Log::warning('clubunio.training.failed', ['reference' => $attempt->reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'status' => (int) $error->getCode()]);
-            throw ValidationException::withMessages(['request' => 'Der Trainingsplan konnte nicht erstellt werden. Referenz: '.$attempt->reference]);
+            throw ValidationException::withMessages(['request' => __('Der Trainingsplan konnte nicht erstellt werden. Referenz: :value1', ['value1' => $attempt->reference])]);
         }
     }
 

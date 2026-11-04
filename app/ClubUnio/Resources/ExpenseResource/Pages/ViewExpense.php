@@ -28,7 +28,7 @@ class ViewExpense extends ViewRecord
                     $this->refreshFormData(['revision', 'member_id', 'team_season_id', 'bank_account_id', 'round_id', 'notes']);
                 }),
             Action::make('notificationPreview')->label('Nachrichtenvorschau')->icon('heroicon-o-envelope')->slideOver()
-                ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')
+                ->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen'))
                 ->modalContent(fn () => view('clubunio.messages.expense-preview', ['plan' => app(ExpenseNotificationService::class)->preview(
                     Filament::auth()->user(), Filament::getTenant(), $this->getRecord()->id
                 )]))];
@@ -36,6 +36,6 @@ class ViewExpense extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'Spesenbeleg #'.($this->getRecord()->legacy_id ?? $this->getRecord()->id);
+        return __('Spesenbeleg #:id', ['id' => $this->getRecord()->legacy_id ?? $this->getRecord()->id]);
     }
 }

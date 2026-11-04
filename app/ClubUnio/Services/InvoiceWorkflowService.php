@@ -51,7 +51,7 @@ class InvoiceWorkflowService
     {
         $id = InvoiceWorkflowStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', $code)->value('id');
         if (! $id) {
-            throw ValidationException::withMessages(['revision' => 'Rechnungsstatus '.$code.' fehlt oder ist inaktiv.']);
+            throw ValidationException::withMessages(['revision' => __('Rechnungsstatus :value1 fehlt oder ist inaktiv.', ['value1' => $code])]);
         }
 
         return $id;
@@ -60,7 +60,7 @@ class InvoiceWorkflowService
     public function cents(string $value): int
     {
         if (! preg_match('/^(\d{1,9})(?:\.(\d{1,4}))?$/', $value, $m)) {
-            throw ValidationException::withMessages(['gross_amount' => 'Ungültiger Betrag.']);
+            throw ValidationException::withMessages(['gross_amount' => __('Ungültiger Betrag.')]);
         }
         $fraction = str_pad($m[2] ?? '', 4, '0');
 
@@ -86,7 +86,7 @@ class InvoiceWorkflowService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', $function);
             $invoice = Invoice::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ((int) $invoice->revision !== $revision) {
-                throw ValidationException::withMessages(['revision' => 'Rechnung wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Rechnung wurde geändert. Bitte neu laden.')]);
             }
             $cancellable = $operation === 'cancel' && $invoice->workflowStatus?->code === 'released'
                 && $invoice->active && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id;
@@ -116,7 +116,7 @@ class InvoiceWorkflowService
                 $line = ! empty($data['line_id']) ? $invoice->activeLines()->where('tenant_id', $tenant->id)->findOrFail($data['line_id']) : new InvoiceLine;
                 if (array_key_exists('bexio_catalog_tax_id', $data)) {
                     if ($invoice->tax_mode !== 'inclusive' && $data['bexio_catalog_tax_id']) {
-                        throw ValidationException::withMessages(['bexio_catalog_tax_id' => 'Zuerst Steuerbehandlung der Rechnung ändern.']);
+                        throw ValidationException::withMessages(['bexio_catalog_tax_id' => __('Zuerst Steuerbehandlung der Rechnung ändern.')]);
                     }
                     $detail['tax_before'] = $line->tax_snapshot;
                     $line->tax_snapshot = $data['bexio_catalog_tax_id'] ? app(InvoiceTaxService::class)->snapshot($tenant,
@@ -134,12 +134,12 @@ class InvoiceWorkflowService
                 $gross = $this->cents((string) $data['gross_amount']);
                 $discount = $this->cents((string) $data['discount']);
                 if ($discount > $gross) {
-                    throw ValidationException::withMessages(['discount' => 'Rabatt darf den Bruttobetrag nicht übersteigen.']);
+                    throw ValidationException::withMessages(['discount' => __('Rabatt darf den Bruttobetrag nicht übersteigen.')]);
                 }
                 $detail['before_line'] = $line->exists ? $line->only(['id', 'description', 'gross_amount', 'discount', 'net_amount', 'notes']) : null;
                 $status = InvoiceLineStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', 'P')->first();
                 if (! $status) {
-                    throw ValidationException::withMessages(['revision' => 'Der aktive Positionsstatus P fehlt.']);
+                    throw ValidationException::withMessages(['revision' => __('Der aktive Positionsstatus P fehlt.')]);
                 }
                 $line->forceFill(['tenant_id' => $tenant->id, 'invoice_id' => $invoice->id, 'description' => $data['description'],
                     'notes' => $data['notes'] ?? null, 'gross_amount' => $this->decimal($gross), 'discount' => $this->decimal($discount),
@@ -150,7 +150,7 @@ class InvoiceWorkflowService
                 $line = $invoice->lines()->where('active', $operation === 'remove_line')->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($data['line_id']);
                 $linked = DB::connection('clubunio')->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('invoice_line_id', $line->id)->exists();
                 if ($line->contribution || $linked) {
-                    throw ValidationException::withMessages(['line_id' => 'Beitragspositionen mit Zuordnungen bleiben erhalten. Bitte die Rechnung bei Bedarf stornieren.']);
+                    throw ValidationException::withMessages(['line_id' => __('Beitragspositionen mit Zuordnungen bleiben erhalten. Bitte die Rechnung bei Bedarf stornieren.')]);
                 }
                 $detail['before_line'] = $line->only(['id', 'description', 'gross_amount', 'discount', 'net_amount', 'active']);
                 $line->active = $operation === 'restore_line';
@@ -165,14 +165,14 @@ class InvoiceWorkflowService
             } elseif ($operation === 'release') {
                 $lines = $invoice->activeLines()->get();
                 if ($lines->isEmpty() || $lines->contains(fn ($line) => ! trim((string) $line->description) || $line->net_amount === null)) {
-                    throw ValidationException::withMessages(['revision' => 'Mindestens eine vollständige Rechnungsposition ist erforderlich.']);
+                    throw ValidationException::withMessages(['revision' => __('Mindestens eine vollständige Rechnungsposition ist erforderlich.')]);
                 }
                 foreach ($lines as $line) {
                     $gross = $this->cents((string) $line->gross_amount);
                     $discount = $this->cents((string) ($line->discount ?? '0'));
                     if ((int) $line->tenant_id !== (int) $tenant->id || $discount > $gross
                         || $this->cents((string) $line->net_amount) !== $gross - $discount) {
-                        throw ValidationException::withMessages(['revision' => 'Positionsbetrag oder Zuordnung ist widersprüchlich. Bitte vor Freigabe korrigieren.']);
+                        throw ValidationException::withMessages(['revision' => __('Positionsbetrag oder Zuordnung ist widersprüchlich. Bitte vor Freigabe korrigieren.')]);
                     }
                 }
                 $invoice->workflow_status_id = $this->status($tenant, 'released');

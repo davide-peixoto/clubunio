@@ -18,7 +18,7 @@ final class AccessProfileService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless(app(AccountAdministrationService::class)->allowed($actor, $tenant), 403);
             if (array_diff(array_keys($input), ['name', 'description', 'active', 'permissions', 'revision', 'reason', 'mobile_modules'])) {
-                throw ValidationException::withMessages(['name' => 'Unbekannte oder geschützte Felder.']);
+                throw ValidationException::withMessages(['name' => __('Unbekannte oder geschützte Felder.')]);
             }
             if (is_string($input['name'] ?? null)) {
                 $input['name'] = trim($input['name']);
@@ -34,12 +34,12 @@ final class AccessProfileService
             ])->validate();
             $record = $id ? AccessProfile::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new AccessProfile;
             if ($id && $record->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['name' => 'Profil wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['name' => __('Profil wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             foreach ($data['permissions'] as $permission) {
                 $view = explode('.', $permission)[0].'.view';
                 if (! in_array($view, $data['permissions'], true)) {
-                    throw ValidationException::withMessages(['permissions' => 'Eine Funktion benötigt auch das Anzeigerecht ihres Moduls.']);
+                    throw ValidationException::withMessages(['permissions' => __('Eine Funktion benötigt auch das Anzeigerecht ihres Moduls.')]);
                 }
             }
             $before = $id ? $record->only(['name', 'description', 'permissions', 'active', 'revision', 'mobile_modules']) : null;

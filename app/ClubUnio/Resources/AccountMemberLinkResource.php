@@ -57,8 +57,8 @@ class AccountMemberLinkResource extends CatalogResource
                     ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%'))
                     ->limit(30)->get()->pluck('display_name', 'id'))
                 ->getOptionLabelUsing(fn ($value) => Member::where('tenant_id', Filament::getTenant()->id)->find($value)?->display_name),
-            Select::make('kind')->label('Zuordnung')->options(self::KINDS)->required()->disabled($edit)->dehydrated(),
-            Select::make('state')->label('Freigabe')->options(self::STATES)->default('pending')->required(),
+            Select::make('kind')->label('Zuordnung')->options(array_map(fn ($name) => __($name), self::KINDS))->required()->disabled($edit)->dehydrated(),
+            Select::make('state')->label('Freigabe')->options(array_map(fn ($name) => __($name), self::STATES))->default('pending')->required(),
             Textarea::make('reason')->label('Prüfvermerk')->required()->minLength(10)->maxLength(500),
             Hidden::make('revision')->dehydrated($edit),
         ];
@@ -69,14 +69,14 @@ class AccountMemberLinkResource extends CatalogResource
         return $table->columns([
             TextColumn::make('account.username')->label('Benutzer')->searchable(),
             TextColumn::make('member.display_name')->label('Mitglied'),
-            TextColumn::make('kind')->label('Zuordnung')->formatStateUsing(fn ($state) => self::KINDS[$state]),
-            TextColumn::make('state')->label('Freigabe')->badge()->formatStateUsing(fn ($state) => self::STATES[$state]),
+            TextColumn::make('kind')->label('Zuordnung')->formatStateUsing(fn ($state) => __(self::KINDS[$state])),
+            TextColumn::make('state')->label('Freigabe')->badge()->formatStateUsing(fn ($state) => __(self::STATES[$state])),
             TextColumn::make('source')->label('Herkunft')->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('reviewed_at')->label('Geprüft')->dateTime('d.m.Y H:i'),
-        ])->filters([SelectFilter::make('state')->label('Freigabe')->options(self::STATES), SelectFilter::make('kind')->label('Zuordnung')->options(self::KINDS)])
+        ])->filters([SelectFilter::make('state')->label('Freigabe')->options(array_map(fn ($name) => __($name), self::STATES)), SelectFilter::make('kind')->label('Zuordnung')->options(array_map(fn ($name) => __($name), self::KINDS))])
             ->headerActions([Action::make('newLink')->label('Zuordnung hinzufügen')->icon('heroicon-o-plus')->schema(self::fields(false))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountLinkService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
-            ->recordActions([Action::make('review')->label('Prüfen')->icon('heroicon-o-shield-check')->iconButton()->tooltip('Zuordnung prüfen')
+            ->recordActions([Action::make('review')->label('Prüfen')->icon('heroicon-o-shield-check')->iconButton()->tooltip(__('Zuordnung prüfen'))
                 ->fillForm(fn (AccountMemberLink $record) => $record->only(['account_id', 'member_id', 'kind', 'state', 'revision']))->schema(self::fields(true))
                 ->action(fn (AccountMemberLink $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountLinkService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)))])
             ->defaultSort('id', 'desc')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();

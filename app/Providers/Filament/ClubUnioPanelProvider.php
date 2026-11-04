@@ -155,6 +155,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 InvoiceCategoryResource::class,
                 BexioCatalogEntryResource::class,
                 StatusStyleResource::class,
+                \App\ClubUnio\Resources\LookupTranslationResource::class,
                 CompetitionResource::class,
                 FootballClubResource::class,
                 SignageNoticeResource::class,

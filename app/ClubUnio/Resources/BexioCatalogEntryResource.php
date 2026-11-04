@@ -101,7 +101,7 @@ class BexioCatalogEntryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('kind')->label('Typ')->badge()->formatStateUsing(fn ($state) => $state === 'tax' ? 'Steuer' : 'Artikel')
+            TextColumn::make('kind')->label('Typ')->badge()->formatStateUsing(fn ($state) => $state === 'tax' ? __('Steuer') : __('Artikel'))
                 ->color(fn ($state) => $state === 'tax' ? 'warning' : 'info'),
             TextColumn::make('name')->label('Bezeichnung')->searchable()->sortable(),
             TextColumn::make('code')->label('Bexio-Code')->searchable(),
@@ -113,7 +113,7 @@ class BexioCatalogEntryResource extends Resource
             IconColumn::make('active')->label('Lokal aktiviert')->boolean(),
             TextColumn::make('observed_at')->label('Abgeglichen')->dateTime('d.m.Y H:i'),
         ])->filters([
-            SelectFilter::make('kind')->label('Typ')->options(['article' => 'Artikel', 'tax' => 'Steuern']),
+            SelectFilter::make('kind')->label('Typ')->options(['article' => __('Artikel'), 'tax' => __('Steuern')]),
             TernaryFilter::make('active')->label('Lokal aktiviert'),
             TernaryFilter::make('provider_active')->label('In Bexio aktiv'),
         ])->headerActions([
@@ -121,7 +121,7 @@ class BexioCatalogEntryResource extends Resource
                 ->visible(fn () => static::canManageCatalog('sync'))
                 ->action(fn ($livewire) => $livewire->syncCatalog()),
         ])->recordActions([
-            EditAction::make()->iconButton()->tooltip('Bezeichnung und Aktivierung bearbeiten')
+            EditAction::make()->iconButton()->tooltip(__('Bezeichnung und Aktivierung bearbeiten'))
                 ->using(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(BexioCatalogService::class)->edit(Filament::auth()->user(), Filament::getTenant(), $record->id, $data))),
         ])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('kind');
     }

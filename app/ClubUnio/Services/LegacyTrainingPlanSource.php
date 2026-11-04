@@ -9,7 +9,7 @@ class LegacyTrainingPlanSource
 {
     public function rows(Tenant $tenant)
     {
-        abort_unless($tenant->slug === 'sv-sissach', 403, 'Kein Altbestand für diesen Verein hinterlegt.');
+        abort_unless($tenant->slug === 'sv-sissach', 403, __('Kein Altbestand für diesen Verein hinterlegt.'));
 
         return DB::connection('clubunio')->table('legacy_prod.TrainingPlannerAuditLog')->orderBy('TrainingPlannerAuditLogID')->get();
     }

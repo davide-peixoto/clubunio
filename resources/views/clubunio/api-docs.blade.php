@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="de">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>ClubUnio API | {{ $tenant->name }}</title>
+    <title>{{ __('ClubUnio API |') }} {{ $tenant->name }}</title>
     <link rel="stylesheet" href="{{ url('/assets/swagger-ui/swagger-ui.css') }}">
     <style>
         body { margin: 0; background: #fff; color: #252b30; font-family: Arial, sans-serif; }
@@ -19,10 +19,10 @@
 </head>
 <body>
     <header>
-        <h1>ClubUnio API</h1>
+        <h1>{{ __('ClubUnio API') }}</h1>
         <span>{{ $tenant->name }}</span>
-        <a href="{{ url('/api-docs/openapi.json') }}">OpenAPI JSON</a>
-        <a href="{{ url('/') }}">ClubUnio</a>
+        <a href="{{ url('/api-docs/openapi.json') }}">{{ __('OpenAPI JSON') }}</a>
+        <a href="{{ url('/') }}">{{ __('ClubUnio') }}</a>
     </header>
     <main id="swagger-ui"></main>
     <script src="{{ url('/assets/swagger-ui/swagger-ui-bundle.js') }}"></script>
@@ -45,11 +45,11 @@
                 requestInterceptor: function (request) {
                     const target = new URL(request.url, window.location.origin);
                     if (target.origin !== window.location.origin) {
-                        throw new Error('Cross-origin API requests are disabled.');
+                        throw new Error(@js(__('Domainübergreifende API-Anfragen sind deaktiviert.')));
                     }
                     const isSpecification = target.pathname === specificationUrl.pathname;
                     if (!isSpecification && !target.pathname.startsWith('/api/v1/')) {
-                        throw new Error('Only ClubUnio API requests are allowed.');
+                        throw new Error(@js(__('Nur ClubUnio-API-Anfragen sind erlaubt.')));
                     }
                     request.credentials = isSpecification ? 'same-origin' : 'omit';
                     if (!isSpecification) {

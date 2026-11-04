@@ -33,7 +33,7 @@ class BexioFinancialActionService
         $money = app(BexioBalanceService::class);
         $expected = (int) ($row->expected_cents ?? ($kind === 'invoice' ? 2500 : 1500));
         $local = $kind === 'invoice' ? app(InvoiceTaxService::class)->summary($document, true)['total_cents'] : $money->cents((string) $document->activeLines()->sum('amount'));
-        abort_unless($local === $expected, 409, 'Lokale Positionen wurden geaendert.');
+        abort_unless($local === $expected, 409, __('Lokale Positionen wurden geaendert.'));
         if ($kind === 'invoice') {
             app(InvoiceTaxService::class)->assertRemote($document, $payload, $data);
         }
@@ -51,7 +51,7 @@ class BexioFinancialActionService
             ? $client->get($token, '/2.0/kb_invoice/'.$row->remote_id.'/payment', ['limit' => 500])
             : $client->get($token, '/4.0/purchase/outgoing-payments', ['bill_id' => $row->remote_id, 'limit' => 100]);
         if ($row->kind === 'expense') {
-            abort_unless(isset($data['data'], $data['paging']['page_count']) && (int) $data['paging']['page_count'] <= 1, 409, 'Zahlungsliste ist nicht vollstaendig.');
+            abort_unless(isset($data['data'], $data['paging']['page_count']) && (int) $data['paging']['page_count'] <= 1, 409, __('Zahlungsliste ist nicht vollstaendig.'));
             $data = $data['data'];
         }
         abort_unless(array_is_list($data) && count($data) < ($row->kind === 'invoice' ? 500 : 100), 409);
@@ -76,7 +76,7 @@ class BexioFinancialActionService
         $guard = app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, $kind, $objectId);
         $existing = $this->table()->where('dispatch_id', $guard->id)->where('operation', $operation)->first();
         if ($existing) {
-            abort_unless($existing->state === 'accepted', 409, 'Aktion bereits gestartet. Ergebnis abgleichen.');
+            abort_unless($existing->state === 'accepted', 409, __('Aktion bereits gestartet. Ergebnis abgleichen.'));
 
             return;
         }
@@ -84,11 +84,11 @@ class BexioFinancialActionService
         [$row, $remote, $balance] = $this->remote($actor, $tenant, $kind, $objectId);
         $status = $remote[$kind === 'invoice' ? 'kb_item_status_id' : 'status'];
         abort_unless($kind === 'invoice' ? ($operation === 'payment_overpaid' ? (int) $status === 9 : in_array((int) $status, [8, 16, 31], true))
-            : ($operation === 'bill_book' ? $status === 'DRAFT' : $status === 'BOOKED'), 409, 'Status erlaubt diese Testbuchung nicht.');
+            : ($operation === 'bill_book' ? $status === 'DRAFT' : $status === 'BOOKED'), 409, __('Status erlaubt diese Testbuchung nicht.'));
         abort_unless(($operation === 'payment_overpaid' ? $balance['remaining_cents'] === 0 && $balance['paid_cents'] === $balance['total_cents'] && $balance['overpaid_cents'] === 0
             : $balance['remaining_cents'] > 0) && $balance['credit_cents'] === 0, 409);
         if ($kind === 'expense') {
-            abort_unless(($remote['payment'] ?? null) === null, 409, 'Vorhandene Zahlungsdaten zuerst klaeren.');
+            abort_unless(($remote['payment'] ?? null) === null, 409, __('Vorhandene Zahlungsdaten zuerst klaeren.'));
         }
         $setting = Setting::where('tenant_id', $tenant->id)->where('area', 'bexio')->where('key', 'BEXIO_BANK_ACCOUNT_ID')->firstOrFail();
         $bankId = Crypt::decryptString($setting->encrypted_value);
@@ -98,7 +98,7 @@ class BexioFinancialActionService
         abort_unless(collect($banks)->contains(fn ($bank) => (int) $bank['id'] === (int) $bankId && in_array($bank['type'] ?? '', ['bank', 'cash'], true)), 409);
         $payments = $operation === 'bill_book' ? [] : $this->payments($tenant, $row);
         if ($kind === 'expense' && $operation === 'bill_pay') {
-            abort_unless($payments === [], 409, 'Bereits vorhandene Zahlungen zuerst abgleichen.');
+            abort_unless($payments === [], 409, __('Bereits vorhandene Zahlungen zuerst abgleichen.'));
         }
         $cents = $operation === 'payment_overpaid' ? 500 : ($operation === 'bill_book' ? 0 : ($operation === 'payment_partial' ? intdiv($balance['remaining_cents'], 2) : $balance['remaining_cents']));
         abort_unless($operation === 'bill_book' || $cents > 0, 409);
@@ -135,7 +135,7 @@ class BexioFinancialActionService
     {
         $document = ($kind === 'invoice' ? Invoice::class : Expense::class)::where('tenant_id', $tenant->id)->findOrFail($objectId);
         abort_unless($kind === 'invoice' ? $document->workflowStatus?->code === 'released'
-            : ($document->status?->code === 'Z' && $document->payment_released_on), 409, 'Beleg zuerst lokal freigeben.');
+            : ($document->status?->code === 'Z' && $document->payment_released_on), 409, __('Beleg zuerst lokal freigeben.'));
     }
 
     public function reconcile(Account $actor, Tenant $tenant, string $kind, int $objectId): void
@@ -196,7 +196,7 @@ class BexioFinancialActionService
         $service = app(BexioReconciliationService::class);
         $checkId = $service->preview($actor, $tenant, $kind, $objectId);
         $check = DB::connection('clubunio')->table('clubora.bexio_checks')->find($checkId);
-        abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, 'Finanzabgleich noch offen.');
+        abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, __('Finanzabgleich noch offen.'));
         if ($check->state === 'ready') {
             $service->apply($actor, $tenant, $checkId);
         }

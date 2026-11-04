@@ -32,16 +32,16 @@ class StatusStyleService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $record = $id ? StatusStyle::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new StatusStyle;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $record->revision) {
-                throw ValidationException::withMessages(['revision' => 'Die Farbe wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Die Farbe wurde geändert. Bitte neu laden.')]);
             }
             $rules = ['name' => 'required|string|max:160', 'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'], 'active' => 'required|boolean', 'revision' => 'nullable|integer|min:1'];
             if (array_diff(array_keys($input), array_keys($rules))) {
-                throw ValidationException::withMessages(['form' => 'Unbekannte oder geschützte Felder.']);
+                throw ValidationException::withMessages(['form' => __('Unbekannte oder geschützte Felder.')]);
             }
             $data = Validator::make($input, $rules)->validate();
             $data['value_key'] = StatusAppearance::key($data['name']);
             if ($data['value_key'] === '' || StatusStyle::where('tenant_id', $tenant->id)->where('value_key', $data['value_key'])->where('id', '!=', $id ?? 0)->exists()) {
-                throw ValidationException::withMessages(['name' => 'Diese Bezeichnung ist leer oder bereits vorhanden.']);
+                throw ValidationException::withMessages(['name' => __('Diese Bezeichnung ist leer oder bereits vorhanden.')]);
             }
             unset($data['revision']);
             $before = $id ? $record->only(array_keys($data)) : null;

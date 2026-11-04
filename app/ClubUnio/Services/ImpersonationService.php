@@ -34,7 +34,7 @@ class ImpersonationService
 
     public function password(Account $actor, string $password): void
     {
-        abort_unless($actor->fresh()?->active && Hash::check($password, $actor->fresh()->password), 403, 'Eigenes Passwort ungueltig.');
+        abort_unless($actor->fresh()?->active && Hash::check($password, $actor->fresh()->password), 403, __('Eigenes Passwort ungueltig.'));
     }
 
     public function grant(Account $actor, Tenant $tenant, int $target, bool $enabled, int $revision, string $reason): void
@@ -47,7 +47,7 @@ class ImpersonationService
             abort_unless(TenantAccount::where('tenant_id', $tenant->id)->where('account_id', $target)->exists(), 404);
             abort_if($enabled && ($account->api_only || ! app(AccountAdministrationService::class)->allowed($account, $tenant)), 422);
             $old = $this->table('grants')->where('tenant_id', $tenant->id)->where('account_id', $target)->first();
-            abort_unless((int) ($old->revision ?? 0) === $revision, 409, 'Freischaltung wurde inzwischen geaendert.');
+            abort_unless((int) ($old->revision ?? 0) === $revision, 409, __('Freischaltung wurde inzwischen geaendert.'));
             $this->table('grants')->updateOrInsert(['tenant_id' => $tenant->id, 'account_id' => $target],
                 ['enabled' => $enabled, 'revision' => $revision + 1]);
             $this->audit($tenant->id, $actor->id, $target, $enabled ? 'grant' : 'revoke', ['reason' => $reason]);
@@ -60,11 +60,11 @@ class ImpersonationService
 
     public function start(Request $request, Account $actor, Tenant $tenant, Account $target, string $reason): string
     {
-        abort_if($request->session()->has(self::KEY), 409, 'Simulation bereits aktiv.');
+        abort_if($request->session()->has(self::KEY), 409, __('Simulation bereits aktiv.'));
         abort_unless($this->allowed($actor, $tenant), 403);
         abort_unless($target->active && ! $target->api_only && $actor->id !== $target->id, 403);
         $link = TenantAccount::where('tenant_id', $tenant->id)->where('account_id', $target->id)->first();
-        abort_unless($link && $link->role !== 'admin', 403, 'Administratoren werden nicht simuliert.');
+        abort_unless($link && $link->role !== 'admin', 403, __('Administratoren werden nicht simuliert.'));
         abort_unless($target->canAccessTenant($tenant) || $link->portal_enabled, 403);
         $bound = app(TenantDomainService::class)->current();
         abort_if($bound && ! $bound->is($tenant), 403);
@@ -97,7 +97,7 @@ class ImpersonationService
             || ! $target?->active || $target->api_only || ! $link || $link->role === 'admin'
             || (! $target->canAccessTenant($tenant) && ! $link->portal_enabled) || ($bound && ! $bound->is($tenant))) {
             $this->stop($request, 'expired_or_revoked');
-            abort(403, 'Simulation beendet. Bitte die Seite neu laden.');
+            abort(403, __('Simulation beendet. Bitte die Seite neu laden.'));
         }
         return $row;
     }

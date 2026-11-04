@@ -76,11 +76,11 @@ trait SeasonFinanceActions
 
         return [
             ...($create ? [$this->getOwnerRecord() instanceof Member ? Hidden::make('member_id')->default($this->getOwnerRecord()->id) : MemberResource::memberSelect('member_id')->required()] : [Hidden::make('revision')->required()]),
-            ...($create && $this->getOwnerRecord() instanceof Member ? [Select::make('season_id')->label('Saison')->searchable()->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderByDesc('name')->pluck('name', 'id'))] : []),
+            ...($create && $this->getOwnerRecord() instanceof Member ? [Select::make('season_id')->label('Saison')->searchable()->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderByDesc('name')->localizedPluck('name', 'id'))] : []),
             Select::make('invoice_category_id')->label('Kategorie')->required($create)
-                ->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('sort_order')->pluck('name', 'id')),
+                ->options(fn () => InvoiceCategory::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('sort_order')->localizedPluck('name', 'id')),
             Select::make('tax_mode')->label('Steuerbehandlung')->required()->default('exempt')
-                ->options(['exempt' => 'Steuerbefreit', 'inclusive' => 'Endpreise inklusive Steuer']),
+                ->options(['exempt' => __('Steuerbefreit'), 'inclusive' => __('Endpreise inklusive Steuer')]),
             Textarea::make('notes')->label('Bemerkungen')->maxLength(4000),
         ];
     }
@@ -101,34 +101,34 @@ trait SeasonFinanceActions
                 ->slideOver()->schema(fn () => $this->financeSchema(true))
                 ->action(fn (array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance(null, $data))),
         ])->recordActions([
-            Action::make('positions')->label('Positionen')->icon('heroicon-o-list-bullet')->iconButton()->tooltip('Positionen anzeigen und bearbeiten')
-                ->modalHeading(fn ($record) => ($invoice ? 'Rechnung #' : 'Spesenbeleg #').($record->legacy_id ?? $record->id))
-                ->slideOver()->modalWidth('7xl')->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')
+            Action::make('positions')->label('Positionen')->icon('heroicon-o-list-bullet')->iconButton()->tooltip(__('Positionen anzeigen und bearbeiten'))
+                ->modalHeading(fn ($record) => $invoice ? __('Rechnung #:id', ['id' => $record->legacy_id ?? $record->id]) : __('Spesenbeleg #:id', ['id' => $record->legacy_id ?? $record->id]))
+                ->slideOver()->modalWidth('7xl')->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen'))
                 ->modalContent(fn ($record) => view('clubunio.finance.season-positions', [
                     'component' => $invoice ? InvoiceLinesRelationManager::class : ExpenseLinesRelationManager::class,
                     'record' => $record, 'contextId' => $this->getOwnerRecord()->id, 'contextType' => $this->getOwnerRecord()::class,
                     'pageClass' => $invoice ? ViewInvoice::class : ViewExpense::class,
                 ])),
-            Action::make('editFinance')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Beleg bearbeiten')->slideOver()->visible($editable)
+            Action::make('editFinance')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Beleg bearbeiten'))->slideOver()->visible($editable)
                 ->fillForm(fn ($record) => $record->only($invoice ? ['revision', 'notes', 'tax_mode', 'invoice_category_id'] : ['revision', 'member_id', 'team_season_id', 'bank_account_id', 'round_id', 'notes']))
                 ->schema(fn () => $this->financeSchema())
                 ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance($record->id, $data))),
             ...($invoice ? [
-                Action::make('releaseFinance')->label('Intern freigeben')->icon('heroicon-o-check')->iconButton()->tooltip('Intern freigeben')->visible($editable)
-                    ->modalDescription('Interne Freigabe ohne Bexio-Übertragung oder Versand. Danach sind Positionen gesperrt.')
+                Action::make('releaseFinance')->label('Intern freigeben')->icon('heroicon-o-check')->iconButton()->tooltip(__('Intern freigeben'))->visible($editable)
+                    ->modalDescription(__('Interne Freigabe ohne Bexio-Übertragung oder Versand. Danach sind Positionen gesperrt.'))
                     ->fillForm(fn ($record) => ['revision' => $record->revision])->schema([Hidden::make('revision')->required()])
                     ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance($record->id, $data, 'release'))),
-                Action::make('cancelFinance')->label('Stornieren')->icon('heroicon-o-x-mark')->color('danger')->iconButton()->tooltip('Stornieren')
+                Action::make('cancelFinance')->label('Stornieren')->icon('heroicon-o-x-mark')->color('danger')->iconButton()->tooltip(__('Stornieren'))
                     ->visible(fn ($record) => $editable($record) || ($record->active && ! $record->legacy_id && ! $record->bexio_invoice_id && $record->workflowStatus?->code === 'released'))
                     ->fillForm(fn ($record) => ['revision' => $record->revision])
                     ->schema([Hidden::make('revision')->required(), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])
                     ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance($record->id, $data, 'cancel'))),
-                Action::make('pdf')->label('PDF-Vorschau')->icon('heroicon-o-document')->iconButton()->tooltip('PDF-Vorschau')->slideOver()->modalWidth('5xl')
+                Action::make('pdf')->label('PDF-Vorschau')->icon('heroicon-o-document')->iconButton()->tooltip(__('PDF-Vorschau'))->slideOver()->modalWidth('5xl')
                     ->visible(fn ($record) => $record->active && ($record->bexio_invoice_id || $record->workflow_status_id))
-                    ->modalSubmitAction(false)->modalCancelActionLabel('Schliessen')->modalContent(fn ($record) => view('clubunio.invoices.preview', [
+                    ->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen'))->modalContent(fn ($record) => view('clubunio.invoices.preview', [
                         'url' => route('clubunio.invoices.pdf', ['tenant' => Filament::getTenant()->slug, 'invoice' => $record->id, 'source' => $record->bexio_invoice_id ? 'bexio' : 'local']),
                     ])),
-            ] : [ExpenseFields::transition()->iconButton()->tooltip('Status ändern')
+            ] : [ExpenseFields::transition()->iconButton()->tooltip(__('Status ändern'))
                 ->action(fn ($record, array $data) => FormMutation::run($this, fn () => $this->saveSeasonFinance($record->id, $data, 'transition')))]),
         ]);
     }

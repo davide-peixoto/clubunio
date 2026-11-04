@@ -39,7 +39,7 @@ class StatusStyleResource extends CatalogResource
         return $table->columns([TextColumn::make('name')->label('Bezeichnung')->searchable()->sortable()->badge()->color(fn ($state) => StatusAppearance::palette($state)), ColorColumn::make('color')->label('Farbe'), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])->headerActions([
             CreateAction::make()->label('Hinzufügen')->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(StatusStyleService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data))),
         ])->recordActions([
-            EditAction::make()->iconButton()->tooltip('Bearbeiten')->using(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(StatusStyleService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data))),
+            EditAction::make()->iconButton()->tooltip(__('Bearbeiten'))->using(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(StatusStyleService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data))),
         ])->defaultSort('name')->deferFilters(false);
     }
 

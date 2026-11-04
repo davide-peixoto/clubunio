@@ -84,14 +84,14 @@ class PlanningCalendarService
             }
             $busReservations = $busQuery->orderBy('starts_at')->orderBy('id')->limit(1001)->get();
             if ($busReservations->count() > 1000) {
-                throw ValidationException::withMessages(['team' => 'Zu viele Busreservierungen. Bitte die Auswahl eingrenzen.']);
+                throw ValidationException::withMessages(['team' => __('Zu viele Busreservierungen. Bitte die Auswahl eingrenzen.')]);
             }
             $busNames = $bus->table($tenant, 'buses')->whereIn('id', $busReservations->pluck('bus_id'))->pluck('name', 'id');
             $busTeams = $p->table($tenant, 'team_seasons')->whereIn('id', $busReservations->pluck('team_season_id'))->pluck('label', 'id');
-            $busStatuses = $bus->table($tenant, 'bus_statuses')->pluck('name', 'code');
+            $busStatuses = $bus->table($tenant, 'bus_statuses')->localizedPluck('name', 'code');
         }
         if ($events->count() > 1000) {
-            throw ValidationException::withMessages(['team' => 'Zu viele Termine. Bitte die Mannschaft oder Saison eingrenzen.']);
+            throw ValidationException::withMessages(['team' => __('Zu viele Termine. Bitte die Mannschaft oder Saison eingrenzen.')]);
         }
         // Conflict checks deliberately ignore display filters, but never access restrictions.
         $conflicts = [];
@@ -100,7 +100,7 @@ class PlanningCalendarService
                 ->where('starts_at', '<', Time::parse($events->max('ends_at'))->toIso8601String())
                 ->where('ends_at', '>', Time::parse($events->min('starts_at'))->toIso8601String())->limit(5001)->get();
             if ($candidates->count() > 5000) {
-                throw ValidationException::withMessages(['team' => 'Zu viele Vergleichstermine. Bitte den Zeitraum und die Mannschaft eingrenzen.']);
+                throw ValidationException::withMessages(['team' => __('Zu viele Vergleichstermine. Bitte den Zeitraum und die Mannschaft eingrenzen.')]);
             }
             $conflicts = app(PlanningCalendarTimeline::class)->conflicts($events, $candidates);
         }

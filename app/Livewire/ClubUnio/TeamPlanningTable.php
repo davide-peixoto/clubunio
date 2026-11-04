@@ -38,6 +38,9 @@ class TeamPlanningTable extends PlanningAdminTable
         $service = app(TeamPlanningService::class);
         $teams = $service->teams($actor, $tenant)->orderByDesc('season_id')->orderBy('label')->get();
         $options = $service->options($tenant);
+        $displayOptions = collect($options)->map(fn ($rows) => collect($rows)->mapWithKeys(fn ($row) => [
+            $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('planning_options', $row),
+        ])->all())->all();
 
         return $table
             ->records(function (?string $search, ?array $filters, ?string $sortColumn, ?string $sortDirection, int|string $page, int|string $recordsPerPage) {
@@ -74,24 +77,24 @@ class TeamPlanningTable extends PlanningAdminTable
             ->columns([
                 TextColumn::make('starts_at')->label('Beginn')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
                 TextColumn::make('title')->label('Termin')->searchable()->sortable()
-                    ->description(fn (array $record) => $options['kind'][$record['kind']]->name ?? $record['kind'])
+                    ->description(fn (array $record) => $displayOptions['kind'][$record['kind']] ?? $record['kind'])
                     ->url(fn (array $record) => route('clubunio.planning.show', [$tenant->slug, $record['id']])),
                 TextColumn::make('team_label')->label('Mannschaft')->sortable(),
                 TextColumn::make('location')->label('Ort')->sortable(),
                 TextColumn::make('status')->label('Status')->badge()->sortable()
                     ->color(fn (string $state) => StatusAppearance::palette($options['status'][$state]->name ?? $state))
-                    ->formatStateUsing(fn (string $state) => $options['status'][$state]->name ?? $state),
-                TextColumn::make('deadline_at')->label('Frist')->dateTime('d.m.Y H:i', 'Europe/Zurich')->placeholder('Keine Frist')->sortable(),
+                    ->formatStateUsing(fn (string $state) => $displayOptions['status'][$state] ?? $state),
+                TextColumn::make('deadline_at')->label('Frist')->dateTime('d.m.Y H:i', 'Europe/Zurich')->placeholder(__('Keine Frist'))->sortable(),
             ])
             ->filters([
                 SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
-                SelectFilter::make('status')->label('Status')->options(collect($options['status'] ?? [])->pluck('name', 'code')->all()),
+                SelectFilter::make('status')->label('Status')->options($displayOptions['status'] ?? []),
                 Filter::make('dates')->label('Zeitraum')->schema([
                     DatePicker::make('from')->label('Von')->default(now('Europe/Zurich')->toDateString()),
                     DatePicker::make('to')->label('Bis')->afterOrEqual('from'),
                 ])->indicateUsing(fn (array $data) => array_filter([
-                    filled($data['from'] ?? null) ? 'Von: '.$data['from'] : null,
-                    filled($data['to'] ?? null) ? 'Bis: '.$data['to'] : null,
+                    filled($data['from'] ?? null) ? __('Von: :date', ['date' => $data['from']]) : null,
+                    filled($data['to'] ?? null) ? __('Bis: :date', ['date' => $data['to']]) : null,
                 ])),
             ])->deferFilters(false)
             ->headerActions([
@@ -101,7 +104,7 @@ class TeamPlanningTable extends PlanningAdminTable
                         && $service->teams($actor, $tenant, true)->exists()),
             ])
             ->defaultSort('starts_at')->paginationPageOptions([10, 25, 50, 100])->defaultPaginationPageOption(25)
-            ->modelLabel('Termin')->pluralModelLabel('Termine')
-            ->emptyStateHeading('Keine Termine gefunden.')->emptyStateDescription(null);
+            ->modelLabel(__('Termin'))->pluralModelLabel(__('Termine'))
+            ->emptyStateHeading(__('Keine Termine gefunden.'))->emptyStateDescription(null);
     }
 }

@@ -20,10 +20,10 @@ class BexioDispatchTrialService
         $this->authorize($actor, $tenant);
         $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
             ->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
-        abort_unless($trial && $trial->state === 'ready', 409, 'Keine offene eigene Versandpruefung.');
-        abort_if(CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10)), 409, 'Vorschau abgelaufen.');
+        abort_unless($trial && $trial->state === 'ready', 409, __('Keine offene eigene Versandpruefung.'));
+        abort_if(CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10)), 409, __('Vorschau abgelaufen.'));
         $prepared = $this->snapshot($actor, $tenant, $trial->object_type, $trial->object_id, false, null, $trial->sandbox_recipient_id ?? null);
-        abort_unless(hash_equals($trial->fingerprint, $prepared['fingerprint']), 409, 'Versandgrundlagen wurden geaendert.');
+        abort_unless(hash_equals($trial->fingerprint, $prepared['fingerprint']), 409, __('Versandgrundlagen wurden geaendert.'));
 
         return $prepared + ['trial' => $trial];
     }
@@ -55,22 +55,22 @@ class BexioDispatchTrialService
         $document = $class::where('tenant_id', $tenant->id)->where('active', true)->when($lock, fn ($q) => $q->lockForUpdate())->findOrFail($id);
         $remote = $document->{$type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id'};
         if (trim((string) $remote) !== '') {
-            $this->invalid('Bereits mit Bexio verknüpft oder ungeklärte Referenz. Keine Neuanlage.');
+            $this->invalid(__('Bereits mit Bexio verknüpft oder ungeklärte Referenz. Keine Neuanlage.'));
         }
         $status = $type === 'invoice' ? $document->workflowStatus : $document->status;
         if (! $status || ! $status->active || $status->tenant_id != $tenant->id || $status->code !== ($type === 'invoice' ? 'released' : 'Z')) {
-            $this->invalid('Das Dokument ist nicht für die Übermittlung freigegeben.');
+            $this->invalid(__('Das Dokument ist nicht für die Übermittlung freigegeben.'));
         }
         if ($type === 'invoice' && $document->legacy_id) {
-            $this->invalid('Importierte Rechnungen benötigen vor Neuanlage einen gesonderten Abgleich.');
+            $this->invalid(__('Importierte Rechnungen benötigen vor Neuanlage einen gesonderten Abgleich.'));
         }
         $member = $document->member;
         if (! $member || $member->tenant_id != $tenant->id || $member->archived_at || ($type === 'expense' && (int) $member->bexio_contact_id <= 0)) {
-            $this->invalid('Eine eindeutige Bexio-Kontaktzuordnung fehlt.');
+            $this->invalid(__('Eine eindeutige Bexio-Kontaktzuordnung fehlt.'));
         }
         $lines = $document->activeLines()->orderBy('id')->limit(501)->get();
         if ($lines->isEmpty() || $lines->count() > 500 || $lines->contains(fn ($line) => $line->tenant_id != $tenant->id)) {
-            $this->invalid('Es werden 1 bis 500 gültige eigene Positionen benötigt.');
+            $this->invalid(__('Es werden 1 bis 500 gültige eigene Positionen benötigt.'));
         }
         $money = app(InvoiceWorkflowService::class);
         $positions = [];
@@ -81,44 +81,44 @@ class BexioDispatchTrialService
                 $discount = $money->cents((string) ($line->discount ?? '0'));
                 $net = $money->cents((string) $line->net_amount);
                 if ($discount > $gross || $net !== $gross - $discount || ! trim((string) $line->description)) {
-                    $this->invalid('Betrag, Rabatt oder Bezeichnung einer Rechnungsposition ist widersprüchlich.');
+                    $this->invalid(__('Betrag, Rabatt oder Bezeichnung einer Rechnungsposition ist widersprüchlich.'));
                 }
                 $article = $line->bexio_catalog_article_id ? app(BexioCatalogService::class)->invoiceArticle($tenant, $line->bexio_catalog_article_id) : null;
                 if ($article && (int) $article->remote_id !== (int) $line->bexio_product_id) {
-                    $this->invalid('Artikelzuordnung wurde verändert.');
+                    $this->invalid(__('Artikelzuordnung wurde verändert.'));
                 }
                 $positions[] = ['id' => $line->id, 'description' => $line->description, 'gross' => $gross, 'discount' => $discount, 'net' => $net, 'article' => $line->bexio_product_id,
                     'catalog_definition' => $article?->only(['id', 'remote_id', 'code', 'provider_name', 'provider_data', 'connection_hash']), 'tax_snapshot' => $line->tax_snapshot];
                 if ($document->tax_mode === 'inclusive') {
                     $current = $line->bexio_catalog_tax_id ? app(InvoiceTaxService::class)->snapshot($tenant, $line->bexio_catalog_tax_id, app(InvoiceTaxService::class)->invoiceDate($document)) : null;
                     if (! $current || $current != $line->tax_snapshot) {
-                        $this->invalid('Steuerzuordnung fehlt oder hat sich geändert. Position erneut prüfen.');
+                        $this->invalid(__('Steuerzuordnung fehlt oder hat sich geändert. Position erneut prüfen.'));
                     }
                 }
             } else {
                 $net = $money->cents((string) $line->amount);
                 $expenseType = ExpenseType::where('tenant_id', $tenant->id)->where('active', true)->find($line->expense_type_id);
                 if ($net <= 0 || ! $expenseType || (int) $expenseType->bexio_account_id <= 0) {
-                    $this->invalid('Positiver Spesenbetrag und Bexio-Buchungskonto je Spesentyp erforderlich.');
+                    $this->invalid(__('Positiver Spesenbetrag und Bexio-Buchungskonto je Spesentyp erforderlich.'));
                 }
                 $positions[] = ['id' => $line->id, 'description' => $expenseType->name, 'net' => $net, 'account' => $expenseType->bexio_account_id];
             }
             $total += $net;
         }
         if ($total <= 0) {
-            $this->invalid('Nullrechnungen benötigen einen gesonderten Abschluss; keine Bexio-Neuanlage.');
+            $this->invalid(__('Nullrechnungen benötigen einen gesonderten Abschluss; keine Bexio-Neuanlage.'));
         }
         if ($type === 'invoice') {
             $summary = app(InvoiceTaxService::class)->summary($document, true);
             if ($summary['unrounded_cents'] !== $total) {
-                $this->invalid('Positionssummen und Endbetrag sind widersprüchlich.');
+                $this->invalid(__('Positionssummen und Endbetrag sind widersprüchlich.'));
             }
             if ((int) $document->rounding_cents !== $summary['rounding_cents']) {
-                $this->invalid('Lokale Rundung ist widersprüchlich.');
+                $this->invalid(__('Lokale Rundung ist widersprüchlich.'));
             }
             $total = $summary['total_cents'];
             if ($total <= 0) {
-                $this->invalid('Der gerundete Endbetrag muss positiv sein; Nullrechnungen benötigen einen gesonderten Abschluss.');
+                $this->invalid(__('Der gerundete Endbetrag muss positiv sein; Nullrechnungen benötigen einen gesonderten Abschluss.'));
             }
         }
         $sandboxContact = null;
@@ -133,7 +133,7 @@ class BexioDispatchTrialService
             if (! $lock) {
                 $attachments = $service->prepare($tenant, $id, $plan);
             } elseif (! $attachments || ! hash_equals($plan['source_hash'], $attachments['source_hash'])) {
-                $this->invalid('Belegzuordnung wurde während der Prüfung geändert. Bitte erneut prüfen.');
+                $this->invalid(__('Belegzuordnung wurde während der Prüfung geändert. Bitte erneut prüfen.'));
             }
         }
         $snapshot = ['version' => 4, 'type' => $type, 'document' => $document->getAttributes(), 'contact' => $member->bexio_contact_id,
@@ -152,14 +152,14 @@ class BexioDispatchTrialService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $snapshot = $this->snapshot($actor, $tenant, $type, $id, true, $prepared['_attachments'], $sandboxRecipientId);
             if (! hash_equals($prepared['fingerprint'], $snapshot['fingerprint'])) {
-                $this->invalid('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.');
+                $this->invalid(__('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.'));
             }
             unset($snapshot['_attachments'], $snapshot['_request']);
             $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials');
             $existing = (clone $query)->where('tenant_id', $tenant->id)->where('object_type', $type)->where('object_id', $id)->where('fingerprint', $snapshot['fingerprint'])->first();
             if ($existing) {
                 if ($existing->actor_id != $actor->id) {
-                    $this->invalid('Für diesen Stand besteht bereits eine Prüfung durch eine andere Person.');
+                    $this->invalid(__('Für diesen Stand besteht bereits eine Prüfung durch eine andere Person.'));
                 }
                 if ($existing->state === 'ready') {
                     (clone $query)->where('id', $existing->id)->update(['created_at' => now()]);
@@ -169,7 +169,7 @@ class BexioDispatchTrialService
             }
 
             if ((clone $query)->where('tenant_id', $tenant->id)->where('object_type', $type)->where('object_id', $id)->whereIn('state', ['uncertain', 'running'])->exists()) {
-                $this->invalid('Ein vorheriger Testlauf hat einen unklaren Ausgang. Keine neue Übermittlung, auch nach Datenänderung.');
+                $this->invalid(__('Ein vorheriger Testlauf hat einen unklaren Ausgang. Keine neue Übermittlung, auch nach Datenänderung.'));
             }
 
             return $query->insertGetId($snapshot + ['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id, 'reference' => (string) Str::uuid(), 'sandbox_recipient_id' => $sandboxRecipientId]);
@@ -179,7 +179,7 @@ class BexioDispatchTrialService
     public function simulate(Account $actor, Tenant $tenant, int $id, string $outcome): void
     {
         $this->authorize($actor, $tenant);
-        abort_if(DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('source_trial_id', $id)->exists(), 409, 'Echter Sandbox-Auftrag vorhanden.');
+        abort_if(DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('source_trial_id', $id)->exists(), 409, __('Echter Sandbox-Auftrag vorhanden.'));
         abort_unless(in_array($outcome, ['simulated', 'rejected', 'uncertain'], true), 422);
         $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
         abort_unless($trial, 404);
@@ -188,7 +188,7 @@ class BexioDispatchTrialService
             return;
         }
         if (CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10))) {
-            $this->invalid('Vorschau abgelaufen. Bitte erneut prüfen.');
+            $this->invalid(__('Vorschau abgelaufen. Bitte erneut prüfen.'));
         }
         $prepared = $this->snapshot($actor, $tenant, $trial->object_type, $trial->object_id, false);
         $token = (string) Str::uuid();
@@ -205,17 +205,17 @@ class BexioDispatchTrialService
             if (DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
                 ->where('tenant_id', $tenant->id)->where('object_type', $trial->object_type)->where('object_id', $trial->object_id)
                 ->where('id', '<>', $id)->whereIn('state', ['running', 'uncertain'])->exists()) {
-                $this->invalid('Ein anderer Testlauf dieses Dokuments muss zuerst geklärt werden.');
+                $this->invalid(__('Ein anderer Testlauf dieses Dokuments muss zuerst geklärt werden.'));
             }
             if (CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10))) {
-                $this->invalid('Vorschau abgelaufen. Bitte erneut prüfen.');
+                $this->invalid(__('Vorschau abgelaufen. Bitte erneut prüfen.'));
             }
             $fresh = $this->snapshot($actor, $tenant, $trial->object_type, $trial->object_id, true, $prepared['_attachments']);
             if (! hash_equals($prepared['fingerprint'], $fresh['fingerprint'])) {
-                $this->invalid('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.');
+                $this->invalid(__('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.'));
             }
             if (! hash_equals($trial->fingerprint, $fresh['fingerprint'])) {
-                $this->invalid('Dokument oder Zuordnungen wurden geändert. Bitte erneut prüfen.');
+                $this->invalid(__('Dokument oder Zuordnungen wurden geändert. Bitte erneut prüfen.'));
             }
             $query->update(['state' => 'running', 'run_started_at' => now(), 'execution_token' => $token, 'completed_at' => null]);
 
@@ -304,14 +304,14 @@ class BexioDispatchTrialService
             abort_unless($trial, 404);
             $this->authorizeDocument($actor, $tenant, $trial->object_type, 'sync');
             if (! in_array($trial->state, ['uncertain', 'rejected', 'running'], true)) {
-                $this->invalid('Nur fehlgeschlagene Testläufe können geklärt werden.');
+                $this->invalid(__('Nur fehlgeschlagene Testläufe können geklärt werden.'));
             }
             if ($trial->state === 'running' && CarbonImmutable::parse($trial->run_started_at)->gt(now()->subMinutes(15))) {
-                $this->invalid('Testlauf läuft noch. Bitte später erneut prüfen.');
+                $this->invalid(__('Testlauf läuft noch. Bitte später erneut prüfen.'));
             }
             $last = DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->where('trial_id', $id)->orderByDesc('id')->first();
             if ($decision === 'found' && (! $last || $last->operation !== 'create' || $trial->state === 'rejected')) {
-                $this->invalid('Es wurde keine unklare Dokumentanlage protokolliert.');
+                $this->invalid(__('Es wurde keine unklare Dokumentanlage protokolliert.'));
             }
             $state = $decision === 'found' ? 'simulated' : 'ready';
             $query->update(['state' => $state, 'execution_token' => null, 'created_at' => now(),

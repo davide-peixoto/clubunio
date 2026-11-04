@@ -40,16 +40,26 @@ class ExpenseMessageService
         $emails = $members->pluck('email')->merge($expense->status->code === 'F' ? $accounts->pluck('username') : [])
             ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))->unique()->values()->all();
         $values = ['verein' => $tenant->name, 'mitglied' => $expense->member?->display_name ?? '', 'saison' => $expense->season?->name ?? '',
-            'runde' => $expense->round?->name ?? '', 'mannschaft' => $expense->teamSeason?->team?->name ?? '',
+            'runde' => $expense->round ? new MessageLookupValue('expense_rounds', $expense->round->getAttributes()) : '', 'mannschaft' => $expense->teamSeason?->team?->name ?? '',
             'betrag' => 'CHF '.number_format((float) $expense->activeLines()->sum('amount'), 2, '.', "'")];
         $templates = app(MessageTemplateService::class);
-        $mail = $templates->render($tenant, $event, 'email', $values);
-        $payload = $mail && $emails ? $mail + ['intended_to' => $emails] : null;
+        $deliveries = [];
+        foreach ($emails as $email) {
+            $mail = $templates->renderForEmail($tenant, $event, $values, $email);
+            if ($mail) {
+                $deliveries[] = $mail + ['intended_to' => [$email]];
+            }
+        }
+        // Keep the legacy envelope while snapshotting each recipient's own variant.
+        $payload = $deliveries ? $deliveries[0] + ['deliveries' => $deliveries] : null;
+        if ($payload) {
+            $payload['intended_to'] = array_merge(...array_column($deliveries, 'intended_to'));
+        }
         $id = $db->table('clubora.expense_events')->insertGetId(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'revision' => $expense->revision, 'event_key' => $event,
             'delivery_state' => $payload ? 'ready' : 'held', 'payload_encrypted' => $payload ? Crypt::encryptString(json_encode($payload, JSON_THROW_ON_ERROR)) : null]);
-        $push = $templates->render($tenant, $event, 'push', $values);
-        if ($push) {
-            foreach ($accounts->unique('account_id') as $account) {
+        foreach ($accounts->unique('account_id') as $account) {
+            $push = $templates->renderForAccount($tenant, $event, 'push', $values, $account->account_id);
+            if ($push) {
                 $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->account_id, 'expense_event_id' => $id,
                     'title' => $push['title'], 'body' => $push['body'], 'object_type' => 'expense', 'object_id' => $expense->id]);
             }

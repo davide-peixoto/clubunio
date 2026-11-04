@@ -13,7 +13,10 @@ class MembersByAge extends ChartWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('members');
     }
 
-    protected ?string $heading = 'Aktive Mitglieder nach Alter';
+    public function getHeading(): string
+    {
+        return __('Aktive Mitglieder nach Alter');
+    }
 
     protected ?string $pollingInterval = null;
 
@@ -31,6 +34,6 @@ class MembersByAge extends ChartWidget
         abort_unless(static::canView(), 403);
         $counts = app(DashboardService::class)->ages(Filament::auth()->user(), $tenant);
 
-        return ['labels' => array_keys($counts), 'datasets' => [['label' => 'Mitglieder', 'data' => array_values($counts), 'backgroundColor' => '#48A9E8']]];
+        return ['labels' => array_map(fn ($label) => $label === 'Unbekannt' ? __('Unbekannt') : $label, array_keys($counts)), 'datasets' => [['label' => __('Mitglieder'), 'data' => array_values($counts), 'backgroundColor' => '#48A9E8']]];
     }
 }

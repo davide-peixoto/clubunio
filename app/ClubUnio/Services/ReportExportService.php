@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\CatalogModel;
 use App\ClubUnio\Models\FamilyMember;
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Models\MemberBankAccount;
@@ -25,7 +26,7 @@ class ReportExportService
 
     public static function action(string $kind): Action
     {
-        return Action::make('export')->label('CSV exportieren')->icon('heroicon-o-arrow-down-tray')
+        return Action::make('export')->label(__('CSV exportieren'))->icon('heroicon-o-arrow-down-tray')
             ->action(fn ($livewire) => app(self::class)->download(Filament::auth()->user(), Filament::getTenant(), $kind, $livewire->getFilteredSortedTableQuery(), $livewire->tableFilters['season']['value'] ?? null));
     }
 
@@ -92,29 +93,29 @@ class ReportExportService
         }
         $rows = $query->limit(5001)->get();
         if ($rows->count() > 5000) {
-            throw ValidationException::withMessages(['export' => 'Bitte die Auswahl auf höchstens 5000 Einträge eingrenzen.']);
+            throw ValidationException::withMessages(['export' => __('Bitte die Auswahl auf höchstens 5000 Einträge eingrenzen.')]);
         }
         $rows->load($relations);
         // Materialize only whitelisted fields before sending headers; errors cannot yield partial CSV.
         $values = $rows->map(function ($row) use ($kind, $membership, $seasonName) {
             if ($kind === 'spots') {
-                return [$row->kind === 'family' ? 'Familie' : 'Einzelmitglied', $row->company, $row->name,
+                return [$row->kind === 'family' ? __('Familie') : __('Einzelmitglied'), $row->company, $row->name,
                     $row->street, $row->postal_code, $row->city, $row->country];
             }
             if ($membership) {
-                return [$row->legacy_id ?? $row->id, $row->display_name, $row->type?->name, $row->status?->name, ...($kind === 'unassigned' ? [$seasonName] : [])];
+                return [$row->legacy_id ?? $row->id, $row->display_name, $this->displayLabel($row->type), $this->displayLabel($row->status), ...($kind === 'unassigned' ? [$seasonName] : [])];
             }
             $member = $row->member;
             $common = [$member->legacy_id ?? $member->id, $member->display_name];
 
             return match ($kind) {
-                'keys' => [$row->number, $row->name, $row->color, ...$common, $member->status?->name, $row->active ? 'Ja' : 'Nein'],
-                'players' => [...$common, $row->teamSeason?->season?->name, $row->teamSeason?->label, $row->active ? 'Ja' : 'Nein', $row->invoice_line_id === null ? 'Nein' : 'Ja'],
+                'keys' => [$row->number, $row->name, $row->color, ...$common, $this->displayLabel($member->status), $row->active ? __('Ja') : __('Nein')],
+                'players' => [...$common, $row->teamSeason?->season?->name, $row->teamSeason?->label, $row->active ? __('Ja') : __('Nein'), $row->invoice_line_id === null ? __('Nein') : __('Ja')],
                 'player_contacts' => [...$common, $row->teamSeason?->season?->name, $row->teamSeason?->label, $member->email, $member->mobile,
                     $member->mother_name, $member->mother_email, $member->mother_mobile, $member->father_name, $member->father_email, $member->father_mobile],
-                'staff' => [...$common, $row->teamSeason?->season?->name, $row->teamSeason?->label, $row->staffFunction?->name, $row->active ? 'Ja' : 'Nein'],
-                'families' => [$row->family?->name, ...$common, $row->family?->street, $row->family?->postal_code, $row->family?->city, $member->birth_date?->format('d.m.Y'), $member->type?->name, $member->status?->name, $row->discount, $row->active ? 'Ja' : 'Nein'],
-                'banks' => [...$common, $row->bank?->name, $row->masked_iban, $row->bank?->city, $row->bank?->swift, $member->status?->name, $row->active ? 'Ja' : 'Nein',
+                'staff' => [...$common, $row->teamSeason?->season?->name, $row->teamSeason?->label, $this->displayLabel($row->staffFunction), $row->active ? __('Ja') : __('Nein')],
+                'families' => [$row->family?->name, ...$common, $row->family?->street, $row->family?->postal_code, $row->family?->city, $member->birth_date?->format('d.m.Y'), $this->displayLabel($member->type), $this->displayLabel($member->status), $row->discount, $row->active ? __('Ja') : __('Nein')],
+                'banks' => [...$common, $row->bank?->name, $row->masked_iban, $row->bank?->city, $row->bank?->swift, $this->displayLabel($member->status), $row->active ? __('Ja') : __('Nein'),
                     $row->bank?->street, $row->bank?->postal_address, $row->bank?->postal_code, $row->bank?->country_code, $row->bank?->clearing_number, $row->bank?->postal_account],
             };
         });
@@ -123,16 +124,16 @@ class ReportExportService
             'after_value' => json_encode(['action' => 'export_prepared', 'kind' => $kind, 'row_count' => $values->count()], JSON_THROW_ON_ERROR),
         ]);
         $headers = match ($kind) {
-            'spots' => ['Empfänger', 'Firma', 'Name', 'Strasse', 'PLZ', 'Ort', 'Land'],
-            'keys' => ['Schlüsselnummer', 'Bezeichnung', 'Farbe', 'Mitglied-Nr.', 'Mitglied', 'Mitgliederstatus', 'Aktiv'],
-            'players' => ['Mitglied-Nr.', 'Mitglied', 'Saison', 'Mannschaft', 'Aktiv', 'Beitragsposition vorhanden'],
-            'player_contacts' => ['Mitglied-Nr.', 'Mitglied', 'Saison', 'Mannschaft', 'E-Mail Spieler', 'Mobile Spieler', 'Mutter', 'E-Mail Mutter', 'Mobile Mutter', 'Vater', 'E-Mail Vater', 'Mobile Vater'],
-            'staff' => ['Mitglied-Nr.', 'Mitglied', 'Saison', 'Mannschaft', 'Funktion', 'Aktiv'],
-            'families' => ['Familie', 'Mitglied-Nr.', 'Mitglied', 'Strasse', 'PLZ', 'Ort', 'Geburtsdatum', 'Mitgliederart', 'Mitgliederstatus', 'Rabatt', 'Aktiv'],
-            'banks' => ['Mitglied-Nr.', 'Mitglied', 'Bank', 'IBAN (maskiert)', 'Bankort', 'SWIFT', 'Mitgliederstatus', 'Aktiv', 'Bankdomizil', 'Bankpostadresse', 'Bank-PLZ', 'Bank-Land', 'Clearing-Nr.', 'Bankpostkonto'],
-            'unassigned' => ['Mitglied-Nr.', 'Mitglied', 'Mitgliederart', 'Mitgliederstatus', 'Saison'],
-            'passive' => ['Mitglied-Nr.', 'Mitglied', 'Mitgliederart', 'Mitgliederstatus'],
-            'member_reports' => ['Mitglied-Nr.', 'Mitglied', 'Mitgliederart', 'Mitgliederstatus'],
+            'spots' => [__('Empfänger'), __('Firma'), __('Name'), __('Strasse'), __('PLZ'), __('Ort'), __('Land')],
+            'keys' => [__('Schlüsselnummer'), __('Bezeichnung'), __('Farbe'), __('Mitglied-Nr.'), __('Mitglied'), __('Mitgliederstatus'), __('Aktiv')],
+            'players' => [__('Mitglied-Nr.'), __('Mitglied'), __('Saison'), __('Mannschaft'), __('Aktiv'), __('Beitragsposition vorhanden')],
+            'player_contacts' => [__('Mitglied-Nr.'), __('Mitglied'), __('Saison'), __('Mannschaft'), __('E-Mail Spieler'), __('Mobile Spieler'), __('Mutter'), __('E-Mail Mutter'), __('Mobile Mutter'), __('Vater'), __('E-Mail Vater'), __('Mobile Vater')],
+            'staff' => [__('Mitglied-Nr.'), __('Mitglied'), __('Saison'), __('Mannschaft'), __('Funktion'), __('Aktiv')],
+            'families' => [__('Familie'), __('Mitglied-Nr.'), __('Mitglied'), __('Strasse'), __('PLZ'), __('Ort'), __('Geburtsdatum'), __('Mitgliederart'), __('Mitgliederstatus'), __('Rabatt'), __('Aktiv')],
+            'banks' => [__('Mitglied-Nr.'), __('Mitglied'), __('Bank'), __('IBAN (maskiert)'), __('Bankort'), __('SWIFT'), __('Mitgliederstatus'), __('Aktiv'), __('Bankdomizil'), __('Bankpostadresse'), __('Bank-PLZ'), __('Bank-Land'), __('Clearing-Nr.'), __('Bankpostkonto')],
+            'unassigned' => [__('Mitglied-Nr.'), __('Mitglied'), __('Mitgliederart'), __('Mitgliederstatus'), __('Saison')],
+            'passive' => [__('Mitglied-Nr.'), __('Mitglied'), __('Mitgliederart'), __('Mitgliederstatus')],
+            'member_reports' => [__('Mitglied-Nr.'), __('Mitglied'), __('Mitgliederart'), __('Mitgliederstatus')],
         };
         $name = ['spots' => 'spots-versandliste', 'keys' => 'schluesselliste', 'players' => 'spielerliste', 'player_contacts' => 'spieler-kontaktliste', 'staff' => 'staffliste', 'families' => 'familienliste', 'banks' => 'bankkontenliste', 'unassigned' => 'mitglieder-ohne-mannschaft', 'passive' => 'passivmitglieder', 'member_reports' => 'mitgliederliste'][$kind];
 
@@ -149,5 +150,10 @@ class ReportExportService
             }
             fclose($file);
         }, $name.'-'.now('Europe/Zurich')->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
+    }
+
+    private function displayLabel(?CatalogModel $lookup): ?string
+    {
+        return $lookup ? app(LookupTranslations::class)->label($lookup->getTable(), $lookup->getAttributes()) : null;
     }
 }

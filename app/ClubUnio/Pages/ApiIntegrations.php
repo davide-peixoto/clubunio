@@ -87,7 +87,7 @@ class ApiIntegrations extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $scopeLabels = app(ApiTokenService::class)->scopes();
+        $scopeLabels = app(ApiTokenService::class)->scopes(translateLabels: true);
 
         return $table->records(function (?string $search, ?array $filters, ?string $sortColumn, ?string $sortDirection, int|string $page, int|string $recordsPerPage) {
             [$actor, $tenant] = $this->context();
@@ -109,20 +109,20 @@ class ApiIntegrations extends Page implements HasTable
             return new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page);
         })->columns([
             TextColumn::make('name')->label('Integration')->searchable()->sortable(),
-            TextColumn::make('active')->label('Status')->badge()->formatStateUsing(fn ($state) => $state ? 'Aktiv' : 'Deaktiviert')
+            TextColumn::make('active')->label('Status')->badge()->formatStateUsing(fn ($state) => $state ? __('Aktiv') : __('Deaktiviert'))
                 ->color(fn ($state) => StatusAppearance::palette($state ? 'Aktiv' : 'Deaktiviert')),
-            TextColumn::make('profile_name')->label('Profil')->placeholder('Profil nicht verfügbar'),
+            TextColumn::make('profile_name')->label('Profil')->placeholder(__('Profil nicht verfügbar')),
             TextColumn::make('rate_limit')->label('Anfragen / Minute')->numeric()->sortable(),
             TextColumn::make('scopes')->label('Scopes')->listWithLineBreaks()->limitList(3)->expandableLimitedList()
                 ->formatStateUsing(fn ($state) => $scopeLabels[$state] ?? $state),
             ViewColumn::make('tokens')->label('Tokens')->view('clubunio.api.integration-tokens')->viewData(['allScopeLabels' => $scopeLabels]),
         ])->filters([
-            SelectFilter::make('active')->label('Status')->options([1 => 'Aktiv', 0 => 'Deaktiviert']),
+            SelectFilter::make('active')->label('Status')->options([1 => __('Aktiv'), 0 => __('Deaktiviert')]),
         ])->deferFilters(false)->recordActions([
-            Action::make('deactivateItem')->label('Integration deaktivieren')->icon('heroicon-o-stop-circle')->iconButton()->tooltip('Integration deaktivieren')->color('danger')
+            Action::make('deactivateItem')->label('Integration deaktivieren')->icon('heroicon-o-stop-circle')->iconButton()->tooltip(__('Integration deaktivieren'))->color('danger')
                 ->visible(fn (array $record) => $record['active'])->requiresConfirmation()->action(fn (array $record) => $this->disableIntegration($record['id'])),
         ])->defaultSort('id', 'desc')->paginationPageOptions([10, 25, 50])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Integrationen.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Integrationen.'))->emptyStateDescription(null);
     }
 
     private function context(): array
@@ -158,7 +158,7 @@ class ApiIntegrations extends Page implements HasTable
             'rate_limit' => $this->rateLimit, 'scopes' => $this->integrationScopes,
         ]);
         $this->reset('name', 'accessProfileId', 'rateLimit', 'integrationScopes');
-        Notification::make()->title('Integration erstellt')->success()->send();
+        Notification::make()->title(__('Integration erstellt'))->success()->send();
     }
 
     public function issueToken(): void
@@ -176,13 +176,13 @@ class ApiIntegrations extends Page implements HasTable
         $integration = app(ApiTokenService::class)->integrations($actor, $tenant)->firstWhere('id', $this->integrationId);
         abort_unless($integration && $integration->active, 403);
         if (array_diff($this->tokenScopes, $integration->scopes ?? [])) {
-            throw ValidationException::withMessages(['tokenScopes' => 'Scopes liegen ausserhalb der Integration.']);
+            throw ValidationException::withMessages(['tokenScopes' => __('Scopes liegen ausserhalb der Integration.')]);
         }
         $result = app(ApiTokenService::class)->issueToken($actor, $tenant, $this->integrationId,
             trim($this->tokenName), $this->tokenScopes, CarbonImmutable::parse($this->expiresAt, config('app.timezone')));
         $this->issuedToken = $result['token'];
         $this->reset('tokenName', 'tokenScopes', 'expiresAt');
-        Notification::make()->title('Token erstellt')->success()->send();
+        Notification::make()->title(__('Token erstellt'))->success()->send();
     }
 
     public function revokeToken(int $id): void
@@ -190,7 +190,7 @@ class ApiIntegrations extends Page implements HasTable
         $this->issuedToken = null;
         [$actor, $tenant] = $this->context();
         app(ApiTokenService::class)->revokeToken($actor, $tenant, $id);
-        Notification::make()->title('Token widerrufen')->success()->send();
+        Notification::make()->title(__('Token wurde widerrufen'))->success()->send();
     }
 
     public function disableIntegration(int $id): void
@@ -198,7 +198,7 @@ class ApiIntegrations extends Page implements HasTable
         $this->issuedToken = null;
         [$actor, $tenant] = $this->context();
         app(ApiTokenService::class)->disableIntegration($actor, $tenant, $id);
-        Notification::make()->title('Integration deaktiviert')->success()->send();
+        Notification::make()->title(__('Integration deaktiviert'))->success()->send();
     }
 
     public function clearToken(): void
@@ -223,7 +223,7 @@ class ApiIntegrations extends Page implements HasTable
         abort_unless($this->providerWorkId && $this->providerWorkRevision, 422);
         app(ApiProviderWork::class)->approve($actor, $tenant, $this->providerWorkId, $this->providerWorkRevision);
         $this->reset('providerWorkId', 'providerWorkRevision');
-        Notification::make()->title('API-Auftrag ausgeführt')->success()->send();
+        Notification::make()->title(__('API-Auftrag ausgeführt'))->success()->send();
     }
 
     public function rejectProviderWork(): void
@@ -260,7 +260,7 @@ class ApiIntegrations extends Page implements HasTable
 
     private function scopeLabels(): array
     {
-        return array_filter(app(ApiTokenService::class)->scopes(),
+        return array_filter(app(ApiTokenService::class)->scopes(translateLabels: true),
             fn ($scope) => ! $this->readOnly || str_ends_with($scope, ':read'), ARRAY_FILTER_USE_KEY);
     }
 
@@ -272,7 +272,7 @@ class ApiIntegrations extends Page implements HasTable
             'integrations' => app(ApiTokenService::class)->integrations($actor, $tenant),
             'profiles' => AccessProfile::where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->pluck('name', 'id'),
             'scopeLabels' => $this->scopeLabels(),
-            'allScopeLabels' => app(ApiTokenService::class)->scopes(),
+            'allScopeLabels' => app(ApiTokenService::class)->scopes(translateLabels: true),
             'issuedToken' => $this->issuedToken,
             'providerWorkRows' => app(ApiProviderWork::class)->adminRows($actor, $tenant),
             'providerWorkDetail' => $this->providerWorkId ? app(ApiProviderWork::class)->inspect($actor, $tenant, $this->providerWorkId) : null,

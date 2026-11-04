@@ -130,11 +130,11 @@ class SyncWorkService
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $token) {
             $row = $this->table()->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             abort_unless($row, 404);
-            abort_if($revision !== null && (int) $row->revision !== $revision, 409, 'Auftrag wurde geändert. Bitte neu laden.');
-            abort_if($row->state === 'running' && $row->lease_until && now()->isBefore($row->lease_until), 409, 'Auftrag wird bereits bearbeitet.');
-            abort_if($row->state === 'closed' && $revision !== null, 409, 'Abgeschlossener Auftrag bleibt im Protokoll.');
+            abort_if($revision !== null && (int) $row->revision !== $revision, 409, __('Auftrag wurde geändert. Bitte neu laden.'));
+            abort_if($row->state === 'running' && $row->lease_until && now()->isBefore($row->lease_until), 409, __('Auftrag wird bereits bearbeitet.'));
+            abort_if($row->state === 'closed' && $revision !== null, 409, __('Abgeschlossener Auftrag bleibt im Protokoll.'));
             abort_unless($row->connection_hash === null || hash_equals($row->connection_hash,
-                app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant) ?? ''), 409, 'Verbindung geändert. Auftrag zuerst fachlich prüfen.');
+                app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant) ?? ''), 409, __('Verbindung geändert. Auftrag zuerst fachlich prüfen.'));
             $this->table()->where('id', $id)->update(['state' => 'running', 'attempts' => $row->attempts + 1,
                 'revision' => $row->revision + 1, 'lease_token' => $token, 'lease_until' => now()->addMinutes(5)->toIso8601String(), 'updated_at' => now()->toIso8601String()]);
             $this->event($id, $actor, 'started');
@@ -184,7 +184,7 @@ class SyncWorkService
             'dispatch_result' => $this->dispatchResult($actor, $tenant, $row->object_id),
             'invoice_result' => app(BexioInvoiceActionService::class)->reconcile($actor, $tenant, $row->object_id),
             'finance_result' => app(BexioFinancialActionService::class)->reconcile($actor, $tenant, $payload['kind'], $row->object_id),
-            'training_review' => abort(409, 'KI-Anfrage im Trainingsplan prüfen. Kein automatischer kostenpflichtiger Neuaufruf.'),
+            'training_review' => abort(409, __('KI-Anfrage im Trainingsplan prüfen. Kein automatischer kostenpflichtiger Neuaufruf.')),
             default => abort(422),
         };
     }
@@ -222,7 +222,7 @@ class SyncWorkService
             $open = DB::connection('clubunio')->table('clubora.bexio_invoice_actions as a')
                 ->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
                 ->where('d.tenant_id', $tenant->id)->where('d.invoice_id', $id)->where('a.operation', $operation)->where('a.state', '<>', 'accepted')->exists();
-            abort_if($open, 409, 'Bexio-Aktion weiterhin unbestätigt. Keine erneute Übertragung.');
+            abort_if($open, 409, __('Bexio-Aktion weiterhin unbestätigt. Keine erneute Übertragung.'));
         } else {
             app(BexioInvoiceActionService::class)->executeNow($actor, $tenant, $id, $operation);
         }

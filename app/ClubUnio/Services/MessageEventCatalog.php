@@ -5,7 +5,7 @@ namespace App\ClubUnio\Services;
 /** Event keys and available data are an application contract, not editable routing rules. */
 class MessageEventCatalog
 {
-    public static function all(): array
+    public static function all(string $language = 'de'): array
     {
         $events = [];
         $add = function ($key, $name, $title, $body, $variables, $channels = ['email', 'push']) use (&$events) {
@@ -57,6 +57,14 @@ class MessageEventCatalog
             $event['body'] = str_replace('\\n', "\n", $event['body']);
         }
 
+        if (in_array($language, ['en', 'en-GB'], true)) {
+            $translations = require lang_path('message-templates/en.php');
+            foreach ($events as $key => &$definition) {
+                [$definition['name'], $definition['title'], $definition['body']] = $translations[$key];
+            }
+            unset($definition);
+        }
+
         return $events;
     }
 
@@ -65,8 +73,14 @@ class MessageEventCatalog
         return self::all()[$key] ?? throw new \InvalidArgumentException('Unknown message event');
     }
 
-    public static function samples(): array
+    public static function samples(string $language = 'de'): array
     {
+        if (in_array($language, ['en', 'en-GB'], true)) {
+            return ['verein' => 'Example Club', 'mitglied' => 'Alex Example', 'saison' => '2026/2027', 'runde' => 'First round',
+                'mannschaft' => 'Juniors Ba', 'betrag' => 'CHF 85.00', 'status' => 'closed', 'platz' => 'Main pitch',
+                'datum' => '15.10.2026, 18:00', 'termin' => 'Training', 'titel' => 'Club information',
+                'nachricht' => 'Our club day takes place on Saturday.', 'link' => 'https://example.invalid/confirm', 'code' => '123456'];
+        }
         return ['verein' => 'Beispielverein', 'mitglied' => 'Alex Beispiel', 'saison' => '2026/2027', 'runde' => 'Vorrunde',
             'mannschaft' => 'Junioren Ba', 'betrag' => 'CHF 85.00', 'status' => 'gesperrt', 'platz' => 'Hauptplatz',
             'datum' => '15.10.2026, 18:00', 'termin' => 'Training', 'titel' => 'Vereinsinformation',

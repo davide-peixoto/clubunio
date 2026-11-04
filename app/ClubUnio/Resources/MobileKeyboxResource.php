@@ -28,17 +28,17 @@ class MobileKeyboxResource extends CatalogResource {
         return $schema->components([TextInput::make('revision')->label('Angezeigte Boxversion')->default(0)->readOnly()->required(),
             TextInput::make('name')->label('Name')->required()->maxLength(160),
             TextInput::make('provider_device_id')->label('Provider-Gerätezuordnung')->password()->revealable()->maxLength(120)->required(fn ($record)=>$record===null)
-                ->helperText('Nur bei Neuanlage oder Änderung eingeben. Leer lassen behält die verschlüsselte Zuordnung; der Wert wird nicht an die App ausgegeben.'),
-            Select::make('bus_id')->label('Bus (optional)')->options(fn ()=>DB::connection('clubunio')->table('clubora.buses')->where('tenant_id',Filament::getTenant()->id)->where('active',true)->pluck('name','id')),
+                ->helperText(__('Nur bei Neuanlage oder Änderung eingeben. Leer lassen behält die verschlüsselte Zuordnung; der Wert wird nicht an die App ausgegeben.')),
+            Select::make('bus_id')->label('Bus (optional)')->options(fn ()=>DB::connection('clubunio')->table('clubora.buses')->where('tenant_id',Filament::getTenant()->id)->where('active',true)->localizedPluck('name','id')),
             Toggle::make('active')->label('Persönliche Zuordnung aktiv')->default(false)->required(),
-            Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500)->helperText('Jede Änderung invalidiert lokale PINs; bereits bekannte Offlinecodes brauchen physische Maßnahmen.')]);
+            Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500)->helperText(__('Jede Änderung invalidiert lokale PINs; bereits bekannte Offlinecodes brauchen physische Maßnahmen.'))]);
     }
     public static function table(Table $table): Table {
         $save=fn ($record,$data,$livewire)=>FormMutation::run($livewire,fn ()=>self::service()->saveBox(Filament::auth()->user(),Filament::getTenant(),$record?->id,$data));
         return $table->columns([TextColumn::make('id')->label('Box-ID'),TextColumn::make('name')->label('Name')->searchable(),TextColumn::make('bus.name')->label('Bus'),
             IconColumn::make('active')->label('Aktiv')->boolean(),TextColumn::make('revision')->label('Version'),
             TextColumn::make('physical_revocation')->label('Physischer Widerruf')->state(fn ($record)=>DB::connection('clubunio')->table('clubora.mobile_keybox_commands')
-                ->where('tenant_id',$record->tenant_id)->where('keybox_id',$record->id)->where('remote_revocation_state','required')->where('valid_until','>',now()->toIso8601String())->exists()?'Erforderlich – keine weitere Ausgabe':'Kein offener lokaler Nachweis')])
+                ->where('tenant_id',$record->tenant_id)->where('keybox_id',$record->id)->where('remote_revocation_state','required')->where('valid_until','>',now()->toIso8601String())->exists()?__('Erforderlich – keine weitere Ausgabe'):__('Kein offener lokaler Nachweis'))])
             ->headerActions([CreateAction::make()->using(fn ($data,$livewire)=>$save(null,$data,$livewire)),
                 Action::make('provider')->label('Providerzugang')->fillForm(fn ()=>self::service()->providerSnapshot(Filament::auth()->user(),Filament::getTenant()))
                     ->schema([Hidden::make('fingerprint')->required(),Toggle::make('configured')->label('Zugangswerte hinterlegt (Abnahme separat)')->disabled()->dehydrated(false),

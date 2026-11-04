@@ -26,12 +26,12 @@ class UnassignedMemberResource extends MemberReportResource
 
         return $table->filters([...array_values($table->getFilters()),
             SelectFilter::make('season')->label('Saison')->searchable()
-                ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id'))
+                ->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->localizedPluck('name', 'id'))
                 ->default(fn () => app(MembershipReportService::class)->currentSeason(Filament::getTenant()))
                 ->query(fn (Builder $query, array $data) => app(MembershipReportService::class)->withoutTeam($query, Filament::getTenant(), $data['value'] ?? null)),
         ])->headerActions([ReportExportService::action('unassigned')])->filtersLayout(FiltersLayout::AboveContent)->filtersFormColumns(4)
             ->emptyStateHeading(fn ($livewire) => blank($livewire->tableFilters['season']['value'] ?? null)
-                ? 'Keine Saison ausgewählt' : 'Keine Mitglieder ohne Mannschaft');
+                ? __('Keine Saison ausgewählt') : __('Keine Mitglieder ohne Mannschaft'));
     }
 
     public static function getPages(): array

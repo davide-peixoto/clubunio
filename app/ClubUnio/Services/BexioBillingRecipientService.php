@@ -20,14 +20,14 @@ class BexioBillingRecipientService
     {
         $recipient = $member->billingRecipient;
         if (! $recipient || ! $recipient->active || $recipient->tenant_id != $member->tenant_id) {
-            $this->invalid('Aktiver Rechnungsempfänger fehlt.');
+            $this->invalid(__('Aktiver Rechnungsempfänger fehlt.'));
         }
         $field = $recipient->email_field;
         $name = match ($field) {
             'email' => trim($member->company ?: $member->first_name.' '.$member->last_name),
             'mother_email' => trim((string) $member->mother_name),
             'father_email' => trim((string) $member->father_name),
-            default => $this->invalid('Unbekannte Adressquelle des Rechnungsempfängers.'),
+            default => $this->invalid(__('Unbekannte Adressquelle des Rechnungsempfängers.')),
         };
 
         return ['recipient_id' => $recipient->id, 'field' => $field, 'name' => $name, 'email' => trim((string) $member->$field)];
@@ -50,7 +50,7 @@ class BexioBillingRecipientService
             return $this->contactId($member->bexio_contact_id);
         }
         if (! $member->billing_bexio_identity_hash || ! hash_equals($member->billing_bexio_identity_hash, $this->identityHash($member))) {
-            $this->invalid('Bexio-Zuordnung des Rechnungsempfängers fehlt oder ist veraltet. Im Mitgliederdossier neu bestätigen.');
+            $this->invalid(__('Bexio-Zuordnung des Rechnungsempfängers fehlt oder ist veraltet. Im Mitgliederdossier neu bestätigen.'));
         }
 
         return $this->contactId($member->billing_bexio_contact_id);
@@ -59,7 +59,7 @@ class BexioBillingRecipientService
     private function contactId(mixed $value): int
     {
         if (! ctype_digit((string) $value) || (int) $value < 1 || (int) $value > 2147483647) {
-            $this->invalid('Gültige Bexio-Kontakt-ID erforderlich.');
+            $this->invalid(__('Gültige Bexio-Kontakt-ID erforderlich.'));
         }
 
         return (int) $value;
@@ -74,17 +74,17 @@ class BexioBillingRecipientService
             $member = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($id);
             Validator::make($input, ['version' => 'required|string|size:64', 'contact_id' => 'present|nullable|integer|min:1|max:2147483647', 'confirmed' => 'accepted'])->validate();
             if (! hash_equals($this->version($member), $input['version'])) {
-                $this->invalid('Mitglied oder Zuordnung wurde geändert. Bitte neu öffnen.');
+                $this->invalid(__('Mitglied oder Zuordnung wurde geändert. Bitte neu öffnen.'));
             }
             $contact = blank($input['contact_id']) ? null : $this->contactId($input['contact_id']);
             $hash = null;
             if ($contact !== null) {
                 $identity = $this->identity($member);
                 if ($identity['field'] === 'email') {
-                    $this->invalid('Beim eigenen Rechnungsempfänger gilt der bestehende Mitgliedskontakt.');
+                    $this->invalid(__('Beim eigenen Rechnungsempfänger gilt der bestehende Mitgliedskontakt.'));
                 }
                 if ($identity['name'] === '' || ! filter_var($identity['email'], FILTER_VALIDATE_EMAIL)) {
-                    $this->invalid('Name und gültige E-Mail des Rechnungsempfängers zuerst im Mitglied ergänzen.');
+                    $this->invalid(__('Name und gültige E-Mail des Rechnungsempfängers zuerst im Mitglied ergänzen.'));
                 }
                 $hash = $this->identityHash($member);
             }

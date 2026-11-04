@@ -169,7 +169,7 @@ class MemberResource extends Resource
     {
         return $model::where('tenant_id', Filament::getTenant()?->id ?? -1)
             ->where(fn ($q) => $q->where('active', true)->orWhere('id', $current ?? -1))
-            ->orderBy('sort_order')->orderBy('name')->pluck('name', 'id')->all();
+            ->orderBy('sort_order')->orderBy('name')->localizedPluck('name', 'id')->all();
     }
 
     public static function memberSelect(string $field): Select
@@ -197,16 +197,16 @@ class MemberResource extends Resource
             TextColumn::make('type.name')->label('Mitgliederart')->sortable(),
             TextColumn::make('exit_date')->label('Austritt')->date('d.m.Y')->toggleable(isToggledHiddenByDefault: true),
         ])->filters([
-            SelectFilter::make('status_id')->label('Status')->options(fn () => MemberStatus::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->pluck('name', 'id')),
-            SelectFilter::make('type_id')->label('Mitgliederart')->options(fn () => MemberType::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->pluck('name', 'id')),
-            SelectFilter::make('country_id')->label('Land')->searchable()->options(fn () => Country::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
+            SelectFilter::make('status_id')->label('Status')->options(fn () => MemberStatus::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->localizedPluck('name', 'id')),
+            SelectFilter::make('type_id')->label('Mitgliederart')->options(fn () => MemberType::where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->localizedPluck('name', 'id')),
+            SelectFilter::make('country_id')->label('Land')->searchable()->options(fn () => Country::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')),
         ])->headerActions([
             CreateAction::make()->label('Mitglied erfassen')->slideOver()
                 ->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberService::class)->create(Filament::auth()->user(), Filament::getTenant(), $data))),
         ])->recordActions([
-            BexioBillingRecipientAction::make()->iconButton()->tooltip('Bexio-Rechnungsempfänger'),
-            ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')->url(fn (Member $record) => static::getUrl('view', ['record' => $record])),
-            EditAction::make()->slideOver()->iconButton()->tooltip('Mitglied bearbeiten')
+            BexioBillingRecipientAction::make()->iconButton()->tooltip(__('Bexio-Rechnungsempfänger')),
+            ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))->url(fn (Member $record) => static::getUrl('view', ['record' => $record])),
+            EditAction::make()->slideOver()->iconButton()->tooltip(__('Mitglied bearbeiten'))
                 ->mutateRecordDataUsing(fn (array $data, Member $record) => array_merge($data, ['_version' => MemberService::version($record)]))
                 ->using(fn (Member $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberService::class)->update(Filament::auth()->user(), Filament::getTenant(), $record->id, $data))),
         ])->deferFilters(false)->persistFiltersInSession()->defaultSort('last_name')->paginated([25, 50, 100])->persistSearchInSession();

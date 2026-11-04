@@ -17,6 +17,6 @@ class CreditNoteLinesRelationManager extends RelationManager
     {
         return $table->columns([TextColumn::make('invoice_line_id')->label('Originalposition'), TextColumn::make('description')->label('Bezeichnung')->wrap(),
             TextColumn::make('amount_cents')->label('Betrag CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2, '.', "'")),
-            TextColumn::make('included_tax')->label('Enthaltene Steuer CHF'), TextColumn::make('tax_snapshot.code')->label('Originalsteuer')->placeholder('Steuerbefreit')]);
+            TextColumn::make('included_tax')->label('Enthaltene Steuer CHF'), TextColumn::make('tax_snapshot.code')->label('Originalsteuer')->placeholder(__('Steuerbefreit'))]);
     }
 }

@@ -169,7 +169,8 @@ class ProfileUiTest extends TestCase
     {
         $this->permissions(\App\ClubUnio\Services\PermissionCatalog::readOnly());
         $adminOnly = ['AccessProfileResource', 'TenantAccountResource', 'AccountMemberLinkResource',
-            'SettingResource', 'StatusStyleResource', 'BusKeyboxResource', 'ObjectChangeResource'];
+            'SettingResource', 'StatusStyleResource', 'BusKeyboxResource', 'ObjectChangeResource', 'LookupTranslationResource',
+            'MobileAppAnnouncementResource', 'MobileKeyboxResource'];
         foreach (glob(app_path('ClubUnio/Resources/*Resource.php')) as $path) {
             $name = basename($path, '.php');
             $class = 'App\\ClubUnio\\Resources\\'.$name;

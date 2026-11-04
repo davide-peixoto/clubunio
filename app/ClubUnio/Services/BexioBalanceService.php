@@ -12,12 +12,12 @@ class BexioBalanceService
             $value = sprintf('%.6F', $value);
         }
         if (! is_scalar($value) || ! preg_match('/^\d{1,12}(?:\.\d{1,6})?$/D', (string) $value)) {
-            throw ValidationException::withMessages(['balance' => 'Bexio-Betrag fehlt oder ist ungueltig.']);
+            throw ValidationException::withMessages(['balance' => __('Bexio-Betrag fehlt oder ist ungueltig.')]);
         }
         [$whole, $fraction] = array_pad(explode('.', (string) $value), 2, '');
         $fraction = str_pad($fraction, 6, '0');
         if (substr($fraction, 2) !== '0000') {
-            throw ValidationException::withMessages(['balance' => 'Bexio-Betrag enthaelt Bruchteile von Rappen.']);
+            throw ValidationException::withMessages(['balance' => __('Bexio-Betrag enthaelt Bruchteile von Rappen.')]);
         }
 
         return (int) $whole * 100 + (int) substr($fraction, 0, 2);
@@ -44,11 +44,11 @@ class BexioBalanceService
             $status = (string) ($data['status'] ?? '');
             $invalidStatus = ($status === 'PAID' && $remaining !== 0) || ($status === 'DRAFT' && $paid !== 0);
             if (($data['currency_code'] ?? '') !== 'CHF') {
-                throw ValidationException::withMessages(['balance' => 'Finanzabgleich unterstuetzt nur CHF-Belege.']);
+                throw ValidationException::withMessages(['balance' => __('Finanzabgleich unterstuetzt nur CHF-Belege.')]);
             }
         }
         if ($total !== $expected || $paid < 0 || $total !== $paid + $credit + $remaining || $invalidStatus) {
-            throw ValidationException::withMessages(['balance' => 'Bexio-Status, Zahlungen, Gutschriften oder Restbetrag sind widerspruechlich.']);
+            throw ValidationException::withMessages(['balance' => __('Bexio-Status, Zahlungen, Gutschriften oder Restbetrag sind widerspruechlich.')]);
         }
 
         return ['total_cents' => $total, 'paid_cents' => $paid, 'credit_cents' => $credit,

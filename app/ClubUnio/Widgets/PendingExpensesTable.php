@@ -16,7 +16,10 @@ class PendingExpensesTable extends TableWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('expenses');
     }
 
-    protected static ?string $heading = 'Spesen in Bearbeitung';
+    protected function getTableHeading(): string
+    {
+        return __('Spesen in Bearbeitung');
+    }
 
     public function table(Table $table): Table
     {
@@ -25,7 +28,7 @@ class PendingExpensesTable extends TableWidget
         abort_unless(static::canView(), 403);
 
         return $table->query(Expense::where('tenant_id', $tenant->id)->where('active', true)->whereHas('status', fn ($q) => $q->whereIn('code', ['F', 'Z']))->with(['member', 'status', 'season', 'round'])->withSum('activeLines', 'amount'))
-            ->columns([TextColumn::make('member.display_name')->label('Mitglied'), TextColumn::make('season.name')->label('Saison'), TextColumn::make('round.name')->label('Runde'), TextColumn::make('status.name')->label('Status')->badge(), TextColumn::make('active_lines_sum_amount')->label('Betrag')->money('CHF')])
+            ->columns([TextColumn::make('member.display_name')->label(__('Mitglied')), TextColumn::make('season.name')->label(__('Saison')), TextColumn::make('round.name')->label(__('Spesenrunde')), TextColumn::make('status.name')->label(__('Status'))->badge(), TextColumn::make('active_lines_sum_amount')->label(__('Betrag'))->money('CHF')])
             ->recordUrl(fn ($record) => ExpenseResource::getUrl('view', ['record' => $record]))->defaultSort('id', 'desc')->paginated([5, 10])->defaultPaginationPageOption(5);
     }
 }

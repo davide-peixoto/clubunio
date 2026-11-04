@@ -5,24 +5,36 @@
     const token = confirmation ? fragment.slice(8) : fragment;
     history.replaceState(null, '', window.location.pathname);
     const message = document.getElementById('sr-message');
+    const text = message.dataset;
     const pledge = document.getElementById('sr-pledge');
     const confirm = document.getElementById('sr-confirm');
     const key = crypto.randomUUID();
     const post = async (action, data) => {
-        const response = await fetch(`/sponsor-run/${action}`, {method: 'POST', credentials: 'same-origin', cache: 'no-store', referrerPolicy: 'no-referrer', headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content}, body: JSON.stringify({...data, token})});
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.errors ? Object.values(body.errors).flat().join(' ') : body.message);
+        let response, body;
+        try {
+            response = await fetch(`/sponsor-run/${action}`, {method: 'POST', credentials: 'same-origin', cache: 'no-store', referrerPolicy: 'no-referrer', headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content}, body: JSON.stringify({...data, token})});
+            body = await response.json();
+        } catch {
+            throw new Error(text.requestFailed);
+        }
+        if (!body || typeof body !== 'object') throw new Error(text.requestFailed);
+        if (!response.ok) {
+            const errors = body.errors && typeof body.errors === 'object'
+                ? Object.values(body.errors).flat().filter(value => typeof value === 'string').join(' ') : '';
+            throw new Error(errors || (typeof body.message === 'string' && body.message) || text.requestFailed);
+        }
         return body;
     };
-    if (!/^[a-f0-9]{64}$/.test(token)) { message.textContent = 'Link ist ungültig oder abgelaufen.'; return; }
+    if (!/^[a-f0-9]{64}$/.test(token)) { message.textContent = text.invalidLink; return; }
     if (confirmation) {
-        message.textContent = 'Bitte Sponsorenzusage verbindlich bestätigen.';
+        message.textContent = text.confirmPledge;
         confirm.hidden = false;
     } else {
         post('info', {}).then(data => {
             document.getElementById('sr-title').textContent = data.title;
             document.getElementById('sr-alias').textContent = data.alias;
-            document.getElementById('sr-date').textContent = `${data.event_date} / Zusagefrist ${data.registration_deadline}`;
+            document.getElementById('sr-date').textContent = text.eventDeadline.replace(/:date|:deadline/g,
+                placeholder => placeholder === ':date' ? data.event_date : data.registration_deadline);
             document.getElementById('sr-event').hidden = false;
             message.textContent = '';
             pledge.hidden = false;

@@ -103,12 +103,12 @@ class DocumentSeries extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        return $table->heading('Letzte Serien')
+        return $table->heading(__('Letzte Serien'))
             ->query(fn () => $this->historyQuery())
             ->columns([
                 TextColumn::make('id')->label('Serie')->prefix('#')->sortable(),
                 TextColumn::make('template_name')->label('Vorlage')->wrap()
-                    ->description(fn (Series $record) => 'Version '.$record->template_version)
+                    ->description(fn (Series $record) => __('Version :version', ['version' => $record->template_version]))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search));
 
@@ -127,11 +127,11 @@ class DocumentSeries extends Page implements HasTable
             ])->deferFilters(false)
             ->recordActions([
                 Action::make('openSeries')->label('Serie öffnen')->icon('heroicon-o-folder-open')
-                    ->iconButton()->tooltip('Serie öffnen')->hidden(fn () => ! ProfileUi::allows('documents'))
+                    ->iconButton()->tooltip(__('Serie öffnen'))->hidden(fn () => ! ProfileUi::allows('documents'))
                     ->alpineClickHandler(fn (Series $record) => '$wire.openSeries('.(int) $record->id.')'),
             ])
             ->defaultSort('id', 'desc')->paginationPageOptions([10, 25, 50])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Serien gefunden.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Serien gefunden.'))->emptyStateDescription(null);
     }
 
     protected function historyQuery(): Builder
@@ -175,7 +175,7 @@ class DocumentSeries extends Page implements HasTable
     public function defaults(): void
     {
         $this->service()->installDefaults(Filament::auth()->user(), Filament::getTenant());
-        Notification::make()->title('Standardvorlagen vorhanden')->success()->send();
+        Notification::make()->title(__('Standardvorlagen vorhanden'))->success()->send();
     }
 
     public function editTemplate(bool $new = false): void
@@ -258,7 +258,7 @@ class DocumentSeries extends Page implements HasTable
         abort_unless($this->acknowledge && ($this->review['can_create'] ?? false), 422);
         $row = $this->service()->create(Filament::auth()->user(), Filament::getTenant(), $this->input(), $this->review['hash'], $this->requestKey);
         $this->seriesId = $row->id;
-        Notification::make()->title('Serie erstellt')->success()->send();
+        Notification::make()->title(__('Serie erstellt'))->success()->send();
     }
 
     public function openSeries(int $id): void
@@ -274,12 +274,12 @@ class DocumentSeries extends Page implements HasTable
         abort_unless($this->seriesId, 422);
         try {
             $result = $this->service()->process(Filament::auth()->user(), Filament::getTenant(), $this->seriesId);
-            Notification::make()->title($result['done'] ? 'Serie vollständig' : (! empty($result['busy']) ? 'Verarbeitung läuft bereits' : 'Dokument erstellt'))->success()->send();
+            Notification::make()->title($result['done'] ? __('Serie vollständig') : (! empty($result['busy']) ? __('Verarbeitung läuft bereits') : __('Dokument erstellt')))->success()->send();
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            Notification::make()->title('Verarbeitung offen')->body('Erneut versuchen. Bereits gespeicherte Uploads bleiben erhalten.')->warning()->send();
+            Notification::make()->title(__('Verarbeitung offen'))->body(__('Erneut versuchen. Bereits gespeicherte Uploads bleiben erhalten.'))->warning()->send();
         }
     }
 

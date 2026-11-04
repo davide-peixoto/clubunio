@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## DE/EN Fachoberflaechen und Sprachvarianten (04.11.2026)
+
+Historische514 Beschriftungen sowie Fachdialoge/Ansichten/Fehlertexte nachgezogen.
+Migration001300 fuehrt ausschliesslich mandantenbezogene Lookup-Anzeigetexte ein;
+Quell-IDs, Statusregeln und Farben bleiben original. Migration001400 ergaenzt nur
+fehlende Nachrichtensprachen und Revisionen, niemals individuelle Bestandstexte.
+Verschluesselte Sicherung und unveraenderte Bestandszeilen werden vor/nach dem
+gezielten Lauf geprueft. Keine Sammelmigration oder Datenauffrischung.
+Rueckweg: vorheriger Code, additive Sprachdaten erhalten. Test-/Release-Nachweis
+und Fallbackregeln: CLUBUNIO-LANGUAGE-COMPLETION.md. PHPMaker DEV/PROD unveraendert.
+
 ## DE-/EN-Sprachbasis (04.11.2026)
 
 Additive Migration001200: persoenliche bevorzugte Sprache und Vereinssprache,

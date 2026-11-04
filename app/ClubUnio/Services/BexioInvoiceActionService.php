@@ -25,10 +25,10 @@ class BexioInvoiceActionService
         abort_unless(preg_match('/^\d{1,9}(?:\.\d{1,6})?$/D', $total), 409);
         [$whole, $fraction] = array_pad(explode('.', $total), 2, '');
         $fraction = str_pad($fraction, 6, '0');
-        abort_unless(substr($fraction, 2) === '0000', 409, 'Unerwartete Bruchteile von Rappen.');
+        abort_unless(substr($fraction, 2) === '0000', 409, __('Unerwartete Bruchteile von Rappen.'));
         $cents = (int) $whole * 100 + (int) substr($fraction, 0, 2);
         abort_unless((string) ($data['id'] ?? '') === $row->remote_id
-            && $cents === (int) ($row->expected_cents ?? 2500), 409, 'Testrechnung wurde extern geaendert.');
+            && $cents === (int) ($row->expected_cents ?? 2500), 409, __('Testrechnung wurde extern geaendert.'));
         app(InvoiceTaxService::class)->assertRemote(Invoice::where('tenant_id', $tenant->id)->findOrFail($invoiceId), $payload, $data);
 
         return [$row, $data];
@@ -53,22 +53,22 @@ class BexioInvoiceActionService
         [$row, $remote] = $this->remote($actor, $tenant, $invoiceId);
         $existing = $this->table()->where('dispatch_id', $row->id)->where('operation', $operation)->first();
         if ($existing) {
-            abort_unless($existing->state === 'accepted', 409, 'Aktion bereits gestartet. Nur Ergebnis abgleichen.');
+            abort_unless($existing->state === 'accepted', 409, __('Aktion bereits gestartet. Nur Ergebnis abgleichen.'));
 
             return;
         }
         $status = (int) ($remote['kb_item_status_id'] ?? 0);
-        abort_unless($operation === 'issue' ? $status === 7 : in_array($status, [8, 31], true), 409, 'Rechnungsstatus erlaubt diese Aktion nicht.');
+        abort_unless($operation === 'issue' ? $status === 7 : in_array($status, [8, 31], true), 409, __('Rechnungsstatus erlaubt diese Aktion nicht.'));
         // Never cancel paid/partially paid or credited documents, including inconsistent provider data.
         foreach (['total_received_payments', 'total_credit_vouchers'] as $field) {
-            abort_unless(isset($remote[$field]) && is_numeric($remote[$field]) && (float) $remote[$field] === 0.0, 409, 'Zahlungen/Gutschriften zuerst fachlich klaeren.');
+            abort_unless(isset($remote[$field]) && is_numeric($remote[$field]) && (float) $remote[$field] === 0.0, 409, __('Zahlungen/Gutschriften zuerst fachlich klaeren.'));
         }
         $id = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoiceId, $row, $operation, $status) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $current = app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, 'invoice', $invoiceId);
             abort_unless(hash_equals($row->connection_hash, $current->connection_hash), 409);
             abort_if($this->table()->where('dispatch_id', $row->id)->where(fn ($q) => $q->where('operation', $operation)->orWhere('state', '<>', 'accepted'))->exists(), 409);
-            abort_if(DB::connection('clubunio')->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->whereIn('state', ['running', 'uncertain'])->exists(), 409, 'Offene Finanzaktion zuerst abgleichen.');
+            abort_if(DB::connection('clubunio')->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->whereIn('state', ['running', 'uncertain'])->exists(), 409, __('Offene Finanzaktion zuerst abgleichen.'));
 
             return $this->table()->insertGetId(['dispatch_id' => $row->id, 'actor_id' => $actor->id, 'operation' => $operation,
                 'state' => 'running', 'connection_hash' => $row->connection_hash, 'before_status' => $status]);
@@ -101,7 +101,7 @@ class BexioInvoiceActionService
         $service = app(BexioReconciliationService::class);
         $checkId = $service->preview($actor, $tenant, 'invoice', $invoiceId);
         $check = DB::connection('clubunio')->table('clubora.bexio_checks')->find($checkId);
-        abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, 'Lokaler Statusabgleich noch offen.');
+        abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, __('Lokaler Statusabgleich noch offen.'));
         if ($check->state === 'ready') {
             $service->apply($actor, $tenant, $checkId);
         }

@@ -40,7 +40,7 @@ class PlanningGuestService
                 ])->validate();
                 $count = $p->effectiveCount($tenant, $event) - (int) ($old?->status === 'DABEI');
                 if ($data['status'] === 'DABEI' && $event->capacity && $count >= $event->capacity) {
-                    throw ValidationException::withMessages(['status' => 'Die maximale Teilnehmerzahl ist erreicht.']);
+                    throw ValidationException::withMessages(['status' => __('Die maximale Teilnehmerzahl ist erreicht.')]);
                 }
                 $data['comment_encrypted'] = empty($data['comment']) ? null : Crypt::encryptString($data['comment']);
                 unset($data['comment']);

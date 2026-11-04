@@ -90,7 +90,7 @@ abstract class CatalogResource extends Resource
             IconColumn::make('active')->label('Aktiv')->boolean(),
         ])->filters([TernaryFilter::make('active')->label('Aktiv')])
             ->headerActions([static::createAction()])->recordActions([
-                EditAction::make()->iconButton()->tooltip('Bearbeiten')->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(CatalogService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data))),
+                EditAction::make()->iconButton()->tooltip(__('Bearbeiten'))->using(fn (Model $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(CatalogService::class)->save(Filament::auth()->user(), Filament::getTenant(), static::getModel(), $record->id, $data))),
             ])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('sort_order');
     }
 }

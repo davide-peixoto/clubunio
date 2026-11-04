@@ -48,14 +48,14 @@ class ManageRecords extends \Filament\Resources\Pages\ManageRecords
                 $count = $fixture ? app(BexioCatalogFixtureService::class)->create(Filament::auth()->user(), Filament::getTenant())
                     : app(BexioCatalogService::class)->sync(Filament::auth()->user(), Filament::getTenant());
             }
-            Notification::make()->title($invoice ? 'Artikeltestrechnung vorbereitet' : ($fixture ? 'Sandbox-Testartikel bestätigt' : $count.' Katalogeinträge abgeglichen'))->success()->send();
+            Notification::make()->title($invoice ? __('Artikeltestrechnung vorbereitet') : ($fixture ? __('Sandbox-Testartikel bestätigt') : __(':count Katalogeinträge abgeglichen', ['count' => $count])))->success()->send();
             $this->resetTable();
         } catch (\Throwable $error) {
             $reference = (string) Str::uuid();
             Log::warning('clubunio.bexio.catalog_failed', ['reference' => $reference,
                 'actor_id' => Filament::auth()->id(), 'tenant_id' => Filament::getTenant()?->id,
                 'exception' => get_class($error), 'code' => $error->getCode()]);
-            Notification::make()->title('Katalogabgleich fehlgeschlagen')->body('Diagnose: '.$reference)->danger()->send();
+            Notification::make()->title(__('Katalogabgleich fehlgeschlagen'))->body(__('Diagnose: :reference', ['reference' => $reference]))->danger()->send();
         }
     }
 }

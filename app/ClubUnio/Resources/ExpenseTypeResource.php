@@ -27,7 +27,7 @@ class ExpenseTypeResource extends CatalogResource
         return parent::form($schema)->components(array_merge(parent::form($schema)->getComponents(), [
             Toggle::make('receipt_required')->label('Beleg erforderlich')->default(false),
             Select::make('amount_source')->label('Betragsvorschlag')->required()->default('manual')
-                ->options(['manual' => 'Manuell', 'receipt_ai' => 'Beleganalyse', 'team_laundry' => 'Dressentschädigung der Mannschaft']),
+                ->options(['manual' => __('Manuell'), 'receipt_ai' => __('Beleganalyse'), 'team_laundry' => __('Dressentschädigung der Mannschaft')]),
         ]));
     }
 }

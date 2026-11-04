@@ -55,6 +55,9 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
     {
         $context = $this->context();
         $kinds = collect($context['options']['absence'] ?? [])->pluck('name', 'code');
+        $kindLabels = collect($context['options']['absence'] ?? [])->mapWithKeys(fn ($row) => [
+            $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('planning_options', $row),
+        ]);
         $service = app(TeamPlanningService::class);
         $editable = $context['profileAllows']('update')
             ? $service->absenceMembers($context['actor'], $context['tenant'], 'update')
@@ -66,7 +69,7 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
                 TextColumn::make('member_name')->label('Mitglied'),
                 TextColumn::make('starts_on')->label('Von')->date('d.m.Y')->sortable(),
                 TextColumn::make('ends_on')->label('Bis')->date('d.m.Y')->sortable(),
-                TextColumn::make('kind')->label('Art')->badge()->formatStateUsing(fn ($state) => $kinds[$state] ?? $state)->color(fn ($state) => StatusAppearance::palette($kinds[$state] ?? $state)),
+                TextColumn::make('kind')->label('Art')->badge()->formatStateUsing(fn ($state) => $kindLabels[$state] ?? $state)->color(fn ($state) => StatusAppearance::palette($kinds[$state] ?? $state)),
                 TextColumn::make('note')->label('Bemerkung')->state(fn ($record) => $record->note_encrypted ? Crypt::decryptString($record->note_encrypted) : '')->wrap(),
                 ViewColumn::make('actions')->label('')->view('livewire.clubunio.workspace-absence-actions')->viewData($context)
                     ->visible(fn () => $context['own']->isNotEmpty() && $context['profileAllows']('deactivate')),
@@ -78,7 +81,7 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
                     ->schema(fn () => $this->absenceSchema(false))->fillForm(['revision' => 0, 'kind' => 'ABWESEND'])
                     ->action(fn (array $data) => $this->storeAbsence(null, $data)),
             ])->recordActions([
-                Action::make('edit')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip('Absenz bearbeiten')->slideOver()
+                Action::make('edit')->label('Bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Absenz bearbeiten'))->slideOver()
                     ->visible(fn ($record) => in_array($record->member_id, $editable, true))
                     ->schema(fn () => $this->absenceSchema(true))
                     ->fillForm(fn ($record) => ['member_id' => $record->member_id, 'revision' => $record->revision,
@@ -87,7 +90,7 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
                     ->action(fn ($record, array $data) => $this->storeAbsence($record->id, $data)),
             ])
             ->defaultSort('starts_on', 'desc')->paginationPageOptions([10, 25, 50, 100])->defaultPaginationPageOption(25)
-            ->emptyStateHeading('Keine Absenzen vorhanden.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine Absenzen vorhanden.'))->emptyStateDescription(null);
     }
 
     private function absenceSchema(bool $edit): array
@@ -105,7 +108,9 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
                     ->orWhere('last_name', 'ilike', '%'.mb_substr($search, 0, 100).'%'))
                     ->orderBy('last_name')->orderBy('first_name')->limit(50)->get()->pluck('display_name', 'id')->all())
                 ->getOptionLabelUsing(fn ($value) => $value ? $members()->whereKey($value)->first()?->display_name : null),
-            Select::make('kind')->label('Art')->required()->options(collect($context['options']['absence'] ?? [])->where('active', true)->pluck('name', 'code')->all()),
+            Select::make('kind')->label('Art')->required()->options(collect($context['options']['absence'] ?? [])->where('active', true)->mapWithKeys(fn ($row) => [
+                $row->code => app(\App\ClubUnio\Services\LookupTranslations::class)->label('planning_options', $row),
+            ])->all()),
             DatePicker::make('starts_on')->label('Von')->required(),
             DatePicker::make('ends_on')->label('Bis')->required()->afterOrEqual('starts_on'),
             Textarea::make('note')->label('Bemerkung')->maxLength(1000),
@@ -119,8 +124,8 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
             ->saveAbsence($context['actor'], $context['tenant'], $id, $data));
         if ($result) {
             $this->flushCachedTableRecords();
-            Notification::make()->success()->title('Absenz gespeichert.')
-                ->body($result['skipped'] ? $result['skipped'].' fristgesperrte Termine blieben unverändert.' : null)->send();
+            Notification::make()->success()->title(__('Absenz gespeichert.'))
+                ->body($result['skipped'] ? __(':count fristgesperrte Termine blieben unverändert.', ['count' => $result['skipped']]) : null)->send();
         }
     }
 

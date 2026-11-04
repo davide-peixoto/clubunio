@@ -19,7 +19,7 @@ class MaterialReceiptService
 
     public function states(Tenant $tenant): array
     {
-        return DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->pluck('name', 'code')->all();
+        return DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
     }
 
     public function visible(Account $actor, Tenant $tenant, bool $administration = false): Builder
@@ -102,11 +102,11 @@ class MaterialReceiptService
                     'confirmation_name' => $actor->display_name, 'confirmation_kind' => $own ? 'self' : 'parent',
                     'confirmation_text' => $record->snapshot['confirmation']]);
             } else {
-                abort_unless(in_array($record->state, ['draft', 'issued'], true), 409, 'Bestätigte Quittungen bleiben unverändert.');
+                abort_unless(in_array($record->state, ['draft', 'issued'], true), 409, __('Bestätigte Quittungen bleiben unverändert.'));
                 $data = Validator::make($input, ['reason' => 'required|string|min:3|max:1000'])->validate();
                 $record->forceFill(['state' => 'cancelled', 'cancelled_by' => $actor->id, 'cancelled_at' => now(), 'cancellation_reason' => $data['reason']]);
             }
-            abort_unless(DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', $record->state)->where('active', true)->exists(), 409, 'Zielstatus ist nicht aktiv.');
+            abort_unless(DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', $record->state)->where('active', true)->exists(), 409, __('Zielstatus ist nicht aktiv.'));
             $record->revision++;
             $record->save();
             $this->audit($actor, $tenant, $record, $operation);
@@ -118,7 +118,7 @@ class MaterialReceiptService
     private function version(MaterialReceipt $record, int $revision): void
     {
         if ($record->revision !== $revision) {
-            throw ValidationException::withMessages(['revision' => 'Die Übergabe wurde geändert. Bitte neu laden.']);
+            throw ValidationException::withMessages(['revision' => __('Die Übergabe wurde geändert. Bitte neu laden.')]);
         }
     }
 

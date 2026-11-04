@@ -22,7 +22,7 @@ class InvoiceRefundsRelationManager extends RelationManager
     {
         return $table->columns([TextColumn::make('id')->label('Nr.'), TextColumn::make('status.name')->label('Status')->badge()->color(fn ($state) => StatusAppearance::palette($state)),
             TextColumn::make('amount_cents')->label('Betrag CHF')->formatStateUsing(fn ($state) => number_format($state / 100, 2, '.', "'")),
-            TextColumn::make('proof_reference')->label('Manueller Nachweis')->placeholder('Noch nicht bestätigt'), TextColumn::make('reason')->label('Begründung')->wrap()])
+            TextColumn::make('proof_reference')->label('Manueller Nachweis')->placeholder(__('Noch nicht bestätigt')), TextColumn::make('reason')->label('Begründung')->wrap()])
             ->recordActions([FinancialDossierDialog::make(EmbeddedRefund::class, fn () => $this->getOwnerRecord()->id)]);
     }
 }

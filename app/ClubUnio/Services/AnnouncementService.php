@@ -19,7 +19,7 @@ class AnnouncementService
 
     public static function states(Tenant $tenant): array
     {
-        return DB::connection('clubunio')->table('clubora.announcement_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->pluck('name', 'code')->all();
+        return DB::connection('clubunio')->table('clubora.announcement_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
     }
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Announcement
@@ -39,17 +39,17 @@ class AnnouncementService
                 'body' => ['required', 'string', 'max:10000', 'not_regex:/<[^>]*>/'], 'target_type' => ['required', Rule::in(array_keys(self::TARGETS))],
                 'target_ids' => 'present|array|max:500', 'target_ids.*' => ($input['target_type'] ?? null) === 'roles' ? 'required|string|max:30|distinct' : 'required|integer|min:1|distinct', 'revision' => 'nullable|integer|min:0'];
             if (array_diff(array_keys($input), array_keys($rules))) {
-                $this->error('Unerlaubte Felder.');
+                $this->error(__('Unerlaubte Felder.'));
             }
             $data = Validator::make($input, $rules)->validate();
             $ids = $data['target_ids'];
             if ($data['target_type'] === 'all') {
                 if ($ids) {
-                    $this->error('Bei allen Benutzern darf keine Einzelauswahl gesetzt sein.');
+                    $this->error(__('Bei allen Benutzern darf keine Einzelauswahl gesetzt sein.'));
                 }
             } else {
                 if (! $ids) {
-                    $this->error('Bitte mindestens einen Empfänger oder eine Gruppe auswählen.');
+                    $this->error(__('Bitte mindestens einen Empfänger oder eine Gruppe auswählen.'));
                 }
                 if ($data['target_type'] === 'roles') {
                     $valid = AccountRole::where('active', true)->whereIn('code', $ids)->count();
@@ -60,7 +60,7 @@ class AnnouncementService
                     $ids = array_map('intval', $ids);
                 }
                 if ($valid !== count($ids)) {
-                    $this->error('Auswahl enthält fremde oder ungültige Werte.');
+                    $this->error(__('Auswahl enthält fremde oder ungültige Werte.'));
                 }
             }
             sort($ids);
@@ -108,6 +108,7 @@ class AnnouncementService
             $plan = $this->plan($tenant, $r);
 
             return ['title' => $plan['message']['title'], 'body' => $plan['message']['body'], 'count' => count($plan['ids']),
+                'variants' => collect($plan['messages'])->unique('locale')->values()->all(),
                 'names' => Account::whereIn('id', $plan['ids'])->orderBy('display_name')->limit(20)->pluck('display_name')->all()];
         }
 
@@ -124,17 +125,17 @@ class AnnouncementService
             $r = Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->draft($r, $revision);
             if ($r->preview_by !== $actor->id || ! $r->preview_expires_at?->isFuture() || ! hash_equals((string) $r->preview_token, $token)) {
-                $this->error('Vorschau fehlt oder ist abgelaufen. Bitte erneut öffnen.');
+                $this->error(__('Vorschau fehlt oder ist abgelaufen. Bitte erneut öffnen.'));
             }
             $plan = $this->plan($tenant, $r);
             if (! hash_equals((string) $r->preview_hash, $plan['hash'])) {
-                $this->error('Empfänger, Text oder Vorlage wurden geändert. Bitte Vorschau erneut öffnen.');
+                $this->error(__('Empfänger, Text oder Vorlage wurden geändert. Bitte Vorschau erneut öffnen.'));
             }
             $db = DB::connection('clubunio');
             foreach (array_chunk($plan['ids'], 250) as $chunk) {
                 $db->table('clubora.announcement_recipients')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account], $chunk));
                 $db->table('clubora.notifications')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account,
-                    'title' => $plan['message']['title'], 'body' => $plan['message']['body'], 'object_type' => 'announcement', 'object_id' => $r->id], $chunk));
+                    'title' => $plan['messages'][$account]['title'], 'body' => $plan['messages'][$account]['body'], 'object_type' => 'announcement', 'object_id' => $r->id], $chunk));
             }
             $r->forceFill(['state' => 'published', 'revision' => $revision + 1, 'published_at' => now(), 'published_by' => $actor->id,
                 'recipient_count' => count($plan['ids']), 'rendered_title' => $plan['message']['title'], 'rendered_body' => $plan['message']['body'],
@@ -152,11 +153,21 @@ class AnnouncementService
             $this->lock($actor, $tenant, 'deactivate');
             $r = Announcement::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             if ($r->state === 'withdrawn' || $r->revision !== $revision) {
-                $this->error('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.');
+                $this->error(__('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.'));
             }
             $r->forceFill(['state' => 'withdrawn', 'withdrawn_at' => now(), 'revision' => $revision + 1, 'preview_token' => null, 'preview_hash' => null])->save();
-            DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('announcement_id', $id)
-                ->update(['title' => 'Ankündigung zurückgezogen', 'body' => 'Diese Ankündigung wurde von der Verwaltung zurückgezogen.']);
+            $notifications = DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('announcement_id', $id);
+            $languages = app(MessageLanguageService::class)->forAccounts($tenant, (clone $notifications)->distinct()->pluck('account_id')->all());
+            $groups = [];
+            foreach ($languages as $accountId => $language) {
+                $groups[$language][] = $accountId;
+            }
+            foreach ($groups as $language => $accountIds) {
+                (clone $notifications)->whereIn('account_id', $accountIds)->update([
+                    'title' => __('Ankündigung zurückgezogen', [], $language),
+                    'body' => __('Diese Ankündigung wurde von der Verwaltung zurückgezogen.', [], $language),
+                ]);
+            }
             $this->audit($actor, $r, 'withdrawn');
         });
     }
@@ -173,14 +184,26 @@ class AnnouncementService
     {
         $message = app(MessageTemplateService::class)->render($tenant, 'announcement.manual', 'push', ['verein' => $tenant->name, 'titel' => $r->title, 'nachricht' => $r->body]);
         if (! $message || mb_strlen($message['title']) > 200 || mb_strlen($message['body']) > 10000) {
-            $this->error('Interne Ankündigungsvorlage fehlt, ist deaktiviert oder erzeugt zu langen Text.');
+            $this->error(__('Interne Ankündigungsvorlage fehlt, ist deaktiviert oder erzeugt zu langen Text.'));
         }
         $ids = $this->recipients($tenant, $r)->orderBy('clubora.accounts.id')->limit(5001)->pluck('clubora.accounts.id')->map(fn ($v) => (int) $v)->all();
         if (! $ids || count($ids) > 5000) {
-            $this->error('Keine erreichbaren Empfänger oder mehr als 5000. Bitte Auswahl prüfen.');
+            $this->error(__('Keine erreichbaren Empfänger oder mehr als 5000. Bitte Auswahl prüfen.'));
         }
 
-        return ['message' => $message, 'ids' => $ids, 'hash' => hash('sha256', json_encode([$r->revision, $message, $ids], JSON_THROW_ON_ERROR))];
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, 'announcement.manual', 'push',
+            ['verein' => $tenant->name, 'titel' => $r->title, 'nachricht' => $r->body], $ids);
+        // Publishing remains atomic: a missing/disabled required language blocks the
+        // entire announcement, just as the previously single disabled template did.
+        foreach ($messages as $variant) {
+            if (! $variant || mb_strlen($variant['title']) > 200 || mb_strlen($variant['body']) > 10000) {
+                $this->error(__('Interne Ankündigungsvorlage fehlt, ist deaktiviert oder erzeugt zu langen Text.'));
+            }
+        }
+
+        // Include every used variant in the existing preview freshness check.
+        return ['message' => $message, 'messages' => $messages, 'ids' => $ids,
+            'hash' => hash('sha256', json_encode([$r->revision, $message, $ids, $messages], JSON_THROW_ON_ERROR))];
     }
 
     private function recipients(Tenant $tenant, Announcement $r): Builder
@@ -230,7 +253,7 @@ class AnnouncementService
     private function draft(Announcement $r, int $revision): void
     {
         if ($r->exists && ($r->state !== 'draft' || $r->revision !== $revision)) {
-            $this->error('Entwurf wurde inzwischen geändert oder abgeschlossen. Bitte erneut öffnen.');
+            $this->error(__('Entwurf wurde inzwischen geändert oder abgeschlossen. Bitte erneut öffnen.'));
         }
     }
 

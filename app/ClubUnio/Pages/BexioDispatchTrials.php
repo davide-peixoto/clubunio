@@ -96,7 +96,7 @@ class BexioDispatchTrials extends Page implements HasTable
                 fn ($member) => $this->searchMember($member, $search)))
                 ->sortable(['last_name', 'first_name']),
         ])->filters([
-            SelectFilter::make('trial')->label('Meine Versandprüfung')->options(['checked' => 'Bereits geprüft', 'unchecked' => 'Noch nicht geprüft'])
+            SelectFilter::make('trial')->label('Meine Versandprüfung')->options(['checked' => __('Bereits geprüft'), 'unchecked' => __('Noch nicht geprüft')])
                 ->query(function (Builder $query, array $data): Builder {
                     if (! in_array($data['value'] ?? null, ['checked', 'unchecked'], true)) {
                         return $query;
@@ -110,12 +110,12 @@ class BexioDispatchTrials extends Page implements HasTable
                 }),
         ])->deferFilters(false)->recordActions([
             // Keep the existing guarded method for profiles not mapped by the mounted-action bridge.
-            Action::make('check')->label('Prüfen')->icon('heroicon-o-magnifying-glass')->iconButton()->tooltip('Prüfen')
+            Action::make('check')->label('Prüfen')->icon('heroicon-o-magnifying-glass')->iconButton()->tooltip(__('Prüfen'))
                 ->visible(fn () => static::canDocumentOperation($this->type, 'send'))
                 ->extraAttributes(['wire:loading.attr' => 'disabled', 'wire:target' => 'check'])
                 ->alpineClickHandler(fn ($record) => '$wire.check('.((int) $record->id).')'),
         ])->paginationPageOptions([15, 25, 50])->defaultPaginationPageOption(15)->defaultSort('id', 'desc')
-            ->emptyStateHeading('Keine freigegebenen, noch nicht verknüpften Dokumente.')->emptyStateDescription(null);
+            ->emptyStateHeading(__('Keine freigegebenen, noch nicht verknüpften Dokumente.'))->emptyStateDescription(null);
     }
 
     private function searchMember(Builder $query, string $search): Builder
@@ -164,7 +164,7 @@ class BexioDispatchTrials extends Page implements HasTable
         abort_unless(static::canDocumentOperation($this->type, 'send'), 403);
         try {
             app(BexioDispatchTrialService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $this->type, $id);
-            Notification::make()->title('Vorschau geprüft')->success()->send();
+            Notification::make()->title(__('Vorschau geprüft'))->success()->send();
         } catch (ValidationException $e) {
             Notification::make()->title($e->getMessage())->warning()->send();
         }
@@ -177,7 +177,7 @@ class BexioDispatchTrials extends Page implements HasTable
         $this->validate(['outcome' => 'required|in:simulated,rejected,uncertain']);
         try {
             app(BexioDispatchTrialService::class)->simulate(Filament::auth()->user(), Filament::getTenant(), $id, $this->outcome);
-            Notification::make()->title('Testlauf abgeschlossen; kein Versand')->send();
+            Notification::make()->title(__('Testlauf abgeschlossen; kein Versand'))->send();
         } catch (ValidationException $e) {
             Notification::make()->title($e->getMessage())->warning()->send();
         }
@@ -223,7 +223,7 @@ class BexioDispatchTrials extends Page implements HasTable
         $this->validate(['resolution' => 'required|in:found,not_created']);
         try {
             app(BexioDispatchTrialService::class)->resolveSimulation(Filament::auth()->user(), Filament::getTenant(), $id, $this->resolution);
-            Notification::make()->title('Testlauf geklärt; kein echter Bexio-Abgleich')->send();
+            Notification::make()->title(__('Testlauf geklärt; kein echter Bexio-Abgleich'))->send();
         } catch (ValidationException $e) {
             Notification::make()->title($e->getMessage())->warning()->send();
         }

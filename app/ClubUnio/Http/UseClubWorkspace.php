@@ -18,11 +18,11 @@ class UseClubWorkspace
         $tenant = Filament::getTenant();
 
         if (! $request->isMethodSafe()) {
-            abort_unless(is_string($request->input('_workspace')), 419, 'Bitte die Seite neu laden.');
+            abort_unless(is_string($request->input('_workspace')), 419, __('Bitte die Seite neu laden.'));
             try {
                 $context = json_decode(Crypt::decryptString((string) $request->input('_workspace')), true);
             } catch (DecryptException) {
-                abort(419, 'Bitte die Seite neu laden.');
+                abort(419, __('Bitte die Seite neu laden.'));
             }
             abort_unless(is_array($context), 419);
             $active->assertSnapshot($request, $context);

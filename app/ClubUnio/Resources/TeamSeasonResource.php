@@ -37,9 +37,9 @@ class TeamSeasonResource extends TeamAssignmentResource
         return $schema->components([
             Hidden::make('_version'),
             Select::make('team_id')->label('Mannschaft')->required()->searchable()->disabled(fn ($record) => $record !== null)->dehydrated(true)
-                ->options(fn (?TeamSeason $record) => Team::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->team_id ?? -1))->orderBy('name')->pluck('name', 'id')),
+                ->options(fn (?TeamSeason $record) => Team::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->team_id ?? -1))->orderBy('name')->localizedPluck('name', 'id')),
             Select::make('season_id')->label('Saison')->required()->disabled(fn ($record) => $record !== null)->dehydrated(true)
-                ->options(fn (?TeamSeason $record) => Season::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->season_id ?? -1))->orderByDesc('name')->pluck('name', 'id')),
+                ->options(fn (?TeamSeason $record) => Season::where('tenant_id', Filament::getTenant()->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record?->season_id ?? -1))->orderByDesc('name')->localizedPluck('name', 'id')),
             Toggle::make('active')->label('Aktiv')->default(true)->required(),
         ]);
     }
@@ -52,8 +52,8 @@ class TeamSeasonResource extends TeamAssignmentResource
             TextColumn::make('legacy_id')->label('TeamSaison-ID')->sortable(),
             IconColumn::make('active')->label('Aktiv')->boolean(),
         ])->filters([
-            SelectFilter::make('season_id')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->pluck('name', 'id')),
-            SelectFilter::make('team_id')->label('Mannschaft')->searchable()->options(fn () => Team::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->pluck('name', 'id')),
+            SelectFilter::make('season_id')->label('Saison')->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->orderByDesc('name')->localizedPluck('name', 'id')),
+            SelectFilter::make('team_id')->label('Mannschaft')->searchable()->options(fn () => Team::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')),
             TernaryFilter::make('active')->label('Aktiv'),
         ])->headerActions([static::createAction()])->recordActions([static::editAction(), static::copyAction(), static::deactivateAction()])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('legacy_id', 'desc')->paginated([25, 50, 100]);
     }

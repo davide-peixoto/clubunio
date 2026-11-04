@@ -27,7 +27,7 @@ class ExpenseFields
         return [Hidden::make('revision'),
             MemberResource::memberSelect('member_id')->required()->live()->afterStateUpdated(fn (Set $set) => $set('bank_account_id', null)),
             Select::make('team_season_id')->label('Mannschaft / Saison')->required()->searchable()->options(fn () => TeamSeason::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderBy('label')->pluck('label', 'id')),
-            Select::make('round_id')->label('Runde')->required()->options(fn () => ExpenseRound::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
+            Select::make('round_id')->label('Runde')->required()->options(fn () => ExpenseRound::where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
             Select::make('bank_account_id')->label('Bankkonto')->required()->searchable()->options(fn (Get $get) => static::bankOptions($get('member_id'))),
             Textarea::make('notes')->label('Bemerkungen')->maxLength(4000),
         ];
@@ -50,7 +50,7 @@ class ExpenseFields
             ->visible(fn (Expense $record) => count(app(ExpenseService::class)->targets(Filament::auth()->user(), Filament::getTenant(), $record)) > 0)
             ->fillForm(fn (Expense $record) => ['revision' => $record->revision])
             ->schema([Hidden::make('revision'), Select::make('status_id')->label('Neuer Status')->required()->options(fn (Expense $record) => ExpenseStatus::where('tenant_id', Filament::getTenant()->id)->where('active', true)
-                ->whereIn('code', app(ExpenseService::class)->targets(Filament::auth()->user(), Filament::getTenant(), $record))->pluck('name', 'id')),
+                ->whereIn('code', app(ExpenseService::class)->targets(Filament::auth()->user(), Filament::getTenant(), $record))->localizedPluck('name', 'id')),
                 Textarea::make('reason')->label('Prüfvermerk')->required()->minLength(10)->maxLength(500)])
             ->action(fn (Expense $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(ExpenseService::class)->transition(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)));
     }
@@ -58,7 +58,7 @@ class ExpenseFields
     public static function line(Expense $expense): array
     {
         return [Hidden::make('revision'), Hidden::make('expense_revision'),
-            Select::make('expense_type_id')->label('Spesentyp')->required()->live()->options(fn () => ExpenseType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id'))
+            Select::make('expense_type_id')->label('Spesentyp')->required()->live()->options(fn () => ExpenseType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id'))
                 ->afterStateUpdated(function ($state, Set $set) use ($expense) {
                     if ($state) {
                         $suggestion = app(ExpenseService::class)->suggestion(Filament::getTenant(), $expense, (int) $state);
@@ -67,7 +67,7 @@ class ExpenseFields
                         }
                     }
                 }),
-            Select::make('game_type_id')->label('Spieltyp')->options(fn () => GameType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
+            Select::make('game_type_id')->label('Spieltyp')->options(fn () => GameType::where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
             TextInput::make('opponent')->label('Gegner')->maxLength(255),
             TextInput::make('amount')->label('Betrag')->prefix('CHF')->numeric()->required()->minValue(0.0001)->maxValue(999999999),
             Textarea::make('notes')->label('Bemerkungen')->maxLength(4000), Toggle::make('active')->label('Aktiv')->default(true),

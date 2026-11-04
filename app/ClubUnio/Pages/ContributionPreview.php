@@ -61,13 +61,13 @@ class ContributionPreview extends Page
 
     protected function getHeaderActions(): array
     {
-        return [Action::make('calculate')->label('Beitrag berechnen')->modalSubmitActionLabel('Berechnen')->icon('heroicon-o-calculator')->schema([
+        return [Action::make('calculate')->label('Beitrag berechnen')->modalSubmitActionLabel(__('Berechnen'))->icon('heroicon-o-calculator')->schema([
             MemberResource::memberSelect('member_id')->required(),
             Select::make('season_id')->label('Saison')->required()->searchable()->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderByDesc('name')->pluck('name', 'id')),
         ])->action(function (array $data) {
             $this->calculation = [];
             $this->calculation = app(ContributionInvoiceService::class)->preview(Filament::auth()->user(), Filament::getTenant(), (int) $data['member_id'], (int) $data['season_id']);
-        }), Action::make('seasonRun')->label('Saisonlauf prüfen')->icon('heroicon-o-queue-list')->modalSubmitActionLabel('Vorschau laden')
+        }), Action::make('seasonRun')->label('Saisonlauf prüfen')->icon('heroicon-o-queue-list')->modalSubmitActionLabel(__('Vorschau laden'))
             ->schema([Select::make('season_id')->label('Saison')->required()->searchable()->options(fn () => Season::where('tenant_id', Filament::getTenant()->id)->where('active', true)->orderByDesc('name')->pluck('name', 'id'))])
             ->action(function (array $data) {
                 $this->batchResults = [];

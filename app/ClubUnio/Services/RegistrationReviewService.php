@@ -67,7 +67,7 @@ class RegistrationReviewService
     {
         $unknown = array_diff(array_keys($input), [...self::FIELDS, 'revision', 'reason', 'member_id', 'member_version', 'member_type_id', 'document_type_id']);
         if ($unknown) {
-            throw ValidationException::withMessages(['status_id' => 'Diese Felder dürfen hier nicht verändert werden.']);
+            throw ValidationException::withMessages(['status_id' => __('Diese Felder dürfen hier nicht verändert werden.')]);
         }
         $data = Validator::make($input, [
             'revision' => 'required|integer|min:1', 'reason' => 'required|string|min:10|max:500',
@@ -85,7 +85,7 @@ class RegistrationReviewService
             $r = Registration::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($this->canReview($actor, $tenant, $r), 403);
             if ((int) $r->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.']);
+                throw ValidationException::withMessages(['revision' => __('Die Anmeldung wurde inzwischen geändert. Bitte erneut öffnen.')]);
             }
             $before = $r->only(self::FIELDS);
             $values = array_replace($before, array_intersect_key($data, array_flip(self::FIELDS)));
@@ -93,7 +93,7 @@ class RegistrationReviewService
             $oldStatus = RegistrationStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->find($r->status_id);
             if (! $status || ! in_array($status->workflow_key, ['review', 'trial', 'accepted', 'rejected', 'pool'], true)
                 || $oldStatus?->workflow_key === 'accepted') {
-                throw ValidationException::withMessages(['status_id' => 'Dieser Statuswechsel ist nicht zulässig. Akzeptierte Anmeldungen bleiben abgeschlossen.']);
+                throw ValidationException::withMessages(['status_id' => __('Dieser Statuswechsel ist nicht zulässig. Akzeptierte Anmeldungen bleiben abgeschlossen.')]);
             }
             $teamChanged = (string) $values['team_season_id'] !== (string) $r->team_season_id;
             $statusChanged = (string) $values['status_id'] !== (string) $r->status_id;
@@ -101,20 +101,20 @@ class RegistrationReviewService
                 $team = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)
                     ->whereHas('team', fn ($q) => $q->where('active', true))->find($values['team_season_id']);
                 if (! $team) {
-                    throw ValidationException::withMessages(['team_season_id' => 'Bitte eine aktive Mannschaft dieses Vereins auswählen.']);
+                    throw ValidationException::withMessages(['team_season_id' => __('Bitte eine aktive Mannschaft dieses Vereins auswählen.')]);
                 }
                 if (! $office && ! $this->assignableTeams($actor, $tenant)->whereKey($team->id)->exists()) {
                     abort(403);
                 }
             }
             if ($status->workflow_key === 'trial' && ! $values['team_season_id']) {
-                throw ValidationException::withMessages(['team_season_id' => 'Für ein Probetraining ist eine Mannschaft erforderlich.']);
+                throw ValidationException::withMessages(['team_season_id' => __('Für ein Probetraining ist eine Mannschaft erforderlich.')]);
             }
             $leaderChanged = (string) $values['technical_lead_member_id'] !== (string) $r->technical_lead_member_id;
             abort_if(! $office && $leaderChanged, 403);
             if ($leaderChanged && ($status->workflow_key !== 'review'
                 || ($values['technical_lead_member_id'] && ! $this->leaders($tenant)->whereKey($values['technical_lead_member_id'])->exists()))) {
-                throw ValidationException::withMessages(['technical_lead_member_id' => 'TL-Zuweisungen sind nur in Prüfung an einen aktiven TL möglich.']);
+                throw ValidationException::withMessages(['technical_lead_member_id' => __('TL-Zuweisungen sind nur in Prüfung an einen aktiven TL möglich.')]);
             }
             $r->forceFill($values);
             if (! $r->isDirty(self::FIELDS)) {

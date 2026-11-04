@@ -45,7 +45,7 @@ class PaymentReportResource extends ExpenseResource
             TextColumn::make('payment_released_on')->label('Zur Zahlung freigegeben')->date('d.m.Y')->sortable(),
         ])->headerActions([Action::make('export')->label('CSV exportieren')->icon('heroicon-o-arrow-down-tray')
             ->action(fn ($livewire) => app(FinanceExportService::class)->download(Filament::auth()->user(), Filament::getTenant(), 'payments', $livewire->getFilteredSortedTableQuery()))])
-            ->recordActions([ViewAction::make()->iconButton()->tooltip('Spesenbeleg')
+            ->recordActions([ViewAction::make()->iconButton()->tooltip(__('Spesenbeleg'))
                 ->url(fn ($record) => ExpenseResource::getUrl('view', ['record' => $record]))]);
     }
 

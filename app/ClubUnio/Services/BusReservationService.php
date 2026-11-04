@@ -86,7 +86,7 @@ class BusReservationService
             $from = Time::createFromFormat('!Y-m-d\TH:i', $data['starts_at'], 'Europe/Zurich');
             $to = Time::createFromFormat('!Y-m-d\TH:i', $data['ends_at'], 'Europe/Zurich');
             if ($from <= now() || $from->format('Y-m-d\TH:i') !== $data['starts_at'] || $to->format('Y-m-d\TH:i') !== $data['ends_at']) {
-                throw ValidationException::withMessages(['starts_at' => 'Bitte eine gültige zukünftige Reservation erfassen.']);
+                throw ValidationException::withMessages(['starts_at' => __('Bitte eine gültige zukünftige Reservation erfassen.')]);
             }
             $this->conflict($tenant, $data['bus_id'], $from->toIso8601String(), $to->toIso8601String());
             $id = $this->table($tenant, 'bus_reservations')->insertGetId(array_merge($data, [
@@ -103,7 +103,7 @@ class BusReservationService
     private function status(Tenant $tenant, string $status): void
     {
         if (! $this->table($tenant, 'bus_statuses')->where('code', $status)->where('active', true)->exists()) {
-            throw ValidationException::withMessages(['status' => 'Der Reservierungsstatus fehlt oder ist inaktiv.']);
+            throw ValidationException::withMessages(['status' => __('Der Reservierungsstatus fehlt oder ist inaktiv.')]);
         }
     }
 
@@ -117,7 +117,7 @@ class BusReservationService
     {
         $season = $this->table($tenant, 'team_seasons')->where('id', $team)->value('season_id');
         if (! $this->table($tenant, 'seasons')->where('id', $season)->where('active', true)->where(fn ($q) => $q->whereNull('ends_on')->orWhere('ends_on', '>=', now('Europe/Zurich')->toDateString()))->exists()) {
-            throw ValidationException::withMessages(['team_season_id' => 'Die Saison der Mannschaft ist beendet oder inaktiv.']);
+            throw ValidationException::withMessages(['team_season_id' => __('Die Saison der Mannschaft ist beendet oder inaktiv.')]);
         }
     }
 
@@ -125,7 +125,7 @@ class BusReservationService
     {
         if ($this->table($tenant, 'bus_reservations')->where('active', true)->where('bus_id', $bus)->whereIn('status', ['ANGEFRAGT', 'GENEHMIGT', 'UNBEKANNT'])
             ->when($ignore, fn ($q) => $q->where('id', '<>', $ignore))->where('starts_at', '<', $to)->where('ends_at', '>', $from)->exists()) {
-            throw ValidationException::withMessages(['starts_at' => 'Der Bus ist in diesem Zeitraum bereits reserviert oder angefragt.']);
+            throw ValidationException::withMessages(['starts_at' => __('Der Bus ist in diesem Zeitraum bereits reserviert oder angefragt.')]);
         }
     }
 
@@ -138,7 +138,7 @@ class BusReservationService
             $row = $this->visible($actor, $tenant)->where('id', $id)->lockForUpdate()->first();
             abort_unless($row, 404);
             if ($row->revision !== $revision) {
-                throw ValidationException::withMessages(['revision' => 'Die Reservation wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Die Reservation wurde geändert. Bitte neu laden.')]);
             }
             $this->authorizeOperation($actor, $tenant, $status === 'STORNIERT' ? 'cancel' : 'approve');
             $office = app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', $status === 'STORNIERT' ? 'cancel' : 'approve');
@@ -146,20 +146,20 @@ class BusReservationService
                 abort_unless($status === 'STORNIERT' && $row->status === 'ANGEFRAGT' && app(MemberAccessService::class)->represented($actor, $tenant, true)->where('id', $row->member_id)->exists(), 403);
             }
             if (! in_array($row->status, ['ANGEFRAGT', 'GENEHMIGT', 'UNBEKANNT'], true) || ($status === 'GENEHMIGT' && $row->status === 'GENEHMIGT') || ($status === 'ABGELEHNT' && $row->status === 'GENEHMIGT')) {
-                throw ValidationException::withMessages(['status' => 'Dieser Statuswechsel ist nicht zulässig.']);
+                throw ValidationException::withMessages(['status' => __('Dieser Statuswechsel ist nicht zulässig.')]);
             }
             if (Time::parse($row->ends_at) <= now()) {
-                throw ValidationException::withMessages(['status' => 'Vergangene Reservationen bleiben unverändert.']);
+                throw ValidationException::withMessages(['status' => __('Vergangene Reservationen bleiben unverändert.')]);
             }
             $this->status($tenant, $status);
             if ($status === 'GENEHMIGT') {
                 if (! $row->member_id || ! $row->team_season_id) {
-                    throw ValidationException::withMessages(['status' => 'Die historische Reservation hat keine vollständige Mitglieder-/Teamzuordnung.']);
+                    throw ValidationException::withMessages(['status' => __('Die historische Reservation hat keine vollständige Mitglieder-/Teamzuordnung.')]);
                 }
                 if (! $this->table($tenant, 'buses')->where('id', $row->bus_id)->where('active', true)->exists()
                     || ! $this->teams($actor, $tenant)->where('id', $row->team_season_id)->exists()
                     || ! app(MemberAccessService::class)->activeMembers($tenant)->where('id', $row->member_id)->exists()) {
-                    throw ValidationException::withMessages(['status' => 'Bus, Mannschaft oder Antragsteller ist nicht mehr aktiv.']);
+                    throw ValidationException::withMessages(['status' => __('Bus, Mannschaft oder Antragsteller ist nicht mehr aktiv.')]);
                 }
                 $this->reservableTeam($tenant, (int) $row->team_season_id);
                 $this->conflict($tenant, $row->bus_id, $row->starts_at, $row->ends_at, $id);
@@ -199,20 +199,20 @@ class BusReservationService
             abort_unless($row, 404);
             abort_unless($this->canReschedule($actor, $tenant, $row), 403);
             if ((int) $row->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Die Reservation wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Die Reservation wurde geändert. Bitte neu laden.')]);
             }
             if (! $this->table($tenant, 'buses')->where('id', $data['bus_id'])->where('active', true)->exists()) {
-                throw ValidationException::withMessages(['bus_id' => 'Dieser Bus ist nicht aktiv.']);
+                throw ValidationException::withMessages(['bus_id' => __('Dieser Bus ist nicht aktiv.')]);
             }
             if (! $row->member_id || ! $row->team_season_id || ! app(MemberAccessService::class)->activeMembers($tenant)->where('id', $row->member_id)->exists()
                 || ! $this->teams($actor, $tenant)->where('id', $row->team_season_id)->exists()) {
-                throw ValidationException::withMessages(['reservation' => 'Die Mitglieder-/Mannschaftszuordnung ist unvollständig oder nicht mehr aktiv.']);
+                throw ValidationException::withMessages(['reservation' => __('Die Mitglieder-/Mannschaftszuordnung ist unvollständig oder nicht mehr aktiv.')]);
             }
             $this->reservableTeam($tenant, (int) $row->team_season_id);
             $from = Time::createFromFormat('!Y-m-d\TH:i', $data['starts_at'], 'Europe/Zurich');
             $to = Time::createFromFormat('!Y-m-d\TH:i', $data['ends_at'], 'Europe/Zurich');
             if ($from <= now() || $from->format('Y-m-d\TH:i') !== $data['starts_at'] || $to->format('Y-m-d\TH:i') !== $data['ends_at']) {
-                throw ValidationException::withMessages(['starts_at' => 'Bitte einen gültigen zukünftigen Zeitraum angeben.']);
+                throw ValidationException::withMessages(['starts_at' => __('Bitte einen gültigen zukünftigen Zeitraum angeben.')]);
             }
             $change = ['bus_id' => (int) $data['bus_id'], 'starts_at' => $from->toIso8601String(), 'ends_at' => $to->toIso8601String(), 'location' => $data['location'] ?? null, 'description' => $data['description'] ?? null];
             $before = ['bus_id' => (int) $row->bus_id, 'starts_at' => Time::parse($row->starts_at)->tz('Europe/Zurich')->toIso8601String(), 'ends_at' => Time::parse($row->ends_at)->tz('Europe/Zurich')->toIso8601String(), 'location' => $row->location, 'description' => $row->description];
@@ -244,10 +244,10 @@ class BusReservationService
             $row = $this->table($tenant, 'bus_reservations')->where('id', $id)->where('active', true)->lockForUpdate()->first();
             abort_unless($row && $row->legacy_id && (! $row->member_id || ! $row->team_season_id), 404);
             if ((int) $row->revision !== (int) $data['revision']) {
-                throw ValidationException::withMessages(['revision' => 'Die Reservation wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['revision' => __('Die Reservation wurde geändert. Bitte neu laden.')]);
             }
             if (($row->member_id && $row->member_id != $data['member_id']) || ($row->team_season_id && $row->team_season_id != $data['team_season_id'])) {
-                throw ValidationException::withMessages(['member_id' => 'Bestehende Zuordnungen bleiben erhalten.']);
+                throw ValidationException::withMessages(['member_id' => __('Bestehende Zuordnungen bleiben erhalten.')]);
             }
             abort_unless($this->table($tenant, 'members')->where('id', $data['member_id'])->exists()
                 && $this->table($tenant, 'team_seasons')->where('id', $data['team_season_id'])->exists(), 422);
@@ -275,11 +275,11 @@ class BusReservationService
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'bus', $data['active'] ? 'restore' : 'deactivate');
             }
             if ($row && ! hash_equals(self::optionVersion($row), $data['version'] ?? '')) {
-                throw ValidationException::withMessages(['version' => 'Die Auswahl wurde geändert. Bitte neu laden.']);
+                throw ValidationException::withMessages(['version' => __('Die Auswahl wurde geändert. Bitte neu laden.')]);
             }
             $change = ['name' => trim($data['name']), 'active' => (bool) $data['active']];
             if ($change['name'] === '' || $this->table($tenant, $table)->whereRaw('lower(name)=lower(?)', [$change['name']])->where('id', '<>', $id ?? 0)->exists()) {
-                throw ValidationException::withMessages(['name' => 'Die Bezeichnung ist leer oder bereits vergeben.']);
+                throw ValidationException::withMessages(['name' => __('Die Bezeichnung ist leer oder bereits vergeben.')]);
             }
             if ($id) {
                 $this->table($tenant, $table)->where('id', $id)->update($change + ($table === 'buses' ? ['revision' => $row->revision + 1] : []));
@@ -308,16 +308,18 @@ class BusReservationService
             $recipients->whereIn('ta.account_id', $this->table($tenant, 'account_member_links')->where('member_id', $row->member_id)->where('kind', 'self')->where('state', 'approved')->select('account_id'))->where('ta.portal_enabled', true);
         }
         $member = Member::where('tenant_id', $tenant->id)->find($row->member_id);
-        $message = app(MessageTemplateService::class)->render($tenant, $event ?? match ($status) {
+        $eventKey = $event ?? match ($status) {
             'ANGEFRAGT' => 'bus.requested','GENEHMIGT' => 'bus.approved','STORNIERT' => 'bus.cancelled',default => 'bus.rejected'
-        }, 'push', [
+        };
+        $values = [
             'verein' => $tenant->name, 'mitglied' => $member?->display_name ?? '', 'mannschaft' => $this->table($tenant, 'team_seasons')->where('id', $row->team_season_id)->value('label') ?? '',
             'datum' => Time::parse($row->starts_at)->setTimezone('Europe/Zurich')->format('d.m.Y H:i'),
-        ]);
-        if (! $message) {
-            return;
-        }
-        foreach ($recipients->distinct()->pluck('ta.account_id') as $account) {
+        ];
+        $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $eventKey, 'push', $values, $recipients->distinct()->pluck('ta.account_id')->all());
+        foreach ($messages as $account => $message) {
+            if (! $message) {
+                continue;
+            }
             $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account, 'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'bus_reservation', 'object_id' => $id]);
         }
     }

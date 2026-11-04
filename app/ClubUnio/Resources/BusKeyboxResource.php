@@ -41,7 +41,7 @@ class BusKeyboxResource extends CatalogResource
     {
         return $schema->components([TextInput::make('revision')->label('Version')->default(0)->readOnly()->required(),
             TextInput::make('name')->label('Bezeichnung')->required()->maxLength(160),
-            Select::make('bus_id')->label('Bus')->required()->options(fn () => DB::connection('clubunio')->table('clubora.buses')->where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'id')),
+            Select::make('bus_id')->label('Bus')->required()->options(fn () => DB::connection('clubunio')->table('clubora.buses')->where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
             Toggle::make('active')->label('Simulation aktiv')->required()->default(false)]);
     }
 
@@ -50,7 +50,7 @@ class BusKeyboxResource extends CatalogResource
         $save = fn ($record, $data, $livewire) => FormMutation::run($livewire, fn () => app(BusKeyboxAccessService::class)->configure(Filament::auth()->user(), Filament::getTenant(), $record?->id, $data));
 
         return $table->columns([TextColumn::make('name')->label('Bezeichnung')->searchable(), TextColumn::make('bus.name')->label('Bus'),
-            TextColumn::make('mode')->label('Modus')->formatStateUsing(fn () => 'Simulation – keine echte Schlüsselbox'), IconColumn::make('active')->label('Simulation aktiv')->boolean()])
+            TextColumn::make('mode')->label('Modus')->formatStateUsing(fn () => __('Simulation – keine echte Schlüsselbox')), IconColumn::make('active')->label('Simulation aktiv')->boolean()])
             ->headerActions([CreateAction::make()->label('Testzuordnung erstellen')->using(fn ($data, $livewire) => $save(null, $data, $livewire))])
             ->recordActions([EditAction::make()->using(fn ($record, $data, $livewire) => $save($record, $data, $livewire))]);
     }

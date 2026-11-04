@@ -68,7 +68,7 @@ class KeyReportResource extends CatalogResource
                 ->whereNotNull('color')->where('color', '<>', '')->distinct()->orderBy('color')->pluck('color', 'color')),
             TernaryFilter::make('active')->label('Aktiv')->default(true),
         ])->headerActions([ReportExportService::action('keys')])->recordActions([
-            ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')
+            ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))
                 ->visible(fn ($record) => $record->member?->archived_at === null)
                 ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record->member_id])),
         ])->defaultSort('number')->paginated([25, 50, 100])

@@ -67,7 +67,7 @@ trait HasSavedViews
             try {
                 $this->applyViewState($default->state_encrypted);
             } catch (ValidationException $e) {
-                Notification::make()->title('Standardansicht nicht geladen')->body('Die gespeicherte Auswahl ist nicht mehr gültig. Bitte die Ansicht aktualisieren.')->warning()->send();
+                Notification::make()->title(__('Standardansicht nicht geladen'))->body(__('Die gespeicherte Auswahl ist nicht mehr gültig. Bitte die Ansicht aktualisieren.'))->warning()->send();
             }
         }
     }
@@ -75,7 +75,7 @@ trait HasSavedViews
     protected function checkedViewState(array $state): array
     {
         $this->viewQuery(); // Recheck access on each Livewire action.
-        $invalid = fn () => throw ValidationException::withMessages(['view_id' => 'Die gespeicherte Auswahl ist nicht mehr gültig.']);
+        $invalid = fn () => throw ValidationException::withMessages(['view_id' => __('Die gespeicherte Auswahl ist nicht mehr gültig.')]);
         if (($state['version'] ?? null) !== 1 || ! is_array($state['filters'] ?? null) || ! is_array($state['columns'] ?? null)) {
             $invalid();
         }

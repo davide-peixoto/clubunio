@@ -82,10 +82,10 @@ class SponsorRunTable extends Component implements HasActions, HasSchemas, HasTa
             ],
             'pledges' => [
                 TextColumn::make('sponsor_name')->label('Sponsor')->searchable()->sortable(),
-                TextColumn::make('amount_type')->label('Zusage')->formatStateUsing(fn ($state) => $state === 'fixed' ? 'Fixbetrag' : 'Pro Runde'),
+                TextColumn::make('amount_type')->label('Zusage')->formatStateUsing(fn ($state) => $state === 'fixed' ? __('Fixbetrag') : __('Pro Runde')),
                 TextColumn::make('amount_cents')->label('Betrag')->formatStateUsing($money),
                 TextColumn::make('cap_cents')->label('Obergrenze')->formatStateUsing($money)->placeholder('-'),
-                TextColumn::make('payment_mode')->label('Zahlungsweg')->formatStateUsing(fn ($state) => $state === 'invoice' ? 'Rechnung' : 'Sammelzahlung'),
+                TextColumn::make('payment_mode')->label('Zahlungsweg')->formatStateUsing(fn ($state) => $state === 'invoice' ? __('Rechnung') : __('Sammelzahlung')),
             ],
             'helpers' => [
                 TextColumn::make('display_name')->label('Benutzer')->searchable()->sortable(),
@@ -104,7 +104,7 @@ class SponsorRunTable extends Component implements HasActions, HasSchemas, HasTa
         };
         $filters = match ($this->kind) {
             'participants' => [SelectFilter::make('team_season_id')->label('Mannschaft')->options($service->choices($actor, $tenant, $event->season_id)['teams'])],
-            'pledges' => [SelectFilter::make('payment_mode')->label('Zahlungsweg')->options(['invoice' => 'Rechnung', 'collective' => 'Sammelzahlung'])],
+            'pledges' => [SelectFilter::make('payment_mode')->label('Zahlungsweg')->options(['invoice' => __('Rechnung'), 'collective' => __('Sammelzahlung')])],
             default => [],
         };
 
@@ -112,9 +112,9 @@ class SponsorRunTable extends Component implements HasActions, HasSchemas, HasTa
             'participants' => 'Teilnehmer', 'pledges' => 'Zusagen', 'helpers' => 'Helfereinsätze', 'outbox' => 'Testmail-Outbox',
         })->records($this->records(...))->columns($columns)->filters($filters)->deferFilters(false)
             ->recordActions($this->kind === 'participants' ? [
-                Action::make('view')->label('Teilnehmer öffnen')->icon('heroicon-o-arrow-right')->iconButton()->tooltip('Teilnehmer öffnen')
+                Action::make('view')->label('Teilnehmer öffnen')->icon('heroicon-o-arrow-right')->iconButton()->tooltip(__('Teilnehmer öffnen'))
                     ->action(fn (array $record) => $this->dispatch('sponsor-run-participant-selected', id: (int) $record['id'])->to(SponsorRuns::class)),
-            ] : [])->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading('Keine Einträge.');
+            ] : [])->paginated([10, 20, 50])->defaultPaginationPageOption(20)->emptyStateHeading(__('Keine Einträge.'));
     }
 
     private function records(?string $search, ?array $filters, int $page, int|string $recordsPerPage, ?string $sortColumn, ?string $sortDirection): LengthAwarePaginator

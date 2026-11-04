@@ -23,9 +23,9 @@ class ListMemberReports extends ListRecords
             $select[] = "count(*) FILTER (WHERE {$field}) as {$field}";
         }
         $counts = MemberReportResource::getEloquentQuery()->selectRaw(implode(', ', $select))->toBase()->first();
-        $tabs = ['all' => Tab::make('Alle ('.$counts->total.')')];
+        $tabs = ['all' => Tab::make(__('Alle (:count)', ['count' => $counts->total]))];
         foreach ($fields as $field => $label) {
-            $tabs[$field] = Tab::make($label.' ('.$counts->$field.')')
+            $tabs[$field] = Tab::make(__($label).' ('.$counts->$field.')')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where($field, true));
         }
 

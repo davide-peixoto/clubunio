@@ -28,6 +28,6 @@ abstract class DossierCatalogResource extends CatalogResource
 
         return $table->columns([TextColumn::make('name')->label('Bezeichnung')->searchable()->sortable(), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])
             ->headerActions([CreateAction::make()->label('Hinzufügen')->using(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => $save(null, $data)))])
-            ->recordActions([EditAction::make()->iconButton()->tooltip('Bearbeiten')->using(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $save($record->id, $data)))])->persistFiltersInSession()->persistSearchInSession()->deferFilters(false)->defaultSort('name');
+            ->recordActions([EditAction::make()->iconButton()->tooltip(__('Bearbeiten'))->using(fn ($record, array $data, $livewire) => FormMutation::run($livewire, fn () => $save($record->id, $data)))])->persistFiltersInSession()->persistSearchInSession()->deferFilters(false)->defaultSort('name');
     }
 }

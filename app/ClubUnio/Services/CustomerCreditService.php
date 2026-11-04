@@ -47,15 +47,15 @@ class CustomerCreditService
             $this->authorize($actor, $tenant, 'create');
             abort_unless(hash_equals($remote['connection_hash'], app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
             $note = CreditNote::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($noteId);
-            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $noteId)->exists(), 409, 'Kundenguthaben bereits erfasst.');
+            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('credit_note_id', $noteId)->exists(), 409, __('Kundenguthaben bereits erfasst.'));
             abort_unless((int) $note->revision === (int) $data['revision'] && $note->status->code === 'released', 409);
             abort_unless((string) ($note->source_snapshot['bexio_invoice_id'] ?? '') === (string) $remote['remote_id'], 409);
-            abort_unless(! empty($remote['contact_id']) && ! empty($remote['currency_id']), 409, 'Verifizierter Rechnungsempfänger fehlt.');
+            abort_unless(! empty($remote['contact_id']) && ! empty($remote['currency_id']), 409, __('Verifizierter Rechnungsempfänger fehlt.'));
             $reference = strtoupper($data['external_reference']);
-            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])->where('external_reference', $reference)->exists(), 409, 'Kundenguthaben bereits erfasst.');
+            abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])->where('external_reference', $reference)->exists(), 409, __('Kundenguthaben bereits erfasst.'));
             abort_if($note->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->exists(), 409);
             abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $remote['connection_hash'])
-                ->whereRaw('upper(external_reference)=?', [$reference])->exists(), 409, 'Gutschrift bereits zugeordnet.');
+                ->whereRaw('upper(external_reference)=?', [$reference])->exists(), 409, __('Gutschrift bereits zugeordnet.'));
             $credit = new CustomerCredit;
             $credit->forceFill(['tenant_id' => $tenant->id, 'member_id' => $note->member_id, 'credit_note_id' => $noteId,
                 'connection_hash' => $remote['connection_hash'], 'contact_id' => $remote['contact_id'], 'currency_id' => $remote['currency_id'],
@@ -73,7 +73,7 @@ class CustomerCreditService
     {
         $this->authorize($actor, $tenant, 'sync');
         $credit = CustomerCredit::where('tenant_id', $tenant->id)->findOrFail($creditId);
-        abort_if($credit->allocations()->count() >= 50, 409, 'Mehr als 50 Verrechnungen erfordern eine gesonderte Prüfung.');
+        abort_if($credit->allocations()->count() >= 50, 409, __('Mehr als 50 Verrechnungen erfordern eine gesonderte Prüfung.'));
         $remote = app(CreditNoteService::class)->remote($actor, $tenant, $invoiceId);
         // Re-read all earlier allocations, so removed/changed Bexio entries cannot inflate remaining credit.
         $observations = [];
@@ -87,13 +87,13 @@ class CustomerCreditService
             $this->authorize($actor, $tenant, 'sync');
             $credit = CustomerCredit::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($creditId);
             abort_unless(hash_equals($credit->connection_hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
-            abort_unless((int) $credit->revision === $revision, 409, 'Guthaben wurde geändert. Bitte neu laden.');
+            abort_unless((int) $credit->revision === $revision, 409, __('Guthaben wurde geändert. Bitte neu laden.'));
             $note = CreditNote::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($credit->credit_note_id);
             abort_unless(in_array($note->status->code, ['released', 'confirmed'], true), 409);
-            abort_if($note->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->exists(), 409, 'Rückerstattung bereits vorgesehen.');
+            abort_if($note->refunds()->whereHas('status', fn ($q) => $q->where('code', '<>', 'cancelled'))->exists(), 409, __('Rückerstattung bereits vorgesehen.'));
             $match = $this->match($credit, $remote);
             abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('id', '<>', $credit->id)->where('connection_hash', $credit->connection_hash)
-                ->where('voucher_id', $match['voucher_id'])->exists(), 409, 'Bexio-Gutschrift gehört bereits zu einem anderen Guthaben.');
+                ->where('voucher_id', $match['voucher_id'])->exists(), 409, __('Bexio-Gutschrift gehört bereits zu einem anderen Guthaben.'));
             $used = 0;
             foreach ($credit->allocations()->get() as $allocation) {
                 $fresh = $observations[$allocation->invoice_id] ?? null;
@@ -101,12 +101,12 @@ class CustomerCreditService
                 $prior = $this->match($credit, $fresh);
                 $savedPaymentIds = $allocation->evidence['allocation']['payment_ids'];
                 abort_unless((int) $prior['amount_cents'] === (int) $allocation->amount_cents
-                    && count($prior['payment_ids']) === count($savedPaymentIds) && !array_diff($prior['payment_ids'], $savedPaymentIds), 409, 'Frühere Bexio-Verrechnung wurde geändert.');
+                    && count($prior['payment_ids']) === count($savedPaymentIds) && !array_diff($prior['payment_ids'], $savedPaymentIds), 409, __('Frühere Bexio-Verrechnung wurde geändert.'));
                 $used += (int) $allocation->amount_cents;
             }
-            abort_if($credit->allocations()->where('invoice_id', $invoiceId)->exists(), 409, 'Rechnung bereits abgeglichen.');
+            abort_if($credit->allocations()->where('invoice_id', $invoiceId)->exists(), 409, __('Rechnung bereits abgeglichen.'));
             if ($match['amount_cents'] > (int) $credit->amount_cents - $used) {
-                $this->fail('Bexio-Verrechnung übersteigt das verbleibende Kundenguthaben.');
+                $this->fail(__('Bexio-Verrechnung übersteigt das verbleibende Kundenguthaben.'));
             }
             abort_if(CreditNote::where('tenant_id', $tenant->id)->where('id', '<>', $note->id)->where('connection_hash', $credit->connection_hash)
                 ->where(fn ($q) => $q->whereRaw('upper(external_reference)=?', [$credit->external_reference])
@@ -133,10 +133,10 @@ class CustomerCreditService
     private function match(CustomerCredit $credit, array $remote): array
     {
         abort_unless(hash_equals($credit->connection_hash, $remote['connection_hash']) && (string) $credit->contact_id === (string) ($remote['contact_id'] ?? '')
-            && (int) $credit->currency_id === (int) ($remote['currency_id'] ?? 0), 409, 'Sandbox, Rechnungsempfänger oder Währung stimmen nicht überein.');
+            && (int) $credit->currency_id === (int) ($remote['currency_id'] ?? 0), 409, __('Sandbox, Rechnungsempfänger oder Währung stimmen nicht überein.'));
         $matches = array_values(array_filter($remote['credit_allocations'], fn ($row) => $row['reference'] === $credit->external_reference));
-        abort_unless(count($matches) === 1 && $matches[0]['amount_cents'] > 0, 409, 'Keine passende Bexio-Verrechnung vorhanden.');
-        abort_unless(! $credit->voucher_id || $credit->voucher_id === $matches[0]['voucher_id'], 409, 'Bexio-Gutschrift-ID stimmt nicht überein.');
+        abort_unless(count($matches) === 1 && $matches[0]['amount_cents'] > 0, 409, __('Keine passende Bexio-Verrechnung vorhanden.'));
+        abort_unless(! $credit->voucher_id || $credit->voucher_id === $matches[0]['voucher_id'], 409, __('Bexio-Gutschrift-ID stimmt nicht überein.'));
 
         return $matches[0];
     }
@@ -150,7 +150,7 @@ class CustomerCreditService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $tenant, 'update');
             $credit = CustomerCredit::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
-            abort_unless((int) $credit->revision === $revision && ! $credit->allocations()->exists(), 409, 'Bereits verrechnete Guthaben sind unveränderlich.');
+            abort_unless((int) $credit->revision === $revision && ! $credit->allocations()->exists(), 409, __('Bereits verrechnete Guthaben sind unveränderlich.'));
             $reference = strtoupper($reference);
             abort_if(CustomerCredit::where('tenant_id', $tenant->id)->where('id', '<>', $id)->where('connection_hash', $credit->connection_hash)->where('external_reference', $reference)->exists(), 409);
             abort_if(CreditNote::where('tenant_id', $tenant->id)->where('connection_hash', $credit->connection_hash)->whereRaw('upper(external_reference)=?', [$reference])->exists(), 409);

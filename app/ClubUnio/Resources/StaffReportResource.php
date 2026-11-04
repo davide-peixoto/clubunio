@@ -35,7 +35,7 @@ class StaffReportResource extends TeamStaffResource
     public static function table(Table $table): Table
     {
         return parent::table($table)->headerActions([ReportExportService::action('staff')])->recordActions([
-            ViewAction::make()->iconButton()->tooltip('Mitgliederdossier')
+            ViewAction::make()->iconButton()->tooltip(__('Mitgliederdossier'))
                 ->url(fn ($record) => MemberResource::getUrl('view', ['record' => $record->member_id])),
         ]);
     }

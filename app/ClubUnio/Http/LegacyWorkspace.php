@@ -15,9 +15,9 @@ class LegacyWorkspace
         if (! $actor || ! $actor->canAccessTenant($tenant)) {
             return $next($request);
         }
-        abort_unless($request->isMethodSafe(), 419, 'Bitte die Seite neu laden.');
+        abort_unless($request->isMethodSafe(), 419, __('Bitte die Seite neu laden.'));
         $selected = app(ActiveTenant::class)->resolve($request);
-        abort_unless($selected->is($tenant), 403, 'Bitte zuerst den passenden Verein auswählen.');
+        abort_unless($selected->is($tenant), 403, __('Bitte zuerst den passenden Verein auswählen.'));
         $parameters = $request->route()->parameters();
         unset($parameters['tenant']);
 

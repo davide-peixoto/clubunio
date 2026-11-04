@@ -153,16 +153,16 @@ class ExpenseService
             if (in_array($status->code, ['F', 'Z'], true)) {
                 if (app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('state', 'pending')
                     ->whereIn('object_id', $expense->activeLines()->select('id'))->exists()) {
-                    throw ValidationException::withMessages(['status_id' => 'Beleganhänge warten auf die Azure-Übertragung. Bitte zuerst Synchronisation prüfen.']);
+                    throw ValidationException::withMessages(['status_id' => __('Beleganhänge warten auf die Azure-Übertragung. Bitte zuerst Synchronisation prüfen.')]);
                 }
                 if (! $expense->activeLines()->exists() || $expense->activeLines()->where(fn ($q) => $q->whereNull('amount')->orWhere('amount', '<=', 0))->exists()) {
-                    throw ValidationException::withMessages(['status_id' => 'Der Beleg benötigt gültige Positionen mit positivem Betrag.']);
+                    throw ValidationException::withMessages(['status_id' => __('Der Beleg benötigt gültige Positionen mit positivem Betrag.')]);
                 }
                 if (! MemberBankAccount::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('member_id', $expense->member_id)->where('active', true)->whereKey($expense->bank_account_id)->exists()) {
-                    throw ValidationException::withMessages(['status_id' => 'Bitte ein aktives eigenes Bankkonto hinterlegen.']);
+                    throw ValidationException::withMessages(['status_id' => __('Bitte ein aktives eigenes Bankkonto hinterlegen.')]);
                 }
                 if ($expense->activeLines()->whereHas('expenseType', fn ($q) => $q->where('receipt_required', true))->where(fn ($q) => $q->whereNull('storage_reference')->orWhere('storage_reference', ''))->exists()) {
-                    throw ValidationException::withMessages(['status_id' => 'Für eine Position fehlt der erforderliche Beleg.']);
+                    throw ValidationException::withMessages(['status_id' => __('Für eine Position fehlt der erforderliche Beleg.')]);
                 }
             }
             $before = $expense->only(['status_id', 'revision']);
@@ -233,13 +233,13 @@ class ExpenseService
             app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($teamQuery, $tenant);
             $team = $teamQuery->findOrFail($data['team_season_id']);
             if (! $access->activeMembers($tenant)->whereKey($data['member_id'])->exists()) {
-                throw ValidationException::withMessages(['member_id' => 'Bitte ein aktives Mitglied wählen.']);
+                throw ValidationException::withMessages(['member_id' => __('Bitte ein aktives Mitglied wählen.')]);
             }
             if (! MemberBankAccount::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('member_id', $data['member_id'])->where('active', true)->whereKey($data['bank_account_id'])->exists()) {
-                throw ValidationException::withMessages(['bank_account_id' => 'Das Konto gehört nicht zu diesem Mitglied.']);
+                throw ValidationException::withMessages(['bank_account_id' => __('Das Konto gehört nicht zu diesem Mitglied.')]);
             }
             if ($id && $e->lines()->exists() && ((int) $e->member_id !== (int) $data['member_id'] || (int) $e->team_season_id !== (int) $data['team_season_id'])) {
-                throw ValidationException::withMessages(['team_season_id' => 'Beleginhaber und Mannschaft können bei vorhandenen Positionen nicht geändert werden.']);
+                throw ValidationException::withMessages(['team_season_id' => __('Beleginhaber und Mannschaft können bei vorhandenen Positionen nicht geändert werden.')]);
             }
             $before = $id ? $e->only(array_keys($data)) : null;
             if (! $id) {
@@ -290,7 +290,7 @@ class ExpenseService
                 $data['amount'] = $suggested;
             }
             if ($this->units($data['amount'] ?? '0') <= 0) {
-                throw ValidationException::withMessages(['amount' => 'Bitte einen positiven Betrag erfassen.']);
+                throw ValidationException::withMessages(['amount' => __('Bitte einen positiven Betrag erfassen.')]);
             }
             $before = $id ? $line->only($fields) : null;
             $data += ['suggested_amount' => $suggested, 'suggestion_accepted' => $suggested === null || $this->units($data['amount']) === $this->units($suggested)];
@@ -312,14 +312,14 @@ class ExpenseService
     private function revision($record, $revision): void
     {
         if ((int) $record->revision !== (int) $revision) {
-            throw ValidationException::withMessages(['revision' => 'Der Datensatz wurde inzwischen geändert. Bitte erneut öffnen.']);
+            throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde inzwischen geändert. Bitte erneut öffnen.')]);
         }
     }
 
     private function fields(array $input, array $allowed): void
     {
         if (array_diff(array_keys($input), $allowed)) {
-            throw ValidationException::withMessages(['revision' => 'Nicht erlaubte Eingabefelder.']);
+            throw ValidationException::withMessages(['revision' => __('Nicht erlaubte Eingabefelder.')]);
         }
     }
 

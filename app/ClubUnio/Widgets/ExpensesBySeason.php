@@ -13,7 +13,10 @@ class ExpensesBySeason extends ChartWidget
         return \App\ClubUnio\Resources\ProfileUi::allows('expenses');
     }
 
-    protected ?string $heading = 'Spesenbeträge nach Saison';
+    public function getHeading(): string
+    {
+        return __('Spesenbeträge nach Saison');
+    }
 
     protected ?string $pollingInterval = null;
 
@@ -33,9 +36,9 @@ class ExpensesBySeason extends ChartWidget
             ->leftJoin('clubora.seasons as s', 's.id', '=', 'e.season_id')
             ->where('clubora.expense_lines.tenant_id', $tenant->id)->where('e.tenant_id', $tenant->id)
             ->where('clubora.expense_lines.active', true)->where('e.active', true)
-            ->selectRaw("COALESCE(s.name, 'Ohne Saison') as season, COALESCE(sum(amount), 0) as total")
+            ->selectRaw('s.name as season, COALESCE(sum(amount), 0) as total')
             ->groupBy('s.id', 's.name')->orderBy('s.name')->get();
 
-        return ['labels' => $rows->pluck('season')->all(), 'datasets' => [['label' => 'CHF', 'data' => $rows->pluck('total')->map(fn ($n) => (float) $n)->all(), 'backgroundColor' => '#d97706']]];
+        return ['labels' => $rows->map(fn ($row) => $row->season ?? __('Ohne Saison'))->all(), 'datasets' => [['label' => 'CHF', 'data' => $rows->pluck('total')->map(fn ($n) => (float) $n)->all(), 'backgroundColor' => '#d97706']]];
     }
 }
