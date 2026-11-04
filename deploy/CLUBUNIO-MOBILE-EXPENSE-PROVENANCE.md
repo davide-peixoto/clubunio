@@ -2,6 +2,10 @@
 
 Stand:04.11.2026. Quellpaket vorbereitet, defaultgeschlossen. Keine900-Anwendung.
 
+Explizite Betreiberfreigabe nach Schema-/Abnahmekontrolle ueber
+CLUBUNIO_MOBILE_EXPENSE_PROVENANCE_ENABLED=true; fehlende, false oder ungueltige
+Werte bleiben geschlossen. Keine aktuelle Env-Aenderung durch diese Vorbereitung.
+
 Das Feld AiBetragUebernommen stammt ausschliesslich aus einem tatsächlich
 erfolgreichen persönlichen Beleg-OCR-Auftrag. Die vorhandenen Felder
 suggested_amount/suggestion_accepted beschreiben Regel-/Pauschalvorschläge und

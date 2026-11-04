@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'native_push_admin_enabled' => filter_var(env('CLUBUNIO_MOBILE_NATIVE_PUSH_ADMIN_ENABLED', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true,
     // Explicit activation after additive migration and review. No external delivery by default.
     'enabled' => (bool) env('CLUBUNIO_MOBILE_ENABLED', false),
     // Enable only after migrations84-87 and check-mobile-planning --enabled.
