@@ -22,5 +22,16 @@ Datenbankauffrischung, Bankzahlungen oder Providerfreigabe.
 
 Nachweise: PERFORMANCE-PLANNING.md, PERFORMANCE-OTHER-MODULES.md,
 PERFORMANCE-API-MEASUREMENTS.md und mobile/docs/PERFORMANCE-ALL-MODULES.md.
-Bereitstellung und Abschlusszahlen werden nach erfolgreichem Lauf ergaenzt.
+Erfolgreich aktiviert:20261104-clubunio-mobile-modules-performance-v1 ausacfda56.
+Alle17 Runtimehashes,15 bekannte Baselines und2 neue Dateien geprueft;
+Common-/Modul-/Schema-/Admin18-/Menue79-/Konten-/Planungs-Kernelgates gruen.
+Vor Aktivierung Admin- und TL-Nachmessung mit Rollback erfolgreich. Danach
+HTTPSgrenzen/numerische Header, aktueller Pfad und PHP-FPM separat bestaetigt.
+App500/500 Tests gruen, Analyse ohne Befund. Shared47/744 undModulePermission13/80
+gruen; Fachnachweise in den verlinkten Moduldokumenten. Kein Xcode-/iOS-Lauf.
+Warmserver: Planung20 von14.6s auf0.78s, TL-Menue5.9s auf0.73s,
+TL-Spesen19 von1.8s auf0.63s; kein Versprechen gleicher Simulator-Gesamtzeiten.
 Rollback: vorheriger performance-v1-Ordner, kein Schemarueckbau erforderlich.
+
+Appquellen und Abschlussdokumentation:991c72c,21 gezielt gepruefte Dateien;
+500/500 Tests und Analyse ohne Befund. Beide Repositories getrennt synchronisieren.

@@ -93,3 +93,34 @@ Abschluss vor DEV: gemeinsame HTTP-/Readrahmenregression47 Tests/744 Assertions
 gruen, globale ModulePermission-PG-Regression13/80 gruen. Vollstaendiger
 Appnachlauf500/500 gruen, Dartanalyse ohne Befund; Root misst nach Bereitstellung
 dieselben Admin-/TL-Kernelrouten erneut.
+
+## Erfolgreiche Nachmessung auf DEV
+
+Aktiv:20261104-clubunio-mobile-modules-performance-v1, Quelleacfda56.
+17 Git-/SHA-gepruefte Dateien, bestehende15 unveraenderte Baselines und2neue Dateien.
+Alle bisherigen Freigabegates bestanden; Env/Composer/Schema/Providerflags gleich.
+Die folgenden Zeiten sind Mittelwerte aus jeweils2 warmen Kernelaufrufen.
+
+| Rolle / Einstieg | Vorher ms | Nachher ms | SQL vorher → nachher |
+| --- | --- | --- | --- |
+|admin /bootstrap|402.1|214.8|17 →8|
+|admin /modules|1193.5|285.3|52 →12|
+|admin /expenses-100|820.2|538.2|34 →20|
+|admin /expenses-options|559.0|424.2|22 →16|
+|admin /planning-20|14605.9|784.1|608/609 →29/30|
+|admin /my-teams-20|451.2|245.8|18 →10|
+|admin /members-20|340.4|224.5|14 →9|
+|admin /registrations-20|431.9|295.5|18 →12|
+|admin /documents-20|677.7|255.4|27 →10|
+|admin /training-20|293.0|239.1|12 →10|
+|admin /sponsor-20|461.7|279.4|19 →11|
+|admin /bus-20|626.2|384.6|26 →16|
+|admin /facilities|293.1|258.3|12 →10|
+|admin /notifications-20|300.0|236.5|12 →9|
+|technical_lead /bootstrap|657.0|255.8|26 →9|
+|technical_lead /modules|5881.4|731.5|241 →26|
+|technical_lead /expenses-100|1819.6|628.7|73 →22|
+|technical_lead /expenses-options|731.9|512.1|28 →17|
+
+Bekannte Datensatzanzahlen unveraendert:61 Adminspesen,19 TL-Spesen,20Kalendertermine,20Teams/28gesamt. Keine Datenreduktion als Performanceersatz. Kleine bzw. leere Quellen sind keine Aussage ueber sehr grosse persoenliche Archive; gefuellte Paritaets-/Querycountfixtures pruefen diese Skalierung separat.
+Nachmessungen haben Rueckrollen und Abwesenheit ihres eigenen Kontos/Session explizit geprueft. HTTPS-Nachlauf:Login200/PublicBootstrap200, geschuetzteSpesen/Planung/MyTeams401 mit numerischem Server-Timing/no-store; geschlossene Identity503. PHP-FPM aktiv,17 Runtimehashes erneut bestaetigt. Kein nativer iPhone-Simulatorlauf.

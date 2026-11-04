@@ -1925,3 +1925,30 @@ Chat/Spesen anonym401, geschlossene Identity503. PHP-FPM aktiv,7 Hashes erneut
 bestaetigt. Details:PERFORMANCE-RELEASE.md und PERFORMANCE-BACKEND.md.
 Betroffene Nutzerumgebung:iPhone-Simulator; kein Xcode-/nativer iOS-Lauf hier.
 Apprequest-/Widgetnachweise und kompletter Abschluss:mobile/docs/PERFORMANCE.md.
+
+
+## Alle Appmodule: gemessene API-Performance (04.11.2026)
+
+DEV aktiv:20261104-clubunio-mobile-modules-performance-v1 ausacfda56.
+17 committete Dateien,15 bekannte Git/SHA-Baselines,2 neue vorab abwesend;
+alle Gates vor atomarem Wechsel/FPMreload bestanden. Env/Composer/Schema/
+Providerflags unveraendert. Rollback:20261104-clubunio-mobile-performance-v1.
+Gemeinsame Fakten nur in exakt einem authentifizierten GET, kein TTL-/Cross-
+Requestcache, keine Wiederverwendung bei Writes/Locks/Reauth. Planung/MyTeams/
+Dossier/Training/Anmeldungen/Dokumente/Sponsor/Notifications lesend gebuendelt;
+Anlagen/Bus/Profil/Keybox/Challenge geprueft, bestehende Fachablaufe erhalten.
+
+500 App-Tests gruen, Analyse ohne Befund; Shared47/744, ModulePermission13/80,
+Planung22 unterschiedliche PG-Faelle, MyTeams3/54+Members6/125 und weitere
+Module6/204 plus bestehende Fachregressionen gruen. Ausschliesslich synthetische
+Rollbackfixtures; kein Import/Refresh, Provideraufruf oder echte Bankzahlung.
+
+Vorher/nachher mit vorhandenen DEV-Daten und synthetischen Rollen, je2 warme
+Kernelaufrufe: Planung20 14.6s→0.78s (608/609→29/30SQL), TL-Modulmenue5.9s→0.73s
+(241→26SQL), TL-Spesen19 1.8s→0.63s (73→22SQL), Adminspesen61 0.82s→0.54s.
+Datensatzanzahlen erhalten. Keine FPM-/Internet-/iPhone-Renderingzeit enthalten.
+Numerischer Server-Timing-Anteil jetzt optional im privaten redigierten SDK-
+Diagnosering; keine Headertexte/URLs/IDs/Token exportiert. HTTPSnachlauf200/
+401/503 korrekt,17Hashes erneut bestaetigt, PHP-FPM aktiv. iOS-Simulator selbst
+hier nicht gemessen. Details:PERFORMANCE-MODULES-RELEASE.md und
+PERFORMANCE-API-MEASUREMENTS.md; App:mobile/docs/PERFORMANCE-ALL-MODULES.md.
