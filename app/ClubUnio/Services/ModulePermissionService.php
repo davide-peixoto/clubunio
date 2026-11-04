@@ -6,7 +6,7 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 
-/** Fresh authorization for a single operation; never a replacement for record ownership checks. */
+/** Fresh authorization; mobile GET facts live only in their authenticated request. Ownership checks remain mandatory. */
 final class ModulePermissionService
 {
     private const MODELS = [
@@ -63,8 +63,8 @@ final class ModulePermissionService
         if (($cached = $reads->permissionCache($actor, $key)) !== null) {
             return $cached['value'];
         }
-        $value = DB::connection('clubunio')->table('clubora.tenant_accounts')
-            ->where('account_id', $actor->id)->where('tenant_id', $tenant->id)->where('role', 'profile')->exists();
+        $value = app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'profile-role:'.$tenant->id, fn () => DB::connection('clubunio')->table('clubora.tenant_accounts')
+            ->where('account_id', $actor->id)->where('tenant_id', $tenant->id)->where('role', 'profile')->exists());
         $reads->permissionCache($actor, $key, ['value' => $value]);
         return $value;
     }
@@ -113,10 +113,11 @@ final class ModulePermissionService
             return in_array($module.'.view', $cached, true) && in_array($module.'.'.$function, $cached, true);
         }
         $db = DB::connection('clubunio');
-        $link = $db->table('clubora.tenant_accounts as membership')
+        $mobileReads = app(\App\ClubUnio\Mobile\MobileReadContext::class);
+        $link = $mobileReads->remember($actor, 'module-link:'.$tenant->id, fn () => $db->table('clubora.tenant_accounts as membership')
             ->join('clubora.accounts as account', 'account.id', '=', 'membership.account_id')
             ->where('membership.account_id', $actor->id)->where('membership.tenant_id', $tenant->id)
-            ->where('account.active', true)->select('membership.*')->first();
+            ->where('account.active', true)->select('membership.*')->first());
         if (! $link) {
             return false;
         }
@@ -126,11 +127,11 @@ final class ModulePermissionService
         if ($link->role !== 'profile' || ! ($link->access_profile_id ?? null)) {
             return false;
         }
-        if (! $db->table('clubora.account_roles')->where('code', 'profile')->where('active', true)->exists()) {
+        if (! $mobileReads->remember($actor, 'profile-role-active', fn () => $db->table('clubora.account_roles')->where('code', 'profile')->where('active', true)->exists())) {
             return false;
         }
-        $profile = $db->table('clubora.access_profiles')->where('tenant_id', $tenant->id)
-            ->where('id', $link->access_profile_id)->where('active', true)->first();
+        $profile = $mobileReads->remember($actor, 'access-profile:'.$tenant->id.':'.$link->access_profile_id, fn () => $db->table('clubora.access_profiles')->where('tenant_id', $tenant->id)
+            ->where('id', $link->access_profile_id)->where('active', true)->first());
         if (! $profile) {
             return false;
         }

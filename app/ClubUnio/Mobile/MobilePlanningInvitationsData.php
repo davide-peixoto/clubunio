@@ -76,6 +76,37 @@ final class MobilePlanningInvitationsData
             'EventRevision' => (int) $event->revision, 'InvitationSnapshot' => $this->snapshot($actor, $tenant, $event, (int) $member->id, $context)])->all()];
     }
 
+    /** Projection-only facts from the already authorized bounded calendar page. */
+    public function metadataBatch(Account $actor, Tenant $tenant, \Illuminate\Support\Collection $events,
+        MobilePlanningCapabilities $presentation, \Illuminate\Support\Collection $invited, array $facts): array
+    {
+        $need = $events->filter(fn ($event) => $event->status === 'AKTIV'
+            && $presentation->allows($actor, $tenant, (int) $event->team_season_id, 'cancel')
+            && ($invited[$event->id] ?? collect())->isNotEmpty());
+        $states = collect(); $audits = collect();
+        if ($need->isNotEmpty()) {
+            $ids = $need->flatMap(fn ($event) => ($invited[$event->id] ?? collect())->pluck('member_id'))->unique();
+            $states = app(MemberAccessService::class)->activeMembers($tenant)->whereKey($ids)
+                ->get(['id','updated_at','status_id','exit_date','archived_at'])->keyBy('id');
+            $audits = app(TeamPlanningService::class)->table($tenant, 'object_changes')->where('object_type', 'team_invitations')
+                ->whereIn('object_id', $need->pluck('id'))->groupBy('object_id')->selectRaw('object_id,max(id) as latest')->pluck('latest','object_id');
+        }
+        $result = [];
+        foreach ($events as $event) {
+            $ids = ($invited[$event->id] ?? collect())->pluck('member_id')->all();
+            $canRemove = $event->status === 'AKTIV' && $presentation->allows($actor, $tenant, (int) $event->team_season_id, 'cancel');
+            $context = $canRemove && $ids ? ['event' => (array) $event,
+                'roster' => $facts[(int) $event->id]['roster']->pluck('id')->all(), 'invited' => $ids,
+                'parts' => $facts[(int) $event->id]['parts']->only($ids), 'members' => $states,
+                'audit' => $audits[$event->id] ?? null] : null;
+            $members = [];
+            foreach ($ids as $id) $members[$id] = ['IsInvited' => true, 'CanRemoveInvitation' => $canRemove,
+                'InvitationSnapshot' => $context ? $this->snapshot($actor, $tenant, $event, (int) $id, $context) : null];
+            $result[(int) $event->id] = ['CanInviteMembers' => $this->canInvite($actor, $tenant, $event, $presentation), 'members' => $members];
+        }
+        return $result;
+    }
+
     public function metadata(Account $actor, Tenant $tenant, object $event, ?MobilePlanningCapabilities $presentation = null): array
     {
         $p = app(TeamPlanningService::class);

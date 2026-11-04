@@ -62,8 +62,10 @@ final class MobileMemberData
         $dto += ['Firma' => $m->company, 'Geburtsdatum' => $m->birth_date?->format('Y-m-d'), 'Passnummer' => $m->pass_number,
             '_version' => MemberService::version($m)];
         foreach (self::CONTACT as $key => $column) { $dto[$key] = $m->{$column}; }
+        $countryIds = array_values(array_unique(array_filter([$m->country_id, $m->nationality_id])));
+        $countries = $countryIds ? $this->table($tenant, 'countries')->whereIn('id', $countryIds)->get()->keyBy('id') : collect();
         foreach (['Land' => 'country_id', 'Nationalitaet' => 'nationality_id'] as $key => $column) {
-            $country = $m->{$column} ? $this->table($tenant, 'countries')->where('id', $m->{$column})->first() : null;
+            $country = $countries->get($m->{$column});
             $dto[$key] = $country ? ($key === 'Land' ? $country->code : $country->iso3) : '';
             $dto[$key.'Text'] = $country?->name;
         }

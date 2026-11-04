@@ -65,9 +65,26 @@ final class MobileMemberDocuments
         if (isset($d['MitgliederID'])) { $query->where('member_id', $d['MitgliederID']); }
         if (! empty($d['Status'])) { $query->where('status', $d['Status']); }
         $total = (clone $query)->count();
-        return ['success' => true, 'Dokumente' => $query->orderByDesc('created_at')->orderBy('source_kind')->orderByDesc('id')
-            ->offset($d['start'] ?? 0)->limit($d['recperpage'] ?? 20)->get()->map(fn ($row) => $this->view($actor, $tenant, (int) $row->id, $row->source_kind))->all(),
+        $page = $query->orderByDesc('created_at')->orderBy('source_kind')->orderByDesc('id')->offset($d['start'] ?? 0)->limit($d['recperpage'] ?? 20)->get();
+        return ['success' => true, 'Dokumente' => $this->listViews($actor, $tenant, $page),
             'totalRecordCount' => $total, 'CanUpload' => $this->canUpload($actor, $tenant), 'CanReadAll' => $this->administration($actor, $tenant)];
+    }
+
+    /** Bounded metadata only. Every source retains its own fresh visible query. */
+    private function listViews(Account $actor, Tenant $tenant, $page): array
+    {
+        if ($page->isEmpty()) return [];
+        $archiveIds = $page->where('source_kind', 'archive')->pluck('id');
+        $receiptIds = $page->where('source_kind', 'receipt')->pluck('id');
+        $fileIds = $page->where('source_kind', 'file')->pluck('id');
+        $receipts = $this->receipts($actor, $tenant)->where(fn ($q) => $q->whereIn('id', $receiptIds)->orWhereIn('archive_receipt_id', $archiveIds))->get(self::META);
+        $read = ['receipts' => $receipts->keyBy('id'), 'forward' => $receipts->whereNotNull('archive_receipt_id')->keyBy('archive_receipt_id'),
+            'files' => $fileIds->isEmpty() ? collect() : $this->files($actor, $tenant)->with('documentType')->whereKey($fileIds)->get()->keyBy('id'),
+            'archives' => $archiveIds->isEmpty() ? collect() : $this->archives($actor, $tenant)->whereKey($archiveIds)->get()->keyBy('id'),
+            'names' => Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('id', $page->pluck('member_id'))->get(['id','first_name','last_name'])->keyBy('id')->all(),
+            'own' => array_fill_keys($this->represented($actor, $tenant)->whereIn('id', $page->pluck('member_id'))->pluck('clubora.members.id')->all(), true),
+            'upload' => $this->canUpload($actor, $tenant)];
+        return $page->map(fn ($row) => $this->viewData($actor, $tenant, (int) $row->id, $row->source_kind, $read))->all();
     }
 
     public function types(Account $actor, Tenant $tenant): array
@@ -92,37 +109,42 @@ final class MobileMemberDocuments
 
     public function view(Account $actor, Tenant $tenant, int $id, string $source = 'receipt'): array
     {
+        return $this->viewData($actor, $tenant, $id, $source);
+    }
+
+    private function viewData(Account $actor, Tenant $tenant, int $id, string $source, ?array $read = null): array
+    {
         if ($source === 'file') {
-            $row = $this->files($actor, $tenant)->with('documentType')->findOrFail($id);
+            $row = $read === null ? $this->files($actor, $tenant)->with('documentType')->findOrFail($id) : ($read['files'][$id] ?? abort(404));
             $title = $row->original_filename ?: $row->documentType?->name ?: 'Mitgliederdokument';
-            return $this->names($tenant, (int) $row->member_id) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'file', 'Revision' => (int) $row->revision,
+            return $this->names($tenant, (int) $row->member_id, $read['names'] ?? null) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'file', 'Revision' => (int) $row->revision,
                 'Titel' => $title, 'Status' => 'ABGELEGT', 'StatusText' => 'Mitgliederdokument', 'CanSign' => false, 'UnterschriftNotwendig' => false,
-                'OriginalSha256' => $row->sha256, 'CanUpload' => $this->canUpload($actor, $tenant)];
+                'OriginalSha256' => $row->sha256, 'CanUpload' => $read['upload'] ?? $this->canUpload($actor, $tenant)];
         }
         if ($source === 'archive') {
-            $row = $this->archives($actor, $tenant)->findOrFail($id);
-            $forward = $this->receipts($actor, $tenant)->where('archive_receipt_id', $id)->first(self::META);
+            $row = $read === null ? $this->archives($actor, $tenant)->findOrFail($id) : ($read['archives'][$id] ?? abort(404));
+            $forward = $read === null ? $this->receipts($actor, $tenant)->where('archive_receipt_id', $id)->first(self::META) : ($read['forward'][$id] ?? null);
             if ($forward) {
                 $this->validateArchive($forward, $row);
-                return array_replace($this->view($actor, $tenant, (int) $forward->id), ['QuittungID' => $id, 'SourceKind' => 'archive', 'SourceRevision' => $row->source_hash]);
+                return array_replace($this->viewData($actor, $tenant, (int) $forward->id, 'receipt', $read), ['QuittungID' => $id, 'SourceKind' => 'archive', 'SourceRevision' => $row->source_hash]);
             }
-            $canSign = $row->source_state === 'OFFEN' && ! $row->signed_document_id && $this->represented($actor, $tenant)->whereKey($row->member_id)->exists();
-            return $this->names($tenant, (int) $row->member_id) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'archive',
+            $canSign = $row->source_state === 'OFFEN' && ! $row->signed_document_id && ($read === null ? $this->represented($actor, $tenant)->whereKey($row->member_id)->exists() : isset($read['own'][$row->member_id]));
+            return $this->names($tenant, (int) $row->member_id, $read['names'] ?? null) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'archive',
                 'Titel' => $row->title, 'Status' => $row->source_state, 'StatusText' => $canSign ? 'Zur Unterschrift' : 'Historische Quittung (schreibgeschuetzt)',
                 'CanSign' => $canSign, 'Revision' => 1, 'SourceRevision' => $row->source_hash, 'UnterschriftNotwendig' => $row->source_state !== 'ABGELEGT', 'OriginalSha256' => $row->original_sha256,
                 'SigniertSha256' => $row->signed_sha256, 'SigniertAm' => $row->signed_at?->toIso8601String()];
         }
         abort_unless($source === 'receipt', 404);
-        $row = $this->receipt($actor, $tenant, $id);
-        return $this->names($tenant, (int) $row->member_id) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'receipt', 'Revision' => (int) $row->revision,
+        $row = $read === null ? $this->receipt($actor, $tenant, $id) : ($read['receipts'][$id] ?? abort(404));
+        return $this->names($tenant, (int) $row->member_id, $read['names'] ?? null) + ['QuittungID' => (int) $row->id, 'SourceKind' => 'receipt', 'Revision' => (int) $row->revision,
             'Titel' => $row->title, 'Status' => self::STATES[$row->state], 'UnterschriftNotwendig' => (bool) $row->signature_required,
-            'CanSign' => $row->state === 'pending' && $this->represented($actor, $tenant)->whereKey($row->member_id)->exists(),
+            'CanSign' => $row->state === 'pending' && ($read === null ? $this->represented($actor, $tenant)->whereKey($row->member_id)->exists() : isset($read['own'][$row->member_id])),
             'OriginalSha256' => $row->original_sha256, 'SigniertSha256' => $row->signed_sha256, 'SigniertAm' => $row->signed_at,
             'OriginalBytes' => (int) $row->original_byte_count, 'SignedBytes' => $row->signed_byte_count === null ? null : (int) $row->signed_byte_count];
     }
-    private function names(Tenant $tenant, int $member): array
+    private function names(Tenant $tenant, int $member, ?array $names = null): array
     {
-        $row = Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($member)->firstOrFail(['id', 'first_name', 'last_name']);
+        $row = $names === null ? Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($member)->firstOrFail(['id', 'first_name', 'last_name']) : ($names[$member] ?? abort(404));
         return ['MitgliederID' => (int) $row->id, 'Vorname' => $row->first_name, 'Nachname' => $row->last_name];
     }
 

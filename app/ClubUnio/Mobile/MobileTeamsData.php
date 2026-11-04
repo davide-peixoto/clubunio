@@ -51,10 +51,12 @@ final class MobileTeamsData
     {
         $d = $r->validate(['start' => 'nullable|integer|min:0|max:100000', 'recperpage' => 'nullable|integer|min:1|max:100']);
         $q = $this->teams($actor, $tenant);
-        $total = (clone $q)->count();
         $capabilities = $this->capabilities($actor, $tenant);
-        return ['Teams' => $q->orderBy('ts.team_id')->orderBy('ts.id')->offset($d['start'] ?? 0)->limit($d['recperpage'] ?? 100)->get()
-            ->map(fn ($row) => $this->teamDto($actor, $tenant, $row, $capabilities))->all(), 'totalRecordCount' => $total];
+        $rows = (clone $q)->selectRaw('COUNT(*) OVER () AS mobile_total')->orderBy('ts.team_id')->orderBy('ts.id')
+            ->offset($d['start'] ?? 0)->limit($d['recperpage'] ?? 100)->get();
+        // An out-of-range/empty page has no window row from which to read total.
+        $total = $rows->isNotEmpty() ? (int) $rows->first()->mobile_total : (clone $q)->count();
+        return ['Teams' => $rows->map(fn ($row) => $this->teamDto($actor, $tenant, $row, $capabilities))->all(), 'totalRecordCount' => $total];
     }
 
     public function team(Account $actor, Tenant $tenant, int $id): object
@@ -121,12 +123,18 @@ final class MobileTeamsData
             return $dto;
         })->all();
         return ['Team' => $this->teamDto($actor, $tenant, $team), 'Staff' => $merge($staff, 'staff'), 'Players' => $merge($players, 'players'),
-            'Trainings' => $this->trainings($actor, $tenant, $id), 'Registrations' => $registrations, 'Members' => $members->values()->all()];
+            'Trainings' => $this->trainingsForAuthorizedTeam($tenant, $id), 'Registrations' => $registrations, 'Members' => $members->values()->all()];
     }
 
     public function trainings(Account $actor, Tenant $tenant, int $id): array
     {
         $this->team($actor, $tenant, $id);
+        return $this->trainingsForAuthorizedTeam($tenant, $id);
+    }
+
+    /** Internal projection only: both callers first resolve the same fresh team scope. */
+    private function trainingsForAuthorizedTeam(Tenant $tenant, int $id): array
+    {
         $flag = app(SignageService::class)->trainingVariant($tenant);
         $options = $this->table($tenant, 'training_options')->where('active', true)->pluck('name', 'id');
         return $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)->where($flag, true)

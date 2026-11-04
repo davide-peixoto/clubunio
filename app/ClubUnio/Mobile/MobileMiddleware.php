@@ -14,6 +14,7 @@ final class MobileMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+        $request->attributes->set('mobile.processing_started', hrtime(true));
         $request->attributes->set('clubunio.api.request_id', (string) Str::uuid());
         try {
             $logout = $request->isMethod('DELETE')
@@ -25,21 +26,23 @@ final class MobileMiddleware
             }
             $actor = app(MobileSessions::class)->authenticate($request);
             $request->attributes->set('mobile.actor', $actor);
-            $key = 'mobile-rate:'.$actor->id;
-            abort_if(RateLimiter::tooManyAttempts($key, 240), 429);
-            RateLimiter::hit($key, 60);
-            if ($request->route('tenant')) {
-                $tenant = Tenant::whereKey($request->route('tenant'))->firstOrFail();
-                abort_if($bound && ! $bound->is($tenant), 404);
-                app(MobileAccess::class)->enter($actor, $tenant);
-                app(MobileBootstrapState::class)->authorizeTenant($request, $tenant);
-                $request->attributes->set('mobile.tenant', $tenant);
-                $request->attributes->set('mobile.season_scope', true);
-            }
+            return app(MobileReadContext::class)->during($request, $actor, function () use ($request, $next, $actor, $bound) {
+                $key = 'mobile-rate:'.$actor->id;
+                abort_if(RateLimiter::tooManyAttempts($key, 240), 429);
+                RateLimiter::hit($key, 60);
+                if ($request->route('tenant')) {
+                    $tenant = Tenant::whereKey($request->route('tenant'))->firstOrFail();
+                    abort_if($bound && ! $bound->is($tenant), 404);
+                    app(MobileAccess::class)->enter($actor, $tenant);
+                    app(MobileBootstrapState::class)->authorizeTenant($request, $tenant);
+                    $request->attributes->set('mobile.tenant', $tenant);
+                    $request->attributes->set('mobile.season_scope', true);
+                }
 
-            return $this->protect($next($request));
+                return $this->protect($next($request));
+            });
         } catch (\Throwable $e) {
-            return app(ApiErrors::class)->render($e, $request);
+            return $this->protect(app(ApiErrors::class)->render($e, $request));
         }
     }
 
@@ -47,6 +50,10 @@ final class MobileMiddleware
     {
         $response->headers->set('Cache-Control', 'private, no-store');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $started = request()->attributes->get('mobile.processing_started');
+        if (is_int($started)) {
+            $response->headers->set('Server-Timing', 'app;dur='.number_format(min(120000, max(0, (hrtime(true)-$started)/1e6)), 2, '.', ''));
+        }
         $response->headers->set('X-Request-ID', request()->attributes->get('clubunio.api.request_id'));
 
         return $response;

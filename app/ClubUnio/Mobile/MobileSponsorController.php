@@ -18,7 +18,7 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
     public function events(Request $r) {
         [$a,$t,$s,$d]=$this->context($r); $p=$this->page($r); $season=$this->season($t,isset($p['SaisonID'])?(int)$p['SaisonID']:null);
         $q=$s->events($a,$t,['scope'=>$p['view']??'mine','season_id'=>$season]); if (!$season) $q->whereRaw('1=0');
-        return $this->json(['Events'=>$q->offset($p['start']??0)->limit(20)->get()->map(fn($e)=>$d->event($a,$t,$e))->all(),
+        return $this->json(['Events'=>$d->events($a,$t,$q->offset($p['start']??0)->limit(20)->get()),
             'CanManage'=>$s->allows($a,$t),'CanCreate'=>$s->allows($a,$t,'create'),'Views'=>$d->views($a,$t),
             'SelectedSaisonID'=>$season,'Seasons'=>$d->table($t,'seasons')->where('active',true)->orderByDesc('id')->get(['id','name'])->map(fn($v)=>['SaisonID'=>(int)$v->id,'Saison'=>$v->name])->all()]);
     }
@@ -32,7 +32,7 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
         $summary=$s->summaries($a,$t,$rows->pluck('id')->all());
         $teams=$s->participants($a,$t,$id,['scope'=>$p['view']??'mine'])->reorder()->select('p.team_season_id','t.label as team_label')->distinct()->limit(500)->get();
         return $this->json(['Event'=>$d->event($a,$t,$e),'Views'=>$d->views($a,$t),'Teams'=>$teams->map(fn($v)=>['TeamSaisonID'=>(int)$v->team_season_id,'Mannschaftsname'=>$v->team_label])->values()->all(),
-            'Participants'=>$rows->map(fn($v)=>$d->participant($a,$t,$v,$summary[$v->id]??null))->all()]);
+            'Participants'=>$d->participants($a,$t,$id,$rows,$summary)]);
     }
     public function teams(Request $r) {
         [$a,$t,$s,$d]=$this->context($r); $s->authorize($a,$t,'create'); $v=$r->validate(['SaisonID'=>'required|integer|min:1']); $id=$this->season($t,(int)$v['SaisonID']);

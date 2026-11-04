@@ -30,7 +30,7 @@ class ExpenseService
             $result[$id] = $closed;
             if ((int) $expense->tenant_id === (int) $tenant->id) { $rows[$id] = $expense; }
         }
-        $fresh = $actor->fresh();
+        $fresh = app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor);
         if (! $rows || ! $fresh?->active) { return $result; }
         $actor = $fresh;
         $permissions = app(ModulePermissionService::class);
@@ -83,7 +83,7 @@ class ExpenseService
         if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
             return false;
         }
-        $fresh = $actor->fresh();
+        $fresh = app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor);
 
         return $fresh && $fresh->active && app(MemberAccessService::class)->canEnter($fresh, $tenant);
     }

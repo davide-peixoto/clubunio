@@ -613,6 +613,11 @@ class TeamPlanningTest extends TestCase
 
     public function test_native_module_catalog_requires_individual_feature_activation_and_personal_access(): void
     {
+        // This synthetic tenant needs the same explicit menu setup as the real admin form.
+        foreach (['Teams','Teamplanung','Spesen'] as $key) {
+            $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key,
+                'name' => \App\ClubUnio\Services\MobileModuleSettings::MODULES[$key], 'active' => true, 'sort_order' => 0]);
+        }
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array', 'clubunio-mobile.native_my_teams_enabled' => false,
             'clubunio-mobile.native_expenses_enabled' => false]);
         $token = $this->postJson('/api/mobile/v1/session', ['username' => $this->trainer->username, 'password' => 'fixture', 'device_name' => 'Module fixture'])->assertOk()->json('data.token');

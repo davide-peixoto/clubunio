@@ -151,6 +151,7 @@ class MobileSponsorTest extends TestCase {
         $this->assertSame(0,$this->db->table('clubora.mobile_sponsor_commands')->count());
     }
     public function test_billing_exposes_only_local_authorized_status_without_recipient_or_provider_writes(): void {
+        config(['clubunio-mobile.native_sponsor_billing_enabled'=>false]);
         $this->withToken($this->token($this->parent));
         $pledge=$this->postJson($this->base.'/participants/'.$this->participant.'/pledges',$this->pledge())->assertOk()->json('data.PledgeID');
         $this->insert('sponsor_run_invoices',['pledge_id'=>$pledge,'event_id'=>$this->event,'reference'=>(string)Str::uuid(),'state'=>'issued','connection_hash'=>str_repeat('a',64),
@@ -159,6 +160,6 @@ class MobileSponsorTest extends TestCase {
         $this->getJson($url)->assertForbidden();
         $this->withToken($this->token($this->admin))->getJson($url)->assertOk()->assertJsonPath('data.Settings.ReadOnly',true)
             ->assertJsonPath('data.Candidates.0.TotalCents',500)->assertJsonPath('data.Candidates.0.State','ISSUED')->assertDontSee('private recipient fixture')->assertDontSee('snapshot_encrypted');
-        $this->postJson($this->base.'/billing/invoices/1/send',[])->assertNotFound(); Http::assertNothingSent(); Mail::assertNothingSent();
+        $this->postJson($this->base.'/billing/invoices/1/send',[])->assertStatus(503); Http::assertNothingSent(); Mail::assertNothingSent();
     }
 }

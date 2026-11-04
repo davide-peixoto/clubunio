@@ -11,7 +11,7 @@ final class MobileAccess
 {
     public function enter(Account $actor, Tenant $tenant): void
     {
-        $fresh = $actor->fresh();
+        $fresh = app(MobileReadContext::class)->freshActor($actor);
         abort_unless($fresh?->active && ! $fresh->api_only
             && app(MemberAccessService::class)->canEnter($fresh, $tenant), 403);
     }

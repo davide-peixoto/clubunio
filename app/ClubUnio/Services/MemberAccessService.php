@@ -12,11 +12,13 @@ class MemberAccessService
 {
     public function membership(Account $actor, Tenant $tenant): ?object
     {
-        if (! $actor->fresh()?->active) {
-            return null;
-        }
+        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'membership:'.$tenant->id, function () use ($actor, $tenant) {
+            if (! app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor)?->active) {
+                return null;
+            }
 
-        return DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+            return DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+        });
     }
 
     public function activeMembers(Tenant $tenant): Builder
@@ -52,34 +54,38 @@ class MemberAccessService
 
     public function canEnter(Account $actor, Tenant $tenant): bool
     {
-        if (app(BackofficeReadContext::class)->tenantsFor($actor)?->contains(fn ($item) => (int) $item->id === (int) $tenant->id)) {
-            return true;
-        }
-        $membership = $this->membership($actor, $tenant);
-        if (! $membership || $membership->role === 'profile') {
-            return false;
-        }
-        return in_array($membership->role, ['admin', 'office'], true)
-            || ($membership->portal_enabled && $this->represented($actor, $tenant)->exists());
+        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-enter:'.$tenant->id, function () use ($actor, $tenant) {
+            if (app(BackofficeReadContext::class)->tenantsFor($actor)?->contains(fn ($item) => (int) $item->id === (int) $tenant->id)) {
+                return true;
+            }
+            $membership = $this->membership($actor, $tenant);
+            if (! $membership || $membership->role === 'profile') {
+                return false;
+            }
+            return in_array($membership->role, ['admin', 'office'], true)
+                || ($membership->portal_enabled && $this->represented($actor, $tenant)->exists());
+        });
     }
 
     public function responsibleTeams(Account $actor, Tenant $tenant): array
     {
-        $role = $this->membership($actor, $tenant)?->role;
-        if (! in_array($role, ['trainer', 'technical_lead'], true) || ! $this->canEnter($actor, $tenant)) {
-            return [];
-        }
-        $table = $role === 'trainer' ? 'team_staff' : 'technical_leads';
+        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-teams:'.$tenant->id, function () use ($actor, $tenant) {
+            $role = $this->membership($actor, $tenant)?->role;
+            if (! in_array($role, ['trainer', 'technical_lead'], true) || ! $this->canEnter($actor, $tenant)) {
+                return [];
+            }
+            $table = $role === 'trainer' ? 'team_staff' : 'technical_leads';
 
-        return DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
-            ->join('clubora.team_seasons as season_team', function ($join) {
-                $join->on('season_team.id', '=', 'assignment.team_season_id')->on('season_team.tenant_id', '=', 'assignment.tenant_id');
-            })->join('clubora.teams as team', function ($join) {
-                $join->on('team.id', '=', 'season_team.team_id')->on('team.tenant_id', '=', 'season_team.tenant_id');
-            })->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)
-            ->where('season_team.active', true)->where('team.active', true)
-            ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'))
-            ->distinct()->pluck('assignment.team_season_id')->all();
+            return DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
+                ->join('clubora.team_seasons as season_team', function ($join) {
+                    $join->on('season_team.id', '=', 'assignment.team_season_id')->on('season_team.tenant_id', '=', 'assignment.tenant_id');
+                })->join('clubora.teams as team', function ($join) {
+                    $join->on('team.id', '=', 'season_team.team_id')->on('team.tenant_id', '=', 'season_team.tenant_id');
+                })->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)
+                ->where('season_team.active', true)->where('team.active', true)
+                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'))
+                ->distinct()->pluck('assignment.team_season_id')->all();
+        });
     }
 
     public function visibleMembers(Account $actor, Tenant $tenant): Builder

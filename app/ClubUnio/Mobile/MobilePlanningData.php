@@ -80,15 +80,18 @@ final class MobilePlanningData
         $total = (clone $query)->count();
         $managed = $p->teams($actor, $tenant, true)->pluck('id')->map(fn ($id) => (int) $id)->all();
         $own = app(MemberAccessService::class)->represented($actor, $tenant)->get(['id', 'first_name', 'last_name']);
-        $rows = $query->orderBy('id')->offset($start)->limit($limit)->get()->map(function ($team) use ($p, $tenant, $managed, $own, $actor) {
-            $members = collect();
-            foreach (['team_players', 'team_staff'] as $table) {
-                $members = $members->merge($p->table($tenant, $table)->where('team_season_id', $team->id)->where('active', true)->pluck('member_id'));
+        $page = $query->orderBy('id')->offset($start)->limit($limit)->get();
+        $members = [];
+        foreach (['team_players', 'team_staff'] as $table) {
+            foreach ($p->table($tenant, $table)->whereIn('team_season_id', $page->pluck('id'))->where('active', true)->get(['team_season_id','member_id']) as $link) {
+                $members[$link->team_season_id][] = $link->member_id;
             }
+        }
+        $rows = $page->map(function ($team) use ($tenant, $managed, $own, $actor, $members) {
             return ['TeamSaisonID' => (int) $team->id, 'TeamSaisonLabel' => $team->label,
                 'CanManage' => in_array((int) $team->id, $managed, true),
                 'CanCreate' => $this->capabilities->allows($actor, $tenant, (int) $team->id, 'create'),
-                'MeineMitglieder' => $own->whereIn('id', $members)->map(fn ($m) => ['MitgliederID' => (int) $m->id,
+                'MeineMitglieder' => $own->whereIn('id', $members[$team->id] ?? [])->map(fn ($m) => ['MitgliederID' => (int) $m->id,
                     'Vorname' => $m->first_name, 'Nachname' => $m->last_name])->values()->all()];
         })->all();
         return ['success' => true, 'Teams' => $rows, 'totalRecordCount' => $total];
@@ -118,22 +121,63 @@ final class MobilePlanningData
             });
         }
         $total = (clone $query)->count();
-        $rows = $query->orderBy('starts_at')->orderBy('id')->offset($start)->limit($limit)->get()
-            ->map(fn ($event) => $this->event($actor, $tenant, (int) $event->id, false))->all();
+        $page = $query->orderBy('starts_at')->orderBy('id')->offset($start)->limit($limit)->get();
+        $rows = $this->eventRows($actor, $tenant, $page);
         return ['success' => true, 'TeamTermine' => $rows, 'totalRecordCount' => $total];
+    }
+
+    /** Only rows from PlanningCalendarService::visible enter this method. */
+    private function eventRows(Account $actor, Tenant $tenant, \Illuminate\Support\Collection $events): array
+    {
+        if ($events->isEmpty()) return [];
+        $p = $this->planning; $eventIds = $events->pluck('id'); $teamIds = $events->pluck('team_season_id')->unique();
+        $managed = array_fill_keys($p->teams($actor, $tenant, true)->whereIn('id', $teamIds)->pluck('id')->all(), true);
+        $own = app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $parts = $p->table($tenant, 'team_participations')->whereIn('event_id', $eventIds)->get()->groupBy('event_id');
+        $guests = $p->table($tenant, 'team_guests')->whereIn('event_id', $eventIds)->whereNull('deleted_at')->orderBy('id')->get()->groupBy('event_id');
+        $invited = $p->table($tenant, 'team_invitations')->whereIn('event_id', $eventIds)->get(['event_id','member_id'])->groupBy('event_id');
+        $links = [];
+        foreach (['team_players','team_staff'] as $table) {
+            $links[$table] = $p->table($tenant, $table)->whereIn('team_season_id', $teamIds)->where('active', true)
+                ->get(['team_season_id','member_id'])->groupBy('team_season_id');
+        }
+        $memberIds = $invited->flatten(1)->pluck('member_id');
+        foreach ($links as $byTeam) $memberIds = $memberIds->merge($byTeam->flatten(1)->pluck('member_id'));
+        $members = app(MemberAccessService::class)->activeMembers($tenant)->whereKey($memberIds->unique())
+            ->orderBy('last_name')->orderBy('first_name')->get(['id','first_name','last_name']);
+        $teams = $p->table($tenant, 'team_seasons')->whereIn('id', $teamIds)->get()->keyBy('id');
+        $facts = [];
+        foreach ($events as $event) {
+            $players = ($links['team_players'][$event->team_season_id] ?? collect())->pluck('member_id')->all();
+            $staff = ($links['team_staff'][$event->team_season_id] ?? collect())->pluck('member_id')->all();
+            $ids = array_merge($players, $staff, ($invited[$event->id] ?? collect())->pluck('member_id')->all());
+            $facts[(int) $event->id] = ['manager' => isset($managed[$event->team_season_id]), 'own' => $own,
+                'parts' => ($parts[$event->id] ?? collect())->keyBy('member_id'), 'guests' => $guests[$event->id] ?? collect(),
+                'roster' => $members->whereIn('id', $ids)->values(), 'staff' => $staff, 'players' => $players,
+                'team' => $teams[$event->team_season_id]];
+        }
+        $metadata = app(MobilePlanningInvitationsData::class)->metadataBatch($actor, $tenant, $events, $this->capabilities, $invited, $facts);
+        return $events->map(fn ($event) => $this->renderEvent($actor, $tenant, $event, false,
+            $facts[(int) $event->id] + ['invitations' => $metadata[(int) $event->id]]))->all();
     }
 
     public function event(Account $actor, Tenant $tenant, int $id, bool $seriesSnapshot = true): array
     {
         $p = $this->planning;
         $event = $p->event($actor, $tenant, $id);
-        $invitationMeta = app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
+        return $this->renderEvent($actor, $tenant, $event, $seriesSnapshot);
+    }
+
+    private function renderEvent(Account $actor, Tenant $tenant, object $event, bool $seriesSnapshot, ?array $projection = null): array
+    {
+        $p = $this->planning; $id = (int) $event->id;
+        $invitationMeta = $projection['invitations'] ?? app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
         $capabilities = $this->capabilities->event($actor, $tenant, $event);
         $pushSnapshot = $capabilities['CanSendSquadPush'] ? app(MobilePushSquad::class)->snapshot($actor, $tenant, $id) : null;
-        $manager = $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
-        $own = app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();
-        $parts = $p->table($tenant, 'team_participations')->where('event_id', $id)->get()->keyBy('member_id');
-        $people = $p->roster($tenant, $event)->get(['id', 'first_name', 'last_name'])->map(function ($member) use ($parts, $event, $manager, $own, $invitationMeta) {
+        $manager = $projection['manager'] ?? $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
+        $own = $projection['own'] ?? app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();
+        $parts = $projection['parts'] ?? $p->table($tenant, 'team_participations')->where('event_id', $id)->get()->keyBy('member_id');
+        $people = ($projection['roster'] ?? $p->roster($tenant, $event)->get(['id', 'first_name', 'last_name']))->map(function ($member) use ($parts, $event, $manager, $own, $invitationMeta) {
             $part = $parts->get($member->id);
             $private = $manager || in_array((int) $member->id, $own, true);
             return ['TeamTerminTeilnahmeID' => (int) ($part->id ?? 0), 'MitgliederID' => (int) $member->id,
@@ -146,7 +190,7 @@ final class MobilePlanningData
                 'AnwesenheitsKommentar' => $private && ($part->attendance_comment_encrypted ?? null) ? Crypt::decryptString($part->attendance_comment_encrypted) : '',
                 'AnwesenheitUpdatedAt' => $part->attendance_updated_at ?? null];
         });
-        $guests = $p->table($tenant, 'team_guests')->where('event_id', $id)->whereNull('deleted_at')->orderBy('id')->get()->map(fn ($guest) => [
+        $guests = ($projection['guests'] ?? $p->table($tenant, 'team_guests')->where('event_id', $id)->whereNull('deleted_at')->orderBy('id')->get())->map(fn ($guest) => [
             'GastID' => (int) $guest->id, 'Vorname' => $guest->first_name, 'Nachname' => $guest->last_name,
             'TeilnahmeStatus' => $guest->status, 'AnwesenheitsStatus' => $guest->attendance,
             'Revision' => (int) $guest->revision, 'Kommentar' => $manager && $guest->comment_encrypted ? Crypt::decryptString($guest->comment_encrypted) : '',
@@ -154,12 +198,12 @@ final class MobilePlanningData
             'AnwesenheitUpdatedAt' => $guest->attendance_updated_at ?? null,
         ]);
         $all = $people->concat($guests)->values();
-        $staffIds = $p->table($tenant, 'team_staff')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
-        $playerIds = $p->table($tenant, 'team_players')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
+        $staffIds = $projection['staff'] ?? $p->table($tenant, 'team_staff')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
+        $playerIds = $projection['players'] ?? $p->table($tenant, 'team_players')->where('team_season_id', $event->team_season_id)->where('active', true)->pluck('member_id')->all();
         $counted = $all->reject(fn ($person) => isset($person['MitgliederID']) && in_array($person['MitgliederID'], $staffIds, true));
         $pending = $people->filter(fn ($person) => in_array($person['MitgliederID'], $playerIds, true)
             && ! in_array($person['MitgliederID'], $staffIds, true) && $person['TeilnahmeStatus'] === 'OFFEN')->values()->all();
-        $team = $p->table($tenant, 'team_seasons')->where('id', $event->team_season_id)->first();
+        $team = $projection['team'] ?? $p->table($tenant, 'team_seasons')->where('id', $event->team_season_id)->first();
         return ['TeamTerminID' => (int) $event->id, 'TeamSaisonID' => (int) $event->team_season_id,
             'TeamSaisonLabel' => $team->label, 'Titel' => $event->title, 'Terminart' => $event->kind,
             'DatumVon' => $event->starts_at, 'DatumBis' => $event->ends_at, 'AnmeldeFrist' => $event->deadline_at,

@@ -16,12 +16,15 @@ final class MobileTrainingController implements \Illuminate\Routing\Controllers\
         $d = $request->validate(['start' => 'sometimes|integer|min:0|max:100000', 'limit' => 'sometimes|integer|min:1|max:50']);
         $rows = $service->visible($actor, $tenant)->whereNull('archived_at')->orderByDesc('created_at')->orderByDesc('id')
             ->offset($d['start'] ?? 0)->limit($d['limit'] ?? 20)->get(['id','title','team_season_id','shared','input_json','created_at']);
-        return response()->json(['data' => ['trainingPlans' => $rows->map(function ($row) use ($actor, $tenant, $service) {
+        $download = $rows->isNotEmpty() && $service->can($actor, $tenant, 'download');
+        $shares = $rows->isEmpty() ? [] : DB::connection('clubunio')->table('clubora.mobile_training_plan_shares')->where('tenant_id', $tenant->id)
+            ->whereIn('plan_id', $rows->where('shared', true)->pluck('id'))->pluck('team_season_id', 'plan_id')->all();
+        return response()->json(['data' => ['trainingPlans' => $rows->map(function ($row) use ($download, $shares) {
             $input = json_decode($row->input_json, true, 64, JSON_THROW_ON_ERROR);
             return ['id' => (int) $row->id, 'title' => $row->title, 'teamName' => $input['teamName'],
                 'durationMinutes' => (int) $input['durationMinutes'], 'playerCount' => (int) $input['playerCount'],
-                'createdAt' => $row->created_at, 'hasPdf' => $service->can($actor, $tenant, 'download'),
-                'sharedTeamSaisonId' => $service->sharedTeam($tenant, $row)];
+                'createdAt' => $row->created_at, 'hasPdf' => $download,
+                'sharedTeamSaisonId' => $row->shared ? (int) ($shares[$row->id] ?? $row->team_season_id) : null];
         })->all()]]);
     }
     public function options(Request $request)

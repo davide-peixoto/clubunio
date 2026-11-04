@@ -829,6 +829,82 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->getJson($this->url('teams'))->assertOk();
     }
 
+    public function test_planning_page_projection_batches_twenty_events_and_preserves_private_invitation_snapshots(): void
+    {
+        foreach (['title text','kind text','starts_at text','ends_at text','deadline_at text','mode text','status text','revision integer DEFAULT 1',
+            'location text','description text','capacity integer','series_key text'] as $column) $this->db->statement('ALTER TABLE clubora.team_events ADD COLUMN '.$column);
+        $this->db->statement('ALTER TABLE clubora.members ADD COLUMN updated_at text');
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations (tenant_id integer,event_id integer,member_id integer);
+CREATE TABLE clubora.team_participations (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,event_id integer,member_id integer,status text,attendance text,comment_encrypted text,revision integer,updated_at text);
+CREATE TABLE clubora.team_guests (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,event_id integer,first_name text,last_name text,status text,attendance text,comment_encrypted text,revision integer,deleted_at text);
+CREATE TABLE clubora.object_changes (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,object_type text,object_id integer);');
+        $invited = $this->member('Invited outsider', '2010-01-01');
+        $own = $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->value('member_id');
+        $ids = [];
+        for ($n = 0; $n < 20; $n++) {
+            $id = $this->db->table('clubora.team_events')->insertGetId(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team,
+                'title' => 'Synthetic event '.$n,'kind' => 'TRAINING','mode' => 'ANMELDEN','status' => 'AKTIV',
+                'starts_at' => now()->addDays(2)->toIso8601String(), 'ends_at' => now()->addDays(2)->addHour()->toIso8601String(),
+                'deadline_at' => now()->addDay()->toIso8601String()]); $ids[] = $id;
+            $this->db->table('clubora.team_invitations')->insert(['tenant_id' => $this->tenant->id,'event_id' => $id,'member_id' => $invited]);
+            foreach ([$own,$invited] as $member) $this->db->table('clubora.team_participations')->insert(['tenant_id' => $this->tenant->id,
+                'event_id' => $id,'member_id' => $member,'status' => 'DABEI','attendance' => 'OFFEN','revision' => 1,
+                'comment_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('private-'.$member)]);
+            $this->db->table('clubora.team_guests')->insert(['tenant_id' => $this->tenant->id,'event_id' => $id,'first_name' => 'Synthetic',
+                'last_name' => 'Guest','status' => 'OFFEN','attendance' => 'OFFEN','revision' => 1]);
+        }
+        $request = fn ($limit) => \Illuminate\Http\Request::create('/', 'GET', ['recperpage' => $limit]);
+        $data = fn () => app(\App\ClubUnio\Mobile\MobilePlanningData::class);
+        $data()->events($request(1), $this->admin, $this->tenant); // Schema discovery is not per-row projection work.
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $one = $data()->events($request(1), $this->admin, $this->tenant);
+        $oneCount = count($this->db->getQueryLog()); $this->db->flushQueryLog();
+        $many = $data()->events($request(20), $this->admin, $this->tenant);
+        $manyCount = count($this->db->getQueryLog()); $this->db->flushQueryLog();
+        $individualData = $data();
+        foreach ($ids as $id) $individualData->event($this->admin, $this->tenant, $id, false);
+        $individualCount = count($this->db->getQueryLog()); $this->db->disableQueryLog();
+        $this->assertCount(20, $many['TeamTermine']); $this->assertSame($oneCount, $manyCount);
+        $this->assertGreaterThan($manyCount * 3, $individualCount, 'The previous per-event projection must use over three times as many SQL queries.');
+        $this->assertSame($one['TeamTermine'][0]['TeamTerminID'], $many['TeamTermine'][0]['TeamTerminID']);
+        $detail = $data()->event($this->admin, $this->tenant, $ids[0], false);
+        $list = $many['TeamTermine'][0];
+        foreach (['Teilnahmen','MeineTeilnahmen','NichtAngemeldet'] as $key) {
+            foreach ($list[$key] ?? [] as $index => $person) {
+                if (!empty($person['InvitationSnapshot'])) {
+                    app(\App\ClubUnio\Mobile\MobilePlanningInvitationsData::class)->verify($this->admin, $this->tenant,
+                        app(\App\ClubUnio\Services\TeamPlanningService::class)->event($this->admin, $this->tenant, $ids[0]),
+                        $person['MitgliederID'], $person['InvitationSnapshot'], 1);
+                }
+                unset($list[$key][$index]['InvitationSnapshot'], $detail[$key][$index]['InvitationSnapshot']);
+            }
+        }
+        $this->assertSame($detail, $list);
+        $parent = $data()->events($request(20), $this->parent, $this->tenant);
+        $this->assertStringContainsString('private-'.$own, json_encode($parent));
+        $this->assertStringNotContainsString('private-'.$invited, json_encode($parent));
+        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        try { $data()->events($request(20), $this->parent, $this->tenant); $this->fail('Revoked actor read planning page'); }
+        catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { $this->assertSame(403, $e->getStatusCode()); }
+    }
+
+    public function test_planning_team_options_batch_roster_links_for_one_and_twenty_teams(): void
+    {
+        $request = \Illuminate\Http\Request::create('/', 'GET', ['recperpage' => 100]);
+        $read = fn () => app(\App\ClubUnio\Mobile\MobilePlanningData::class)->teams($request, $this->admin, $this->tenant);
+        $read(); $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $one = $read(); $oneCount = count($this->db->getQueryLog()); $this->db->disableQueryLog();
+        $season = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');
+        for ($n = 1; $n < 20; $n++) {
+            $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->tenant->id,'name' => 'Synthetic team '.$n]);
+            $this->db->table('clubora.team_seasons')->insert(['tenant_id' => $this->tenant->id,'team_id' => $team,'season_id' => $season,'label' => 'Synthetic '.$n]);
+        }
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $many = $read(); $manyCount = count($this->db->getQueryLog()); $this->db->disableQueryLog();
+        $this->assertCount(1, $one['Teams']); $this->assertCount(20, $many['Teams']);
+        $this->assertSame($oneCount, $manyCount); $this->assertSame($one['Teams'][0], $many['Teams'][0]);
+    }
+
     public function test_native_planning_dtos_preserve_visibility_and_private_comments(): void
     {
         foreach (['title text', 'kind text', 'starts_at text', 'ends_at text', 'deadline_at text', 'mode text',

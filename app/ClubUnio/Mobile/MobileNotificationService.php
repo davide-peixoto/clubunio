@@ -16,34 +16,57 @@ final class MobileNotificationService
     }
 
     /** References real, currently visible owned source rows, never copies private payloads. */
-    private function materialize(Account $actor, Tenant $tenant): void
+    private function allowed(Account $actor, Tenant $tenant, string $kind, int $object, array &$rights): bool
+    {
+        // A single read projection only. Never retained by this service or used for writes/delivery.
+        $key = $kind.':'.$object;
+        return $rights[$key] ??= app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $kind, $object, false);
+    }
+
+    private function materialize(Account $actor, Tenant $tenant, array &$rights): void
     {
         app(MobileAccess::class)->enter($actor, $tenant);
-        DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+        DB::connection('clubunio')->table('clubora.notifications as source')->where('source.tenant_id', $tenant->id)->where('source.account_id', $actor->id)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.mobile_inbox as indexed')
+                ->whereColumn('indexed.tenant_id', 'source.tenant_id')->whereColumn('indexed.account_id', 'source.account_id')
+                ->whereRaw("indexed.event_key = 'notification:' || source.id::text"))
             ->whereIn('object_type', array_keys(self::SOURCES))->select(['id', 'object_type', 'object_id', 'created_at', 'read_at'])
-            ->chunkById(100, function ($rows) use ($actor, $tenant) {
+            ->chunkById(100, function ($rows) use ($actor, $tenant, &$rights) {
+                $insert = [];
                 foreach ($rows as $row) {
                     $kind = self::SOURCES[$row->object_type];
-                    if (! app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $kind, (int) $row->object_id, false)) continue;
-                    $this->rows($actor, $tenant)->insertOrIgnore(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
+                    if (! $this->allowed($actor, $tenant, $kind, (int) $row->object_id, $rights)) continue;
+                    $insert[] = ['tenant_id' => $tenant->id, 'account_id' => $actor->id,
                         'kind' => $kind, 'object_id' => $row->object_id, 'event_key' => 'notification:'.$row->id,
-                        'read_at' => $row->read_at, 'created_at' => $row->created_at]);
-                    if ($row->read_at !== null) $this->rows($actor, $tenant)->where('event_key', 'notification:'.$row->id)->whereNull('read_at')->update(['read_at' => $row->read_at]);
+                        'read_at' => $row->read_at, 'created_at' => $row->created_at];
                 }
+                if ($insert) $this->rows($actor, $tenant)->insertOrIgnore($insert);
             });
+        // Preserve web/source read state without a separate update per old notification.
+        $source = DB::connection('clubunio')->table('clubora.notifications as source')
+            ->whereColumn('source.tenant_id', 'inbox.tenant_id')->whereColumn('source.account_id', 'inbox.account_id')
+            ->whereColumn('source.object_id', 'inbox.object_id')->whereRaw("inbox.event_key = 'notification:' || source.id::text")
+            ->whereRaw("inbox.kind = CASE source.object_type
+                WHEN 'expense' THEN 'expense' WHEN 'registration' THEN 'registration' WHEN 'bus_reservation' THEN 'bus'
+                WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' END")
+            ->whereNotNull('source.read_at');
+        DB::connection('clubunio')->table('clubora.mobile_inbox as inbox')->where('inbox.tenant_id', $tenant->id)->where('inbox.account_id', $actor->id)
+            ->whereNull('inbox.read_at')->whereExists((clone $source)->selectRaw('1'))
+            ->update(['read_at' => (clone $source)->select('source.read_at')->limit(1)]);
     }
 
     private function visible(Account $actor, Tenant $tenant): array
     {
-        $this->materialize($actor, $tenant);
+        $rights = [];
+        $this->materialize($actor, $tenant, $rights);
         $visible = [];
         foreach ($this->rows($actor, $tenant)->orderByDesc('id')->cursor() as $row) {
-            if (app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $row->kind, (int) $row->object_id, false)) $visible[] = $row;
+            if ($this->allowed($actor, $tenant, $row->kind, (int) $row->object_id, $rights)) $visible[] = $row;
         }
         return $visible;
     }
 
-    private function text(Account $actor, Tenant $tenant, object $row): array
+    private function text(Account $actor, Tenant $tenant, object $row, array $sources): array
     {
         if ($row->kind === 'admin_notice') {
             $notice = app(MobileAdminNoticeAccess::class)->notice($actor, $tenant, (int) $row->object_id);
@@ -54,9 +77,8 @@ final class MobileNotificationService
             return [Crypt::decryptString($notice->title_encrypted), Crypt::decryptString($notice->body_encrypted)];
         }
         if (preg_match('/^notification:([1-9][0-9]*)$/D', $row->event_key, $matches)) {
-            $source = DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
-                ->where('id', $matches[1])->where('object_id', $row->object_id)->first(['object_type', 'title', 'body']);
-            if ($source && (self::SOURCES[$source->object_type] ?? null) === $row->kind) return [$source->title, $source->body];
+            $source = $sources[(int) $matches[1]] ?? null;
+            if ($source && (int) $source->object_id === (int) $row->object_id && (self::SOURCES[$source->object_type] ?? null) === $row->kind) return [$source->title, $source->body];
         }
         return match ($row->kind) {
             'invoice' => ['Neue Rechnung', 'Eine Rechnung ist verfügbar.'],
@@ -71,9 +93,14 @@ final class MobileNotificationService
         $all = $this->visible($actor, $tenant);
         $unread = count(array_filter($all, fn ($r) => $r->read_at === null));
         $selected = $unreadOnly ? array_values(array_filter($all, fn ($r) => $r->read_at === null)) : $all;
+        $page = array_slice($selected, $start, $limit);
+        $sourceIds = [];
+        foreach ($page as $row) if (preg_match('/^notification:([1-9][0-9]*)$/D', $row->event_key, $match)) $sourceIds[] = (int) $match[1];
+        $sources = $sourceIds ? DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+            ->whereIn('id', $sourceIds)->get(['id','object_type','object_id','title','body'])->keyBy('id')->all() : [];
         $rows = [];
-        foreach (array_slice($selected, $start, $limit) as $row) {
-            [$title, $body] = $this->text($actor, $tenant, $row);
+        foreach ($page as $row) {
+            [$title, $body] = $this->text($actor, $tenant, $row, $sources);
             $rows[] = ['NotificationID' => (int) $row->id, 'title' => $title, 'body' => $body, 'objectType' => $row->kind,
                 'objectId' => (int) $row->object_id, 'data' => ['tenant_id' => (int) $tenant->id, 'kind' => $row->kind, 'object_id' => (int) $row->object_id],
                 'readAt' => $row->read_at, 'createdAt' => $row->created_at];
