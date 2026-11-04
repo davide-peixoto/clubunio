@@ -131,8 +131,9 @@ bestanden. SfvTrainingApiActionsTest27/327 hatte genau eine fehlgeschlagene
 Signaturassertion, alle Fachpfade bestanden. review behaelt jetzt wieder
 exakt seinen urspruenglichen Vertrag mit authorization als letztem nullable
 Closure-Parameter; reviewDraft delegiert auf dieselbe private Umsetzung.
-PHP-Syntax und Reflection pruefen dies lokal erfolgreich. **Training bleibt
-bis zum gezielten Contract-/native5-Nachlauf offen**. PG-Fenster wird mit
+PHP-Syntax und Reflection pruefen dies lokal erfolgreich. Der gezielte
+**Contract1/62 und native5/110-Nachlauf ist vollstaendig bestanden**.
+Trainingsquellen sind lokal stabil;100/DEV-Freigabe bleibt separat. PG-Fenster wird mit
 Root/Spesen/Directory seriell koordiniert, keine parallele eigene PG-Suite.
 Die Fluttertests erhalten Originalbearbeitung/-Vorschau und pruefen konkrete
 Mannschaften, angezeigte Revisionen, gleiche Anfrageschluessel und Fehler bei

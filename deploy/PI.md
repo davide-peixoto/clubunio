@@ -1865,3 +1865,42 @@ SMTP/FCM/APNs/Igloo-Konfiguration und physische Abnahme fehlen weiterhin;
 kein echter Mail-, Push-, PIN-, Hardware- oder Zahlungsaufruf. NativeChallenge-
 Shell/Modulfreigabe und800/900/1000-Paritaetsarbeit sind noch offen. Fremde
 Aenderungen, PHPMaker DEV/PROD und SVS-Original erhalten.
+
+
+## Mobile Originalablaeufe: DEV-Paritaetsrelease (04.11.2026)
+
+Massgeblicher Iststand: current zeigt auf20261104-clubunio-mobile-parity-v1,
+Produktsnapshot3560c6e, Toolingcdf8889, Aktivierunga5b253f.56 explizite
+Runtimefiles mit SHA geprueft. Rollbackzielparity-foundation-v2 behaelt das
+additive Schema.800/900/1000 atomar angewendet: vier neue leere Tabellen,
+11 FKs; vorhandene Elternzeilen erhalten. Nur fehlende App-Defaults, der
+gepruefte AI-Uniqueindex und admin_notice im Outboxcheck hinzugefuegt.
+Verschluesselte0600-Sicherung vor Apply separat verifiziert:
+shared/backups/mobile-before-800-900-1000-20261104-20261104012923-235b6a199ff2ae189d721cc87ce5689e.cuenc
+SHA2563678ba69e56812ce9e438b28e12f417b6b9a055836ffd597f32c2c10ac82a0e3.
+Begrenzte Eltern-/Ledger-Sicherung, kein Vollrestore-Nachweis.
+
+Bootstrap/DEV-Origin, Rollenhilfe, OCR-Provenienz, Pushverwaltung, Challenge
+und Keybox mit Verwaltung intern freigegeben. Bestehende Modulrechte bleiben
+massgeblich; keine automatische Penalty-Modulfreigabe. Externe Identity/SMTP,
+FCM/APNs-Zustellung, Azure-OCR und Igloo-Provider/PIN-Ausgabe bleiben geschlossen.
+Alle bestehenden Gates plus Admin18 und Modulmenue79 Kernelpruefungen gruen;
+fachliche Konten-/Planungspruefungen mit Rollback. Erster inaktiver Releaseversuch
+wegen PHPUnit-Abhaengigkeit eines Gatehelpers abgebrochen; produktionsfaehigen
+Helper korrigiert, neuen unveraenderten Release geprueft und aktiviert.
+
+Nach Aktivierung HTTPS: Login200, PublicBootstrap200 mit no-store und nur
+neun oeffentlichen Vertragsfeldern; PublicIdentity503; Notifications, Keybox
+und persoenlicher Bootstrap anonym401. PHP-FPM aktiv, Runtimehashes geprueft.
+App: kompletter Flutterlauf468 Tests bestanden, finaler Android-Debugbuild
+bestanden. Original-SVS-Ablaufabgleich G1-G12 einschliesslich Anmelde-HEIC,
+Sponsoridentitaet und redigierter Profildiagnose nachgefuehrt. Native iOS-/
+Android-Endabnahme, echte Biometrie/HEIC und externe Providerkonfiguration
+bleiben offen. Kein echter Mail-/Push-/PIN-/Zahlungsaufruf; kein Store-Release.
+Details: CLUBUNIO-MOBILE-PARITY-RELEASE.md, CLUBUNIO-MOBILE-PARITY-SCHEMA.md,
+CLUBUNIO-SVS-MOBILE-COMPLETENESS-AUDIT.md und mobile/docs/ALL-PACKAGES-STATUS.md.
+
+Abschlussquellen: App42a227f mit112 gezielt geprueften Quelldateien/Dokumenten;
+Flutteranalyse ohne Befund. Unabhaengiger Quellenabgleich findet keine weitere
+bestaetigte Implementierungsluecke in G1-G12 und den Design-/Mandantenvorgaben.
+Native/externe Abnahmen bleiben als separate offene Inbetriebnahmearbeit erfasst.

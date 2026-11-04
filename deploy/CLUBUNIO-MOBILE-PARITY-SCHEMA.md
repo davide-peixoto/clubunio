@@ -1,11 +1,26 @@
-# Vorbereiteter Schemahelfer800/900/1000
+# Schema800/900/1000 auf DEV angewendet
 
-Nur Quellpaket vorbereitet und mit `php -l` geprüft. Kein Export, keine
-Datenbankprüfung, keine DDL-Anwendung oder Bereitstellung durch diesen Agenten.
-Root prüft und führt die Schritte später getrennt aus. Frühere Schemahelfer,
-Migrationen und gemeinsame App-/API-/Config-/Routendateien bleiben unverändert.
+Iststand 04.11.2026: Root hat Export, unabhängige Sicherungsprüfung und die
+atomare Anwendung der drei fest gebundenen Migrationen auf ClubUnio-DEV
+erfolgreich abgeschlossen. Vier neue Tabellen, elf geprüfte Fremdschlüssel
+und die unten exakt erlaubten Bestandsdeltas sind bestätigt. Alte Elternzeilen,
+Settings und Metadaten bleiben außerhalb dieser erlaubten Deltas unverändert.
+Keine PHPMaker-/Legacy-Anwendung oder Datenübernahme.
 
-## Feste Ausführungsgrenzen
+Private verschlüsselte Sicherung:
+`/var/www/svs-laravel/shared/backups/mobile-before-800-900-1000-20261104-20261104012923-235b6a199ff2ae189d721cc87ce5689e.cuenc`.
+SHA256: `3678ba69e56812ce9e438b28e12f417b6b9a055836ffd597f32c2c10ac82a0e3`.
+Spec-SHA256: `9bc49f6f1700358e2fe175e4075bacb20e3311d7c1a9ee8e18af23b28612a06c`.
+Die Sicherung ist keine versionierte Projektdatei. Kein erneuter Apply-/Down-
+oder Restorelauf ist Bestandteil dieser Dokumentationsaktualisierung.
+
+Der anschließende aktive Stand ist `parity-v1` aus Produktsnapshot `3560c6e`,
+mit 56 geprüften Runtime-Dateihashes. Tooling `cdf8889`, Aktivierung `a5b253f`;
+vorbereiteter Runtime-Rollbackstand `parity-foundation-v2`. Ein Runtime-Rollback
+ist keine Rücknahme der angewendeten additiven Migrationen. Details und Gates:
+[Releaseprotokoll](CLUBUNIO-MOBILE-PARITY-RELEASE.md).
+
+## Feste Ausführungsgrenzen des abgeschlossenen Schemalaufs
 
 `deploy/prepare-mobile-parity-schema.php` bootstrapped ausschließlich
 `/var/www/svs-laravel/releases/20261104-clubunio-mobile-parity-foundation-v2`.
@@ -99,15 +114,17 @@ Jeder Fehler vor Commit rollt DDL/Zeilen/Ledger atomar zurück. Identitäts-
 Sequenzfortschritte werden wie üblich von PostgreSQL nicht zurückgerollt;
 dieser Helfer setzt keine Sequenzen zurück oder importiert Daten.
 
-## Bisherige Prüfung
+## Quellprüfung und bestätigter Abschluss
 
 Neue Datei PHP-Syntax grün. Statische Inventarprüfung3 Migrationen/4 Tabellen/
 11FKs/9 Eltern, SpecUTF8 und festes SpecSHA geprüft.800/900-Arbeitsbytes
 entsprechen dem Spec;1000-Git-/LF-Bytes entsprechen dem Spec, lokale CRLF-
-Arbeitsbytes absichtlich nicht. Keine tatsächliche PostgreSQL-/Backupdatei-
-Prüfung oder Anwendung behauptet; Root muss den festen Release bereitstellen
-und alle drei Stufen unabhängig prüfen/ausführen.
+Arbeitsbytes absichtlich nicht. Root hat anschließend den festen Release aus
+den freigegebenen Gitbytes bereitgestellt und alle drei getrennten Stufen mit
+der oben identifizierten verschlüsselten Sicherung erfolgreich ausgeführt.
 
 Unabhaengiger zweiter Quellreview abgeschlossen: Spec-SHA/Inventare/Atomaritaet/
 Bestandsschutz bestaetigt, keine konkrete Ausfuehrungs- oder Datenverlustluecke.
-Kein PG-/DDL-Lauf durch die Reviews. Runtimeanwendung weiterhin separat.
+Kein PG-/DDL-Lauf durch die Reviews. Der anschließende DEV-Schemalauf und die
+getrennte interne Runtimefreigabe sind inzwischen erfolgreich abgeschlossen;
+SMTP/FCM/Azure/Igloo und physische Betriebsaktionen bleiben geschlossen.
