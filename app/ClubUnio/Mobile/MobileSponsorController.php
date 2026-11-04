@@ -132,7 +132,9 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
                     $revision=(int)((clone $q)->value('revision')??0); $this->record($a,$t,$v['RequestKey'],$action.'_link',$hash,$p->event_id,$p->id,$revision);
                 }
             }
-            return $this->json(['ShareUrl'=>$result['url'],'DisplayName'=>$result['alias']??'','ExpiresOn'=>$result['expires_at']??null,'Revision'=>(int)((clone $q)->value('revision')??0)]);
+            $link=(clone $q)->first();
+            $shareUrl=app(MobileSponsorShareIdentity::class)->url($r,$t,$link,($result['url']??null)!==null);
+            return $this->json(['TenantID'=>(int)$t->id,'TenantName'=>$t->name,'ShareUrl'=>$shareUrl,'DisplayName'=>$result['alias']??'','ExpiresOn'=>$result['expires_at']??null,'Revision'=>(int)($link->revision??0)]);
         });
     }
     public function billing(Request $r) {

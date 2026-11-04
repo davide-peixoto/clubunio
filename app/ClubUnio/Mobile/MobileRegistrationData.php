@@ -64,10 +64,16 @@ final class MobileRegistrationData
         foreach (self::FIELDS as $legacy => $field) { $dto[$legacy] = $values[$field] ?? null; }
         // The original country picker uses codes; IDs remain the canonical server contract.
         foreach (['Land' => 'country_id', 'Nationalitaet' => 'nationality_id'] as $field => $idField) {
-            $country = $this->table($tenant, 'countries')->where('id', $values[$idField] ?? null)->first(['code', 'iso3']);
+            $country = $this->table($tenant, 'countries')->where('id', $values[$idField] ?? null)->first(['code', 'iso3', 'name']);
             $dto[$field] = $field === 'Nationalitaet' ? ($country?->iso3 ?: $country?->code) : $country?->code;
+            $dto[$field.'Text'] = $country?->name;
         }
         foreach (['Geschlecht', 'RechnungAn'] as $field) { $dto[$field] = isset($dto[$field]) ? (string) $dto[$field] : ''; }
+        $dto['GeschlechtText'] = $this->table($tenant, 'genders')->where('id', $values['gender_id'] ?? null)->value('name');
+        $dto['RechnungAnText'] = $this->table($tenant, 'billing_recipients')->where('id', $values['billing_recipient_id'] ?? null)->value('name');
+        $dto += ['EingereichtAm' => $r->submitted_at?->toIso8601String(), 'GeprueftAm' => $r->reviewed_at?->toIso8601String(),
+            'AkzeptiertAm' => $r->accepted_at?->toIso8601String(),
+            'AbgelehntAm' => $r->rejected_at ? \Carbon\CarbonImmutable::parse($r->rejected_at)->toIso8601String() : null];
         $dto += ['CanEdit' => $r->status?->workflow_key !== 'accepted' && $permissions->allows($actor, $tenant, 'registrations', 'update'),
             'CanReview' => $r->status?->workflow_key !== 'accepted' && $this->review()->canReview($actor, $tenant, $r),
             'CanAssignLeader' => $permissions->allows($actor, $tenant, 'registrations', 'approve'),

@@ -69,3 +69,10 @@ Zwei bestehende RegistrationCompletion-Uploadregressionen/13 Assertions bleiben
 gruen. Ausschliesslich synthetische zurueckgerollte Daten, TEMP-300/FK-Eltern
 und gemockter Blobtransport; kein DDL an gemeinsam genutzten Bestandstabellen.
 Keine echte Aufnahme, Nachricht oder Dateiuebertragung durch Tools.
+
+
+G3-Fortsetzung: persoenliche frische My-Teams-Anmeldedetails behalten echte
+Land-/Geschlecht-/Rechnungsempfaengerlabels und bereits sichtbare Lifecyclezeiten.
+Keine neuen AHV-/Eltern-/Reviewerrechte. Privater Portraitleser nutzt den
+bestehenden gesicherten Dateivertrag. Vier neue und acht bestehende Flutter-
+My-Teamsfaelle gruen; keine neue Schema- oder Provideraktion.

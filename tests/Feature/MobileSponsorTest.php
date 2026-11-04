@@ -111,11 +111,17 @@ class MobileSponsorTest extends TestCase {
         $this->assertSame(1,$this->db->table('clubora.mobile_sponsor_commands')->count());
     }
     public function test_link_consent_revision_rotation_replay_and_revocation_do_not_send_mail(): void {
-        app(SponsorRunPublicService::class)->configurePublic($this->admin,$this->tenant,true); $url=$this->base.'/participants/'.$this->participant.'/share-link';
+        app(SponsorRunPublicService::class)->configurePublic($this->admin,$this->tenant,true); $url='https://synthetic.example'.$this->base.'/participants/'.$this->participant.'/share-link';
         $this->withToken($this->token($this->parent))->getJson($url)->assertOk()->assertJsonPath('data.Revision',0);
         $input=['Action'=>'create','RequestKey'=>(string)Str::uuid(),'Revision'=>0,'DisplayName'=>'Synthetic child','Consent'=>true];
         $this->postJson($url,array_replace($input,['Consent'=>false]))->assertUnprocessable();
-        $link=$this->postJson($url,$input)->assertOk()->assertJsonPath('data.Revision',1)->json('data.ShareUrl');
+        $link=$this->postJson($url,$input)->assertOk()->assertJsonPath('data.Revision',1)
+            ->assertJsonPath('data.TenantID',(int)$this->tenant->id)->assertJsonPath('data.TenantName',$this->tenant->name)->json('data.ShareUrl');
+        $this->assertMatchesRegularExpression('~^https://synthetic\.example/sponsor-run#[a-f0-9]{64}$~D',$link);
+        config(['clubunio-domains.hosts'=>array_merge(config('clubunio-domains.hosts',[]),['custom.example'=>$this->tenant->slug])]);
+        $custom=str_replace('https://synthetic.example','https://custom.example',$url);
+        $this->getJson($custom)->assertOk()->assertJsonPath('data.ShareUrl',str_replace('https://synthetic.example','https://custom.example',$link));
+        $this->getJson(str_replace('https://synthetic.example','https://foreign.example',$url))->assertNotFound();
         $this->postJson($url,$input)->assertOk()->assertJsonPath('data.ShareUrl',$link);
         $rotate=['Action'=>'rotate','RequestKey'=>(string)Str::uuid(),'Revision'=>1,'DisplayName'=>'Synthetic child','Consent'=>true];
         $next=$this->postJson($url,$rotate)->assertOk()->assertJsonPath('data.Revision',2)->json('data.ShareUrl'); $this->assertNotSame($link,$next);

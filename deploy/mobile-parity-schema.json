@@ -1,0 +1,114 @@
+{
+  "migrations": {
+    "2026_11_04_000800_mobile_app_announcements": "25a198b6ca3e8781a126a12e59cf932da94c13f608717bf7e66e5e54bb558386",
+    "2026_11_04_000900_mobile_expense_ocr_provenance": "187e219f7270053c09704bf686373773c09229b8a8cec1db6fbe14bc2b78be5f",
+    "2026_11_04_001000_mobile_admin_notices": "6d5bafd5ca296f6161622cbb4cc729dccb6dedb5f6b245c039f45d955051f630"
+  },
+  "parents": [
+    "tenants",
+    "accounts",
+    "tenant_accounts",
+    "tenant_settings",
+    "mobile_ai_work",
+    "expense_lines",
+    "mobile_expense_receipts",
+    "mobile_push_outbox",
+    "migrations"
+  ],
+  "newTables": {
+    "mobile_app_announcements": [
+      "id",
+      "tenant_id",
+      "title",
+      "body",
+      "audience",
+      "starts_at",
+      "ends_at",
+      "active",
+      "revision",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at"
+    ],
+    "mobile_expense_ocr_provenance": [
+      "tenant_id",
+      "line_id",
+      "line_revision",
+      "created_by",
+      "ocr_account_id",
+      "work_id",
+      "draft_id",
+      "draft_revision",
+      "source_sha256",
+      "suggested_amount",
+      "saved_amount",
+      "source_replaced",
+      "accepted",
+      "created_at"
+    ],
+    "mobile_admin_notices": [
+      "id",
+      "tenant_id",
+      "account_id",
+      "command_key",
+      "payload_sha256",
+      "recipient_sha256",
+      "target_type",
+      "target_value",
+      "title_encrypted",
+      "body_encrypted",
+      "created_at",
+      "published_at"
+    ],
+    "mobile_admin_notice_recipients": [
+      "tenant_id",
+      "notice_id",
+      "account_id"
+    ]
+  },
+  "expectedFks": {
+    "mobile_app_announcements": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,created_by|clubora|tenant_accounts|tenant_id,account_id",
+      "tenant_id,updated_by|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_expense_ocr_provenance": [
+      "created_by|clubora|accounts|id",
+      "tenant_id,line_id|clubora|expense_lines|tenant_id,id",
+      "tenant_id,draft_id|clubora|mobile_expense_receipts|tenant_id,id",
+      "tenant_id,ocr_account_id,work_id|clubora|mobile_ai_work|tenant_id,account_id,id"
+    ],
+    "mobile_admin_notices": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_admin_notice_recipients": [
+      "tenant_id,notice_id|clubora|mobile_admin_notices|tenant_id,id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ]
+  },
+  "primaryKeys": {
+    "mobile_app_announcements": "id",
+    "mobile_expense_ocr_provenance": "tenant_id,line_id,line_revision",
+    "mobile_admin_notices": "id",
+    "mobile_admin_notice_recipients": "tenant_id,notice_id,account_id"
+  },
+  "settingsDefaults": {
+    "MaintenanceMode": {
+      "label": "App-Wartungsmodus",
+      "type": "boolean",
+      "value": "0"
+    },
+    "MaintenanceMessage": {
+      "label": "App-Wartungshinweis",
+      "type": "string",
+      "value": "Die App wird gewartet. Bitte versuche es sp\u00e4ter erneut."
+    },
+    "RegistrationActive": {
+      "label": "App-Kontoregistrierung anzeigen",
+      "type": "boolean",
+      "value": "1"
+    }
+  }
+}
