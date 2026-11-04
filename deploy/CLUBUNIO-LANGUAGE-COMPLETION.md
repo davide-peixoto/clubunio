@@ -4,6 +4,14 @@
 
 ## Umfang
 
+Bedienungsnachtrag04.11.2026: Gemeinsame Sprachauswahl im Login und in der
+Kopfleiste sendet bei Auswahl sofort den bestehenden CSRF-geschuetzten POST.
+Kein Bestaetigungsbutton mehr; Sprachauswahl, Ruecksprung und Kontopraeferenz
+bleiben unveraendert. Keine Datenmigration oder Rechteaenderung.
+Release:20261104-clubunio-language-autoswitch. Rueckweg:languages-reviewed-v2.
+Gezielte Sprachtests:5 erfolgreich/40 Assertions,2 DB-Opt-in-Tests ausgelassen;
+2523 DE-/EN-Katalogschluessel geprueft.
+
 - Die historische Liste mit 514 PHP-Beschriftungen ist vollstaendig im gemeinsamen
   DE-/EN-Katalog enthalten. Zusaetzlich Fachdialoge, Fehlertexte, HTML/PDF-Ansichten,
   Portaltexte, Barrierefreiheitslabels und JavaScript-Anzeigen.

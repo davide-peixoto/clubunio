@@ -8,6 +8,19 @@ use Tests\TestCase;
 
 class LanguagePreferencesTest extends TestCase
 {
+    public function test_shared_switcher_submits_on_selection_without_confirmation_button(): void
+    {
+        foreach (['de', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $html = view('clubunio.language-switcher')->render();
+            $this->assertStringContainsString('onchange="this.form.requestSubmit()"', $html);
+            $this->assertStringContainsString('name="_token"', $html);
+            $this->assertStringContainsString('method="POST"', $html);
+            $this->assertStringNotContainsString('<button', $html);
+            $this->assertStringContainsString('aria-label="'.__('Sprache').'"', $html);
+        }
+    }
+
     public function test_only_enabled_languages_are_selected_with_german_fallback(): void
     {
         $service = app(LanguagePreferences::class);
