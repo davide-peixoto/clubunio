@@ -68,3 +68,18 @@ Abgedeckt: DE-/EN-Loginantwort, Content-Language, Auswahlvalidierung, sicherer
 Ruecksprung, persoenliche Speicherung ohne Rollenwechsel, Adminpflicht bei
 Vereinssprache, veraltete Aenderung, Audit und bestehende Mandantennavigation.
 Vollstaendige visuelle Fachabnahme und englische Vorlagenabnahme noch offen.
+
+## Release-Abnahme
+
+e4fa1e7 auf20261104-clubunio-languages, basierend auf chat-composer-v1.
+Vorab Patch-Anwendbarkeit gegen laufenden Release geprueft; nur eigener Delta,
+Env/Composer/Shared-Storage identisch. Vier Servergates erfolgreich,272 Schluessel
+in beiden Katalogen geprueft; Migration1200 bereits auf gemeinsamer DB vorhanden.
+Config-/Route-/View-Caches neu aufgebaut und FPM neu geladen.
+deploy/check-languages-http.php bestaetigt anonymen CSRF-geschuetzten Wechsel
+en/de mit HTTP200 und HTML-lang. Kein bestehendes Konto geaendert.
+IAB nach Neuinitialisierung verfuegbar: Login mit englischen Framework-/Feldtexten
+visuell auf1280x720 und390x844 ohne Ueberlappung; zurueck auf Deutsch gewechselt.
+Screenshots lokal storage/app/languages-login-en.png und
+languages-login-en-mobile.png, nicht versioniert. Angemeldete Fachmasken bleiben
+als visuelle Restabnahme offen; keine pauschale Vollstaendigkeitsbehauptung.
