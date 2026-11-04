@@ -228,6 +228,11 @@ final class MobileController
         return $this->write($r, fn () => $this->data(app(ChatPreferences::class)->save($this->actor($r), $this->tenant($r), $r->all())));
     }
 
+    public function reactionParticipants(Request $r)
+    {
+        return response()->json(app(ChatControls::class)->reactionParticipants($r, $this->actor($r), $this->tenant($r), (int)$r->route('message')));
+    }
+
     public function reaction(Request $r)
     {
         $d = $r->validate(['revision' => 'required|integer|min:1', 'emoji' => 'present|nullable|string|max:16']);

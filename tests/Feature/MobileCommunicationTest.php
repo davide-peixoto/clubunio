@@ -585,6 +585,57 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         Http::assertNothingSent();
     }
 
+    public function test_reaction_participant_pages_are_bounded_name_only_and_do_not_mutate_reactions(): void
+    {
+        $chat=$this->teamChat($this->parent); $this->teamChat($this->player);
+        $parent=$this->token($this->parent); $player=$this->token($this->player);
+        $message=$this->withToken($parent)->postJson($this->url('chats/'.$chat.'/messages'),['client_id'=>(string)Str::uuid(),'text'=>'Reaction participants'])->assertCreated()->json('data');
+        foreach ([$parent,$player] as $token) $this->withToken($token)->postJson($this->url('messages/'.$message['id'].'/reaction'),['revision'=>1,'emoji'=>'👍'])->assertOk();
+        $count=$this->db->table('clubora.chat_changes')->count();
+        $url=$this->url('messages/'.$message['id'].'/reactions');
+        $ids=[$this->parent->id,$this->player->id]; sort($ids);
+        $page=$this->withToken($parent)->getJson($url.'?limit=1')->assertOk()->assertJsonCount(1,'data')
+            ->assertJsonPath('meta.has_more',true)->assertJsonPath('meta.next_after',$ids[0]);
+        $this->assertEqualsCanonicalizing(['account_id','name','emoji','mine'],array_keys($page->json('data.0')));
+        $this->assertSame($ids[0],$page->json('data.0.account_id'));
+        $this->assertSame($ids[0]===$this->parent->id,$page->json('data.0.mine'));
+        $second=$this->getJson($url.'?limit=1&after='.$ids[0])->assertOk()->assertJsonCount(1,'data')
+            ->assertJsonPath('data.0.account_id',$ids[1])->assertJsonPath('meta.has_more',false)->assertJsonPath('meta.next_after',$ids[1]);
+        $this->assertSame($ids[1]===$this->parent->id,$second->json('data.0.mine'));
+        $this->getJson($url.'?after='.$ids[1])->assertOk()->assertJsonCount(0,'data')->assertJsonPath('meta.next_after',$ids[1]);
+        $this->getJson($url.'?limit=51')->assertUnprocessable();
+        $this->getJson($url.'?after=-1')->assertUnprocessable();
+        $this->getJson($url.'?email=true')->assertUnprocessable();
+        $this->assertSame(2,$this->db->table('clubora.chat_reactions')->count());
+        $this->assertSame($count,$this->db->table('clubora.chat_changes')->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_reaction_participant_read_rechecks_history_tenant_block_deletion_and_revocation(): void
+    {
+        $chat=$this->teamChat($this->parent); $parent=$this->token($this->parent);
+        $message=$this->withToken($parent)->postJson($this->url('chats/'.$chat.'/messages'),['client_id'=>(string)Str::uuid(),'text'=>'Scoped participants'])->assertCreated()->json('data');
+        $url=$this->url('messages/'.$message['id'].'/reactions');
+        $this->teamChat($this->player); // Joined after the message: do not reveal historic participant names.
+        $this->withToken($this->token($this->player))->getJson($url)->assertNotFound();
+        $foreign=Tenant::create(['slug'=>'foreign-reaction','name'=>'Foreign synthetic']);
+        $this->withToken($parent)->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/messages/'.$message['id'].'/reactions')->assertForbidden();
+        $this->db->table('clubora.chat_messages')->where('id',$message['id'])->update(['deleted_at'=>now()->toIso8601String()]);
+        $this->getJson($url)->assertNotFound();
+        $this->db->table('clubora.chat_messages')->where('id',$message['id'])->update(['deleted_at'=>null]);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+        $this->getJson($url)->assertForbidden();
+        // Direct conversations additionally honour fresh block state.
+        $direct=app(ChatService::class)->direct($this->trainer,$this->tenant,$this->player->id);
+        $trainer=$this->token($this->trainer);
+        $sent=$this->withToken($trainer)->postJson($this->url('chats/'.$direct->id.'/messages'),['client_id'=>(string)Str::uuid(),'text'=>'Direct participants'])->assertCreated()->json('data');
+        $directUrl=$this->url('messages/'.$sent['id'].'/reactions');
+        $this->getJson($directUrl)->assertOk();
+        $this->db->table('clubora.chat_blocks')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->player->id,'other_account_id'=>$this->trainer->id,'created_at'=>now()->toIso8601String()]);
+        $this->getJson($directUrl)->assertNotFound();
+        Http::assertNothingSent();
+    }
+
     public function test_reactions_are_private_scoped_idempotent_and_sent_through_change_feed(): void
     {
         $chat = $this->teamChat($this->parent);

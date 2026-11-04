@@ -81,6 +81,27 @@ final class ChatControls
         return $row;
     }
 
+    /** On-demand names only; message aggregates remain bounded and contain no participant list. */
+    public function reactionParticipants(\Illuminate\Http\Request $request, Account $actor, Tenant $tenant, int $id): array
+    {
+        $row = $this->visible($actor, $tenant, $id);
+        abort_if($row->deleted_at, 404);
+        if (array_diff(array_keys($request->query()), ['after', 'limit'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['query' => 'Nicht erlaubter Reaktionsfilter.']);
+        }
+        $data = \Illuminate\Support\Facades\Validator::make($request->query(),
+            ['after' => 'sometimes|required|integer|min:0', 'limit' => 'sometimes|required|integer|min:1|max:50'])->validate();
+        $after = (int)($data['after'] ?? 0); $limit = (int)($data['limit'] ?? 30);
+        $rows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.chat_reactions as reaction')
+            ->join('clubora.accounts as account','account.id','=','reaction.account_id')
+            ->where('reaction.tenant_id',$tenant->id)->where('reaction.message_id',$id)->where('reaction.account_id','>',$after)
+            ->orderBy('reaction.account_id')->limit($limit + 1)->get(['reaction.account_id','reaction.emoji','account.display_name']);
+        $more = $rows->count() > $limit; $page = $rows->take($limit);
+        return ['data' => $page->map(fn($reaction) => ['account_id'=>(int)$reaction->account_id,'name'=>$reaction->display_name,
+            'emoji'=>$reaction->emoji,'mine'=>(int)$reaction->account_id===(int)$actor->id])->values()->all(),
+            'meta' => ['has_more'=>$more,'next_after'=>(int)($page->last()?->account_id ?? $after)]];
+    }
+
     public function changes(Account $actor, Tenant $tenant, int $chatId, int $after): array
     {
         $s = $this->service(); $s->chat($actor, $tenant, $chatId);
