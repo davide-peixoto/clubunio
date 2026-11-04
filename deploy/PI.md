@@ -1,5 +1,19 @@
 # Pi staging: dev.clubunio.ch
 
+## Platzbelegung: Web-Testrelease (04.11.2026)
+
+Aktiv `20261104-clubunio-pitch-v1` aus `9c0fbbe`; Rueckweg chat-delta-v1.
+68 Dateihashes, Cacheaufbau und PHP-FPM geprueft. Vier Migrationen001500-001800
+nach gepruefter verschluesselter Elternsicherung atomar angewendet, alte Werte
+unveraendert; acht neue leere Tabellen und56 neue DE/EN-Vorlagen/Revisionen.
+211 kombinierte Tests/3589 Assertions (ein visuelles Fragment ausgelassen),
+126 Unit-Tests, echte Zwei-Verbindungen-Rennen und Server-Kernelgates bestanden.
+HTTPS Health/Login/CSS200, persoenliche API401 anonym, Webkalender302 zum Login.
+Native Pitch und Push/Mail bleiben geschlossen. Angemeldete Sichtpruefung vom
+Benutzer verschoben; historische SFV-Zuordnung nur lesend, sieben Mehrdeutigkeiten
+nicht automatisch bereinigt. PHPMaker DEV/PROD, Rechte und ENV unveraendert.
+Verbindlicher Iststand/Abnahme/Sicherung: CLUBUNIO-PITCH-FOLLOWUP.md.
+
 ## Angemeldete DE/EN-Sichtabnahme (04.11.2026)
 
 Nachlauf `20261104-clubunio-languages-reviewed-v2`, auf reviewed/complete.

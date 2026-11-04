@@ -1,8 +1,9 @@
 # Pitch: targeted release preparation
 
-Prepared only. No release, permanent migration, environment edit, provider
-activation, upload, real notification or commit was performed by this task.
-Parent integrates/tests/reviews and executes. Existing PHPMaker DEV/PROD and
+Preparation runbook, subsequently executed by the parent for pitch-v1.
+Actual results and remaining acceptance: [release follow-up](CLUBUNIO-PITCH-FOLLOWUP.md).
+The phase descriptions below preserve the original review sequence; do not
+rerun the apply stage against the now-present schema. Existing PHPMaker DEV/PROD and
 the imported legacy snapshot are outside scope. Visual acceptance is explicitly
 postponed by the user; no login bypass and no claim of visual acceptance.
 
@@ -84,6 +85,10 @@ claimed. Parent transfers only these generated artifacts to the exact server
 directory `/var/www/svs-laravel/shared/pitch-release`, excluding runtime/secrets.
 Retain the independently recorded SHA256SUMS hash and manifest hash printed by
 the packager; do not establish trust merely by hashing the transferred files.
+The package directory and files must be group-readable/traversable by www-data
+for the guarded schema runner: `sudo chgrp -R www-data "$package"` and
+`chmod -R g+rX "$package"`. They contain reviewed source artifacts, not secrets;
+the separate encrypted backup directory remains owned0700/0600.
 
 Current migration pins are exact LF deploy bytes. 1500/1600 were also checked
 against `git show 1e265a8:path`; 1700/1800 match their stable local LF bytes.

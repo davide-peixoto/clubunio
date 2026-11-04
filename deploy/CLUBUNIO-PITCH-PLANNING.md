@@ -42,7 +42,7 @@ Implementierung gestartet; diese Beschreibung ist kein Release-/Abnahmenachweis.
 | Nachrichten | Staffempfaenger, keine Doppelzustellung, Mail nur neue Anfrage | Outboxtests gruen; echte Zustellung offen |
 | Darstellung | Web Desktop/Mobil und App Tages-/Kalenderansicht | Fragment-/Widgettests; angemeldete Abnahme vom Benutzer verschoben, native Abnahme offen |
 | Integration | Signage und App identisch zur wirksamen Plantafel | Automatisierte Projektion; Liveabgleich offen |
-| Betrieb | Additive Migration, Sicherung/Verifikation, gezieltes ClubUnio-Release | Offen |
+| Betrieb | Additive Migration, Sicherung/Verifikation, gezieltes ClubUnio-Release | Webrelease pitch-v1 aktiv; vier Migrationen und Servergates geprueft, native Freigabe offen |
 
 ## Migrationsgrenzen
 
@@ -66,9 +66,9 @@ Mandanten-/Akteur-IDs noch eine Freigabe aus dem Client uebernehmen.
 ### Lokaler Zwischenstand
 
 Web-Plantafel, persoenlicher API-Adapter, App-Inkrement und transaktionale
-Nachrichten sind implementiert. Das Modul ist noch nicht live freigegeben.
-Die mobilen Endpunkte bleiben hinter einer separaten, standardmaessig
-deaktivierten Freigabe. Es wurden keine echten Benachrichtigungen versendet.
+Nachrichten sind implementiert. Webrelease pitch-v1 ist auf ClubUnio aktiv.
+Die mobilen Endpunkte bleiben hinter einer separaten, weiterhin deaktivierten
+Freigabe. Keine echte Benachrichtigung versendet; Fach-/Geraeteabnahme offen.
 
 Web:27 Tests/129 Assertions; Fragment-Geometrie in DE/EN auf1440/768/390/320px.
 Dies ist keine Abnahme der angemeldeten Filament-Shell mit echten Daten.
