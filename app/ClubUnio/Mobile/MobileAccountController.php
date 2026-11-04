@@ -15,8 +15,10 @@ final class MobileAccountController
     public function profile(Request $request)
     {
         $actor = $request->attributes->get('mobile.actor');
+        $language = app(MobileLanguages::class)->forAccount($actor);
         return response()->json(['data' => ['id' => (int) $actor->id,
             'username' => $actor->username, 'name' => $actor->display_name,
+            'language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback'],
             'recovery_tenants' => $this->recoveryTenants($request, $actor),
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),

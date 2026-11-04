@@ -17,6 +17,7 @@ final class MobileAiService
             app(MobileSessions::class)->authenticate(request());
         }
         app(MobileAccess::class)->enter($actor, $tenant);
+        app(MobileLanguages::class)->validateLanguage($data['language']);
         if ($data['operation'] === 'translate') {
             app(ChatPreferences::class)->allowTranslation($actor, $tenant, $data['language']);
         }
@@ -38,8 +39,9 @@ final class MobileAiService
     {
         abort_unless(config('clubunio-mobile.ai.enabled'), 503);
         $data = Validator::make($input, ['request_key' => 'required|uuid', 'operation' => 'required|in:translate,correct,friendly,shorten,check',
-            'language' => 'required|in:de,en,fr,it,pt-PT,sq,sr,tr', 'message_id' => 'nullable|integer|min:1',
+            'language' => app(MobileLanguages::class)->rules(), 'message_id' => 'nullable|integer|min:1',
             'text' => 'nullable|string|max:4000', 'consent' => 'required|accepted'])->validate();
+        $data['language'] = app(MobileLanguages::class)->normalize($data['language']);
         [$text, $revision] = $this->source($actor, $tenant, $data);
         $provider = config('clubunio-mobile.ai.'.($data['operation'] === 'translate' ? 'translation_provider' : 'writing_provider'));
         abort_unless(in_array($provider, ['openai', 'azure_openai', 'azure_translator'], true), 503);

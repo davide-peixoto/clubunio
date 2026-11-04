@@ -18,6 +18,8 @@ try {
         $response = $kernel->handle($request);
         return [$response->getStatusCode(), json_decode($response->getContent(), true)];
     };
+    $originalLanguages=config('clubunio-languages.enabled');
+    $originalDefault=config('clubunio-languages.default');
     $db->beginTransaction();
     $ids = [];
     try {
@@ -37,7 +39,9 @@ try {
         }
         $prefix='clubs/'.$tenant->id.'/';
         [$status,$defaults]=$call('GET',$prefix.'chat-preferences',$tokens[0]);
-        $assert($status===200 && $defaults['data']===['revision'=>0,'translation_enabled'=>false,'target_language'=>'de'],'Default preferences');
+        $assert($status===200 && $defaults['data']===['revision'=>0,'translation_enabled'=>false,'target_language'=>app(App\ClubUnio\Mobile\MobileLanguages::class)->policy()['default'],'language_policy'=>app(App\ClubUnio\Mobile\MobileLanguages::class)->policy(),'language_fallback'=>false],'Default preferences');
+        // Process-local synthetic French case; never changes the central release configuration.
+        config(['clubunio-languages.enabled'=>['de'=>'Deutsch','en'=>'English','fr'=>'Français','it'=>'Italiano','pt'=>'Português'],'clubunio-languages.default'=>'de']);
         $settings=['revision'=>0,'translation_enabled'=>true,'target_language'=>'fr'];
         [$status,$saved]=$call('POST',$prefix.'chat-preferences',$tokens[0],$settings);
         $assert($status===200 && $saved['data']['revision']===1,'Save preference');
@@ -63,7 +67,7 @@ try {
         $assert(Illuminate\Support\Facades\Http::recorded()->isEmpty(),'No provider call');
         $assert(Illuminate\Support\Facades\Mail::sent(Illuminate\Mail\Mailable::class)->isEmpty()
             && Illuminate\Support\Facades\Mail::queued(Illuminate\Mail\Mailable::class)->isEmpty(),'No mail');
-    } finally { $db->rollBack(); }
+    } finally { $db->rollBack(); config(['clubunio-languages.enabled'=>$originalLanguages,'clubunio-languages.default'=>$originalDefault]); }
     $assert(!$db->table('clubora.accounts')->whereIn('id',$ids)->exists() && $db->transactionLevel()===0,'Verified fixture rollback');
     echo "Chat settings/reactions/change feed/privacy HTTP checks passed; fixtures rolled back; no providers.\n";
 } catch (Throwable $error) { fwrite(STDERR,'Chat experience gate: '.get_class($error).': '.$error->getMessage().PHP_EOL); exit(1); }

@@ -34,8 +34,9 @@ final class MobileController
         $actor = $this->actor($r);
         $tenants = $actor->tenants()->get()->filter(fn ($t) => app(MemberAccessService::class)->canEnter($actor, $t));
         $bound = app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($r);
+        $language = app(MobileLanguages::class)->forAccount($actor);
         return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name, 'username' => $actor->username],
-            'language' => DB::connection('clubunio')->table('clubora.mobile_preferences')->where('account_id', $actor->id)->value('language') ?? 'de',
+            'language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback'],
             'tenants' => $tenants->filter(fn ($t) => ! $bound || $bound->is($t))->map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name])->values(),
             'capabilities' => ['push' => app(MobilePushReady::class)->available($r), 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
     }
@@ -215,11 +216,11 @@ final class MobileController
 
     public function preferences(Request $r)
     {
-        $d = $r->validate(['language' => 'required|in:de,en,fr,it,pt-PT']);
         $actor = app(MobileSessions::class)->authenticate($r);
+        $language = app(MobileLanguages::class)->validateLanguage($r->input('language'));
         DB::connection('clubunio')->table('clubora.mobile_preferences')->updateOrInsert(['account_id' => $actor->id],
-            ['language' => $d['language'], 'updated_at' => now()->toIso8601String()]);
-        return $this->data(['language' => $d['language']]);
+            ['language' => $language, 'updated_at' => now()->toIso8601String()]);
+        return $this->data(app(MobileLanguages::class)->forAccount($actor));
     }
 
     public function chatPreferences(Request $r)

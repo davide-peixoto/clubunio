@@ -24,6 +24,8 @@ class MobileCommunicationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // These legacy communication fixtures deliberately exercise all five implemented locales.
+        config(['clubunio-languages.enabled'=>['de'=>'Deutsch','en'=>'English','fr'=>'Français','it'=>'Italiano','pt'=>'Português'], 'clubunio-languages.default'=>'de']);
         config(['database.default' => 'clubunio', 'database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
             'clubunio-mobile.enabled' => true, 'clubunio-mobile.native_planning_enabled' => true, 'clubunio-mobile.ai.enabled' => false, 'cache.default' => 'array', 'hashing.bcrypt.rounds' => 4]);
         DB::purge('clubunio');
@@ -888,6 +890,44 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->assertFalse(\App\ClubUnio\Mobile\ClamAvScanner::verdict("stream: Eicar-Test-Signature FOUND\0", 'synthetic')['clean']);
         try { \App\ClubUnio\Mobile\ClamAvScanner::verdict("stream: ERROR\0", 'synthetic'); $this->fail('Unknown verdict was clean'); }
         catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { $this->assertSame(503, $e->getStatusCode()); }
+    }
+
+    public function test_empty_central_language_policy_closes_preferences_and_chat_opt_in_without_rewriting_saved_rows(): void
+    {
+        config(['clubunio-languages.enabled'=>[],'clubunio-languages.default'=>'de']);
+        $token=$this->token($this->parent);
+        $this->db->table('clubora.mobile_preferences')->insert(['account_id'=>$this->parent->id,'language'=>'fr']);
+        $this->db->table('clubora.chat_preferences')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->parent->id,
+            'target_language'=>'en','translation_enabled'=>true,'revision'=>3]);
+        $this->withToken($token)->getJson('/api/mobile/v1/context')->assertOk()->assertJsonPath('data.language',null)
+            ->assertJsonPath('data.language_policy',['enabled'=>[],'default'=>null])->assertJsonPath('data.language_fallback',true);
+        $this->getJson($this->url('chat-preferences'))->assertOk()->assertJsonPath('data.target_language',null)
+            ->assertJsonPath('data.translation_enabled',false)->assertJsonPath('data.revision',3);
+        $this->postJson('/api/mobile/v1/preferences',['language'=>'en'])->assertUnprocessable();
+        $this->postJson($this->url('chat-preferences'),['revision'=>3,'target_language'=>'en','translation_enabled'=>true])->assertUnprocessable();
+        config(['clubunio-mobile.ai.enabled'=>true]);
+        $this->postJson($this->url('ai'),['request_key'=>(string)Str::uuid(),'operation'=>'friendly','language'=>'en','text'=>'Synthetic draft','consent'=>true])->assertUnprocessable();
+        $this->assertSame('fr',$this->db->table('clubora.mobile_preferences')->where('account_id',$this->parent->id)->value('language'));
+        $this->assertSame('en',$this->db->table('clubora.chat_preferences')->where('account_id',$this->parent->id)->value('target_language'));
+        Http::assertNothingSent();
+    }
+
+    public function test_portuguese_central_alias_is_saved_canonically_and_revoked_policy_never_inherits_consent(): void
+    {
+        config(['clubunio-languages.enabled'=>['pt'=>'Português'],'clubunio-languages.default'=>'pt']);
+        $token=$this->token($this->parent); $this->withToken($token);
+        $this->postJson('/api/mobile/v1/preferences',['language'=>'pt'])->assertOk()->assertJsonPath('data.language','pt-PT')
+            ->assertJsonPath('data.language_policy',['enabled'=>['pt-PT'],'default'=>'pt-PT']);
+        $this->postJson($this->url('chat-preferences'),['revision'=>0,'target_language'=>'pt','translation_enabled'=>true])->assertOk()
+            ->assertJsonPath('data.target_language','pt-PT')->assertJsonPath('data.translation_enabled',true);
+        $this->assertSame('pt-PT',$this->db->table('clubora.mobile_preferences')->where('account_id',$this->parent->id)->value('language'));
+        $this->assertSame('pt-PT',$this->db->table('clubora.chat_preferences')->where('account_id',$this->parent->id)->value('target_language'));
+        config(['clubunio-languages.enabled'=>['de'=>'Deutsch'],'clubunio-languages.default'=>'de']);
+        $this->getJson($this->url('chat-preferences'))->assertOk()->assertJsonPath('data.target_language','de')
+            ->assertJsonPath('data.translation_enabled',false)->assertJsonPath('data.language_fallback',true)->assertJsonPath('data.revision',1);
+        $this->postJson('/api/mobile/v1/preferences',['language'=>'pt-PT'])->assertUnprocessable();
+        $this->postJson($this->url('chat-preferences'),['revision'=>1,'target_language'=>'pt-PT','translation_enabled'=>true])->assertUnprocessable();
+        Http::assertNothingSent();
     }
 
     public function test_language_preference_is_persistent_account_scoped_and_validated(): void
