@@ -78,6 +78,13 @@ Lokale Abnahme vom 04.11.2026:
 - Rollen-/UI-Regressionslauf19 Tests /463 Assertions erfolgreich.
 - Lookup-Rechte separat mit synthetischen PostgreSQL-Daten geprueft:
   Mandantentrennung, Revisionen, API-only und Nur-Lesen-Simulation; Rollback.
+- Breiter PostgreSQL-Regressionslauf:81 Tests vor dem ersten veralteten
+  MyTeams-Test erfolgreich (davon1 umgebungsabhaengig uebersprungen).
+  Dessen Erwartung stammte vor dem Zugriffspaket056fc93: Mannschaftslisten sind
+  kein persoenliches Kinderdossier, Trainerzugriff benoetigt eine Teamfunktion.
+  Nur Test korrigiert, keine Rechte/Produktionslogik geaendert. Nachlauf:
+  korrigierter Test44 Assertions, letzte3 Tests73 Assertions sowie4 separate
+  Mannschaftszugriffstests106 Assertions erfolgreich. Testdaten zurueckgerollt.
 
 Release-/Browsernachweis wird nach Aktivierung unten nachgefuehrt.
 Automatische Katalogabdeckung beweist nicht, dass beliebige kundeneigene Texte

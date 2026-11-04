@@ -1094,18 +1094,42 @@ class TeamPlanningTest extends TestCase
         $this->db->table('account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $parent->id, 'member_id' => $this->member, 'kind' => 'parent', 'state' => 'approved', 'source' => 'test']);
         $this->withToken($login($parent))->getJson($base)->assertOk()->assertJsonPath('data.totalRecordCount', 1)->assertJsonPath('data.Teams.0.TeamSaisonID', $this->team);
         $details = $this->getJson($base.'/'.$this->team)->assertOk()->assertJsonPath('data.Team.CanAddAssignments', false)->assertJsonPath('data.Team.CanRemoveAssignments', false)->assertJsonCount(1, 'data.Trainings');
-        $this->assertStringContainsString('PRIVATE-CHILD-MOTHER', $details->getContent());
-        $this->assertStringNotContainsString('coach@example.invalid', $details->getContent());
+        // My Teams uses the scoped roster contract, not the personal child dossier.
+        $details->assertJsonPath('data.Players.0.CanOpenDossier', false)
+            ->assertJsonPath('data.Players.0.ContactOnly', true)
+            ->assertJsonPath('data.Players.0.CanRequestChanges', false)
+            ->assertJsonMissingPath('data.Players.0.Email')
+            ->assertJsonMissingPath('data.Players.0.Mutter')
+            ->assertJsonPath('data.Staff.0.CanOpenDossier', true)
+            ->assertJsonPath('data.Staff.0.ContactOnly', true)
+            ->assertJsonPath('data.Staff.0.Email', 'coach@example.invalid');
+        $this->assertStringNotContainsString('PRIVATE-CHILD-MOTHER', $details->getContent());
+        $this->assertStringNotContainsString('child@example.invalid', $details->getContent());
         $this->assertStringNotContainsString('PRIVATE-COACH-MOTHER', $details->getContent());
         $this->assertStringNotContainsString('PRIVATE-AHV', $details->getContent());
         $this->getJson($base.'/'.$otherTeam)->assertNotFound();
         $this->getJson($base.'/'.$pastTeam)->assertNotFound();
         $this->getJson($base.'?recperpage=101')->assertUnprocessable();
         $this->getJson($base.'/members?q=Player')->assertForbidden();
-        $trainer = $this->withToken($login($this->trainer))->getJson($base.'/'.$this->team)->assertOk();
+        // A global trainer role without a classified staff function grants no full roster access.
+        $helper = $this->withToken($login($this->trainer))->getJson($base.'/'.$this->team)->assertOk()
+            ->assertJsonPath('data.Players.0.CanOpenDossier', false)
+            ->assertJsonPath('data.Staff.0.IsTrainer', false);
+        $this->assertStringNotContainsString('PRIVATE-CHILD-MOTHER', $helper->getContent());
+        $this->assertStringNotContainsString('PRIVATE-COACH-MOTHER', $helper->getContent());
+        $function = $this->db->table('staff_functions')->insertGetId(['tenant_id' => $this->tenant->id,
+            'code' => 'TRAINER', 'name' => 'Fixture trainer', 'active' => true]);
+        $this->db->table('team_staff')->where('tenant_id', $this->tenant->id)->where('team_season_id', $this->team)
+            ->where('member_id', $this->otherMember)->update(['staff_function_id' => $function]);
+        $trainer = $this->getJson($base.'/'.$this->team)->assertOk()
+            ->assertJsonPath('data.Players.0.CanOpenDossier', true)
+            ->assertJsonPath('data.Players.0.ContactOnly', false)
+            ->assertJsonPath('data.Players.0.CanRequestChanges', true)
+            ->assertJsonPath('data.Staff.0.IsTrainer', true);
         $this->assertStringContainsString('child@example.invalid', $trainer->getContent());
-        $this->assertStringNotContainsString('PRIVATE-CHILD-MOTHER', $trainer->getContent());
+        $this->assertStringContainsString('PRIVATE-CHILD-MOTHER', $trainer->getContent());
         $this->assertStringContainsString('PRIVATE-COACH-MOTHER', $trainer->getContent());
+        $this->assertStringNotContainsString('PRIVATE-AHV', $trainer->getContent());
         $this->withToken($login($this->admin))->getJson($base.'/'.$this->team)->assertOk()->assertJsonPath('data.Team.CanAddAssignments', true)->assertJsonPath('data.Team.CanRemoveAssignments', true);
     }
 
