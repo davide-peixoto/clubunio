@@ -78,7 +78,11 @@ final class MobileController
         return $this->write($r, fn () => $this->data(app(ChatService::class)->conversation($this->actor($r), $this->tenant($r), (int) $r->route('chat'))));
     }
 
-    public function contacts(Request $r) { return $this->data(app(MobileAccess::class)->contacts($this->actor($r), $this->tenant($r))); }
+    public function contacts(Request $r)
+    {
+        $d = $r->validate(['q' => 'sometimes|nullable|string|max:120', 'limit' => 'sometimes|integer|min:1|max:40']);
+        return $this->data(app(MobileAccess::class)->contacts($this->actor($r), $this->tenant($r), $d['q'] ?? '', (int) ($d['limit'] ?? 40)));
+    }
 
     public function direct(Request $r)
     {

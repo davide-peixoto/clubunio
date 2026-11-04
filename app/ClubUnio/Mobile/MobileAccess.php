@@ -59,52 +59,124 @@ final class MobileAccess
         return $query->whereKey($id)->firstOrFail();
     }
 
-    public function contacts(Account $actor, Tenant $tenant): array
+    /** Directional discovery, one bounded SQL projection; never authorize each row in PHP. */
+    public function contacts(Account $actor, Tenant $tenant, string $search = '', int $limit = 40): array
     {
-        $this->enter($actor, $tenant);
-        $result = [];
-        foreach ($tenant->accounts()->where('active', true)->where('api_only', false)->orderBy('clubora.accounts.id')->lazy(100) as $candidate) {
-            if ((int) $candidate->id === (int) $actor->id) {
-                continue;
-            }
-            if (! app(MemberAccessService::class)->canEnter($candidate, $tenant)) {
-                continue;
-            }
-            if ($this->canContact($actor, $candidate, $tenant)) {
-                $result[] = ['id' => (int) $candidate->id, 'name' => $candidate->display_name];
-            }
-            if (count($result) >= 100) {
-                break;
-            }
+        $query = $this->contactCandidates($actor, $tenant);
+        if (($search = trim($search)) !== '') {
+            // Treat user input as text, not LIKE wildcards; bindings protect the SQL boundary.
+            $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search));
+            $query->whereRaw("lower(candidate.display_name) LIKE ? ESCAPE '!'", ['%'.$search.'%']);
         }
-
-        return $result;
+        return $query->orderBy('candidate.display_name')->orderBy('candidate.id')->limit(max(1, min(40, $limit)))
+            ->get(['candidate.id', 'candidate.display_name as name'])
+            ->map(fn ($row) => ['id' => (int) $row->id, 'name' => $row->name])->all();
     }
 
+    /** Same fresh directed policy for creation and ongoing direct-chat access. */
     public function canContact(Account $actor, Account $other, Tenant $tenant): bool
     {
-        $this->enter($actor, $tenant);
-        if ((int) $actor->id === (int) $other->id || ! $other->active || $other->api_only
-            || ! app(MemberAccessService::class)->canEnter($other, $tenant)) {
+        if (!request()->isMethod('GET')) request()->attributes->remove('mobile.current_season.'.$tenant->id.'.'.now('Europe/Zurich')->toDateString());
+        if ($this->contactCandidates($actor, $tenant)->where('candidate.id', $other->id)->exists()) return true;
+        // Reply is not discovery: an already established active pair can answer while
+        // either directed entitlement still exists. No stale chat membership grants rights.
+        $ids = [(int) $actor->id, (int) $other->id]; sort($ids);
+        $chat = DB::connection('clubunio')->table('clubora.chat_conversations as direct')
+            ->where('direct.tenant_id', $tenant->id)->where('direct.kind', 'direct')
+            ->where('direct.scope_key', 'direct:'.implode(':', $ids))
+            ->whereRaw('(select count(*) from clubora.chat_memberships cm where cm.tenant_id = direct.tenant_id and cm.conversation_id = direct.id and cm.left_at is null) = 2');
+        foreach ($ids as $id) $chat->whereExists(fn ($q) => $q->selectRaw('1')->from('clubora.chat_memberships as pair')
+            ->whereColumn('pair.tenant_id', 'direct.tenant_id')->whereColumn('pair.conversation_id', 'direct.id')
+            ->where('pair.account_id', $id)->whereNull('pair.left_at'));
+        if (! $chat->exists()) return false;
+        try {
+            return $this->contactCandidates($other, $tenant)->where('candidate.id', $actor->id)->exists();
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
             return false;
         }
-        if (DB::connection('clubunio')->table('clubora.chat_blocks')->where('tenant_id', $tenant->id)
-            ->where(fn ($q) => $q->where(fn ($a) => $a->where('account_id', $actor->id)->where('other_account_id', $other->id))
-                ->orWhere(fn ($a) => $a->where('account_id', $other->id)->where('other_account_id', $actor->id)))->exists()) { return false; }
-        if ($this->admin($actor, $tenant) || $this->admin($other, $tenant)) {
-            return true;
-        }
+    }
+
+    private function contactCandidates(Account $actor, Tenant $tenant)
+    {
+        $this->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
-        $teams = $this->teams($actor, $tenant)->pluck('ts.id')->all();
-        $otherTeams = $this->teams($other, $tenant)->pluck('ts.id')->all();
-        $shared = array_intersect($teams, $otherTeams);
-        if (! $shared) { return false; }
-        $minor = fn ($person) => $access->represented($person, $tenant, true)->where('birth_date', '>', now('Europe/Zurich')->subYears(18)->toDateString())->exists();
-        if ($minor($actor) || $minor($other)) {
-            $staff = array_merge($access->responsibleTeams($actor, $tenant), $access->responsibleTeams($other, $tenant));
-            $related = $access->represented($actor, $tenant)->whereIn('clubora.members.id', $access->represented($other, $tenant)->select('clubora.members.id'))->exists();
-            return (bool) array_intersect($shared, $staff) || $related;
-        }
-        return true;
+        $role = $access->membership($actor, $tenant)?->role;
+        $query = DB::connection('clubunio')->table('clubora.accounts as candidate')
+            ->join('clubora.tenant_accounts as membership', fn ($j) => $j->on('membership.account_id', '=', 'candidate.id')->where('membership.tenant_id', $tenant->id))
+            ->where('candidate.id', '<>', $actor->id)->where('candidate.active', true)->where('candidate.api_only', false)
+            ->where('membership.role', '<>', 'profile')
+            ->where(function ($q) use ($tenant) {
+                $q->whereIn('membership.role', ['admin', 'office'])->orWhere(function ($q) use ($tenant) {
+                    $q->where('membership.portal_enabled', true)->whereExists($this->accountLinks($tenant, 'candidate.id'));
+                });
+            })
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.chat_blocks as block')->where('block.tenant_id', $tenant->id)
+                ->where(fn ($q) => $q->where(fn ($q) => $q->where('block.account_id', $actor->id)->whereColumn('block.other_account_id', 'candidate.id'))
+                    ->orWhere(fn ($q) => $q->whereColumn('block.account_id', 'candidate.id')->where('block.other_account_id', $actor->id))));
+        if (in_array($role, ['admin', 'office', 'technical_lead'], true)) return $query;
+
+        $own = $access->represented($actor, $tenant, true)->pluck('clubora.members.id')->all();
+        $children = $access->represented($actor, $tenant)->whereExists(fn ($q) => $q->selectRaw('1')->from('clubora.account_member_links as child_link')
+            ->where('child_link.tenant_id', $tenant->id)->where('child_link.account_id', $actor->id)
+            ->where('child_link.kind', 'parent')->where('child_link.state', 'approved')->whereColumn('child_link.member_id', 'clubora.members.id'))
+            ->pluck('clubora.members.id')->all();
+        // Flatten only this operation's freshly authorized actor facts. Deeply
+        // correlated family/team subqueries otherwise multiply work per candidate.
+        $playerTeams = $own ? $this->contactTeams($tenant, $own, ['team_players'])->pluck('contact_team.id')->all() : [];
+        $childTeams = $children ? $this->contactTeams($tenant, $children, ['team_players'])->pluck('contact_team.id')->all() : [];
+        $trainerTeams = $role === 'trainer' && $own ? app(\App\ClubUnio\Services\MemberTeamAccessService::class)->trainerTeams($actor, $tenant)->pluck('assignment.team_season_id')->all() : [];
+        $targets = $access->activeMembers($tenant)->where(function ($q) use ($tenant, $role, $playerTeams, $childTeams, $trainerTeams) {
+            foreach (['team_players', 'team_staff'] as $table) {
+                $q->orWhereIn('clubora.members.id', $this->contactRoster($tenant, $table, $playerTeams));
+                if ($role === 'trainer') $q->orWhereIn('clubora.members.id', $this->contactRoster($tenant, $table, $trainerTeams));
+            }
+            $q->orWhereIn('clubora.members.id', $this->contactRoster($tenant, 'team_staff', $childTeams));
+            if ($role === 'trainer') $q->orWhereIn('clubora.members.id', $this->contactRoster($tenant, 'team_staff', $this->contactTeams($tenant)));
+        })->pluck('clubora.members.id')->all();
+        $parentTargets = $role === 'trainer' && $trainerTeams
+            ? $this->parentMembers($tenant)->whereIn('clubora.members.id', $this->contactRoster($tenant, 'team_players', $trainerTeams))->pluck('clubora.members.id')->all() : [];
+        return $query->whereExists(function ($q) use ($tenant, $role, $targets, $parentTargets) {
+            $q->selectRaw('1')->from('clubora.account_member_links as target_link')->where('target_link.tenant_id', $tenant->id)
+                ->whereColumn('target_link.account_id', 'candidate.id')->where('target_link.state', 'approved')
+                ->where(function ($q) use ($role, $targets, $parentTargets) {
+                    $q->where(fn ($q) => $q->where('target_link.kind', 'self')->whereIn('target_link.member_id', $targets));
+                    if ($role === 'trainer') $q->orWhere(fn ($q) => $q->where('target_link.kind', 'parent')->whereIn('target_link.member_id', $parentTargets));
+                });
+        });
+    }
+
+    /** SQL equivalent of represented(): approved self, or approved parent of an active minor. */
+    private function accountLinks(Tenant $tenant, string $accountColumn)
+    {
+        return DB::connection('clubunio')->query()->selectRaw('1')->from('clubora.account_member_links as entry_link')
+            ->where('entry_link.tenant_id', $tenant->id)->whereColumn('entry_link.account_id', $accountColumn)->where('entry_link.state', 'approved')
+            ->whereIn('entry_link.member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubora.members.id'))
+            ->where(fn ($q) => $q->where('entry_link.kind', 'self')->orWhere(fn ($q) => $q->where('entry_link.kind', 'parent')->whereIn('entry_link.member_id', $this->parentMembers($tenant))));
+    }
+
+    private function parentMembers(Tenant $tenant)
+    {
+        $today = now('Europe/Zurich')->toDateString();
+        return app(MemberAccessService::class)->activeMembers($tenant)->where('birth_date', '<=', $today)
+            ->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today])->select('clubora.members.id');
+    }
+
+    private function contactTeams(Tenant $tenant, $members = null, array $tables = [])
+    {
+        $q = DB::connection('clubunio')->table('clubora.team_seasons as contact_team')
+            ->join('clubora.teams as contact_club_team', fn ($j) => $j->on('contact_club_team.id', '=', 'contact_team.team_id')->on('contact_club_team.tenant_id', '=', 'contact_team.tenant_id'))
+            ->where('contact_team.tenant_id', $tenant->id)->where('contact_team.active', true)->where('contact_club_team.active', true);
+        app(MobileSeasonScope::class)->teams($q, $tenant, 'contact_team.season_id');
+        if ($members !== null) $q->where(function ($q) use ($tenant, $members, $tables) {
+            foreach ($tables as $table) $q->orWhereIn('contact_team.id', DB::connection('clubunio')->table('clubora.'.$table)
+                ->where('tenant_id', $tenant->id)->where('active', true)->whereIn('member_id', $members)->select('team_season_id'));
+        });
+        return $q->select('contact_team.id');
+    }
+
+    private function contactRoster(Tenant $tenant, string $table, $teams)
+    {
+        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)
+            ->whereIn('team_season_id', $teams)->select('member_id');
     }
 }

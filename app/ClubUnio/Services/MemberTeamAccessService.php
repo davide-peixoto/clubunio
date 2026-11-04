@@ -36,7 +36,7 @@ final class MemberTeamAccessService
         return 'parent';
     }
 
-    private function trainerTeams(Account $actor, Tenant $tenant)
+    public function trainerTeams(Account $actor, Tenant $tenant)
     {
         $access = app(MemberAccessService::class);
         $query = DB::connection('clubunio')->table('clubora.team_staff as assignment')
