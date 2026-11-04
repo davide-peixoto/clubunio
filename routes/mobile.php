@@ -21,6 +21,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
         \App\ClubUnio\Mobile\MobileExpenseRoutes::register();
+        \App\ClubUnio\Mobile\MobileMemberIdCardRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
         \App\ClubUnio\Mobile\MobileTrainingRoutes::register();
         \App\ClubUnio\Mobile\MobileSponsorRoutes::register();

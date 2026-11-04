@@ -16,6 +16,9 @@ return [
     'training_ai' => ['enabled' => false, 'cost_reviewed' => false, 'tenant_slugs' => [], 'models' => [],
         'reservation_microusd' => 0, 'monthly_limit_microusd' => 0, 'max_output_tokens' => 0,
         'max_input_bytes' => 0, 'dispatch_after_response' => true],
+    'native_members_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MEMBERS_ENABLED', false),
+    'native_member_id_card_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_MEMBER_ID_CARD_ENABLED', false),
+    'native_sponsor_billing_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_SPONSOR_BILLING_ENABLED', false),
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [
