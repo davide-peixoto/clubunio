@@ -1,4 +1,8 @@
-# Schemahilfe100/200/300: nur vorbereitet (04.11.2026)
+# Schemahilfe100/200/300: DEV-Anwendung bestaetigt (04.11.2026)
+
+Aktueller Nachweis:100/200/300 angewendet, packages-v1 aktiv. Eltern-/Ledger-
+sicherung vor/nach identisch, neue Tabellen/FKs geprueft. Details in PI.md und
+CLUBUNIO-MIGRATION.md. Die nachfolgenden Vorbereitungsnotizen sind historisch.
 
 Root-Fortsetzung: `tools/package-mobile-packages-dev.py` paketiert ausschliesslich
 committete Dateien der geprueften Sponsor-/Training-/Directory-/Registrierungs-

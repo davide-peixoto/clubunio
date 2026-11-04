@@ -1794,3 +1794,37 @@ Es wurde keine Sitzung angelegt und kein authentifizierter Dateihandler,
 Blob-/Mail-/Bankprovider oder Geschaeftsprozess aufgerufen. PHP-Tempdateien
 werden am Requestende entfernt. Dies ist ein Transportnachweis, keine
 Scanner-/Azure-/Kamera-/Geraeteabnahme der grossen Dateien.
+
+
+## Mobile Originalmodule auf DEV freigegeben (04.11.2026)
+
+Aktiv:20261104-clubunio-mobile-packages-v1, Rueckweg zur geschlossenen
+20261104-clubunio-mobile-packages-foundation-v3.50 explizite Quelldateien aus
+5524e914 auf native-followups-v4;11 vorhandene Dateien gegen bekannte Git-
+Historie/Baseline-SHA geprueft,39 neue Dateien. Fremder Parameter-/Saisonstand
+erhalten, keine PHPMaker-, Integrations- oder Storeumstellung.
+
+Nur100/200/300 nach separatem Export und Verifikation atomar angewendet:
+Trainingsfreigaben, Sponsor-Callerledger und Anmeldungs-Callerledger. Acht
+Eltern-/Ledgertabellen mit Metadaten, Indizes, Constraints und Zeilendigests
+vor/nach verglichen; drei neue leere Tabellen, zehn tenantgebundene FKs und
+exakter Dreizeilen-Ledgerdelta bestaetigt. Verschluesselte0600-Sicherung:
+shared/backups/mobile-before-100-200-300-20261104-20261104002006-d8918d0b849d731270a61614963f91c4.cuenc
+SHA256 a04f6f1a9bddb60f423f15c17f27b01907de49dec9015a5550895ffef7ee4528.
+Dies ist eine begrenzte Eltern-/Ledger-Sicherung, kein Vollrestore-Nachweis.
+
+Sechs native persoenliche Flags jetzt true: Mitglieder, Mitgliederausweis,
+Training, Sponsorenlauf, Sponsorabrechnung und Anmeldungen. KI-, Mail-, Kosten-
+und externe Providerkonfiguration unveraendert. Bestehende Freigaben fuer
+Planung/My Teams/Spesen/Dokumente/Anlagen/Bus erhalten. Auth400/Push500/
+Challenge600/Keybox700 und weitere Paritaetsarbeit noch nicht deployed/applied.
+
+13 bestehende Gates, Planung21-Routen, bestehendes natives Kern-Gate, Training11,
+Anmeldungen11, Sponsor15, Billing4 und Ausweis1 geschuetzte Routen bestaetigt.
+Geschlossene Foundation31 und aktivierte Module79 echte HTTP-Kernelchecks,
+Login/Profil/11-Module/Passwort/Sitzungswiderruf sowie native Planung/My Teams
+mit zurueckgerollten synthetischen Daten gruen. Keine Provider-/Mail-/Bankaktion.
+50 Quelldigests nach Gates bestaetigt, FPM aktiv; HTTPS Login200 und sechs
+persoenliche Modulrouten anonym401. Erste zwei inaktive Stagings wurden durch
+Routen-/Argumentgates gestoppt und unveraendert erhalten. Native/externe
+Gesamtabnahme und verbleibende Originalparitaet bleiben Teil des offenen Auftrags.
