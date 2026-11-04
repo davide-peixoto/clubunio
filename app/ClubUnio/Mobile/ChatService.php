@@ -227,7 +227,16 @@ final class ChatService
         $rows = $rows->take(50)->sortBy('id');
 
         return ['data' => array_values($this->messageDtos($actor, $tenant, $rows)),
-            'meta' => ['has_more' => $hasMore, 'first_id' => $rows->min('id'), 'last_id' => $rows->max('id'), 'change_cursor' => $changeCursor]];
+            'meta' => ['has_more' => $hasMore, 'first_id' => $rows->min('id'), 'last_id' => $rows->max('id'), 'change_cursor' => $changeCursor]
+                + $this->deltaMeta($actor, $tenant, $chat, (int) $membership->joined_after)];
+    }
+
+    /** Fresh scope/capabilities, even when a delta has no changed message DTOs. */
+    public function deltaMeta(Account $actor, Tenant $tenant, object $chat, int $joinedAfter): array
+    {
+        return ['delta_version' => 1, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
+            'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
+            'can_write' => $chat->kind !== 'announcements' || app(MobileAccess::class)->admin($actor, $tenant)];
     }
 
     public function messageDto(Account $actor, Tenant $tenant, object $row): array

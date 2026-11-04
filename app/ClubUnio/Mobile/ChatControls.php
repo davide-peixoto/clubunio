@@ -104,18 +104,24 @@ final class ChatControls
 
     public function changes(Account $actor, Tenant $tenant, int $chatId, int $after): array
     {
-        $s = $this->service(); $s->chat($actor, $tenant, $chatId);
-        $joined = $s->table($tenant, 'chat_memberships')->where('conversation_id', $chatId)->where('account_id', $actor->id)->value('joined_after');
-        $rows = $s->table($tenant, 'chat_changes')->where('conversation_id', $chatId)->where('id', '>', $after)
+        $s = $this->service(); $chat = $s->chat($actor, $tenant, $chatId);
+        $joined = (int) $s->table($tenant, 'chat_memberships')->where('conversation_id', $chatId)->where('account_id', $actor->id)->value('joined_after');
+        // Capture before selecting DTOs. Later commits remain replayable next time;
+        // never advance to a highwater read after materializing the message state.
+        $upper = (int) ($s->table($tenant, 'chat_changes')->where('conversation_id', $chatId)->max('id') ?? 0);
+        $meta = $s->deltaMeta($actor, $tenant, $chat, $joined) + ['reset_required' => $after > $upper];
+        if ($after > $upper) return ['data' => [], 'meta' => $meta + ['has_more' => false, 'cursor' => $upper]];
+        $rows = $s->table($tenant, 'chat_changes')->where('conversation_id', $chatId)->where('id', '>', $after)->where('id', '<=', $upper)
             ->where('message_id', '>', $joined)->orderBy('id')->limit(51)->get();
         $more = $rows->count() > 50; $rows = $rows->take(50);
-        if ($rows->isEmpty()) return ['data' => [], 'meta' => ['has_more' => false, 'cursor' => $after]];
+        $cursor = $more ? (int) $rows->last()->id : $upper;
+        if ($rows->isEmpty()) return ['data' => [], 'meta' => $meta + ['has_more' => false, 'cursor' => $cursor]];
         $messages = $s->table($tenant, 'chat_messages')->where('conversation_id', $chatId)->whereIn('id', $rows->pluck('message_id'))->get();
         $dtos = $s->messageDtos($actor, $tenant, $messages);
         return ['data' => $rows->map(function ($change) use ($dtos) {
             abort_unless(isset($dtos[(int) $change->message_id]), 404);
             return ['cursor' => (int) $change->id, 'message' => $dtos[(int) $change->message_id]];
-        })->values()->all(), 'meta' => ['has_more' => $more, 'cursor' => (int) ($rows->max('id') ?? $after)]];
+        })->values()->all(), 'meta' => $meta + ['has_more' => $more, 'cursor' => $cursor]];
     }
 
     public function preview(Account $actor, Tenant $tenant): array
