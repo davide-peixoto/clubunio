@@ -1,0 +1,278 @@
+{
+  "migrations": {
+    "2026_11_03_000400_mobile_public_identity": "60152a45bd7dc53e0a409280fb483ff381cd724a83397c1d23272faa2f5aed9d",
+    "2026_11_04_000500_mobile_push_devices": "eb4622f61214dcefb56deb80228db0720b8b7ea200bd46ae86ec9c69f88e5ca2",
+    "2026_11_04_000600_mobile_penalty_challenge": "2a40e4c57380ce7a9aa8378f4fe7077f636854ffa9c82bb31ba247f7a9e53608",
+    "2026_11_04_000700_mobile_keybox_codes": "47e63c1150deaa6f8beab6833f22daede6b228ffb9dc49d6579b5bb58db1588b"
+  },
+  "parents": [
+    "tenants",
+    "accounts",
+    "tenant_accounts",
+    "registrations",
+    "mobile_sessions",
+    "team_events",
+    "buses",
+    "bus_reservations",
+    "migrations"
+  ],
+  "newTables": {
+    "mobile_identity_challenges": [
+      "id",
+      "tenant_id",
+      "purpose",
+      "request_key",
+      "request_fingerprint",
+      "email_hash",
+      "secret_hash",
+      "account_id",
+      "state",
+      "payload_encrypted",
+      "delivery_encrypted",
+      "delivery_state",
+      "expires_at",
+      "completed_at",
+      "created_at",
+      "UNIQUE(tenant_id,purpose,request_key)",
+      "CHECK(purpose<>'enroll'",
+      "CHECK(state='pending'"
+    ],
+    "mobile_account_emails": [
+      "account_id",
+      "email_hash",
+      "email_encrypted",
+      "revision",
+      "verified_at",
+      "source",
+      "proof_challenge_id"
+    ],
+    "mobile_public_intake_commands": [
+      "tenant_id",
+      "request_key",
+      "payload_sha256",
+      "registration_id",
+      "pending_attachments",
+      "scan_evidence_encrypted",
+      "created_at"
+    ],
+    "mobile_push_devices": [
+      "id",
+      "proof_hash",
+      "app_id",
+      "platform",
+      "origin",
+      "fixed_tenant_id",
+      "token_cipher",
+      "token_hash",
+      "revision",
+      "revoked_at",
+      "created_at",
+      "updated_at"
+    ],
+    "mobile_push_bindings": [
+      "id",
+      "device_id",
+      "account_id",
+      "session_id",
+      "revision",
+      "revoked_at",
+      "created_at",
+      "updated_at",
+      "UNIQUE(device_id,account_id)",
+      "UNIQUE(id,account_id,device_id)"
+    ],
+    "mobile_push_outbox": [
+      "id",
+      "binding_id",
+      "account_id",
+      "device_id",
+      "tenant_id",
+      "kind",
+      "object_id",
+      "event_key",
+      "device_revision",
+      "binding_revision",
+      "state",
+      "lease_until",
+      "provider_reference",
+      "outcome_code",
+      "created_at",
+      "finished_at",
+      "UNIQUE(binding_id,tenant_id,event_key)"
+    ],
+    "mobile_push_commands": [
+      "tenant_id",
+      "account_id",
+      "command_key",
+      "operation",
+      "fingerprint",
+      "event_id",
+      "event_revision",
+      "recipient_fingerprint",
+      "queued_count",
+      "created_at"
+    ],
+    "mobile_penalty_challenges": [
+      "tenant_id",
+      "generation",
+      "reset_at",
+      "reset_by"
+    ],
+    "mobile_penalty_sessions": [
+      "tenant_id",
+      "id",
+      "account_id",
+      "command_key",
+      "generation",
+      "mode",
+      "opponents_encrypted",
+      "choices_sha256",
+      "score",
+      "created_at",
+      "expires_at",
+      "finished_at",
+      "UNIQUE(tenant_id,account_id,command_key)",
+      "CHECK(expires_at>created_at)",
+      "CHECK((finished_at"
+    ],
+    "mobile_penalty_best": [
+      "tenant_id",
+      "account_id",
+      "mode",
+      "display_name",
+      "score",
+      "achieved_at"
+    ],
+    "mobile_penalty_resets": [
+      "id",
+      "tenant_id",
+      "account_id",
+      "previous_generation",
+      "generation",
+      "title_encrypted",
+      "body_encrypted",
+      "created_at",
+      "dispatch_reference",
+      "UNIQUE(tenant_id,id)",
+      "UNIQUE(tenant_id,previous_generation)",
+      "UNIQUE(dispatch_reference)"
+    ],
+    "mobile_keyboxes": [
+      "id",
+      "tenant_id",
+      "name",
+      "provider_device_cipher",
+      "bus_id",
+      "active",
+      "revision",
+      "UNIQUE(tenant_id,id)"
+    ],
+    "mobile_keybox_grants": [
+      "tenant_id",
+      "keybox_id",
+      "account_id",
+      "active",
+      "revision"
+    ],
+    "mobile_keybox_commands": [
+      "id",
+      "tenant_id",
+      "keybox_id",
+      "account_id",
+      "session_id",
+      "request_key",
+      "scope_key",
+      "snapshot_encrypted",
+      "pin_encrypted",
+      "reservation_id",
+      "keybox_revision",
+      "reservation_revision",
+      "valid_from",
+      "valid_until",
+      "state",
+      "invalidated_at",
+      "remote_revocation_state",
+      "created_at",
+      "provider_started_at",
+      "UNIQUE(tenant_id,account_id,request_key)",
+      "UNIQUE(tenant_id,keybox_id,scope_key)",
+      "CHECK((state='issued')=(pin_encrypted"
+    ]
+  },
+  "expectedFks": {
+    "mobile_identity_challenges": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_account_emails": [
+      "account_id|clubora|accounts|id",
+      "proof_challenge_id|clubora|mobile_identity_challenges|id"
+    ],
+    "mobile_public_intake_commands": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,registration_id|clubora|registrations|tenant_id,id"
+    ],
+    "mobile_push_devices": [
+      "fixed_tenant_id|clubora|tenants|id"
+    ],
+    "mobile_push_bindings": [
+      "device_id|clubora|mobile_push_devices|id",
+      "account_id|clubora|accounts|id",
+      "session_id,account_id|clubora|mobile_sessions|id,account_id"
+    ],
+    "mobile_push_outbox": [
+      "binding_id,account_id,device_id|clubora|mobile_push_bindings|id,account_id,device_id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_push_commands": [
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id",
+      "tenant_id,event_id|clubora|team_events|tenant_id,id"
+    ],
+    "mobile_penalty_challenges": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,reset_by|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_penalty_sessions": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_penalty_best": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_penalty_resets": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_keyboxes": [
+      "tenant_id|clubora|tenants|id",
+      "tenant_id,bus_id|clubora|buses|tenant_id,id"
+    ],
+    "mobile_keybox_grants": [
+      "tenant_id,keybox_id|clubora|mobile_keyboxes|tenant_id,id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id"
+    ],
+    "mobile_keybox_commands": [
+      "session_id|clubora|mobile_sessions|id",
+      "tenant_id,keybox_id|clubora|mobile_keyboxes|tenant_id,id",
+      "tenant_id,account_id|clubora|tenant_accounts|tenant_id,account_id",
+      "tenant_id,reservation_id|clubora|bus_reservations|tenant_id,id"
+    ]
+  },
+  "primaryKeys": {
+    "mobile_identity_challenges": "id",
+    "mobile_account_emails": "account_id",
+    "mobile_public_intake_commands": "tenant_id,request_key",
+    "mobile_push_devices": "id",
+    "mobile_push_bindings": "id",
+    "mobile_push_outbox": "id",
+    "mobile_push_commands": "tenant_id,account_id,command_key",
+    "mobile_penalty_challenges": "tenant_id",
+    "mobile_penalty_sessions": "tenant_id,id",
+    "mobile_penalty_best": "tenant_id,account_id,mode",
+    "mobile_penalty_resets": "id",
+    "mobile_keyboxes": "id",
+    "mobile_keybox_grants": "tenant_id,keybox_id,account_id",
+    "mobile_keybox_commands": "id"
+  }
+}
