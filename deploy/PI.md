@@ -1904,3 +1904,24 @@ Abschlussquellen: App42a227f mit112 gezielt geprueften Quelldateien/Dokumenten;
 Flutteranalyse ohne Befund. Unabhaengiger Quellenabgleich findet keine weitere
 bestaetigte Implementierungsluecke in G1-G12 und den Design-/Mandantenvorgaben.
 Native/externe Abnahmen bleiben als separate offene Inbetriebnahmearbeit erfasst.
+
+
+## App-Performance: Chat und Spesen (04.11.2026)
+
+DEV aktiv:20261104-clubunio-mobile-performance-v1, Quelle199d3f8e11af385c4bf2800891a69399a2c23d5f.
+Sieben explizite PHP-Dateien gegen bekannte Git/SHA-Baselines paketiert und
+vor/nach Bereitstellung geprueft. Env/Composer/Schema/Providerflags gleich,
+kein Import/Refresh oder echte Zahlung. Runtime-Rollback:parity-v1.
+Chatlisten/Nachrichten/Metadaten und OCR-Provenienz gebuendelt; private
+Anhangbytes werden nicht mehr fuer Metadaten geladen. Spesenlisten verwenden
+explizite requestlokale Read-Capabilities; Schreibpolicy bleibt frisch gleich.
+Common/Boundary43/652, neue TEMP-PG-Projektionen2/44, bestehende vier Spesen-/
+OCR-/Indexfaelle und Rollen-/Status-/Widerrufsmatrix4/235 gruen. Fuer eine und
+20 Belegprojektionen gleiche Queryzahl, alte20er-Trainerprojektion ueber5x
+so viele Queries. Kein behaupteter iPhone-Zeit-/FPS-Nachweis.
+Alle bisherigen DEV-Gates einschliesslich Admin18/Menue79/Konten/MyTeams/
+Planung-Rollback bestanden. HTTPSnachlauf:Login200/PublicBootstrap200/no-store,
+Chat/Spesen anonym401, geschlossene Identity503. PHP-FPM aktiv,7 Hashes erneut
+bestaetigt. Details:PERFORMANCE-RELEASE.md und PERFORMANCE-BACKEND.md.
+Betroffene Nutzerumgebung:iPhone-Simulator; kein Xcode-/nativer iOS-Lauf hier.
+Apprequest-/Widgetnachweise und kompletter Abschluss:mobile/docs/PERFORMANCE.md.
