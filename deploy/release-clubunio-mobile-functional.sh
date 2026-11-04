@@ -3,7 +3,7 @@ set -euo pipefail
 umask 027
 base=/var/www/svs-laravel
 previous=$base/releases/20261104-clubunio-mobile-modules-performance-v1
-release=$base/releases/20261104-clubunio-mobile-functional-v1
+release=$base/releases/20261104-clubunio-mobile-functional-v2
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 cd "$previous"
@@ -29,10 +29,8 @@ php artisan route:cache
 sudo chgrp -R www-data "$release"
 chmod -R g+rX "$release"
 sudo -u www-data php artisan view:cache
-sudo install -d -o www-data -g www-data -m 0700 "$base/shared/chat-experience-backups"
-backup_file=$(sudo -u www-data php deploy/prepare-chat-experience-schema.php --export)
-[[ "$backup_file" =~ ^/var/www/svs-laravel/shared/chat-experience-backups/before-1100-[0-9]{14}-[a-f0-9]{32}\.cuenc$ ]]
-sudo -u www-data php deploy/prepare-chat-experience-schema.php --apply --backup-file="$backup_file"
+# Schema1100 was committed by the immutable failed v1; verify only, never reapply.
+sudo -u www-data php deploy/verify-chat-experience-schema.php --backup-file=/var/www/svs-laravel/shared/chat-experience-backups/before-1100-20261104103950-bce2422c1f47058bbd309bf15e70aea8.cuenc
 gate() { sudo -u www-data php -r 'array_shift($argv); $argc=count($argv); try { require $argv[0]; } catch (Throwable $e) { fwrite(STDERR, get_class($e).PHP_EOL); exit(1); }' "deploy/$1.php" "${@:2}"; }
 for check in check-tenant-navigation check-clubunio check-access-profiles check-season-planning check-sponsor-documents check-api check-impersonation check-tenant-api-release check-administration-ui check-platform-administration check-mobile check-mobile-account-shell check-mobile-season-scope; do
  gate "$check"

@@ -8,7 +8,7 @@ import subprocess
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'storage/app/mobile-functional-release'
+OUT = ROOT / 'storage/app/mobile-functional-v2-release'
 BASELINE = 'acfda56'
 PREVIOUS = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-modules-performance-v1'
 # An explicit review boundary, not a wildcard over unrelated working changes.
@@ -33,12 +33,14 @@ deploy/check-mobile-team-planning-functional.php
 deploy/mobile-followup-menu-probe.php
 deploy/check-mobile-chat-experience.php
 deploy/prepare-chat-experience-schema.php
+deploy/verify-chat-experience-schema.php
 '''.split())
 REQUIRED_NEW = frozenset({
     'app/ClubUnio/Mobile/ChatPreferences.php',
     'database/clubunio/2026_11_04_001100_chat_experience.php',
     'deploy/check-mobile-chat-experience.php',
     'deploy/prepare-chat-experience-schema.php',
+    'deploy/verify-chat-experience-schema.php',
 })
 
 

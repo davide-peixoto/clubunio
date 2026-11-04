@@ -61,7 +61,8 @@ try {
         [$status,$freshChat]=$call('GET',$prefix.'chats/'.$chat->id,$tokens[0]);
         $assert($status===200 && $freshChat['data']['chat_preferences']['target_language']==='fr' && !$freshChat['data']['can_link_event'],'Fresh conversation preferences');
         $assert(Illuminate\Support\Facades\Http::recorded()->isEmpty(),'No provider call');
-        $assert(Illuminate\Support\Facades\Mail::sent()->isEmpty() && Illuminate\Support\Facades\Mail::queued()->isEmpty(),'No mail');
+        $assert(Illuminate\Support\Facades\Mail::sent(Illuminate\Mail\Mailable::class)->isEmpty()
+            && Illuminate\Support\Facades\Mail::queued(Illuminate\Mail\Mailable::class)->isEmpty(),'No mail');
     } finally { $db->rollBack(); }
     $assert(!$db->table('clubora.accounts')->whereIn('id',$ids)->exists() && $db->transactionLevel()===0,'Verified fixture rollback');
     echo "Chat settings/reactions/change feed/privacy HTTP checks passed; fixtures rolled back; no providers.\n";
