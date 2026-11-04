@@ -1475,3 +1475,35 @@ Analyse ohne Befund; echte Modulwechsel/Rechteentzug und alle8 Kombinationen
 bei320px sowie grosse Schrift320/390/1024 geprüft. Reine Appänderung,
 keine Backend-/Schema-/DEV-Betriebsänderung. DEV weiterhinfunctional-v2.
 Details:CLUBUNIO-MOBILE-PRIMARY-NAVIGATION.md; App:docs/PRIMARY-NAVIGATION.md.
+
+
+## 04.11.2026: Teamgebundene Dossiers und einheitliche App-Navigation
+
+Aktiv auf DEV:20261104-clubunio-mobile-team-access-v2, Runtime59cb059,
+Produkt056fc93; Appbe6bec5.7 committete Dateien mit bekannten Git-/rohen SHA-
+Baselines; nach Aktivierung alle7Hashes erneut bestätigt, PHP-FPM aktiv.
+Rollback:20261104-clubunio-mobile-functional-v2. Schema,Umgebung,Composer,
+Betriebs-/Providerflags und PHPMaker unverändert.
+
+Trainer/Assistenztrainer benötigen echte aktive Funktion im konkreten aktuellen
+Team; Helfer/Coach/fehlende Funktionen erteilen keine Trainerdossiers oder
+Anträge. Eltern sehen im Team nur Spielernamen und Staffkontakte, persönliche
+Kinderdossiers separat vollständig. team_id separat validierte Query, Antrag
+statt Direktänderung, erneute Rechteprüfung bei Verwaltungsfreigabe. Kein neues
+Finanz-/Dokument-/Ausweis-/Prüfrecht aus der Trainerrolle. Mitglieder öffnen
+direkt ohne zusätzliche Aufklapp-/Linkstufe. Einheitliches Menü/Profil; obere
+Leiste Heute,Profil,Posteingang,Menü,Abmelden, genau eine eigene Abmeldung.
+
+550/550 App-Tests und Analyse grün; Kommunikation47/721, PG-Team-/Member-
+Regression16/360 plus Common-Änderungsabläufe3/22; Roster23/23SQL konstant.
+Alle bisherigen DEV-Gates plus neue60 HTTP-Prüfungen bestanden und Fixtures
+zurückgerollt. V1-Staging blieb wegen eines Testdatenfehlers (insertGetId auf
+Composite-Key-Modulkatalog) inaktiv/erhalten; V2 enthält die korrigierte Probe.
+
+Lesender Nachlauf am betroffenen Konto:3 eigene/vertretbare Mitglieder,2 volle
+Kinderdossiers, echte Trainerdetails/Optionen;2 Elternteams mit24 namensreinen
+Spielern und2 Staffkontakt-GETs, genau eine aktuelle Sitzung. Keine echten
+Änderungsanträge angelegt, temporäre Sitzung zurückgerollt. HTTPS200/401,
+keine Provideraufrufe/Importe/Bankzahlungen. Native iPhone-Abnahme nicht behauptet;
+Mac-App muss den synchronisierten Stand neu bauen.
+Details:MOBILE-TEAM-MEMBER-ACCESS.md; App:docs/MEMBERS-PROFILE-RELEASE.md.

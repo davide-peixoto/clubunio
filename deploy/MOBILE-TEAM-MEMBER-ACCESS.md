@@ -26,7 +26,7 @@ Optionaler positiver `team_id`-Queryparameter ausschließlich an:
 - `GET clubs/{tenant}/members/{member}/contact-options`
 - `POST clubs/{tenant}/members/{member}/contact`
 
-Der Queryparameter wird separat validiert und niemals in die Mitgliedsänderungsfelder gemischt. Ein `team_id` im JSON-Änderungspayload ist unzulässig. Der POST verarbeitet ausschließlich den tatsächlichen Body und prüft den Kontext nochmals unter dem bestehenden Tenant-/Sitzungsschreiblock. Ohne Kontext entstehen keine neuen Antragsrechte; die bisherige Trainerkontaktsicht wird zusätzlich auf tatsächlich klassifizierte aktuelle Trainerteams eingegrenzt, damit Helfer-/Coachzuordnungen keine alternative Member-GET-Kontaktsicht auf fremde Spieler öffnen. Persönliche und bestehende Verwaltungsabläufe bleiben erhalten. 
+Der Queryparameter wird separat validiert und niemals in die Mitgliedsänderungsfelder gemischt. Ein `team_id` im JSON-Änderungspayload ist unzulässig. Der POST verarbeitet ausschließlich den tatsächlichen Body und prüft den Kontext nochmals unter dem bestehenden Tenant-/Sitzungsschreiblock. Ohne Kontext entstehen keine neuen Antragsrechte; die bisherige Trainerkontaktsicht wird zusätzlich auf tatsächlich klassifizierte aktuelle Trainerteams eingegrenzt, damit Helfer-/Coachzuordnungen keine alternative Member-GET-Kontaktsicht auf fremde Spieler öffnen. Persönliche und bestehende Verwaltungsabläufe bleiben erhalten.
 
 Team-Personen und frische Memberantworten liefern `TeamSaisonID`, `ContactOnly` und `CanRequestChanges`; Team-Personen liefern weiterhin `CanOpenDossier`. Staff und Spieler werden getrennt projiziert. Im Elternmodus enthält jede Spielerzeile ausschließlich Namen, technische Identität/Zuordnungsrevision und negative Zugangsfähigkeiten, ohne E-Mail, Mobile, Wohnort, Geburt oder Elternkontakte. Der direkte Member-GET mit diesem Teamkontext ist für Spieler ebenfalls geschlossen, auch beim eigenen Kind. Staffkontaktdetails werden erneut über den persönlichen Teamkontext geladen.
 
@@ -41,3 +41,31 @@ Die Mitgliedszeile bleibt bei Einreichung unverändert. Genehmigung nutzt den vo
 Neue synthetische HTTP-Fälle in `MobileTeamMemberAccessTest`: Trainerdetails/-optionen/-antrag, echte nachgelagerte Genehmigung, verbotene direkte Änderung/Prüfung/Finanzfelder, Elternnamen-/Staffprojektion, direkte Detailversuche, Doppelrolle, Pending/Widerruf und Verwaltungsablehnung nach Widerruf. **4 neue Rechtefälle / 106 Assertions** sowie **12 bestehende Mitglieder-/MyTeams-Paritäts-/Verzeichnis-/Leistungsfälle / 254 Assertions** bestanden seriell auf der finalen Source (zusammen 16/360). Zusätzlich 3 bestehende Common-MemberChangefälle / 22 Assertions grün. Rosterprojektion bei 2/40 Mitgliedern konstant 23/23 SQL, Teamauflösung 1/1. Positive Trainerfixtures verwenden eine echte Trainerfunktion; die Helper-/Coach-/NULL-Negative wurden nicht durch globale Trainerrollen ersetzt.
 
 Neues eigenständiges DEV-Gate `deploy/check-mobile-team-member-access.php --synthetic-rollback`: keine PHPUnit-Abhängigkeit; exakte DEV-/PostgreSQL-/Featuregrenzen, geschlossene externe Provider, ausschließlich neue synthetische Mandanten/Konten/Sitzungen/Mitglieder, tatsächliche HTTP-Routen und anschließend verifizierter Rollback. Prüft auch genau die aktuelle eigene Sitzung. Mail-/HTTP-Nachweise erfolgen über Fakes/gesammelte Ergebnisse, ohne echte Zustellung. Keine Datenimporte, Schemaoperationen, Bank- oder Provideraktionen. Lokal schloss der Gateversuch bereits vor Fixtureanlage an der strikten Bootstrap-/DEV-Konfigurationsgrenze; der tatsächliche DEV-Kernellauf ist daher Bestandteil des separaten Releaseprotokolls, kein lokal behaupteter Erfolgsnachweis.
+
+## Aktivierter DEV-Nachweis
+
+`20261104-clubunio-mobile-team-access-v2` aus Runtime `59cb059`, Produkt
+`056fc93`, App `be6bec5`. Sieben begrenzte Gitdateien mit überprüften rohen
+Ausgangs-/Zielhashes; nach Aktivierung erneut alle sieben bestätigt, PHP-FPM
+aktiv. Runtime-Rollback: `20261104-clubunio-mobile-functional-v2`. Keine Schema-,
+Umgebungs-, Composer- oder Provideränderung. V1 bleibt unverändert erhalten:
+seine letzte neue Prüfung scheiterte am Testdatenaufbau mit insertGetId auf
+mobile_module_options ohne id-Spalte; die Fixture verwendet nun insert.
+Die korrigierte Prüfung wurde vor V2 separat mit Rollback nachgeprüft.
+
+Alle bestehenden Freischaltungsprüfungen und das neue Gate mit **60 Prüfungen**
+bestanden. Lokale Nachweise: **550/550 App-Tests**, Analyse ohne Befund;
+Kommunikation **47/721**, PostgreSQL-Team-/Mitgliederregression **16/360** plus
+bestehende Änderungsabläufe **3/22**. Rosterabfragen konstant **23/23**.
+
+Nach Aktivierung lesend mit dem betroffenen bestehenden Konto geprüft: drei
+persönliche Mitglieder, zwei volle Kinderdossiers, tatsächliche
+Trainerdossier-/Optionsrechte ohne Finanzrechte; zwei Elternteams mit insgesamt
+24 namensbeschränkten Spielerzeilen und zwei frisch geöffneten Staffkontakten.
+Genau eine aktuelle Sitzung erkannt. **Keine echten Änderungsanträge angelegt**;
+die temporäre Prüfsitzung und sämtliche synthetischen Fixtures wurden
+zurückgerollt. HTTPS Health200, private anonyme API401. Keine private Antwort,
+Token oder personenbezogenen Diagnosefelder exportiert. Keine native
+Simulatorabnahme auf diesem Windowsrechner; Appcode auf dem Mac aktualisieren
+und neu bauen. Gestaltung/Frontenddetails im Mobile-Repository unter
+`docs/MEMBERS-PROFILE-RELEASE.md`.
