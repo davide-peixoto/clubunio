@@ -1,6 +1,6 @@
 # Gemeinsamer Webchat: Abnahme und Release
 
-Stand04.11.2026. Umsetzung/Pruefung laeuft; Serveraktivierung noch nicht erfolgt.
+Stand04.11.2026. Codepaket auf ClubUnio aktiviert; echte Abnahmegrenzen siehe unten.
 Dieses Dokument trennt Implementierung, synthetische Nachweise und echte Abnahme.
 
 ## Daten und Zugriff
@@ -38,7 +38,7 @@ Unklarer Sendestatus behaelt eine eingefrorene client_id samt Nutzlast fuer
 manuellen Retry, keine automatische Wiederholung einer Nachricht.
 Delta-Abfragen pausieren bei unsichtbarem Tab, ohne neue WebSocket-Infrastruktur.
 
-## Bisherige technische Tests
+## Technische Tests
 
 - MobileCommunication, ChatAccessPolicy und MobileChatDelta:60 Tests/968 Assertions.
 - Bestehender MobileChatDeltaTest:62 Kernelchecks,16 SQL beim leeren Delta;
@@ -46,7 +46,8 @@ Delta-Abfragen pausieren bei unsichtbarem Tab, ohne neue WebSocket-Infrastruktur
 - WebChatTest gegen echte Webroutes mit PostgreSQL-Rollback: Versand/Replay,
   Edit/Reaktion/Umfrage, Nur-Lesen, fremder Direktchat, Kontextwechsel,
   Domainbindung, Ankuendigungsvorschau und separate Moderationsrechte.
-  Abschliessende Testzahlen werden vor Aktivierung ergaenzt.
+  Abschliessender gemeinsamer Lauf:18 Tests/483 Assertions einschliesslich
+  WebChatGate. Servergate59 HTTP-/Sicherheitschecks,27 Idle-SQL bei Budget30.
 - Unit-Suite126 Tests/56028 Assertions.
 - Rollen/Finanzen/Lesekontext/Direktkontakte:35 Regressionstests/372 Assertions;
   der echte Direktkontakt-Kernelprobe enthaelt272 Teilpruefungen mit Rollback.
@@ -59,8 +60,8 @@ Delta-Abfragen pausieren bei unsichtbarem Tab, ohne neue WebSocket-Infrastruktur
   Screenshots320/390/1280px unter lokalem TEMP/clubunio-web-chat-frontend geprueft;
   dies ist die isolierte Komponente, nicht die angemeldete Filament-Sitzung.
 
-Diese Zahlen sind der Zwischenstand, kein Nachweis einer echten Geraetezustellung
-oder einer angemeldeten Desktop-/Mobil-Sichtpruefung.
+Diese Zahlen sind kein Nachweis einer echten Geraetezustellung oder einer
+angemeldeten Desktop-/Mobil-Sichtpruefung.
 
 ## Gezieltes Release
 
@@ -80,6 +81,25 @@ Zielrelease: `/var/www/svs-laravel/releases/20261104-clubunio-web-chat-v1`.
 Rueckweg: `/var/www/svs-laravel/releases/20261104-clubunio-pitch-v1` durch geprueften
 atomaren Symlinkwechsel und Reload des ClubUnio-PHP-FPM. Daten bleiben erhalten.
 Nach Aktivierung HTTPS Health/Login/Assets und anonyme401/302 pruefen.
+
+Aktiv `20261104-clubunio-web-chat-v1`, vorher `20261104-clubunio-pitch-v1`.
+Alle Servergates bestanden: Mandantenrouten, Profile, Simulation, API/Mobile,
+Chat-Erlebnis/Composer,272 Direktkontaktpruefungen,62 Delta- und59 Webchatchecks,
+geschlossene Pushkonfiguration. Alle synthetischen Datensaetze zurueckgerollt.
+Nach atomarer Aktivierung PHP-FPM aktiv; HTTPS Health/Login/CSS/JS200,
+Chats302 zum Login fuer Browser, Chats/Sessiondaten401 fuer anonyme JSON-Aufrufe.
+ENV und Composer unveraendert, keine Migration oder Rechtezuordnung.
+Uploads sind wie zuvor aktiviert; KI, Pushcapture/-zustellung und Native Pitch
+bleiben geschlossen. Kein Nachweis einer echten Scanner-/FCM-Providerzustellung.
+
+Paket aus Commit `f3aef80`:23 Runtime-/Gate-Dateien, Inventory-SHA256
+`5869378c6415e4f5010ee7907c676d374856bc308f96b08a275e8e66d3311b61`,
+SHA256SUMS `cd5127f8d90a8bc74c1336ddefaa2f48dab739650b671b7830a6ec42e3d721a8`.
+Serverbaseline vor Overlay byteweise geprueft. Beim ersten Stage-Lauf stoppten
+uebernommene www-data-Cachedateien den nicht privilegierten chmod. Nur der
+inaktive Kandidat wurde nach erneuter Hash-/ENV-/Pfadpruefung weiter aufgebaut;
+Cacheverzeichnis ohne Symlinks, Rechte mit sudo korrigiert. Runbook entsprechend
+nachgebessert; originales Paket bleibt unveraendert als Nachweis erhalten.
 
 ## Offen / nicht behauptet
 

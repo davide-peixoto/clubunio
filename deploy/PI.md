@@ -1,5 +1,18 @@
 # Pi staging: dev.clubunio.ch
 
+## Gemeinsamer Webchat (04.11.2026)
+
+Aktiv `20261104-clubunio-web-chat-v1` aus `f3aef80`, Rueckweg pitch-v1.
+23 Dateihashes und vorherige Serverbaseline geprueft; keine Migration, Seeds,
+ENV-/Composer-/Rechteaenderung. Inaktiver Cacheaufbau nach gezielter Korrektur
+uebernommener www-data-Dateirechte, danach alle gemeinsamen Servergates bestanden.
+Webchat59 HTTP-/Sicherheitschecks,27 Idle-SQL; Direktkontakte272, Chatdelta62.
+Synthetische Fixtures zurueckgerollt, kein realer Versand. HTTPS Health/Login/
+CSS/JS200; Chats302 zum Login, anonyme JSON-Aufrufe401. PHP-FPM aktiv.
+Uploads bleiben aktiviert, KI/Push/Native Pitch geschlossen. Angemeldete
+manuelle Sicht-/Geraeteabnahme noch offen. PHPMaker DEV/PROD unveraendert.
+Nachweis, Paket-Hashes, Grenzen und Pendenzen: CLUBUNIO-WEB-CHAT-RELEASE.md.
+
 ## Platzbelegung: Web-Testrelease (04.11.2026)
 
 Aktiv `20261104-clubunio-pitch-v1` aus `9c0fbbe`; Rueckweg chat-delta-v1.

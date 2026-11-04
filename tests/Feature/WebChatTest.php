@@ -370,7 +370,7 @@ final class WebChatTest extends TestCase
         $this->assertSame((int) $this->reader->id, (int) $this->db->table('clubora.chat_reports')->where('id', $report['id'])->value('resolved_by'));
         $this->assertNull($this->db->table('clubora.chat_messages')->where('id', $message['id'])->value('deleted_at'));
         $this->chatRequest($this->reader, 'reports', ['chat_id' => $this->direct()])->assertNotFound();
-        $this->assertFalse(app(MobileAccess::class)->admin($this->reader, $this->tenant));
+        $this->assertFalse(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($this->reader, $this->tenant, 'invoices', 'view'));
         $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(['chat.view', 'chat.groups'])]);
         $this->chatRequest($this->reader, 'resolve', ['report_id' => $report['id']], true)->assertForbidden();
     }
@@ -429,10 +429,11 @@ final class WebChatTest extends TestCase
     public function test_verified_tenant_domain_preserves_the_host_bound_context(): void
     {
         config(['clubunio-domains.hosts' => ['web-chat-bound.invalid' => $this->tenant->slug]]);
-        $this->withServerVariables(['HTTP_HOST' => 'web-chat-bound.invalid', 'SERVER_NAME' => 'web-chat-bound.invalid', 'HTTPS' => 'on']);
         $this->contexts[$this->office->id]['host'] = 'web-chat-bound.invalid';
-        $this->chatRequest($this->office, 'list')->assertOk();
-        $this->chatRequest($this->office, 'direct', ['account_id' => $this->admin->id], true)->assertOk();
+        $this->actingAs($this->office, 'clubunio')->withSession(['clubunio_context.'.$this->office->id => $this->contexts[$this->office->id]]);
+        $data = ['context' => $this->contexts[$this->office->id]];
+        $this->getJson('https://web-chat-bound.invalid/chat-data/list?'.http_build_query($data))->assertOk();
+        $this->postJson('https://web-chat-bound.invalid/chat-data/direct', $data + ['account_id' => $this->admin->id])->assertOk();
     }
 
     public function test_sender_outbox_replay_mute_revocation_and_rollback_use_synthetic_bindings_only(): void

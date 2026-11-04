@@ -1,6 +1,6 @@
 # Chat im ClubUnio-Backend
 
-Stand04.11.2026: Weboberflaeche und eigene Kommunikationsrechte in Umsetzung.
+Stand04.11.2026: Weboberflaeche und eigene Kommunikationsrechte implementiert.
 Aktueller technischer Abnahme-/Release-Nachweis: [Webchat-Release](CLUBUNIO-WEB-CHAT-RELEASE.md).
 Ziel: gleicher fachlicher Funktionsumfang wie der persoenliche Appchat, mit
 komfortablem Nachrichtenversand fuer Admins und Geschaeftsstelle/Backoffice.
@@ -44,7 +44,7 @@ oder Providerstatus. Aktuelle Pushgrenze: `CLUBUNIO-PITCH-FOLLOWUP.md`.
 | Einstellungen | Stummschaltung, Direktkontaktsperre, persoenlicher Lesestand | Konto-/Mandantenbezug; gleiche Wirkung in App und Web |
 | Moderation | Melden, berechtigte Gruppenmeldungen bearbeiten/abschliessen | Kein allgemeines Mitlesen privater Direktchats; bestehende Grenzen fuer Direktmeldungen erhalten |
 | Sprache/KI | DE/EN-Oberflaeche und vorhandene optionale Text-/Uebersetzungsaktionen | Aktivierte Sprachen, explizites Opt-in/Einwilligung, geschlossene Provider nicht als aktiv darstellen |
-| Rundnachrichten | Erlaubte Mannschaften/Staff/Vereinsankuendigungen mit Vorschau | Empfaengeranzahl/Fingerprint vor Versand, erneute Bestaetigung bei Aenderung |
+| Rundnachrichten | Mannschafts-/Staffchats und Vereinsankuendigungen | Vereinsankuendigung mit Empfaengeranzahl/Fingerprint und erneuter Bestaetigung bei Aenderung; zusaetzliche Team-/Staff-Empfaengervorschau noch offen |
 | App-Push | Webnachrichten loesen denselben deduplizierten Pushweg aus wie Appnachrichten | Aktuelle Bindung, Rechte, Stummschaltung, kein Selbst-/Doppelversand; keine privaten Texte in der Sperrbildschirm-Payload |
 
 Gleicher Funktionsumfang bedeutet fachliche Paritaet, nicht identische mobile

@@ -63,13 +63,13 @@ PY
     test "$(readlink -f storage)" = "$(readlink -f "$previous/storage")"
     mkdir -p bootstrap/cache/web-chat-views
     sudo chgrp -R www-data bootstrap/cache
-    chmod -R g+rwX bootstrap/cache
+    sudo chmod -R g+rwX bootstrap/cache
     php artisan config:clear >/dev/null
     php artisan route:clear >/dev/null
     VIEW_COMPILED_PATH="$release/bootstrap/cache/web-chat-views" php artisan config:cache >/dev/null
     php artisan route:cache >/dev/null
     sudo chgrp -R www-data bootstrap/cache
-    chmod -R g+rwX bootstrap/cache
+    sudo chmod -R g+rwX bootstrap/cache
     sudo -u www-data php artisan view:cache >/dev/null
     sudo -u www-data php deploy/check-web-chat-release.php --closed
     printf 'Staged inactive %s. No migration, flags or site switch.\n' "$release"

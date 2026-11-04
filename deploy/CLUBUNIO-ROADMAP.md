@@ -5,7 +5,7 @@
 Chat mit fachlicher App-Paritaet in der normalen ClubUnio-Shell, gemeinsamer
 Datenbasis und Pushweg; komfortabler Admin-/Backofficeversand mit Vorschau.
 Gezielte Kommunikationsrechte statt globaler Adminfreigabe oder Einblick in
-fremde Direktchats. Webpaket in Umsetzung und technischer Abnahme; keine
+fremde Direktchats. Webpaket auf ClubUnio aktiviert und technisch geprueft; keine
 automatische Profilzuordnung oder Aktivierung externer Dienste.
 Funktionsmatrix: [Webchat](CLUBUNIO-WEB-CHAT.md),
 [aktueller Abnahme-/Releasestand](CLUBUNIO-WEB-CHAT-RELEASE.md).
