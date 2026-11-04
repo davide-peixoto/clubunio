@@ -25,11 +25,7 @@ return [
     'training_ai' => ['enabled' => false, 'cost_reviewed' => false, 'tenant_slugs' => [], 'models' => [],
         'reservation_microusd' => 0, 'monthly_limit_microusd' => 0, 'max_output_tokens' => 0,
         'max_input_bytes' => 0, 'dispatch_after_response' => true],
-    'public_identity' => ['enabled' => false, 'registration_enabled' => false,
-        'password_reset_enabled' => false, 'membership_enabled' => false, 'mail_enabled' => false,
-        'email_enrollment_enabled' => false,
-        'tenant_slugs' => [], 'origins' => [], 'mailer' => 'clubunio_identity', 'from' => null,
-        'dispatch_after_response' => true],
+    'public_identity' => require __DIR__.'/clubunio-public-identity.php',
     'session_days' => 30,
     'login_limit' => 5,
     'ai' => [

@@ -36,6 +36,7 @@ return [
     */
 
     'mailers' => [
+        'clubunio_identity' => require __DIR__.'/clubunio-identity-smtp.php',
 
         'smtp' => [
             'transport' => 'smtp',
