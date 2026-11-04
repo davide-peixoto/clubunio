@@ -11,6 +11,15 @@ neuen Modulvertraegen und synthetischem HTTP-Kernel-Menue-/Kontotest. Keine
 Auth400-/Push500-/Challenge600-/Keybox700-WIP-Quelle in diesem Paket.
 Die Anwendung/Liveaktivierung ist bis zum gesonderten Servernachweis offen.
 
+Danach aktiviert `release-clubunio-mobile-packages-enabled.sh` ausschliesslich
+die sechs persoenlichen Modulflags fuer Mitglieder, Ausweis, Training,
+Sponsorenlauf, dessen Abrechnung und Anmeldungen in einer separaten Release-Env.
+Die drei Schemaleder muessen zuvor erfolgreich angewendet sein; Gates verlangen
+die wirklichen Tabellen/Spalten/Ledger und die echten geschuetzten Routen.
+KI-/Provider-/Mail-/Kostenkonfiguration bleibt unveraendert. Synthetische
+Menue-/Konten-/Planungsablaeufe werden zurueckgerollt, keine echten Provider-
+oder Zahlungsaktionen. Erst erfolgreiche Gates erlauben den atomaren Wechsel.
+
 `deploy/prepare-mobile-packages-schema.php` ist ausschliesslich fuer die exakte
 aktive Linuxbasis `/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation`
 und deren current-Link vorbereitet. API aktiv, DEV-Origin exakt
