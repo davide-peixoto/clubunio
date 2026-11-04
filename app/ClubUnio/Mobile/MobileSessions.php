@@ -30,6 +30,10 @@ final class MobileSessions
         $bound = app(TenantDomainService::class)->resolve($request);
         $tenants = $actor->tenants()->get()->filter(fn ($tenant) => (! $bound || $bound->is($tenant))
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant));
+        if ($tenants->isEmpty() && config('clubunio-mobile.public_identity.enabled', false)
+            && app(MobileIdentityChallenges::class)->accessPending($actor, $bound)) {
+            throw new MobileAccessPending;
+        }
         abort_if($tenants->isEmpty(), 401);
         $id = (string) Str::uuid();
         $secret = bin2hex(random_bytes(32));

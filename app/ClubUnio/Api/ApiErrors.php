@@ -31,12 +31,14 @@ final class ApiErrors
             409 => 'conflict', 413 => 'payload_too_large', 415 => 'unsupported_media_type',
             422 => 'invalid_request', 429 => 'rate_limited', default => 'request_failed',
         };
+        $accessPending = $error instanceof \App\ClubUnio\Mobile\MobileAccessPending;
+        if ($accessPending) { $code = 'access_pending'; }
         if ($status >= 500) {
             logger()->error('ClubUnio API failure', ['request_id' => $id, 'exception' => $error::class,
                 'file' => basename($error->getFile()), 'line' => $error->getLine()]);
         }
         $response = response()->json(['error' => array_filter(['code' => $code,
-            'message' => match ($status) {
+            'message' => $accessPending ? $error->getMessage() : match ($status) {
                 400 => 'Ungültige Anfrage.', 401 => 'Authentifizierung erforderlich.', 403 => 'Zugriff nicht erlaubt.', 404 => 'Nicht gefunden.',
                 405 => 'Diese Aktion wird nicht unterstützt.', 409 => 'Konflikt. Daten neu laden und Vorgang prüfen.',
                 413 => 'Anfrage zu gross.', 415 => 'Nicht unterstütztes Datenformat.', 422 => 'Eingaben prüfen.',

@@ -10,6 +10,9 @@ class TestMailGuard
 
     public function handle(MessageSending $event): ?bool
     {
+        if (\App\ClubUnio\Mobile\MobileIdentityMailGuard::recognizes($event)) {
+            return app(\App\ClubUnio\Mobile\MobileIdentityMailGuard::class)->handle($event);
+        }
         if (! app()->environment(['local', 'testing', 'staging']) || ! config('clubunio-integrations.test_mail_enabled')) {
             return false;
         }

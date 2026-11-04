@@ -17,7 +17,9 @@ final class MobileAccountController
         $actor = $request->attributes->get('mobile.actor');
         return response()->json(['data' => ['id' => (int) $actor->id,
             'username' => $actor->username, 'name' => $actor->display_name,
-            'password_change' => true, 'push' => false, 'registration' => false,
+            'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
+                app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
+            'password_change' => true, 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
             'password_reset' => false]]);
     }
 
@@ -54,7 +56,7 @@ final class MobileAccountController
         $map = ['Spesen' => 'expenses', 'Mitglieder' => 'members', 'Platzverfugbarkeit' => 'field_availability',
             'MitgliederAnmeldungen' => 'registrations', 'Teams' => 'teams', 'Teamplanung' => 'teams',
             'Trainingsplaner' => 'training', 'BusReservationen' => 'bus', 'Dokumente' => 'documents',
-            'Sponsorenlauf' => 'sponsor_runs'];
+            'Sponsorenlauf' => 'sponsor_runs', 'Penalty' => 'penalty'];
         $modules = [];
         $busAllowed = false;
         if (config('clubunio-mobile.native_bus_enabled')) {
@@ -71,14 +73,16 @@ final class MobileAccountController
         foreach ($map as $key => $permission) {
             if (! in_array($key, $visibleKeys, true)) { continue; }
             $followupAllowed = app(MobileFollowupModules::class)->allowed($key, $actor, $tenant);
+            $penaltyAllowed = $key === 'Penalty' && app(MobilePenaltyAccess::class)->canPlay($actor, $tenant);
             $allowed = app(ModulePermissionService::class)->allows($actor, $tenant, $permission, 'view')
                 || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
                 || ($key === 'Dokumente' && config('clubunio-mobile.native_documents_enabled') && app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant)->exists())
                 || ($key === 'BusReservationen' && $busAllowed)
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true))
-                || $followupAllowed;
+                || $followupAllowed || $penaltyAllowed;
             if ($allowed) {
                 $native = match ($key) {
+                    'Penalty' => $penaltyAllowed && in_array('penalty-v1', $supported, true),
                     'Mitglieder', 'MitgliederAnmeldungen', 'Trainingsplaner', 'Sponsorenlauf' =>
                         $followupAllowed
                         && in_array(MobileFollowupModules::CONTRACTS[$key][1], $supported, true),

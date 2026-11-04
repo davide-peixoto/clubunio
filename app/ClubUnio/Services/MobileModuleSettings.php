@@ -11,7 +11,7 @@ final class MobileModuleSettings
         'Spesen'=>'Spesen', 'Mitglieder'=>'Mitglieder', 'Platzverfugbarkeit'=>'Anlagenstatus',
         'MitgliederAnmeldungen'=>'Mitgliederanmeldungen', 'Teams'=>'Meine Mannschaften',
         'Teamplanung'=>'Teamplanung', 'Trainingsplaner'=>'KI-Trainingsplanung',
-        'BusReservationen'=>'Busreservierungen', 'Dokumente'=>'Dokumente', 'Sponsorenlauf'=>'Sponsorenlauf',
+        'BusReservationen'=>'Busreservierungen', 'Dokumente'=>'Dokumente', 'Sponsorenlauf'=>'Sponsorenlauf', 'Penalty'=>'Vereinschallenge',
     ];
 
     public function options(Tenant $tenant): array
