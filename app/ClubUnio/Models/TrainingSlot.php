@@ -4,7 +4,7 @@ namespace App\ClubUnio\Models;
 
 class TrainingSlot extends CatalogModel
 {
-    protected $casts = ['active' => 'boolean', 'all_fields' => 'boolean', 'without_main' => 'boolean', 'synthetic_only' => 'boolean', 'website_visible' => 'boolean'];
+    protected $casts = ['active' => 'boolean', 'all_fields' => 'boolean', 'without_main' => 'boolean', 'synthetic_only' => 'boolean', 'website_visible' => 'boolean', 'area_id' => 'integer'];
 
     public function teamSeason()
     {

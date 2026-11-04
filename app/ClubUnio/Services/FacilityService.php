@@ -97,8 +97,13 @@ class FacilityService
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
             }
             $before = $id ? $record->only(array_keys($data)) : null;
+            $pitchBefore = $model === Competition::class
+                ? app(PitchCompetitionEdits::class)->beforeSave($actor, $tenant, $record, $data) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id, 'revision' => $id ? $record->revision + 1 : 1])->save();
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
+            if ($pitchBefore !== null) {
+                app(PitchCompetitionEdits::class)->afterSave($actor, $tenant, $record, $pitchBefore);
+            }
 
             return $record;
         });

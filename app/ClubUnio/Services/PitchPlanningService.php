@@ -126,6 +126,16 @@ class PitchPlanningService
         return $this->createRequest($actor, $tenant, $input, false);
     }
 
+    public function authorizeFriendlyRequest(Account $actor, Tenant $tenant, int $teamSeasonId): void
+    {
+        // An idempotent replay must use the same fresh authorization as a new request.
+        $this->write($actor, $tenant, function ($actor) use ($tenant, $teamSeasonId) {
+            $this->activeTeam($tenant, $teamSeasonId);
+            abort_unless($this->office($actor, $tenant, 'competitions', 'create')
+                || in_array($teamSeasonId, $this->teams($actor, $tenant), true), 403);
+        });
+    }
+
     public function createManual(Account $actor, Tenant $tenant, array $input): array
     {
         return $this->createRequest($actor, $tenant, $input, true);
@@ -239,6 +249,7 @@ class PitchPlanningService
                 // Geometry referenced by bookings is immutable. Rename only; define a new
                 // area and move bookings explicitly to avoid introducing hidden conflicts.
                 $used = false;
+                if (app(PitchWeeklyAreas::class)->ready()) $used = $this->projection->table('training_slots', $tenant)->where('area_id', $before->id)->exists();
                 foreach (['pitch_training_exceptions', 'pitch_requests', 'pitch_blocks', 'pitch_competition_settings'] as $table) $used = $used || $this->projection->table($table, $tenant)->where('area_id', $before->id)->exists();
                 foreach (['field_id', 'x', 'y', 'width', 'height'] as $field) if ($used && (float) $data[$field] !== (float) $before->$field) abort(409, __('Eine belegte Teilfläche kann nicht verändert werden. Bitte eine neue Teilfläche anlegen.'));
             }

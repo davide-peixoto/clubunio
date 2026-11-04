@@ -105,7 +105,7 @@ final class SeasonPlanningService
             $doc['rules'][] = ['key' => (string) Str::uuid(), 'price_key' => $prices[$price->id], 'gender_id' => $rule->gender_id,
                 'year_from' => $rule->year_from + 1, 'year_to' => $rule->year_to + 1];
         }
-        $slots = ['period_id', 'weekday_id', 'starts_at', 'ends_at', 'field_id', 'room_id', 'side_id', 'hall', 'all_fields', 'without_main', 'synthetic_only', 'website_visible'];
+        $slots = ['period_id', 'weekday_id', 'starts_at', 'ends_at', 'field_id', 'area_id', 'room_id', 'side_id', 'hall', 'all_fields', 'without_main', 'synthetic_only', 'website_visible'];
         foreach ($sourceTeams as $ts) {
             if (! isset($facts['teams'][$ts->team_id])) {
                 continue;
@@ -188,7 +188,7 @@ final class SeasonPlanningService
                 'bexio_product_id' => 'nullable|string|max:100', 'bexio_article_id' => 'nullable|integer|min:1'],
             'rules' => ['price_key' => 'nullable|uuid', 'gender_id' => 'nullable|integer', 'year_from' => 'nullable|integer|min:1800|max:2200', 'year_to' => 'nullable|integer|min:1800|max:2200'],
             'assignments' => ['kind' => 'required|in:player,staff,lead', 'team_key' => 'required|uuid', 'member_id' => 'required|integer|min:1', 'function_id' => 'nullable|integer'],
-            'slots' => ['team_key' => 'nullable|uuid', 'starts_at' => 'nullable|date_format:H:i,H:i:s', 'ends_at' => 'nullable|date_format:H:i,H:i:s', 'hall' => 'nullable|string|max:255'],
+            'slots' => ['team_key' => 'nullable|uuid', 'starts_at' => 'nullable|date_format:H:i,H:i:s', 'ends_at' => 'nullable|date_format:H:i,H:i:s', 'hall' => 'nullable|string|max:255', 'area_id' => 'nullable|integer|min:1'],
         ];
         foreach (['period', 'weekday', 'field', 'room', 'side'] as $kind) {
             $columns['slots'][$kind.'_id'] = 'nullable|integer';
@@ -356,6 +356,10 @@ final class SeasonPlanningService
             }
         }
         foreach ($doc['slots'] as $slot) {
+            if (! empty($slot['area_id']) && (! app(PitchWeeklyAreas::class)->ready()
+                || ! app(PitchWeeklyAreas::class)->matches($tenant->id, $slot['field_id'] ?? null, $slot['area_id']))) {
+                $errors[] = __('Das ausgewählte Spielfeld oder die Teilfläche ist nicht verfügbar.');
+            }
             if (! $teams->has($slot['team_key'] ?? '') || empty($slot['starts_at']) || empty($slot['ends_at']) || $slot['ends_at'] <= $slot['starts_at'] || (empty($slot['field_id']) && empty($slot['hall']))) {
                 $errors[] = __('Eine Trainingszeit ist unvollständig oder ungültig.');
             }

@@ -4,6 +4,7 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\PitchPlanningService;
+use App\ClubUnio\Services\PitchFriendlyRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Validator};
@@ -49,8 +50,14 @@ final class MobilePitchController implements \Illuminate\Routing\Controllers\Has
             $data = $this->input($request, $rules + [
                 'team_season_id' => 'required|integer|min:1', 'opponent' => 'required|string|max:255',
                 'notes' => 'nullable|string|max:2000',
+                'request_id' => ['required', 'string', 'regex:/^[A-Za-z0-9._:-]{8,120}$/D'],
             ]);
-            return $service->requestFriendly($actor, $tenant, $data);
+            $requestId = $data['request_id'];
+            unset($data['request_id']);
+            $result = app(PitchFriendlyRequestService::class)->submit($actor, $tenant, $data, $requestId);
+            $response = response()->json(['data' => $result['data']]);
+            if ($result['replayed']) $response->header('Idempotency-Replayed', 'true');
+            return $response;
         });
     }
 
@@ -96,7 +103,8 @@ final class MobilePitchController implements \Illuminate\Routing\Controllers\Has
                 ->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobileAccess::class)->enter($actor, $tenant);
-            return response()->json(['data' => $operation($actor, $tenant, app(PitchPlanningService::class))]);
+            $result = $operation($actor, $tenant, app(PitchPlanningService::class));
+            return $result instanceof JsonResponse ? $result : response()->json(['data' => $result]);
         });
     }
 
@@ -108,7 +116,7 @@ final class MobilePitchController implements \Illuminate\Routing\Controllers\Has
         if (array_diff(array_keys($data), $fields)) {
             Validator::make(['payload' => $data], ['payload' => 'array:'.implode(',', $fields)])->validate();
         }
-        return Validator::make($data, $rules)->validate();
+        return Validator::make($data, $rules, [], ['request_id' => __('Kennung')])->validate();
     }
 
     private function calendarRules(): array

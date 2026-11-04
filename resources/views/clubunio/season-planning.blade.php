@@ -161,6 +161,9 @@
                             <label>{{ $caption }}<select wire:model.live="document.slots.{{ $i }}.{{ $category }}_id"><option value="">{{ __('Auswählen') }}</option>@foreach($facts['training_options'] as $option)@if($option->category === $category)<option value="{{ $option->id }}">{{ $seasonLookup('training_options', $option) }}</option>@endif @endforeach</select></label>
                         @endforeach
                         <label>{{ __('Von') }}<input type="time" wire:model.live="document.slots.{{ $i }}.starts_at"></label>
+                        @if(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->ready())
+                            <label>{{ __('Teilfläche') }}<select wire:model.live="document.slots.{{ $i }}.area_id"><option value="">{{ __('Ganzer Platz') }}</option>@foreach(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->options(\Filament\Facades\Filament::getTenant(), $slot['field_id'] ?: null) as $areaId => $areaName)<option value="{{ $areaId }}">{{ $areaName }}</option>@endforeach</select></label>
+                        @endif
                         <label>{{ __('Bis') }}<input type="time" wire:model.live="document.slots.{{ $i }}.ends_at"></label>
                         <label>{{ __('Halle') }}<input maxlength="255" wire:model.live.debounce.1000ms="document.slots.{{ $i }}.hall"></label>
                         @foreach(['all_fields' => __('Alle Plätze'), 'without_main' => __('Ohne Hauptplatz'), 'synthetic_only' => __('Nur Kunstrasen'), 'website_visible' => __('Auf Webseite sichtbar')] as $column => $caption)<label class="sp-check"><input type="checkbox" wire:model.live="document.slots.{{ $i }}.{{ $column }}">{{ $caption }}</label>@endforeach

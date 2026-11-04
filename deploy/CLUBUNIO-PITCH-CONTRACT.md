@@ -13,6 +13,10 @@ tenant permissions. No adapter may bypass this service for mutations.
 - `requestFriendly($actor, $tenant, array $input): array`: `team_season_id`,
   `field_id`, nullable `area_id` (null = entire field), `date`, `starts_at`
   (HH:mm), `duration_minutes` (default 120), `opponent`, optional `notes`.
+- `authorizeFriendlyRequest($actor, $tenant, int $teamSeasonId): void`: fresh
+  non-mutating request authorization for replay, sharing the actual friendly
+  creation rules, including active actor, simulation, view/create and own-team
+  eligibility. This is a core integration dependency, not an adapter permission.
 - `createManual($actor, $tenant, array $input): array`: same input as
   requestFriendly; directly approved admin/office booking, no request email.
 - `move($actor, $tenant, string $key, array $input): array`: `revision` from
@@ -104,9 +108,16 @@ No migration application, provider send, deployment or commit in this increment.
 - Historical competitions with missing field/time are not projected; repair source
   assignment first. Existing SFV mappings populate on the next reviewed apply;
   unchanged historical competitions can be mapped explicitly by an administrator.
-- Request creation has no client idempotency key: separate deliberate submissions
-  create separate pending requests. Revision protects decisions/moves; notification
-  fanout is idempotent per event key. Tenant lock serializes planner writes.
+- Friendly API/web creation uses `PitchFriendlyRequestService::submit(actor,
+  tenant, input, requestId)`, returning `{data: originalEntry, replayed: bool}`.
+  `requestId` never reaches source mutation input. Migration001800 stores the
+  tenant/account/key-hash primary key, canonical payload hash and encrypted
+  original response in the same transaction as request/notification intent.
+  The existing tenant lock serializes submissions; same key/payload returns the
+  original result without another notification, different payload is409, failed
+  transaction leaves no claim. Replays call `authorizeFriendlyRequest` afresh.
+  API requires JSON `request_id`; web uses a locked form UUID. Manual admin
+  bookings and revision-based decisions/moves remain unchanged. No TTL pruning.
 - Real simultaneous two-connection race not yet exercised; PostgreSQL TEMP DDL,
   FK behavior, transaction rollback and stale-revision paths are covered separately.
 - Notification transport restrictions remain documented by its owner (profile

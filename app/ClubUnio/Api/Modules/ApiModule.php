@@ -42,7 +42,12 @@ final class ApiModule
         return $this->fresh(function () use ($context) {
             $this->authorize($context, 'read', 'view');
 
-            return $this->recordQuery($context)->select($this->definition['read_fields']);
+            $fields = $this->definition['read_fields'];
+            if ($this->definition['key'] === 'training_slots' && ! app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->ready()) {
+                $fields = array_values(array_diff($fields, ['area_id']));
+                return $this->recordQuery($context)->select($fields)->selectRaw('NULL AS area_id');
+            }
+            return $this->recordQuery($context)->select($fields);
         });
     }
 

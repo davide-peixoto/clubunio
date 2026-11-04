@@ -47,7 +47,7 @@ final class ApiModuleDefinitions
         $add('technical_leads', Models\TechnicalLead::class, 'teams', 'assignment',
             ['member_id', 'team_season_id', 'active'], [], ['member_id', 'team_season_id', 'active'], [], [], '_version');
         $add('training_slots', Models\TrainingSlot::class, 'training_slots', 'training',
-            ['team_season_id', 'starts_at', 'ends_at', 'hall', 'period_id', 'weekday_id', 'field_id', 'room_id', 'side_id',
+            ['team_season_id', 'starts_at', 'ends_at', 'hall', 'period_id', 'weekday_id', 'field_id', 'area_id', 'room_id', 'side_id',
                 'all_fields', 'without_main', 'synthetic_only', 'website_visible', 'active'], ['hall'],
             ['team_season_id', 'period_id', 'weekday_id', 'field_id', 'active', 'website_visible'], [], ['revision'], 'revision');
         $add('competitions', Models\Competition::class, 'competitions', 'facility',

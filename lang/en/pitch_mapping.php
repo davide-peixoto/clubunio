@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'command_description' => 'Preview historical SFV team links; apply only with explicit admin confirmation.',
+    'confirmation_required' => 'Application requires --apply and --confirm with the reviewed preview fingerprint.',
+    'stale' => 'The mapping evidence has changed. Create and review a new preview.',
+    'errors_present' => 'The preview contains errors. No mappings were applied.',
+    'not_ready' => 'Pitch planning is not available yet. No mappings were applied.',
+    'limit' => 'At most 1000 competitions per preview. Narrow the date range.',
+    'invalid_scope' => 'Specify a valid tenant, admin account, date range and enabled language.',
+    'denied' => 'This operation requires an active admin of the selected club.',
+    'summary' => 'Ready: :ready. Skipped: :skipped. Errors: :error.',
+    'fingerprint' => 'Preview fingerprint: :fingerprint',
+    'applied' => 'Mapped competitions: :count. No notifications sent.',
+    'headers' => ['Competition', 'SFV match ID', 'Date', 'Team season IDs', 'Result'],
+    'reasons' => [
+        'no_match_id' => 'No existing SFV match ID.',
+        'existing_mapping' => 'Existing team mapping retained.',
+        'local_configuration' => 'Existing local configuration retained, including explicitly cleared mappings.',
+        'inactive_competition' => 'Inactive competition retained.',
+        'ambiguous_match' => 'Ambiguous source or competition match ID.',
+        'missing_source' => 'No stored SFV source match. No fetch or import.',
+        'source_date_mismatch' => 'Source date missing or different from the competition date in Europe/Zurich.',
+        'invalid_source_teams' => 'Two distinct positive SFV team IDs are required.',
+        'no_local_team' => 'No local team with these SFV IDs. Names are not used.',
+        'ambiguous_team' => 'More than one active team-season assignment matches an SFV team ID and date.',
+        'missing_team_season' => 'A local SFV team has no active assignment in a dated season covering the match.',
+        'deterministic_match' => 'Unique SFV ID and date-season match; ready for confirmation.',
+    ],
+];

@@ -31,17 +31,17 @@ Implementierung gestartet; diese Beschreibung ist kein Release-/Abnahmenachweis.
 
 | Bereich | Nachweis | Stand |
 | --- | --- | --- |
-| Mandant/Rechte | Fremder Verein/Team, Nur-Lesen, Trainerentscheidung verboten | Offen |
-| Teilflaechen | Vollplatz gegen Haelfte, ueberlappende/nicht ueberlappende Teile | Offen |
-| Zeiten | Halb-offene Intervalle, Tageswechsel, Sommerzeit, begrenzter Zeitraum | Offen |
-| Sperren | Zeitblock und statischer Anlagenstatus; bestehende Konflikte sichtbar | Offen |
-| Wiederholung | Einzelverschiebung ohne Grundplanaenderung, Aus-/Einblenden am Datum | Offen |
-| Originaldaten | Wettkampf aktualisiert, Garderoben/Match-ID erhalten | Offen |
-| SFV | Genehmigte Aenderung uebernommen, Konflikt sichtbar, kein Doppeltermin | Offen |
-| Nebenlaeufigkeit | Veraltete Revision und gleichzeitige Freigaben | Offen |
-| Nachrichten | Staffempfaenger, keine Doppelzustellung, Mail nur neue Anfrage | Offen |
-| Darstellung | Web Desktop/Mobil und App Tages-/Kalenderansicht | Offen |
-| Integration | Signage und App identisch zur wirksamen Plantafel | Offen |
+| Mandant/Rechte | Fremder Verein/Team, Nur-Lesen, Trainerentscheidung verboten | Automatisierte Kern-/API-Tests; Liveabnahme offen |
+| Teilflaechen | Vollplatz gegen Haelfte, ueberlappende/nicht ueberlappende Teile | Geometrie und Wochenvorlage automatisiert geprueft |
+| Zeiten | Halb-offene Intervalle, Tageswechsel, Sommerzeit, begrenzter Zeitraum | Automatisierte Kern-/Kalendertests |
+| Sperren | Zeitblock und statischer Anlagenstatus; bestehende Konflikte sichtbar | Automatisierte Kernpruefung |
+| Wiederholung | Einzelverschiebung ohne Grundplanaenderung, Aus-/Einblenden am Datum | PostgreSQL TEMP-/Rollbacktests |
+| Originaldaten | Wettkampf aktualisiert, Garderoben/Match-ID erhalten | Automatisierte Kern-/SFV-Regression |
+| SFV | Genehmigte Aenderung uebernommen, Konflikt sichtbar, kein Doppeltermin | Regression und historische Vorschau geprueft; Bestands-Apply offen |
+| Nebenlaeufigkeit | Veraltete Revision und gleichzeitige Freigaben | 13 Tests/234 Assertions, zwei echte PostgreSQL-Verbindungen bestanden |
+| Nachrichten | Staffempfaenger, keine Doppelzustellung, Mail nur neue Anfrage | Outboxtests gruen; echte Zustellung offen |
+| Darstellung | Web Desktop/Mobil und App Tages-/Kalenderansicht | Fragment-/Widgettests; angemeldete Abnahme vom Benutzer verschoben, native Abnahme offen |
+| Integration | Signage und App identisch zur wirksamen Plantafel | Automatisierte Projektion; Liveabgleich offen |
 | Betrieb | Additive Migration, Sicherung/Verifikation, gezieltes ClubUnio-Release | Offen |
 
 ## Migrationsgrenzen
@@ -92,7 +92,8 @@ erneut beantragen. App-Inkrement bcb83d1 nach origin/main synchronisiert.
 
 1. Datenbanktests mit temporaeren Tabellen und zurueckgerollten Vereinsfixtures.
 2. Vor permanentem Apply separate Sicherung und Pruefung der Eltern-/Ledgertabellen.
-3. Nur001500 (Belegung) und001600 (Nachrichten) gezielt anwenden; keine fremden
+3. Nur001500 (Belegung),001600 (Nachrichten),001700 (Wochen-Teilflaechen) und
+   001800 (Antrags-Idempotenz) gezielt anwenden; keine fremden
    ausstehenden Migrationen pauschal starten, keine Daten auffrischen.
 4. Live-Fachdaten lesend auf zuordenbare Plaetze, Staff und SFV-Verknuepfungen
    pruefen; fehlende Wettkampf-Mannschaftszuordnungen ausdruecklich pflegen.
@@ -104,3 +105,62 @@ Der erste Bestandsregressionstest der SFV-Wettkampftabelle bestand mit6 Tests
 und130 Assertions. Der Uebersetzungs-Ausgangsstand bestand mit2523 Schluesseln.
 Das sind Ausgangspruefungen, keine Abnahme des neuen Moduls. Neue Sprachfragmente
 werden erst bei Zusammenfuehrung in die gemeinsamen Kataloge eingelesen.
+
+### Integrationsnachlauf
+
+Die oben genannten Implementierungsluecken Wochen-Teilflaeche, historische
+SFV-Zuordnungsvorschau und Neuantrags-Idempotenz sind inzwischen geschlossen.
+Der frische Replay-Rechtecheck verwendet dieselben Sperren und Teamregeln wie
+ein neuer Antrag. Keine neue Freigabe durch einen alten Idempotenzschluessel.
+Mobile-Nachlauf `1c9d552` ist synchronisiert;29 gezielte App-Tests bestanden.
+126 Backend-Unit-Tests/55299 Assertions sowie45 PostgreSQL-Tests/572 Assertions
+fuer API-Replay und historische Zuordnung bestanden. Keine echte Zustellung.
+Aktueller Betriebs-/Abnahmestand: [Nachlauf](CLUBUNIO-PITCH-FOLLOWUP.md),
+gezielte Schritte: [Releaseverfahren](CLUBUNIO-PITCH-RELEASE.md).
+
+### Direkte Wettkampfaenderungen / Direct competition edits
+
+`PitchCompetitionEdits` verbindet ausschliesslich den direkten `FacilityService`-
+Save mit der Platzplanung. Normalisierter Vorher-/Nachhervergleich von Datum,
+Zeit, Platz und Aktivstatus; reine Raum-, Freitext- und gleichwertige Zeitformate
+erzeugen keine neue Konfliktpruefung oder Platznachricht. Bestehende dynamische
+`competitions`-Profilrechte bleiben erhalten und werden bei Belegungsaenderungen
+frisch geprueft. Das erweitert keine strengeren Planner-/Freigaberechte.
+
+Manuelle Saves pruefen normale Konflikte auch bei SFV-verknuepften Quellen.
+Nur der getrennte SFV-Import behaelt seinen autoritativen Sonderpfad. Die
+Projektion verwirft eine Teilflaeche des alten Platzes bereits vor der Pruefung
+des Zielplatzes; nach erfolgreichem Save wird die alte Zuordnung dauerhaft
+geleert und ihre Metadatenrevision erhoeht. Dauer, SFV-/Legacy-IDs, Garderoben
+und weitere nicht bearbeitete Quellfelder bleiben erhalten.
+
+Altbestand ohne Platz oder Zeit bleibt ohne erfundene Mitternachtsbelegung
+editierbar. Unveraenderte Belegung: kein Plannerzugriff. Weiterhin unvollstaendige
+Belegung nach einer Aenderung: Audit, aber keine Belegungsnachricht. Vollstaendige
+Belegung herstellen/reaktivieren: Konfliktpruefung und `created`; bestehende
+Belegung verschieben: `moved`; Platz/Zeit entfernen oder deaktivieren: `cancelled`.
+SFV-`withdrawn` bleibt erhalten. Fehlt das komplette Planner-Schema, bleibt der
+Legacy-Save ohne Plannerintegration nutzbar; keine automatische Nachholung.
+
+Quellsave, Teilflaechenbereinigung, Audit und Staff-Inbox sind eine Transaktion.
+Fanoutfehler rollen alles zurueck. Kein direkter Mail-/Pushversand; bestehende
+DE/EN-Nachrichtenvorlagen und Empfaengerregeln bleiben massgeblich. Planner und
+SFV rufen diesen Adapter nicht auf, daher kein doppelter Ereignispfad.
+
+English: Direct editor grants are preserved, independently of planner approval
+roles. Only actual placement changes trigger normal conflict checks and atomic
+audit/staff notices. Cross-field moves use whole-field geometry before checking
+conflicts and permanently discard the old area after saving. Incomplete legacy
+placements remain editable without invented times: audit only while incomplete,
+created on completion/reactivation, cancelled on loss of placement/deactivation.
+Missing planner schema retains legacy behavior. Existing source IDs, rooms,
+duration and SFV withdrawal metadata are preserved. No provider delivery occurs.
+
+Regression: `tests/Feature/PitchCompetitionEditsTest.php`, ausschliesslich
+PostgreSQL-`pg_temp`, permanente Schreibzugriffe im Test gesperrt. Keine permanente
+Migration, Bestandsaenderung, Bereitstellung oder Commit fuer diese Ergaenzung.
+Lokaler Nachweis:10 Tests/158 Assertions; bestehende Notification-/Kalendertests
+34/199;2589 DE/EN-Schluessel und Platzhalter geprueft. Dynamische Updateprofile,
+widerrufene gecachte Rechte, alte linke/neue rechte Teilflaeche, Originalidentitaet,
+Raum-/Text-No-ops, unvollstaendige Quellen, Anlage/Deaktivierung, Planner-
+Deduplizierung und Rollback bereits erzeugter Inboxzeilen eingeschlossen.

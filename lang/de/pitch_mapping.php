@@ -1,0 +1,30 @@
+<?php
+
+return [
+    'command_description' => 'Historische SFV-Teamverknuepfungen pruefen; Anwendung nur nach expliziter Admin-Bestaetigung.',
+    'confirmation_required' => 'Die Anwendung verlangt --apply und --confirm mit dem Fingerprint der geprueften Vorschau.',
+    'stale' => 'Die Zuordnungsgrundlagen wurden geaendert. Bitte eine neue Vorschau erstellen und pruefen.',
+    'errors_present' => 'Die Vorschau enthaelt Fehler. Es wurden keine Zuordnungen angewendet.',
+    'not_ready' => 'Die Platzplanung ist noch nicht verfuegbar. Es wurden keine Zuordnungen angewendet.',
+    'limit' => 'Maximal 1000 Wettkaempfe pro Vorschau. Bitte den Zeitraum eingrenzen.',
+    'invalid_scope' => 'Bitte einen gueltigen Verein, ein Adminkonto, einen Zeitraum und eine aktivierte Sprache angeben.',
+    'denied' => 'Diese Aktion verlangt einen aktiven Admin des ausgewaehlten Vereins.',
+    'summary' => 'Bereit: :ready. Uebersprungen: :skipped. Fehler: :error.',
+    'fingerprint' => 'Vorschau-Fingerprint: :fingerprint',
+    'applied' => 'Zugeordnete Wettkaempfe: :count. Keine Benachrichtigungen versendet.',
+    'headers' => ['Wettkampf', 'SFV-Match-ID', 'Datum', 'Teamsaison-IDs', 'Ergebnis'],
+    'reasons' => [
+        'no_match_id' => 'Keine bestehende SFV-Match-ID.',
+        'existing_mapping' => 'Bestehende Teamzuordnung bleibt erhalten.',
+        'local_configuration' => 'Bestehende lokale Konfiguration bleibt erhalten, auch explizit geleerte Zuordnungen.',
+        'inactive_competition' => 'Inaktiver Wettkampf bleibt erhalten.',
+        'ambiguous_match' => 'Mehrdeutige Quelle oder Wettkampf-Match-ID.',
+        'missing_source' => 'Kein gespeichertes SFV-Quellspiel. Kein Abruf oder Import.',
+        'source_date_mismatch' => 'Quelldatum fehlt oder weicht vom Wettkampftag in Europe/Zurich ab.',
+        'invalid_source_teams' => 'Zwei verschiedene positive SFV-Team-IDs sind erforderlich.',
+        'no_local_team' => 'Kein lokales Team mit diesen SFV-IDs. Namen werden nicht verwendet.',
+        'ambiguous_team' => 'Mehr als eine aktive Teamsaison passt zu einer SFV-Team-ID und dem Datum.',
+        'missing_team_season' => 'Ein lokales SFV-Team hat keine aktive Zuordnung in einer datierten Saison am Spieltag.',
+        'deterministic_match' => 'Eindeutige SFV-ID und Datum-Saison-Zuordnung; bereit zur Bestaetigung.',
+    ],
+];

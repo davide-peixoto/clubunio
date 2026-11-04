@@ -120,6 +120,29 @@ class PitchPlanningPageTest extends TestCase
         }
     }
 
+    public function test_friendly_form_key_survives_validation_and_conflict_but_new_dialog_gets_new_key(): void
+    {
+        $component = Livewire::test(PitchPlanningHarness::class)->call('createEntry', 'request');
+        $key = $component->get('friendlyRequestId');
+        $this->assertTrue(\Illuminate\Support\Str::isUuid($key));
+        PitchPlanningHarness::$failure = ValidationException::withMessages(['opponent' => 'Required']);
+        $component->call('saveEntry')->assertSet('friendlyRequestId', $key);
+        PitchPlanningHarness::$failure = new HttpException(409);
+        $component->call('saveEntry')->assertHasErrors('save')->assertSet('friendlyRequestId', $key);
+        PitchPlanningHarness::$failure = null;
+        $component->call('saveEntry')->assertSet('friendlyRequestId', null)->assertSet('editor', null);
+        $component->call('createEntry', 'request');
+        $this->assertNotSame($key, $component->get('friendlyRequestId'));
+        $component->call('closeEditor')->call('createEntry', 'manual')->assertSet('friendlyRequestId', null);
+    }
+
+    public function test_friendly_key_cannot_be_replaced_by_browser(): void
+    {
+        $component = Livewire::test(PitchPlanningHarness::class)->call('createEntry', 'request');
+        $this->expectException(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
+        $component->set('friendlyRequestId', 'forged-request-key');
+    }
+
     public function test_english_labels_do_not_translate_user_content(): void
     {
         app()->setLocale('en');
@@ -215,6 +238,13 @@ class PitchPlanningHarness extends PitchPlanning
     public static bool $manage = true;
 
     public static function canAccess(): bool { return true; }
+
+    protected function submitFriendlyRequest(array $input): array
+    {
+        if (! $this->friendlyRequestId) throw new \LogicException('Missing form request key');
+        if (array_key_exists('request_id', $input)) throw new \LogicException('Key must not reach domain input');
+        return $this->callService('requestFriendly', $input);
+    }
 
     public function mount(): void
     {

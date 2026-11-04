@@ -128,7 +128,13 @@ class ApiModulesTest extends TestCase
         $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubora')->get(['table_name', 'column_name'])->groupBy('table_name');
         foreach (array_intersect_key($this->registry->definitions(), ApiModuleDefinitions::all()) as $key => $definition) {
             $table = (new $definition['model'])->getTable();
-            $this->assertSame([], array_values(array_diff($definition['read_fields'], $columns->get(Str::after($table, 'clubora.'))->pluck('column_name')->all())), $key);
+            $fields = $definition['read_fields'];
+            if ($key === 'training_slots' && ! app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->ready()) {
+                // Optional 001700 metadata is projected as SQL NULL before deployment.
+                $fields = array_values(array_diff($fields, ['area_id']));
+                $this->assertCount(0, $this->registry->module($key)->query($this->context)->get());
+            }
+            $this->assertSame([], array_values(array_diff($fields, $columns->get(Str::after($table, 'clubora.'))->pluck('column_name')->all())), $key);
             $this->assertSame([], $this->registry->list($this->context, $key)['data'], $key);
         }
     }

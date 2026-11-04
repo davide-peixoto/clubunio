@@ -34,6 +34,8 @@ class MobilePitchControllerTest extends TestCase
         $db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $db->statement('CREATE TABLE clubora.tenants (id INTEGER PRIMARY KEY, name TEXT)');
         $db->statement('CREATE TABLE clubora.mobile_sessions (id TEXT PRIMARY KEY)');
+        $db->statement('CREATE TABLE clubora.pitch_request_idempotency (tenant_id INTEGER, account_id INTEGER, key_hash TEXT, payload_hash TEXT, response_encrypted TEXT NOT NULL, PRIMARY KEY(tenant_id,account_id,key_hash))');
+        $db->statement('CREATE TABLE clubora.pitch_test_effects (id INTEGER PRIMARY KEY, kind TEXT)');
         $db->table('clubora.tenants')->insert([['id' => 1, 'name' => 'Synthetic'], ['id' => 2, 'name' => 'Other']]);
         $db->table('clubora.mobile_sessions')->insert(['id' => 'synthetic-session']);
         Http::preventStrayRequests();
@@ -48,18 +50,20 @@ class MobilePitchControllerTest extends TestCase
         $this->sessions = new class {
             public int $calls = 0;
             public bool $revokeOnWrite = false;
+            public int $accountId = 17;
             public function authenticate($request): Account {
                 $this->calls++;
                 abort_unless($request->bearerToken() === 'personal-test-token', 401);
                 abort_if($this->revokeOnWrite && $this->calls > 1, 401);
                 $request->attributes->set('mobile.session', (object) ['id' => 'synthetic-session']);
-                return (new Account)->forceFill(['id' => 17, 'active' => true, 'api_only' => false, 'display_name' => 'Synthetic']);
+                return (new Account)->forceFill(['id' => $this->accountId, 'active' => true, 'api_only' => false, 'display_name' => 'Synthetic']);
             }
         };
         $this->app->instance(MobileSessions::class, $this->sessions);
         $this->access = new class {
             public int $calls = 0;
-            public function enter($actor, $tenant): void { $this->calls++; abort_unless($tenant->id === 1, 403); }
+            public array $tenants = [1];
+            public function enter($actor, $tenant): void { $this->calls++; abort_unless(in_array($tenant->id, $this->tenants, true), 403); }
             public function teams($actor, $tenant) { return new class { public function exists(): bool { return false; } }; }
         };
         $this->app->instance(MobileAccess::class, $this->access);
@@ -74,16 +78,23 @@ class MobilePitchControllerTest extends TestCase
             public array $calls = [];
             public ?int $failure = null;
             public bool $visible = true;
+            public bool $denyReplay = false;
+            public bool $recordEffects = false;
+            public int $replayChecks = 0;
             public array $result = ['key' => 'training:3:2026-11-04', 'revision' => 'opaque-v2', 'status' => 'approved'];
             public function canView($actor, $tenant): bool { return $this->visible; }
             public function options(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function calendar(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function requestFriendly(...$args): array { return $this->call(__FUNCTION__, $args); }
+            public function authorizeFriendlyRequest(...$args): void { $this->replayChecks++; abort_if($this->denyReplay, 403); }
             public function move(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function decide(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function configureCompetition(...$args): array { return $this->call(__FUNCTION__, $args); }
             private function call($method, $args): array {
                 $this->calls[] = [$method, $args];
+                if ($method === 'requestFriendly' && $this->recordEffects) {
+                    DB::connection('clubunio')->table('clubora.pitch_test_effects')->insert([['kind' => 'request'], ['kind' => 'notification']]);
+                }
                 if ($this->failure) abort($this->failure);
                 return $this->result;
             }
@@ -170,14 +181,16 @@ class MobilePitchControllerTest extends TestCase
 
     public function test_request_reauthenticates_and_does_not_allow_authority_mass_assignment(): void
     {
-        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Unchanged free text', 'notes' => 'Original note'];
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Unchanged free text', 'notes' => 'Original note', 'request_id' => 'synthetic-request-1'];
         unset($body['duration_minutes']);
         $this->domain->result = ['key' => 'request:5', 'status' => 'pending', 'revision' => '1'];
         $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertOk()->assertJsonPath('data.status', 'pending');
         $this->assertSame(2, $this->sessions->calls);
         $this->assertSame(2, $this->access->calls);
         $this->assertSame('requestFriendly', $this->domain->calls[0][0]);
-        $this->assertSame($body, $this->domain->calls[0][1][2]);
+        $expected = $body + ['duration_minutes' => 120];
+        unset($expected['request_id']);
+        $this->assertEquals($expected, $this->domain->calls[0][1][2]);
         foreach (['status' => 'approved', 'tenant_id' => 2, 'actor_id' => 99, 'sfv_authoritative' => true] as $key => $value) {
             $this->postJson($this->base.'/pitch-planning/requests', $body + [$key => $value])->assertUnprocessable();
         }
@@ -196,6 +209,91 @@ class MobilePitchControllerTest extends TestCase
         $this->domain->failure = 409;
         $this->postJson($this->base.'/pitch-planning/move', $body)->assertConflict()->assertJsonPath('error.code', 'conflict');
         $this->assertSame(0, DB::connection('clubunio')->transactionLevel());
+    }
+
+    public function test_friendly_replay_returns_original_and_never_duplicates_transactional_effects(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic', 'request_id' => 'retry-original-1'];
+        $this->domain->recordEffects = true;
+        $first = $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertOk()->json();
+        $this->domain->result = ['key' => 'request:99', 'revision' => 'new-result'];
+        $this->postJson($this->base.'/pitch-planning/requests', array_reverse($body, true))
+            ->assertOk()->assertExactJson($first)->assertHeader('Idempotency-Replayed', 'true');
+        $this->assertCount(1, $this->domain->calls);
+        $this->assertSame(1, $this->domain->replayChecks);
+        $this->assertSame(2, DB::connection('clubunio')->table('clubora.pitch_test_effects')->count());
+        $row = DB::connection('clubunio')->table('clubora.pitch_request_idempotency')->first();
+        $this->assertSame(hash('sha256', $body['request_id']), $row->key_hash);
+        $this->assertStringNotContainsString($first['data']['key'], $row->response_encrypted);
+        $this->postJson($this->base.'/pitch-planning/requests', array_replace($body, ['opponent' => 'Changed']))->assertConflict();
+        $this->assertCount(1, $this->domain->calls);
+    }
+
+    public function test_friendly_keys_are_scoped_to_account_and_tenant_and_defaults_are_canonical(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic', 'request_id' => 'scoped-request-1'];
+        $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertOk();
+        $minimal = $body;
+        unset($minimal['area_id'], $minimal['duration_minutes']);
+        $minimal['team_season_id'] = '9';
+        $this->postJson($this->base.'/pitch-planning/requests', $minimal)->assertOk()->assertHeader('Idempotency-Replayed', 'true');
+        $this->sessions->accountId = 18;
+        $this->postJson($this->base.'/pitch-planning/requests', $body)->assertOk()->assertHeaderMissing('Idempotency-Replayed');
+        $this->access->tenants = [1, 2];
+        $this->postJson('/api/mobile/v1/clubs/2/pitch-planning/requests', $body)->assertOk()->assertHeaderMissing('Idempotency-Replayed');
+        $this->assertCount(3, $this->domain->calls);
+        $this->assertSame(3, DB::connection('clubunio')->table('clubora.pitch_request_idempotency')->count());
+    }
+
+    public function test_friendly_replay_rechecks_current_rights_and_session(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic', 'request_id' => 'revoked-request-1'];
+        $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertOk();
+        $this->domain->denyReplay = true;
+        $this->postJson($this->base.'/pitch-planning/requests', $body)->assertForbidden();
+        $this->domain->denyReplay = false;
+        $this->sessions->revokeOnWrite = true;
+        $this->postJson($this->base.'/pitch-planning/requests', $body)->assertUnauthorized();
+        $this->assertCount(1, $this->domain->calls);
+    }
+
+    public function test_friendly_failed_transaction_rolls_back_effects_and_can_retry_same_key(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic', 'request_id' => 'rollback-request-1'];
+        $this->domain->recordEffects = true;
+        $this->domain->failure = 503;
+        $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertStatus(503);
+        $db = DB::connection('clubunio');
+        $this->assertSame(0, $db->table('clubora.pitch_test_effects')->count());
+        $this->assertSame(0, $db->table('clubora.pitch_request_idempotency')->count());
+        $this->domain->failure = null;
+        $this->postJson($this->base.'/pitch-planning/requests', $body)->assertOk();
+        $this->assertSame(2, $db->table('clubora.pitch_test_effects')->count());
+        $this->assertSame(1, $db->table('clubora.pitch_request_idempotency')->count());
+    }
+
+    public function test_friendly_requires_valid_key_and_ledger_before_mutation(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic'];
+        foreach ([null, '', 'short', str_repeat('x', 121), 'invalid key', "valid\nkey", ['array']] as $id) {
+            $this->personal()->postJson($this->base.'/pitch-planning/requests', $body + ['request_id' => $id])->assertUnprocessable();
+        }
+        $this->postJson($this->base.'/pitch-planning/requests', $body)->assertUnprocessable();
+        DB::connection('clubunio')->statement('DROP TABLE clubora.pitch_request_idempotency');
+        $this->postJson($this->base.'/pitch-planning/requests', $body + ['request_id' => 'valid-key-1'])->assertStatus(503);
+        $this->assertSame([], $this->domain->calls);
+    }
+
+    public function test_friendly_response_encoding_failure_rolls_back_request_and_notification(): void
+    {
+        $body = $this->placement() + ['team_season_id' => 9, 'opponent' => 'Synthetic', 'request_id' => 'encoding-failure-1'];
+        $this->domain->recordEffects = true;
+        $this->domain->result['title'] = "\xB1\x31";
+        $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertStatus(500);
+        $db = DB::connection('clubunio');
+        $this->assertSame(0, $db->table('clubora.pitch_test_effects')->count());
+        $this->assertSame(0, $db->table('clubora.pitch_request_idempotency')->count());
+        $this->assertSame(0, $db->transactionLevel());
     }
 
     public function test_review_forwards_exact_decision_and_cannot_bypass_domain_denial(): void
@@ -301,10 +399,10 @@ class MobilePitchControllerTest extends TestCase
         $this->app->forgetInstance(PitchPlanningProjection::class);
         $this->assertInstanceOf(PitchPlanningService::class, app(PitchPlanningService::class));
         foreach ([MobilePitchController::class, MobilePitchReady::class, MobilePitchDocumentation::class,
-            \App\ClubUnio\Mobile\MobilePitchRoutes::class, PitchPlanningProjection::class] as $class) {
+            \App\ClubUnio\Mobile\MobilePitchRoutes::class, \App\ClubUnio\Services\PitchFriendlyRequestService::class, PitchPlanningProjection::class] as $class) {
             $this->assertInstanceOf($class, app($class));
         }
-        foreach (['canView' => 2, 'options' => 2, 'calendar' => 3, 'requestFriendly' => 3, 'move' => 4, 'decide' => 4, 'configureCompetition' => 4] as $method => $count) {
+        foreach (['canView' => 2, 'options' => 2, 'calendar' => 3, 'requestFriendly' => 3, 'authorizeFriendlyRequest' => 3, 'move' => 4, 'decide' => 4, 'configureCompetition' => 4] as $method => $count) {
             $reflection = new \ReflectionMethod(PitchPlanningService::class, $method);
             $this->assertTrue($reflection->isPublic());
             $this->assertSame($count, $reflection->getNumberOfRequiredParameters());

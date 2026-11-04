@@ -67,16 +67,20 @@ final class MobilePushOutbox
     }
 
     /** Explicit worker operation, never called from message/account requests. */
-    public function deliverOne(): bool
+    public function deliverOne(?string $onlyId = null): bool
     {
+        if ($onlyId !== null && ! Str::isUuid($onlyId)) throw new \InvalidArgumentException('A valid push outbox UUID is required');
         if (! config('clubunio-mobile-push.enabled', false) || ! config('clubunio-mobile-push.delivery_enabled', false)) return false;
         $db = DB::connection('clubunio');
         if ($db->transactionLevel() > 0 && ! app()->environment('testing')) throw new \LogicException('Push worker cannot run inside a business transaction');
         // A crashed/uncertain sender is not automatically retried: provider may already have accepted it.
         $db->table('clubora.mobile_push_outbox')->where('state', 'sending')->where('lease_until', '<', now()->toIso8601String())
+            ->when($onlyId !== null, fn ($query) => $query->where('id', $onlyId))
             ->update(['state' => 'attention', 'outcome_code' => 'delivery_uncertain', 'finished_at' => now()->toIso8601String()]);
-        $claimed = $db->transaction(function () use ($db) {
-            $row = $db->table('clubora.mobile_push_outbox')->where('state', 'pending')->orderBy('created_at')->lock('FOR UPDATE SKIP LOCKED')->first();
+        $claimed = $db->transaction(function () use ($db, $onlyId) {
+            $row = $db->table('clubora.mobile_push_outbox')->where('state', 'pending')
+                ->when($onlyId !== null, fn ($query) => $query->where('id', $onlyId))
+                ->orderBy('created_at')->lock('FOR UPDATE SKIP LOCKED')->first();
             if (! $row) return null;
             $db->table('clubora.mobile_push_outbox')->where('id', $row->id)->update(['state' => 'sending', 'lease_until' => now()->addMinute()->toIso8601String()]);
             return $row;

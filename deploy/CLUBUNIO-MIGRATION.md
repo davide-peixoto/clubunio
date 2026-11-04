@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## Platzbelegung und Trainingsspielanfragen (04.11.2026)
+
+Gezieltes Paket001500-001800: Belegung/Teilflaechen, Ereignisse und DE/EN-Vorlagen,
+optionale Wochenvorlagen-Teilflaeche sowie Antrags-Idempotenz. Keine automatische
+Bestandszuordnung oder Rechtevergabe. Sicherung, Eltern-/Ledgervergleich und
+Code-Rollback mit erhaltener additiver Historie sind verbindlich.
+Plan: [Platzplanung](CLUBUNIO-PITCH-PLANNING.md),
+[Integrationsstand und offene Abnahme](CLUBUNIO-PITCH-FOLLOWUP.md),
+[gezieltes Releaseverfahren](CLUBUNIO-PITCH-RELEASE.md).
+Echte Push-Zustellung und angemeldete Sichtpruefung noch nicht abgenommen.
+
 ## DE/EN Fachoberflaechen und Sprachvarianten (04.11.2026)
 
 Historische514 Beschriftungen sowie Fachdialoge/Ansichten/Fehlertexte nachgezogen.

@@ -190,11 +190,20 @@ final class MobileTeamsData
     {
         $flag = app(SignageService::class)->trainingVariant($tenant);
         $options = $this->table($tenant, 'training_options')->where('active', true)->pluck('name', 'id');
-        return $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)->where($flag, true)
-            ->orderBy('weekday_id')->orderBy('starts_at')->orderBy('id')->get()->map(fn ($r) => [
+        $slots = $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)->where($flag, true)
+            ->orderBy('weekday_id')->orderBy('starts_at')->orderBy('id')->get();
+        $areaIds = $slots->pluck('area_id')->filter()->unique();
+        $areas = $areaIds->isEmpty() ? collect() : $this->table($tenant, 'pitch_areas')->whereIn('id', $areaIds)->get()->keyBy('id');
+        return $slots->map(function ($r) use ($id, $options, $areas) {
+            $area = $areas->get($r->area_id ?? null);
+            if ($area && (int) $area->field_id !== (int) $r->field_id) $area = null;
+            return [
                 'TrainingID' => (int) $r->id, 'TeamSaisonID' => (int) $id, 'Wochentag' => $options->get($r->weekday_id, ''),
                 'ZeitVon' => $r->starts_at, 'ZeitBis' => $r->ends_at, 'SommerWinter' => $options->get($r->period_id, ''),
                 'Feld' => $options->get($r->field_id, ''), 'Halle' => $r->hall,
-                'trainingAll' => (bool) $r->all_fields, 'trainingOhneHauptplatz' => (bool) $r->without_main, 'trainingNurKunstrasen' => (bool) $r->synthetic_only])->all();
+                'field_id' => $r->field_id ? (int) $r->field_id : null, 'area_id' => $area ? (int) $area->id : null,
+                'area_name' => $area ? app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->label($area) : null,
+                'trainingAll' => (bool) $r->all_fields, 'trainingOhneHauptplatz' => (bool) $r->without_main, 'trainingNurKunstrasen' => (bool) $r->synthetic_only];
+        })->all();
     }
 }

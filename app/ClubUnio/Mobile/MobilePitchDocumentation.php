@@ -33,7 +33,9 @@ final class MobilePitchDocumentation
                 'fields' => $this->listOf('Field'), 'entries' => $this->listOf('Entry'), 'capabilities' => $this->ref('Capabilities')]),
             'Options' => $this->object(['fields' => $this->listOf('Field'), 'teams' => $this->listOf('Team'), 'capabilities' => $this->ref('Capabilities')]),
             'FriendlyRequest' => $this->object($placement + ['team_season_id' => $id, 'opponent' => $text + ['maxLength' => 255],
-                'notes' => $text + ['nullable' => true, 'maxLength' => 2000]], ['field_id', 'date', 'starts_at', 'team_season_id', 'opponent']),
+                'request_id' => $text + ['minLength' => 8, 'maxLength' => 120, 'pattern' => '^[A-Za-z0-9._:-]{8,120}$',
+                    'description' => 'Stable client key for this draft. Reuse unchanged after uncertain outcomes; scoped to current tenant and account.'],
+                'notes' => $text + ['nullable' => true, 'maxLength' => 2000]], ['field_id', 'date', 'starts_at', 'team_season_id', 'opponent', 'request_id']),
             'Move' => $this->object($placement + ['key' => $text + ['maxLength' => 160], 'revision' => $revision],
                 ['field_id', 'date', 'starts_at', 'duration_minutes', 'key', 'revision']),
             'Review' => $this->object(['revision' => $revision, 'decision' => $text + ['enum' => ['approved', 'rejected']]]),
@@ -75,17 +77,21 @@ final class MobilePitchDocumentation
             $responses = ['200' => ['description' => 'Saved entry or authorized projection.', 'content' => [
                 'application/json' => ['schema' => $this->object(['data' => $this->ref($result)])],
             ]]];
+            if ($name === 'request') $responses['200']['headers']['Idempotency-Replayed'] = [
+                'description' => 'Present and true when returning the original successful result, without repeating the request or notifications.',
+                'schema' => ['type' => 'string', 'enum' => ['true']],
+            ];
             foreach ([401, 403, 404, 409, 422, 429, 503] as $status) {
                 $responses[(string) $status] = ['description' => match ($status) {
                     401 => 'Personal session missing, expired or revoked.', 403 => 'Current personal/domain permission denied.',
-                    404 => 'Unknown or tenant-scoped record.', 409 => 'Stale revision or occupancy conflict. Reload; do not blindly retry.',
+                    404 => 'Unknown or tenant-scoped record.', 409 => 'Stale revision, occupancy conflict, or a request_id reused with a different payload. Never a successful replay.',
                     422 => 'Invalid or unknown input fields.', 429 => 'Rate limited.', 503 => 'Feature or schema unavailable.',
                 }, 'content' => ['application/json' => ['schema' => $this->ref('Error')]]];
             }
             $operation = ['operationId' => 'mobile_pitch_'.$name, 'tags' => ['Personal pitch planning'],
                 'summary' => str_replace('_', ' ', ucfirst($name)), 'parameters' => $parameters, 'responses' => $responses,
                 'description' => 'Personal mobile session only. Current core permissions apply; capabilities are presentation hints, not authority. '.match ($name) {
-                    'request' => 'Trainer/TL request only their assigned active teams. Pending, never auto-approved. Only this action can enqueue new-request email to admin/office.',
+                    'request' => 'Trainer/TL request only their assigned active teams. Pending, never auto-approved. Required request_id is scoped to tenant and account; identical validated payload replays the original result with fresh authorization, differing payload returns 409. Ledger, request and notification intent commit atomically. Only the first successful submission can enqueue new-request email to admin/office. Missing keys return 422; web requests use their own stable form key.',
                     'review' => 'Admin/office only; trainers and technical leads cannot approve. Approval rechecks occupancy.',
                     'competition_teams' => 'Admin/office with current competition-update permission only. Echo the opaque revision. Team-season mappings replace current assignments and are tenant-validated by configureCompetition; no name inference, permission grant or modification of SFV source records.',
                     'move' => 'Admin/office only. Training changes one dated occurrence, not its weekly base. Successful moves enqueue staff in-app/push, never email.',
@@ -96,7 +102,7 @@ final class MobilePitchDocumentation
             $paths[$root.$path][$method] = $operation;
         }
         return ['openapi' => '3.0.3', 'info' => ['title' => 'ClubUnio Personal Pitch Planning API', 'version' => '1.0.0',
-            'description' => 'Development contract, disabled until explicit release. No automatic idempotency replay for personal writes. Reload after uncertain outcomes. Weekly training DTOs stay unchanged.'],
+            'description' => 'Development contract, disabled until explicit release. Friendly requests require request_id for safe replay; other writes retain revision semantics. Weekly training DTOs stay unchanged.'],
             'servers' => [['url' => '/api/mobile/v1']], 'security' => [['personalBearer' => []]], 'paths' => $paths,
             'components' => ['securitySchemes' => ['personalBearer' => ['type' => 'http', 'scheme' => 'bearer',
                 'description' => 'Personal mobile session token. Not an integration token, web cookie or administrator impersonation.']], 'schemas' => $schemas]];

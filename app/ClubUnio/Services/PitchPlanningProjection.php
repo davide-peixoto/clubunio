@@ -55,6 +55,7 @@ class PitchPlanningProjection
             // into it, while an outgoing exception must suppress its original occurrence.
             $exceptions = $this->table('pitch_training_exceptions', $tenant)->whereIn('training_slot_id', $slots->pluck('id'))
                 ->where(fn ($query) => $query->whereBetween('original_date', [$queryFrom, $to])->orWhereBetween('date', [$queryFrom, $to]))->get();
+            $areas = $this->table('pitch_areas', $tenant)->whereIn('id', $slots->pluck('area_id')->merge($exceptions->pluck('area_id'))->filter()->unique())->get()->keyBy('id');
             foreach ($slots as $slot) {
                 $dates = [];
                 for ($day = Time::parse($queryFrom); $day->toDateString() <= $to; $day = $day->addDay()) $dates[] = $day->toDateString();
@@ -64,7 +65,7 @@ class PitchPlanningProjection
                     if (! $this->occurs($slot, $original)) continue;
                     $exception = $own->get($original);
                     if ($exception?->cancelled) continue;
-                    $entry = $this->training($slot, $original, $exception);
+                    $entry = $this->training($slot, $original, $exception, $areas);
                     if ($entry) $entries[] = $entry;
                 }
             }
@@ -95,14 +96,23 @@ class PitchPlanningProjection
             && $slot->weekday?->active && (int) $slot->weekday->code === Time::parse($date)->dayOfWeek + 1;
     }
 
-    public function training(TrainingSlot $slot, string $original, ?object $exception = null): ?array
+    public function training(TrainingSlot $slot, string $original, ?object $exception = null, ?Collection $areas = null): ?array
     {
         if (! $slot->starts_at || ! $slot->ends_at || (! $slot->field_id && ! $exception)) return null;
         $duration = (int) Time::parse($slot->starts_at)->diffInMinutes(Time::parse($slot->ends_at), false);
         if ($duration <= 0) $duration += 1440;
+        $field = $exception?->field_id ?? $slot->field_id;
+        // A dated null allocation explicitly means the whole field, not inheritance.
+        $area = $exception ? $exception->area_id : $slot->area_id;
+        if ($area) {
+            $matches = $areas !== null
+                ? ($areas->get($area)?->field_id == $field && $areas->get($area)?->tenant_id == $slot->tenant_id)
+                : app(PitchWeeklyAreas::class)->matches($slot->tenant_id, $field, $area);
+            if (! $matches) $area = null;
+        }
         return $this->entry('training', $slot->id, $exception?->date ?? $original,
             $exception?->starts_at ?? $slot->starts_at, $exception?->duration_minutes ?? $duration,
-            $exception?->field_id ?? $slot->field_id, $exception?->area_id,
+            $field, $area,
             [$slot->team_season_id], $slot->teamSeason?->team?->name ?? '', 'approved',
             $slot->revision.':'.($exception?->revision ?? 0), $original);
     }
@@ -124,9 +134,13 @@ class PitchPlanningProjection
     {
         $entries = collect($this->entries($tenant, $date, $date, $period))->where('source', 'training')->where('date', $date);
         $slots = TrainingSlot::where('tenant_id', $tenant->id)->whereIn('id', $entries->pluck('source_id'))->with('teamSeason.team')->get()->keyBy('id');
-        return $entries->map(function ($entry) use ($slots) {
+        $areas = $this->table('pitch_areas', $tenant)->whereIn('id', $entries->pluck('area_id')->filter()->unique())->get()->keyBy('id');
+        return $entries->map(function ($entry) use ($slots, $areas) {
             $slot = clone $slots[$entry['source_id']];
             $slot->field_id = $entry['field_id'];
+            $slot->area_id = $entry['area_id'];
+            $slot->pitch_area_name = ($area = $areas->get($entry['area_id'])) ? app(PitchWeeklyAreas::class)->label($area) : null;
+            $slot->unsetRelation('field');
             $slot->starts_at = $entry['starts_at'];
             $slot->ends_at = $entry['ends_at'];
             return $slot;

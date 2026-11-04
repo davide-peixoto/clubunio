@@ -46,6 +46,7 @@ class ContributionTrainingService
                     $rules += ['category' => ['required', Rule::in(['period', 'weekday', 'field', 'room', 'side'])], 'code' => ['required', 'string', 'max:30', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('clubunio.clubora.training_options')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $input['category'] ?? ''))]];
                 }
             } else {
+                $rules['area_id'] = 'sometimes|nullable|integer|min:1';
                 $rules += ['team_season_id' => ['required', 'integer', $exists('team_seasons')], 'starts_at' => 'required|date_format:H:i:s', 'ends_at' => 'required|date_format:H:i:s|after:starts_at', 'hall' => 'nullable|string|max:255'];
                 foreach (['period', 'weekday', 'field', 'room', 'side'] as $category) {
                     $rules[$category.'_id'] = [in_array($category, ['period', 'weekday']) ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->where('active', true))];
@@ -63,6 +64,9 @@ class ContributionTrainingService
                 throw ValidationException::withMessages(['form' => __('Unbekannte oder geschützte Felder.')]);
             }
             $data = Validator::make($input, $rules)->validate();
+            if ($model === TrainingSlot::class) {
+                $data = app(PitchWeeklyAreas::class)->forSave($tenant, $record, $data);
+            }
             app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
             if ($id && (bool) $record->active !== (bool) $data['active']) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $data['active'] ? 'restore' : 'deactivate');

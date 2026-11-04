@@ -4,6 +4,8 @@ namespace App\ClubUnio\Pages;
 
 use App\ClubUnio\Pages\Components\PitchPlanningCalendar;
 use App\ClubUnio\Services\PitchPlanningService;
+use App\ClubUnio\Services\PitchFriendlyRequestService;
+use Illuminate\Support\Str;
 use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -37,6 +39,8 @@ class PitchPlanning extends Page
     public ?string $editor = null;
     #[Locked]
     public ?string $loadError = null;
+    #[Locked]
+    public ?string $friendlyRequestId = null;
 
     public static function getNavigationGroup(): ?string { return 'Anlagen & Kommunikation'; }
     public static function getNavigationIcon(): string { return 'heroicon-o-calendar-days'; }
@@ -127,6 +131,7 @@ class PitchPlanning extends Page
         abort_unless($this->capability($kind === 'request' ? 'request' : 'manage'), 403);
         $this->selected = null;
         $this->editor = $kind;
+        $this->friendlyRequestId = $kind === 'request' ? (string) Str::uuid() : null;
         $this->form = ['field_id' => $this->options['fields'][0]['id'] ?? null, 'area_id' => null,
             'team_season_id' => $this->options['teams'][0]['id'] ?? null,
             'date' => $this->date, 'starts_at' => '18:00', 'duration_minutes' => 120,
@@ -194,6 +199,7 @@ class PitchPlanning extends Page
     public function closeEditor(): void
     {
         $this->editor = null;
+        $this->friendlyRequestId = null;
         $this->selected = null;
         $this->selectedArea = null;
         $this->form = [];
@@ -234,11 +240,22 @@ class PitchPlanning extends Page
                 } else {
                     $this->callService('move', $this->selected['key'], $input + ['revision' => $this->selected['revision']]);
                 }
+            } elseif ($this->editor === 'request') {
+                $this->submitFriendlyRequest(array_intersect_key($input, array_flip([
+                    'field_id', 'area_id', 'date', 'starts_at', 'duration_minutes', 'team_season_id', 'opponent', 'notes',
+                ])));
             } else {
-                $method = match ($this->editor) { 'request' => 'requestFriendly', 'block' => 'saveBlock', 'manual' => 'createManual', default => abort(422) };
+                $method = match ($this->editor) { 'block' => 'saveBlock', 'manual' => 'createManual', default => abort(422) };
                 $this->callService($method, $input);
             }
         });
+    }
+
+    protected function submitFriendlyRequest(array $input): array
+    {
+        abort_unless($this->friendlyRequestId, 409);
+        return app(PitchFriendlyRequestService::class)->submit(
+            Filament::auth()->user(), Filament::getTenant(), $input, $this->friendlyRequestId)['data'];
     }
 
     public function decideEntry(string $decision): void
