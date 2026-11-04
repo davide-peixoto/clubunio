@@ -11,6 +11,10 @@ bleiben unveraendert. Keine Datenmigration oder Rechteaenderung.
 Release:20261104-clubunio-language-autoswitch. Rueckweg:languages-reviewed-v2.
 Gezielte Sprachtests:5 erfolgreich/40 Assertions,2 DB-Opt-in-Tests ausgelassen;
 2523 DE-/EN-Katalogschluessel geprueft.
+Angemeldet auf ClubUnio DE->EN und EN->DE allein durch Auswahl bestaetigt;
+Settings/App-URL bleibt erhalten, kein Bestaetigungsbutton. Urspruengliche
+Benutzersprache Englisch wiederhergestellt. Screenshot unversioniert:
+storage/app/language-autoswitch.png.
 
 - Die historische Liste mit 514 PHP-Beschriftungen ist vollstaendig im gemeinsamen
   DE-/EN-Katalog enthalten. Zusaetzlich Fachdialoge, Fehlertexte, HTML/PDF-Ansichten,
