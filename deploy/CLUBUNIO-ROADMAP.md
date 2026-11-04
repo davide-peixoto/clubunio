@@ -1,5 +1,28 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Neue Anforderung: Webchat (04.11.2026)
+
+Chat mit fachlicher App-Paritaet in der normalen ClubUnio-Shell, gemeinsamer
+Datenbasis und Pushweg; komfortabler Admin-/Backofficeversand mit Vorschau.
+Gezielte Kommunikationsrechte statt globaler Adminfreigabe oder Einblick in
+fremde Direktchats. Anforderung aufgenommen, noch nicht implementiert.
+Funktionsmatrix und Pakete: [Webchat](CLUBUNIO-WEB-CHAT.md).
+
+## Aufgenommene Pendenzen Platzplanung (04.11.2026)
+
+- [ ] Angemeldete Desktop-/Mobil-Sichtpruefung nachholen; Benutzer aktuell ohne Zugriff.
+- [ ] Native Platzplanungsfreigabe und echte App-Abnahme durchfuehren.
+- [ ] Firebase/FCM/APNs konfigurieren, eigene Geraetebindung und isolierten Push testen.
+- [ ] Testmail fuer neue Anfragen pruefen; keine E-Mail bei blossen Status-/Platzwechseln.
+- [ ] Sieben mehrdeutige SFV-Zuordnungen pruefen; erst neue Vorschau bestaetigen, kein blindes Apply.
+- [ ] Teilflaechen/Trainingszuordnungen, bestehende Sperren und Konflikte fachlich pruefen.
+- [ ] Saisonbezogene Mannschaftsauswahl und Bezeichnungen in der Plantafel optimieren.
+- [ ] Einmaligen Datenbankfehler im Plattform-Releasegate bei Wiederholung mit sicheren Diagnosen untersuchen.
+
+Webrelease aktiv; Status, Nachweise und Migrationsgrenzen:
+[Platzplanungs-Nachlauf](CLUBUNIO-PITCH-FOLLOWUP.md). Keine automatische
+Aenderung von Bestandszuordnungen, Benutzerrechten oder PHPMaker DEV/PROD.
+
 ## DE/EN Fachoberflaechen (04.11.2026)
 
 514 Bestandslabels, Fachdialoge, Lookup-Anzeigevarianten und Empfaengersprachen
