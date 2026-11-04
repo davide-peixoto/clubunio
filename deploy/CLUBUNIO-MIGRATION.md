@@ -1008,3 +1008,13 @@ Begrenzte serverseitige Namenssuche ersetzt die personenbezogene Abfrageschleife
 DEV20261104-clubunio-direct-contacts-v1 aus956af46; Rollback language-policy-v1.
 App640/640, Backend272 Kernelchecks und56/896 Bestandsregression grün.
 Abnahme und frische Antwortrechte: MOBILE-DIRECT-CONTACTS.md.
+
+
+## 04.11.2026: Additiver Delta-Version1-Vertrag und flüchtiger App-Cache
+
+Keine Datenmigration und keine neue Route. Messages/Changes ergänzen persönliche
+Scope-/Zeit-/Aktionsmetadaten und expliziten Cursorreset. Alte Apps kompatibel;
+neue App löscht RAMdaten beim Konto-/Vereinswechsel und bei Zugriffsentzug.
+DEV20261104-clubunio-chat-delta-v1 aus7442f67; Rückweg direct-contacts-v1.
+Delta62 Prüfungen plus56/896 Regression und653 App-Tests grün.
+Abfrage-/History-/Cachegrenzen: MOBILE-CHAT-DELTA.md.

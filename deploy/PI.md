@@ -2090,3 +2090,14 @@ Konstante1/100-Kontobudgets Spieler14/14, Trainer17/17, Eltern15/15 SQL;
 synthetische Kernelzeiten ungefähr0,35–0,55s. Keine native Simulatorzeit.
 Keine Migration, Providerfreigabe oder PHPMaker-Änderung.
 MOBILE-DIRECT-CONTACTS.md; Mobile8e38148,640 App-Tests grün.
+
+
+## 04.11.2026: Delta-Chat und RAMcache
+
+Aktiv20261104-clubunio-chat-delta-v1, Quelle7442f67; Rückweg
+20261104-clubunio-direct-contacts-v1. Drei explizite Dateien, Git-/Roh-SHA-
+Baselines vor/nach Aktivierung geprüft. Alle bisherigen Gates plusDelta62
+bestanden; unveränderter Chat14SQL ohne Nachrichten-/Anhang-/Reaktions-/
+Stimmenprojektion. FPM aktiv, up200/context401, Env/Composerbytes unverändert.
+Keine Migration, Providerfreigabe oder PHPMaker-Änderung. App660f0d9,653 Tests.
+MOBILE-CHAT-DELTA.md.

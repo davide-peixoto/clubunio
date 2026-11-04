@@ -1,6 +1,6 @@
 # Persönlicher Chat: kompatibler Delta-Vertrag (04.11.2026)
 
-Implementierter und synthetisch geprüfter Delta-Vertrag; der DEV-Abschlussnachweis folgt nach der Aktivierung. Keine Migration, keine neuen Routen und keine Freischaltung externer Provider.
+Auf DEV aktiviert: `20261104-clubunio-chat-delta-v1` aus Quellstand `7442f67`. Keine Migration, keine neuen Routen und keine Freischaltung externer Provider.
 
 ## Vollständiger normaler Änderungsfeed
 
@@ -47,3 +47,23 @@ Die Probe prüft echte Send/Edit/Reaktions-/Vote-/Löschrouten, Anhangbindung un
 Neue Probe mit tatsächlich aktivierter Bootstrapprüfung:62 Kernel-/Vertragsprüfungen grün,1 PHPUnit-Fall/5 äußere Assertions, Idlepfad14SQL und ausdrücklich keine Nachrichtenselektion oder Anhang-/Reaktions-/Stimmenprojektion. Beide deterministischen Highwater-Rennen,60er-Pagination und Rejoinfall bestanden; vollständiger Rollback verifiziert. Bestehende Kommunikations-/ReadContextsuite:56 Tests/896 Assertions grün. PHP-Lint aller vier PHP-Dateien und gezieltes git diff --check erfolgreich.
 
 Runtimeänderungen ausschließlich `ChatService.php` (messages-Meta und gemeinsamer deltaMeta-Builder) sowie `ChatControls.php` (changes). Neu: diese Dokumentation, `deploy/check-mobile-chat-delta.php`, `tests/Feature/MobileChatDeltaTest.php`. Kein Controller, keine Route, kein Schema und keine fremde Runtimequelle verändert. Produkt-, Gate-, Test- und Dokustand an Root eingefroren übergeben; PostgreSQL-Fenster frei. Kein Commit oder Deployment durch den Fachagenten.
+
+
+## DEV und App-Abschluss
+
+Aktiv `/var/www/svs-laravel/releases/20261104-clubunio-chat-delta-v1`, Rückweg
+`20261104-clubunio-direct-contacts-v1`. Drei explizite Dateien aus Git7442f67
+gegen bekannte Quellstände und Roh-SHA-Manifeste geprüft, unveränderliche Kopie
+des aktiven Vorgängers erstellt. Sämtliche bisherigen Gates einschließlich
+Direktkontakt272 sowie neuer Delta62-Check erfolgreich. Nach Aktivierung erneut
+Hashes bestätigt, FPM aktiv, HTTPS `/up`200 und anonymer persönlicher Context401.
+Env-/Composerbytes unverändert. Keine Schema-/Provider-/PHPMaker-Umstellung.
+
+App660f0d9: sitzungsgebundener begrenzter RAMcache für Liste und Nachrichten,
+sofortiges vorläufiges Wiederöffnen mit frischer Hintergrundverifikation,
+Delta-only im normalen Takt, manueller/Resume-Vollabgleich.13 neue Cache-/
+Deltafälle einschließlich verspäteter Send-/Reaktionsantwort nach neuem
+Scope/neuester Projektion.653/653 Gesamttests, Analyse und lokale1921-Schlüssel-
+Sprachprüfung bestanden. Grenzen:12 Einträge,200 Nachrichten pro Verlauf,
+2MiB,10 Minuten, keine Dateien/Tokens/Entwürfe/Übersetzungen/Binäranhänge.
+Kein nativer iPhone-/Simulatorlauf. Details `docs/CHAT-CACHE.md` im App-Repository.

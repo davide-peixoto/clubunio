@@ -1568,3 +1568,12 @@ aktiven persönlichen Vereinschatkonten. Gerichtet suchen, bestehende berechtigt
 Zweierchats beantworten; Rechtewiderruf/Blockierung bleiben frisch.
 DEV direct-contacts-v1 aus956af46 aktiv,272 Serverchecks und640 App-Tests grün.
 Keine Schema-/Provider-/PHPMaker-Umstellung. MOBILE-DIRECT-CONTACTS.md.
+
+
+## 04.11.2026: RAMchatcache und echtes Delta im normalen Aktualisierungstakt
+
+App zeigt gelesene Listen/Nachrichten aus begrenztem sitzungsgebundenem RAMstand;
+frische persönliche Delta-Metadaten statt wiederholter50er-Nachrichtenprojektion.
+Rejoin, Cursorreset und verspätete Mutationen abgesichert; keine Dateipersistenz.
+DEV chat-delta-v1 aus7442f67 aktiv, Delta62+alle Bestandsgates bestanden.
+App660f0d9 mit653 Tests grün. MOBILE-CHAT-DELTA.md.
