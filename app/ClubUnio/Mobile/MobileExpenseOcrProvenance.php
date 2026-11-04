@@ -18,16 +18,32 @@ final class MobileExpenseOcrProvenance
 
     private function sourceAttached(Tenant $tenant, ExpenseLine $line, array $proof): bool
     {
-        $draft = app(MobileExpenseReceipts::class)->table($tenant)->where('id', $proof['draft_id'])->where('account_id', $proof['ocr_account_id'])
-            ->where('state', 'bound')->where('bound_line_id', $line->id)->first(['sha256', 'bound_upload_id', 'revision']);
-        if (! $draft || (int) $draft->revision !== (int) $proof['draft_revision'] + 1 || ! hash_equals($draft->sha256, $proof['source_sha256'])) return false;
-        $upload = DB::connection('clubunio')->table('clubora.document_uploads')->where('tenant_id', $tenant->id)->where('id', $draft->bound_upload_id)
-            ->where('kind', 'expense')->where('object_id', $line->id)->first(['state', 'sha256', 'folder', 'filename', 'encrypted_bytes']);
-        if (! $upload || ! hash_equals($upload->sha256, $proof['source_sha256'])) return false;
-        // Pending transfer retains the real scanned source privately; published files must still belong to this line.
-        if ($upload->state === 'pending') return $upload->encrypted_bytes !== null;
-        return $upload->state === 'published' && in_array($upload->folder.$upload->filename,
-            array_filter(array_map('trim', explode(',', (string) $line->storage_reference))), true);
+        return $this->sourcesAttached($tenant, [(int) $line->id => ['line' => $line, 'proof' => $proof]])[(int) $line->id];
+    }
+
+    /** Batch source metadata only; pending payload existence is a SQL boolean. */
+    private function sourcesAttached(Tenant $tenant, array $pairs): array
+    {
+        if (!$pairs) return [];
+        $draftIds = array_values(array_unique(array_map(fn ($pair) => $pair['proof']['draft_id'], $pairs)));
+        $drafts = app(MobileExpenseReceipts::class)->table($tenant)->whereIn('id', $draftIds)
+            ->get(['id','account_id','state','bound_line_id','sha256','bound_upload_id','revision'])->keyBy('id');
+        $uploads = DB::connection('clubunio')->table('clubora.document_uploads')->where('tenant_id', $tenant->id)->where('kind', 'expense')
+            ->whereIn('id', $drafts->pluck('bound_upload_id')->filter()->unique())
+            ->get(['id','object_id','state','sha256','folder','filename',new \Illuminate\Database\Query\Expression('encrypted_bytes IS NOT NULL AS has_bytes')])->keyBy('id');
+        $result = [];
+        foreach ($pairs as $id => $pair) {
+            $line = $pair['line']; $proof = $pair['proof']; $draft = $drafts[$proof['draft_id']] ?? null;
+            $upload = $draft ? ($uploads[$draft->bound_upload_id] ?? null) : null;
+            $matches = $draft && (int) $draft->account_id === (int) $proof['ocr_account_id'] && $draft->state === 'bound'
+                && (int) $draft->bound_line_id === (int) $line->id && (int) $draft->revision === (int) $proof['draft_revision'] + 1
+                && hash_equals($draft->sha256, $proof['source_sha256']) && $upload && (int) $upload->object_id === (int) $line->id
+                && hash_equals($upload->sha256, $proof['source_sha256']);
+            $result[$id] = $matches && ($upload->state === 'pending' ? $upload->has_bytes === true
+                : ($upload->state === 'published' && in_array($upload->folder.$upload->filename,
+                    array_filter(array_map('trim', explode(',', (string) $line->storage_reference))), true)));
+        }
+        return $result;
     }
 
     public function claim(Account $actor, Tenant $tenant, array $input): ?array
@@ -85,12 +101,30 @@ final class MobileExpenseOcrProvenance
 
     public function fields(Tenant $tenant, ExpenseLine $line): array
     {
-        if (! config('clubunio-expense-provenance.enabled', false)) return ['AiBetragUebernommen' => null];
-        $row = $this->table($tenant)->where('line_id', $line->id)->orderByDesc('line_revision')->first();
-        if (! $row) return ['AiBetragUebernommen' => null];
-        // Web/provider edits without a new personal event still cannot retain an obsolete true marker.
-        $sourceCurrent = ! $row->source_replaced && $this->sourceAttached($tenant, $line, (array) $row);
-        $accepted = $sourceCurrent && self::units((string) $line->amount) === self::units((string) $row->suggested_amount);
-        return ['AiBetragUebernommen' => $accepted, 'AiVorschlagBetrag' => $sourceCurrent ? (string) $row->suggested_amount : null];
+        return $this->fieldsForLines($tenant, [$line])[(int) $line->id] ?? ['AiBetragUebernommen' => null];
+    }
+
+    public function fieldsForLines(Tenant $tenant, iterable $lines): array
+    {
+        $lines = collect($lines)->filter(fn ($line) => (int) $line->id > 0)->keyBy('id');
+        $result = $lines->map(fn () => ['AiBetragUebernommen' => null])->all();
+        if (!config('clubunio-expense-provenance.enabled', false) || $lines->isEmpty()) return $result;
+        $latest = $this->table($tenant)->whereIn('line_id', $lines->keys())->whereNotExists(function ($q) {
+            $q->selectRaw('1')->from('clubora.mobile_expense_ocr_provenance as newer')
+                ->whereColumn('newer.tenant_id', 'clubora.mobile_expense_ocr_provenance.tenant_id')
+                ->whereColumn('newer.line_id', 'clubora.mobile_expense_ocr_provenance.line_id')
+                ->whereColumn('newer.line_revision', '>', 'clubora.mobile_expense_ocr_provenance.line_revision');
+        })->get();
+        $pairs = [];
+        foreach ($latest as $row) if (!$row->source_replaced) {
+            $pairs[(int) $row->line_id] = ['line' => $lines[$row->line_id], 'proof' => (array) $row];
+        }
+        $attached = $this->sourcesAttached($tenant, $pairs);
+        foreach ($latest as $row) {
+            $line = $lines[$row->line_id]; $current = $attached[(int) $row->line_id] ?? false;
+            $result[(int) $row->line_id] = ['AiBetragUebernommen' => $current && self::units((string) $line->amount) === self::units((string) $row->suggested_amount),
+                'AiVorschlagBetrag' => $current ? (string) $row->suggested_amount : null];
+        }
+        return $result;
     }
 }

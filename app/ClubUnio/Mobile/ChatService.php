@@ -37,6 +37,7 @@ final class ChatService
     {
         $query = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', $actor->id);
         $row = (clone $query)->first();
+        if ($row && !$row->left_at) return $row;
         if (! $row || $row->left_at) {
             $latest = (int) ($this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)->max('id') ?? 0);
             $query->updateOrInsert(['conversation_id' => $chat->id, 'account_id' => $actor->id],
@@ -97,28 +98,67 @@ final class ChatService
     {
         $access = app(MobileAccess::class);
         $access->enter($actor, $tenant);
-        $teams = $access->teams($actor, $tenant)->orderBy('ts.id')->limit(100)->get();
-        foreach ($teams as $team) {
-            $this->ensure($tenant, 'team', $team->id);
+        // Fresh policy builders exist only for this projection, never across requests.
+        $teamQuery = $access->teams($actor, $tenant);
+        $staffQuery = $access->teams($actor, $tenant, true);
+        $teams = (clone $teamQuery)->orderBy('ts.id')->limit(100)->get();
+        $staffTeams = (clone $staffQuery)->orderBy('ts.id')->limit(100)->get();
+        $needed = ['announcements:club' => ['kind' => 'announcements', 'team_season_id' => null]];
+        foreach ($teams as $team) $needed['team:'.$team->id] = ['kind' => 'team', 'team_season_id' => $team->id];
+        foreach ($staffTeams as $team) $needed['staff:'.$team->id] = ['kind' => 'staff', 'team_season_id' => $team->id];
+        $existing = $this->table($tenant, 'chat_conversations')->whereIn('scope_key', array_keys($needed))->pluck('scope_key')->all();
+        $missing = array_diff_key($needed, array_fill_keys($existing, true));
+        if ($missing) {
+            $insert = [];
+            foreach ($missing as $key => $scope) $insert[] = $scope + ['tenant_id' => $tenant->id, 'scope_key' => $key, 'created_at' => now()->toIso8601String()];
+            $this->table($tenant, 'chat_conversations')->insertOrIgnore($insert);
         }
-        foreach ($access->teams($actor, $tenant, true)->orderBy('ts.id')->limit(100)->get() as $team) {
-            $this->ensure($tenant, 'staff', $team->id);
-        }
-        $this->ensure($tenant, 'announcements');
         $rows = $this->table($tenant, 'chat_conversations')->where(function ($q) use ($actor, $tenant, $teams) {
             $q->where('kind', 'announcements')->orWhereIn('team_season_id', $teams->pluck('id'))
                 ->orWhereIn('id', $this->table($tenant, 'chat_memberships')->where('account_id', $actor->id)->select('conversation_id'));
         })->orderByDesc('id')->limit(200)->get();
-        $result = [];
+        // Include candidate scopes beyond the provisioning limit, preserving old membership access.
+        $candidateTeams = $rows->pluck('team_season_id')->filter()->unique();
+        $permittedTeams = (clone $teamQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
+        $permittedStaff = (clone $staffQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
+        $admin = $access->admin($actor, $tenant);
+        $accepted = collect(); $denied = [];
         foreach ($rows as $chat) {
-            if (! $this->allowed($actor, $tenant, $chat)) {
-                $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', $actor->id)->update(['left_at' => now()->toIso8601String()]);
-                continue;
-            }
-            $result[] = $this->conversationDto($actor, $tenant, $chat, $teams);
+            $allowed = match ($chat->kind) {
+                'announcements' => true,
+                'team' => in_array((int) $chat->team_season_id, $permittedTeams, true),
+                'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
+                default => $this->allowed($actor, $tenant, $chat), // Direct/event policies stay fully fresh.
+            };
+            if ($allowed) $accepted->push($chat); else $denied[] = $chat->id;
         }
-
-        return $result;
+        if ($denied) $this->table($tenant, 'chat_memberships')->whereIn('conversation_id', $denied)->where('account_id', $actor->id)->update(['left_at' => now()->toIso8601String()]);
+        if ($accepted->isEmpty()) return [];
+        $memberships = $this->table($tenant, 'chat_memberships')->whereIn('conversation_id', $accepted->pluck('id'))->where('account_id', $actor->id)->get()->keyBy('conversation_id');
+        $join = $accepted->filter(fn ($chat) => !isset($memberships[$chat->id]) || $memberships[$chat->id]->left_at);
+        if ($join->isNotEmpty()) {
+            $latest = $this->table($tenant, 'chat_messages')->whereIn('conversation_id', $join->pluck('id'))->groupBy('conversation_id')->selectRaw('conversation_id,max(id) as latest')->pluck('latest', 'conversation_id');
+            $records = $join->map(fn ($chat) => ['tenant_id' => $tenant->id, 'conversation_id' => $chat->id, 'account_id' => $actor->id,
+                'joined_after' => (int) ($latest[$chat->id] ?? 0), 'left_at' => null, 'read_message_id' => (int) ($latest[$chat->id] ?? 0), 'muted' => false])->all();
+            // A competing request may have joined/read since our first SELECT.
+            // Preserve its active row; only a still-left membership may rejoin.
+            $updates = [];
+            $target = Str::afterLast(DB::connection('clubunio')->getQueryGrammar()->wrapTable('clubora.chat_memberships'), '.');
+            foreach (['joined_after','left_at','read_message_id','muted'] as $column) {
+                $updates[$column] = new \Illuminate\Database\Query\Expression('CASE WHEN '.$target.'."left_at" IS NOT NULL THEN "excluded"."'.$column.'" ELSE '.$target.'."'.$column.'" END');
+            }
+            $this->table($tenant, 'chat_memberships')->upsert($records, ['conversation_id','account_id'], $updates);
+            $memberships = $this->table($tenant, 'chat_memberships')->whereIn('conversation_id', $accepted->pluck('id'))->where('account_id', $actor->id)->get()->keyBy('conversation_id');
+        }
+        $unread = DB::connection('clubunio')->table('clubora.chat_messages as m')->join('clubora.chat_memberships as membership', function ($join) use ($actor) {
+            $join->on('membership.tenant_id', '=', 'm.tenant_id')->on('membership.conversation_id', '=', 'm.conversation_id')->where('membership.account_id', $actor->id);
+        })->where('m.tenant_id', $tenant->id)->whereIn('m.conversation_id', $accepted->pluck('id'))
+            ->whereColumn('m.id', '>', 'membership.joined_after')->whereColumn('m.id', '>', 'membership.read_message_id')
+            ->where('m.account_id', '<>', $actor->id)->whereNull('m.deleted_at')->groupBy('m.conversation_id')->selectRaw('m.conversation_id,count(*) as total')->pluck('total','m.conversation_id');
+        return $accepted->map(fn ($chat) => $this->conversationDto($actor, $tenant, $chat, $teams, [
+            'membership' => $memberships[$chat->id], 'admin' => $admin, 'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
+            'unread' => (int) ($unread[$chat->id] ?? 0),
+        ]))->all();
     }
 
     public function conversation(Account $actor, Tenant $tenant, int $id): array
@@ -128,10 +168,10 @@ final class ChatService
         return $this->conversationDto($actor, $tenant, $chat, $teams);
     }
 
-    private function conversationDto(Account $actor, Tenant $tenant, object $chat, $teams): array
+    private function conversationDto(Account $actor, Tenant $tenant, object $chat, $teams, ?array $projection = null): array
     {
         $access = app(MobileAccess::class);
-        $membership = $this->membership($actor, $tenant, $chat);
+        $membership = $projection['membership'] ?? $this->membership($actor, $tenant, $chat);
         $team = $teams->firstWhere('id', $chat->team_season_id);
         $title = match ($chat->kind) {
             'team' => ($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
@@ -144,14 +184,14 @@ final class ChatService
         }
         return ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
             'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
-            'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
+            'can_moderate' => $projection !== null ? ($chat->kind !== 'direct' && ($projection['admin'] || $projection['staff'])) : app(ChatControls::class)->moderator($actor, $tenant, $chat),
             'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
             'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
-            'can_write' => $chat->kind !== 'announcements' || $access->admin($actor, $tenant),
-            'can_poll' => $chat->kind !== 'announcements' && ($access->admin($actor, $tenant)
-                || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists())),
+            'can_write' => $chat->kind !== 'announcements' || ($projection['admin'] ?? $access->admin($actor, $tenant)),
+            'can_poll' => $chat->kind !== 'announcements' && ($projection !== null ? ($projection['admin'] || $projection['staff'])
+                : ($access->admin($actor, $tenant) || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()))),
             'muted' => (bool) $membership->muted,
-            'unread' => $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)
+            'unread' => $projection['unread'] ?? $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)
                 ->where('id', '>', max($membership->joined_after, $membership->read_message_id))->where('account_id', '<>', $actor->id)->whereNull('deleted_at')->count()];
     }
 
@@ -182,23 +222,43 @@ final class ChatService
         $hasMore = $rows->count() > 50;
         $rows = $rows->take(50)->sortBy('id');
 
-        return ['data' => $rows->map(fn ($row) => $this->messageDto($actor, $tenant, $row))->values()->all(),
+        return ['data' => array_values($this->messageDtos($actor, $tenant, $rows)),
             'meta' => ['has_more' => $hasMore, 'first_id' => $rows->min('id'), 'last_id' => $rows->max('id'), 'change_cursor' => $changeCursor]];
     }
 
     public function messageDto(Account $actor, Tenant $tenant, object $row): array
     {
-        return ['id' => (int) $row->id, 'conversation_id' => (int) $row->conversation_id, 'author_id' => (int) $row->account_id,
-            'author_name' => Account::whereKey($row->account_id)->value('display_name'), 'kind' => $row->kind,
-            'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
-            'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
-            'poll' => $row->kind === 'poll' && ! $row->deleted_at ? $this->pollDto($actor, $tenant, (int) $row->object_id) : null,
-            'event_id' => ! $row->deleted_at && $row->kind === 'event' ? (int) $row->object_id : null,
-            'can_edit' => ! $row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)
-                && \Carbon\CarbonImmutable::parse($row->created_at)->gte(now()->subMinutes(30)),
-            'can_delete' => ! $row->deleted_at && ((int) $row->account_id === (int) $actor->id
-                || app(ChatControls::class)->moderator($actor, $tenant, $this->table($tenant, 'chat_conversations')->where('id', $row->conversation_id)->first())),
-            'attachment' => ! $row->deleted_at ? app(ChatAttachments::class)->forMessage($tenant, (int) $row->id) : null];
+        return $this->messageDtos($actor, $tenant, [$row])[(int) $row->id];
+    }
+
+    /** Request-local projection, after the caller has authorized the conversation. */
+    public function messageDtos(Account $actor, Tenant $tenant, iterable $messages): array
+    {
+        $rows = collect($messages);
+        if ($rows->isEmpty()) return [];
+        $authors = Account::whereIn('id', $rows->pluck('account_id')->unique())->pluck('display_name', 'id');
+        $visible = $rows->filter(fn ($row) => !$row->deleted_at);
+        $attachments = app(ChatAttachments::class)->forMessages($tenant, $visible->pluck('id')->all());
+        $polls = $this->pollDtos($actor, $tenant, $visible->where('kind', 'poll')->pluck('object_id')->unique()->all());
+        $moderated = [];
+        $foreign = $visible->filter(fn ($row) => (int) $row->account_id !== (int) $actor->id)->pluck('conversation_id')->unique()->all();
+        if ($foreign) foreach ($this->table($tenant, 'chat_conversations')->whereIn('id', $foreign)->get() as $chat) {
+            $moderated[(int) $chat->id] = app(ChatControls::class)->moderator($actor, $tenant, $chat);
+        }
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row->id] = ['id' => (int) $row->id, 'conversation_id' => (int) $row->conversation_id, 'author_id' => (int) $row->account_id,
+                'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
+                'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
+                'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
+                'poll' => $row->kind === 'poll' && !$row->deleted_at ? $polls[(int) $row->object_id] : null,
+                'event_id' => !$row->deleted_at && $row->kind === 'event' ? (int) $row->object_id : null,
+                'can_edit' => !$row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)
+                    && \Carbon\CarbonImmutable::parse($row->created_at)->gte(now()->subMinutes(30)),
+                'can_delete' => !$row->deleted_at && ((int) $row->account_id === (int) $actor->id || ($moderated[(int) $row->conversation_id] ?? false)),
+                'attachment' => !$row->deleted_at ? ($attachments[(int) $row->id] ?? null) : null];
+        }
+        return $result;
     }
 
     public function send(Account $actor, Tenant $tenant, int $chatId, array $input): object
@@ -277,18 +337,27 @@ final class ChatService
 
     public function pollDto(Account $actor, Tenant $tenant, int $id): array
     {
-        $poll = $this->table($tenant, 'chat_polls')->where('id', $id)->firstOrFail();
-        $votes = $this->table($tenant, 'chat_votes')->where('poll_id', $id)->get();
-        $counts = [];
-        foreach ($votes as $vote) {
-            foreach (json_decode($vote->choices, true, flags: JSON_THROW_ON_ERROR) as $choice) {
+        return $this->pollDtos($actor, $tenant, [$id])[$id];
+    }
+
+    private function pollDtos(Account $actor, Tenant $tenant, array $ids): array
+    {
+        if (!$ids) return [];
+        $polls = $this->table($tenant, 'chat_polls')->whereIn('id', $ids)->get(['id','question','options','multiple','closes_at'])->keyBy('id');
+        foreach ($ids as $id) abort_unless(isset($polls[$id]), 404);
+        $votes = $this->table($tenant, 'chat_votes')->whereIn('poll_id', $ids)->get(['poll_id','account_id','choices'])->groupBy('poll_id');
+        $result = [];
+        foreach ($polls as $id => $poll) {
+            $ballots = $votes[$id] ?? collect();
+            $counts = [];
+            foreach ($ballots as $vote) foreach (json_decode($vote->choices, true, flags: JSON_THROW_ON_ERROR) as $choice) {
                 $counts[$choice] = ($counts[$choice] ?? 0) + 1;
             }
+            $result[(int) $id] = ['id' => (int) $id, 'question' => $poll->question, 'multiple' => (bool) $poll->multiple, 'closes_at' => $poll->closes_at,
+                'options' => array_map(fn ($o) => $o + ['count' => $counts[$o['id']] ?? 0], json_decode($poll->options, true, flags: JSON_THROW_ON_ERROR)),
+                'my_choices' => json_decode($ballots->firstWhere('account_id', $actor->id)?->choices ?? '[]', true), 'voters' => $ballots->count()];
         }
-
-        return ['id' => $id, 'question' => $poll->question, 'multiple' => (bool) $poll->multiple, 'closes_at' => $poll->closes_at,
-            'options' => array_map(fn ($o) => $o + ['count' => $counts[$o['id']] ?? 0], json_decode($poll->options, true, flags: JSON_THROW_ON_ERROR)),
-            'my_choices' => json_decode($votes->firstWhere('account_id', $actor->id)?->choices ?? '[]', true), 'voters' => $votes->count()];
+        return $result;
     }
 
     public function vote(Account $actor, Tenant $tenant, int $id, array $choices): array

@@ -345,6 +345,96 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->getJson($this->url('chats/'.$id))->assertForbidden();
     }
 
+    public function test_conversation_list_batches_twenty_team_scopes_without_rewriting_existing_memberships(): void
+    {
+        $s = app(ChatService::class); $s->conversations($this->admin, $this->tenant);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $one = $s->conversations($this->admin, $this->tenant);
+        $oneCount = count($this->db->getQueryLog()); $this->db->disableQueryLog();
+        $this->assertCount(3, $one);
+        $season = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');
+        for ($n = 1; $n < 20; $n++) {
+            $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic '.$n]);
+            $this->db->table('clubora.team_seasons')->insert(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic '.$n]);
+        }
+        $s->conversations($this->admin, $this->tenant); // Provision each missing scope once, in bounded batches.
+        $chat = $this->db->table('clubora.chat_conversations')->where('kind', 'team')->where('team_season_id', $this->team)->value('id');
+        $s->send($this->parent, $this->tenant, $chat, ['client_id' => (string) Str::uuid(), 'text' => 'New unread fixture']);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $many = $s->conversations($this->admin, $this->tenant);
+        $queries = $this->db->getQueryLog(); $this->db->disableQueryLog();
+        $this->assertCount(41, $many); $this->assertSame($oneCount, count($queries));
+        $this->assertSame(1, collect($many)->firstWhere('id', $chat)['unread']);
+        foreach ($many as $dto) $this->assertTrue($dto['can_moderate']);
+        foreach ($queries as $query) $this->assertDoesNotMatchRegularExpression('/^\s*(insert|update|delete)\b/i', $query['query']);
+        // A forged prior staff membership must not make a parent a staff participant.
+        $staff = $this->db->table('clubora.chat_conversations')->where('kind', 'staff')->where('team_season_id', $this->team)->value('id');
+        $this->db->table('clubora.chat_memberships')->insert(['tenant_id' => $this->tenant->id, 'conversation_id' => $staff, 'account_id' => $this->parent->id]);
+        $parentList = $s->conversations($this->parent, $this->tenant);
+        $this->assertNotContains($staff, array_column($parentList, 'id'));
+        $this->assertNotNull($this->db->table('clubora.chat_memberships')->where('conversation_id', $staff)->where('account_id', $this->parent->id)->value('left_at'));
+    }
+
+    public function test_conversation_list_still_rechecks_direct_and_event_revocation(): void
+    {
+        $s = app(ChatService::class); $this->teamChat($this->parent); $this->teamChat($this->trainer);
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations (tenant_id integer, event_id integer, member_id integer)');
+        $event = $this->db->table('clubora.team_events')->insertGetId(['tenant_id' => $this->tenant->id, 'team_season_id' => $this->team]);
+        $eventChat = $s->ensure($this->tenant, 'event', event: $event);
+        $s->chat($this->parent, $this->tenant, $eventChat->id);
+        $direct = $s->direct($this->parent, $this->tenant, $this->trainer->id);
+        $before = $s->conversations($this->parent, $this->tenant);
+        $this->assertContains($eventChat->id, array_column($before, 'id'));
+        $this->assertContains($direct->id, array_column($before, 'id'));
+        $this->db->table('clubora.team_events')->where('id', $event)->update(['deleted_at' => now()->toIso8601String()]);
+        $this->db->table('clubora.chat_blocks')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->trainer->id, 'other_account_id' => $this->parent->id, 'created_at' => now()->toIso8601String()]);
+        $after = $s->conversations($this->parent, $this->tenant);
+        $this->assertNotContains($eventChat->id, array_column($after, 'id'));
+        $this->assertNotContains($direct->id, array_column($after, 'id'));
+        $this->assertContains('team', array_column($after, 'kind'));
+    }
+
+    public function test_message_projection_query_count_is_constant_and_attachment_payloads_are_not_selected(): void
+    {
+        $chat = $this->teamChat($this->parent); $s = app(ChatService::class);
+        $poll = $s->send($this->admin, $this->tenant, $chat, ['client_id' => (string) Str::uuid(), 'text' => 'Synthetic poll',
+            'kind' => 'poll', 'poll' => ['options' => ['A','B'], 'multiple' => true, 'closes_at' => now()->addDay()->toIso8601String()]]);
+        $all = collect([$poll]);
+        for ($n = 1; $n < 40; $n++) {
+            $attributes = (array) $poll; unset($attributes['id']);
+            $attributes['client_id'] = (string) Str::uuid();
+            $id = $s->table($this->tenant, 'chat_messages')->insertGetId($attributes);
+            $all->push($s->table($this->tenant, 'chat_messages')->where('id', $id)->first());
+        }
+        foreach ($all as $row) {
+            $s->table($this->tenant, 'chat_attachments')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $this->tenant->id,
+                'conversation_id' => $chat, 'account_id' => $this->admin->id, 'client_id' => (string) Str::uuid(), 'message_id' => $row->id,
+                'filename_encrypted' => \Illuminate\Support\Facades\Crypt::encryptString('Synthetic.pdf'),
+                'bytes_encrypted' => str_repeat('private-cipher-marker', 2048), 'sha256' => str_repeat('a',64), 'byte_count' => 100,
+                'mime_type' => 'application/pdf', 'state' => 'clean', 'created_at' => now()->toIso8601String()]);
+        }
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $one = $s->messageDtos($this->parent, $this->tenant, [$poll]);
+        $oneCount = count($this->db->getQueryLog()); $this->db->flushQueryLog();
+        $many = $s->messageDtos($this->parent, $this->tenant, $all);
+        $queries = $this->db->getQueryLog(); $this->db->disableQueryLog();
+        $this->assertSame($oneCount, count($queries)); $this->assertCount(40, $many);
+        $this->assertSame($one[(int) $poll->id], $many[(int) $poll->id]);
+        $this->assertSame('Synthetic.pdf', $many[(int) $poll->id]['attachment']['name']);
+        $this->assertFalse($many[(int) $poll->id]['can_delete']);
+        $this->assertSame(['A','B'], array_column($many[(int) $poll->id]['poll']['options'], 'text'));
+        $attachmentQueries = array_filter($queries, fn ($q) => str_contains($q['query'], 'chat_attachments'));
+        $this->assertCount(1, $attachmentQueries);
+        foreach ($attachmentQueries as $query) {
+            $this->assertStringNotContainsString('bytes_encrypted', $query['query']);
+            $this->assertStringNotContainsString('select *', strtolower($query['query']));
+        }
+        $this->assertTrue($s->messageDto($this->admin, $this->tenant, $poll)['can_delete']);
+        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        try { $s->messages($this->parent, $this->tenant, $chat); $this->fail('Revoked actor read messages'); }
+        catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { $this->assertSame(404, $e->getStatusCode()); }
+    }
+
     public function test_messages_are_encrypted_idempotent_and_replay_conflicts_fail(): void
     {
         $chat = $this->teamChat($this->parent);

@@ -86,9 +86,21 @@ final class ChatAttachments
 
     public function forMessage(Tenant $tenant, int $message): ?array
     {
-        $row = $this->service()->table($tenant, 'chat_attachments')->where('message_id', $message)->where('state', 'clean')->first();
-        return $row ? ['id' => $row->id, 'name' => Crypt::decryptString($row->filename_encrypted),
-            'mime' => $row->mime_type, 'bytes' => (int) $row->byte_count, 'sha256' => $row->sha256] : null;
+        return $this->forMessages($tenant, [$message])[$message] ?? null;
+    }
+
+    /** Metadata only: normal message pages must never materialize attachment bytes. */
+    public function forMessages(Tenant $tenant, array $messages): array
+    {
+        if (!$messages) return [];
+        $rows = $this->service()->table($tenant, 'chat_attachments')->whereIn('message_id', $messages)->where('state', 'clean')
+            ->get(['id','message_id','filename_encrypted','mime_type','byte_count','sha256']);
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row->message_id] ??= ['id' => $row->id, 'name' => Crypt::decryptString($row->filename_encrypted),
+                'mime' => $row->mime_type, 'bytes' => (int) $row->byte_count, 'sha256' => $row->sha256];
+        }
+        return $result;
     }
 
     public function download(Account $actor, Tenant $tenant, string $id)

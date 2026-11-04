@@ -12,7 +12,7 @@ final class MobileExpenseData
         $alias = str_contains($table, ' as ') ? substr($table, strrpos($table, ' as ') + 4).'.' : '';
         return DB::connection('clubunio')->table('clubora.'.$table)->where($alias.'tenant_id', $tenant->id);
     }
-    public function receipt(Account $actor, Tenant $tenant, Expense $e): array {
+    public function receipt(Account $actor, Tenant $tenant, Expense $e, ?array $capabilities = null): array {
         $service = app(ExpenseService::class);
         $e->loadMissing(['member','teamSeason.team','season','round','status']);
         return ['SpesenID' => (int) $e->id, 'Revision' => (int) $e->revision, 'MitgliederID' => (int) $e->member_id,
@@ -21,12 +21,12 @@ final class MobileExpenseData
             '_ReceiptTitle' => $e->teamSeason?->label ?? '', 'Saison' => $e->season?->name ?? '',
             'Vorname' => $e->member?->first_name ?? '', 'Nachname' => $e->member?->last_name ?? '',
             'Status' => $e->status?->code ?? '', 'Runde' => $e->round?->code ?? '', 'Bemerkungen' => $e->notes ?? '',
-            'CanManagePositions' => $service->editable($actor, $tenant, $e),
-            'CanAddPosition' => $service->editable($actor, $tenant, $e, 'create'),
-            'CanDeletePosition' => $service->editable($actor, $tenant, $e, 'deactivate'),
-            'AllowedStatusCodes' => array_values(array_diff($service->targets($actor, $tenant, $e), ['B']))];
+            ...($capabilities ?? ['CanManagePositions' => $service->editable($actor, $tenant, $e),
+                'CanAddPosition' => $service->editable($actor, $tenant, $e, 'create'),
+                'CanDeletePosition' => $service->editable($actor, $tenant, $e, 'deactivate'),
+                'AllowedStatusCodes' => array_values(array_diff($service->targets($actor, $tenant, $e), ['B']))])];
     }
-    public function line(Tenant $tenant, ExpenseLine $line, int $pending = 0): array {
+    public function line(Tenant $tenant, ExpenseLine $line, int $pending = 0, ?array $provenance = null): array {
         $line->loadMissing(['expenseType','gameType']);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         $attachments = array_map(function ($file, $index) use ($line) {
@@ -39,7 +39,7 @@ final class MobileExpenseData
         return ['SpesenPositionenID' => (int) $line->id, 'SpesenID' => (int) $line->expense_id, 'Revision' => (int) $line->revision,
             'SpesenTypID' => (int) $line->expense_type_id, '_TypeLabel' => $line->expenseType?->name ?? '',
             'Spieltyp' => $line->gameType?->code ?? '', 'Gegner' => $line->opponent ?? '', 'Betrag' => (string) $line->amount,
-            'BemerkungenPos' => $line->notes ?? '', ...app(MobileExpenseOcrProvenance::class)->fields($tenant, $line), 'PendingUploadCount' => $pending,
+            'BemerkungenPos' => $line->notes ?? '', ...($provenance ?? app(MobileExpenseOcrProvenance::class)->fields($tenant, $line)), 'PendingUploadCount' => $pending,
             ...($files ? ['FileUploadName' => ['url' => '', 'name' => $line->filename ?: 'Beleg', 'type' => $line->content_type ?? ''],
                 'BelegLength' => $line->file_size, 'AttachmentCount' => count($files), 'Attachments' => $attachments] : [])];
     }
@@ -52,8 +52,9 @@ final class MobileExpenseData
             ->map(fn ($u) => ['id' => (int) $u->id, 'can_retry' => (int) $u->created_by === (int) $actor->id || $canManage])->all();
         $bank = app(BankAccountService::class)->visible($actor, $tenant)->whereKey($e->bank_account_id)->first();
         $bankLabel = $bank ? $this->bank($actor, $tenant, $bank)['Label'] : '';
+        $provenance = app(MobileExpenseOcrProvenance::class)->fieldsForLines($tenant, $e->activeLines);
         return ['receipt' => $this->receipt($actor, $tenant, $e) + ['_BankLabel' => $bankLabel, 'PendingUploadCount' => (int) $pending->sum(), 'PendingUploads' => $retry],
-            'lines' => $e->activeLines->map(fn ($l) => $this->line($tenant, $l, (int) ($pending[$l->id] ?? 0)))->all()];
+            'lines' => $e->activeLines->map(fn ($l) => $this->line($tenant, $l, (int) ($pending[$l->id] ?? 0), $provenance[(int) $l->id]))->all()];
     }
     public function bank(Account $actor, Tenant $tenant, object $bank): array {
         // Never widen bank visibility from technical lead/team-expense access.

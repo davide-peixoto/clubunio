@@ -18,6 +18,66 @@ use Illuminate\Validation\ValidationException;
 
 class ExpenseService
 {
+    /** Read-only DTO projection for one page. Never reuse these facts for mutations. */
+    public function readCapabilities(Account $actor, Tenant $tenant, iterable $expenses): array
+    {
+        $closed = ['CanManagePositions' => false, 'CanAddPosition' => false,
+            'CanDeletePosition' => false, 'AllowedStatusCodes' => []];
+        $rows = []; $result = [];
+        foreach ($expenses as $expense) {
+            if (! $expense instanceof Expense || ! $expense->exists) { continue; }
+            $id = (int) $expense->id;
+            $result[$id] = $closed;
+            if ((int) $expense->tenant_id === (int) $tenant->id) { $rows[$id] = $expense; }
+        }
+        $fresh = $actor->fresh();
+        if (! $rows || ! $fresh?->active) { return $result; }
+        $actor = $fresh;
+        $permissions = app(ModulePermissionService::class);
+        $allowed = [];
+        foreach (['view', 'update', 'create', 'deactivate', 'send', 'approve', 'cancel'] as $function) {
+            $allowed[$function] = $permissions->allows($actor, $tenant, 'expenses', $function);
+        }
+        $office = $allowed['view'];
+        $portal = $this->portalAllowed($actor, $tenant);
+        $access = app(MemberAccessService::class);
+        $own = $portal ? $access->represented($actor, $tenant, true)->pluck('clubora.members.id')->map(fn ($id) => (int) $id)->all() : [];
+        $role = ! $office && $portal ? $access->membership($actor, $tenant)?->role : null;
+        $teams = $role === 'technical_lead' ? array_map('intval', $access->responsibleTeams($actor, $tenant)) : [];
+
+        // Same visible() policy, using the fresh facts above once for this invocation.
+        // Keeping it local avoids giving any mutating call a cached authorization result.
+        $visible = Expense::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereKey(array_keys($rows));
+        app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($visible, $tenant);
+        if (! $office) {
+            if (! $portal) { return $result; }
+            $visible->where(fn ($q) => $q->whereIn('member_id', $own)->when($role === 'technical_lead', fn ($q) => $q->orWhereIn('team_season_id', $teams)));
+        }
+        $ids = array_fill_keys($visible->pluck('clubora.expenses.id')->map(fn ($id) => (int) $id)->all(), true);
+        (new \Illuminate\Database\Eloquent\Collection(array_values($rows)))->loadMissing('status');
+        $own = array_fill_keys($own, true); $teams = array_fill_keys($teams, true);
+        foreach ($rows as $id => $expense) {
+            if (! isset($ids[$id])) { continue; }
+            $status = $expense->status?->code;
+            $personal = $portal && isset($own[(int) $expense->member_id]);
+            foreach (['CanManagePositions' => 'update', 'CanAddPosition' => 'create', 'CanDeletePosition' => 'deactivate'] as $key => $function) {
+                $result[$id][$key] = $status === 'O' && ($allowed[$function] || $personal);
+            }
+            if ($office) {
+                $targets = match ($status) {
+                    'O' => ['F', 'R'], 'F' => ['O', 'Z', 'R'], 'Z' => ['B'], 'R' => ['O'], default => [],
+                };
+                $result[$id]['AllowedStatusCodes'] = array_values(array_filter($targets,
+                    fn ($code) => $code !== 'B' && $allowed[$this->transitionFunction($code)]));
+            } elseif ($portal && $status === 'O' && $personal) {
+                $result[$id]['AllowedStatusCodes'] = ['F'];
+            } elseif ($portal && $status === 'F' && $role === 'technical_lead' && isset($teams[(int) $expense->team_season_id])) {
+                $result[$id]['AllowedStatusCodes'] = ['Z', 'R'];
+            }
+        }
+        return $result;
+    }
+
     public function portalAllowed(Account $actor, Tenant $tenant): bool
     {
         if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {

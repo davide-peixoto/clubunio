@@ -72,9 +72,12 @@ final class ChatControls
         $rows = $s->table($tenant, 'chat_changes')->where('conversation_id', $chatId)->where('id', '>', $after)
             ->where('message_id', '>', $joined)->orderBy('id')->limit(51)->get();
         $more = $rows->count() > 50; $rows = $rows->take(50);
-        return ['data' => $rows->map(function ($change) use ($s, $actor, $tenant) {
-            $row = $s->table($tenant, 'chat_messages')->where('id', $change->message_id)->firstOrFail();
-            return ['cursor' => (int) $change->id, 'message' => $s->messageDto($actor, $tenant, $row)];
+        if ($rows->isEmpty()) return ['data' => [], 'meta' => ['has_more' => false, 'cursor' => $after]];
+        $messages = $s->table($tenant, 'chat_messages')->where('conversation_id', $chatId)->whereIn('id', $rows->pluck('message_id'))->get();
+        $dtos = $s->messageDtos($actor, $tenant, $messages);
+        return ['data' => $rows->map(function ($change) use ($dtos) {
+            abort_unless(isset($dtos[(int) $change->message_id]), 404);
+            return ['cursor' => (int) $change->id, 'message' => $dtos[(int) $change->message_id]];
         })->values()->all(), 'meta' => ['has_more' => $more, 'cursor' => (int) ($rows->max('id') ?? $after)]];
     }
 

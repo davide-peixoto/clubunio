@@ -32,7 +32,10 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
             ->when(isset($d['status']), fn ($q) => $q->whereHas('status', fn ($s) => $s->where('code', $d['status'])));
         $total = (clone $q)->count();
         $rows = $q->with(['member','teamSeason.team','season','round','status'])->orderByDesc('id')->offset($d['start'] ?? 0)->limit($d['limit'] ?? 20)->get();
-        return response()->json(['data' => ['rows' => $rows->map(fn ($e) => app(MobileExpenseData::class)->receipt($this->actor($r), $this->tenant($r), $e))->all(), 'total' => $total]]);
+        $capabilities = app(ExpenseService::class)->readCapabilities($this->actor($r), $this->tenant($r), $rows);
+        $closed = ['CanManagePositions' => false, 'CanAddPosition' => false, 'CanDeletePosition' => false, 'AllowedStatusCodes' => []];
+        return response()->json(['data' => ['rows' => $rows->map(fn ($e) => app(MobileExpenseData::class)->receipt($this->actor($r), $this->tenant($r), $e,
+            $capabilities[(int) $e->id] ?? $closed))->all(), 'total' => $total]]);
     }
     public function show(Request $r) { return response()->json(['data' => app(MobileExpenseData::class)->detail($this->actor($r), $this->tenant($r), (int) $r->route('expense'))]); }
     public function options(Request $r) {
