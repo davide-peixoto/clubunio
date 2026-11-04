@@ -28,3 +28,13 @@ Gate gestoppt: Laravel-Fakeasserts verlangten auf dem bewusst PHPUnit-freien
 Server eine Testbibliothek. Providerfreiheit wird nun direkt aus den leeren
 HTTP-/Mailable-/Queueaufzeichnungen geprueft. Neuer unveraenderlicher Pfad
 parity-foundation-v2; bisher aktiver Stand und Schema unveraendert.
+
+Naechster gepruefter Freigabeschritt: release-clubunio-mobile-parity-enabled.sh
+setzt ausschliesslich sieben interne Flags und die kanonische DEV-Bootstrap-
+Origin in einer separaten Release-Env. Bootstrap/Rollenhilfe, OCR-Herkunft,
+Rundnachrichten und Challenge-/Keybox-Originaleinstiege werden serverseitig
+bereit; bestehende mandantenbezogene Modul- und Fachrechte gelten weiter.
+Keyboxadministration erlaubt reale Einrichtung ohne SQL-Handeingriffe, jedoch
+keine PIN-Ausgabe. Externe SMTP-/FCM-/Azure-/Igloo-/Kosten-/Widerrufsfreigaben
+bleiben unveraendert geschlossen. Aktivierung erst nach echten Schema- und
+geschuetzten Routen-/synthetischen Kernelgates, niemals bei Teilfehlern.
