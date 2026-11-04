@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PersonalAccessRelationManager extends RelationManager
 {
+    use LocalizedRelationTitle;
     protected static string $relationship = 'personalAccessLinks';
 
     protected static ?string $title = 'Benutzerzugriff';

@@ -7,6 +7,7 @@ use Filament\Pages\Page;
 
 class TeamPlanning extends Page
 {
+    use LocalizedTitle;
     protected string $view = 'clubunio.planning-entry';
 
     protected static ?string $title = 'Teamplanung';

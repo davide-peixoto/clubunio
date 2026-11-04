@@ -28,6 +28,7 @@ use Livewire\Attributes\Locked;
 
 class Synchronisation extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable {
         handleTableFilterUpdates as protected handleNativeTableFilterUpdates;
         updatedTableSearch as protected updatedNativeTableSearch;

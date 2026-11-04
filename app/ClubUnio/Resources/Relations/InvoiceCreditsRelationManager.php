@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 
 class InvoiceCreditsRelationManager extends RelationManager
 {
+    use LocalizedRelationTitle;
     use RefreshFinancialDossier;
 
     protected static string $relationship = 'creditNotes';

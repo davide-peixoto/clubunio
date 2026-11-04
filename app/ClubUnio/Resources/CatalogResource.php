@@ -19,6 +19,10 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class CatalogResource extends Resource
 {
+    public static function getModelLabel(): string { return __(parent::getModelLabel()); }
+
+    public static function getPluralModelLabel(): string { return __(parent::getPluralModelLabel()); }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Stammdaten';

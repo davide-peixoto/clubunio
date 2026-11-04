@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BexioCatalogEntryResource extends Resource
 {
+    use LocalizedLabels;
     protected static ?string $model = BexioCatalogEntry::class;
 
     protected static ?string $modelLabel = 'Bexio-Katalogeintrag';

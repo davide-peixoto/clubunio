@@ -15,6 +15,7 @@ use Livewire\Attributes\Locked;
 
 class ContributionPreview extends Page
 {
+    use LocalizedTitle;
     protected string $view = 'clubunio.contribution-preview';
 
     protected static ?string $title = 'Beitragsberechnung';

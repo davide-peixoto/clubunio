@@ -28,6 +28,7 @@ use Livewire\Attributes\Locked;
 
 class ApiIntegrations extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.api-integrations';

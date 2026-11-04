@@ -26,6 +26,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class BexioSandbox extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.bexio-sandbox';

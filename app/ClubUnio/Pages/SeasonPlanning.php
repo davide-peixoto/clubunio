@@ -12,6 +12,7 @@ use Livewire\Attributes\Locked;
 
 class SeasonPlanning extends Page
 {
+    use LocalizedTitle;
     protected string $view = 'clubunio.season-planning';
 
     protected static ?string $title = 'Saisonplanung';

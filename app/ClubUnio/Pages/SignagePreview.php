@@ -20,6 +20,7 @@ use Illuminate\Validation\ValidationException;
 
 class SignagePreview extends Page
 {
+    use LocalizedTitle;
     protected function getHeaderActions(): array
     {
         return [Action::make('publicDisplay')->label('Öffentliche Signage')->icon('heroicon-o-arrow-top-right-on-square')

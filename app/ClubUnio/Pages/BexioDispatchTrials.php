@@ -23,6 +23,7 @@ use Illuminate\Validation\ValidationException;
 
 class BexioDispatchTrials extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.bexio-dispatch-trials';

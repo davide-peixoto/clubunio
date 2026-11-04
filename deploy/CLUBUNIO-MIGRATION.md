@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## DE-/EN-Sprachbasis (04.11.2026)
+
+Additive Migration001200: persoenliche bevorzugte Sprache und Vereinssprache,
+keine Bestandsrechte/-daten neu importieren. DE bleibt Standard, EN waehlbar.
+Kataloge und verbindliche Pflegepruefung fuer aktivierte Sprachen eingefuehrt.
+Bestandsuebersetzung noch NICHT vollstaendig: Rueckstand, Tests und Rueckweg
+in CLUBUNIO-LANGUAGES.md. Sprachvarianten fuer Fachvorlagen/Lookups separat
+migrieren; keine automatische Uebersetzung oder Provideraktionen.
+
 ## Parameterbereinigung und App-Profile (03.11.2026)
 
 Gezielte Migrationen000092/000093: gepruefte Altparameter mit verschluesselter

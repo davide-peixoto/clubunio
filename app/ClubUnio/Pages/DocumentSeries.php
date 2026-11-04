@@ -24,6 +24,7 @@ use Livewire\WithFileUploads;
 
 class DocumentSeries extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
     use WithFileUploads;
 

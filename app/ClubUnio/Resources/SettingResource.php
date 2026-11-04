@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Crypt;
 
 class SettingResource extends Resource
 {
+    use LocalizedLabels;
     protected static ?string $model = Setting::class;
 
     protected static ?string $modelLabel = 'Einstellung';

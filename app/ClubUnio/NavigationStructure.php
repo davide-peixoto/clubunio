@@ -121,7 +121,7 @@ class NavigationStructure
                     $item->isActiveWhen(fn () => $active);
                 }
             }
-            $navigation[] = NavigationGroup::make(in_array($label, ['', 'Einstellungen'], true) ? null : $label)->items($items)
+            $navigation[] = NavigationGroup::make(in_array($label, ['', 'Einstellungen'], true) ? null : __($label))->items($items)
                 ->collapsed($label !== '' && $label !== 'Einstellungen' && ! $active)
                 ->collapsible($label !== '' && $label !== 'Einstellungen');
         }
@@ -129,10 +129,20 @@ class NavigationStructure
         foreach ([...array_keys(self::SETTINGS), 'Weitere Einstellungen'] as $label) {
             if (! empty($settings[$label])) {
                 usort($settings[$label], fn ($a, $b) => strnatcasecmp($a->getLabel(), $b->getLabel()));
-                $orderedSettings[$label] = $settings[$label];
+                $orderedSettings[__($label)] = $settings[$label];
             }
         }
 
+        $translate = function ($item) use (&$translate) {
+            $item->label(__($item->getLabel()));
+            foreach ($item->getChildItems() as $child) { $translate($child); }
+        };
+        foreach ($navigation as $group) {
+            foreach ($group->getItems() as $item) { $translate($item); }
+        }
+        foreach ($orderedSettings as $items) {
+            foreach ($items as $item) { $translate($item); }
+        }
         return ['navigation' => $navigation, 'settings' => $orderedSettings];
     }
 }

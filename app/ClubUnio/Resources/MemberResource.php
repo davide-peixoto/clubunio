@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MemberResource extends Resource
 {
+    use LocalizedLabels;
     protected static ?string $model = Member::class;
 
     protected static ?string $modelLabel = 'Mitglied';

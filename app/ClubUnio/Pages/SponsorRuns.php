@@ -32,6 +32,7 @@ use Livewire\Attributes\On;
 
 class SponsorRuns extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.sponsor-runs';

@@ -28,6 +28,7 @@ use Livewire\Attributes\Url;
 
 class SponsorRunBilling extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.sponsor-run-billing';

@@ -125,6 +125,8 @@ class ClubUnioPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
+            ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
+            ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=blue-v1" rel="stylesheet" data-navigate-track />')])
             ->tenant(Tenant::class, slugAttribute: 'slug', ownershipRelationship: 'tenant')
             ->tenantMenu(false)
@@ -207,6 +209,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                \App\ClubUnio\Http\UseLanguage::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,

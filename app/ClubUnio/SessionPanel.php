@@ -29,7 +29,12 @@ class SessionPanel extends Panel
             'beitrag' => 'banknotes', 'bank' => 'building-library', 'bus' => 'truck',
             'signage' => 'tv', 'wett' => 'trophy', 'spiel' => 'trophy', 'platz' => 'map-pin',
             'dokument' => 'paper-clip', 'benutzer' => 'user-circle', 'berechtigung' => 'shield-check',
-            'vorlage' => 'envelope', 'einstellung' => 'cog-6-tooth', 'land' => 'globe-europe-africa'];
+            'vorlage' => 'envelope', 'einstellung' => 'cog-6-tooth', 'land' => 'globe-europe-africa',
+            'member' => 'user-group', 'application' => 'user-plus', 'season' => 'calendar-days',
+            'team' => 'users', 'invoice' => 'document-text', 'expense' => 'receipt-percent',
+            'fee' => 'banknotes', 'fixture' => 'trophy', 'pitch' => 'map-pin', 'document' => 'paper-clip',
+            'user' => 'user-circle', 'permission' => 'shield-check', 'template' => 'envelope',
+            'setting' => 'cog-6-tooth', 'countr' => 'globe-europe-africa'];
         foreach ($groups as $group) {
             if ($group->getIcon()) {
                 continue;

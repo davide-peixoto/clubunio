@@ -9,6 +9,7 @@ use Filament\Pages\Page;
 
 class SettingsOverview extends Page
 {
+    use LocalizedTitle;
     protected string $view = 'clubunio.settings-overview';
 
     protected static ?string $title = 'Einstellungen';

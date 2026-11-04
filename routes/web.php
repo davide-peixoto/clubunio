@@ -1,5 +1,8 @@
 <?php
 
+\Illuminate\Support\Facades\Route::post('/language', \App\ClubUnio\Http\LanguageController::class)
+    ->middleware('throttle:30,1')->name('clubunio.language');
+
 use App\ClubUnio\Http\AnnouncementPortalController;
 use App\ClubUnio\Http\BankAccountPortalController;
 use App\ClubUnio\Http\BexioConnectionController;

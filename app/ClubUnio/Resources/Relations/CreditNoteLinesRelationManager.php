@@ -8,6 +8,7 @@ use Filament\Tables\Table;
 
 class CreditNoteLinesRelationManager extends RelationManager
 {
+    use LocalizedRelationTitle;
     protected static string $relationship = 'lines';
 
     protected static ?string $title = 'Gutschriftspositionen';

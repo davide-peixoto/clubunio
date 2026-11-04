@@ -13,7 +13,15 @@ class ListSettings extends ListRecords
 {
     protected function getHeaderActions(): array
     {
-        return [Action::make('appProfiles')->label('App-Module nach Profil')->icon('heroicon-o-squares-2x2')
+        return [Action::make('defaultLanguage')->label('Vereinssprache')->icon('heroicon-o-language')
+            ->visible(fn () => app(\App\ClubUnio\Services\AccountAdministrationService::class)->allowed(Filament::auth()->user(),Filament::getTenant()))
+            ->schema([\Filament\Forms\Components\Select::make('locale')->label('Standardsprache')->required()
+                ->options(fn () => app(\App\ClubUnio\Services\LanguagePreferences::class)->enabled()),
+                \Filament\Forms\Components\Hidden::make('expected'),
+                \Filament\Forms\Components\Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500)])
+            ->fillForm(fn () => ['locale'=>Filament::getTenant()->fresh()->default_locale ?? config('clubunio-languages.default'),'expected'=>Filament::getTenant()->fresh()->default_locale])
+            ->action(fn (array $data,$livewire) => \App\ClubUnio\Resources\FormMutation::run($livewire,fn () => app(\App\ClubUnio\Services\LanguagePreferences::class)->setTenantDefault(Filament::auth()->user(),Filament::getTenant(),$data))),
+            Action::make('appProfiles')->label('App-Module nach Profil')->icon('heroicon-o-squares-2x2')
             ->visible(fn () => \App\ClubUnio\Resources\AccessProfileResource::canViewAny())
             ->url(fn () => \App\ClubUnio\Resources\AccessProfileResource::getUrl()),
             Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')

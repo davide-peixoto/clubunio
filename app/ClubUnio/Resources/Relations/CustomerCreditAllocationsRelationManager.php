@@ -11,6 +11,7 @@ use Filament\Tables\Table;
 
 class CustomerCreditAllocationsRelationManager extends RelationManager
 {
+    use LocalizedRelationTitle;
     protected static string $relationship = 'allocations';
 
     protected static ?string $title = 'Nachgewiesene Verrechnungen';

@@ -22,6 +22,7 @@ use Livewire\Attributes\Locked;
 
 class SfvCompetitions extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.sfv-competitions';

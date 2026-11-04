@@ -11,6 +11,6 @@ class Dashboard extends \Filament\Pages\Dashboard
     {
         $firstName = Str::before(trim((string) Filament::auth()->user()?->display_name), ' ');
 
-        return $firstName !== '' ? 'Willkommen, '.$firstName : 'Willkommen';
+        return $firstName !== '' ? __('Willkommen, :name', ['name' => $firstName]) : __('Willkommen');
     }
 }

@@ -16,3 +16,16 @@ Bestehendes PHPMaker DEV/PROD unveraendert lassen. Keine echten Bankzahlungen.
 Nach Releases Doku und Migrationsplan nachfuehren, gezielt testen, Commit&Sync.
 Keine Secrets, .env-Dateien, Uploads, Laufzeitdateien oder vendor committen.
 Vorhandene fremde Aenderungen erhalten und nicht pauschal mitcommitten.
+
+## Verbindliche Mehrsprachigkeit
+
+Bei jeder neuen oder geaenderten Funktion alle aktivierten Sprachen aus
+config/clubunio-languages.php beruecksichtigen; aktuell Deutsch und Englisch.
+Sichtbare UI-Texte, Validierung, Barrierefreiheitslabels, Exporte und Nachrichten
+ueber Uebersetzungsschluessel pflegen, keine neuen fest verdrahteten deutschen
+Texte. Beide Kataloge und Platzhalter pruefen: php tools/check-translations.php.
+Status-/Lookup-IDs, API-Schluessel, Berechtigungen und Benutzereingaben bleiben
+sprachunabhaengig. Freitexte niemals automatisch ersetzen. Dynamische Templates
+und Lookups brauchen getrennte Sprachvarianten mit dokumentiertem Fallback.
+Neue Sprache erst aktivieren, wenn ihre Kataloge und betroffenen Ablaufe getestet
+sind. Stand und offene Bestandsuebersetzungen: deploy/CLUBUNIO-LANGUAGES.md.

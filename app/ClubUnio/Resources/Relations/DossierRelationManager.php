@@ -19,6 +19,7 @@ use Livewire\Attributes\Locked;
 
 abstract class DossierRelationManager extends RelationManager
 {
+    use LocalizedRelationTitle;
     use AssignmentRelationActions;
 
     protected static string $kind;

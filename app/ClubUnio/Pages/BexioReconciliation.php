@@ -23,6 +23,7 @@ use Illuminate\Validation\ValidationException;
 
 class BexioReconciliation extends Page implements HasTable
 {
+    use LocalizedTitle;
     use InteractsWithTable;
 
     protected string $view = 'clubunio.bexio-reconciliation';
