@@ -162,7 +162,7 @@
                         @endforeach
                         <label>{{ __('Von') }}<input type="time" wire:model.live="document.slots.{{ $i }}.starts_at"></label>
                         @if(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->ready())
-                            <label>{{ __('Teilfläche') }}<select wire:model.live="document.slots.{{ $i }}.area_id"><option value="">{{ __('Ganzer Platz') }}</option>@foreach(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->options(\Filament\Facades\Filament::getTenant(), $slot['field_id'] ?: null) as $areaId => $areaName)<option value="{{ $areaId }}">{{ $areaName }}</option>@endforeach</select></label>
+                            <label>{{ __('Teilfläche') }}<select wire:model.live="document.slots.{{ $i }}.area_id"><option value="">{{ __('Ganzer Platz') }}</option>@foreach(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->trainingOptions(\Filament\Facades\Filament::getTenant(), $slot['field_id'] ?: null) as $areaId => $areaName)<option value="{{ $areaId }}">{{ $areaName }}</option>@endforeach</select></label>
                         @endif
                         <label>{{ __('Bis') }}<input type="time" wire:model.live="document.slots.{{ $i }}.ends_at"></label>
                         <label>{{ __('Halle') }}<input maxlength="255" wire:model.live.debounce.1000ms="document.slots.{{ $i }}.hall"></label>

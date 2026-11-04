@@ -58,6 +58,8 @@ class SeasonPlanningTest extends TestCase
         foreach (['period', 'weekday', 'field', 'room', 'side'] as $category) {
             $this->options[$category] = $this->insert('training_options', ['name' => $category, 'category' => $category, 'code' => 'fixture']);
         }
+        $this->insert('pitch_areas', ['field_id' => $this->options['field'], 'name_de' => 'Hälfte A', 'name_en' => 'Half A',
+            'x' => 0, 'y' => 0, 'width' => .5, 'height' => 1]);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
@@ -136,6 +138,7 @@ class SeasonPlanningTest extends TestCase
         $this->assertSame('completed', $this->service()->get($this->actor, $this->tenant, $row->id)->state);
         $this->assertSame(9, $this->rows('season_plan_results'));
         $this->assertSame('18:00:00', TrainingSlot::where('tenant_id', $this->tenant->id)->sole()->starts_at);
+        $this->assertNotNull(TrainingSlot::where('tenant_id', $this->tenant->id)->sole()->area_id);
         $this->assertSame(0, $this->rows('invoices'));
         Http::assertNothingSent();
         Mail::assertNothingSent();

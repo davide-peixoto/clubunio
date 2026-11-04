@@ -2666,5 +2666,7 @@
     "Überwiegend klar": "Mainly clear",
     "Übung": "Exercise",
     "–": "–",
-    "– Info-Display": "– Information display"
+    "– Info-Display": "– Information display",
+    "Halber Platz (automatisch)": "Half pitch (automatic)",
+    "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.": "No half-pitch area has been configured for this pitch yet."
 }

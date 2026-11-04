@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+## Halbplatzstandard fuer Trainings (05.11.2026)
+
+Neue Wochenvorlagen/Saisonplanung verwenden halbe Teilflaechen. Freigegebene
+Bestandskorrektur fuer SV Sissach:95 platzgebundene Trainings mit A/B-Haelften,
+553 fehlende Platzangaben unveraendert. Kein Schema-/Legacy-Import. Vor Apply
+Snapshot/verschluesselte Sicherung, Revision und Audit; keine Nachrichten.
+Bei spaeteren Importen native Teilflaechen erhalten und nicht durch null aus
+Altquellen ersetzen. Korrektur nicht blind erneut ausfuehren. Nachweis/Rueckweg:
+[Trainingshaelften](CLUBUNIO-TRAINING-HALVES.md).
+
 ## Gemeinsamer App-/Webchat (04.11.2026)
 
 Code-only-Erweiterung auf bestehenden chat_*/mobile_*-Tabellen: keine neue

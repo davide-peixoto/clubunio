@@ -2413,11 +2413,14 @@ class ClubUnioTest extends TestCase
         foreach (['period', 'weekday', 'field'] as $category) {
             $ids[$category.'_id'] = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => 'fixture', 'name' => $category]);
         }
+        $half = $this->db->table('clubora.pitch_areas')->insertGetId(['tenant_id' => $this->own->id, 'field_id' => $ids['field_id'],
+            'name_de' => 'Hälfte A', 'name_en' => 'Half A', 'x' => 0, 'y' => 0, 'width' => .5, 'height' => 1]);
         $input = $ids + ['team_season_id' => $ts, 'starts_at' => '18:00', 'ends_at' => '19:30', 'all_fields' => true, 'without_main' => false, 'synthetic_only' => false, 'website_visible' => true, 'active' => true];
         $this->get('/training-slots')->assertOk();
         Livewire::test(ManageSlots::class)->callTableAction('create', data: $input)->assertHasNoTableActionErrors();
         $slot = TrainingSlot::where('tenant_id', $this->own->id)->sole();
         $this->assertSame('18:00:00', $slot->starts_at);
+        $this->assertSame($half, $slot->area_id);
         $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'training_slots')->count());
         $service = app(ContributionTrainingService::class);
         foreach ([['ends_at' => '17:00'], ['field_id' => $ids['period_id']]] as $bad) {

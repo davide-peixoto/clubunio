@@ -146,9 +146,30 @@ class PitchWeeklyAreasTest extends TestCase
         $this->invalid(fn () => $this->save($input, $slot->id), 'revision');
         $input['revision'] = $edited->revision;
         $input['field_id'] = $this->otherField;
+        $this->invalid(fn () => $this->save($input, $slot->id));
+        $input['area_id'] = null;
         $this->assertNull($this->save($input, $slot->id)->area_id);
         $audit = $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'training_slots')->orderByDesc('id')->first();
         $this->assertNull(json_decode($audit->after_value, true)['area_id']);
+    }
+
+    public function test_new_training_defaults_to_half_and_parallel_training_uses_other_half(): void
+    {
+        $right = app(PitchPlanningService::class)->saveArea($this->actor, $this->tenant, [
+            'field_id' => $this->field, 'name_de' => 'B', 'name_en' => 'B', 'x' => .5, 'y' => 0, 'width' => .5, 'height' => 1]);
+        $input = $this->input();
+        unset($input['area_id']);
+        $first = $this->save($input);
+        $this->assertSame($this->area['id'], $first->area_id);
+        $second = $this->save($this->input(['area_id' => 0]));
+        $this->assertSame($right['id'], $second->area_id);
+        $later = $this->save($this->input(['area_id' => 0, 'starts_at' => '19:30', 'ends_at' => '20:30']));
+        $this->assertSame($first->area_id, $later->area_id);
+        $this->assertNull($this->save($this->input(['area_id' => null]))->area_id);
+        $this->assertNull($this->save($this->input(['area_id' => 0, 'field_id' => null, 'hall' => 'Hall']))->area_id);
+        $edited = $this->save($input + ['revision' => $first->revision], $first->id);
+        $this->assertSame($first->area_id, $edited->area_id);
+        $this->assertSame(__('Halber Platz (automatisch)'), app(PitchWeeklyAreas::class)->trainingOptions($this->tenant, $this->field)[0]);
     }
 
     public function test_service_rejects_wrong_field_foreign_area_no_field_and_inactive_field(): void

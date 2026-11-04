@@ -188,7 +188,7 @@ final class SeasonPlanningService
                 'bexio_product_id' => 'nullable|string|max:100', 'bexio_article_id' => 'nullable|integer|min:1'],
             'rules' => ['price_key' => 'nullable|uuid', 'gender_id' => 'nullable|integer', 'year_from' => 'nullable|integer|min:1800|max:2200', 'year_to' => 'nullable|integer|min:1800|max:2200'],
             'assignments' => ['kind' => 'required|in:player,staff,lead', 'team_key' => 'required|uuid', 'member_id' => 'required|integer|min:1', 'function_id' => 'nullable|integer'],
-            'slots' => ['team_key' => 'nullable|uuid', 'starts_at' => 'nullable|date_format:H:i,H:i:s', 'ends_at' => 'nullable|date_format:H:i,H:i:s', 'hall' => 'nullable|string|max:255', 'area_id' => 'nullable|integer|min:1'],
+            'slots' => ['team_key' => 'nullable|uuid', 'starts_at' => 'nullable|date_format:H:i,H:i:s', 'ends_at' => 'nullable|date_format:H:i,H:i:s', 'hall' => 'nullable|string|max:255', 'area_id' => 'nullable|integer|min:0'],
         ];
         foreach (['period', 'weekday', 'field', 'room', 'side'] as $kind) {
             $columns['slots'][$kind.'_id'] = 'nullable|integer';
@@ -211,6 +211,7 @@ final class SeasonPlanningService
         foreach ($columns as $collection => $fields) {
             $result[$collection] = array_values($result[$collection]);
             foreach ($result[$collection] as &$row) {
+                if ($collection === 'slots' && !array_key_exists('area_id', $row)) $row['area_id'] = 0;
                 $row += array_fill_keys(array_keys($fields), null);
                 foreach ($fields as $field => $_) {
                     if (($row[$field] ?? null) === '') {

@@ -45,11 +45,11 @@ class TrainingSlotResource extends ContributionTrainingResource
         $fields = [Hidden::make('revision'), Select::make('team_season_id')->label('Mannschaft / Saison')->options(fn () => static::options(TeamSeason::class, 'label'))->searchable()->required()];
         foreach (['period' => 'Sommer / Winter', 'weekday' => 'Wochentag', 'field' => 'Spielfeld', 'room' => 'Garderobe', 'side' => 'Anlagenseite'] as $category => $label) {
             $select = Select::make($category.'_id')->label($label)->options(fn () => static::choices($category))->required(in_array($category, ['period', 'weekday']));
-            if ($category === 'field') $select->live()->afterStateUpdated(fn (Set $set) => $set('area_id', null));
+            if ($category === 'field') $select->live()->afterStateUpdated(fn (Set $set) => $set('area_id', 0));
             $fields[] = $select;
             if ($category === 'field') {
-                $fields[] = Select::make('area_id')->label('Teilfläche')->placeholder(__('Ganzer Platz'))
-                    ->options(fn (Get $get) => app(PitchWeeklyAreas::class)->options(Filament::getTenant(), $get('field_id') ?: null))
+                $fields[] = Select::make('area_id')->label('Teilfläche')->placeholder(__('Ganzer Platz'))->default(0)
+                    ->options(fn (Get $get) => app(PitchWeeklyAreas::class)->trainingOptions(Filament::getTenant(), $get('field_id') ?: null))
                     ->visible(fn () => app(PitchWeeklyAreas::class)->ready());
             }
         }
