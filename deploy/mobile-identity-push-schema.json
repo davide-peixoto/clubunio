@@ -32,10 +32,7 @@
       "delivery_state",
       "expires_at",
       "completed_at",
-      "created_at",
-      "UNIQUE(tenant_id,purpose,request_key)",
-      "CHECK(purpose<>'enroll'",
-      "CHECK(state='pending'"
+      "created_at"
     ],
     "mobile_account_emails": [
       "account_id",
@@ -77,9 +74,7 @@
       "revision",
       "revoked_at",
       "created_at",
-      "updated_at",
-      "UNIQUE(device_id,account_id)",
-      "UNIQUE(id,account_id,device_id)"
+      "updated_at"
     ],
     "mobile_push_outbox": [
       "id",
@@ -97,8 +92,7 @@
       "provider_reference",
       "outcome_code",
       "created_at",
-      "finished_at",
-      "UNIQUE(binding_id,tenant_id,event_key)"
+      "finished_at"
     ],
     "mobile_push_commands": [
       "tenant_id",
@@ -130,10 +124,7 @@
       "score",
       "created_at",
       "expires_at",
-      "finished_at",
-      "UNIQUE(tenant_id,account_id,command_key)",
-      "CHECK(expires_at>created_at)",
-      "CHECK((finished_at"
+      "finished_at"
     ],
     "mobile_penalty_best": [
       "tenant_id",
@@ -152,10 +143,7 @@
       "title_encrypted",
       "body_encrypted",
       "created_at",
-      "dispatch_reference",
-      "UNIQUE(tenant_id,id)",
-      "UNIQUE(tenant_id,previous_generation)",
-      "UNIQUE(dispatch_reference)"
+      "dispatch_reference"
     ],
     "mobile_keyboxes": [
       "id",
@@ -164,8 +152,7 @@
       "provider_device_cipher",
       "bus_id",
       "active",
-      "revision",
-      "UNIQUE(tenant_id,id)"
+      "revision"
     ],
     "mobile_keybox_grants": [
       "tenant_id",
@@ -193,10 +180,7 @@
       "invalidated_at",
       "remote_revocation_state",
       "created_at",
-      "provider_started_at",
-      "UNIQUE(tenant_id,account_id,request_key)",
-      "UNIQUE(tenant_id,keybox_id,scope_key)",
-      "CHECK((state='issued')=(pin_encrypted"
+      "provider_started_at"
     ]
   },
   "expectedFks": {

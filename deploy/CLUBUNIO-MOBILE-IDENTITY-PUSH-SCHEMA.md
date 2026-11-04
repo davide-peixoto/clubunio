@@ -43,3 +43,17 @@ Lokale Syntax-/Quellpruefung ist Vorbereitung; erfolgreicher Linuxlauf,
 Sicherungsdigest und Anwendung werden erst nach wirklicher Ausfuehrung in PI.md
 und CLUBUNIO-MIGRATION.md festgehalten. Externe SMTP/FCM/APNs-/Igloo-Konfiguration
 und physische Abnahme sind separate, weiterhin offene Voraussetzungen.
+
+DEV-Vorbereitung: Foundation d68874d ist nach allen bestehenden/geschlossenen
+Gates aktiviert. Erster Apply wurde durch Spaltenvergleich gestoppt und komplett
+zurueckgerollt; nachfolgende Fresh-/Sicherungspruefung bestaetigt unveraenderte
+Eltern und fehlende Zieltabellen/Ledger. In der Blueprint standen einige
+Constraintausdruecke faelschlich unter Spalten. Nur die Blueprint korrigiert,
+Migrationen und FKs unveraendert; jeder Spaltenname wird jetzt vorab validiert.
+
+Korrigierter versionierter Operatorrunner liegt separat unter
+shared/schema-mobile-identity-push-v2/ (Helper und fest gehashte Blueprint).
+Er bootstrapped ausschliesslich die weiterhin exakt gebundene aktive Foundation;
+die unveraenderliche Runtime wird nicht nachtraeglich editiert. Die vorhandene
+Elternsicherung bleibt nur nach erneutem vollstaendigem Vergleich verwendbar.
+Erfolgreiche Anwendung wird weiterhin erst nach wirklichem Nachweis dokumentiert.

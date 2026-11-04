@@ -14,10 +14,10 @@ try {
         else throw new LogicException('Unexpected or duplicate stage argument');
     }
     if (($stage === '--export') !== ($fileArgument === null)) throw new LogicException('Export creates a new backup; verify/apply require its explicit path');
-    require dirname(__DIR__).'/vendor/autoload.php';
-    $app = require dirname(__DIR__).'/bootstrap/app.php';
-    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
     $release = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-identity-push-foundation';
+    require $release.'/vendor/autoload.php';
+    $app = require $release.'/bootstrap/app.php';
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
     $directory = '/var/www/svs-laravel/shared/backups';
     $db = DB::connection('clubunio');
     $guard = function () use ($db, $release): void {
@@ -43,13 +43,18 @@ try {
     $guard();
     if ($db->transactionLevel() !== 0) throw new LogicException('Standalone schema operation required');
     $specPath = __DIR__.'/mobile-identity-push-schema.json';
-    $specHash = 'd46fbe6783c8b2edf8882cde48d43e970d207c96d202367626cae4d30a4ca450';
+    $specHash = '83e94e88031c7a314bdcece9fea2815702a445ba0c36f8d5312ca3563d8ecfd6';
     if (!is_file($specPath) || is_link($specPath) || !hash_equals($specHash, hash_file('sha256', $specPath))) throw new LogicException('Fixed schema blueprint required');
     $spec = json_decode(file_get_contents($specPath), true, 64, JSON_THROW_ON_ERROR);
     $migrations = $spec['migrations']; $parents = $spec['parents']; $newTables = $spec['newTables'];
     $expectedFks = $spec['expectedFks']; $primaryKeys = $spec['primaryKeys'];
     if (count($migrations) !== 4 || count($parents) !== 9 || count($newTables) !== 14
         || array_sum(array_map('count', $expectedFks)) !== 30) throw new LogicException('Unexpected fixed schema inventory');
+    foreach ($newTables as $columns) {
+        foreach ($columns as $column) {
+            if (!is_string($column) || !preg_match('/^[a-z][a-z0-9_]*$/D', $column)) throw new LogicException('Invalid blueprint column');
+        }
+    }
     $checkSources = function () use ($migrations, $specPath, $specHash): void {
         if (!hash_equals($specHash, hash_file('sha256', $specPath))) throw new LogicException('Blueprint source changed');
         foreach ($migrations as $name => $hash) {
@@ -241,5 +246,5 @@ try {
     echo ($stage === '--apply' ? 'Applied only400/500/600/700 atomically; new tables empty and tenant FKs verified; parent rows preserved; only reviewed session unique addition. ' : 'Verified encrypted metadata/index/constraint/ledger and streamed parent backup. ')
         .'Backup '.basename($file).' SHA256 '.hash_file('sha256', $file)."\n";
 } catch (Throwable $error) {
-    fwrite(STDERR, 'Package schema preparation failed: '.get_class($error)." (private records and connection details suppressed).\n"); exit(1);
+    fwrite(STDERR, 'Package schema preparation failed: '.get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()." (private records and connection details suppressed).\n"); exit(1);
 }
