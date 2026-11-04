@@ -4,7 +4,7 @@
             @csrf
             <input type="hidden" name="_workspace" value="{{ $workspaceToken }}">
             <input type="hidden" name="from" value="{{ $filters['from'] ?? '' }}"><input type="hidden" name="to" value="{{ $filters['to'] ?? '' }}">
-            <x-filament::button type="submit" icon="heroicon-o-arrow-path">Vom SFV aktualisieren</x-filament::button>
+            <x-filament::button type="submit" icon="heroicon-o-arrow-path">{{ __('Vom SFV aktualisieren') }}</x-filament::button>
         </form>
     @endif
     {{ $this->table }}

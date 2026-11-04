@@ -24,9 +24,9 @@
                     <span class="fi-sidebar-item-label">{{ $slot }}</span>
                 </span>
             @endif
-            <button type="button" class="cu-submenu-toggle" aria-label="Untermenü {{ trim(strip_tags($slot->toHtml())) }}"
+            <button type="button" class="cu-submenu-toggle" aria-label="{{ __('Untermenü :label', ['label' => trim(strip_tags($slot->toHtml()))]) }}"
                 aria-controls="{{ $submenuId }}" x-bind:aria-expanded="open.toString()" x-on:click="open = !open"
-                title="Untermenü auf- oder zuklappen">
+                title="{{ __('Untermenü auf- oder zuklappen') }}">
                 <x-filament::icon icon="heroicon-m-chevron-down" class="cu-submenu-chevron" x-bind:class="{ 'cu-submenu-open': open }" />
             </button>
         </div>

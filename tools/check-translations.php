@@ -9,7 +9,7 @@ if (in_array('--sync-de', $argv, true)) {
 }
 $errors = [];
 $literalLabels = [];
-foreach (['app/ClubUnio','app/Livewire','app/Providers','resources/views/clubunio'] as $folder) {
+foreach (['app/ClubUnio','app/Livewire','app/Providers','resources/views'] as $folder) {
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/'.$folder));
     foreach ($files as $file) {
         if (! $file->isFile() || $file->getExtension() !== 'php') { continue; }

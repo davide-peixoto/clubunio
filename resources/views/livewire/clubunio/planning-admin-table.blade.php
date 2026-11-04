@@ -1,4 +1,4 @@
 <div class="fi-page-content">
-    <header class="fi-header"><h1 class="fi-header-heading">{{ $this instanceof \App\Livewire\ClubUnio\TeamPlanningTable ? 'Teamplanung' : 'Trainingspläne' }}</h1></header>
+    <header class="fi-header"><h1 class="fi-header-heading">{{ $this instanceof \App\Livewire\ClubUnio\TeamPlanningTable ? __('Teamplanung') : __('Trainingspläne') }}</h1></header>
     {{ $this->table }}
 </div>

@@ -6,6 +6,36 @@ use PHPUnit\Framework\TestCase;
 
 class LanguageCatalogIntegrityTest extends TestCase
 {
+    public function test_navigation_review_labels_and_accessibility_use_english_catalogue(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $catalog = json_decode(file_get_contents($root.'/lang/en.json'), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('App banners', $catalog['Appbanner']);
+        $this->assertSame('Personal keyboxes', $catalog['Persönliche Schlüsselboxen']);
+        $this->assertSame('Personal keybox', $catalog['Persönliche Schlüsselbox']);
+        $this->assertSame('Submenu :label', $catalog['Untermenü :label']);
+        $this->assertSame('Expand or collapse submenu', $catalog['Untermenü auf- oder zuklappen']);
+        $view = file_get_contents($root.'/resources/views/vendor/filament-panels/components/sidebar/item.blade.php');
+        $this->assertStringContainsString("__('Untermenü :label',", $view);
+        $this->assertStringContainsString("__('Untermenü auf- oder zuklappen')", $view);
+    }
+
+    public function test_embedded_views_compile_and_keep_weather_logic_and_user_captions_raw(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $compiler = new \Illuminate\View\Compilers\BladeCompiler(new \Illuminate\Filesystem\Filesystem, sys_get_temp_dir());
+        $compiler->withoutComponentTags();
+        foreach (glob($root.'/resources/views/livewire/clubunio/*.blade.php') as $file) {
+            token_get_all($compiler->compileString(file_get_contents($file)), TOKEN_PARSE);
+            $this->addToAssertionCount(1);
+        }
+        $source = file_get_contents($root.'/resources/views/livewire/clubunio/signage-kiosk-feed.blade.php');
+        $this->assertStringContainsString("['Klar','Überwiegend klar']", $source);
+        $this->assertStringContainsString("\$post['caption']?:__('Instagram-Beitrag')", $source);
+        $source = file_get_contents($root.'/resources/views/livewire/clubunio/planning-admin-table.blade.php');
+        $this->assertStringContainsString("__('Teamplanung') : __('Trainingspläne')", $source);
+    }
+
     public function test_enabled_catalogues_cover_backlog_and_all_merged_parts(): void
     {
         $root = dirname(__DIR__, 2);
