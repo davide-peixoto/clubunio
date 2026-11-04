@@ -1828,3 +1828,40 @@ mit zurueckgerollten synthetischen Daten gruen. Keine Provider-/Mail-/Bankaktion
 persoenliche Modulrouten anonym401. Erste zwei inaktive Stagings wurden durch
 Routen-/Argumentgates gestoppt und unveraendert erhalten. Native/externe
 Gesamtabnahme und verbleibende Originalparitaet bleiben Teil des offenen Auftrags.
+
+
+## Mobile Identity/Push/Challenge/Keybox: DEV-Unterbau und Schema (04.11.2026)
+
+Aktiv20261104-clubunio-mobile-identity-push-foundation auf packages-v1,
+Produktsnapshot d1dc1e5 und Paketd68874d.62 explizite Quelldateien,15 vorhandene
+Baselinefiles gegen Git/SHA bekannt,47 neue Dateien. Nur google/auth1.55.3,
+firebase/php-jwt7.2.1 und psr/cache3.0.0 addiert, keine bestehenden Lockversionen
+geaendert; Install ohne Composerplugins/Scripts. Env und bisherige Modulflags
+unveraendert. Bestehende Gates,79 persoenliche Modul-Kernelchecks sowie
+Login/Profil/Passwort/Sitzungen und My Teams/Planung mit Rollback gruen.
+Neue geschlossene Gates: Identity8/2, Push6/Notifications4, Keybox6, Challenge5.
+
+400/500/600/700 jetzt atomar angewendet,14 neue leere Tabellen/30 validierte
+FKs/14 exakte PKs/PUBLIC-Sperren bestaetigt. Neun Eltern-/Ledgertabellen vor/nach
+mit Spalten, Indizes, Constraints und kompletten Zeilendigests verglichen.
+Einzige erlaubte Elternmetadatenergaenzung: mobile_sessions_id_account_unique
+auf(id,account_id) und genau zugehoeriger Uniqueindex; keine Sitzung umgeschrieben.
+Nur vier neue Ledgerzeilen/ein Batch. Verschluesselte0600-Sicherung:
+shared/backups/mobile-before-400-500-600-700-20261104-20261104004038-e3918be54084187fd51c305e901e4401.cuenc
+SHA256 81cc17646abbc41d3d3713dc646e3ff2b84d081b96d7301ada2744da01ca2f13.
+Begrenzte Eltern-/Ledger-Sicherung, kein Vollrestore-Nachweis.
+
+Der erste Apply wurde durch die Blueprint-Spaltenpruefung gestoppt und voll
+zurueckgerollt. Fresh-/Sicherungspruefung bestaetigte danach unveraenderte Daten.
+Nur irrtuemlich als Spalten erfasste Constraintausdruecke korrigiert; DDLquellen
+unveraendert. Gepruefter Operatorrunner8281a17 separat unter
+shared/schema-mobile-identity-push-v2/; Runtimeartefakt unveraendert.
+Erneute Verifikation vor erfolgreichem Apply, danach62 Runtimehashes bestaetigt.
+
+HTTPS Login200, oeffentliche Identity bewusst503, Notifications/Pushstatus/
+Keybox/Challenge anonym401; PHP-FPM aktiv. Identity/Mail, Pushzustellung,
+Challengehauptflag und Keyboxhaupt-/Provider-/PINflags bleiben geschlossen.
+SMTP/FCM/APNs/Igloo-Konfiguration und physische Abnahme fehlen weiterhin;
+kein echter Mail-, Push-, PIN-, Hardware- oder Zahlungsaufruf. NativeChallenge-
+Shell/Modulfreigabe und800/900/1000-Paritaetsarbeit sind noch offen. Fremde
+Aenderungen, PHPMaker DEV/PROD und SVS-Original erhalten.

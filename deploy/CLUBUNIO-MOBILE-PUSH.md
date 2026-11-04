@@ -1,5 +1,15 @@
 # Persoenliche Pushanbindung
 
+Aktueller DEV-Nachweis04.11.2026: Identity-/Push-/Challenge-/Keybox-Unterbau ist
+auf DEV,400/500/600/700 atomar nach gepruefter verschluesselter Sicherung
+angewendet.14 leere neue Tabellen/30 FKs, Elternzeilen unveraendert; nur
+zusaetzliche Session-Unique wie geplant. Runtime-/Mail-/Zustellungs-/PINflags
+bleiben geschlossen; externe Konfiguration/Abnahme und weitere Integration
+bleiben offen. Details: PI.md und CLUBUNIO-MOBILE-IDENTITY-PUSH-SCHEMA.md.
+Fruehere Vorbereitungsangaben unten sind historisch, keine aktuelle Aussage
+ueber den inzwischen bestaetigten Schema-/DEV-Stand.
+
+
 Stand:04.11.2026. Folgepaket nach den nativen Markenbuilds, in Umsetzung.
 
 Migration500 ist ausschliesslich unter
