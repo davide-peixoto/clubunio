@@ -16,7 +16,7 @@ final class MobileAiService
         if (request()->attributes->has('mobile.session')) {
             app(MobileSessions::class)->authenticate(request());
         }
-        app(MobileAccess::class)->enter($actor, $tenant);
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         app(MobileLanguages::class)->validateLanguage($data['language']);
         if ($data['operation'] === 'translate') {
             app(ChatPreferences::class)->allowTranslation($actor, $tenant, $data['language']);

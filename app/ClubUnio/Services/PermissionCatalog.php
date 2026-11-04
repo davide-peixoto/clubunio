@@ -15,7 +15,7 @@ final class PermissionCatalog
         'credits' => 'Gutschriften und Rückerstattungen', 'bexio' => 'Bexio',
         'bus' => 'Busverwaltung', 'facilities' => 'Anlagen inklusive Status-Wertetabelle',
         'field_availability' => 'Platzverfügbarkeit und Bemerkungen', 'signage' => 'Signage',
-        'announcements' => 'Ankündigungen', 'events' => 'Veranstaltungen',
+        'announcements' => 'Ankündigungen', 'chat' => 'Chats', 'events' => 'Veranstaltungen',
         'sponsor_runs' => 'Sponsorenlauf',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
         'templates' => 'Nachrichtenvorlagen',
@@ -29,10 +29,15 @@ final class PermissionCatalog
         'export' => 'Exportieren', 'approve' => 'Prüfen / Freigeben', 'send' => 'Versenden / Veröffentlichen',
         'cancel' => 'Stornieren / Zurückziehen', 'sync' => 'Abgleich / Import ausführen',
         'transfer' => 'Saisonübernahme',
+        'poll' => 'Umfragen erstellen', 'announce' => 'Vereinsnachrichten veröffentlichen',
+        'moderate' => 'Gruppenmeldungen moderieren', 'groups' => 'Alle Mannschafts- und Staffchats anzeigen',
     ];
 
     public static function functions(string $module): array
     {
+        if ($module === 'chat') {
+            return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'send', 'upload', 'download', 'poll', 'announce', 'moderate', 'groups']));
+        }
         if ($module === 'field_availability') {
             return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'update']));
         }

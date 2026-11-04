@@ -65,7 +65,7 @@ final class MobileController
         $a = $this->actor($r); $t = $this->tenant($r);
         return $this->data(['teams' => app(MobileAccess::class)->teams($a, $t)->orderBy('ts.id')->limit(100)->get(),
             'represented' => app(MemberAccessService::class)->represented($a, $t)->orderBy('id')->limit(50)->get(['id', 'first_name', 'last_name']),
-            'can_announce' => app(MobileAccess::class)->admin($a, $t)]);
+            'can_announce' => app(ChatAccess::class)->allows($a, $t, 'announce')]);
     }
 
     public function chats(Request $r)

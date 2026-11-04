@@ -1,7 +1,7 @@
 # Chat im ClubUnio-Backend
 
-Stand04.11.2026: neue Anforderung aufgenommen, Bestand geprueft. Weboberflaeche
-und neue Kommunikationsrechte noch nicht implementiert oder bereitgestellt.
+Stand04.11.2026: Weboberflaeche und eigene Kommunikationsrechte in Umsetzung.
+Aktueller technischer Abnahme-/Release-Nachweis: [Webchat-Release](CLUBUNIO-WEB-CHAT-RELEASE.md).
 Ziel: gleicher fachlicher Funktionsumfang wie der persoenliche Appchat, mit
 komfortablem Nachrichtenversand fuer Admins und Geschaeftsstelle/Backoffice.
 Keine zweite Chatdatenbank und keine Kopie des Flutter-Codes ins Backend.
@@ -16,13 +16,12 @@ transaktionalen Dienstweg verwenden; kein direkter Tabelleninsert und kein
 FCM-Aufruf im Webrequest. Die Websession liefert den angemeldeten Account und
 den aktuell gewaehlten Mandanten; kein technisches Sammelkonto oder neuer JWT.
 
-Im Bestand fehlen eine Chatseite in der normalen Filament-Shell und ein eigenes
-Chatmodul im `PermissionCatalog`. Vereinsankuendigungen sind derzeit ueber
-`MobileAccess::admin` an die Rolle Admin gebunden. Dieser allgemeine Admincheck
-wird auch ausserhalb des Chats verwendet und darf fuer Backoffice NICHT global
-aufgeweicht werden. Chatbezogene Rechte muessen gezielt und fuer Web/App
-konsistent implementiert und getestet werden. Dynamische Profile sind bislang
-nicht pauschal zum persoenlichen Mobile-Zugriff berechtigt.
+Die Seite `Chats` liegt in der normalen Filament-Shell unter `/chats`, das Modul
+`chat` im `PermissionCatalog`. `ChatAccess` trennt die Kommunikationsrechte von
+`MobileAccess::admin`: Geschaeftsstelle darf kommunizieren, ohne neue Finanz-
+oder allgemeine Adminrechte zu erhalten. Bestehende Profilzuordnungen bleiben
+unveraendert. Dynamische Profile erhalten dadurch keinen pauschalen persoenlichen
+App-/Mobile-Login; dieser separate Zugang wird nicht stillschweigend erweitert.
 
 Quellen fuer den Funktionsabgleich: `mobile/docs/CHAT-FEATURES.md`,
 `mobile/docs/DIRECT-CHAT.md`, `deploy/MOBILE-CHAT-DELTA.md`,
@@ -57,10 +56,12 @@ verstaendliche Tooltips, Tastaturbedienung und kontrollierter Fokus.
 
 ## Rechte und Backoffice
 
-Vorgeschlagenes eigenes Modul Kommunikation/Chat mit getrennten Funktionen:
-Lesen, Senden, Anhang hoch-/herunterladen, Umfragen erstellen,
-Rundnachrichten veroeffentlichen und Gruppenmoderation. Endgueltige technische
-Schluessel bei Umsetzung in Katalog, Policies und Tests gemeinsam festlegen.
+Eigenes Modul `chat` mit getrennten Funktionen `view`, `send`, `upload`,
+`download`, `poll`, `announce`, `moderate` und `groups`. `groups` erlaubt die
+Mannschafts-/Staffunterhaltungen der aktuellen Saison, nie fremde Direktchats.
+Nur `view` erschliesst Vereinsankuendigungen; Gruppenbereiche benoetigen die
+zusaetzliche Gruppenfreigabe. Profil-Direktkontakte bleiben gezielt beim
+Backoffice, nicht bei beliebigen fremden Paaren. Keine automatische Profilvergabe.
 
 Admin und berechtigte Geschaeftsstelle sollen Vereinsnachrichten bequem
 veroeffentlichen koennen. Die konkrete Funktions-/Empfaengerfreigabe wird

@@ -4,7 +4,6 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
-use App\ClubUnio\Services\TeamPlanningService;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -49,7 +48,7 @@ final class ChatService
 
     public function allowed(Account $actor, Tenant $tenant, object $chat): bool
     {
-        $access = app(MobileAccess::class);
+        $access = app(ChatAccess::class);
         try {
             $access->enter($actor, $tenant);
             if ((int) $chat->tenant_id !== (int) $tenant->id) {
@@ -62,7 +61,7 @@ final class ChatService
                 return $access->teams($actor, $tenant, $chat->kind === 'staff')->where('ts.id', $chat->team_season_id)->exists();
             }
             if ($chat->kind === 'event') {
-                app(TeamPlanningService::class)->event($actor, $tenant, $chat->event_id);
+                $access->event($actor, $tenant, $chat->event_id);
 
                 return true;
             }
@@ -84,10 +83,11 @@ final class ChatService
 
     public function chat(Account $actor, Tenant $tenant, int $id, bool $writing = false): object
     {
+        if ($writing) app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $chat = $this->table($tenant, 'chat_conversations')->where('id', $id)->first();
         abort_unless($chat && $this->allowed($actor, $tenant, $chat), 404);
         if ($writing && $chat->kind === 'announcements') {
-            abort_unless(app(MobileAccess::class)->admin($actor, $tenant), 403);
+            app(ChatAccess::class)->authorize($actor, $tenant, 'announce');
         }
         $this->membership($actor, $tenant, $chat);
 
@@ -96,7 +96,7 @@ final class ChatService
 
     public function conversations(Account $actor, Tenant $tenant): array
     {
-        $access = app(MobileAccess::class);
+        $access = app(ChatAccess::class);
         $access->enter($actor, $tenant);
         // Fresh policy builders exist only for this projection, never across requests.
         $teamQuery = $access->teams($actor, $tenant);
@@ -122,6 +122,13 @@ final class ChatService
         $permittedTeams = (clone $teamQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
         $permittedStaff = (clone $staffQuery)->whereIn('ts.id', $candidateTeams)->pluck('ts.id')->map(fn ($id) => (int) $id)->all();
         $admin = $access->admin($actor, $tenant);
+        $profile = $access->isProfile($actor, $tenant);
+        $canSend = $access->allows($actor, $tenant, 'send');
+        $canAnnounce = $access->allows($actor, $tenant, 'announce');
+        $canPoll = $access->allows($actor, $tenant, 'poll');
+        $canModerate = $access->allows($actor, $tenant, 'moderate');
+        $canUpload = $access->allows($actor, $tenant, 'upload');
+        $canDownload = $access->allows($actor, $tenant, 'download');
         $preferences = app(ChatPreferences::class)->get($actor, $tenant);
         $accepted = collect(); $denied = [];
         foreach ($rows as $chat) {
@@ -156,44 +163,78 @@ final class ChatService
         })->where('m.tenant_id', $tenant->id)->whereIn('m.conversation_id', $accepted->pluck('id'))
             ->whereColumn('m.id', '>', 'membership.joined_after')->whereColumn('m.id', '>', 'membership.read_message_id')
             ->where('m.account_id', '<>', $actor->id)->whereNull('m.deleted_at')->groupBy('m.conversation_id')->selectRaw('m.conversation_id,count(*) as total')->pluck('total','m.conversation_id');
+        $latest = $this->latestMessages($actor, $tenant, $accepted->pluck('id')->all());
         return $accepted->map(fn ($chat) => $this->conversationDto($actor, $tenant, $chat, $teams, [
-            'membership' => $memberships[$chat->id], 'admin' => $admin, 'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
+            'membership' => $memberships[$chat->id], 'admin' => $admin, 'profile' => $profile, 'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
+            'send' => $canSend, 'announce' => $canAnnounce, 'poll' => $canPoll, 'moderate' => $canModerate,
+            'upload' => $canUpload, 'download' => $canDownload,
             'chat_preferences' => $preferences,
+            'last_message' => $latest[(int) $chat->id] ?? null,
             'unread' => (int) ($unread[$chat->id] ?? 0),
         ]))->all();
+    }
+
+    /** One bounded overview projection, only after conversation authorization. No attachment bytes or poll DTOs. */
+    private function latestMessages(Account $actor, Tenant $tenant, array $conversations): array
+    {
+        if (!$conversations) return [];
+        $latest = DB::connection('clubunio')->table('clubora.chat_messages as m')
+            ->join('clubora.chat_memberships as membership', function ($join) use ($actor) {
+                $join->on('membership.tenant_id', '=', 'm.tenant_id')->on('membership.conversation_id', '=', 'm.conversation_id')
+                    ->where('membership.account_id', $actor->id)->whereNull('membership.left_at');
+            })->where('m.tenant_id', $tenant->id)->whereIn('m.conversation_id', $conversations)
+            ->whereColumn('m.id', '>', 'membership.joined_after')->whereNull('m.deleted_at')
+            ->groupBy('m.conversation_id')->selectRaw('m.conversation_id, MAX(m.id) as id');
+        $rows = DB::connection('clubunio')->table('clubora.chat_messages as message')
+            ->joinSub($latest, 'latest', fn ($join) => $join->on('latest.id', '=', 'message.id')->on('latest.conversation_id', '=', 'message.conversation_id'))
+            ->leftJoin('clubora.accounts as author', 'author.id', '=', 'message.account_id')
+            ->where('message.tenant_id', $tenant->id)->whereNull('message.deleted_at')
+            ->get(['message.id', 'message.conversation_id', 'message.body_encrypted', 'message.created_at', 'author.display_name as author_name']);
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row->conversation_id] = ['id' => (int) $row->id,
+                'text' => mb_substr(Crypt::decryptString($row->body_encrypted), 0, 160),
+                'created_at' => $row->created_at, 'author_name' => $row->author_name];
+        }
+        return $result;
     }
 
     public function conversation(Account $actor, Tenant $tenant, int $id): array
     {
         $chat = $this->chat($actor, $tenant, $id);
-        $teams = app(MobileAccess::class)->teams($actor, $tenant)->where('ts.id', $chat->team_season_id ?? 0)->get();
+        $teams = app(ChatAccess::class)->teams($actor, $tenant)->where('ts.id', $chat->team_season_id ?? 0)->get();
         return $this->conversationDto($actor, $tenant, $chat, $teams);
     }
 
     private function conversationDto(Account $actor, Tenant $tenant, object $chat, $teams, ?array $projection = null): array
     {
-        $access = app(MobileAccess::class);
+        $access = app(ChatAccess::class);
         $membership = $projection['membership'] ?? $this->membership($actor, $tenant, $chat);
         $team = $teams->firstWhere('id', $chat->team_season_id);
         $title = match ($chat->kind) {
-            'team' => ($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
-            'staff' => 'Trainer · '.($team?->name ?? 'Mannschaft').' · '.($team?->season ?? ''),
-            'announcements' => 'Vereinsankündigungen', 'event' => 'Terminbesprechung', default => 'Direktnachricht',
+            'team' => ($team?->name ?? __('Mannschaft')).' · '.($team?->season ?? ''),
+            'staff' => __('Trainer').' · '.($team?->name ?? __('Mannschaft')).' · '.($team?->season ?? ''),
+            'announcements' => __('Vereinsankündigungen'), 'event' => __('Terminbesprechung'), default => __('Direktnachricht'),
         };
         if ($chat->kind === 'direct') {
             $other = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', '<>', $actor->id)->value('account_id');
             $title = Account::whereKey($other)->value('display_name') ?? $title;
         }
+        $canSend = $projection['send'] ?? $access->allows($actor, $tenant, 'send');
+        $canWrite = $canSend && ($chat->kind !== 'announcements' || ($projection['announce'] ?? $access->allows($actor, $tenant, 'announce')));
         return ['id' => (int) $chat->id, 'kind' => $chat->kind, 'title' => $title,
+            ...($projection === null ? [] : ['last_message' => $projection['last_message'] ?? null]),
             'chat_preferences' => $projection['chat_preferences'] ?? app(ChatPreferences::class)->get($actor, $tenant),
             'team_season_id' => $chat->team_season_id ? (int) $chat->team_season_id : null,
-            'can_moderate' => $projection !== null ? ($chat->kind !== 'direct' && ($projection['admin'] || $projection['staff'])) : app(ChatControls::class)->moderator($actor, $tenant, $chat),
+            'can_moderate' => $projection !== null ? ($projection['moderate'] && $chat->kind !== 'direct'
+                && ($projection['admin'] || $projection['staff'] || ($chat->kind === 'announcements' && $projection['profile']))) : app(ChatControls::class)->moderator($actor, $tenant, $chat),
             'other_account_id' => $chat->kind === 'direct' ? (int) $other : null,
-            'uploads' => (bool) config('clubunio-mobile.uploads_enabled'),
-            'can_link_event' => in_array($chat->kind, ['team', 'staff'], true) && (bool) $chat->team_season_id,
-            'can_write' => $chat->kind !== 'announcements' || ($projection['admin'] ?? $access->admin($actor, $tenant)),
-            'can_poll' => $chat->kind !== 'announcements' && ($projection !== null ? ($projection['admin'] || $projection['staff'])
-                : ($access->admin($actor, $tenant) || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()))),
+            'uploads' => $canWrite && (bool) config('clubunio-mobile.uploads_enabled') && ($projection['upload'] ?? $access->allows($actor, $tenant, 'upload')),
+            'can_download' => (bool) config('clubunio-mobile.uploads_enabled') && ($projection['download'] ?? $access->allows($actor, $tenant, 'download')),
+            'can_link_event' => $canWrite && in_array($chat->kind, ['team', 'staff', 'event'], true) && (bool) $chat->team_season_id,
+            'can_write' => $canWrite,
+            'can_poll' => $canSend && ($projection['poll'] ?? $access->allows($actor, $tenant, 'poll')) && $chat->kind !== 'announcements' && ($projection !== null ? ($projection['admin'] || $projection['staff'] || $projection['profile'])
+                : ($access->isProfile($actor, $tenant) || $access->admin($actor, $tenant) || ($chat->team_season_id && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()))),
             'muted' => (bool) $membership->muted,
             'unread' => $projection['unread'] ?? $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)
                 ->where('id', '>', max($membership->joined_after, $membership->read_message_id))->where('account_id', '<>', $actor->id)->whereNull('deleted_at')->count()];
@@ -201,8 +242,9 @@ final class ChatService
 
     public function direct(Account $actor, Tenant $tenant, int $other): object
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $candidate = Account::whereKey($other)->first();
-        abort_unless($candidate && app(MobileAccess::class)->canContact($actor, $candidate, $tenant), 404);
+        abort_unless($candidate && app(ChatAccess::class)->canContact($actor, $candidate, $tenant), 404);
         $ids = [(int) $actor->id, $other];
         sort($ids);
         $chat = $this->ensure($tenant, 'direct', key: 'direct:'.implode(':', $ids));
@@ -236,7 +278,7 @@ final class ChatService
     {
         return ['delta_version' => 1, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
             'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
-            'can_write' => $chat->kind !== 'announcements' || app(MobileAccess::class)->admin($actor, $tenant)];
+            'can_write' => app(ChatAccess::class)->allows($actor, $tenant, 'send') && ($chat->kind !== 'announcements' || app(ChatAccess::class)->allows($actor, $tenant, 'announce'))];
     }
 
     public function messageDto(Account $actor, Tenant $tenant, object $row): array
@@ -249,13 +291,17 @@ final class ChatService
     {
         $rows = collect($messages);
         if ($rows->isEmpty()) return [];
+        $access = app(ChatAccess::class);
+        $canSend = $access->allows($actor, $tenant, 'send');
+        $canAnnounce = $rows->contains('kind', 'announcement') && $access->allows($actor, $tenant, 'announce');
         $authors = Account::whereIn('id', $rows->pluck('account_id')->unique())->pluck('display_name', 'id');
         $visible = $rows->filter(fn ($row) => !$row->deleted_at);
         $attachments = app(ChatAttachments::class)->forMessages($tenant, $visible->pluck('id')->all());
         $polls = $this->pollDtos($actor, $tenant, $visible->where('kind', 'poll')->pluck('object_id')->unique()->all());
         $reactions = $this->table($tenant, 'chat_reactions')->whereIn('message_id', $visible->pluck('id'))->get(['message_id', 'account_id', 'emoji'])->groupBy('message_id');
         $moderated = [];
-        $foreign = $visible->filter(fn ($row) => (int) $row->account_id !== (int) $actor->id)->pluck('conversation_id')->unique()->all();
+        $foreign = $visible->filter(fn ($row) => (int) $row->account_id !== (int) $actor->id
+            || ($row->kind === 'announcement' && !$canAnnounce))->pluck('conversation_id')->unique()->all();
         if ($foreign) foreach ($this->table($tenant, 'chat_conversations')->whereIn('id', $foreign)->get() as $chat) {
             $moderated[(int) $chat->id] = app(ChatControls::class)->moderator($actor, $tenant, $chat);
         }
@@ -265,15 +311,16 @@ final class ChatService
                 'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
                 'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
                 'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
-                'can_react' => !$row->deleted_at,
+                'can_react' => $canSend && !$row->deleted_at,
                 'reactions' => ($reactions[(int) $row->id] ?? collect())->groupBy('emoji')->map(fn ($group, $emoji) => [
                     'emoji' => $emoji, 'count' => $group->count(), 'mine' => $group->contains(fn ($reaction) => (int) $reaction->account_id === (int) $actor->id),
                 ])->values()->all(),
                 'poll' => $row->kind === 'poll' && !$row->deleted_at ? $polls[(int) $row->object_id] : null,
                 'event_id' => !$row->deleted_at && $row->kind === 'event' ? (int) $row->object_id : null,
-                'can_edit' => !$row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)
+                'can_edit' => $canSend && ($row->kind !== 'announcement' || $canAnnounce) && !$row->deleted_at && (int) $row->account_id === (int) $actor->id && in_array($row->kind, ['text', 'announcement'], true)
                     && \Carbon\CarbonImmutable::parse($row->created_at)->gte(now()->subMinutes(30)),
-                'can_delete' => !$row->deleted_at && ((int) $row->account_id === (int) $actor->id || ($moderated[(int) $row->conversation_id] ?? false)),
+                'can_delete' => $canSend && !$row->deleted_at && (((int) $row->account_id === (int) $actor->id
+                    && ($row->kind !== 'announcement' || $canAnnounce)) || ($moderated[(int) $row->conversation_id] ?? false)),
                 'attachment' => !$row->deleted_at ? ($attachments[(int) $row->id] ?? null) : null];
         }
         return $result;
@@ -281,6 +328,7 @@ final class ChatService
 
     public function send(Account $actor, Tenant $tenant, int $chatId, array $input): object
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $chat = $this->chat($actor, $tenant, $chatId, true);
         $data = Validator::make($input, ['client_id' => 'required|uuid', 'text' => 'required|string|max:4000',
             'kind' => 'nullable|in:text,event,poll,announcement', 'event_id' => 'nullable|integer|min:1',
@@ -294,6 +342,8 @@ final class ChatService
         if ($chat->kind === 'announcements') {
             $kind = 'announcement';
         }
+        if ($kind === 'poll') app(ChatAccess::class)->authorize($actor, $tenant, 'poll');
+        if (!empty($data['attachment_id'])) app(ChatAccess::class)->authorize($actor, $tenant, 'upload');
         $hash = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
         $old = $this->table($tenant, 'chat_messages')->where('account_id', $actor->id)->where('client_id', $data['client_id'])->first();
         if ($old) {
@@ -311,15 +361,16 @@ final class ChatService
         }
         $object = null;
         if ($kind === 'event') {
-            $event = app(TeamPlanningService::class)->event($actor, $tenant, (int) ($data['event_id'] ?? 0));
+            $event = app(ChatAccess::class)->event($actor, $tenant, (int) ($data['event_id'] ?? 0));
             abort_unless(in_array($chat->kind, ['team', 'staff', 'event'], true) && (int) $chat->team_season_id === (int) $event->team_season_id, 422);
             $object = $event->id;
         }
         if ($kind === 'poll') {
             abort_unless(\Carbon\CarbonImmutable::parse($data['poll']['closes_at'])->isFuture(), 422);
-            // First iteration permits creation by responsible staff/admin, voting by all members.
-            abort_unless(app(MobileAccess::class)->admin($actor, $tenant)
-                || ($chat->team_season_id && app(MobileAccess::class)->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()), 403);
+            // Explicit profile grants act only inside the already-authorized chat.
+            // Legacy accounts retain the responsible staff/admin/office restriction.
+            abort_unless(app(ChatAccess::class)->isProfile($actor, $tenant) || app(ChatAccess::class)->admin($actor, $tenant)
+                || ($chat->team_season_id && app(ChatAccess::class)->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists()), 403);
             $options = array_map(fn ($label) => ['id' => (string) Str::uuid(), 'text' => $label], $data['poll']['options']);
             $object = $this->table($tenant, 'chat_polls')->insertGetId(['tenant_id' => $tenant->id, 'conversation_id' => $chat->id,
                 'question' => mb_substr($data['text'], 0, 1000), 'options' => json_encode($options),
@@ -327,11 +378,9 @@ final class ChatService
         }
         $recipients = [];
         if ($kind === 'announcement') {
-            foreach ($tenant->accounts()->where('active', true)->where('api_only', false)->get() as $recipient) {
-                if (app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($recipient, $tenant)) {
-                    $this->membership($recipient, $tenant, $chat);
-                    $recipients[] = (int) $recipient->id;
-                }
+            $recipients = array_column($preview['recipients'], 'id');
+            foreach (Account::whereIn('id', $recipients)->get() as $recipient) {
+                $this->membership($recipient, $tenant, $chat);
             }
         }
         $id = $this->table($tenant, 'chat_messages')->insertGetId(['tenant_id' => $tenant->id, 'conversation_id' => $chat->id,
@@ -380,6 +429,7 @@ final class ChatService
 
     public function vote(Account $actor, Tenant $tenant, int $id, array $choices): array
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $poll = $this->table($tenant, 'chat_polls')->where('id', $id)->firstOrFail();
         $this->chat($actor, $tenant, (int) $poll->conversation_id);
         $message = $this->table($tenant, 'chat_messages')->where('kind', 'poll')->where('object_id', $id)->whereNull('deleted_at')->first();
@@ -397,6 +447,7 @@ final class ChatService
 
     public function read(Account $actor, Tenant $tenant, int $chatId, int $message): void
     {
+        app(ChatAccess::class)->authorizeWrite($actor, $tenant, 'view');
         $chat = $this->chat($actor, $tenant, $chatId);
         abort_unless($message === 0 || $this->table($tenant, 'chat_messages')->where('conversation_id', $chat->id)->where('id', $message)->exists(), 422);
         $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', $actor->id)

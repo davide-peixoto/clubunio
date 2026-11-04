@@ -1,5 +1,17 @@
 # ClubUnio migration work packages
 
+## Gemeinsamer App-/Webchat (04.11.2026)
+
+Code-only-Erweiterung auf bestehenden chat_*/mobile_*-Tabellen: keine neue
+Migration, keine Nachrichtenkopie und kein Reset bestehender Lesestaende.
+Neue Modulfunktionen sind Katalogeintraege; keine bestehenden access_profiles,
+Benutzer-/Mandantenzuordnungen oder ENV-/Providerwerte automatisch aendern.
+Websession mit festem Kontext-Snapshot, fachliche Chatdienste samt transaktionalem
+Push-Ausgang wiederverwenden. Neuer Code kann durch vorherigen Release ersetzt
+werden; neu erfasste Nachrichten bleiben dabei erhalten und in der App sichtbar.
+Spezifikation/Tests/Rueckweg: [Webchat-Release](CLUBUNIO-WEB-CHAT-RELEASE.md).
+PHPMaker DEV/PROD und echte FCM-/Mailzustellung sind nicht Teil dieses Releases.
+
 ## Platzbelegung und Trainingsspielanfragen (04.11.2026)
 
 Gezieltes Paket001500-001800: Belegung/Teilflaechen, Ereignisse und DE/EN-Vorlagen,

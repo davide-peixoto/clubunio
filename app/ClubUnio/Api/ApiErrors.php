@@ -22,7 +22,7 @@ final class ApiErrors
             $error instanceof ValidationException => 422,
             $error instanceof AuthenticationException => 401,
             $error instanceof AuthorizationException => 403,
-            $error instanceof ModelNotFoundException => 404,
+            $error instanceof ModelNotFoundException, $error instanceof \Illuminate\Database\RecordNotFoundException => 404,
             $error instanceof HttpExceptionInterface => $error->getStatusCode(),
             default => 500,
         };
@@ -46,6 +46,7 @@ final class ApiErrors
         if (! $accessPending && $request->routeIs('clubunio.mobile.pitch.*')) {
             $message = __($message, [], $request->attributes->get('mobile.pitch.locale'));
         }
+        if (! $accessPending && $request->is('chat-data/*')) $message = __($message);
         $response = response()->json(['error' => array_filter(['code' => $code,
             'message' => $message, 'request_id' => $id,
             'fields' => $error instanceof ValidationException ? $error->errors() : null], fn ($v) => $v !== null)], $status);

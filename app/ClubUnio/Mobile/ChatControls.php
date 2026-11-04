@@ -4,18 +4,20 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
-use App\ClubUnio\Services\MemberAccessService;
 use Illuminate\Support\Facades\Crypt;
 
 final class ChatControls
 {
     private function service(): ChatService { return app(ChatService::class); }
 
+    /** Capability within an already-authorized conversation, never a visibility grant. */
     public function moderator(Account $actor, Tenant $tenant, object $chat): bool
     {
-        if ($chat->kind === 'direct') { return false; }
-        $access = app(MobileAccess::class);
-        return $access->admin($actor, $tenant) || ($chat->team_season_id
+        if ((int) $chat->tenant_id !== (int) $tenant->id || $chat->kind === 'direct'
+            || !app(ChatAccess::class)->allows($actor, $tenant, 'moderate')) { return false; }
+        $access = app(ChatAccess::class);
+        return ($chat->kind === 'announcements' && $access->isProfile($actor, $tenant))
+            || $access->admin($actor, $tenant) || ($chat->team_season_id
             && $access->teams($actor, $tenant, true)->where('ts.id', $chat->team_season_id)->exists());
     }
 
@@ -38,16 +40,21 @@ final class ChatControls
 
     public function edit(Account $actor, Tenant $tenant, int $id, int $revision, ?string $text): object
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $s = $this->service(); $row = $this->visible($actor, $tenant, $id);
         $chat = $s->chat($actor, $tenant, (int) $row->conversation_id);
         $own = (int) $row->account_id === (int) $actor->id;
         abort_unless($own || ($text === null && $this->moderator($actor, $tenant, $chat)), 403);
+        if ($text === null && $own && $row->kind === 'announcement'
+            && !$this->moderator($actor, $tenant, $chat)) {
+            app(ChatAccess::class)->authorize($actor, $tenant, 'announce');
+        }
         abort_if($row->deleted_at || (int) $row->revision !== $revision, 409);
         if ($text !== null) {
             abort_unless($own && in_array($row->kind, ['text', 'announcement'], true), 403);
             abort_unless(\Carbon\CarbonImmutable::parse($row->created_at)->gte(now()->subMinutes(30)), 409);
-            abort_if(trim($text) === '', 422);
-            if ($row->kind === 'announcement') { abort_unless(app(MobileAccess::class)->admin($actor, $tenant), 403); }
+            abort_if(trim($text) === '' || mb_strlen($text) > 4000, 422);
+            if ($row->kind === 'announcement') { app(ChatAccess::class)->authorize($actor, $tenant, 'announce'); }
         }
         $s->table($tenant, 'chat_messages')->where('id', $id)->update(['revision' => $revision + 1,
             'body_encrypted' => Crypt::encryptString($text ?? ''), 'deleted_at' => $text === null ? now()->toIso8601String() : null]);
@@ -68,6 +75,7 @@ final class ChatControls
 
     public function react(Account $actor, Tenant $tenant, int $id, int $revision, ?string $emoji): object
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $row = $this->visible($actor, $tenant, $id);
         abort_if($row->deleted_at || (int) $row->revision !== $revision, 409);
         abort_unless($emoji === null || in_array($emoji, ['👍', '❤️', '😂', '😮', '😢', '🙏'], true), 422);
@@ -126,10 +134,10 @@ final class ChatControls
 
     public function preview(Account $actor, Tenant $tenant): array
     {
-        app(MobileAccess::class)->enter($actor, $tenant);
-        abort_unless(app(MobileAccess::class)->admin($actor, $tenant), 403);
+        app(ChatAccess::class)->enter($actor, $tenant);
+        app(ChatAccess::class)->authorize($actor, $tenant, 'announce');
         $people = $tenant->accounts()->where('active', true)->where('api_only', false)->orderBy('clubora.accounts.id')->get()
-            ->filter(fn ($a) => app(MemberAccessService::class)->canEnter($a, $tenant))
+            ->filter(fn ($a) => app(ChatAccess::class)->allows($a, $tenant, 'view'))
             ->map(fn ($a) => ['id' => (int) $a->id, 'name' => $a->display_name])->values()->all();
         return ['count' => count($people), 'recipients' => $people,
             'fingerprint' => hash('sha256', json_encode(array_column($people, 'id'), JSON_THROW_ON_ERROR))];
@@ -137,10 +145,11 @@ final class ChatControls
 
     public function report(Account $actor, Tenant $tenant, int $message, string $reason): array
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $row = $this->visible($actor, $tenant, $message);
         $chat = $this->service()->chat($actor, $tenant, (int) $row->conversation_id);
         abort_unless($chat->kind !== 'direct', 403); // No private moderation grant without a separate policy.
-        abort_if($row->deleted_at || trim($reason) === '', 422);
+        abort_if($row->deleted_at || trim($reason) === '' || mb_strlen($reason) > 1000, 422);
         $s = $this->service();
         $s->table($tenant, 'chat_reports')->insertOrIgnore(['tenant_id' => $tenant->id, 'conversation_id' => $row->conversation_id,
             'message_id' => $row->id, 'account_id' => $actor->id, 'reason_encrypted' => Crypt::encryptString($reason),
@@ -161,6 +170,7 @@ final class ChatControls
 
     public function resolve(Account $actor, Tenant $tenant, int $id): array
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'moderate');
         $s = $this->service(); $report = $s->table($tenant, 'chat_reports')->where('id', $id)->firstOrFail();
         $chat = $s->chat($actor, $tenant, (int) $report->conversation_id);
         abort_unless($this->moderator($actor, $tenant, $chat), 403);

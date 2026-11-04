@@ -34,6 +34,11 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
 
+Route::match(['GET', 'POST'], '/chat-data/{operation}', \App\ClubUnio\Http\WebChatController::class)
+    ->where('operation', '[a-z-]+')
+    ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])
+    ->name('clubunio.chat.data');
+
 Route::middleware('auth:clubunio')->group(function () {
     Route::get('/api-docs', [\App\ClubUnio\Http\ApiDocumentationController::class, 'show'])->name('clubunio.api-docs');
     Route::get('/api-docs/openapi.json', [\App\ClubUnio\Http\ApiDocumentationController::class, 'specification'])->name('clubunio.api-docs.specification');

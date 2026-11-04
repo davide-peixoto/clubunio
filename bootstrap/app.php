@@ -20,9 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontFlash(['value', 'text', 'password']);
-        $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*'));
+        $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*'));
         $exceptions->render(function (\Throwable $error, Request $request) {
-            if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*')) {
+            if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*')) {
                 return app(\App\ClubUnio\Api\ApiErrors::class)->render($error, $request);
             }
         });

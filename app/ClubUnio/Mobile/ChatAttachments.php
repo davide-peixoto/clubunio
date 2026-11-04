@@ -16,6 +16,8 @@ final class ChatAttachments
 
     public function stage(Account $actor, Tenant $tenant, int $chat, string $clientId, UploadedFile $file): array
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'upload');
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $this->enabled(); $s = $this->service(); $s->chat($actor, $tenant, $chat, true);
         Validator::make(['client_id' => $clientId, 'file' => $file],
             ['client_id' => 'required|uuid', 'file' => 'required|file|max:5120|mimetypes:application/pdf,image/jpeg,image/png,image/webp'])->validate();
@@ -51,6 +53,8 @@ final class ChatAttachments
 
     public function owned(Account $actor, Tenant $tenant, string $id): object
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'upload');
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $this->enabled(); $s = $this->service();
         $row = $s->table($tenant, 'chat_attachments')->where('id', $id)->where('account_id', $actor->id)->firstOrFail();
         $s->chat($actor, $tenant, (int) $row->conversation_id, true);
@@ -105,6 +109,7 @@ final class ChatAttachments
 
     public function download(Account $actor, Tenant $tenant, string $id)
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'download');
         $this->enabled(); $s = $this->service();
         $row = $s->table($tenant, 'chat_attachments')->where('id', $id)->where('state', 'clean')->whereNotNull('message_id')->firstOrFail();
         $message = app(ChatControls::class)->visible($actor, $tenant, (int) $row->message_id);

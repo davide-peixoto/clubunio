@@ -9,7 +9,7 @@ final class ChatPreferences
 {
     public function get(Account $actor, Tenant $tenant): array
     {
-        app(MobileAccess::class)->enter($actor, $tenant);
+        app(ChatAccess::class)->enter($actor, $tenant);
         $row = app(ChatService::class)->table($tenant, 'chat_preferences')->where('account_id', $actor->id)->first();
         $language = app(MobileLanguages::class)->effective($row->target_language ?? null);
         return ['revision' => (int) ($row->revision ?? 0),
@@ -20,6 +20,7 @@ final class ChatPreferences
     // The controller holds the tenant/session lock, also used by every chat write.
     public function save(Account $actor, Tenant $tenant, array $input): array
     {
+        app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $data = Validator::make($input, ['revision' => 'required|integer|min:0', 'translation_enabled' => 'required|boolean',
             'target_language' => app(MobileLanguages::class)->rules()])->validate();
         $data['target_language'] = app(MobileLanguages::class)->normalize($data['target_language']);

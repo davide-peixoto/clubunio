@@ -119,7 +119,8 @@ final class MobileChatDeltaProbe
             $this->expect($adminScope['meta']['can_write'] && $adminScope['meta']['can_moderate'],'Announcement admin initial capabilities');
             $db->table('clubora.tenant_accounts')->where('tenant_id',$tenantId)->where('account_id',$actors[0]->id)->update(['role'=>'office']);
             $officeScope=$call('GET',$announcementPath.'/changes?after='.$adminScope['meta']['change_cursor'],$tokens[0]);
-            $this->expect($officeScope['data']===[] && !$officeScope['meta']['can_write'] && !$officeScope['meta']['can_moderate'],'Empty delta refreshes revoked moderator/write capability');
+            // Webchat introduces a communication-only office grant; finance admin remains unchanged.
+            $this->expect($officeScope['data']===[] && $officeScope['meta']['can_write'] && $officeScope['meta']['can_moderate'],'Empty delta reflects communication office capabilities');
             $db->table('clubora.tenant_accounts')->where('tenant_id',$tenantId)->where('account_id',$actors[0]->id)->update(['role'=>'admin']);
             $seed=function(string $text,?object $target=null) use($s,$tenant,$actors): object {
                 $target ??= $s->table($tenant,'chat_conversations')->where('kind','direct')->firstOrFail();

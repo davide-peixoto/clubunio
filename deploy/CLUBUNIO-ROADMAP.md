@@ -5,8 +5,10 @@
 Chat mit fachlicher App-Paritaet in der normalen ClubUnio-Shell, gemeinsamer
 Datenbasis und Pushweg; komfortabler Admin-/Backofficeversand mit Vorschau.
 Gezielte Kommunikationsrechte statt globaler Adminfreigabe oder Einblick in
-fremde Direktchats. Anforderung aufgenommen, noch nicht implementiert.
-Funktionsmatrix und Pakete: [Webchat](CLUBUNIO-WEB-CHAT.md).
+fremde Direktchats. Webpaket in Umsetzung und technischer Abnahme; keine
+automatische Profilzuordnung oder Aktivierung externer Dienste.
+Funktionsmatrix: [Webchat](CLUBUNIO-WEB-CHAT.md),
+[aktueller Abnahme-/Releasestand](CLUBUNIO-WEB-CHAT-RELEASE.md).
 
 ## Aufgenommene Pendenzen Platzplanung (04.11.2026)
 
