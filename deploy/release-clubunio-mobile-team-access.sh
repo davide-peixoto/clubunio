@@ -3,7 +3,7 @@ set -euo pipefail
 umask 027
 base=/var/www/svs-laravel
 previous=$base/releases/20261104-clubunio-mobile-functional-v2
-release=$base/releases/20261104-clubunio-mobile-team-access-v1
+release=$base/releases/20261104-clubunio-mobile-team-access-v2
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"
 cd "$previous"

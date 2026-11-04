@@ -8,7 +8,7 @@ import subprocess
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'storage/app/mobile-team-access-release'
+OUT = ROOT / 'storage/app/mobile-team-access-v2-release'
 BASELINE = '9cf83de'
 PREVIOUS = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-functional-v2'
 # An explicit review boundary, not a wildcard over unrelated working changes.

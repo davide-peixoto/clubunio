@@ -45,7 +45,7 @@ try {
         $db->statement("SET LOCAL statement_timeout TO '15s'");
         $tenant = Tenant::create(['slug'=>'team-access-'.bin2hex(random_bytes(10)),'name'=>'Synthetic team-member access']); $tenantId=(int)$tenant->id;
         $insert = fn(string $table, array $row) => $db->table('clubora.'.$table)->insertGetId($row+['tenant_id'=>$tenantId]);
-        foreach (MobileModuleSettings::MODULES as $key=>$name) $insert('mobile_module_options',['key'=>$key,'name'=>$name]);
+        foreach (MobileModuleSettings::MODULES as $key=>$name) $db->table('clubora.mobile_module_options')->insert(['tenant_id'=>$tenantId,'key'=>$key,'name'=>$name]);
         foreach (['admin'=>'admin','trainer'=>'trainer','parent'=>'member','outside'=>'member'] as $key=>$role) {
             $actor = new Account; $password=bin2hex(random_bytes(16));
             $actor->forceFill(['username'=>'team-access-'.bin2hex(random_bytes(12)),'display_name'=>'Synthetic '.$key,
