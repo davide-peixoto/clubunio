@@ -1,5 +1,16 @@
 # Schemahilfe100/200/300: nur vorbereitet (04.11.2026)
 
+Root-Fortsetzung: `tools/package-mobile-packages-dev.py` paketiert ausschliesslich
+committete Dateien der geprueften Sponsor-/Training-/Directory-/Registrierungs-
+und Menuepakete. Bekannte Basis ist exakt native-followups-v4; jede bestehende
+Zieldatei wird gegen die bekannte Git-Historie und einen SHA256-Baselinestand
+geprueft. Unbekannte parallele Aenderungen brechen die Paketierung ab.
+`release-clubunio-mobile-packages-foundation.sh` behaelt Env, Dependencies und
+Schema unveraendert; Aktivierung erst nach bestehenden Gates, geschlossenen
+neuen Modulvertraegen und synthetischem HTTP-Kernel-Menue-/Kontotest. Keine
+Auth400-/Push500-/Challenge600-/Keybox700-WIP-Quelle in diesem Paket.
+Die Anwendung/Liveaktivierung ist bis zum gesonderten Servernachweis offen.
+
 `deploy/prepare-mobile-packages-schema.php` ist ausschliesslich fuer die exakte
 aktive Linuxbasis `/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation`
 und deren current-Link vorbereitet. API aktiv, DEV-Origin exakt
