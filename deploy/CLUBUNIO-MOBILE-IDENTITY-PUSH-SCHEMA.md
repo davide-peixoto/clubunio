@@ -1,5 +1,15 @@
 # Gezielte Vorbereitung400/500/600/700 (04.11.2026)
 
+Bereitstellung: `tools/package-mobile-identity-push-dev.py` verwendet den
+festgehaltenen Produktsnapshot d1dc1e5 fuer alle App-/Config-/Routen-/Schema-
+und Composerdateien. Laufende800/900/1000-Arbeit wird nicht mitgenommen.
+Zieldateien werden gegen den aktiven packages-v1 und bekannte Git-Historie
+geprueft. Composerlock darf nur google/auth1.55.3, firebase/php-jwt7.2.1 und
+psr/cache3.0.0 addieren; keine bestehenden Paketversionen entfernen/aendern.
+Der Installer verwendet den Lock ohne Plugins/Scripts und aktiviert erst nach
+alten Modul-/Account-/Planungsgates und vier neuen geschlossenen Routengates.
+Release-Env und alle bisherigen Modulflags bleiben unveraendert.
+
 Noch keine Anwendung. `prepare-mobile-identity-push-schema.php` ist nur fuer die
 exakte aktive DEV-Basis20261104-clubunio-mobile-identity-push-foundation und die
 bekannte ClubUnio-Datenbank freigegeben. Identity/Mail, Push/Delivery, Challenge
