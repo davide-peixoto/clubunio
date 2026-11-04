@@ -25,7 +25,7 @@ if previous != '/var/www/svs-laravel/releases/20261103-clubunio-native-followups
 paths = set()
 for commit in ['2851c65', 'c1258cf', '972338c', '327e081']:
     for path in git('diff-tree', '--no-commit-id', '--name-only', '-r', commit).decode().splitlines():
-        if path.startswith(('app/', 'config/', 'database/clubunio/', 'resources/views/')) or path.startswith('deploy/check-'):
+        if path.startswith(('app/', 'config/', 'routes/', 'database/clubunio/', 'resources/views/')) or path.startswith('deploy/check-'):
             paths.add(path)
 paths.update(['deploy/mobile-followup-menu-probe.php', 'deploy/prepare-mobile-packages-schema.php',
               'deploy/check-mobile-sponsor.php', 'deploy/release-clubunio-mobile-packages-foundation.sh'])

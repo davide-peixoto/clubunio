@@ -5,7 +5,7 @@ base=/var/www/svs-laravel
 previous=$(cat "$base/shared/mobile-packages.previous")
 test "$previous" = "$base/releases/20261103-clubunio-native-followups-v4"
 test "$(readlink -f "$base/current")" = "$previous"
-release=$base/releases/20261104-clubunio-mobile-packages-foundation
+release=$base/releases/20261104-clubunio-mobile-packages-foundation-v2
 test ! -e "$release"
 cd "$previous"
 sha256sum -c "$base/shared/mobile-packages.before.manifest"

@@ -17,7 +17,7 @@ try {
     require dirname(__DIR__).'/vendor/autoload.php';
     $app = require dirname(__DIR__).'/bootstrap/app.php';
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-    $release = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation';
+    $release = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-packages-foundation-v2';
     $directory = '/var/www/svs-laravel/shared/backups';
     $db = DB::connection('clubunio');
     $guard = function () use ($db, $release): void {
