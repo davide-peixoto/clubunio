@@ -2,7 +2,7 @@
 set -euo pipefail
 umask 027
 base=/var/www/svs-laravel
-previous=$base/releases/20261104-clubunio-languages-reviewed
+previous=$base/releases/20261104-clubunio-language-autoswitch
 release=$base/releases/20261104-clubunio-language-policy-v1
 test "$(readlink -f "$base/current")" = "$previous"
 test ! -e "$release"

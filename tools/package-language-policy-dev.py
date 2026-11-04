@@ -9,8 +9,8 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'storage/app/language-policy-release'
-BASELINE = '24c0d1c'
-PREVIOUS = '/var/www/svs-laravel/releases/20261104-clubunio-languages-reviewed'
+BASELINE = 'db9c297'
+PREVIOUS = '/var/www/svs-laravel/releases/20261104-clubunio-language-autoswitch'
 # An explicit review boundary, not a wildcard over unrelated working changes.
 ALLOWED = frozenset("""
 app/ClubUnio/Mobile/MobileLanguages.php
