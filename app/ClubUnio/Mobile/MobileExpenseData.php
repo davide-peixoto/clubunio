@@ -39,7 +39,7 @@ final class MobileExpenseData
         return ['SpesenPositionenID' => (int) $line->id, 'SpesenID' => (int) $line->expense_id, 'Revision' => (int) $line->revision,
             'SpesenTypID' => (int) $line->expense_type_id, '_TypeLabel' => $line->expenseType?->name ?? '',
             'Spieltyp' => $line->gameType?->code ?? '', 'Gegner' => $line->opponent ?? '', 'Betrag' => (string) $line->amount,
-            'BemerkungenPos' => $line->notes ?? '', 'AiBetragUebernommen' => null, 'PendingUploadCount' => $pending,
+            'BemerkungenPos' => $line->notes ?? '', ...app(MobileExpenseOcrProvenance::class)->fields($tenant, $line), 'PendingUploadCount' => $pending,
             ...($files ? ['FileUploadName' => ['url' => '', 'name' => $line->filename ?: 'Beleg', 'type' => $line->content_type ?? ''],
                 'BelegLength' => $line->file_size, 'AttachmentCount' => count($files), 'Attachments' => $attachments] : [])];
     }

@@ -101,6 +101,86 @@ class MobileExpensesTest extends TestCase
         return $id;
     }
     private function pdf(string $marker = 'Synthetic'): UploadedFile { return UploadedFile::fake()->createWithContent('receipt.pdf', "%PDF-1.4\n".$marker."\n%%EOF\n"); }
+    private function provenanceSchema(): void {
+        $this->db->statement('CREATE TEMP TABLE mobile_ai_work (LIKE clubora.mobile_ai_work INCLUDING ALL) ON COMMIT DROP');
+        $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_04_000900_mobile_expense_ocr_provenance.php'))->up());
+        $sql = str_replace(['CREATE TABLE clubora.mobile_expense_ocr_provenance', 'clubora.mobile_expense_ocr_provenance', 'clubora.mobile_ai_work',
+            'REFERENCES clubora.accounts', 'REFERENCES clubora.expense_lines', 'REFERENCES clubora.mobile_expense_receipts'],
+            ['CREATE TEMP TABLE mobile_expense_ocr_provenance', 'pg_temp.mobile_expense_ocr_provenance', 'pg_temp.mobile_ai_work',
+            'REFERENCES pg_temp.expense_draft_accounts', 'REFERENCES pg_temp.expense_lines', 'REFERENCES pg_temp.mobile_expense_receipts'], $ddl[0]['query']);
+        $this->db->unprepared($sql);
+        $previous = $this->db->getQueryGrammar();
+        $this->db->setQueryGrammar(new class($this->db, $previous) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
+            public function __construct($db, private $previous) { parent::__construct($db); }
+            private function replace($value) { return is_string($value) ? str_replace(['"clubora"."mobile_ai_work"', '"clubora"."mobile_expense_ocr_provenance"'], ['"pg_temp"."mobile_ai_work"', '"pg_temp"."mobile_expense_ocr_provenance"'], $value) : $value; }
+            public function wrapTable($table, $prefix = null) { return $this->replace($this->previous->wrapTable($table, $prefix)); }
+            public function wrap($value, $prefixAlias = false) { return $this->replace($this->previous->wrap($value, $prefixAlias)); }
+        });
+        config(['clubunio-expense-provenance.enabled' => true, 'clubunio-expense-ocr.enabled' => true,
+            'clubunio-expense-ocr.cost_reviewed' => true, 'clubunio-expense-ocr.tenant_slugs' => [$this->tenant->slug],
+            'clubunio-expense-ocr.reservation_microusd' => 1000, 'clubunio-expense-ocr.monthly_limit_microusd' => 10000,
+            'clubunio-expense-ocr.endpoint' => 'https://synthetic-ocr.cognitiveservices.azure.com',
+            'clubunio-expense-ocr.key' => 'synthetic-not-a-provider-secret']);
+    }
+    private function analysedDraft(string $marker = 'Synthetic'): array {
+        $draft = $this->post($this->url.'/receipts', ['client_id' => (string) Str::uuid(), 'file' => $this->pdf($marker)], ['Accept' => 'application/json'])
+            ->assertOk()->json('data.receiptToken');
+        Http::swap(new \Illuminate\Http\Client\Factory); Http::preventStrayRequests();
+        Http::fake(fn ($r) => $r->method() === 'POST'
+            ? Http::response('', 202, ['Operation-Location' => 'https://synthetic-ocr.cognitiveservices.azure.com/documentintelligence/documentModels/prebuilt-receipt/analyzeResults/11111111-2222-4333-8444-555555555555?api-version=2024-11-30'])
+            : Http::response(['status' => 'succeeded', 'analyzeResult' => ['apiVersion' => '2024-11-30', 'modelId' => 'prebuilt-receipt',
+                'pages' => [['pageNumber' => 1]], 'documents' => [['fields' => ['Total' => ['type' => 'currency', 'confidence' => 0.99,
+                    'valueCurrency' => ['amount' => 12.50, 'currencyCode' => 'CHF']]]]]]], 200));
+        $response = $this->postJson($this->url.'/receipts/'.$draft.'/suggest', ['request_key' => (string) Str::uuid(), 'draft_revision' => 1, 'consent' => true])
+            ->assertOk()->assertJsonPath('data.provenance.draft_id', $draft)->assertJsonPath('data.provenance.draft_revision', 1);
+        Http::assertSentCount(2);
+        return ['receipt_token' => $draft, 'receipt_revision' => 1, 'ocr_work_id' => $response->json('data.provenance.work_id'),
+            'ocr_source_revision' => 1, 'ai_suggested_amount' => '12.5000'];
+    }
+    public function test_verified_ocr_amount_provenance_is_persisted_and_manual_change_is_false(): void {
+        $this->provenanceSchema(); $expense = $this->expense(); $proof = $this->analysedDraft();
+        $input = $proof + ['command_key' => (string) Str::uuid(), 'expense_revision' => 1, 'expense_type_id' => $this->type, 'amount' => '12.50', 'notes' => 'Synthetic'];
+        $saved = $this->postJson($this->url.'/'.$expense.'/lines', $input)->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', true)
+            ->assertJsonPath('data.lines.0.AiVorschlagBetrag', '12.5000');
+        $line = $saved->json('data.line_id');
+        $this->postJson($this->url.'/'.$expense.'/lines', $input)->assertOk()->assertJsonPath('data.replayed', true);
+        $this->assertSame(1, $this->db->table('clubora.mobile_expense_ocr_provenance')->count());
+        $this->assertNull($this->db->table('clubora.mobile_expense_receipts')->where('id', $proof['receipt_token'])->value('bytes_encrypted'));
+        // Synthetic provider boundary only: no external publication is claimed.
+        $published = $this->db->table('clubora.document_uploads')->where('object_id', $line)->first();
+        $this->db->table('clubora.document_uploads')->where('object_id', $line)->update(['state' => 'published', 'encrypted_bytes' => null]);
+        $this->db->table('clubora.expense_lines')->where('id', $line)->update(['storage_reference' => $published->folder.$published->filename]);
+        $this->getJson($this->url.'/'.$expense)->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', true);
+        $this->patchJson($this->url.'/'.$expense.'/lines/'.$line, ['revision' => 1, 'expense_revision' => 2, 'expense_type_id' => $this->type,
+            'amount' => '13.00', 'notes' => 'Manual correction'])->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', false);
+        $this->assertSame(2, $this->db->table('clubora.mobile_expense_ocr_provenance')->count());
+        $this->db->table('clubora.mobile_ai_work')->update(['state' => 'expired', 'result_encrypted' => null]);
+        $this->getJson($this->url.'/'.$expense)->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', false);
+        $this->db->table('clubora.expense_lines')->where('id', $line)->update(['amount' => '12.5000', 'storage_reference' => '']);
+        $this->getJson($this->url.'/'.$expense)->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', false)->assertJsonPath('data.lines.0.AiVorschlagBetrag', null);
+    }
+    public function test_ocr_claim_rejects_wrong_draft_revision_amount_and_foreign_work_before_line_write(): void {
+        $this->provenanceSchema(); $expense = $this->expense(); $proof = $this->analysedDraft();
+        $other = $this->post($this->url.'/receipts', ['client_id' => (string) Str::uuid(), 'file' => $this->pdf('Another')], ['Accept' => 'application/json'])->assertOk()->json('data.receiptToken');
+        $input = $proof + ['command_key' => (string) Str::uuid(), 'expense_revision' => 1, 'expense_type_id' => $this->type, 'amount' => '12.50'];
+        foreach ([['receipt_token' => $other], ['ocr_source_revision' => 2], ['ai_suggested_amount' => '99.00'], ['ocr_work_id' => (string) Str::uuid()]] as $wrong) {
+            $this->postJson($this->url.'/'.$expense.'/lines', array_replace($input, $wrong))->assertConflict();
+        }
+        $this->assertSame(0, $this->db->table('clubora.expense_lines')->count());
+        $this->assertSame(0, $this->db->table('clubora.mobile_expense_ocr_provenance')->count());
+        $this->db->table('clubora.mobile_expense_receipts')->where('id', $other)->update(['account_id' => $this->other->id]);
+        $this->postJson($this->url.'/'.$expense.'/lines', array_replace($input, ['receipt_token' => $other]))->assertNotFound();
+        $this->db->table('clubora.mobile_ai_work')->where('id', $proof['ocr_work_id'])->update(['account_id' => $this->other->id]);
+        $this->postJson($this->url.'/'.$expense.'/lines', $input)->assertConflict();
+    }
+    public function test_manual_saved_amount_can_reference_real_ocr_but_rule_acceptance_cannot(): void {
+        $this->provenanceSchema(); $expense = $this->expense(); $proof = $this->analysedDraft();
+        $this->postJson($this->url.'/'.$expense.'/lines', $proof + ['command_key' => (string) Str::uuid(), 'expense_revision' => 1,
+            'expense_type_id' => $this->type, 'amount' => '13.00'])->assertOk()->assertJsonPath('data.lines.0.AiBetragUebernommen', false);
+        $row = $this->db->table('clubora.expense_lines')->first();
+        $this->assertTrue((bool) $row->suggestion_accepted); // Rule service has no suggested amount; independent historical semantic.
+        $this->assertFalse((bool) $this->db->table('clubora.mobile_expense_ocr_provenance')->value('accepted'));
+    }
     public function test_personal_expense_core_preserves_visibility_versions_bank_privacy_and_workflow(): void {
         $expense = $this->expense();
         // Match the production index/options registrations, not a test-only replacement route.

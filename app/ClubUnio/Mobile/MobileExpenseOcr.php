@@ -105,7 +105,17 @@ final class MobileExpenseOcr
         $this->source($actor, $tenant, $receipt, $revision);
         $value = json_decode(Crypt::decryptString($row->result_encrypted), true, 64, JSON_THROW_ON_ERROR);
         abort_unless(is_array($value) && isset($value['suggestion'], $value['warnings'], $value['meta']), 502);
-        return ['state' => 'succeeded', 'cached' => true] + $value;
+        return $this->result($row, $value, true, $receipt, $revision);
+    }
+    private function result(object $work, array $value, bool $cached, string $receipt, int $revision): array {
+        $source = $value['_source'] ?? null; unset($value['_source']);
+        $result = ['state' => 'succeeded', 'cached' => $cached] + $value;
+        if (config('clubunio-expense-provenance.enabled', false) && is_array($source)
+            && ($source['draft_id'] ?? null) === $receipt && ($source['draft_revision'] ?? null) === $revision
+            && is_string($source['sha256'] ?? null) && preg_match('/^[0-9a-f]{64}$/D', $source['sha256'])) {
+            $result['provenance'] = ['work_id' => $work->id, 'draft_id' => $receipt, 'draft_revision' => $revision, 'source_sha256' => $source['sha256']];
+        }
+        return $result;
     }
     private function pending(): array { return ['state' => 'pending', 'retry_after' => max(1, min(30, (int) config('clubunio-expense-ocr.poll_interval_seconds', 3)))]; }
     private function poll(Account $actor, Tenant $tenant, string $receipt, int $revision, string $id): array {
@@ -131,7 +141,7 @@ final class MobileExpenseOcr
             $row = $this->table($tenant)->where('account_id', $actor->id)->where('id', $id)->lockForUpdate()->firstOrFail();
             $pointer = $row->result_encrypted ? json_decode(Crypt::decryptString($row->result_encrypted), true, 8, JSON_THROW_ON_ERROR) : [];
             if ($row->state !== 'polling' || ($pointer['lease'] ?? null) !== $claim['lease']) return $this->pending();
-            try { $this->source($actor, $tenant, $receipt, $revision); }
+            try { [$sourceDraft] = $this->source($actor, $tenant, $receipt, $revision); }
             catch (\Throwable) { $this->table($tenant)->where('id', $id)->update(['state' => 'attention']); return ['state' => 'stale']; }
             if (in_array($result['status'], ['notStarted','running'], true)) {
                 $this->table($tenant)->where('id', $id)->update(['state' => 'running', 'result_encrypted' => Crypt::encryptString(json_encode(['job' => $claim['job'],
@@ -141,8 +151,10 @@ final class MobileExpenseOcr
             if ($result['status'] !== 'succeeded') { $this->table($tenant)->where('id', $id)->update(['state' => 'attention']); return ['state' => 'failed']; }
             try { $suggestion = app(AzureExpenseOcrProvider::class)->suggestion($result); }
             catch (\Throwable) { $this->table($tenant)->where('id', $id)->update(['state' => 'attention']); return ['state' => 'failed']; }
+            $suggestion['_source'] = ['draft_id' => $receipt, 'draft_revision' => $revision, 'sha256' => $sourceDraft->sha256,
+                'scanner_version' => $sourceDraft->scanner_version, 'scanned_at' => \Carbon\CarbonImmutable::parse($sourceDraft->scanned_at)->utc()->toIso8601String()];
             $this->table($tenant)->where('id', $id)->update(['state' => 'succeeded', 'result_encrypted' => Crypt::encryptString(json_encode($suggestion, JSON_THROW_ON_ERROR))]);
-            return ['state' => 'succeeded', 'cached' => false] + $suggestion;
+            return $this->result($row, $suggestion, false, $receipt, $revision);
         });
     }
 }

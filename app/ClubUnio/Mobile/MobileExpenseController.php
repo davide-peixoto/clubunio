@@ -95,7 +95,10 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
             $d = $r->validate(['command_key' => $id ? 'prohibited' : 'required|uuid', 'revision' => $id ? 'required|integer|min:1' : 'prohibited', 'expense_revision' => 'required|integer|min:1',
                 'expense_type_id' => $delete ? 'prohibited' : 'required|integer|min:1', 'game_type_id' => 'nullable|integer|min:1',
                 'opponent' => 'nullable|string|max:255', 'amount' => $delete ? 'prohibited' : 'required|regex:/^\d{1,9}(\.\d{1,4})?$/', 'notes' => 'nullable|string|max:4000',
-                'receipt_token' => $delete ? 'prohibited' : 'nullable|uuid', 'receipt_revision' => 'required_with:receipt_token|integer|min:1']);
+                'receipt_token' => $delete ? 'prohibited' : 'nullable|uuid|required_with:ocr_work_id', 'receipt_revision' => 'required_with:receipt_token|integer|min:1',
+                'ocr_work_id' => $delete ? 'prohibited' : 'nullable|uuid|required_with:ocr_source_revision,ai_suggested_amount',
+                'ocr_source_revision' => $delete ? 'prohibited' : 'required_with:ocr_work_id|integer|min:1',
+                'ai_suggested_amount' => $delete ? 'prohibited' : 'required_with:ocr_work_id|regex:/^\d{1,9}(\.\d{1,4})?$/']);
             $key = $d['command_key'] ?? null; unset($d['command_key']);
             $commands = app(MobileExpenseCommands::class);
             $commandFingerprint = $commands->fingerprint(['expense_id' => $expense] + $d);
@@ -109,10 +112,13 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
                     'upload_id' => $boundUpload];
             }
             abort_if($this->pending($tenant, $expense), 409, 'Bitte zuerst die offene Beleguebertragung abschliessen.');
-            $input = array_diff_key($d, ['receipt_token' => true, 'receipt_revision' => true]);
+            $provenance = app(MobileExpenseOcrProvenance::class);
+            $claim = $delete ? null : $provenance->claim($actor, $tenant, $d);
+            $input = array_diff_key($d, array_fill_keys(['receipt_token', 'receipt_revision', 'ocr_work_id', 'ocr_source_revision', 'ai_suggested_amount'], true));
             if ($delete) { $input['active'] = false; }
             $line = app(ExpenseService::class)->saveLine($actor, $tenant, $expense, $id, $input);
             $upload = isset($d['receipt_token']) ? $drafts->bind($actor, $tenant, $d['receipt_token'], $d['receipt_revision'], $line, $fingerprint) : null;
+            $provenance->record($actor, $tenant, $line, $claim, isset($d['receipt_token']));
             if ($key) $commands->remember($actor, $tenant, $key, 'create_line', $commandFingerprint, $expense, (int) $line->id, $upload);
             return app(MobileExpenseData::class)->detail($actor, $tenant, $expense) + ['line_id' => (int) $line->id, 'upload_id' => $upload,
                 'upload_state' => $upload ? 'pending' : null, 'removed' => $delete];
