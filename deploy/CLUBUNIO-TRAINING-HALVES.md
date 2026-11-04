@@ -58,7 +58,30 @@ ueberschreiben und verknuepfte Teilflaechen nicht pauschal loeschen.
 - Bestandsprobe95 Trainings/sechs Teilflaechen komplett zurueckgerollt;
   anschliessend identischer Snapshot-Hash.
 - DE/EN:2670 Schluessel geprueft.
-- Erweiterte Saison-/Platzregression und Serverrelease werden nachgefuehrt.
+- Saisonplanung:27 Tests/344 Assertions; Platzdomaene:13 Tests/105 Assertions.
+  Zusammen mit den obigen Laeufen52 Tests/550 Assertions. Erste Saisonfixtures
+  wurden um die nun erforderliche Halbplatzkonfiguration ergaenzt, Nachlauf gruen.
 
 Ausgangsrelease `20261104-clubunio-web-chat-v1`. Kein Schemaeingriff,
 keine ENV-/Providerfreigabe und keine Aenderung von Login-/Benutzerrechten.
+
+## Ausgefuehrt
+
+Aktiv `20261105-clubunio-training-halves` aus `6d35c0f`: zehn exakte Git-Dateien
+gegen vorherigen Serverstand geprueft, release-lokale Caches aufgebaut, Rollen-/
+Mandanten-/Supportgates bestanden. Health/Login200, Trainingszeiten/Plantafel
+anonym302 zum Login. ENV/Composer erhalten; PHP-FPM neu geladen.
+
+SV Sissach:sechs Halbteilflaechen IDs35-40 angelegt,95 Trainings zugeordnet,
+jeweils Revision und Audit. Nachpruefung:0 verbleibende Kandidaten,553 fehlende
+Platzangaben unveraendert. Apply UTC04.11.2026 23:09, lokal05.11.2026.
+Keine Mails/Push, keine Wettkaempfe/Sperren/Termine verschoben oder freigegeben.
+Ausdruecklich bestaetigte letzte Auswahl: automatische Verteilung, nicht feste A.
+
+Private Sicherung `shared/backups/training-halves-20261104230925-17e098204bbc2022.cuenc`,
+SHA256 `9fe353ad326c3994c00cf474391a7335e0489bbf57d8c12369aa2e44116231f3`.
+Vorher-Snapshot `2bb851adf1d98e7836acb1028cd89ee6bdf07a24babaa368eb09bf5997454aec`,
+Nachher `8ec6f70f3bc69bca1dac4755a3586c022b752485f409ba197e0f816edfc9fb39`.
+Gezielte Sicherung, kein Nachweis eines vollstaendigen Datenbank-Restore.
+Paket-SHA256SUMS `d39997b4a8c3f7f7e61f402eec0ddbf06dc15f021c3e021744f0290b6f62df5e`.
+Angemeldete manuelle Sichtpruefung bleibt gemaess vorheriger Vereinbarung offen.

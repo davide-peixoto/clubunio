@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Halbplatzstandard (05.11.2026)
+
+Training standardmaessig halber Platz, automatische A/B-Verteilung.95 bestehende
+SV-Sissach-Trainings nach privater Sicherung zugeordnet;553 ohne Platz unveraendert.
+ClubUnio-Release aktiviert; Konflikte/Sperren bleiben sichtbar und wirksam.
+Keine automatische Platzfreigabe, keine PHPMaker-/Rechteaenderung.
+[Nachweis und Migrationspfad](CLUBUNIO-TRAINING-HALVES.md).
+
 ## Neue Anforderung: Webchat (04.11.2026)
 
 Chat mit fachlicher App-Paritaet in der normalen ClubUnio-Shell, gemeinsamer

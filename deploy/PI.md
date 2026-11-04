@@ -1,5 +1,16 @@
 # Pi staging: dev.clubunio.ch
 
+## Trainingshaelften (05.11.2026)
+
+Aktiv `20261105-clubunio-training-halves` aus `6d35c0f`, Rueckweg web-chat-v1.
+Halbplatzstandard in Wochenvorlagen/Saisonplanung, automatische A/B-Auswahl;
+ganzer Platz bleibt explizit waehlbar. Nach verifizierter verschluesselter
+Sicherung95 bestehende Trainings auf sechs neue Haelften verteilt, Revision/Audit.
+553 fehlende Plaetze nicht geraten. Sperren/Spiele/Zeiten/Garderoben unveraendert.
+Zehn Runtimehashes, Cacheaufbau, Servergates und52 gezielte Tests/550 Assertions.
+Keine Migration/ENV-/Rechte-/PHPMaker-Aenderung und kein realer Versand.
+Nachweis und Rueckweg: CLUBUNIO-TRAINING-HALVES.md.
+
 ## Gemeinsamer Webchat (04.11.2026)
 
 Aktiv `20261104-clubunio-web-chat-v1` aus `f3aef80`, Rueckweg pitch-v1.
