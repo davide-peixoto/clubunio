@@ -14,7 +14,7 @@ try {
         else throw new LogicException('Unexpected or duplicate stage argument');
     }
     if (($stage === '--export') !== ($fileArgument === null)) throw new LogicException('Export creates a new backup; verify/apply require its explicit path');
-    $release = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-parity-foundation';
+    $release = '/var/www/svs-laravel/releases/20261104-clubunio-mobile-parity-foundation-v2';
     if (realpath(__FILE__) !== $release.'/deploy/prepare-mobile-parity-schema.php') throw new LogicException('Runner must belong to fixed release');
     require $release.'/vendor/autoload.php';
     $app = require $release.'/bootstrap/app.php';

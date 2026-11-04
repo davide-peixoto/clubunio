@@ -5,7 +5,7 @@ base=/var/www/svs-laravel
 previous=$(cat "$base/shared/mobile-parity.previous")
 test "$previous" = "$base/releases/20261104-clubunio-mobile-identity-push-foundation"
 test "$(readlink -f "$base/current")" = "$previous"
-release=$base/releases/20261104-clubunio-mobile-parity-foundation
+release=$base/releases/20261104-clubunio-mobile-parity-foundation-v2
 test ! -e "$release"
 cd "$previous"
 sha256sum -c "$base/shared/mobile-parity.before.manifest"

@@ -76,7 +76,9 @@ try {
         $expect(app(App\ClubUnio\Mobile\MobileAdminNoticeAccess::class)->publicationCurrent($tenant,$id),false,'sender authority freshly revoked');
         [$status]=$call('GET',$base.'/push-admin/notices/'.$id,[],$tokens['admin']); $expect($status,403,'revoked sender receipt');
     }
-    Illuminate\Support\Facades\Http::assertNothingSent(); Illuminate\Support\Facades\Mail::assertNothingSent();
+    if (Illuminate\Support\Facades\Http::recorded()->isNotEmpty()
+        || Illuminate\Support\Facades\Mail::sent(Illuminate\Mail\Mailable::class)->isNotEmpty()
+        || Illuminate\Support\Facades\Mail::queued(Illuminate\Mail\Mailable::class)->isNotEmpty()) throw new LogicException('Unexpected external request or mail');
     $db->rollBack();
     echo "Personal admin notices ".($enabled?'enabled':'closed foundation')." verified: $checks HTTP/source checks, synthetic rollback, no provider action.\n";
 } catch (Throwable $error) {

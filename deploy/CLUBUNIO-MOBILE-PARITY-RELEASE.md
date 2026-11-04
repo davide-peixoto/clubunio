@@ -22,3 +22,9 @@ bleiben in der Foundation geschlossen; SMTP/FCM/APNs/Azure-/Igloo-Provider und
 echte native Kamera-/Biometrie-/Share-/Geraeteabnahme sind weiterhin gesondert
 offen. Eine vorbereitete Quelle oder ein bestandener Mocktest ist kein Nachweis
 erfolgreicher externer Zustellung oder Hardwareausgabe.
+
+Erster inaktiver Staginglauf f2c5c5b wurde vor Aktivierung im Rundnachrichten-
+Gate gestoppt: Laravel-Fakeasserts verlangten auf dem bewusst PHPUnit-freien
+Server eine Testbibliothek. Providerfreiheit wird nun direkt aus den leeren
+HTTP-/Mailable-/Queueaufzeichnungen geprueft. Neuer unveraenderlicher Pfad
+parity-foundation-v2; bisher aktiver Stand und Schema unveraendert.

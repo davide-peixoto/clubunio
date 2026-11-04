@@ -8,7 +8,7 @@ Migrationen und gemeinsame App-/API-/Config-/Routendateien bleiben unverändert.
 ## Feste Ausführungsgrenzen
 
 `deploy/prepare-mobile-parity-schema.php` bootstrapped ausschließlich
-`/var/www/svs-laravel/releases/20261104-clubunio-mobile-parity-foundation`.
+`/var/www/svs-laravel/releases/20261104-clubunio-mobile-parity-foundation-v2`.
 Auch der Runner selbst muss in genau diesem Release liegen und `current`
 dorthin zeigen. Linux-CLI, PostgreSQL18, Datenbank `db_acdf8d_dclubora`,
 `https://dev.clubunio.ch` und persönliche Mobile-API sind Pflicht.
