@@ -46,7 +46,7 @@ class MobileMyTeamsParityTest extends TestCase
         $this->team=$this->insert('team_seasons',['team_id'=>$this->insert('teams',['name'=>'Synthetic team']),'season_id'=>$season,'label'=>'Synthetic team']);
         $this->otherTeam=$this->insert('team_seasons',['team_id'=>$this->insert('teams',['name'=>'Other team']),'season_id'=>$season,'label'=>'Other team']);
         $this->insert('team_players',['team_season_id'=>$this->team,'member_id'=>$this->child]);
-        $this->insert('team_staff',['team_season_id'=>$this->team,'member_id'=>$this->members['trainer']]);
+        $this->insert('team_staff',['team_season_id'=>$this->team,'member_id'=>$this->members['trainer'],'staff_function_id'=>$this->insert('staff_functions',['code'=>'TRAINER','name'=>'Trainer'])]);
         $this->insert('training_slots',['team_season_id'=>$this->team,'starts_at'=>'18:00','ends_at'=>'19:30','synthetic_only'=>true]);
         $this->base='/api/mobile/v1/clubs/'.$this->tenant->id;
         $this->withToken($this->tokens['trainer']);

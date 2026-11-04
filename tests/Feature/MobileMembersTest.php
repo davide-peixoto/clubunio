@@ -47,7 +47,8 @@ class MobileMembersTest extends TestCase
         $team = $this->db->table('teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic']);
         $team = $this->db->table('team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic']);
         $this->db->table('team_players')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $team, 'member_id' => $this->child->id]);
-        $this->db->table('team_staff')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $team, 'member_id' => $this->coach]);
+        $trainerFunction=$this->db->table('staff_functions')->insertGetId(['tenant_id'=>$this->tenant->id,'code'=>'TRAINER','name'=>'Trainer']);
+        $this->db->table('team_staff')->insert(['tenant_id' => $this->tenant->id, 'team_season_id' => $team, 'member_id' => $this->coach,'staff_function_id'=>$trainerFunction]);
         foreach (['pending', 'approved', 'rejected', 'withdrawn'] as $code) {
             $this->db->table('member_change_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code, 'color' => '#164B8A']);
         }

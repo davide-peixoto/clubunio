@@ -3,7 +3,7 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\{Account, Member, MemberChangeRequest, Tenant};
-use App\ClubUnio\Services\{InvoiceAccessService, InvoiceTaxService, MemberAccessService, MemberChangeService, MemberService, ModulePermissionService};
+use App\ClubUnio\Services\{InvoiceAccessService, InvoiceTaxService, MemberAccessService, MemberChangeService, MemberService, ModulePermissionService, MemberTeamAccessService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +23,7 @@ final class MobileMemberData
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view')) {
             return Member::withoutGlobalScopes()->where('tenant_id', $tenant->id);
         }
+        if (app(MemberAccessService::class)->membership($actor,$tenant)?->role === 'trainer') return app(MemberTeamAccessService::class)->visibleTrainerContacts($actor,$tenant);
         return app(MemberAccessService::class)->visibleMembers($actor, $tenant);
     }
 
@@ -39,29 +40,35 @@ final class MobileMemberData
         return app(MemberAccessService::class)->represented($actor, $tenant)->whereKey($id)->exists();
     }
 
-    public function details(Account $actor, Tenant $tenant, int $id): array
+    public function details(Account $actor, Tenant $tenant, int $id, ?int $teamId = null): array
     {
-        $m = $this->member($actor, $tenant, $id);
+        [$m, $mode] = $teamId === null ? [$this->member($actor, $tenant, $id), null]
+            : app(MemberTeamAccessService::class)->member($actor, $tenant, $teamId, $id);
         $own = $this->represented($actor, $tenant, $id);
-        $full = $own || app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view');
-        $direct = $this->direct($actor, $tenant) && ! $m->archived_at;
-        $editable = ($direct || $own) && ! $m->archived_at;
+        $teamRestricted = $mode !== null && $mode !== 'full';
+        $trainer = $mode === 'trainer';
+        $full = $mode !== null ? in_array($mode, ['full', 'trainer'], true)
+            : ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view'));
+        $direct = !$teamRestricted && $this->direct($actor, $tenant) && ! $m->archived_at;
+        $editable = ($direct || ($own && !$teamRestricted) || $trainer) && ! $m->archived_at;
         $fields = $editable ? array_keys(self::CONTACT) : [];
         if (! $direct) { $fields = array_values(array_diff($fields, ['Homepage'])); }
+        if ($trainer) { $fields = array_values(array_diff($fields, ['RechnungAn'])); }
         $features = explode(',', substr((string) request()->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
-        $documents = (bool) config('clubunio-mobile.native_documents_enabled', false) && in_array('member-documents-v1', $features, true)
+        $documents = !$teamRestricted && (bool) config('clubunio-mobile.native_documents_enabled', false) && in_array('member-documents-v1', $features, true)
             && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view'));
         $dto = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
             'Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city, 'CanEdit' => $editable,
             'ChangeMode' => $editable ? ($direct ? 'direct' : 'request') : 'none', 'EditableFields' => $fields,
-            'CanReadChangeRequests' => app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),
-            'CanReadInvoices' => $own || app(MobileAccess::class)->admin($actor, $tenant), 'CanReadDocuments' => $documents, 'CanReadIdCard' => (bool) config('clubunio-mobile.native_member_id_card_enabled', false)
+            'TeamSaisonID' => $teamId, 'ContactOnly' => !$full, 'CanRequestChanges' => $editable && !$direct,
+            'CanReadChangeRequests' => !$teamRestricted && app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),
+            'CanReadInvoices' => !$teamRestricted && ($own || app(MobileAccess::class)->admin($actor, $tenant)), 'CanReadDocuments' => $documents, 'CanReadIdCard' => !$teamRestricted && (bool) config('clubunio-mobile.native_member_id_card_enabled', false)
                 && in_array('member-id-card-v1', $features, true)
                 && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view'))];
         if (! $full) { return $dto; }
         $dto += ['Firma' => $m->company, 'Geburtsdatum' => $m->birth_date?->format('Y-m-d'), 'Passnummer' => $m->pass_number,
             '_version' => MemberService::version($m)];
-        foreach (self::CONTACT as $key => $column) { $dto[$key] = $m->{$column}; }
+        foreach (self::CONTACT as $key => $column) { if ($trainer && $key === 'RechnungAn') continue; $dto[$key] = $m->{$column}; }
         $countryIds = array_values(array_unique(array_filter([$m->country_id, $m->nationality_id])));
         $countries = $countryIds ? $this->table($tenant, 'countries')->whereIn('id', $countryIds)->get()->keyBy('id') : collect();
         foreach (['Land' => 'country_id', 'Nationalitaet' => 'nationality_id'] as $key => $column) {
@@ -69,20 +76,21 @@ final class MobileMemberData
             $dto[$key] = $country ? ($key === 'Land' ? $country->code : $country->iso3) : '';
             $dto[$key.'Text'] = $country?->name;
         }
-        $recipient = $m->billing_recipient_id ? $this->table($tenant, 'billing_recipients')->where('id', $m->billing_recipient_id)->first() : null;
-        $dto['RechnungAn'] = $recipient ? (string) $recipient->id : '';
-        $dto['RechnungAnText'] = $recipient?->name;
+        $recipient = !$trainer && $m->billing_recipient_id ? $this->table($tenant, 'billing_recipients')->where('id', $m->billing_recipient_id)->first() : null;
+        if (!$trainer) { $dto['RechnungAn'] = $recipient ? (string) $recipient->id : ''; $dto['RechnungAnText'] = $recipient?->name; }
         $dto['Geschlecht'] = $m->gender_id ? $this->table($tenant, 'genders')->where('id', $m->gender_id)->value('name') : null;
         return $dto;
     }
 
-    public function options(Account $actor, Tenant $tenant, int $id): array
+    public function options(Account $actor, Tenant $tenant, int $id, ?int $teamId = null): array
     {
-        $m = $this->member($actor, $tenant, $id);
-        abort_unless(($this->direct($actor, $tenant) || $this->represented($actor, $tenant, $id)) && ! $m->archived_at, 403);
+        [$m, $mode] = $teamId === null ? [$this->member($actor, $tenant, $id), null]
+            : app(MemberTeamAccessService::class)->member($actor, $tenant, $teamId, $id);
+        $trainer = $mode === 'trainer';
+        abort_unless(($trainer || (($mode === null || $mode === 'full') && ($this->direct($actor, $tenant) || $this->represented($actor, $tenant, $id)))) && ! $m->archived_at, 403);
         return ['Countries' => $this->table($tenant, 'countries')->where(fn ($q) => $q->where('active', true)->orWhereIn('id', array_filter([$m->country_id, $m->nationality_id])))
             ->orderBy('name')->orderBy('id')->get(['code', 'iso3', 'name'])->map(fn ($c) => ['ISO2' => $c->code, 'ISO3' => $c->iso3, 'Name' => $c->name])->all(),
-            'BillingRecipients' => $this->table($tenant, 'billing_recipients')->where(fn ($q) => $q->where('active', true)->orWhere('id', $m->billing_recipient_id ?? -1))
+            'BillingRecipients' => $trainer ? [] : $this->table($tenant, 'billing_recipients')->where(fn ($q) => $q->where('active', true)->orWhere('id', $m->billing_recipient_id ?? -1))
                 ->orderBy('sort_order')->orderBy('id')->get(['id', 'name'])->map(fn ($r) => ['value' => (string) $r->id, 'label' => $r->name])->all()];
     }
 

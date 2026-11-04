@@ -124,6 +124,23 @@ SQL);
         return (int) $this->db->table('clubora.chat_conversations')->where('tenant_id', $this->tenant->id)->where('kind', 'team')->where('team_season_id', $this->team)->value('id');
     }
 
+    public function test_session_list_marks_only_current_own_session(): void
+    {
+        $first = $this->token($this->parent);
+        $second = $this->token($this->parent);
+        $this->token($this->trainer);
+        $rows = $this->withToken($second)->getJson('/api/mobile/v1/sessions')->assertOk()->json('data');
+        $this->assertCount(2, $rows);
+        $current = array_values(array_filter($rows, fn ($row) => $row['current'] === true));
+        $this->assertCount(1, $current);
+        $this->assertSame(explode('.', $second)[0], $current[0]['id']);
+        $other = array_values(array_filter($rows, fn ($row) => !$row['current']));
+        $this->assertSame(explode('.', $first)[0], $other[0]['id']);
+        $this->withToken($second)->deleteJson('/api/mobile/v1/sessions/'.$other[0]['id'])->assertOk();
+        $this->withToken($second)->getJson('/api/mobile/v1/context')->assertOk();
+        $this->withToken($first)->getJson('/api/mobile/v1/context')->assertUnauthorized();
+    }
+
     public function test_saison_parameter_maps_legacy_id_before_native_collision_without_date_guessing(): void
     {
         $current = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');

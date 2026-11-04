@@ -3,7 +3,7 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\{Account, Member, Tenant, TeamPlayer, TeamStaff, Registration};
-use App\ClubUnio\Services\{FamilyService, MemberAccessService, ModulePermissionService, RegistrationDataService, RegistrationReviewService, SignageService};
+use App\ClubUnio\Services\{FamilyService, MemberAccessService, ModulePermissionService, RegistrationDataService, RegistrationReviewService, SignageService, MemberTeamAccessService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -79,18 +79,21 @@ final class MobileTeamsData
         $staff = TeamStaff::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('team_season_id', $id)->where('active', true)->whereIn('member_id', clone $active)->orderBy('id')->get();
         $players = TeamPlayer::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('team_season_id', $id)->where('active', true)->whereIn('member_id', clone $active)->orderBy('id')->get();
         $ids = $staff->pluck('member_id')->merge($players->pluck('member_id'))->unique();
-        $visible = array_fill_keys($access->visibleMembers($actor, $tenant)->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+        $mode = app(MemberTeamAccessService::class)->forAuthorizedTeam($actor, $tenant, $id);
+        $staffIds = array_fill_keys($staff->pluck('member_id')->all(), true);
+        $direct = app(MobileMemberData::class)->direct($actor, $tenant);
         $own = array_fill_keys($access->represented($actor, $tenant)->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
-        $full = app(ModulePermissionService::class)->allows($actor, $tenant, 'members', 'view');
+        $full = in_array($mode, ['full', 'trainer'], true);
         $members = Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('id', $ids)->get(['id', 'first_name', 'last_name',
             'email', 'mobile', 'city', 'birth_date', 'street', 'house_number', 'postal_code', 'phone_private', 'phone_business',
-            'mother_name', 'mother_email', 'mother_mobile', 'father_name', 'father_email', 'father_mobile'])->mapWithKeys(function ($m) use ($visible, $own, $full) {
+            'mother_name', 'mother_email', 'mother_mobile', 'father_name', 'father_email', 'father_mobile'])->mapWithKeys(function ($m) use ($mode, $staffIds, $own, $full, $direct, $id) {
             $d = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
-                'CanOpenDossier' => isset($visible[$m->id]) || $full];
-            if (isset($visible[$m->id]) || $full) {
+                'TeamSaisonID' => $id, 'CanOpenDossier' => $mode !== 'parent' || isset($staffIds[$m->id]),
+                'ContactOnly' => !$full, 'CanRequestChanges' => $mode === 'trainer' || ($mode === 'full' && isset($own[$m->id]) && !$direct)];
+            if ($d['CanOpenDossier']) {
                 $d += ['Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city];
             }
-            if (isset($own[$m->id]) || $full) {
+            if ($full) {
                 foreach (['street' => 'Strasse', 'house_number' => 'HausNr', 'postal_code' => 'PLZ', 'phone_private' => 'TelefonPrivat',
                     'phone_business' => 'TelefonGeschaeft', 'mother_name' => 'Mutter', 'mother_email' => 'EmailMutter', 'mother_mobile' => 'MobileMutter',
                     'father_name' => 'Vater', 'father_email' => 'EmailVater', 'father_mobile' => 'MobileVater'] as $from => $to) { $d[$to] = $m->$from; }
@@ -99,10 +102,15 @@ final class MobileTeamsData
             return [(int) $m->id => $d];
         });
         $functions = $this->table($tenant, 'staff_functions')->get(['id', 'code', 'name'])->keyBy('id');
-        $merge = fn ($rows, $kind) => $rows->map(fn ($row) => $this->assignment($row, $kind) + ($members->get($row->member_id) ?? [])
+        $person = function ($row, string $kind) use ($mode, $members, $id): array {
+            $person = $members->get($row->member_id) ?? [];
+            if ($mode === 'parent' && $kind === 'players') return array_intersect_key($person, array_flip(['MitgliederID', 'Vorname', 'Nachname']))
+                + ['TeamSaisonID'=>$id, 'CanOpenDossier'=>false, 'ContactOnly'=>true, 'CanRequestChanges'=>false];
+            return $person;
+        };
+        $merge = fn ($rows, $kind) => $rows->map(fn ($row) => $this->assignment($row, $kind) + $person($row, $kind)
             + ($kind === 'staff' ? ['Bezeichnung' => $functions->get($row->staff_function_id)?->name ?? '',
-                'IsTrainer' => strtoupper($functions->get($row->staff_function_id)?->code ?? '') === 'TRAINER'
-                    || mb_strtolower(trim($functions->get($row->staff_function_id)?->name ?? '')) === 'trainer'] : []))->all();
+                'IsTrainer' => MemberTeamAccessService::trainerFunction($functions->get($row->staff_function_id))] : []))->all();
         $registrations = $this->registrationRows($actor,$tenant,$team);
         return ['Team' => $this->teamDto($actor, $tenant, $team), 'Staff' => $merge($staff, 'staff'), 'Players' => $merge($players, 'players'),
             'Trainings' => $this->trainingsForAuthorizedTeam($tenant, $id), 'Registrations' => $registrations, 'Members' => $members->values()->all()];
@@ -117,8 +125,7 @@ final class MobileTeamsData
     private function teamRegistrations(Account $actor,Tenant $tenant,int $team)
     {
         $access=app(MemberAccessService::class);
-        if (!$this->privateRegistrations($actor,$tenant) && $access->membership($actor,$tenant)?->role==='trainer'
-            && in_array($team,$access->responsibleTeams($actor,$tenant),true)) {
+        if (!$this->privateRegistrations($actor,$tenant) && app(MemberTeamAccessService::class)->forAuthorizedTeam($actor,$tenant,$team)==='trainer') {
             return Registration::withoutGlobalScopes()->where('tenant_id',$tenant->id)->where('active',true)->where('team_season_id',$team);
         }
         return app(RegistrationReviewService::class)->visible($actor,$tenant)->where('team_season_id',$team);

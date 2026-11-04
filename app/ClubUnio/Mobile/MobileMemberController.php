@@ -10,14 +10,21 @@ use Illuminate\Validation\ValidationException;
 
 final class MobileMemberController
 {
+    private function teamContext(Request $r): ?int
+    {
+        if (array_diff(array_keys($r->query()), ['team_id'])) { throw ValidationException::withMessages(['context' => 'Nicht erlaubter Mannschaftskontext.']); }
+        $context = \Illuminate\Support\Facades\Validator::make($r->query(), ['team_id' => 'sometimes|required|integer|min:1'])->validate();
+        return isset($context['team_id']) ? (int)$context['team_id'] : null;
+    }
+
     public function show(Request $r)
     {
-        return response()->json(['data' => ['Member' => app(MobileMemberData::class)->details($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'))]]);
+        return response()->json(['data' => ['Member' => app(MobileMemberData::class)->details($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'), $this->teamContext($r))]]);
     }
 
     public function options(Request $r)
     {
-        return response()->json(['data' => app(MobileMemberData::class)->options($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'))]);
+        return response()->json(['data' => app(MobileMemberData::class)->options($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'), $this->teamContext($r))]);
     }
 
     public function invoices(Request $r)
@@ -57,19 +64,22 @@ final class MobileMemberController
             app(MobileAccess::class)->enter($actor, $tenant);
             $data = app(MobileMemberData::class);
             $id = (int) $r->route('member');
-            $member = $data->member($actor, $tenant, $id);
-            $direct = $data->direct($actor, $tenant);
-            abort_unless(($direct || $data->represented($actor, $tenant, $id)) && ! $member->archived_at, 403);
-            $allowed = array_keys(MobileMemberData::CONTACT);
-            if (! $direct) { $allowed = array_values(array_diff($allowed, ['Homepage'])); }
-            if (array_diff(array_keys($r->all()), [...$allowed, '_version'])) {
+            $teamId = $this->teamContext($r);
+            $detail = $data->details($actor, $tenant, $id, $teamId);
+            $member = $teamId === null ? $data->member($actor, $tenant, $id)
+                : app(\App\ClubUnio\Services\MemberTeamAccessService::class)->member($actor, $tenant, $teamId, $id)[0];
+            $direct = $detail['ChangeMode'] === 'direct';
+            abort_unless($detail['CanEdit'] && !$member->archived_at, 403);
+            $allowed = $detail['EditableFields'];
+            $payload = $r->isJson() ? $r->json()->all() : $r->request->all();
+            if (array_diff(array_keys($payload), [...$allowed, '_version'])) {
                 throw ValidationException::withMessages(['member' => 'Nicht erlaubtes Aenderungsfeld.']);
             }
-            $r->validate(['_version' => 'required|regex:/^[0-9a-f]{64}$/']);
-            $input = ['_version' => $r->input('_version')];
+            \Illuminate\Support\Facades\Validator::make($payload, ['_version' => 'required|regex:/^[0-9a-f]{64}$/'])->validate();
+            $input = ['_version' => $payload['_version']];
             foreach ($allowed as $key) {
-                if (! $r->exists($key)) { continue; }
-                $value = $r->input($key);
+                if (! array_key_exists($key, $payload)) { continue; }
+                $value = $payload[$key];
                 if (in_array($key, ['Land', 'Nationalitaet'], true)) {
                     if ($value === '' || $value === null) { $value = null; }
                     else {
@@ -85,9 +95,9 @@ final class MobileMemberController
             }
             if ($direct) {
                 app(MemberService::class)->update($actor, $tenant, $id, $input);
-                return response()->json(['data' => ['success' => true, 'action' => 'member-contact-update', 'Member' => $data->details($actor, $tenant, $id)]]);
+                return response()->json(['data' => ['success' => true, 'action' => 'member-contact-update', 'Member' => $data->details($actor, $tenant, $id, $teamId)]]);
             }
-            $change = app(MemberChangeService::class)->submit($actor, $tenant, $id, $input);
+            $change = app(MemberChangeService::class)->submit($actor, $tenant, $id, $input, $teamId);
             return response()->json(['data' => ['success' => true, 'action' => 'member-contact-change-request', 'request_id' => (int) $change->id,
                 'request_revision' => (int) $change->revision, 'state' => $change->state]]);
         });

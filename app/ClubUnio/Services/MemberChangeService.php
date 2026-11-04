@@ -36,19 +36,27 @@ class MemberChangeService
         return $query->findOrFail($id);
     }
 
+    private function requestable(Account $actor, Tenant $tenant, int $id, bool $lock, ?int $teamId): Member
+    {
+        if ($teamId === null) return $this->represented($actor, $tenant, $id, $lock);
+        $fresh = $actor->fresh();
+        abort_unless($fresh && app(MemberAccessService::class)->canEnter($fresh, $tenant), 403);
+        return app(MemberTeamAccessService::class)->requestable($fresh, $tenant, $teamId, $id, $lock);
+    }
+
     public function values(Member $member): array
     {
         return array_replace($member->only(array_keys(self::FIELDS)), ['birth_date' => $member->birth_date?->format('Y-m-d')]);
     }
 
-    public function submit(Account $actor, Tenant $tenant, int $id, array $input): MemberChangeRequest
+    public function submit(Account $actor, Tenant $tenant, int $id, array $input, ?int $teamId = null): MemberChangeRequest
     {
-        $this->represented($actor, $tenant, $id);
+        $this->requestable($actor, $tenant, $id, false, $teamId);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $teamId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $member = $this->represented($actor, $tenant, $id, true);
-            if (array_diff(array_keys($input), [...array_keys(self::FIELDS), '_version'])) {
+            $member = $this->requestable($actor, $tenant, $id, true, $teamId);
+            if (array_diff(array_keys($input), [...array_diff(array_keys(self::FIELDS), $teamId !== null ? ['billing_recipient_id'] : []), '_version'])) {
                 throw ValidationException::withMessages(['member' => 'Nicht erlaubtes Änderungsfeld.']);
             }
             Validator::make($input, ['_version' => 'required|string|size:64'])->validate();
@@ -104,7 +112,7 @@ class MemberChangeService
             $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor->id,
                 'status_id' => $this->status($tenant, 'pending'), 'state' => 'pending', 'revision' => 1,
                 'member_version' => MemberService::version($member),
-                'snapshot_encrypted' => Crypt::encryptString(json_encode(['before' => array_intersect_key($before, $changes), 'changes' => $changes], JSON_THROW_ON_ERROR))])->save();
+                'snapshot_encrypted' => Crypt::encryptString(json_encode(['before' => array_intersect_key($before, $changes), 'changes' => $changes, 'team_id' => $teamId], JSON_THROW_ON_ERROR))])->save();
             $this->audit($actor, $request, 'submitted');
             $this->notify($tenant, $request, 'member.change.requested', true);
 
@@ -125,9 +133,9 @@ class MemberChangeService
             // Revoked parent/self links and departed members cannot be approved retrospectively.
             if ($approve) {
                 try {
-                    $member = $this->represented($r->requester, $tenant, $r->member_id, true);
-                } catch (ModelNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
-                    throw ValidationException::withMessages(['revision' => 'Die Mitglieds- oder Elternberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.']);
+                    $member = $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
+                } catch (ModelNotFoundException|\Illuminate\Database\RecordNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
+                    throw ValidationException::withMessages(['revision' => 'Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.']);
                 }
                 if (! hash_equals($r->member_version, MemberService::version($member))) {
                     throw ValidationException::withMessages(['revision' => 'Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.']);
@@ -149,7 +157,7 @@ class MemberChangeService
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $r = MemberChangeRequest::where('tenant_id', $tenant->id)->where('requested_by', $actor->id)->lockForUpdate()->findOrFail($id);
-            $this->represented($actor, $tenant, $r->member_id);
+            $this->requestable($actor, $tenant, $r->member_id, false, $this->snapshot($r)['team_id'] ?? null);
             $this->pending($r, $revision);
             $r->forceFill(['state' => 'withdrawn', 'status_id' => $this->status($tenant, 'withdrawn'), 'revision' => $revision + 1])->save();
             $this->audit($actor, $r, 'withdrawn');

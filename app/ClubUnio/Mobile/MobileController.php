@@ -42,9 +42,12 @@ final class MobileController
 
     public function sessions(Request $r)
     {
-        return $this->data(DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $this->actor($r)->id)
+        $actor = $this->actor($r);
+        $current = $r->attributes->get('mobile.session')?->id;
+        return $this->data(DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $actor->id)
             ->whereNull('revoked_at')->where('expires_at', '>', now()->toIso8601String())->orderByDesc('created_at')->limit(30)
-            ->get(['id', 'device_name', 'expires_at', 'created_at']));
+            ->get(['id', 'device_name', 'expires_at', 'created_at'])
+            ->map(fn ($session) => (array) $session + ['current' => $session->id === $current]));
     }
 
     public function revoke(Request $r)
