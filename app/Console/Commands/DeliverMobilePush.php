@@ -18,6 +18,7 @@ final class DeliverMobilePush extends Command
         $processed = 0;
         app(\App\ClubUnio\Mobile\MobilePushSources::class)->existingNotifications();
         app(\App\ClubUnio\Mobile\MobilePushSources::class)->challengeResets();
+        app(\App\ClubUnio\Mobile\MobileAdminNoticeService::class)->pending();
         while ($processed < $limit && app(MobilePushOutbox::class)->deliverOne()) $processed++;
         $this->info($processed.' outbox records processed; provider acceptance is not device delivery.');
         return self::SUCCESS;

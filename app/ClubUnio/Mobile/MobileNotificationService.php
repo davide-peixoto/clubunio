@@ -45,6 +45,10 @@ final class MobileNotificationService
 
     private function text(Account $actor, Tenant $tenant, object $row): array
     {
+        if ($row->kind === 'admin_notice') {
+            $notice = app(MobileAdminNoticeAccess::class)->notice($actor, $tenant, (int) $row->object_id);
+            return [Crypt::decryptString($notice->title_encrypted), Crypt::decryptString($notice->body_encrypted)];
+        }
         if ($row->kind === 'penalty') {
             $notice = app(MobilePenaltyAccess::class)->notice($actor, $tenant, (int) $row->object_id);
             return [Crypt::decryptString($notice->title_encrypted), Crypt::decryptString($notice->body_encrypted)];

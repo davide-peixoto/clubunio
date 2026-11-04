@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 final class MobilePushTargets
 {
     public const KINDS = ['chat', 'announcement', 'invoice', 'planning', 'expense', 'member', 'member_change', 'registration',
-        'bus', 'document_receipt', 'document_file', 'document_archive', 'penalty'];
+        'bus', 'document_receipt', 'document_file', 'document_archive', 'penalty', 'admin_notice'];
 
     public function authorize(Account $actor, Tenant $tenant, string $kind, int $id): array
     {
@@ -33,6 +33,7 @@ final class MobilePushTargets
             case 'document_receipt': case 'document_file': case 'document_archive':
                 app(MobileMemberDocuments::class)->view($actor, $tenant, $id, substr($kind, 9)); break;
             case 'penalty': app(MobilePenaltyAccess::class)->notice($actor, $tenant, $id); break;
+            case 'admin_notice': app(MobileAdminNoticeAccess::class)->notice($actor, $tenant, $id); break;
             default: abort_unless(app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $kind, $id, false), 404);
         } } catch (\Illuminate\Database\RecordNotFoundException) { abort(404); }
         return ['kind' => $kind, 'object_id' => $id] + $extra;

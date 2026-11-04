@@ -132,6 +132,7 @@ final class MobilePushOutbox
 
     private function publicationCurrent(Tenant $tenant, object $row): bool
     {
+        if ($row->kind === 'admin_notice') return app(MobileAdminNoticeAccess::class)->publicationCurrent($tenant, (int) $row->object_id);
         if ($row->kind !== 'planning' || ! str_starts_with($row->event_key, 'squad:')) return true;
         if (! preg_match('/^squad:([1-9][0-9]*):([0-9a-f-]{36})$/D', $row->event_key, $matches)) return false;
         $command = DB::connection('clubunio')->table('clubora.mobile_push_commands')->where('tenant_id', $tenant->id)
