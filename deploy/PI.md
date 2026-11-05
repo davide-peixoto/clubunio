@@ -2194,3 +2194,15 @@ bestanden; unveränderter Chat14SQL ohne Nachrichten-/Anhang-/Reaktions-/
 Stimmenprojektion. FPM aktiv, up200/context401, Env/Composerbytes unverändert.
 Keine Migration, Providerfreigabe oder PHPMaker-Änderung. App660f0d9,653 Tests.
 MOBILE-CHAT-DELTA.md.
+
+
+## 05.11.2026: Explizite Admin-Genehmigung trotz aktuellem Platzstatus
+
+Aktiv DEV20261105-clubunio-pitch-admin-status-override, Rueckweg dashboard-reservations-v2.
+Runtime b416136, lesender Gatefix5a04213; App b9e38dd. Nur ausdruecklicher Admin
+mit Update-Recht darf aktuellen Anlagenstatus fuer genau eine Genehmigung
+uebergehen; Belegungs-/Sperrzeitkonflikte und Revision bleiben geprueft.
+Auditflag, kein Status-/Schema-/Providerwechsel, keine echte Anfrage genehmigt.
+53 Backendtests/824 Assertions und64 App-Tests erfolgreich; Code-/i18n-Pruefung
+sauber. Vier Dateihashes und Konfigurationsgleichheit geprueft, FPM aktiv,
+HTTPSup200/context401. CLUBUNIO-PITCH-ADMIN-STATUS-OVERRIDE.md.

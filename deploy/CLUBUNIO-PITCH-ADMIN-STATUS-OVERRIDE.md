@@ -45,3 +45,19 @@ keine neue Overrideaktion. Keine automatische Genehmigung offener Anfragen.
 Domänenfälle mit145 Assertions und zurückgerollten synthetischen Daten.
 64 App-Tests erfolgreich, Analyse und1988/5-Sprachkatalogprüfung sauber.
 Keine echte Vereinsanfrage genehmigt. Native Geräteabnahme bleibt offen.
+
+## DEV-Abschluss05.11.2026
+
+Aktiv `/var/www/svs-laravel/releases/20261105-clubunio-pitch-admin-status-override`.
+Rückweg:20261105-clubunio-dashboard-reservations-v2. Runtime b416136,
+lesender Gatefix5a04213; App b9e38dd. Vier Rohdateihashes geprüft;
+Ausgangsdateien identisch zur geprüften Gitbaseline. Vollständige Konfiguration
+inklusive privater Firebase-Registry nach Cacheaufbau erhalten, ENV/Composerbytes
+unverändert. Lesender Check: echtes Adminrecht vorhanden, Supportmodus geschlossen;
+keine reale Genehmigung. FPM aktiv, HTTPSup200/context401 nach Aktivierung.
+
+Die erste inaktive Kandidatenprüfung hatte einen falschen Typ im simulierten
+Supportkontext. Gate vor Aktivierung auf echte Kontextform korrigiert und erneut
+geprüft. Aktiver Altstand blieb bis zur erfolgreichen Endprüfung unverändert.
+Finales Manifest7933e79982ca378556deee0ff1c2ae23219a39cf9075d9443cc52e733dc09704.
+Keine neuen Tabellen, Profile, Provideraktionen, PHPMaker- oder Storeumstellung.
