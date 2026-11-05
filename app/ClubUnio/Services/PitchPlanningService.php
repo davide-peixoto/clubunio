@@ -95,6 +95,45 @@ class PitchPlanningService
         return ['from' => $data['from'], 'to' => $data['to'], 'timezone' => 'Europe/Zurich', 'fields' => $fields, 'entries' => $entries, 'capabilities' => $capabilities];
     }
 
+    public function requests(Account $actor, Tenant $tenant, array $filters = []): array
+    {
+        abort_unless($this->canView($actor, $tenant), 403);
+        $all = $this->office($actor, $tenant, 'competitions', 'view');
+        $access = app(MemberAccessService::class);
+        abort_unless($all || (in_array($access->membership($actor, $tenant)?->role, ['trainer', 'technical_lead'], true)
+            && $access->canEnter($actor, $tenant)
+            && in_array('Platzverfugbarkeit', app(MobileModuleSettings::class)->visibleKeys($actor, $tenant), true)), 403);
+        abort_if(! $all && array_key_exists('status', $filters), 403);
+        $this->ready();
+        $data = Validator::make($filters, [
+            'page' => 'sometimes|integer|min:1|max:2147483647', 'per_page' => 'sometimes|integer|min:1|max:100',
+            'status' => 'sometimes|required|in:pending,approved,rejected,cancelled',
+        ])->validate();
+        $page = (int) ($data['page'] ?? 1);
+        $size = (int) ($data['per_page'] ?? 30);
+        $rows = $this->projection->table('pitch_requests', $tenant)
+            ->when(! $all, fn ($query) => $query->where('requester_account_id', $actor->id)
+                ->where('date', '>=', now('Europe/Zurich')->toDateString()))
+            ->when(isset($data['status']), fn ($query) => $query->where('status', $data['status']))
+            ->orderByDesc('id')->offset(($page - 1) * $size)->limit($size + 1)->get();
+        $hasMore = $rows->count() > $size;
+        $rows = $rows->take($size);
+        $fields = $this->projection->requestFields($tenant, $rows->pluck('field_id')->unique()->all());
+        $teams = $this->teamOptions($actor, $tenant);
+        $capabilities = $this->capabilities($actor, $tenant);
+        $capabilities['request'] = $capabilities['request'] && $teams !== [];
+        $entries = [];
+        foreach ($rows as $row) {
+            $entry = $this->projection->stored('request', $row);
+            // Inbox conflicts stay empty; calendar and fresh mutation checks are authoritative.
+            $entry['editable'] = $capabilities['manage'] && ! in_array($entry['status'], ['rejected', 'cancelled'], true);
+            unset($entry['requester_account_id']);
+            $entries[] = $entry;
+        }
+        return ['timezone' => 'Europe/Zurich', 'fields' => $fields, 'teams' => $teams, 'entries' => $entries,
+            'capabilities' => $capabilities, 'can_filter_status' => $all, 'page' => $page, 'has_more' => $hasMore];
+    }
+
     private function write(Account $actor, Tenant $tenant, \Closure $action): mixed
     {
         $this->ready();

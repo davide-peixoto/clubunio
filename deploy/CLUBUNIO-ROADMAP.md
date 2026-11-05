@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Anfragebox unabhaengig vom Kalendertag (05.11.2026)
+
+Eigene aktuelle Trainer-/TL-Anfragen und vollstaendige Admin-/Backoffice-Liste
+mit Statusfilter. Eigener paginierter API-Leseweg, keine Kalenderbereichsgrenze,
+keine wiederholten Konfliktberechnungen je Datum.72 Fluttertests/Analyse und
+Sprachpruefung erfolgreich; physischer Test mit aktualisiertem Build bleibt offen.
+Release-/Backendabnahme: CLUBUNIO-PITCH-REQUEST-INBOX-RELEASE.md.
+
 ## App-Anlagenstatus zuerst (05.11.2026)
 
 Bestehende Offen/Gesperrt-Ansicht als Standard im App-Modul, persoenlicher

@@ -85,6 +85,7 @@ class MobilePitchControllerTest extends TestCase
             public function canView($actor, $tenant): bool { return $this->visible; }
             public function options(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function calendar(...$args): array { return $this->call(__FUNCTION__, $args); }
+            public function requests(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function requestFriendly(...$args): array { return $this->call(__FUNCTION__, $args); }
             public function authorizeFriendlyRequest(...$args): void { $this->replayChecks++; abort_if($this->denyReplay, 403); }
             public function move(...$args): array { return $this->call(__FUNCTION__, $args); }
@@ -131,10 +132,11 @@ class MobilePitchControllerTest extends TestCase
         return ['field_id' => 4, 'area_id' => null, 'date' => '2026-11-04', 'starts_at' => '18:30', 'duration_minutes' => 120];
     }
 
-    public function test_all_seven_routes_use_personal_and_pitch_middleware(): void
+    public function test_all_eight_routes_use_personal_and_pitch_middleware(): void
     {
         $spec = (new MobilePitchDocumentation)->specification();
         $this->assertCount(7, $spec['paths']);
+        $this->assertSame(8, array_sum(array_map('count', $spec['paths'])));
         foreach ($spec['paths'] as $path => $operations) {
             foreach ($operations as $method => $operation) {
                 $url = '/api/mobile/v1'.str_replace(['{tenant}', '{booking}', '{team}', '{competition}'], ['1', '7', '9', '11'], $path);
@@ -170,6 +172,54 @@ class MobilePitchControllerTest extends TestCase
         $this->assertSame(17, $arguments[0]->id);
         $this->assertSame(1, $arguments[1]->id);
         $this->assertSame(['from' => '2026-10-25', 'to' => '2026-10-25', 'period_id' => '2'], $arguments[2]);
+    }
+
+    public function test_inbox_forwards_only_pagination_and_status_and_preserves_contract(): void
+    {
+        $this->domain->result = ['timezone' => 'Europe/Zurich', 'fields' => [], 'teams' => [], 'entries' => [],
+            'capabilities' => ['view' => true, 'request' => false, 'manage' => false, 'approve' => false],
+            'can_filter_status' => false, 'page' => 1, 'has_more' => false];
+        $url = $this->base.'/pitch-planning/requests';
+        $this->personal()->getJson($url)->assertOk()->assertExactJson(['data' => $this->domain->result])
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertSame('requests', $this->domain->calls[0][0]);
+        $this->assertSame(17, $this->domain->calls[0][1][0]->id);
+        $this->assertSame(1, $this->domain->calls[0][1][1]->id);
+        $this->assertSame([], $this->domain->calls[0][1][2]);
+        $this->getJson($url.'?page=2&per_page=100&status=cancelled')->assertOk();
+        $this->assertSame(['page' => '2', 'per_page' => '100', 'status' => 'cancelled'], $this->domain->calls[1][1][2]);
+        foreach (['page=0', 'page=-1', 'page=1.5', 'page=2147483648', 'per_page=0', 'per_page=101',
+            'status=unknown', 'status=', 'status[]=pending', 'from=2026-11-05', 'to=2026-11-05',
+            'team_season_id=9', 'requester_account_id=17', 'tenant_id=2'] as $query) {
+            $this->getJson($url.'?'.$query)->assertUnprocessable();
+        }
+        $this->assertCount(2, $this->domain->calls);
+        $this->domain->failure = 403;
+        $this->getJson($url.'?status=pending')->assertForbidden()->assertJsonPath('error.code', 'forbidden');
+    }
+
+    public function test_inbox_auth_tenant_and_feature_gates_and_openapi(): void
+    {
+        $url = $this->base.'/pitch-planning/requests';
+        $this->getJson($url)->assertUnauthorized();
+        $this->withToken('integration-token')->getJson($url)->assertUnauthorized();
+        $this->personal()->getJson('/api/mobile/v1/clubs/2/pitch-planning/requests')->assertForbidden();
+        config(['clubunio-mobile.native_pitch_planning_enabled' => false]);
+        $this->getJson($url)->assertStatus(503);
+        $this->assertSame([], $this->domain->calls);
+        $spec = (new MobilePitchDocumentation)->specification();
+        $operation = $spec['paths']['/clubs/{tenant}/pitch-planning/requests']['get'];
+        $this->assertSame(['tenant', 'page', 'per_page', 'status'], array_column($operation['parameters'], 'name'));
+        $this->assertSame(30, $operation['parameters'][2]['schema']['default']);
+        $this->assertSame(100, $operation['parameters'][2]['schema']['maximum']);
+        $this->assertSame(['timezone', 'fields', 'teams', 'entries', 'capabilities', 'can_filter_status', 'page', 'has_more'],
+            $spec['components']['schemas']['RequestInbox']['required']);
+        $entry = $spec['components']['schemas']['RequestInboxEntry'];
+        $this->assertSame(['request'], $entry['properties']['source']['enum']);
+        $this->assertSame(0, $entry['properties']['conflicts']['maxItems']);
+        $this->assertArrayNotHasKey('requester_account_id', $entry['properties']);
+        $this->assertArrayNotHasKey('notes', $entry['properties']);
+        $this->assertSame($spec['components']['schemas']['Entry']['required'], $entry['required']);
     }
 
     public function test_team_effective_calendar_scopes_before_projection_and_rejects_overrides(): void

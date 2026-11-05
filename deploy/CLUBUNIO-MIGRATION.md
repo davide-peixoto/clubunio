@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Datumsunabhaengige Platzanfragen (05.11.2026)
+
+Additiver GET-Endpunkt fuer die App-Anfragebox, ohne Datenmigration oder
+Rechtezuordnung. Trainer/TL lesen eigene Anfragen ab heute, Admin/Backoffice
+auch Historie mit Statusfilter. App nutzt seitenweises Nachladen unabhaengig
+vom Kalenderdatum. Bestehende POST-Anfragen und Entscheidungspruefungen bleiben
+erhalten; keine Benachrichtigung beim Lesen. Release/Rueckweg und Testnachweise:
+CLUBUNIO-PITCH-REQUEST-INBOX-RELEASE.md. PHPMaker DEV/PROD unveraendert.
+
 ## App-Anlagenstatus und fixierte Zeitachse (05.11.2026)
 
 Keine Datenmigration, Profilzuordnung oder Importwiederholung. Persoenlicher

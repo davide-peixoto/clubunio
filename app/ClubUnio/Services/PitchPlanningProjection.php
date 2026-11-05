@@ -23,12 +23,20 @@ class PitchPlanningProjection
 
     public function fields(Tenant $tenant): array
     {
+        return $this->requestFields($tenant, []);
+    }
+
+    /** Active choices plus tenant-scoped archived references on this inbox page. */
+    public function requestFields(Tenant $tenant, array $referencedIds): array
+    {
         $availability = FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)->with('status')->get()->keyBy('field_id');
         $areas = $this->table('pitch_areas', $tenant)->orderBy('id')->get()->groupBy('field_id');
-        return TrainingOption::where('tenant_id', $tenant->id)->where('category', 'field')->where('active', true)->orderBy('id')->get()->map(function ($field) use ($availability, $areas) {
+        return TrainingOption::where('tenant_id', $tenant->id)->where('category', 'field')
+            ->where(fn ($query) => $query->where('active', true)->orWhereIn('id', $referencedIds))
+            ->orderBy('id')->get()->map(function ($field) use ($availability, $areas) {
             $status = $availability->get($field->id)?->status;
             return ['id' => (int) $field->id, 'name' => app(LookupTranslations::class)->label('training_options', $field, null, $field->tenant_id),
-                'available' => $status && $status->active && ! $status->blocks_training,
+                'available' => $field->active && $status && $status->active && ! $status->blocks_training,
                 'areas' => ($areas->get($field->id) ?? collect())->map(fn ($area) => $this->area($area))->all()];
         })->all();
     }

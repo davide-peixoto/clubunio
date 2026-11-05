@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+## Datumsunabhaengige App-Anfragebox (05.11.2026)
+
+Aktiv `20261105-clubunio-pitch-request-inbox`, Rueckweg facilities-status.
+Acht verifizierte Dateien; eigene aktuelle Trainer-/TL-Anfragen und alle
+Admin-/Backoffice-Anfragen mit Statusfilter.71 Backendtests/1768 Assertions,
+72 Fluttertests/Analyse, lesende Serverpruefung und Health200/API401 erfolgreich.
+Konfiguration/Firebase und geschlossene Pushflags erhalten, keine DB-/Rechte-
+oder PHPMaker-Aenderung. App c2d784a benoetigt neues installiertes Testbuild.
+CLUBUNIO-PITCH-REQUEST-INBOX-RELEASE.md.
+
 ## App-Anlagenstatus korrigiert (05.11.2026)
 
 Aktiv `20261105-clubunio-facilities-status`, Rueckweg pitch-usability-v3.

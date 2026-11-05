@@ -42,6 +42,17 @@ final class MobilePitchController implements \Illuminate\Routing\Controllers\Has
         return response()->json(['data' => app(PitchPlanningService::class)->calendar($actor, $tenant, $filters)]);
     }
 
+    public function requests(Request $request): JsonResponse
+    {
+        return response()->json(['data' => app(PitchPlanningService::class)->requests(
+            $request->attributes->get('mobile.actor'), $request->attributes->get('mobile.tenant'),
+            $this->input($request, [
+                'page' => 'sometimes|integer|min:1|max:2147483647',
+                'per_page' => 'sometimes|integer|min:1|max:100',
+                'status' => 'sometimes|required|in:pending,approved,rejected,cancelled',
+            ]))]);
+    }
+
     public function request(Request $request): JsonResponse
     {
         return $this->write($request, function ($actor, $tenant, $service) use ($request) {

@@ -4,7 +4,8 @@
 try {
     $root = dirname(__DIR__);
     if (PHP_SAPI !== 'cli' || PHP_OS_FAMILY !== 'Linux'
-        || $root !== '/var/www/svs-laravel/releases/20261105-clubunio-facilities-status') {
+        || !in_array($root, ['/var/www/svs-laravel/releases/20261105-clubunio-facilities-status',
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-request-inbox'], true)) {
         throw new LogicException('Fixed ClubUnio release required');
     }
     require $root.'/vendor/autoload.php';

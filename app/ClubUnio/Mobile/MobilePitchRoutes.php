@@ -10,6 +10,7 @@ final class MobilePitchRoutes
     {
         Route::get('pitch-planning/options', [MobilePitchController::class, 'options'])->name('pitch.options');
         Route::get('pitch-planning/calendar', [MobilePitchController::class, 'calendar'])->name('pitch.calendar');
+        Route::get('pitch-planning/requests', [MobilePitchController::class, 'requests'])->name('pitch.requests');
         Route::post('pitch-planning/requests', [MobilePitchController::class, 'request'])->name('pitch.request');
         Route::post('pitch-planning/move', [MobilePitchController::class, 'move'])->name('pitch.move');
         Route::post('pitch-planning/requests/{booking}/review', [MobilePitchController::class, 'review'])

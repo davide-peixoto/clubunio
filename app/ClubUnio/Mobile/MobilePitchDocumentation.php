@@ -32,6 +32,10 @@ final class MobilePitchDocumentation
             'Calendar' => $this->object(['from' => $date, 'to' => $date, 'timezone' => $text + ['enum' => ['Europe/Zurich']],
                 'fields' => $this->listOf('Field'), 'entries' => $this->listOf('Entry'), 'capabilities' => $this->ref('Capabilities')]),
             'Options' => $this->object(['fields' => $this->listOf('Field'), 'teams' => $this->listOf('Team'), 'capabilities' => $this->ref('Capabilities')]),
+            'RequestInbox' => $this->object(['timezone' => $text + ['enum' => ['Europe/Zurich']],
+                'fields' => $this->listOf('Field'), 'teams' => $this->listOf('Team'), 'entries' => $this->listOf('RequestInboxEntry'),
+                'capabilities' => $this->ref('Capabilities'), 'can_filter_status' => ['type' => 'boolean'],
+                'page' => $id, 'has_more' => ['type' => 'boolean']]),
             'FriendlyRequest' => $this->object($placement + ['team_season_id' => $id, 'opponent' => $text + ['maxLength' => 255],
                 'request_id' => $text + ['minLength' => 8, 'maxLength' => 120, 'pattern' => '^[A-Za-z0-9._:-]{8,120}$',
                     'description' => 'Stable client key for this draft. Reuse unchanged after uncertain outcomes; scoped to current tenant and account.'],
@@ -53,12 +57,17 @@ final class MobilePitchDocumentation
         $schemas['FriendlyRequest']['properties']['duration_minutes']['default'] = 120;
         $schemas['Move']['properties']['duration_minutes']['maximum'] = 44640;
         $schemas['Move']['properties']['duration_minutes']['description'] = 'Up to 44640 for blocks; the core limits other sources to 1440.';
-        $schemas['Entry']['properties']['requester_account_id'] = $id + ['description' => 'Only present for an authorized manager or the requester.'];
+        $schemas['RequestInboxEntry'] = $schemas['Entry'];
+        $schemas['RequestInboxEntry']['properties']['source']['enum'] = ['request'];
+        $schemas['RequestInboxEntry']['properties']['conflicts']['maxItems'] = 0;
+        $schemas['RequestInboxEntry']['properties']['conflicts']['description'] = 'Always empty in the inbox, not evidence of availability. Consult the calendar; approval/move perform fresh authoritative conflict checks.';
+        $schemas['Entry']['properties']['requester_account_id'] = $id + ['description' => 'Only present for an authorized manager or the requester; never returned by the request inbox.'];
         $root = '/clubs/{tenant}';
         $paths = [];
         foreach ([
             ['/pitch-planning/options', 'get', 'options', 'Options', null],
             ['/pitch-planning/calendar', 'get', 'calendar', 'Calendar', null],
+            ['/pitch-planning/requests', 'get', 'requests', 'RequestInbox', null],
             ['/pitch-planning/requests', 'post', 'request', 'Entry', 'FriendlyRequest'],
             ['/pitch-planning/move', 'post', 'move', 'Entry', 'Move'],
             ['/pitch-planning/requests/{booking}/review', 'post', 'review', 'Entry', 'Review'],
@@ -73,6 +82,12 @@ final class MobilePitchDocumentation
                 foreach (['from', 'to'] as $parameter) $parameters[] = ['name' => $parameter, 'in' => 'query', 'required' => true, 'schema' => $date];
                 $parameters[] = ['name' => 'period_id', 'in' => 'query', 'schema' => $id];
                 if ($name === 'calendar') $parameters[] = ['name' => 'team_season_id', 'in' => 'query', 'schema' => $id];
+            }
+            if ($result === 'RequestInbox') {
+                $parameters[] = ['name' => 'page', 'in' => 'query', 'schema' => $id + ['default' => 1, 'maximum' => 2147483647]];
+                $parameters[] = ['name' => 'per_page', 'in' => 'query', 'schema' => $id + ['default' => 30, 'maximum' => 100]];
+                $parameters[] = ['name' => 'status', 'in' => 'query', 'schema' => $text + ['enum' => ['pending', 'approved', 'rejected', 'cancelled']],
+                    'description' => 'Only admin/office with competitions.view. Personal Trainer/TL filters return 403. Omit for all statuses.'];
             }
             $responses = ['200' => ['description' => 'Saved entry or authorized projection.', 'content' => [
                 'application/json' => ['schema' => $this->object(['data' => $this->ref($result)])],
@@ -96,9 +111,11 @@ final class MobilePitchDocumentation
                     'competition_teams' => 'Admin/office with current competition-update permission only. Echo the opaque revision. Team-season mappings replace current assignments and are tenant-validated by configureCompetition; no name inference, permission grant or modification of SFV source records.',
                     'move' => 'Admin/office only. Training changes one dated occurrence, not its weekly base. Successful moves enqueue staff in-app/push, never email.',
                     'calendar', 'team_calendar' => 'Inclusive civil dates, maximum 42 days. Europe/Zurich date and HH:mm fields stay unconverted; ISO timestamps identify absolute instants. Team calendar first checks existing team access. Pending requests do not reserve space.',
+                    'requests' => 'Date-independent inbox, ordered by immutable request ID descending. Admin/office with competitions.view see all tenant requests, including history. Personal trainers/technical leads see only their own requester_account_id and civil date >= today in Europe/Zurich, irrespective of selected date, team or season. Other roles are denied. No requester IDs or private notes are returned. Active fields plus archived references on this page use the same Field DTO; archived fields have available=false and remain rejected as new-request targets by the server. Teams are current requestable options, not historical labels; request capability is false when options are empty. Pagination defaults to page=1/per_page=30, maximum per_page=100; page is a positive 32-bit integer. Empty pages have entries=[] and has_more=false. Offset pagination is deterministic for unchanged data, not a cross-request snapshot; restart at page 1 after changes. No calendar range inputs or 42-day listing limit. Inbox conflicts are always empty to keep query counts independent of dates and page size; this does not mean conflict-free. Consult the calendar; approval/move retain fresh authoritative conflict checks. Mutation authorization is unchanged.',
                     default => 'Requestable teams and explicit view/request/manage/approve capabilities from the shared service.',
                 }];
             if ($body) $operation['requestBody'] = ['required' => true, 'content' => ['application/json' => ['schema' => $this->ref($body)]]];
+            if ($name === 'requests') $operation['description'] .= ' Personal Trainer/TL access additionally requires current portal admission and Platzverfugbarkeit in MobileModuleSettings.visibleKeys. Excluded/inactive mobile profiles return 403 on the next request; admin/office continue to use competitions.view.';
             $paths[$root.$path][$method] = $operation;
         }
         return ['openapi' => '3.0.3', 'info' => ['title' => 'ClubUnio Personal Pitch Planning API', 'version' => '1.0.0',

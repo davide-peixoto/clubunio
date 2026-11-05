@@ -11,7 +11,8 @@ try {
             '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability',
             '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v2',
             '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v3',
-            '/var/www/svs-laravel/releases/20261105-clubunio-facilities-status'], true)) throw new LogicException('Fixed release/mode required');
+            '/var/www/svs-laravel/releases/20261105-clubunio-facilities-status',
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-request-inbox'], true)) throw new LogicException('Fixed release/mode required');
     require $root.'/vendor/autoload.php';
     $app = require $root.'/bootstrap/app.php';
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -34,7 +35,8 @@ try {
             if ($db->table('clubora.migrations')->where('migration', '2026_11_04_'.$migration)->count() !== 1) throw new LogicException('Missing schema ledger');
         }
         $routes = array_filter(iterator_to_array(app('router')->getRoutes()), fn ($r) => str_starts_with($r->getName() ?? '', 'clubunio.mobile.pitch.'));
-        if (count($routes) !== 7) throw new LogicException('Unexpected route count');
+        $expectedRoutes = str_ends_with($root, '/20261105-clubunio-pitch-request-inbox') ? 8 : 7;
+        if (count($routes) !== $expectedRoutes) throw new LogicException('Unexpected route count');
         foreach ($routes as $route) {
             foreach ([App\ClubUnio\Mobile\MobileMiddleware::class, App\ClubUnio\Mobile\MobilePitchReady::class] as $middleware) {
                 if (!in_array($middleware, $route->gatherMiddleware(), true)) throw new LogicException('Missing personal API gate');
