@@ -42,3 +42,13 @@ und ersetzt ausschliesslich MobilePlanningController.php, MobilePlanningData.php
 sowie das lesende Gate check-planning-detail-loading.php. Keine Migration oder
 ENV-/Composer-/Provideränderung. Aktive Pushflags, Registry und Versandtimer
 bleiben erhalten. Abnahme und Aktivierung werden nach Durchführung ergänzt.
+
+
+## Auslieferung 05.11.2026
+
+DEV aktiv 20261105-clubunio-planning-detail-loading aus 64d01be.
+Lesendes Kandidatgate720ms/26SQL, Aktivierung679ms/26SQL, jeweils22Personen,
+0Snapshots und frisches Pushrecht. Konfiguration einschliesslich privater
+Registry/Pushflags identisch, ENV-/Composerbytes erhalten. FPM/Push-Timer aktiv,
+Health200/context401. Manifest56ee4c35a0ab0d9868324ddd85946de02121b2c71614e9cb6378ed2243f00c91.
+45 Flutterregressionen grün, zusätzlicher UI-Vertragsfall ergänzt.

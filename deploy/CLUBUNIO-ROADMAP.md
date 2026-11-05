@@ -1715,3 +1715,15 @@ Pushflags/Registry und kompletter Konfigurationsstand erhalten, Versandtimer/FPM
 aktiv, Health200/context401.52 Backendtests/963Assertions und25 Fluttertests
 bestanden. Keine Migration, echten Nachrichten oder Appbuildänderung.
 MOBILE-PLANNING-PUSH-LOADING.md.
+
+
+## 05.11.2026: Geteilte Teamtermine schnell öffnen
+
+DEV aktiv20261105-clubunio-planning-detail-loading, Runtime64d01be.
+Optionaler leichter Detailabruf ohne vorgezogene Push-Empfängerprojektion;
+frische Rechte/Roster bleiben, bisherige Clients erhalten weiter volle Details.
+Flutter öffnet Terminroute sofort, 1Detailabruf, explizite Pushvorbereitung mit
+Aufgebotsvergleich/Bestätigung. Vergleich12.973s→1.155s; Releasegate679ms/26SQL,
+22Personen/0Snapshots. Pushflags/Registry unverändert, Timer/FPMaktiv, Health200.
+52Backendtests/990Assertions und45Flutterregressionen grün, extra UI-Fall ergänzt.
+Keine Migration. MOBILE-PLANNING-DETAIL-LOADING.md; neuer Flutterstand nötig.
