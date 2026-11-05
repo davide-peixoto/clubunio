@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Native Platzplanungsfreigabe (05.11.2026)
+
+Nur ClubUnio-Releasekonfiguration: Native Pitch aktiviert auf bestehendem
+Schema001500-001800 und unveraenderten Berechtigungen. Kein erneuter Import,
+keine Halbplatzkorrektur wiederholen, kein Provider-/Push-/Mailenable.
+Vorheriger Release behaelt geschlossenen Schalter als Code-/Konfigurationsrueckweg;
+zwischenzeitliche Anfragen und Replayledger nie durch einen Rollback loeschen.
+[Abnahme und Migrationsgrenzen](CLUBUNIO-NATIVE-PITCH-ACTIVATION.md).
+
 ## Halbplatzstandard fuer Trainings (05.11.2026)
 
 Neue Wochenvorlagen/Saisonplanung verwenden halbe Teilflaechen. Freigegebene

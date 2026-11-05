@@ -1,6 +1,9 @@
 # Personal Pitch Planning API
 
-Integration in progress, not deployed. No live migrations or provider sends.
+Current status05.11.2026: deployed on ClubUnio and explicitly enabled for native
+clients advertising pitch-planning-v1. Schema001500-001800 is present. External
+mail/push remain disabled. See [activation evidence](CLUBUNIO-NATIVE-PITCH-ACTIVATION.md).
+The dated local handoff sections below are historical, not the current release state.
 
 Base: `/api/mobile/v1/clubs/{tenant}` using the existing personal bearer session,
 tenant/domain binding and MobileAccess gate. Technical integration tokens and

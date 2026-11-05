@@ -103,8 +103,12 @@ nachgebessert; originales Paket bleibt unveraendert als Nachweis erhalten.
 
 ## Offen / nicht behauptet
 
-- Angemeldete visuelle Abnahme in der echten ClubUnio-Sitzung; Benutzer aktuell
-  ohne Zugriff. Synthetische Browser-Fixtures ersetzen diese Abnahme nicht.
+- Angemeldete Sichtpruefung05.11.2026 nachgeholt: DE/EN, Desktop1280px und
+  Mobil390px, reale Chatliste, Ankuendigungseingabe, Zuruecknavigation und
+  Einstellungsdialog geprueft. Keine Nachricht/Datei versendet, kein Mute/Block/
+  KI-Opt-in geaendert. Gemeinsame mobile Kopfzeile zeigt Sprache/Avatar zu dicht;
+  als Bedienungsbefund dokumentiert. Reale Anhang-/Scanner-/Kamera-/Versandabnahme
+  weiterhin offen. Ein leeres Ankuendigungsfenster ist kein Versandnachweis.
 - Firebase/Appregistry, eigene aktive Testgeraetebindung und FCM/APNs.
   Reale Pushnachrichten ausschliesslich an das freigegebene eigene Testkonto,
   nicht an Vereinsmitglieder. Betriebs-/Workeraktivierung getrennt abnehmen.

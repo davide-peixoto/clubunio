@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Native Platzplanung und Sichtpruefung (05.11.2026)
+
+App-Freigabeschalter auf ClubUnio aktiviert; neue App bietet die Platzplanung,
+alte Clients behalten Anlagenstatus. Bestehende Rechte und PHPMaker unveraendert.
+Angemeldete DE/EN-Desktop-/Mobil-Websicht nachgeholt; historische Mannschafts-
+auswahl, breite Tagesplantafel und enge mobile Kopfzeile als Befunde offen.
+Native Geraeteabnahme, FCM/APNs und Testmail weiterhin offen; kein echter Versand.
+[Freigabe, Tests und Rueckweg](CLUBUNIO-NATIVE-PITCH-ACTIVATION.md).
+
 ## Halbplatzstandard (05.11.2026)
 
 Training standardmaessig halber Platz, automatische A/B-Verteilung.95 bestehende
@@ -20,8 +29,9 @@ Funktionsmatrix: [Webchat](CLUBUNIO-WEB-CHAT.md),
 
 ## Aufgenommene Pendenzen Platzplanung (04.11.2026)
 
-- [ ] Angemeldete Desktop-/Mobil-Sichtpruefung nachholen; Benutzer aktuell ohne Zugriff.
-- [ ] Native Platzplanungsfreigabe und echte App-Abnahme durchfuehren.
+- [x] Angemeldete DE/EN-Desktop-/Mobil-Websicht05.11.2026 nachgeholt; Befunde siehe Freigabeprotokoll.
+- [x] Native Platzplanungsfreigabe05.11.2026 auf ClubUnio aktiviert.
+- [ ] Echte native App-/Geraeteabnahme durchfuehren.
 - [ ] Firebase/FCM/APNs konfigurieren, eigene Geraetebindung und isolierten Push testen.
 - [ ] Testmail fuer neue Anfragen pruefen; keine E-Mail bei blossen Status-/Platzwechseln.
 - [ ] Sieben mehrdeutige SFV-Zuordnungen pruefen; erst neue Vorschau bestaetigen, kein blindes Apply.

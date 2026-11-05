@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+## Native Platzplanung freigegeben (05.11.2026)
+
+Aktiv `20261105-clubunio-native-pitch`, Rueckweg training-halves. Nur der
+releaseprivate Native-Pitch-Schalter aktiviert, keine Fachcode-/DB-/Rechteaenderung.
+Sieben persoenliche API-Routen, eigener Moduladapter und alte Clientansicht
+lesend geprueft;50 Backendtests/595 Assertions und44 Fluttertests erfolgreich.
+Health200, anonyme API401, PHP-FPM aktiv. Push/Mail weiterhin geschlossen.
+Angemeldete DE/EN-Websicht nachgeholt; Bedienungsbefunde und native Restabnahme:
+[Freigabeprotokoll](CLUBUNIO-NATIVE-PITCH-ACTIVATION.md).
+
 ## Trainingshaelften (05.11.2026)
 
 Aktiv `20261105-clubunio-training-halves` aus `6d35c0f`, Rueckweg web-chat-v1.
