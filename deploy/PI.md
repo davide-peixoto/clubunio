@@ -2219,3 +2219,14 @@ Konfiguration geprüft; synthetisches Servergate118819->30690Bytes/Alphaerhalt,
 FPM aktiv, HTTPSup200/context401. Keine Migration/Provider-/PHPMakeränderung.
 Bestehende Bilder nicht verändert. Rückbau nach neuen Uploads benötigt weiterhin
 den neuen Dateinamensleser/Replaypfad. CLUBUNIO-CHAT-IMAGE-COMPRESSION.md.
+
+
+## 05.11.2026: Persönliches iOS-Push auf DEV freigeschaltet
+
+Auf ausdrücklichen Auftrag beide Pushflags true; vorhandene iOS-Core-Registry
+und übrige Konfiguration byte-/arraygeprüft erhalten. www-data-Capability true,
+unsupported Clients weiter false. Neuer Minutentimer/oneshotwww-data-Worker,
+max10 Einträge und kein Parallellauf. Vorher0 Geräte/Bindungen/Outbox, erster
+Lauf erfolgreich0 verarbeitet, kein künstlicher Testversand. FPM aktiv,
+HTTPSup200/context401. Kein Runtime-/DB-/PHPMakerwechsel, noch keine physische
+FCM-/APNs-Zustellungsabnahme. CLUBUNIO-DEV-PUSH-ACTIVATION.md.

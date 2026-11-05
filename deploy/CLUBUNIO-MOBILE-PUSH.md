@@ -153,3 +153,14 @@ Clientdetails: mobile/docs/PUSH.md. Fehlende Registry-/FCM-/APNs-Konfiguration,
 APNs-Entitlements/Provisioning und echte Initial-/Foreground-/Tap-Abnahme auf
 Android/iOS bleiben explizit offen. Keine Storeveroeffentlichung oder echten
 Pushs durch Tools, kein erfolgreicher Pushrelease behauptet.
+
+
+## 05.11.2026: Persönliches iOS-Push auf DEV freigeschaltet
+
+Auf ausdrücklichen Auftrag beide Pushflags true; vorhandene iOS-Core-Registry
+und übrige Konfiguration byte-/arraygeprüft erhalten. www-data-Capability true,
+unsupported Clients weiter false. Neuer Minutentimer/oneshotwww-data-Worker,
+max10 Einträge und kein Parallellauf. Vorher0 Geräte/Bindungen/Outbox, erster
+Lauf erfolgreich0 verarbeitet, kein künstlicher Testversand. FPM aktiv,
+HTTPSup200/context401. Kein Runtime-/DB-/PHPMakerwechsel, noch keine physische
+FCM-/APNs-Zustellungsabnahme. CLUBUNIO-DEV-PUSH-ACTIVATION.md.
