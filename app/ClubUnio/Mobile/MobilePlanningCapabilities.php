@@ -17,13 +17,13 @@ final class MobilePlanningCapabilities
         return isset($this->managed[$key][$team]);
     }
 
-    public function event(Account $actor, Tenant $tenant, object $event): array
+    public function event(Account $actor, Tenant $tenant, object $event, bool $includePush = true): array
     {
         $active = $event->status === 'AKTIV';
         $can = fn ($function) => $this->allows($actor, $tenant, (int) $event->team_season_id, $function);
         return ['CanEdit' => $active && $can('update'), 'CanAddPeople' => $active && $can('create'),
             'CanCancel' => $active && $can('cancel'), 'CanRemove' => $can('deactivate'),
             'CanShareSquad' => $active && $can('update') && $can('export'),
-            'CanSendSquadPush' => $active && $can('update') && $can('export') && app(MobilePushReady::class)->available()];
+            'CanSendSquadPush' => $includePush && $active && $can('update') && $can('export') && app(MobilePushReady::class)->available()];
     }
 }

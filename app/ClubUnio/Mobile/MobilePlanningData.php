@@ -172,7 +172,9 @@ final class MobilePlanningData
     {
         $p = $this->planning; $id = (int) $event->id;
         $invitationMeta = $projection['invitations'] ?? app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
-        $capabilities = $this->capabilities->event($actor, $tenant, $event);
+        // List/Today projections have no push publication action. A recipient
+        // fingerprint is expensive and authoritative only when opening detail.
+        $capabilities = $this->capabilities->event($actor, $tenant, $event, $projection === null);
         $pushSnapshot = $capabilities['CanSendSquadPush'] ? app(MobilePushSquad::class)->snapshot($actor, $tenant, $id) : null;
         $manager = $projection['manager'] ?? $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
         $own = $projection['own'] ?? app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();

@@ -1088,6 +1088,68 @@ CREATE TABLE clubora.object_changes (id integer PRIMARY KEY AUTOINCREMENT,tenant
         catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { $this->assertSame(403, $e->getStatusCode()); }
     }
 
+    public function test_push_enabled_planning_lists_never_build_squad_snapshots_but_detail_remains_fresh(): void
+    {
+        foreach (['title text','kind text','starts_at text','ends_at text','deadline_at text','mode text','status text','revision integer DEFAULT 1',
+            'location text','description text','capacity integer','series_key text'] as $column) $this->db->statement('ALTER TABLE clubora.team_events ADD COLUMN '.$column);
+        $this->db->statement('ALTER TABLE clubora.members ADD COLUMN updated_at text');
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations (tenant_id integer,event_id integer,member_id integer);
+CREATE TABLE clubora.team_participations (id integer PRIMARY KEY,tenant_id integer,event_id integer,member_id integer,status text,attendance text,comment_encrypted text,revision integer,updated_at text);
+CREATE TABLE clubora.team_guests (id integer PRIMARY KEY,tenant_id integer,event_id integer,first_name text,last_name text,status text,attendance text,comment_encrypted text,revision integer,deleted_at text);
+CREATE TABLE clubora.object_changes (id integer PRIMARY KEY,tenant_id integer,object_type text,object_id integer);');
+        $ids = [];
+        for ($i = 0; $i < 20; $i++) $ids[] = $this->db->table('clubora.team_events')->insertGetId([
+            'tenant_id' => $this->tenant->id, 'team_season_id' => $this->team, 'title' => 'Synthetic push list '.$i,
+            'kind' => 'TRAINING', 'mode' => 'ANMELDEN', 'status' => 'AKTIV', 'revision' => 1,
+            'starts_at' => now()->addDays(2)->toIso8601String(), 'ends_at' => now()->addDays(2)->addHour()->toIso8601String(),
+            'deadline_at' => now()->addDay()->toIso8601String(),
+        ]);
+        $ready = new class {
+            public int $calls = 0;
+            public function available(): bool { $this->calls++; return true; }
+        };
+        $snapshot = new class {
+            public array $calls = [];
+            public function snapshot($actor, $tenant, $id): array {
+                $p = app(\App\ClubUnio\Services\TeamPlanningService::class);
+                $event = $p->event($actor, $tenant, $id, true, 'update');
+                $p->event($actor, $tenant, $id, true, 'export');
+                $this->calls[] = [(int)$actor->id, (int)$tenant->id, $id, (int)$event->revision];
+                return ['revision' => hash('sha256', (string)$event->revision), 'recipient_fingerprint' => str_repeat('a',64)];
+            }
+        };
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushReady::class, $ready);
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushSquad::class, $snapshot);
+        $request = fn ($limit) => \Illuminate\Http\Request::create('/', 'GET', ['recperpage' => $limit]);
+        $data = fn () => app(\App\ClubUnio\Mobile\MobilePlanningData::class);
+        $data()->events($request(1), $this->admin, $this->tenant);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $data()->events($request(1), $this->admin, $this->tenant);
+        $small = count($this->db->getQueryLog()); $this->db->flushQueryLog();
+        $many = $data()->events($request(20), $this->admin, $this->tenant);
+        $large = count($this->db->getQueryLog()); $this->db->disableQueryLog();
+        $this->assertSame($small, $large);
+        $this->assertCount(20, $many['TeamTermine']);
+        $this->assertSame(0, $ready->calls, 'List/Today must not inspect push credentials per event');
+        $this->assertSame([], $snapshot->calls, 'List/Today must not enumerate recipients');
+        foreach ($many['TeamTermine'] as $row) {
+            $this->assertFalse($row['CanSendSquadPush']);
+            $this->assertArrayNotHasKey('PushRevision', $row);
+            $this->assertArrayNotHasKey('PushRecipientFingerprint', $row);
+            $this->assertTrue($row['CanShareSquad']);
+        }
+        $detail = $data()->event($this->admin, $this->tenant, $ids[0], false);
+        $this->assertTrue($detail['CanSendSquadPush']);
+        $this->assertSame(hash('sha256','1'), $detail['PushRevision']);
+        $this->db->table('clubora.team_events')->where('id',$ids[0])->update(['revision'=>2]);
+        $fresh = $data()->event($this->admin, $this->tenant, $ids[0], false);
+        $this->assertSame(hash('sha256','2'), $fresh['PushRevision']);
+        $this->assertCount(2, $snapshot->calls);
+        $parent = $data()->event($this->parent, $this->tenant, $ids[0], false);
+        $this->assertFalse($parent['CanSendSquadPush']);
+        $this->assertCount(2, $snapshot->calls, 'Parent detail must not inherit admin publication rights');
+    }
+
     public function test_planning_team_options_batch_roster_links_for_one_and_twenty_teams(): void
     {
         $request = \Illuminate\Http\Request::create('/', 'GET', ['recperpage' => 100]);
