@@ -4,6 +4,7 @@ namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\{Account, Competition, Tenant, TrainingSlot};
 use App\ClubUnio\Mobile\MobileReadContext;
+use App\ClubUnio\Mobile\MobileSeasonScope;
 use Carbon\CarbonImmutable as Time;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -52,13 +53,25 @@ class PitchPlanningService
     {
         abort_unless($this->canView($actor, $tenant), 403);
         $this->ready();
-        $teams = $this->projection->table('team_seasons', $tenant)->where('active', true)->get();
-        $allowed = $this->office($actor, $tenant) ? null : $this->teams($actor, $tenant);
-        $names = $this->projection->table('teams', $tenant)->where('active', true)->pluck('name', 'id');
-        return ['fields' => $this->projection->fields($tenant), 'teams' => $teams
-            ->filter(fn ($team) => $names->has($team->team_id) && ($allowed === null || in_array((int) $team->id, $allowed, true)))
-            ->map(fn ($team) => ['id' => (int) $team->id, 'name' => $names[$team->team_id]])->values()->all(),
+        return ['fields' => $this->projection->fields($tenant), 'teams' => $this->teamOptions($actor, $tenant),
             'capabilities' => $this->capabilities($actor, $tenant)];
+    }
+
+    private function teamOptions(Account $actor, Tenant $tenant): array
+    {
+        // Scope only selectable options, never historical calendar entries or write authorization.
+        $season = app(MobileSeasonScope::class)->current($tenant);
+        if (! $season) return [];
+        $allowed = $this->office($actor, $tenant) ? null : $this->teams($actor, $tenant);
+        $teams = $this->projection->table('team_seasons', $tenant)->where('active', true)->where('season_id', $season->id)
+            ->when($allowed !== null, fn ($query) => $query->whereIn('id', $allowed))
+            ->orderBy('id')->get(['id', 'team_id']);
+        $names = $this->projection->table('teams', $tenant)->where('active', true)
+            ->whereIn('id', $teams->pluck('team_id')->unique())->pluck('name', 'id');
+
+        return $teams->filter(fn ($team) => $names->has($team->team_id))
+            ->map(fn ($team) => ['id' => (int) $team->id, 'name' => $names[$team->team_id].' ('.$season->name.')'])
+            ->values()->all();
     }
 
     public function calendar(Account $actor, Tenant $tenant, array $filters): array

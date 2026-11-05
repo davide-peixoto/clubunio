@@ -224,9 +224,24 @@ class PitchPlanningPageTest extends TestCase
             }
             $component->call('editEntry', self::entry()['key']);
             $html[$locale.'-editor'] = $component->html();
+            $dense = [];
+            foreach ([0, 1, 2, 3, 4] as $index) {
+                $entry = self::entry();
+                $entry['key'] = 'training:'.(100 + $index);
+                $entry['title'] = 'Dense training '.$index;
+                $entry['starts_at'] = $index === 4 ? '21:00' : '18:00';
+                $entry['ends_at'] = $index === 4 ? '22:00' : '19:00';
+                $entry['starts_at_iso'] = '2026-11-04T'.$entry['starts_at'].':00+01:00';
+                $entry['ends_at_iso'] = '2026-11-04T'.$entry['ends_at'].':00+01:00';
+                $entry['duration_minutes'] = 60;
+                $dense[] = $entry;
+            }
+            PitchPlanningHarness::$fixtureEntries = $dense;
+            $html[$locale.'-dense-day'] = Livewire::test(PitchPlanningHarness::class)->set('mode', 'day')->html();
+            PitchPlanningHarness::$fixtureEntries = [self::entry()];
         }
         file_put_contents(storage_path('app/pitch-web-qa.json'), json_encode($html, JSON_THROW_ON_ERROR));
-        $this->assertCount(8, $html);
+        $this->assertCount(10, $html);
     }
 }
 
@@ -262,6 +277,7 @@ class PitchPlanningHarness extends PitchPlanning
             ['id' => 1, 'name' => 'Pitch One', 'available' => true, 'areas' => [['id' => 11, 'name' => 'Half A',
                 'name_de' => 'Nordhälfte', 'name_en' => 'North half', 'x' => 0, 'y' => 0, 'width' => 0.5, 'height' => 1, 'revision' => 'area-r2']]],
             ['id' => 2, 'name' => 'Pitch Two', 'available' => false, 'areas' => []],
+            ['id' => 3, 'name' => 'Pitch Three', 'available' => true, 'areas' => []],
         ], 'teams' => [['id' => 2, 'name' => 'U18']],
             'capabilities' => ['view' => true, 'request' => true, 'manage' => self::$manage, 'approve' => self::$manage]];
 

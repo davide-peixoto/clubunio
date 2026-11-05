@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+## Platzplanung: Options- und Darstellungsnachlauf (05.11.2026)
+
+Keine Datenmigration oder Importwiederholung. Mannschaftsoptionen benutzen
+die bestehende aktuelle Saisonkonfiguration; historische Termine und
+Schreibautorisierung unveraendert. Nur ClubUnio-Code/Caches, Native-Pitch-Flag
+erhalten, Providerflags geschlossen. Rueckweg ohne Datenreset und Nachweise:
+CLUBUNIO-PITCH-USABILITY.md. PHPMaker DEV/PROD unveraendert.
+
 ## Native Platzplanungsfreigabe (05.11.2026)
 
 Nur ClubUnio-Releasekonfiguration: Native Pitch aktiviert auf bestehendem

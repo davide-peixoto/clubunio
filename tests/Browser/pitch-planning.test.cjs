@@ -29,10 +29,18 @@ test('pitch planner static geometry stays contained at desktop/mobile sizes', as
                 assert.equal(overflow, false, `${name} must not overflow page at ${width}px`);
                 if (name.endsWith('-day')) {
                     await page.locator('.pitch-scroll').evaluate(el => { el.scrollTop = 1500; });
-                    assert.equal(await page.locator('.pitch-column').count(), 2);
-                    assert.equal(await page.locator('.pitch-entry[aria-label]').count(), 1);
+                    assert.equal(await page.locator('.pitch-column').count(), 3);
+                    assert.equal(await page.locator('.pitch-entry[aria-label]').count(), name.includes('-dense-') ? 5 : 1);
                     const columns = await page.locator('.pitch-column').evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().x));
                     assert.ok(columns[1] > columns[0], 'Fields remain side by side');
+                    if (width >= 1440) {
+                        assert.ok(await page.locator('.pitch-scroll').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'All three pitches fit on desktop');
+                    }
+                    if (name.includes('-dense-')) {
+                        const cards = await page.locator('.pitch-entry').evaluateAll(nodes => nodes.map(n => ({width:n.getBoundingClientRect().width, title:n.getAttribute('title')})));
+                        assert.ok(cards[4].width > cards[0].width * 3, 'Later singleton uses the full pitch width');
+                        assert.ok(cards.every(c => c.title.includes('Dense training')), 'Condensed cards retain descriptive tooltips');
+                    }
                     if (width <= 390) {
                         const scrolled = await page.locator('.pitch-scroll').evaluate(el => { el.scrollLeft = 200; return el.scrollLeft; });
                         assert.ok(scrolled > 0, 'Only the planner scrolls horizontally');

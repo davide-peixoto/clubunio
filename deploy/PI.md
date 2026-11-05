@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## Platzplanung: Bedienungsnachlauf (05.11.2026)
+
+Release20261105-clubunio-pitch-usability-v3, Basis native-pitch.
+Saisonoptionen, kompakte Platzspalten/Paralleltermine, mobile Sprachwahl.
+Keine DB-/ENV-/Rechteaenderung, keine echten Nachrichten. Native Pitch bleibt
+aktiv, Push/Mail geschlossen. Nachweis/Rueckweg: CLUBUNIO-PITCH-USABILITY.md.
+
 ## Native Platzplanung freigegeben (05.11.2026)
 
 Aktiv `20261105-clubunio-native-pitch`, Rueckweg training-halves. Nur der

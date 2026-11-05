@@ -1,4 +1,4 @@
-    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=3">
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
@@ -38,7 +38,7 @@
         @if(!$loadError && !$options['fields'])<p class="pitch-empty">{{ __('Keine aktiven Spielfelder vorhanden.') }}</p>@endif
         @if($options['fields'] && $mode === 'day')
             <div class="pitch-scroll" tabindex="0" role="region" aria-label="{{ __('Tagesplan nach Spielfeld') }}" x-init="$nextTick(() => $el.scrollTop = 720)">
-                <div class="pitch-board" style="grid-template-columns: 60px @foreach($columns as $column) minmax({{ 220 * $column['lanes'] }}px, 1fr) @endforeach">
+                <div class="pitch-board" style="grid-template-columns: 60px repeat({{ count($columns) }}, minmax(240px, 1fr))">
                     <div class="pitch-heading pitch-time-heading">{{ __('Zeit') }}</div>
                     @foreach($columns as $column)
                         <div class="pitch-heading"><strong>{{ $column['field']['name'] }}</strong>@if(!$column['field']['available'])<span class="pitch-status pitch-status-cancelled">{{ __('Gesperrt') }}</span>@endif</div>

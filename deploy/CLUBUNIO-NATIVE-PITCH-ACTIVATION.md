@@ -63,7 +63,7 @@ mobile Zuruecknavigation und Einstellungen. Keine Nachricht, kein Upload,
 keine Einwilligungsaenderung. Sprache abschliessend Deutsch, Viewportoverride
 entfernt. Echte Anhang-/Scanner-/Kameraabnahme weiterhin offen.
 
-Bestaetigte offene Bedienungspunkte:
+Bestaetigte Bedienungspunkte, im Nachlauf CLUBUNIO-PITCH-USABILITY.md behandelt:
 - Mannschaftsauswahl enthaelt historische Saisons mit gleichen Anzeigenamen;
   saisonbezogene Auswahl und eindeutige Beschriftung bleiben erforderlich.
 - Tagesplantafel verbreitert Spalten nach Parallelbelegungen; damit sind bei

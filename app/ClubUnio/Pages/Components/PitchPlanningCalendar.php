@@ -80,17 +80,31 @@ final class PitchPlanningCalendar
         $columns = [];
         foreach ($fields as $field) {
             $rows = array_values(array_filter($events, fn ($row) => (string) $row['field_id'] === (string) $field['id']));
+            usort($rows, fn ($a, $b) => [$a['minute'], $a['until'], $a['key']] <=> [$b['minute'], $b['until'], $b['key']]);
             $lanes = [];
-            foreach ($rows as &$row) {
+            $group = [];
+            $groupEnd = 0;
+            $maxLanes = 1;
+            // Width is shared only by visually overlapping cards, not by the busiest slot of the day.
+            $finishGroup = function () use (&$rows, &$group, &$lanes, &$maxLanes): void {
+                $count = max(1, count($lanes));
+                foreach ($group as $index) { $rows[$index]['lane_count'] = $count; }
+                $maxLanes = max($maxLanes, $count);
+                $group = $lanes = [];
+            };
+            foreach ($rows as $index => $row) {
+                if ($group && $row['minute'] >= $groupEnd) { $finishGroup(); }
                 $lane = 0;
                 while (isset($lanes[$lane]) && $lanes[$lane] > $row['minute']) {
                     $lane++;
                 }
                 $lanes[$lane] = max($row['minute'] + 60, $row['until']);
-                $row['lane'] = $lane;
+                $rows[$index]['lane'] = $lane;
+                $group[] = $index;
+                $groupEnd = max($lanes);
             }
-            unset($row);
-            $columns[] = ['field' => $field, 'events' => $rows, 'lanes' => max(1, count($lanes))];
+            $finishGroup();
+            $columns[] = ['field' => $field, 'events' => $rows, 'lanes' => $maxLanes];
         }
 
         return $columns;

@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Platzplanung: Bedienungsnachlauf (05.11.2026)
+
+Saisonbezogene Teamoptionen, kompakte parallele Tagesplantafel und mobile
+Sprachkopfzeile umgesetzt.120 gezielte Tests/1047 Assertions erfolgreich;
+DE/EN und angemeldete Websicht geprueft. Native Geraete-/Pushabnahme weiter
+offen, keine echten Nachrichten oder Terminmutationen. Bestehende Rechte und
+PHPMaker DEV/PROD unveraendert. CLUBUNIO-PITCH-USABILITY.md.
+
 ## Native Platzplanung und Sichtpruefung (05.11.2026)
 
 App-Freigabeschalter auf ClubUnio aktiviert; neue App bietet die Platzplanung,

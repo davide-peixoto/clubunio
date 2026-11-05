@@ -47,8 +47,25 @@ class PitchPlanningCalendarTest extends TestCase
             ['key' => 'c', 'field_id' => 1, 'minute' => 720, 'until' => 780],
         ]);
         $this->assertSame([0, 1, 0], array_column($columns[0]['events'], 'lane'));
+        $this->assertSame([2, 2, 1], array_column($columns[0]['events'], 'lane_count'));
         $this->assertSame(2, $columns[0]['lanes']);
         $this->assertSame([], $columns[1]['events']);
         $this->assertSame(1, $columns[1]['lanes']);
+    }
+
+    public function test_width_groups_preserve_minimum_card_height_and_reset_after_dense_times(): void
+    {
+        $events = [
+            ['key' => 'later', 'field_id' => 1, 'minute' => 720, 'until' => 800],
+            ['key' => 'short', 'field_id' => 1, 'minute' => 600, 'until' => 615],
+            ['key' => 'overlap', 'field_id' => 1, 'minute' => 620, 'until' => 640],
+            ['key' => 'third', 'field_id' => 1, 'minute' => 630, 'until' => 645],
+        ];
+        $columns = (new PitchPlanningCalendar)->columns([['id' => 1]], $events);
+        $this->assertSame(['short', 'overlap', 'third', 'later'], array_column($columns[0]['events'], 'key'));
+        $this->assertSame([0, 1, 2, 0], array_column($columns[0]['events'], 'lane'));
+        $this->assertSame([3, 3, 3, 1], array_column($columns[0]['events'], 'lane_count'));
+        $this->assertSame(3, $columns[0]['lanes']);
+        $this->assertArrayNotHasKey('lane', $events[0]);
     }
 }

@@ -7,7 +7,10 @@ try {
     if (PHP_SAPI !== 'cli' || PHP_OS_FAMILY !== 'Linux'
         || !in_array(array_slice($argv, 1), [['--closed'], ['--enabled']], true)
         || !in_array($root, ['/var/www/svs-laravel/releases/20261105-clubunio-training-halves',
-            '/var/www/svs-laravel/releases/20261105-clubunio-native-pitch'], true)) throw new LogicException('Fixed release/mode required');
+            '/var/www/svs-laravel/releases/20261105-clubunio-native-pitch',
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability',
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v2',
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v3'], true)) throw new LogicException('Fixed release/mode required');
     require $root.'/vendor/autoload.php';
     $app = require $root.'/bootstrap/app.php';
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -59,7 +62,7 @@ try {
         $calendar = $service->calendar($actor, $tenant, ['from' => $date, 'to' => $date]);
         echo json_encode(['read_only' => true, 'native_pitch_enabled' => $enabled, 'pitch_routes' => count($routes),
             'own_account_module' => $new, 'old_client_module' => $old,
-            'fields' => count($options['fields']), 'entries_today' => count($calendar['entries']),
+            'fields' => count($options['fields']), 'teams' => count($options['teams']), 'entries_today' => count($calendar['entries']),
             'areas' => $db->table('clubora.pitch_areas')->where('tenant_id', $tenant->id)->count(),
             'push_and_mail_closed' => true, 'mobile_login_tested' => false], JSON_THROW_ON_ERROR).PHP_EOL;
     } finally { $db->rollBack(); }
