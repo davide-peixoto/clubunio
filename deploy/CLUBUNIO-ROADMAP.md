@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Firebase-Zugang vorbereitet (05.11.2026)
+
+Serviceaccount privat auf ClubUnio installiert, iOS-Registry hinterlegt und
+echte Google-OAuth-Anmeldung erfolgreich. Versandflags bleiben false;
+eigenes Konto hat noch keine iOS-Geraetebindung. Kein FCM-Versand oder
+Geraetenachweis. Naechster Schritt: eingegrenzte persoenliche Geraeteabnahme.
+CLUBUNIO-FIREBASE-CREDENTIALS.md; PHPMaker DEV/PROD unveraendert.
+
 ## Platzplanung: Bedienungsnachlauf (05.11.2026)
 
 Saisonbezogene Teamoptionen, kompakte parallele Tagesplantafel und mobile

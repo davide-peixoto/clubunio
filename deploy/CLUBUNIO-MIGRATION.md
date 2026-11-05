@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+## Firebase-Credentials vorbereiten (05.11.2026)
+
+Keine DB-/Datenmigration. Externe private Serviceaccountdatei unter /etc/clubunio
+und explizite iOS-Appregistry in releaseprivater Konfiguration. Bei Folge-Releases
+erhalten, nie importieren oder in Pakete aufnehmen. Zustellung bleibt deaktiviert.
+Vorherige Konfiguration privat gesichert; Rueckweg und Abnahmegrenzen:
+CLUBUNIO-FIREBASE-CREDENTIALS.md. PHPMaker DEV/PROD unveraendert.
+
 ## Platzplanung: Options- und Darstellungsnachlauf (05.11.2026)
 
 Keine Datenmigration oder Importwiederholung. Mannschaftsoptionen benutzen

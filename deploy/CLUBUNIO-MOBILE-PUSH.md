@@ -1,5 +1,10 @@
 # Persoenliche Pushanbindung
 
+Nachlauf05.11.2026: Serviceaccount privat installiert und iOS-Registry fuer
+ClubUnio vorbereitet. Google OAuth funktioniert; beide Pushflags weiterhin
+false, eigenes Konto ohne Geraetebindung. Kein FCM-/APNs-Versandnachweis.
+Aktueller Konfigurationsstand: CLUBUNIO-FIREBASE-CREDENTIALS.md.
+
 Aktueller DEV-Nachweis04.11.2026: Identity-/Push-/Challenge-/Keybox-Unterbau ist
 auf DEV,400/500/600/700 atomar nach gepruefter verschluesselter Sicherung
 angewendet.14 leere neue Tabellen/30 FKs, Elternzeilen unveraendert; nur

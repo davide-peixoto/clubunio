@@ -1,5 +1,13 @@
 # Pi staging: dev.clubunio.ch
 
+## Firebase-Credentials vorbereitet (05.11.2026)
+
+Auf bestehendem pitch-usability-v3 nur private iOS-Appregistry gesetzt.
+Serviceaccount /etc/clubunio/secrets/firebase-service-account.json, root:www-data0640.
+Google OAuth erfolgreich; beide Pushflags weiterhin false, keine Nachricht,
+keine eigene iOS-Bindung. Cache/FPM und Health geprueft. Private Konfiguration
+bei naechsten Deployments erhalten. CLUBUNIO-FIREBASE-CREDENTIALS.md.
+
 ## Platzplanung: Bedienungsnachlauf (05.11.2026)
 
 Release20261105-clubunio-pitch-usability-v3, Basis native-pitch.
