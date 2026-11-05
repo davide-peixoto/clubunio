@@ -2230,3 +2230,15 @@ max10 Einträge und kein Parallellauf. Vorher0 Geräte/Bindungen/Outbox, erster
 Lauf erfolgreich0 verarbeitet, kein künstlicher Testversand. FPM aktiv,
 HTTPSup200/context401. Kein Runtime-/DB-/PHPMakerwechsel, noch keine physische
 FCM-/APNs-Zustellungsabnahme. CLUBUNIO-DEV-PUSH-ACTIVATION.md.
+
+
+## 05.11.2026: Teamplanungsliste trotz Push wieder schnell
+
+DEV aktiv20261105-clubunio-planning-push-list aus938d386, Basis chat-image-compression.
+Eager Aufgebotsempfänger-/Pushfingerprints aus Listen/Heute entfernt, Detail-/
+Versandprüfung unverändert. Gleiche2Termine25.328s/906SQL→1.322s/46SQL;
+Servergate Kandidat1326ms/47SQL und vor Aktivierung1180ms/47SQL,0Snapshots.
+Pushflags/Registry und kompletter Konfigurationsstand erhalten, Versandtimer/FPM
+aktiv, Health200/context401.52 Backendtests/963Assertions und25 Fluttertests
+bestanden. Keine Migration, echten Nachrichten oder Appbuildänderung.
+MOBILE-PLANNING-PUSH-LOADING.md.

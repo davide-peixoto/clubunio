@@ -46,3 +46,18 @@ mit denselben2Terminen1317ms/46SQL/0Snapshots. Vorher1Termin13217ms/475SQL,
 2Termine25328ms/906SQL. Komplette MobileCommunicationTest52Tests/963Assertions
 grün, darin Push-available-Regression für Listen1/20, Detail und Elternrechte;
 4 gezielte Planungsfälle120Assertions separat grün. PHP-Lint/diffcheck sauber.
+
+
+## DEV-Auslieferung05.11.2026
+
+Aktiv20261105-clubunio-planning-push-list, Quelle938d386; Basiskopie
+20261105-clubunio-chat-image-compression bleibt erhalten. Drei Rohdateihashes
+vor/nach Aktivierung und beide bisherigen PHP-Baselines geprüft. Komplette
+Konfiguration samt privater Registry und aktiven Pushflags identisch;
+ENV-/Composerbytes unverändert. Lesendes Gate:2Termine1326ms/47SQL im
+Kandidaten,1180ms/47SQL vor Aktivierung, jeweils0Squadsnapshots; kein DB-Schreiben.
+FPM und clubunio-dev-mobile-push.timer aktiv, HTTPSup200/context401.
+Manifest6f040e5b5fa9dbe2a8c5cafad5a68644ed158018597912ce8bdf2542393daa02.
+Keine echte Nachricht, fremde Rechtefreigabe oder physische iPhone-Zeitmessung.
+Für Rücknahme zusätzlich die Bild-Metadatenkompatibilität aus der Basiskopie
+beachten; keine blinde Rückkehr vor Chatbildkomprimierung.
