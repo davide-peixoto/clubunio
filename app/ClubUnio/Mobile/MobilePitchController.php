@@ -92,6 +92,7 @@ final class MobilePitchController implements \Illuminate\Routing\Controllers\Has
         return $this->write($request, fn ($actor, $tenant, $service) => $service->decide(
             $actor, $tenant, (int) $request->route('booking'), $this->input($request, [
                 'revision' => 'required|string|max:200', 'decision' => 'required|in:approved,rejected',
+                'override_field_status' => 'sometimes|boolean',
             ])));
     }
 

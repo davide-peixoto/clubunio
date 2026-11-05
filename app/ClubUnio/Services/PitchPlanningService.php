@@ -46,7 +46,15 @@ class PitchPlanningService
     {
         $manage = $this->office($actor, $tenant);
         return ['view' => true, 'manage' => $manage, 'approve' => $manage,
+            'override_field_status' => $manage && $this->canOverrideFieldStatus($actor, $tenant),
             'request' => ! request()->attributes->get('clubunio_impersonation') && ($manage || $this->teams($actor, $tenant) !== [])];
+    }
+
+    private function canOverrideFieldStatus(Account $actor, Tenant $tenant): bool
+    {
+        return ! request()->attributes->get('clubunio_impersonation')
+            && $this->projection->table('tenant_accounts', $tenant)->where('account_id', $actor->id)->value('role') === 'admin'
+            && $this->office($actor, $tenant);
     }
 
     public function options(Account $actor, Tenant $tenant): array
@@ -218,14 +226,19 @@ class PitchPlanningService
     {
         return $this->write($actor, $tenant, function ($actor) use ($tenant, $requestId, $input) {
             abort_unless($this->office($actor, $tenant), 403);
-            $data = Validator::make($input, ['revision' => 'required|string', 'decision' => 'required|in:approved,rejected'])->validate();
+            $data = Validator::make($input, ['revision' => 'required|string', 'decision' => 'required|in:approved,rejected',
+                'override_field_status' => 'sometimes|boolean'])->validate();
+            $override = (bool) ($data['override_field_status'] ?? false);
+            abort_if($override && $data['decision'] !== 'approved', 422);
+            abort_unless(! $override || $this->canOverrideFieldStatus($actor, $tenant), 403);
             $row = $this->row($tenant, 'pitch_requests', $requestId);
             $before = $this->projection->stored('request', $row);
             $this->revision($before, $data);
             abort_unless($row->status === 'pending', 409, __('Über diesen Antrag wurde bereits entschieden.'));
             $this->activeTeam($tenant, (int) $row->team_season_id);
             $after = array_replace($before, ['status' => $data['decision'], 'revision' => (string) ($row->revision + 1)]);
-            if ($data['decision'] === 'approved') $this->ensureFree($tenant, $after);
+            if ($data['decision'] === 'approved') $this->ensureFree($tenant, $after, $override);
+            if ($override) $after['override_field_status'] = true;
             $this->update($tenant, 'pitch_requests', $requestId, ['status' => $data['decision'], 'decided_by' => $actor->id, 'revision' => $row->revision + 1]);
             $this->audit($actor, $tenant, $before, $after, $data['decision']);
             return $after;
@@ -420,9 +433,16 @@ class PitchPlanningService
         return PitchPlanningGeometry::conflicts($entry, $this->projection->entries($tenant, $entry['date'], $to), $this->projection->fields($tenant));
     }
 
-    private function ensureFree(Tenant $tenant, array $entry): void
+    private function ensureFree(Tenant $tenant, array $entry, bool $overrideFieldStatus = false): void
     {
-        abort_if($this->conflicts($tenant, $entry) !== [], 409, __('Das ausgewählte Spielfeld oder die Teilfläche ist nicht verfügbar.'));
+        if ($overrideFieldStatus) {
+            // An absent/archived field is not a temporary availability status.
+            abort_unless($this->projection->table('training_options', $tenant)->where('id', $entry['field_id'])
+                ->where('category', 'field')->where('active', true)->exists(), 404);
+        }
+        $conflicts = $this->conflicts($tenant, $entry);
+        if ($overrideFieldStatus) $conflicts = array_filter($conflicts, fn ($conflict) => $conflict['type'] !== 'field_unavailable');
+        abort_if($conflicts !== [], 409, __('Das ausgewählte Spielfeld oder die Teilfläche ist nicht verfügbar.'));
     }
 
     private function times(array $data): array

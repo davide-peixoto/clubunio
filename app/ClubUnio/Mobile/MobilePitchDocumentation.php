@@ -15,7 +15,7 @@ final class MobilePitchDocumentation
         $placement = ['field_id' => $id, 'area_id' => $nullableId, 'date' => $date, 'starts_at' => $time,
             'duration_minutes' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 1440]];
         $schemas = [
-            'Capabilities' => $this->object(array_fill_keys(['view', 'request', 'manage', 'approve'], ['type' => 'boolean'])),
+            'Capabilities' => $this->object(array_fill_keys(['view', 'request', 'manage', 'approve', 'override_field_status'], ['type' => 'boolean'])),
             'Area' => $this->object(['id' => $id, 'field_id' => $id, 'name' => $text, 'name_de' => $text, 'name_en' => $text,
                 'revision' => $text] + array_fill_keys(['x', 'y', 'width', 'height'], ['type' => 'number', 'minimum' => 0, 'maximum' => 1])),
             'Field' => $this->object(['id' => $id, 'name' => $text, 'available' => ['type' => 'boolean'], 'areas' => $this->listOf('Area')]),
@@ -42,7 +42,10 @@ final class MobilePitchDocumentation
                 'notes' => $text + ['nullable' => true, 'maxLength' => 2000]], ['field_id', 'date', 'starts_at', 'team_season_id', 'opponent', 'request_id']),
             'Move' => $this->object($placement + ['key' => $text + ['maxLength' => 160], 'revision' => $revision],
                 ['field_id', 'date', 'starts_at', 'duration_minutes', 'key', 'revision']),
-            'Review' => $this->object(['revision' => $revision, 'decision' => $text + ['enum' => ['approved', 'rejected']]]),
+            'Review' => $this->object(['revision' => $revision, 'decision' => $text + ['enum' => ['approved', 'rejected']],
+                'override_field_status' => ['type' => 'boolean', 'default' => false,
+                    'description' => 'Explicit approval-only exception for a fresh admin with competitions.update. Ignores current field availability status only; never missing/archived fields, occupancy, time blocks, tenant scope or stale revisions.']],
+                ['revision', 'decision']),
             'CompetitionTeams' => $this->object(['revision' => $revision, 'team_season_ids' => [
                 'type' => 'array', 'maxItems' => 20, 'uniqueItems' => true, 'items' => $id,
                 'description' => 'Replaces the current stored mapping. An empty list clears all current assignments, including previously SFV-derived assignments. No separate provenance is retained. A later actually changed and reviewed SFV import regenerates authoritative numeric mappings.',
@@ -57,6 +60,8 @@ final class MobilePitchDocumentation
         $schemas['FriendlyRequest']['properties']['duration_minutes']['default'] = 120;
         $schemas['Move']['properties']['duration_minutes']['maximum'] = 44640;
         $schemas['Move']['properties']['duration_minutes']['description'] = 'Up to 44640 for blocks; the core limits other sources to 1440.';
+        $schemas['Entry']['properties']['override_field_status'] = ['type' => 'boolean',
+            'description' => 'Present and true on an explicitly overridden approval response and its audit event after DTO; not a persistent field or permission.'];
         $schemas['RequestInboxEntry'] = $schemas['Entry'];
         $schemas['RequestInboxEntry']['properties']['source']['enum'] = ['request'];
         $schemas['RequestInboxEntry']['properties']['conflicts']['maxItems'] = 0;
@@ -107,7 +112,7 @@ final class MobilePitchDocumentation
                 'summary' => str_replace('_', ' ', ucfirst($name)), 'parameters' => $parameters, 'responses' => $responses,
                 'description' => 'Personal mobile session only. Current core permissions apply; capabilities are presentation hints, not authority. '.match ($name) {
                     'request' => 'Trainer/TL request only their assigned active teams. Pending, never auto-approved. Required request_id is scoped to tenant and account; identical validated payload replays the original result with fresh authorization, differing payload returns 409. Ledger, request and notification intent commit atomically. Only the first successful submission can enqueue new-request email to admin/office. Missing keys return 422; web requests use their own stable form key.',
-                    'review' => 'Admin/office only; trainers and technical leads cannot approve. Approval rechecks occupancy.',
+                    'review' => 'Admin/office with competitions.update only; trainers and technical leads cannot approve. Approval rechecks occupancy and field availability. An explicit override_field_status=true is admin-only and approval-only; it ignores only the current field_unavailable conflict and is recorded in the audit after DTO. Active field, occupancy, time block and revision checks remain mandatory.',
                     'competition_teams' => 'Admin/office with current competition-update permission only. Echo the opaque revision. Team-season mappings replace current assignments and are tenant-validated by configureCompetition; no name inference, permission grant or modification of SFV source records.',
                     'move' => 'Admin/office only. Training changes one dated occurrence, not its weekly base. Successful moves enqueue staff in-app/push, never email.',
                     'calendar', 'team_calendar' => 'Inclusive civil dates, maximum 42 days. Europe/Zurich date and HH:mm fields stay unconverted; ISO timestamps identify absolute instants. Team calendar first checks existing team access. Pending requests do not reserve space.',

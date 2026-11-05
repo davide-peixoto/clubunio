@@ -361,6 +361,24 @@ class MobilePitchControllerTest extends TestCase
         $this->assertCount(2, $this->domain->calls);
     }
 
+    public function test_review_accepts_only_explicit_boolean_status_override_and_preserves_domain_authority(): void
+    {
+        $payload = ['revision' => 'v3', 'decision' => 'approved', 'override_field_status' => true];
+        $this->personal()->postJson($this->base.'/pitch-planning/requests/7/review', $payload)->assertOk();
+        $this->assertSame($payload, $this->domain->calls[0][1][3]);
+        $this->postJson($this->base.'/pitch-planning/requests/7/review', array_replace($payload, ['override_field_status' => 'yes']))->assertUnprocessable();
+        $this->postJson($this->base.'/pitch-planning/requests/7/review', $payload + ['override_occupancy' => true])->assertUnprocessable();
+        $this->assertCount(1, $this->domain->calls);
+        $this->domain->failure = 403;
+        $this->postJson($this->base.'/pitch-planning/requests/7/review', $payload)->assertForbidden();
+        $schema = (new MobilePitchDocumentation)->specification()['components']['schemas'];
+        $this->assertSame(['revision', 'decision'], $schema['Review']['required']);
+        $this->assertSame('boolean', $schema['Review']['properties']['override_field_status']['type']);
+        $this->assertFalse($schema['Review']['properties']['override_field_status']['default']);
+        $this->assertSame('boolean', $schema['Capabilities']['properties']['override_field_status']['type']);
+        $this->assertNotContains('override_field_status', $schema['Entry']['required']);
+    }
+
     public function test_revocation_between_read_and_write_prevents_domain_mutation(): void
     {
         $this->sessions->revokeOnWrite = true;
@@ -500,6 +518,8 @@ class MobilePitchControllerTest extends TestCase
             $db->table('clubora.tenant_accounts')->where('id', 1)->update(['role' => $role]);
             $this->personal()->postJson($this->base.'/pitch-planning/requests/7/review', ['revision' => '1', 'decision' => 'approved'])
                 ->assertForbidden()->assertJsonPath('error.code', 'forbidden');
+            $this->postJson($this->base.'/pitch-planning/requests/7/review', ['revision' => '1', 'decision' => 'approved', 'override_field_status' => true])
+                ->assertForbidden();
             $this->postJson($this->base.'/pitch-planning/competitions/11/teams', ['revision' => '1', 'team_season_ids' => [9]])
                 ->assertForbidden();
             $this->assertSame(0, $db->transactionLevel());

@@ -36,6 +36,7 @@ class PitchPlanningDomainTest extends TestCase
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->grammar = $this->db->getQueryGrammar();
         $this->db->beginTransaction();
+        $this->db->statement("SET LOCAL application_name TO 'clubunio-pitch-admin-override-test'");
         $suffix = bin2hex(random_bytes(8));
         $this->tenant = Tenant::create(['slug' => 'pitch-'.$suffix, 'name' => 'Pitch test']);
         $this->actor = new Account;
@@ -156,6 +157,70 @@ class PitchPlanningDomainTest extends TestCase
         $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $two['source_id'], ['revision' => $two['revision'], 'decision' => 'approved']));
         $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $one['source_id'], ['revision' => $one['revision'], 'decision' => 'rejected']));
         $this->assertSame(['requested', 'requested', 'approved'], array_column($this->events, 'action'));
+    }
+
+    public function test_admin_must_explicitly_override_only_current_field_status_and_audit_the_choice(): void
+    {
+        $request = $this->service->requestFriendly($this->actor, $this->tenant, $this->input());
+        $closed = $this->insert('facility_statuses', ['code' => 'CLOSED-OVERRIDE', 'name' => 'Closed now', 'blocks_training' => true]);
+        $this->db->table('clubora.field_availabilities')->where('tenant_id', $this->tenant->id)->where('field_id', $this->field)->update(['status_id' => $closed]);
+        $this->assertTrue($this->service->options($this->actor, $this->tenant)['capabilities']['override_field_status']);
+        $review = ['revision' => $request['revision'], 'decision' => 'approved'];
+        $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review + ['override_field_status' => false]));
+        $this->fails(422, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], ['revision' => $request['revision'], 'decision' => 'rejected', 'override_field_status' => true]));
+        $approved = $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review + ['override_field_status' => true]);
+        $this->assertSame('approved', $approved['status']);
+        $this->assertTrue($approved['override_field_status']);
+        $this->assertTrue(end($this->events)['after']['override_field_status']);
+        $event = json_decode($this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'pitch_planning')->orderByDesc('id')->value('after_value'), true);
+        $this->assertTrue($event['after']['override_field_status']);
+        $this->assertSame($closed, $this->db->table('clubora.field_availabilities')->where('tenant_id', $this->tenant->id)->where('field_id', $this->field)->value('status_id'));
+    }
+
+    public function test_field_status_override_cannot_ignore_occupancy_blocks_or_stale_revision(): void
+    {
+        $occupied = $this->service->createManual($this->actor, $this->tenant, $this->input());
+        $request = $this->service->requestFriendly($this->actor, $this->tenant, $this->input());
+        $closed = $this->insert('facility_statuses', ['code' => 'CLOSED-COLLISION', 'name' => 'Closed', 'blocks_training' => true]);
+        $this->db->table('clubora.field_availabilities')->where('tenant_id', $this->tenant->id)->where('field_id', $this->field)->update(['status_id' => $closed]);
+        $review = ['revision' => $request['revision'], 'decision' => 'approved', 'override_field_status' => true];
+        $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->service->cancel($this->actor, $this->tenant, $occupied['key'], ['revision' => $occupied['revision']]);
+        $block = $this->service->saveBlock($this->actor, $this->tenant, $this->input(['reason' => 'Synthetic timed closure']));
+        $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->service->cancel($this->actor, $this->tenant, $block['key'], ['revision' => $block['revision']]);
+        $this->fails(409, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], array_replace($review, ['revision' => 'stale'])));
+        $this->assertSame('pending', $this->db->table('pg_temp.pitch_requests')->where('id', $request['source_id'])->value('status'));
+        $this->assertNotContains('approved', array_column($this->events, 'action'));
+    }
+
+    public function test_status_override_requires_fresh_admin_update_right_and_active_tenant_field(): void
+    {
+        $request = $this->service->requestFriendly($this->actor, $this->tenant, $this->input());
+        $review = ['revision' => $request['revision'], 'decision' => 'approved', 'override_field_status' => true];
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
+        $this->assertTrue($this->service->options($this->actor, $this->tenant)['capabilities']['approve']);
+        $this->assertFalse($this->service->options($this->actor, $this->tenant)['capabilities']['override_field_status']);
+        $this->fails(403, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+        $this->db->table('clubora.training_options')->where('id', $this->field)->update(['active' => false]);
+        $this->fails(404, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->db->table('clubora.training_options')->where('id', $this->field)->update(['active' => true, 'category' => 'period']);
+        $this->fails(404, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        $this->db->table('clubora.training_options')->where('id', $this->field)->update(['category' => 'field']);
+        $permissions = new class {
+            public function allows($actor, $tenant, $module, $operation): bool { return $operation === 'view'; }
+        };
+        $this->app->instance(\App\ClubUnio\Services\ModulePermissionService::class, $permissions);
+        $this->assertFalse($this->service->options($this->actor, $this->tenant)['capabilities']['override_field_status']);
+        $this->fails(403, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        foreach (['trainer', 'technical_lead'] as $role) {
+            $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => $role]);
+            $this->assertFalse($this->service->options($this->actor, $this->tenant)['capabilities']['override_field_status']);
+            $this->fails(403, fn () => $this->service->decide($this->actor, $this->tenant, $request['source_id'], $review));
+        }
+        $this->assertSame('pending', $this->db->table('pg_temp.pitch_requests')->where('id', $request['source_id'])->value('status'));
     }
 
     public function test_training_move_is_single_exception_visible_outside_original_range_and_cancellable(): void
