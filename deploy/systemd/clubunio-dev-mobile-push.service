@@ -1,0 +1,18 @@
+[Unit]
+Description=ClubUnio DEV personal mobile push delivery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/svs-laravel/current
+RuntimeDirectory=clubunio-dev-mobile-push
+RuntimeDirectoryMode=0750
+ExecStart=/usr/bin/flock -n /run/clubunio-dev-mobile-push/worker.lock /usr/bin/php /var/www/svs-laravel/current/artisan clubunio:deliver-mobile-push --dispatch --limit=10
+TimeoutStartSec=420
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full

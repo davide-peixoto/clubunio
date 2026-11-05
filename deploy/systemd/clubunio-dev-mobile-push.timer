@@ -1,0 +1,11 @@
+[Unit]
+Description=Run ClubUnio DEV personal mobile push every minute
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=60s
+AccuracySec=5s
+Unit=clubunio-dev-mobile-push.service
+
+[Install]
+WantedBy=timers.target
