@@ -2668,5 +2668,8 @@
     "–": "–",
     "– Info-Display": "– Information display",
     "Halber Platz (automatisch)": "Half pitch (automatic)",
-    "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.": "No half-pitch area has been configured for this pitch yet."
+    "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.": "No half-pitch area has been configured for this pitch yet.",
+    "Offene Reservierungsanfragen": "Pending reservation requests",
+    "Anfrage zur Genehmigung öffnen": "Open request for approval",
+    "Keine offenen Anfragen": "No pending requests"
 }

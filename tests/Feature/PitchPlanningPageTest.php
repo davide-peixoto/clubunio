@@ -38,6 +38,21 @@ class PitchPlanningPageTest extends TestCase
         $this->get('/pitch-planning')->assertRedirect('/login');
     }
 
+    public function test_dashboard_link_opens_requested_day_and_existing_review_dialog(): void
+    {
+        PitchPlanningHarness::$fixtureEntries[0] = array_replace(self::entry(), ['key' => 'request:9', 'source' => 'request', 'source_id' => 9, 'status' => 'pending']);
+        Livewire::withQueryParams(['booking' => 9, 'date' => '2026-11-04'])
+            ->test(DashboardPitchLinkHarness::class)->assertSet('date', '2026-11-04')
+            ->assertSet('editor', 'edit')->assertSet('selected.key', 'request:9')->assertSee('Genehmigen');
+        $this->assertNotContains('decide', array_column(PitchPlanningHarness::$calls, 0));
+    }
+
+    public function test_dashboard_link_cannot_open_a_request_outside_the_authorized_projection(): void
+    {
+        Livewire::withQueryParams(['booking' => 99, 'date' => '2026-11-04'])
+            ->test(DashboardPitchLinkHarness::class)->assertStatus(404);
+    }
+
     public function test_page_renders_fields_translated_statuses_and_accessible_edit_buttons(): void
     {
         $component = Livewire::test(PitchPlanningHarness::class)
@@ -287,5 +302,13 @@ class PitchPlanningHarness extends PitchPlanning
     public function render(): View
     {
         return view('clubunio.pitch-planning.planner', $this->getViewData());
+    }
+}
+
+class DashboardPitchLinkHarness extends PitchPlanningHarness
+{
+    public function mount(): void
+    {
+        PitchPlanning::mount();
     }
 }

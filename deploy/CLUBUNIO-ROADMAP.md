@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Reservierungsanfragen im Dashboard (05.11.2026)
+
+Bus-/Platzanfragen mit Gesamtzahl und direktem Genehmigungslink fuer
+Geschaeftsstelle/Admin. Mandantentrennung, Rechte, Konflikt-/Revisionspruefungen
+bleiben erhalten; keine Nachrichten beim Lesen. Begrenzte Listen mit Blaettern,
+DE/EN und Tests. Kein Schema-/Legacy-Eingriff. CLUBUNIO-DASHBOARD-RESERVATIONS.md.
+
 ## Anfragebox unabhaengig vom Kalendertag (05.11.2026)
 
 Eigene aktuelle Trainer-/TL-Anfragen und vollstaendige Admin-/Backoffice-Liste

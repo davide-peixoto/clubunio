@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Dashboard fuer offene Reservierungsanfragen (05.11.2026)
+
+Bus- und Platzanfragen lesend im Admin-/Office-Dashboard mit Anzahl,
+seitenweiser Liste und Links zur bestehenden Genehmigung. Keine Schema-/
+Datenmigration, Importwiederholung, Status- oder Rechteaenderung. Bestehende
+Anfragen und Mandantenzuordnung bei spaeteren Uebernahmen erhalten. Rueckweg
+per vorherigem Code ohne Datenreset. Nachweise und Release:
+CLUBUNIO-DASHBOARD-RESERVATIONS.md. PHPMaker DEV/PROD unveraendert.
+
 ## Datumsunabhaengige Platzanfragen (05.11.2026)
 
 Additiver GET-Endpunkt fuer die App-Anfragebox, ohne Datenmigration oder

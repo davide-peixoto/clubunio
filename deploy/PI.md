@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+## Offene Reservierungsanfragen im Dashboard (05.11.2026)
+
+Aktiv20261105-clubunio-dashboard-reservations-v2, Basis/Rueckweg pitch-request-inbox.
+Acht Dateihashes und bestehende Dateibaselines geprueft. Keine DB-/ENV-/Profil-
+oder PHPMaker-Aenderung. Frische Rechtepruefung, lesendes Servergate, DE/EN,
+30 gezielte Tests/136 Assertions (ein optionaler Fragmentexport ausgelassen).
+Cacheaufbau/FPM erfolgreich; Health/Login200, private Seiten anonym302.
+Anfragenzaehler und Trainer403 lesend bestaetigt. Keine echte Genehmigung oder
+Nachricht. Nachweise/Migrationspfad: CLUBUNIO-DASHBOARD-RESERVATIONS.md.
+
 ## Datumsunabhaengige App-Anfragebox (05.11.2026)
 
 Aktiv `20261105-clubunio-pitch-request-inbox`, Rueckweg facilities-status.

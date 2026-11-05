@@ -205,7 +205,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 MembersByStatus::class, ExpensesByStatus::class, MembersByAge::class,
                 ExpensesBySeason::class, NewMembersMonthly::class,
                 InvoicesByStatus::class, InvoicesBySeason::class,
-                OpenInvoicesTable::class, PendingExpensesTable::class])
+                OpenInvoicesTable::class, PendingExpensesTable::class, \App\ClubUnio\Widgets\PendingReservationRequests::class])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

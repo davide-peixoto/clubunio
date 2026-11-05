@@ -65,6 +65,12 @@ class PitchPlanning extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->date = CarbonImmutable::now(PitchPlanningCalendar::TIMEZONE)->toDateString();
+        if (request()->has('booking')) {
+            $input = request()->validate(['booking' => ['required', 'integer', 'min:1'], 'date' => ['required', 'date_format:Y-m-d']]);
+            $this->date = $input['date'];
+            $this->editEntry('request:'.$input['booking']);
+            return;
+        }
         $this->refreshCalendar();
     }
 

@@ -148,11 +148,16 @@ class DashboardDetailPerformanceTest extends TestCase
         $this->adjustment('credit_notes', 'draft', 100);
         $this->adjustment('credit_notes', 'released', 200);
         $this->adjustment('credit_notes', 'confirmed', 800);
-        $this->adjustment('credit_notes', 'draft', 900, ['tenant_id' => $this->foreign->id]);
+        $foreignMember = $this->insert('members', ['first_name' => 'Foreign', 'tenant_id' => $this->foreign->id]);
+        $foreignInvoice = $this->insert('invoices', ['member_id' => $foreignMember, 'tenant_id' => $this->foreign->id]);
+        $foreignDraft = $this->insert('financial_adjustment_statuses', ['tenant_id' => $this->foreign->id, 'code' => 'draft', 'name' => 'draft']);
+        $this->adjustment('credit_notes', 'draft', 900, ['tenant_id' => $this->foreign->id,
+            'invoice_id' => $foreignInvoice, 'member_id' => $foreignMember, 'status_id' => $foreignDraft]);
         $this->adjustment('refunds', 'draft', 100);
         $refund = $this->adjustment('refunds', 'confirmed', 400);
         $this->adjustment('refunds', 'cancelled', 900);
-        $this->adjustment('refunds', 'draft', 900, ['tenant_id' => $this->foreign->id]);
+        $this->adjustment('refunds', 'draft', 900, ['tenant_id' => $this->foreign->id,
+            'invoice_id' => $foreignInvoice, 'status_id' => $foreignDraft]);
         $service = app(InvoiceDetailTotals::class);
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();

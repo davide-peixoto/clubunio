@@ -2668,5 +2668,8 @@
     "–": "–",
     "– Info-Display": "– Info-Display",
     "Halber Platz (automatisch)": "Halber Platz (automatisch)",
-    "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.": "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet."
+    "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.": "Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.",
+    "Offene Reservierungsanfragen": "Offene Reservierungsanfragen",
+    "Anfrage zur Genehmigung öffnen": "Anfrage zur Genehmigung öffnen",
+    "Keine offenen Anfragen": "Keine offenen Anfragen"
 }
