@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Drittel und Viertel auf Sportplaetzen (05.11.2026)
+
+Fuer die drei aktiven SVS-Plaetze sind Drittel A-C und Viertel A-D in DE/EN
+ergaenzt. Bestehende Halbplaetze/Belegungen bleiben erhalten. Web und App
+uebernehmen die dynamische Auswahl, geometrische Konfliktpruefung getestet.
+20 Tests/312 Assertions und lesender Servercheck erfolgreich; Webauswahl
+angemeldet geprueft. Physischer App-Test offen. CLUBUNIO-PITCH-FRACTIONS.md.
+
 ## Reservierungsanfragen im Dashboard (05.11.2026)
 
 Bus-/Platzanfragen mit Gesamtzahl und direktem Genehmigungslink fuer

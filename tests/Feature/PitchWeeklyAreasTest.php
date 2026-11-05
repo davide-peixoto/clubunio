@@ -172,6 +172,28 @@ class PitchWeeklyAreasTest extends TestCase
         $this->assertSame(__('Halber Platz (automatisch)'), app(PitchWeeklyAreas::class)->trainingOptions($this->tenant, $this->field)[0]);
     }
 
+    public function test_thirds_and_quarters_are_selectable_persisted_and_localized_without_changing_half_default(): void
+    {
+        $presets = require base_path('deploy/pitch-fraction-presets.php');
+        $ids = [];
+        foreach ($presets as $preset) {
+            $area = app(PitchPlanningService::class)->saveArea($this->actor, $this->tenant, ['field_id' => $this->field] + $preset);
+            $ids[] = $area['id'];
+            $slot = $this->save($this->input(['area_id' => $area['id']]));
+            $this->assertSame($area['id'], $slot->area_id);
+            foreach (['de', 'en'] as $locale) {
+                app()->setLocale($locale);
+                $label = $preset['name_'.$locale];
+                $this->assertSame($label, app(PitchWeeklyAreas::class)->trainingOptions($this->tenant, $this->field)[$area['id']]);
+                $field = collect(app(PitchPlanningProjection::class)->fields($this->tenant))->firstWhere('id', $this->field);
+                $this->assertSame($label, collect($field['areas'])->firstWhere('id', $area['id'])['name']);
+            }
+        }
+        $automatic = $this->save($this->input(['area_id' => 0, 'starts_at' => '21:00', 'ends_at' => '22:00']));
+        $this->assertSame($this->area['id'], $automatic->area_id);
+        $this->assertNotContains($automatic->area_id, $ids);
+    }
+
     public function test_service_rejects_wrong_field_foreign_area_no_field_and_inactive_field(): void
     {
         $this->invalid(fn () => $this->save($this->input(['field_id' => $this->otherField])));

@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Drittel und Viertel bei Platzbelegungen (05.11.2026)
+
+Additive Konfiguration von 21 Teilflaechen fuer die drei aktiven SVS-Plaetze,
+keine Schema- oder Codeumstellung. Bestehende Belegungen und Halbplatz-Default
+unveraendert. Wiederholbarer Helper mit Vorschau, Rollbacktest, verschluesselter
+Sicherung, Audit und Dublettenpruefung; bei spaeteren Importen IDs/Referenzen
+erhalten. Web/App lesen die DE/EN-Auswahl dynamisch. Nachweis und Rueckweg:
+CLUBUNIO-PITCH-FRACTIONS.md. PHPMaker DEV/PROD unveraendert.
+
 ## Dashboard fuer offene Reservierungsanfragen (05.11.2026)
 
 Bus- und Platzanfragen lesend im Admin-/Office-Dashboard mit Anzahl,
