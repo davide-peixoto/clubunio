@@ -35,8 +35,17 @@ final class ChatAttachments
         $sha = hash('sha256', $bytes);
         $old = $s->table($tenant, 'chat_attachments')->where('account_id', $actor->id)->where('client_id', $clientId)->first();
         if ($old) {
-            abort_unless((int) $old->conversation_id === $chat && hash_equals($old->sha256, $sha), 409);
+            $metadata = $this->filename($old->filename_encrypted);
+            abort_unless((int) $old->conversation_id === $chat
+                && hash_equals($metadata['source_sha256'] ?? $old->sha256, $sha), 409);
             return ['id' => $old->id, 'state' => $old->state];
+        }
+        $sourceSha = $sha;
+        if ($mime !== 'application/pdf') {
+            $normalized = app(ChatImageCompression::class)->normalize($bytes, $mime);
+            $bytes = $normalized['bytes']; $mime = $normalized['mime']; $ext = $normalized['extension'];
+            $size = strlen($bytes); $sha = hash('sha256', $bytes);
+            abort_unless($size <= ChatImageCompression::MAX_BYTES, 422);
         }
         $held = $s->table($tenant, 'chat_attachments')->whereNotNull('bytes_encrypted');
         abort_if((clone $held)->count() >= 100 || (int) (clone $held)->sum('byte_count') + $size > 104857600, 429);
@@ -45,7 +54,8 @@ final class ChatAttachments
         $name = preg_replace('/\.[^.]*$/u', '', $name).'.'.$ext;
         $id = (string) Str::uuid();
         $s->table($tenant, 'chat_attachments')->insert(['id' => $id, 'tenant_id' => $tenant->id, 'conversation_id' => $chat,
-            'account_id' => $actor->id, 'client_id' => $clientId, 'filename_encrypted' => Crypt::encryptString($name),
+            'account_id' => $actor->id, 'client_id' => $clientId, 'filename_encrypted' => Crypt::encryptString($mime === 'application/pdf'
+                ? $name : json_encode(['v' => 1, 'name' => $name, 'source_sha256' => $sourceSha], JSON_THROW_ON_ERROR)),
             'bytes_encrypted' => Crypt::encryptString($bytes), 'sha256' => $sha, 'byte_count' => $size, 'mime_type' => $mime,
             'state' => 'quarantine', 'created_at' => now()->toIso8601String()]);
         return ['id' => $id, 'state' => 'quarantine'];
@@ -101,10 +111,23 @@ final class ChatAttachments
             ->get(['id','message_id','filename_encrypted','mime_type','byte_count','sha256']);
         $result = [];
         foreach ($rows as $row) {
-            $result[(int) $row->message_id] ??= ['id' => $row->id, 'name' => Crypt::decryptString($row->filename_encrypted),
+            $result[(int) $row->message_id] ??= ['id' => $row->id, 'name' => $this->filename($row->filename_encrypted)['name'],
                 'mime' => $row->mime_type, 'bytes' => (int) $row->byte_count, 'sha256' => $row->sha256];
         }
         return $result;
+    }
+
+    /** Legacy plaintext names remain valid; only an exact private envelope carries replay proof. */
+    private function filename(string $encrypted): array
+    {
+        $name = Crypt::decryptString($encrypted);
+        $data = json_decode($name, true);
+        if (is_array($data) && array_keys($data) === ['v', 'name', 'source_sha256'] && $data['v'] === 1
+            && is_string($data['name']) && $data['name'] !== '' && strlen($data['name']) <= 512
+            && is_string($data['source_sha256']) && preg_match('/^[0-9a-f]{64}$/D', $data['source_sha256'])) {
+            return $data;
+        }
+        return ['name' => $name];
     }
 
     public function download(Account $actor, Tenant $tenant, string $id)
