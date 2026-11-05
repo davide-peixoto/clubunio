@@ -2271,3 +2271,12 @@ sauber,2020Texte in5lokalenSprachkatalogen/i18n-Prüfung erfolgreich. Neue nativ
 Mail-/Geräteplugins: vollständiger Appneubau erforderlich, physischer Mailversand
 offen. Kein Backend-/DB-Vertrag geändert, kein DEV-Release notwendig.
 CLUBUNIO-MOBILE-GUIDANCE-SUPPORT.md; Appdoku docs/GETTING-STARTED-SUPPORT.md.
+
+
+## 05.11.2026: Posteingang akzeptiert Platzbelegungsziele
+
+Appfehler «Unbekanntes Benachrichtigungsziel» für bestehende pitch_planning-
+Mitteilungen reproduziert/behoben. Posteingang und Push verwenden dieselbe
+strikte Zielzuordnung; Mandanten-/Objektprüfungen bleiben.30Flutterfälle grün,
+Analyse sauber. Kein Backend-/DB-/DEV-Wechsel; aktueller Appbuild erforderlich.
+CLUBUNIO-PITCH-NOTIFICATIONS.md; App docs/PERSONAL-NOTIFICATIONS.md.

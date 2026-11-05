@@ -89,3 +89,21 @@ event uniqueness, tenant FKs, email-action constraints and preservation of push
 queue FKs/uniqueness while extending the kind check. This does not apply the
 permanent migration or exercise template seeding against real tenants. Concurrent
 worker contention and real device delivery remain separate integration checks.
+
+
+## 05.11.2026: Posteingang mit Platzbelegungsbenachrichtigungen
+
+Fehler reproduziert: Ein autorisierter pitch_planning-Eintrag liess die gesamte
+Benachrichtigungsseite mit «Unbekanntes Benachrichtigungsziel» scheitern.
+Backend/Pushziel und Platzbelegungsdetail waren bereits vorhanden; allein die
+separate Zuordnung im persönlichen Posteingang war unvollständig. Der Posteingang
+verwendet jetzt dieselbe geschlossene Zielzuordnung wie Push. Keine Einträge
+übersprungen, keine Zähler-/Pagingänderung. Fremder Mandant, widersprüchliche
+Objektquelle, unbekannte Ziele und gewechselte Sitzungen bleiben abgewiesen;
+vor Öffnen weiterhin frische serverseitige Ziel-/Modulrechteprüfung.
+
+30 gezielte Fluttertests erfolgreich: gemischte Liste, Paging/Lesestatus,
+echte Posteingangsansicht/Öffnen, Zieltypen einschliesslich Platzbelegung,
+Mandantenwechsel und Notificationperformance. Analyse ohne Befund.
+Appkorrektur, kein geänderter Backendvertrag/DEV-Release. Aktuellen Appstand
+neu bauen/installieren bzw. im Flutterlauf neu starten.
