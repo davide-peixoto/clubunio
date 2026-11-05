@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
+require __DIR__.'/clubunio-marketing.php';
 
 Route::match(['GET', 'POST'], '/chat-data/{operation}', \App\ClubUnio\Http\WebChatController::class)
     ->where('operation', '[a-z-]+')
