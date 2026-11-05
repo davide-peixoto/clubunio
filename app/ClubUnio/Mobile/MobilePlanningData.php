@@ -161,21 +161,21 @@ final class MobilePlanningData
             $facts[(int) $event->id] + ['invitations' => $metadata[(int) $event->id]]))->all();
     }
 
-    public function event(Account $actor, Tenant $tenant, int $id, bool $seriesSnapshot = true): array
+    public function event(Account $actor, Tenant $tenant, int $id, bool $seriesSnapshot = true, bool $includePushSnapshot = true): array
     {
         $p = $this->planning;
         $event = $p->event($actor, $tenant, $id);
-        return $this->renderEvent($actor, $tenant, $event, $seriesSnapshot);
+        return $this->renderEvent($actor, $tenant, $event, $seriesSnapshot, null, $includePushSnapshot);
     }
 
-    private function renderEvent(Account $actor, Tenant $tenant, object $event, bool $seriesSnapshot, ?array $projection = null): array
+    private function renderEvent(Account $actor, Tenant $tenant, object $event, bool $seriesSnapshot, ?array $projection = null, bool $includePushSnapshot = true): array
     {
         $p = $this->planning; $id = (int) $event->id;
         $invitationMeta = $projection['invitations'] ?? app(MobilePlanningInvitationsData::class)->metadata($actor, $tenant, $event, $this->capabilities);
         // List/Today projections have no push publication action. A recipient
         // fingerprint is expensive and authoritative only when opening detail.
         $capabilities = $this->capabilities->event($actor, $tenant, $event, $projection === null);
-        $pushSnapshot = $capabilities['CanSendSquadPush'] ? app(MobilePushSquad::class)->snapshot($actor, $tenant, $id) : null;
+        $pushSnapshot = $includePushSnapshot && $capabilities['CanSendSquadPush'] ? app(MobilePushSquad::class)->snapshot($actor, $tenant, $id) : null;
         $manager = $projection['manager'] ?? $p->teams($actor, $tenant, true)->where('id', $event->team_season_id)->exists();
         $own = $projection['own'] ?? app(MemberAccessService::class)->represented($actor, $tenant)->pluck('id')->map(fn ($v) => (int) $v)->all();
         $parts = $projection['parts'] ?? $p->table($tenant, 'team_participations')->where('event_id', $id)->get()->keyBy('member_id');

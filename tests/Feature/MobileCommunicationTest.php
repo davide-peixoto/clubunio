@@ -1141,6 +1141,13 @@ CREATE TABLE clubora.object_changes (id integer PRIMARY KEY,tenant_id integer,ob
         $detail = $data()->event($this->admin, $this->tenant, $ids[0], false);
         $this->assertTrue($detail['CanSendSquadPush']);
         $this->assertSame(hash('sha256','1'), $detail['PushRevision']);
+        $quick = $data()->event($this->admin, $this->tenant, $ids[0], false, false);
+        $this->assertTrue($quick['CanSendSquadPush'], 'Opting out of preparation cannot remove the fresh push capability');
+        $this->assertArrayNotHasKey('PushRevision', $quick);
+        $this->assertArrayNotHasKey('PushRecipientFingerprint', $quick);
+        $this->assertSame(array_diff_key($detail, array_flip(['PushRevision','PushRecipientFingerprint'])), $quick,
+            'Lightweight detail retains the exact roster, rights and event projection');
+        $this->assertCount(1, $snapshot->calls, 'Lightweight detail cannot prepare recipients');
         $this->db->table('clubora.team_events')->where('id',$ids[0])->update(['revision'=>2]);
         $fresh = $data()->event($this->admin, $this->tenant, $ids[0], false);
         $this->assertSame(hash('sha256','2'), $fresh['PushRevision']);
@@ -1148,6 +1155,23 @@ CREATE TABLE clubora.object_changes (id integer PRIMARY KEY,tenant_id integer,ob
         $parent = $data()->event($this->parent, $this->tenant, $ids[0], false);
         $this->assertFalse($parent['CanSendSquadPush']);
         $this->assertCount(2, $snapshot->calls, 'Parent detail must not inherit admin publication rights');
+        $token = $this->token($this->admin);
+        $url = $this->url('planning/events/'.$ids[0]);
+        $this->withToken($token)->getJson($url.'?include_push_snapshot=0')->assertOk()
+            ->assertJsonPath('data.TeamTermin.CanSendSquadPush', true)->assertJsonMissingPath('data.TeamTermin.PushRevision');
+        $this->assertCount(2, $snapshot->calls);
+        foreach (['invalid','false','2',''] as $value) $this->getJson($url.'?include_push_snapshot='.$value)->assertUnprocessable();
+        $this->assertCount(2, $snapshot->calls, 'Malformed opt-outs must fail before projection');
+        $this->getJson($url)->assertOk()->assertJsonPath('data.TeamTermin.PushRevision', hash('sha256','2'));
+        $this->getJson($url.'?include_push_snapshot=1')->assertOk()->assertJsonPath('data.TeamTermin.PushRevision', hash('sha256','2'));
+        $this->assertCount(4, $snapshot->calls, 'Omitted flag and explicit true retain the full old contract');
+        $this->getJson($this->url('planning/events/999999?include_push_snapshot=0'))->assertNotFound();
+        $parentToken = $this->token($this->parent);
+        $this->withToken($parentToken)->getJson($url.'?include_push_snapshot=0')->assertOk()
+            ->assertJsonPath('data.TeamTermin.CanSendSquadPush', false)->assertJsonMissingPath('data.TeamTermin.PushRevision');
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+        $this->getJson($url.'?include_push_snapshot=0')->assertForbidden();
+        $this->assertCount(4, $snapshot->calls, 'Opt-out never bypasses revoked membership or grants push to a parent');
     }
 
     public function test_planning_team_options_batch_roster_links_for_one_and_twenty_teams(): void
