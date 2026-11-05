@@ -22,7 +22,7 @@ try {
         $app->instance('request', $request);
         app(App\ClubUnio\Mobile\MobileAccess::class)->enter($admin, $tenant);
         if ($service->options($admin, $tenant)['capabilities']['override_field_status'] !== true) throw new LogicException('Admin capability missing');
-        $request->attributes->set('clubunio_impersonation', true);
+        $request->attributes->set('clubunio_impersonation', (object) ['tenant_id' => $tenant->id, 'target_id' => $admin->id]);
         if ($service->options($admin, $tenant)['capabilities']['override_field_status'] !== false) throw new LogicException('Impersonation capability leak');
         echo json_encode(['read_only' => true, 'admin_override_capability' => true, 'impersonation_closed' => true, 'real_approval_tested' => false], JSON_THROW_ON_ERROR).PHP_EOL;
     } finally { $db->rollBack(); }
