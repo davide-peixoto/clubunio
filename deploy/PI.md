@@ -2254,3 +2254,20 @@ Aufgebotsvergleich/Bestätigung. Vergleich12.973s→1.155s; Releasegate679ms/26S
 22Personen/0Snapshots. Pushflags/Registry unverändert, Timer/FPMaktiv, Health200.
 52Backendtests/990Assertions und45Flutterregressionen grün, extra UI-Fall ergänzt.
 Keine Migration. MOBILE-PLANNING-DETAIL-LOADING.md; neuer Flutterstand nötig.
+
+
+## 05.11.2026: Interaktive Erste Schritte und Support-Mail
+
+Rollen-/modulabhängige aufklappbare Checkliste, direkte Aktionen und ausdrücklich
+markierter Fortschritt. Lokale Speicherung jeOrigin/Benutzer/Mandant, begrenztes
+Warten auf Gerätespeicher, Fehler sichtbar, keine automatischen Fachdatenänderungen.
+Supportformular bereitet Mail an info@clubunio.ch mit Benutzer-/Vereins-/Geräteinfos
+und begrenztem bereinigtem Diagnoseanhang vor; Benutzer sendet im Mailprogramm.
+Fehlende native Anhangsunterstützung bietet Share-Fallback. Allgemeinen
+Aktualisieren-Menüeintrag entfernt; gezieltes Refresh bleibt erhalten.
+
+53 gezielte Fluttertests grün (20Guide/33Support-Navigation-Layout), Codeanalyse
+sauber,2020Texte in5lokalenSprachkatalogen/i18n-Prüfung erfolgreich. Neue native
+Mail-/Geräteplugins: vollständiger Appneubau erforderlich, physischer Mailversand
+offen. Kein Backend-/DB-Vertrag geändert, kein DEV-Release notwendig.
+CLUBUNIO-MOBILE-GUIDANCE-SUPPORT.md; Appdoku docs/GETTING-STARTED-SUPPORT.md.
