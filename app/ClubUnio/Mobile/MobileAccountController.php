@@ -95,9 +95,9 @@ final class MobileAccountController
             && app(\App\ClubUnio\Services\PitchPlanningProjection::class)->ready()
             && app(\App\ClubUnio\Services\PitchPlanningService::class)->canView($actor, $tenant);
         $pitchNative = $pitchAllowed && in_array('pitch-planning-v1', $supported, true);
-        $facilitiesNative = config('clubunio-mobile.native_facilities_enabled')
-            && in_array('facilities-v1', $supported, true)
-            && app(ModulePermissionService::class)->allows($actor, $tenant, 'field_availability', 'view');
+        $facilitiesAllowed = config('clubunio-mobile.native_facilities_enabled')
+            && app(MobileFacilitiesData::class)->canRead($actor, $tenant);
+        $facilitiesNative = $facilitiesAllowed && in_array('facilities-v1', $supported, true);
         foreach ($map as $key => $permission) {
             if (! in_array($key, $visibleKeys, true)) { continue; }
             $followupAllowed = app(MobileFollowupModules::class)->allowed($key, $actor, $tenant);
@@ -106,7 +106,7 @@ final class MobileAccountController
                 || ($key === 'Spesen' && config('clubunio-mobile.native_expenses_enabled') && app(\App\ClubUnio\Services\ExpenseService::class)->portalAllowed($actor, $tenant))
                 || ($key === 'Dokumente' && config('clubunio-mobile.native_documents_enabled') && app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant)->exists())
                 || ($key === 'BusReservationen' && $busAllowed)
-                || ($key === 'Platzverfugbarkeit' && $pitchAllowed)
+                || ($key === 'Platzverfugbarkeit' && ($pitchAllowed || $facilitiesAllowed))
                 || ($hasTeams && in_array($key, ['Teams', 'Teamplanung'], true))
                 || $followupAllowed || $penaltyAllowed;
             if ($allowed) {

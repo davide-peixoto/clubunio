@@ -1,5 +1,15 @@
 # Pi staging: dev.clubunio.ch
 
+## App-Anlagenstatus korrigiert (05.11.2026)
+
+Aktiv `20261105-clubunio-facilities-status`, Rueckweg pitch-usability-v3.
+Zwei Runtime-Dateien plus zwei CLI-Gates per Hash verifiziert; Konfiguration
+inklusive privater Firebase-Registry unveraendert.39 Backendtests/686 Assertions,
+lesender Trainercheck (drei Plaetze, keine Schreibrechte), Health200/API401.
+Keine DB-/Profil-/Provider-/PHPMaker-Aenderung. App baae0db bringt Statusstart
+und feste Zeitspalte; neues Testbuild erforderlich.56 Fluttertests/Analyse gruen.
+CLUBUNIO-FACILITIES-STATUS-RELEASE.md.
+
 ## Firebase-Credentials vorbereitet (05.11.2026)
 
 Auf bestehendem pitch-usability-v3 nur private iOS-Appregistry gesetzt.

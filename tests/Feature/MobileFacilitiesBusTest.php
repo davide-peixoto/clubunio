@@ -27,9 +27,11 @@ class MobileFacilitiesBusTest extends TestCase
         if (getenv('CLUBUNIO_TEST_DB') !== '1') { $this->markTestSkipped('Opt-in rolled-back DB fixtures'); }
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName()); $this->db->beginTransaction();
-        config(['clubunio-mobile.enabled' => true, 'clubunio-mobile.native_bus_enabled' => true, 'clubunio-mobile.native_facilities_enabled' => true, 'cache.default' => 'array']);
+        config(['clubunio-mobile.enabled' => true, 'clubunio-mobile.native_bus_enabled' => true, 'clubunio-mobile.native_facilities_enabled' => true,
+            'clubunio-mobile.native_pitch_planning_enabled' => false, 'cache.default' => 'array']);
         Http::preventStrayRequests(); Mail::fake();
         $this->tenant = Tenant::create(['slug' => 'qa-facilities-bus-'.bin2hex(random_bytes(5)), 'name' => 'Synthetic facilities/bus']);
+        $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => 'Platzverfugbarkeit', 'name' => 'Facilities']);
         $this->admin = $this->account('admin'); $this->trainer = $this->account('trainer'); $this->outsider = $this->account('member');
         $this->member = $this->insert('members', ['first_name' => 'Synthetic', 'last_name' => 'Applicant', 'email' => 'PRIVATE-BUS@example.invalid', 'mobile' => 'PRIVATE-BUS-MOBILE']);
         $other = $this->insert('members', ['first_name' => 'Outside', 'last_name' => 'Applicant']);
@@ -75,8 +77,11 @@ class MobileFacilitiesBusTest extends TestCase
         $this->patchJson($url, ['revision' => 1, 'status_id' => $this->open, 'status_revision' => 1])->assertUnprocessable();
         $this->patchJson($url, ['revision' => 2, 'status_id' => $this->open, 'status_revision' => 99])->assertConflict();
         $this->assertSame($this->closed, $this->db->table('clubora.field_availabilities')->where('id', $this->field)->value('status_id'));
-        $this->withToken($this->token($this->trainer))->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->withToken($this->token($this->trainer))->getJson($this->base().'/facilities/fields')->assertOk()
+            ->assertJsonPath('data.fields.0.can_edit', false)->assertJsonPath('data.fields.0.blocks_training', true);
         $this->patchJson($url, ['revision' => 2, 'status_id' => $this->open, 'status_revision' => 1])->assertForbidden();
+        $this->assertSame($this->closed, $this->db->table('clubora.field_availabilities')->where('id', $this->field)->value('status_id'));
+        $this->assertSame(2, $this->db->table('clubora.field_availabilities')->where('id', $this->field)->value('revision'));
         config(['clubunio-mobile.native_facilities_enabled' => false]);
         $this->withToken($this->token($this->admin))->getJson($this->base().'/facilities/fields')->assertStatus(503);
         Http::assertNothingSent();
@@ -108,6 +113,87 @@ class MobileFacilitiesBusTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_facilities_personal_read_is_tenant_scoped_and_rechecked_after_revocation(): void
+    {
+        $foreign = Tenant::create(['slug' => 'qa-facilities-foreign-'.bin2hex(random_bytes(4)), 'name' => 'Foreign']);
+        $status = $this->db->table('clubora.facility_statuses')->insertGetId(['tenant_id' => $foreign->id, 'code' => 'open', 'name' => 'PRIVATE-FOREIGN-STATUS']);
+        $field = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $foreign->id, 'category' => 'field', 'code' => 'foreign', 'name' => 'PRIVATE-FOREIGN-FIELD']);
+        $availability = $this->db->table('clubora.field_availabilities')->insertGetId(['tenant_id' => $foreign->id, 'field_id' => $field, 'status_id' => $status]);
+        $this->withToken($this->token($this->trainer))->getJson($this->base().'/facilities/fields')->assertOk()
+            ->assertJsonCount(1, 'data.fields')->assertJsonCount(2, 'data.statuses')->assertDontSee('PRIVATE-FOREIGN')
+            ->assertJsonPath('data.fields.0.blocks_training', false)->assertJsonPath('data.fields.0.can_edit', false);
+        $this->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/facilities/fields')->assertForbidden();
+        $this->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules', ['X-ClubUnio-Mobile-Features' => 'facilities-v1'])->assertForbidden();
+        $this->patchJson($this->base().'/facilities/fields/'.$availability, ['revision' => 1, 'status_id' => $status, 'status_revision' => 1])->assertForbidden();
+        $this->assertFalse(app(\App\ClubUnio\Mobile\MobileFacilitiesData::class)->canRead($this->trainer, $foreign));
+        $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $this->trainer->id)->delete();
+        $this->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->getJson($this->base().'/modules', ['X-ClubUnio-Mobile-Features' => 'facilities-v1'])->assertForbidden();
+        $this->assertFalse(app(\App\ClubUnio\Mobile\MobileFacilitiesData::class)->canRead($this->trainer, $this->tenant));
+        Http::assertNothingSent();
+    }
+
+    public function test_facilities_role_without_personal_link_does_not_grant_read_or_write(): void
+    {
+        $unrelated = $this->account('trainer');
+        $this->postJson('/api/mobile/v1/session', ['username' => $unrelated->username, 'password' => 'synthetic-password', 'device_name' => 'Synthetic unrelated trainer'])->assertUnauthorized();
+        // A valid session in another club must not turn the bare trainer role into access here.
+        $foreign = Tenant::create(['slug' => 'qa-unrelated-facilities-'.bin2hex(random_bytes(4)), 'name' => 'Foreign']);
+        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $unrelated->id, 'role' => 'admin', 'portal_enabled' => true]);
+        $this->withToken($this->token($unrelated))->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->getJson($this->base().'/modules', ['X-ClubUnio-Mobile-Features' => 'pitch-planning-v1,facilities-v1'])->assertForbidden();
+        $this->patchJson($this->base().'/facilities/fields/'.$this->field, ['revision' => 1, 'status_id' => $this->closed, 'status_revision' => 1])->assertForbidden();
+        $this->assertFalse(app(\App\ClubUnio\Mobile\MobileFacilitiesData::class)->canRead($unrelated, $this->tenant));
+        $this->assertSame($this->open, $this->db->table('clubora.field_availabilities')->where('id', $this->field)->value('status_id'));
+        Http::assertNothingSent();
+    }
+
+    public function test_facilities_member_access_and_module_flags_agree_without_pitch_or_write_permissions(): void
+    {
+        $headers = ['X-ClubUnio-Mobile-Features' => 'pitch-planning-v1,facilities-v1'];
+        foreach ([$this->trainer, $this->outsider] as $actor) {
+            $this->assertFalse(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $this->tenant, 'field_availability', 'view'));
+            $this->withToken($this->token($actor))->getJson($this->base().'/modules', $headers)->assertOk()
+                ->assertJsonPath('data.modules.0.key', 'Platzverfugbarkeit')->assertJsonPath('data.modules.0.facilities', true)
+                ->assertJsonPath('data.modules.0.native', true)->assertJsonPath('data.modules.0.available', true)
+                ->assertJsonPath('data.modules.0.pitch_planning', false);
+            $this->getJson($this->base().'/facilities/fields')->assertOk()->assertJsonPath('data.fields.0.can_edit', false);
+            $this->patchJson($this->base().'/facilities/fields/'.$this->field, ['revision' => 1, 'status_id' => $this->closed, 'status_revision' => 1])->assertForbidden();
+            $this->getJson($this->base().'/modules', ['X-ClubUnio-Mobile-Features' => 'pitch-planning-v1'])->assertOk()
+                ->assertJsonPath('data.modules.0.facilities', false)->assertJsonPath('data.modules.0.available', false);
+        }
+        $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+        $this->getJson($this->base().'/modules', $headers)->assertOk()->assertJsonCount(1, 'data.modules')->assertJsonPath('data.modules.0.key', 'Profil');
+        $this->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => true]);
+        config(['clubunio-mobile.native_facilities_enabled' => false]);
+        $this->getJson($this->base().'/facilities/fields')->assertStatus(503);
+        $this->getJson($this->base().'/modules', $headers)->assertOk()->assertJsonCount(1, 'data.modules')->assertJsonPath('data.modules.0.key', 'Profil');
+        config(['clubunio-mobile.native_facilities_enabled' => true]);
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->outsider->id)->update(['portal_enabled' => false]);
+        $this->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->getJson($this->base().'/modules', $headers)->assertForbidden();
+        Http::assertNothingSent();
+    }
+
+    public function test_facilities_personal_access_preserves_explicit_mobile_profile_restrictions(): void
+    {
+        $headers = ['X-ClubUnio-Mobile-Features' => 'pitch-planning-v1,facilities-v1'];
+        $this->withToken($this->token($this->trainer))->getJson($this->base().'/facilities/fields')->assertOk();
+        $profile = $this->insert('access_profiles', ['name' => 'Synthetic restricted facilities profile', 'permissions' => '[]', 'mobile_modules' => '[]']);
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->trainer->id)->update(['mobile_profile_id' => $profile]);
+        $this->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->getJson($this->base().'/modules', $headers)->assertOk()->assertJsonMissing(['key' => 'Platzverfugbarkeit']);
+        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['mobile_modules' => '["Platzverfugbarkeit"]']);
+        $this->getJson($this->base().'/modules', $headers)->assertOk()->assertJsonPath('data.modules.0.facilities', true);
+        $this->getJson($this->base().'/facilities/fields')->assertOk()->assertJsonPath('data.fields.0.can_edit', false);
+        $this->patchJson($this->base().'/facilities/fields/'.$this->field, ['revision' => 1, 'status_id' => $this->closed, 'status_revision' => 1])->assertForbidden();
+        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['active' => false]);
+        $this->getJson($this->base().'/facilities/fields')->assertForbidden();
+        $this->getJson($this->base().'/modules', $headers)->assertOk()->assertJsonMissing(['key' => 'Platzverfugbarkeit']);
+        Http::assertNothingSent();
+    }
+
     public function test_bus_current_season_history_and_owner_visibility_never_expand_other_members_access(): void
     {
         $this->withToken($this->token($this->trainer));
@@ -128,7 +214,7 @@ class MobileFacilitiesBusTest extends TestCase
     public function test_native_menu_requires_client_support_and_keeps_personal_bus_and_document_access(): void
     {
         config(['clubunio-mobile.native_documents_enabled' => true]);
-        foreach (['Platzverfugbarkeit', 'BusReservationen', 'Dokumente'] as $key) {
+        foreach (['BusReservationen', 'Dokumente'] as $key) {
             $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key, 'name' => $key]);
         }
         $this->withToken($this->token($this->admin));
@@ -145,7 +231,8 @@ class MobileFacilitiesBusTest extends TestCase
         $personal = $this->getJson($this->base().'/modules', $headers)->assertOk()->json('data.modules');
         $this->assertTrue(collect($personal)->firstWhere('key', 'BusReservationen')['native']);
         $this->assertTrue(collect($personal)->firstWhere('key', 'Dokumente')['native']);
-        $this->assertNull(collect($personal)->firstWhere('key', 'Platzverfugbarkeit'));
+        $this->assertTrue(collect($personal)->firstWhere('key', 'Platzverfugbarkeit')['facilities']);
+        $this->assertFalse(collect($personal)->firstWhere('key', 'Platzverfugbarkeit')['pitch_planning']);
         config(['clubunio-mobile.native_bus_enabled' => false, 'clubunio-mobile.native_documents_enabled' => false]);
         $closed = $this->getJson($this->base().'/modules', $headers)->assertOk()->json('data.modules');
         $this->assertNull(collect($closed)->firstWhere('key', 'BusReservationen'));

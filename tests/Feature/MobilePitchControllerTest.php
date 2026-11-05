@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\ClubUnio\Mobile\{MobileAccess, MobileAccountController, MobileBootstrapState, MobileFollowupModules,
     MobileLanguages, MobilePitchController, MobilePitchDocumentation, MobilePitchReady, MobileReadContext, MobileSessions, MobileTeamsData};
 use App\ClubUnio\Models\{Account, Tenant};
-use App\ClubUnio\Services\{MobileModuleSettings, ModulePermissionService, PitchPlanningProjection, PitchPlanningService, TenantDomainService};
+use App\ClubUnio\Services\{MemberAccessService, MobileModuleSettings, ModulePermissionService, PitchPlanningProjection, PitchPlanningService, TenantDomainService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Http, Mail, Route};
 use Tests\TestCase;
@@ -104,6 +104,10 @@ class MobilePitchControllerTest extends TestCase
         $this->app->instance(PitchPlanningProjection::class, $this->projection);
         $this->permissions = new class { public bool $view = false; public function allows(...$args): bool { return $this->view; } };
         $this->app->instance(ModulePermissionService::class, $this->permissions);
+        $this->app->instance(MemberAccessService::class, new class {
+            public bool $allowed = false;
+            public function canEnter($actor, $tenant): bool { return $this->allowed; }
+        });
         $this->visibility = new class { public array $keys = ['Platzverfugbarkeit']; public function visibleKeys(...$args): array { return $this->keys; } };
         $this->app->instance(MobileModuleSettings::class, $this->visibility);
         $this->app->instance(MobileFollowupModules::class, new class { public function allowed(...$args): bool { return false; } });
@@ -329,11 +333,19 @@ class MobilePitchControllerTest extends TestCase
     public function test_module_negotiation_keeps_pitch_facilities_and_profile_visibility_separate(): void
     {
         $headers = ['X-ClubUnio-Mobile-Features' => 'pitch-planning-v1,facilities-v1'];
+        app(MemberAccessService::class)->allowed = true;
         $this->personal()->getJson($this->base.'/modules', $headers)->assertOk()
-            ->assertJsonPath('data.modules.0.pitch_planning', true)->assertJsonPath('data.modules.0.facilities', false);
+            ->assertJsonPath('data.modules.0.pitch_planning', true)->assertJsonPath('data.modules.0.facilities', true);
         $this->getJson($this->base.'/modules', ['X-ClubUnio-Mobile-Features' => ''])->assertOk()
-            ->assertJsonPath('data.modules.0.available', false)->assertJsonPath('data.modules.0.pitch_planning', false);
+            ->assertJsonPath('data.modules.0.available', false)->assertJsonPath('data.modules.0.pitch_planning', false)->assertJsonPath('data.modules.0.facilities', false);
+        config(['clubunio-mobile.native_facilities_enabled' => false]);
+        $this->getJson($this->base.'/modules', $headers)->assertOk()
+            ->assertJsonPath('data.modules.0.pitch_planning', true)->assertJsonPath('data.modules.0.facilities', false);
+        config(['clubunio-mobile.native_facilities_enabled' => true]);
         $this->projection->ready = false;
+        $this->getJson($this->base.'/modules', $headers)->assertOk()
+            ->assertJsonPath('data.modules.0.facilities', true)->assertJsonPath('data.modules.0.pitch_planning', false);
+        app(MemberAccessService::class)->allowed = false;
         $this->getJson($this->base.'/modules', $headers)->assertOk()->assertJsonCount(1, 'data.modules')->assertJsonPath('data.modules.0.key', 'Profil');
         $this->permissions->view = true;
         $this->getJson($this->base.'/modules', $headers)->assertOk()->assertJsonPath('data.modules.0.facilities', true)->assertJsonPath('data.modules.0.pitch_planning', false);

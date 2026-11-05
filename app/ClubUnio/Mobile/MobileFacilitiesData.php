@@ -3,15 +3,23 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\{Account, Tenant};
-use App\ClubUnio\Services\ModulePermissionService;
+use App\ClubUnio\Services\{MemberAccessService, MobileModuleSettings, ModulePermissionService};
 use Illuminate\Support\Facades\DB;
 
 final class MobileFacilitiesData
 {
+    public function canRead(Account $actor, Tenant $tenant): bool
+    {
+        // Personal status visibility never grants facility administration rights.
+        return app(ModulePermissionService::class)->allows($actor, $tenant, 'field_availability', 'view')
+            || (app(MemberAccessService::class)->canEnter($actor, $tenant)
+                && in_array('Platzverfugbarkeit', app(MobileModuleSettings::class)->visibleKeys($actor, $tenant), true));
+    }
+
     public function read(Account $actor, Tenant $tenant): array
     {
         $permissions = app(ModulePermissionService::class);
-        $permissions->authorize($actor, $tenant, 'field_availability', 'view');
+        abort_unless($this->canRead($actor, $tenant), 403);
         $db = DB::connection('clubunio');
         $statuses = $db->table('clubora.facility_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->orderBy('name')->orderBy('id')->get();
         $labels = $db->table('clubora.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('active', true)->pluck('name', 'id');

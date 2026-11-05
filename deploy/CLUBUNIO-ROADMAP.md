@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## App-Anlagenstatus zuerst (05.11.2026)
+
+Bestehende Offen/Gesperrt-Ansicht als Standard im App-Modul, persoenlicher
+Trainer-Lesezugriff korrigiert, Zeitachse beim Scrollen fixiert. Team-/Pushziele
+bleiben im datierten Kalender.56 Fluttertests und Analyse erfolgreich;
+installiertes natives Testbuild weiterhin noetig. Keine neue Rechtezuordnung,
+kein PHPMaker-Eingriff. CLUBUNIO-FACILITIES-STATUS-RELEASE.md.
+
 ## Firebase-Zugang vorbereitet (05.11.2026)
 
 Serviceaccount privat auf ClubUnio installiert, iOS-Registry hinterlegt und

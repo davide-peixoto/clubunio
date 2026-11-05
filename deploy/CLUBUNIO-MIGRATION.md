@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## App-Anlagenstatus und fixierte Zeitachse (05.11.2026)
+
+Keine Datenmigration, Profilzuordnung oder Importwiederholung. Persoenlicher
+Anlagen-Lesezugriff und Modulantwort werden vereinheitlicht; Aenderungsrechte
+bleiben separat. App-Einstieg zeigt zuerst Offen/Gesperrt, Kalender/Anfragen oben;
+Zeitachse beim horizontalen Scrollen fixiert. App-Commit baae0db braucht ein neues
+installiertes Testbuild. ClubUnio-Backenddelta/Rueckweg und Abnahme separat in
+CLUBUNIO-FACILITIES-STATUS-RELEASE.md. PHPMaker DEV/PROD bleiben unveraendert.
+
 ## Firebase-Credentials vorbereiten (05.11.2026)
 
 Keine DB-/Datenmigration. Externe private Serviceaccountdatei unter /etc/clubunio

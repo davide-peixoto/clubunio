@@ -10,7 +10,8 @@ try {
             '/var/www/svs-laravel/releases/20261105-clubunio-native-pitch',
             '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability',
             '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v2',
-            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v3'], true)) throw new LogicException('Fixed release/mode required');
+            '/var/www/svs-laravel/releases/20261105-clubunio-pitch-usability-v3',
+            '/var/www/svs-laravel/releases/20261105-clubunio-facilities-status'], true)) throw new LogicException('Fixed release/mode required');
     require $root.'/vendor/autoload.php';
     $app = require $root.'/bootstrap/app.php';
     $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
