@@ -2206,3 +2206,16 @@ Auditflag, kein Status-/Schema-/Providerwechsel, keine echte Anfrage genehmigt.
 53 Backendtests/824 Assertions und64 App-Tests erfolgreich; Code-/i18n-Pruefung
 sauber. Vier Dateihashes und Konfigurationsgleichheit geprueft, FPM aktiv,
 HTTPSup200/context401. CLUBUNIO-PITCH-ADMIN-STATUS-OVERRIDE.md.
+
+
+## 05.11.2026: Chatbilder vor Upload und Speicherung komprimiert
+
+DEV aktiv20261105-clubunio-chat-image-compression, Basis pitch-admin-status-override.
+Runtime bd6a414, App5157a59. Lange Seite1600px, Ziel350KiB, hart512KiB;
+Alpha/Ausrichtung erhalten, Metadaten entfernt, PDFs unverändert.
+42 App-Tests und69 Backendtests/1052Assertions grün; PG-Fixtures zurückgerollt,
+Analyse und1997/5-i18n-Prüfung sauber. Drei Rohdateihashes/Baseline und vollständige
+Konfiguration geprüft; synthetisches Servergate118819->30690Bytes/Alphaerhalt,
+FPM aktiv, HTTPSup200/context401. Keine Migration/Provider-/PHPMakeränderung.
+Bestehende Bilder nicht verändert. Rückbau nach neuen Uploads benötigt weiterhin
+den neuen Dateinamensleser/Replaypfad. CLUBUNIO-CHAT-IMAGE-COMPRESSION.md.

@@ -49,3 +49,17 @@ Neuer Appbuild für Kompression vor dem Netzwerk erforderlich; Server schützt
 auch ältere Apps. Keine automatische Umschreibung bestehender Bilddateien.
 Nach neuen Uploads muss ein Rückbau den neuen Dateinamensleser/Replaypfad
 beibehalten: blindes Zurückschalten auf den alten Klarname-Leser ist ungeeignet.
+
+
+## DEV-Nachweis05.11.2026
+
+Aktiv `/var/www/svs-laravel/releases/20261105-clubunio-chat-image-compression`,
+Runtime bd6a414, App5157a59. Basiskopie pitch-admin-status-override erhalten.
+Drei Dateihashes vor/nach Aktivierung und bisherige ChatAttachments-Baseline
+geprüft; komplette Konfiguration samt privater Firebase-Registry unverändert,
+ENV-/Composerbytes gleich. Synthetisches, rein im RAM arbeitendes Codecgate:
+118819->30690Bytes, maximal1600px; transparente Pixel nach Reencode erhalten.
+Kein DB-Schreibzugriff oder echter Chat-/Malwareprovideraufruf für dieses Gate.
+FPM aktiv, HTTPSup200/context401. Finale Manifest-SHA:
+aae1686fc9d588962accd0d736be4c0a12e911ac2c2fa6f94a9ab5a02b3ce009.
+Native Kamera-/Galerieabnahme benötigt den neu gebauten Appstand.
