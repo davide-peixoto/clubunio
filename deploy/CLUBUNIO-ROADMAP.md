@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Modellabnahme mit synthetischen Daten (06.11.2026)
+
+72 gewertete Backoffice-Aufgaben ueber die echte OpenAI-API verglichen:
+mini/Sol nach inhaltlicher Nachpruefung je36/36, keine beobachteten
+Sicherheitsverstoesse. Mini schneller; kein nachgewiesener fachlicher Sol-Vorteil
+in diesem kleinen Sample. Cacheeffekte und abweichende Heuristikwerte separat
+dokumentiert. Kein Modellwechsel, Deployment oder Freischalten echter Daten.
+`CLUBUNIO-ASSISTANT-BENCHMARK.md`; schwierige Langkontextfaelle und Live-/Race-
+Abnahme bleiben eigenstaendige Folgeschritte.
+
 ## Backoffice-Assistent (06.11.2026)
 
 Umsetzung der drei Pakete Tagesbericht/Fachabfragen, bestaetigte Fachaktionen

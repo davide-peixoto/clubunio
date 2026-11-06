@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+## Synthetischer Modellvergleich (06.11.2026)
+
+Reine lokale API-Abnahme ohne Migration oder Deployment: GPT-5.4 mini und
+GPT-6.1 Sol auf identischen DE/EN-Backoffice-Faellen, jeweils36 Aufgaben.
+Nach dokumentierter Korrektur dreier rein sprachlicher Fehlwertungen beide36/36;
+Median2.214s/4.290s, gemessene Usage-KostenUSD0.041271/0.044234 bei starkem Cache.
+Keine Mitgliederdaten, Fachaktionen, Rollen- oder Providerflag-Aenderungen.
+Bestehendes DEV/PROD und ClubUnio-Laufzeit unveraendert. Rohdaten bleiben privat;
+Methode, Grenzen, Pilotkosten und Empfehlung: `CLUBUNIO-ASSISTANT-BENCHMARK.md`.
+
 ## Backoffice-Assistent (06.11.2026)
 
 Drei additive Tabellen fuer verschluesselte Gespraeche, Kostenreservierungen und
