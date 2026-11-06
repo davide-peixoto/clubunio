@@ -822,6 +822,100 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->assertTrue($quote['deleted']); $this->assertNull($quote['author_name']);
     }
 
+    public function test_read_receipts_are_own_only_minimized_cursor_based_and_paginated(): void
+    {
+        $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent); $this->teamChat($this->player);
+        $s=app(ChatService::class); $row=$s->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Read cursor source']);
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->update(['read_message_id'=>$row->id]);
+        $path=$this->url('messages/'.$row->id.'/readers');
+        $first=$this->withToken($this->token($this->trainer))->getJson($path.'?limit=1')->assertOk()->assertJsonPath('meta.has_more',true)->json();
+        $this->assertCount(1,$first['data']); $this->assertSame(['account_id','name'],array_keys($first['data'][0]));
+        $this->assertNotSame($this->trainer->id,$first['data'][0]['account_id']);
+        $second=$this->getJson($path.'?limit=1&after='.$first['meta']['next_after'])->assertOk()->assertJsonPath('meta.has_more',false)->json();
+        $this->assertCount(1,$second['data']); $this->assertGreaterThan($first['data'][0]['account_id'],$second['data'][0]['account_id']);
+        $this->getJson($path.'?limit=51')->assertUnprocessable(); $this->getJson($path.'?after=-1')->assertUnprocessable();
+        $this->getJson($path.'?unread=true')->assertUnprocessable();
+        $own=$s->messageDto($this->trainer,$this->tenant,$row); $other=$s->messageDto($this->parent,$this->tenant,$row);
+        $this->assertTrue($own['can_view_readers']); $this->assertFalse($other['can_view_readers']);
+        $this->withToken($this->token($this->parent))->getJson($path)->assertNotFound();
+        $this->withToken($this->token($this->admin))->getJson($path)->assertNotFound();
+        $this->withToken($this->token($this->trainer))->getJson($this->url('chats/'.$chat.'/messages'))->assertOk()->assertJsonPath('meta.read_receipts_supported',true);
+    }
+
+    public function test_read_receipts_recheck_readers_scope_and_never_rejoin_or_create_owner_membership(): void
+    {
+        $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent); $this->teamChat($this->player);
+        $row=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Fresh readers']);
+        $member=$this->db->table('clubora.chat_memberships')->where('conversation_id',$chat);
+        $member->update(['read_message_id'=>$row->id]);
+        $path=$this->url('messages/'.$row->id.'/readers');
+        $this->withToken($this->token($this->trainer));
+        foreach(['not_read','late_join','left','inactive','api_only','revoked_link','no_tenant'] as $reason) {
+            $parentMember=(clone $member)->where('account_id',$this->parent->id);
+            if($reason==='not_read') $parentMember->update(['read_message_id'=>0]);
+            if($reason==='late_join') $parentMember->update(['joined_after'=>$row->id]);
+            if($reason==='left') $parentMember->update(['left_at'=>now()->toIso8601String()]);
+            if($reason==='inactive') $this->db->table('clubora.accounts')->where('id',$this->parent->id)->update(['active'=>false]);
+            if($reason==='api_only') $this->db->table('clubora.accounts')->where('id',$this->parent->id)->update(['api_only'=>true]);
+            if($reason==='revoked_link') $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+            if($reason==='no_tenant') $this->db->table('clubora.tenant_accounts')->where('account_id',$this->parent->id)->delete();
+            $ids=array_column($this->getJson($path)->assertOk()->json('data'),'account_id');
+            $this->assertNotContains($this->parent->id,$ids,$reason); $this->assertContains($this->player->id,$ids);
+            $parentMember->update(['read_message_id'=>$row->id,'joined_after'=>0,'left_at'=>null]);
+            $this->db->table('clubora.accounts')->where('id',$this->parent->id)->update(['active'=>true,'api_only'=>false]);
+            $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'approved']);
+            if($reason==='no_tenant') $this->db->table('clubora.tenant_accounts')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->parent->id,'role'=>'parent','portal_enabled'=>true]);
+        }
+        $owner=(clone $member)->where('account_id',$this->trainer->id);
+        $owner->update(['left_at'=>now()->toIso8601String()]); $before=(array)$owner->first();
+        $this->getJson($path)->assertNotFound(); $this->assertSame($before,(array)$owner->first());
+        $owner->delete(); $this->getJson($path)->assertNotFound(); $this->assertFalse($owner->exists());
+    }
+
+    public function test_read_receipts_advance_empty_filtered_pages_and_make_no_database_writes(): void
+    {
+        $chat=$this->teamChat($this->admin); $row=app(ChatService::class)->send($this->admin,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Bounded read page']);
+        for($i=0;$i<102;$i++) {
+            $account=$this->account('parent');
+            $this->db->table('clubora.chat_memberships')->insert(['tenant_id'=>$this->tenant->id,'conversation_id'=>$chat,'account_id'=>$account->id,'joined_after'=>0,'read_message_id'=>$row->id]);
+        }
+        $last=$this->account('admin');
+        $this->db->table('clubora.chat_memberships')->insert(['tenant_id'=>$this->tenant->id,'conversation_id'=>$chat,'account_id'=>$last->id,'joined_after'=>0,'read_message_id'=>$row->id]);
+        $this->withToken($this->token($this->admin));
+        $path=$this->url('messages/'.$row->id.'/readers');
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $first=$this->getJson($path)->assertOk()->assertJsonCount(0,'data')->assertJsonPath('meta.has_more',true)->json();
+        $this->assertGreaterThan(0,$first['meta']['next_after']);
+        $second=$this->getJson($path.'?after='.$first['meta']['next_after'])->assertOk()->assertJsonPath('meta.has_more',false)->json();
+        $this->assertSame([$last->id],array_column($second['data'],'account_id'));
+        $queries=$this->db->getQueryLog(); $this->db->disableQueryLog();
+        foreach($queries as $query) $this->assertMatchesRegularExpression('/^select\s/i',ltrim($query['query']));
+        $this->db->table('clubora.chat_messages')->where('id',$row->id)->update(['deleted_at'=>now()->toIso8601String()]);
+        $this->getJson($path)->assertNotFound();
+        $this->assertFalse(app(ChatService::class)->messageDto($this->admin,$this->tenant,$this->db->table('clubora.chat_messages')->where('id',$row->id)->first())['can_view_readers']);
+    }
+
+    public function test_read_receipts_close_for_foreign_tenants_owner_join_floor_and_current_direct_blocks(): void
+    {
+        $service=app(ChatService::class); $chat=$service->direct($this->parent,$this->tenant,$this->trainer->id);
+        $message=$service->send($this->parent,$this->tenant,$chat->id,['client_id'=>(string)Str::uuid(),'text'=>'Direct read cursor']);
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat->id)->update(['read_message_id'=>$message->id]);
+        $path=$this->url('messages/'.$message->id.'/readers');
+        $this->withToken($this->token($this->parent))->getJson($path)->assertOk()->assertJsonPath('data.0.account_id',$this->trainer->id);
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat->id)->where('account_id',$this->parent->id)->update(['joined_after'=>$message->id]);
+        $this->getJson($path)->assertNotFound();
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat->id)->where('account_id',$this->parent->id)->update(['joined_after'=>0]);
+        $this->db->table('clubora.chat_blocks')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->trainer->id,'other_account_id'=>$this->parent->id,'created_at'=>now()->toIso8601String()]);
+        $this->getJson($path)->assertNotFound();
+        $other=Tenant::create(['name'=>'Other readers fixture','slug'=>'other-readers']);
+        $otherActor=$this->account('admin',$other);
+        $foreign=$service->ensure($other,'announcements');
+        $foreignId=$this->db->table('clubora.chat_messages')->insertGetId(['tenant_id'=>$other->id,'conversation_id'=>$foreign->id,'account_id'=>$otherActor->id,
+            'client_id'=>(string)Str::uuid(),'kind'=>'text','content_hash'=>str_repeat('0',64),'body_encrypted'=>\Illuminate\Support\Facades\Crypt::encryptString('Foreign'),'created_at'=>now()->toIso8601String()]);
+        $this->getJson($this->url('messages/'.$foreignId.'/readers'))->assertNotFound();
+        Http::assertNothingSent();
+    }
+
     public function test_poll_votes_are_per_account_changeable_and_deadline_enforced(): void
     {
         $chat = $this->teamChat($this->parent);

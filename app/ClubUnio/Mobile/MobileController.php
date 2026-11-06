@@ -104,6 +104,11 @@ final class MobileController
             (int)$r->route('chat'),$r->route('client')));
     }
 
+    public function messageReaders(Request $r)
+    {
+        return response()->json(app(ChatReadReceipts::class)->readers($r,$this->actor($r),$this->tenant($r),(int)$r->route('message')));
+    }
+
     public function send(Request $r)
     {
         return $this->write($r, function () use ($r) {

@@ -276,7 +276,7 @@ final class ChatService
     /** Fresh scope/capabilities, even when a delta has no changed message DTOs. */
     public function deltaMeta(Account $actor, Tenant $tenant, object $chat, int $joinedAfter): array
     {
-        return ['delta_version' => 1, 'reply_supported' => true, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
+        return ['delta_version' => 1, 'reply_supported' => true, 'read_receipts_supported'=>true, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
             'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
             'can_write' => app(ChatAccess::class)->allows($actor, $tenant, 'send') && ($chat->kind !== 'announcements' || app(ChatAccess::class)->allows($actor, $tenant, 'announce'))];
     }
@@ -325,6 +325,7 @@ final class ChatService
             }
             $result[(int) $row->id] = ['id' => (int) $row->id, 'conversation_id' => (int) $row->conversation_id, 'author_id' => (int) $row->account_id,
                 'reply'=>$reply,
+                'can_view_readers'=>!$row->deleted_at && (int)$row->account_id===(int)$actor->id,
                 'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
                 'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
                 'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => (int)$row->account_id === (int)$actor->id ? $row->client_id : null,

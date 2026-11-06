@@ -105,6 +105,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::post('messages/{message}/edit', [Mobile::class, 'editMessage'])->whereNumber('message');
         Route::post('messages/{message}/reaction', [Mobile::class, 'reaction'])->whereNumber('message');
         Route::get('messages/{message}/reactions', [Mobile::class, 'reactionParticipants'])->whereNumber('message');
+        Route::get('messages/{message}/readers', [Mobile::class, 'messageReaders'])->whereNumber('message');
         Route::post('messages/{message}/delete', [Mobile::class, 'deleteMessage'])->whereNumber('message');
         Route::post('messages/{message}/report', [Mobile::class, 'reportMessage'])->whereNumber('message');
         Route::get('chats/{chat}/reports', [Mobile::class, 'reports'])->whereNumber('chat');
