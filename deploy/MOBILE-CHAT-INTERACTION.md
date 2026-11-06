@@ -2,7 +2,7 @@
 
 Stand 06.11.2026. Fortsetzung von MOBILE-CHAT-ASYNC-SEND.md.
 
-Die App soll den Composer beim Übernehmen eines Sendeversuchs sofort freigeben.
+Die App gibt den Composer beim Übernehmen eines Sendeversuchs sofort frei.
 Weitere Nachrichten erhalten unabhängige UUIDs und Zustände; die Bestätigung
 einer älteren Nachricht darf keinen neuen Entwurf löschen. Verschlüsselte
 vorbereitete POSTs, Own-UUID-Abgleich nach Timeout und unveränderte Wiederholung
@@ -31,6 +31,9 @@ Migration `2026_11_06_000300_chat_replies` ergänzt nullable Spalte, Tenant-Frem
 Ordnungscheck und begrenzten Index. Bestehende Inhalte bleiben erhalten. Kein
 Refresh, kein Import. Ein Code-Rollback lässt die additive Spalte und Referenzen
 erhalten; alte Clients zeigen die normale Nachricht ohne Antwortvorschau.
+Bei einem Rückbau auf Code ohne Reply-Changefeed müssen bereits verwendete
+App-Chatcaches vollständig neu abgeglichen werden, bevor alte Zitate weiter
+angezeigt werden. Den schema- und replyfähigen Worker/Service bevorzugt erhalten.
 
 ## Auslieferung
 
@@ -44,4 +47,26 @@ private Firebase-Registry und Push-/Assistantflags bleiben erhalten.
 Own-UUID-Lookup rein lesend. Es erzeugt keine Nachricht und keinen Push.
 Appdetails: mobile/docs/CHAT-COMPOSER-INTERACTION.md.
 
-Tests und tatsächlich ausgeführte DEV-Abnahme werden nachgeführt.
+## DEV-Abnahme
+
+Runtime `d887662` auf DEV als `20261106-clubunio-chat-interaction` aktiv.
+Genau Migration000300 und Ledger atomar angewendet. Beide lesenden Gates erkennen
+die eigene vorhandene Nachricht, nullable Spalte, Fremdschlüssel, Ordnungscheck
+und Index. Lookup81SQL/2224ms vor Aktivierung beziehungsweise2201ms beim
+Aktivieren; das ist ein nicht memoisiertes CLI-Lesegate, keine Sendezeitmessung.
+FPM und Pushtimer aktiv, letzter Worker erfolgreich, `/up`200 und anonymer
+Context401. Vollständige Konfiguration einschließlich privater Registry erhalten.
+Keine künstliche Fachnachricht oder Providerzustellung erzeugt.
+
+80 Backendtests mit 1453 Assertions grün. Gesamte Flutter-Testsuite: 855 Fälle grün,
+darunter Wisch-/Vorschauwidgets in fünf Sprachen, schmale Anzeige mit größerer
+Schrift, mehrere Nachrichten bei wartendem POST, Timeoutabgleich und Reaktionen.
+Analyse von neun betroffenen App-/Testdateien sauber; 2042 Texte in fünf lokalen
+Appkatalogen und 2806 Backendtexte DE/EN einschließlich Literalprüfung erfolgreich.
+Nach der letzten Korrektur für echte401-Antworten nach SDK-Sitzungsablauf nochmals
+46 gezielte Fälle grün: POST-/Lookup401, Mehrfachversand, Timeout-Retry,
+Wischantworten und alle zehn Reaktionsfälle. Keine neuen nativen Abhängigkeiten;
+neuer Appstand erforderlich.
+
+Paketmanifest `ae2118a3f7ed0da20878698fbd381a0cc67366286936c40677b0b510a9f39a26`,
+Releasescript `9bf09ccc39b5cf365e4e6ce07b24b07c199f03f7deab25a173f854d70df3b64a`.

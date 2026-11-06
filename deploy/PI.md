@@ -2308,3 +2308,20 @@ KompletteConfig/Registry/Flags/ENV/Composererhalten, FPM/Timeraktiv, Health200.
 AppzeigtsofortPending, sichereverschlüsselteWiederaufnahme/Timeoutlookup,
 keinAutoReplaybei404, alterBody/UUIDbeiRetry. NeuerAppstandfürUIerforderlich.
 MOBILE-CHAT-ASYNC-SEND.md / App CHAT-RELIABLE-SEND.md.
+
+## 06.11.2026: Chat ohne blockierten Composer und mit Wischantworten
+
+DEV aktiv: 20261106-clubunio-chat-interaction, Runtime d887662, Basis async-locks.
+Genau die additive Replymigration000300 atomar mit Ledger angewendet; nullable
+Referenz, Tenant-FK/Ordnungscheck/Index, frische Chat-/Joinfloorprüfung und gebündelte
+Livezitate. Edit/Delete aktualisiert Antwortzitate auch im Delta. 80 Backendtests
+mit1453Assertions grün. Beide lesenden DEV-Gates erfolgreich: 81SQL,2224 beziehungsweise
+2201ms CLI-Lookup; keine Sendezeitmessung. Vollständige Konfiguration einschließlich
+Registry, Push-/Assistantflags, ENV und Composer erhalten. FPM und Pushtimer aktiv,
+Worker erfolgreich, Health200/context401. Keine Testnachricht erzeugt.
+App: getrennte Sendeversuche, sofort freies Feld, optimistische Reaktionen mit Status,
+Antwort per Wischgeste. Abschließende Appprüfungen in MOBILE-CHAT-INTERACTION.md.
+
+App-Gesamtsuite mit 855 Fällen und anschließend 46 gezielte Regressionen nach der
+letzten Sitzungsablaufkorrektur grün. Neun Dateien ohne Analysebefund; 2042 Texte
+in fünf Appkatalogen und 2806 Backendschlüssel DE/EN geprüft. Aktueller Appstand nötig.

@@ -189,7 +189,7 @@ SQL);
 CREATE TABLE clubora.chat_conversations (id integer PRIMARY KEY, tenant_id integer, kind text, scope_key text, team_season_id integer, event_id integer);
 CREATE TABLE clubora.chat_memberships (tenant_id integer, conversation_id integer, account_id integer, joined_after integer, left_at text, read_message_id integer, muted boolean);
 CREATE TABLE clubora.chat_blocks (tenant_id integer, account_id integer, other_account_id integer);
-CREATE TABLE clubora.chat_messages (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, account_id integer, client_id text, content_hash text, kind text, body_encrypted text, object_id integer, revision integer DEFAULT 1, created_at text, deleted_at text);
+CREATE TABLE clubora.chat_messages (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, account_id integer, client_id text, content_hash text, kind text, body_encrypted text, object_id integer, revision integer DEFAULT 1, created_at text, deleted_at text, reply_to_message_id integer);
 CREATE TABLE clubora.chat_polls (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, question text, options text, multiple boolean, closes_at text);
 CREATE TABLE clubora.chat_changes (tenant_id integer, conversation_id integer, message_id integer, actor_id integer, action text, revision integer, created_at text);
 INSERT INTO clubora.chat_conversations VALUES (1, 10, 'direct', 'direct:1:2', null, null), (2, 10, 'direct', 'direct:2:3', null, null);
