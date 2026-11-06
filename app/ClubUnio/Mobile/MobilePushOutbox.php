@@ -45,8 +45,9 @@ final class MobilePushOutbox
         $request = request();
         $previousScope = $request->attributes->get('mobile.season_scope');
         $request->attributes->set('mobile.season_scope', true);
+        $lockedProjection=app(MobileReadContext::class)->lockedFor($actor,$tenant);
         foreach (array_keys($request->attributes->all()) as $key) {
-            if (str_starts_with($key, 'mobile.current_season.'.$tenant->id.'.')) $request->attributes->remove($key);
+            if (!$lockedProjection && str_starts_with($key, 'mobile.current_season.'.$tenant->id.'.')) $request->attributes->remove($key);
         }
         try {
             app(MobileAccess::class)->enter($actor, $tenant);

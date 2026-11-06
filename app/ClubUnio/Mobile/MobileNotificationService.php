@@ -18,7 +18,7 @@ final class MobileNotificationService
     /** References real, currently visible owned source rows, never copies private payloads. */
     private function allowed(Account $actor, Tenant $tenant, string $kind, int $object, array &$rights): bool
     {
-        // A single read projection only. Never retained by this service or used for writes/delivery.
+        // One operation only; mutation callers hold the tenant lock throughout authorization.
         $key = $kind.':'.$object;
         return $rights[$key] ??= app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $kind, $object, false);
     }
@@ -110,29 +110,56 @@ final class MobileNotificationService
 
     public function count(Account $actor, Tenant $tenant): array
     {
-        $all = $this->visible($actor, $tenant);
-        return ['unreadCount' => count(array_filter($all, fn ($r) => $r->read_at === null)), 'watermark' => (int) ($all[0]->id ?? 0)];
+        $rights=[]; $this->materialize($actor,$tenant,$rights); $unread=0;
+        foreach($this->rows($actor,$tenant)->whereNull('read_at')->cursor() as $row) {
+            if($this->allowed($actor,$tenant,$row->kind,(int)$row->object_id,$rights)) $unread++;
+        }
+        return ['unreadCount'=>$unread,'watermark'=>(int)($this->rows($actor,$tenant)->max('id')??0)];
     }
 
-    public function read(Account $actor, Tenant $tenant, ?int $id, ?int $through): array
+    public function read(Account $actor, Tenant $tenant, ?int $id, ?int $through, array $observed = []): array
     {
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $through) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $through, $observed) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $rows = $id ? $this->rows($actor, $tenant)->where('id', $id)->get() : $this->rows($actor, $tenant)->where('id', '<=', $through)->whereNull('read_at')->get();
-            if ($id && $rows->isEmpty()) abort(404);
-            foreach ($rows as $row) {
-                if (! app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $row->kind, (int) $row->object_id, false)) {
-                    if ($id) abort(404);
-                    continue;
-                }
-                $this->rows($actor, $tenant)->where('id', $row->id)->whereNull('read_at')->update(['read_at' => now()->toIso8601String()]);
-                if (preg_match('/^notification:([1-9][0-9]*)$/D', $row->event_key, $matches)) {
-                    DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
-                        ->where('id', $matches[1])->where('object_id', $row->object_id)->whereIn('object_type', array_keys(self::SOURCES, $row->kind, true))
-                        ->whereNull('read_at')->update(['read_at' => DB::connection('clubunio')->raw('clock_timestamp()::timestamp')]);
-                }
+            if(count($observed)>100 || array_filter($observed,fn($value)=>(!is_int($value) && !(is_string($value)&&ctype_digit($value))) || (int)$value<=0)) {
+                throw new \InvalidArgumentException('Invalid observed notification identifiers');
             }
-            return ['unreadCount' => $this->count($actor, $tenant)['unreadCount'], 'read' => true];
+            $observed=array_unique(array_map('intval',$observed)); $rights=[];
+            // Materialization/source-sync can write metadata, so it stays outside the facts frame.
+            $this->materialize($actor,$tenant,$rights);
+            $projection=app(MobileReadContext::class)->duringLockedProjection(request(),$actor,$tenant,function()use($actor,$tenant,$id,$through,$observed,&$rights){
+                $unread=$this->rows($actor,$tenant)->whereNull('read_at')->get();
+                $checked=$id!==null ? $this->rows($actor,$tenant)->where('id',$id)->get()
+                    : ($observed ? $this->rows($actor,$tenant)->whereIn('id',$observed)->where('id','<=',$through)->get() : collect());
+                if($id!==null && $checked->isEmpty()) abort(404);
+                $marked=[]; $confirmed=[]; $remaining=0;
+                foreach($unread->concat($checked)->unique('id') as $row) {
+                    $allowed=$this->allowed($actor,$tenant,$row->kind,(int)$row->object_id,$rights);
+                    if(!$allowed) { if($id!==null && (int)$row->id===$id) abort(404); continue; }
+                    $selected=$id!==null ? (int)$row->id===$id : (int)$row->id<=(int)$through;
+                    if($row->read_at===null) {
+                        if($selected) $marked[]=(int)$row->id;
+                        else $remaining++;
+                    }
+                    if(($id!==null || in_array((int)$row->id,$observed,true)) && ($row->read_at!==null || $selected)) $confirmed[]=(int)$row->id;
+                }
+                return ['marked'=>$marked,'confirmed'=>$confirmed,'remaining'=>$remaining];
+            });
+            // No authorization snapshot survives into the read-marker writes.
+            $stamp=now()->toIso8601String();
+            foreach(array_chunk($projection['marked'],500) as $ids) {
+                $this->rows($actor,$tenant)->whereIn('id',$ids)->whereNull('read_at')->update(['read_at'=>$stamp]);
+                $indexed=DB::connection('clubunio')->table('clubora.mobile_inbox as indexed')->where('indexed.tenant_id',$tenant->id)
+                    ->where('indexed.account_id',$actor->id)->whereIn('indexed.id',$ids)
+                    ->whereColumn('indexed.object_id','source.object_id')->whereRaw("indexed.event_key = 'notification:' || source.id::text")
+                    ->whereRaw("indexed.kind = CASE source.object_type
+                        WHEN 'expense' THEN 'expense' WHEN 'registration' THEN 'registration' WHEN 'bus_reservation' THEN 'bus'
+                        WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' WHEN 'pitch_planning' THEN 'pitch_planning' END");
+                DB::connection('clubunio')->table('clubora.notifications as source')->where('source.tenant_id',$tenant->id)
+                    ->where('source.account_id',$actor->id)->whereNull('source.read_at')->whereExists($indexed->selectRaw('1'))->update(['read_at'=>$stamp]);
+            }
+            return ['unreadCount'=>$projection['remaining'],'read'=>true,'through_id'=>$through,
+                'marked_ids'=>$projection['marked'],'read_ids'=>$projection['confirmed']];
         });
     }
 }
