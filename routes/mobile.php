@@ -85,6 +85,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::post('direct', [Mobile::class, 'direct']);
         Route::get('chats/{chat}', [Mobile::class, 'chat'])->whereNumber('chat');
         Route::get('chats/{chat}/messages', [Mobile::class, 'messages'])->whereNumber('chat');
+        Route::get('chats/{chat}/messages/by-client/{client}', [Mobile::class, 'messageByClient'])->whereNumber('chat')->whereUuid('client');
         Route::post('chats/{chat}/messages', [Mobile::class, 'send'])->whereNumber('chat');
         Route::post('chats/{chat}/read', [Mobile::class, 'read'])->whereNumber('chat');
         Route::post('chats/{chat}/mute', [Mobile::class, 'mute'])->whereNumber('chat');

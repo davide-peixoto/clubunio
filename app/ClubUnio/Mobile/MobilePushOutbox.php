@@ -133,19 +133,27 @@ final class MobilePushOutbox
         });
     }
 
-    public function chatMessage(Account $sender, Tenant $tenant, object $message): void
+    public function chatMessage(Account $sender, Tenant $tenant, object $message, ?string $sourceCreatedAt = null): int
     {
-        if (! config('clubunio-mobile-push.enabled', false)) return;
+        if (! config('clubunio-mobile-push.enabled', false)) return 0;
+        $count = 0;
         foreach ($tenant->accounts()->where('active', true)->where('api_only', false)->where('accounts.id', '<>', $sender->id)
-            ->whereExists($this->bindings($tenant)->whereColumn('b.account_id', 'clubora.accounts.id')->selectRaw('1'))->get() as $actor) {
-            $this->enqueue($actor, $tenant, $message->kind === 'announcement' ? 'announcement' : 'chat',
-                (int) $message->conversation_id, 'chat.message:'.$message->id);
+            ->whereExists($this->bindings($tenant, $sourceCreatedAt)->whereColumn('b.account_id', 'clubora.accounts.id')->selectRaw('1'))->get() as $actor) {
+            $count += $this->enqueue($actor, $tenant, $message->kind === 'announcement' ? 'announcement' : 'chat',
+                (int) $message->conversation_id, 'chat.message:'.$message->id, $sourceCreatedAt);
         }
+        return $count;
     }
 
     private function publicationCurrent(Tenant $tenant, object $row): bool
     {
         if ($row->kind === 'admin_notice') return app(MobileAdminNoticeAccess::class)->publicationCurrent($tenant, (int) $row->object_id);
+        if (str_starts_with($row->event_key, 'chat.message:')) {
+            if (! preg_match('/^chat\.message:([1-9][0-9]*)$/D', $row->event_key, $matches)) return false;
+            $source = app(ChatPushPublications::class)->source($tenant, (int) $matches[1]);
+            return $source && (int) $source['message']->conversation_id === (int) $row->object_id
+                && $row->kind === ($source['message']->kind === 'announcement' ? 'announcement' : 'chat');
+        }
         if ($row->kind !== 'planning' || ! str_starts_with($row->event_key, 'squad:')) return true;
         if (! preg_match('/^squad:([1-9][0-9]*):([0-9a-f-]{36})$/D', $row->event_key, $matches)) return false;
         $command = DB::connection('clubunio')->table('clubora.mobile_push_commands')->where('tenant_id', $tenant->id)

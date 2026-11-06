@@ -421,7 +421,10 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
 CREATE TABLE clubora.mobile_push_bindings (id text PRIMARY KEY, device_id text, account_id integer, session_id text, revision integer DEFAULT 1, revoked_at text, created_at text);
 CREATE TABLE clubora.mobile_push_outbox (id text PRIMARY KEY, binding_id text, account_id integer, device_id text, tenant_id integer,
 kind text, object_id integer, event_key text, device_revision integer, binding_revision integer, created_at text,
-UNIQUE(binding_id,tenant_id,event_key));');
+UNIQUE(binding_id,tenant_id,event_key));
+CREATE TABLE clubora.mobile_chat_publications (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,account_id integer,message_id integer,
+state text DEFAULT \'pending\',attempts integer DEFAULT 0,next_attempt_at text,queued_count integer DEFAULT 0,last_error_code text,
+created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         config(['clubunio-mobile-push.enabled'=>true]);
     }
 
@@ -512,6 +515,170 @@ UNIQUE(binding_id,tenant_id,event_key));');
             $queries=$this->db->getQueryLog();
         } finally { $this->db->disableQueryLog(); }
         $this->assertSame([],$queries);
+    }
+
+    public function test_lookup_by_client_is_owned_fresh_scoped_and_foreign_message_uuids_are_private(): void
+    {
+        $chat=$this->teamChat($this->parent); $this->teamChat($this->trainer);
+        $token=$this->token($this->parent); $client=(string)Str::uuid();
+        $row=$this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'),['client_id'=>$client,'text'=>'Saved before timeout'])->assertCreated()->json('data');
+        $lookup=$this->url('chats/'.$chat.'/messages/by-client/'.$client);
+        $this->getJson($lookup)->assertOk()->assertJsonPath('data.id',$row['id'])->assertJsonPath('data.client_id',$client);
+        $this->getJson($this->url('chats/'.$chat.'/messages/by-client/'.Str::uuid()))->assertNotFound();
+        $this->getJson($this->url('chats/99999/messages/by-client/'.$client))->assertNotFound();
+        $this->withToken($this->token($this->trainer))->getJson($lookup)->assertNotFound();
+        $this->getJson($this->url('chats/'.$chat.'/messages'))->assertOk()->assertJsonPath('data.0.client_id',null);
+        $this->withToken($token);
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id)->update(['joined_after'=>$row['id']]);
+        $this->getJson($lookup)->assertNotFound();
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id)->update(['joined_after'=>0]);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+        $this->getJson($lookup)->assertForbidden();
+    }
+
+    public function test_lookup_by_client_never_creates_membership_or_rejoins_left_accounts_and_only_reads(): void
+    {
+        $chat=$this->teamChat($this->parent); $client=(string)Str::uuid();
+        $row=app(ChatService::class)->send($this->parent,$this->tenant,$chat,['client_id'=>$client,'text'=>'Read only lookup']);
+        $membership=$this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id);
+        $service=app(ChatService::class);
+        $read=function()use($service,$chat,$client) {
+            $this->db->enableQueryLog(); $this->db->flushQueryLog();
+            try { return $service->messageByClient($this->parent,$this->tenant,$chat,$client); }
+            finally {
+                $queries=$this->db->getQueryLog(); $this->db->disableQueryLog();
+                $this->assertNotEmpty($queries);
+                foreach($queries as $query) $this->assertMatchesRegularExpression('/^select\s/i',ltrim($query['query']));
+            }
+        };
+        $this->assertSame((int)$row->id,$read()['id']);
+        $membership->update(['left_at'=>now()->toIso8601String()]);
+        $before=(array)$membership->first();
+        try { $read(); $this->fail('Left member cannot recover a message'); }
+        catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) { $this->assertSame(404,$error->getStatusCode()); }
+        $this->assertSame($before,(array)$membership->first());
+        $membership->delete();
+        try { $read(); $this->fail('Missing member cannot recover a message'); }
+        catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) { $this->assertSame(404,$error->getStatusCode()); }
+        $this->assertFalse($membership->exists());
+    }
+
+    public function test_message_and_publication_are_atomic_and_post_never_calculates_push_recipients(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->parent);
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushOutbox::class,new class {
+            public function chatMessage(...$args): int { throw new \LogicException('Inline fanout is forbidden'); }
+        });
+        $token=$this->token($this->parent); $payload=['client_id'=>(string)Str::uuid(),'text'=>'Atomic chat publication'];
+        $row=$this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'),$payload)->assertCreated()->json('data');
+        $this->postJson($this->url('chats/'.$chat.'/messages'),$payload)->assertCreated()->assertJsonPath('data.id',$row['id']);
+        $this->postJson($this->url('chats/'.$chat.'/messages'),array_replace($payload,['text'=>'Different payload']))->assertConflict();
+        $this->assertSame(1,$this->db->table('clubora.chat_messages')->where('conversation_id',$chat)->count());
+        $this->assertSame(1,$this->db->table('clubora.mobile_chat_publications')->count());
+        $this->assertSame(0,$this->db->table('clubora.mobile_push_outbox')->count());
+        $this->app->instance(\App\ClubUnio\Mobile\ChatPushPublications::class,new class {
+            public function record(...$args): void { throw new \RuntimeException('Synthetic intent failure'); }
+        });
+        $failed=(string)Str::uuid();
+        try { app(ChatService::class)->send($this->parent,$this->tenant,$chat,['client_id'=>$failed,'text'=>'Must roll back']); $this->fail('Intent failure accepted'); }
+        catch(\RuntimeException $error) { $this->assertSame('Synthetic intent failure',$error->getMessage()); }
+        $this->assertFalse($this->db->table('clubora.chat_messages')->where('client_id',$failed)->exists());
+        $this->assertSame(1,$this->db->table('clubora.chat_changes')->count());
+        $this->assertSame(0,$this->db->transactionLevel());
+    }
+
+    public function test_publication_worker_rolls_back_partial_fanout_retries_and_is_idempotent(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent); $this->pushBinding($this->parent);
+        $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Background only']);
+        $real=new \App\ClubUnio\Mobile\MobilePushOutbox;
+        $fault=new class($real) {
+            public bool $fail=true;
+            public function __construct(private $real) {}
+            public function chatMessage(...$args): int {
+                $count=$this->real->chatMessage(...$args);
+                if($this->fail) throw new \RuntimeException('Synthetic partial fanout failure');
+                return $count;
+            }
+        };
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushOutbox::class,$fault);
+        $worker=app(\App\ClubUnio\Mobile\ChatPushPublications::class);
+        $this->assertTrue($worker->processOne());
+        $job=$this->db->table('clubora.mobile_chat_publications')->first();
+        $this->assertSame('pending',$job->state); $this->assertSame(1,(int)$job->attempts);
+        $this->assertSame(0,$this->db->table('clubora.mobile_push_outbox')->count(),'Partial outbox insert must roll back');
+        $this->assertFalse($worker->processOne(),'Retry backoff must not busy-loop');
+        $this->db->table('clubora.mobile_chat_publications')->update(['next_attempt_at'=>now()->subMinute()->toIso8601String()]);
+        $fault->fail=false;
+        $this->assertTrue($worker->processOne()); $this->assertFalse($worker->processOne());
+        $job=$this->db->table('clubora.mobile_chat_publications')->first();
+        $this->assertSame('done',$job->state); $this->assertSame(2,(int)$job->attempts); $this->assertSame(1,(int)$job->queued_count);
+        $this->assertSame(1,$this->db->table('clubora.mobile_push_outbox')->count());
+        $this->assertSame('chat.message:'.$message->id,$this->db->table('clubora.mobile_push_outbox')->value('event_key'));
+        Http::assertNothingSent();
+    }
+
+    public function test_publication_worker_discards_deleted_or_revoked_source_and_excludes_late_optin(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent);
+        $worker=app(\App\ClubUnio\Mobile\ChatPushPublications::class);
+        $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'No retrospective device delivery']);
+        $proof=$this->pushBinding($this->parent);
+        $this->db->table('clubora.mobile_push_bindings')->where('id',$proof['binding'])->update(['created_at'=>now()->addHour()->toIso8601String()]);
+        $this->assertTrue($worker->processOne());
+        $this->assertSame(0,$this->db->table('clubora.mobile_chat_publications')->where('message_id',$message->id)->value('queued_count'));
+        foreach(['deleted','inactive','left','revoked'] as $reason) {
+            $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Fresh source '.$reason]);
+            if($reason==='deleted') $this->db->table('clubora.chat_messages')->where('id',$message->id)->update(['deleted_at'=>now()->toIso8601String()]);
+            if($reason==='inactive') $this->db->table('clubora.accounts')->where('id',$this->trainer->id)->update(['active'=>false]);
+            if($reason==='left') $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->trainer->id)->update(['left_at'=>now()->toIso8601String()]);
+            if($reason==='revoked') $this->db->table('clubora.account_member_links')->where('account_id',$this->trainer->id)->update(['state'=>'revoked']);
+            $this->assertTrue($worker->processOne());
+            $this->assertSame('discarded',$this->db->table('clubora.mobile_chat_publications')->where('message_id',$message->id)->value('state'),$reason);
+            $this->db->table('clubora.accounts')->where('id',$this->trainer->id)->update(['active'=>true]);
+            $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->trainer->id)->update(['left_at'=>null]);
+            $this->db->table('clubora.account_member_links')->where('account_id',$this->trainer->id)->update(['state'=>'approved']);
+        }
+        $this->assertSame(0,$this->db->table('clubora.mobile_push_outbox')->count());
+    }
+
+    public function test_queued_publication_rechecks_source_before_provider_without_exposing_deleted_or_revoked_messages(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent);
+        $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Final source check']);
+        $outbox=new \App\ClubUnio\Mobile\MobilePushOutbox;
+        $check=new \ReflectionMethod($outbox,'publicationCurrent');
+        $row=(object)['kind'=>'chat','object_id'=>$chat,'event_key'=>'chat.message:'.$message->id];
+        $this->assertTrue($check->invoke($outbox,$this->tenant,$row));
+        $wrong=clone $row; $wrong->object_id=$chat+999;
+        $this->assertFalse($check->invoke($outbox,$this->tenant,$wrong));
+        $wrong=clone $row; $wrong->kind='announcement';
+        $this->assertFalse($check->invoke($outbox,$this->tenant,$wrong));
+        $wrong=clone $row; $wrong->event_key='chat.message:invalid';
+        $this->assertFalse($check->invoke($outbox,$this->tenant,$wrong));
+        $this->db->table('clubora.chat_messages')->where('id',$message->id)->update(['deleted_at'=>now()->toIso8601String()]);
+        $this->assertFalse($check->invoke($outbox,$this->tenant,$row));
+        $this->db->table('clubora.chat_messages')->where('id',$message->id)->update(['deleted_at'=>null]);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->trainer->id)->update(['state'=>'revoked']);
+        $this->assertFalse($check->invoke($outbox,$this->tenant,$row));
+        Http::assertNothingSent();
+    }
+
+    public function test_publication_retry_budget_stops_after_five_failures(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->trainer);
+        app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Bounded retry']);
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushOutbox::class,new class {
+            public function chatMessage(...$args): int { throw new \RuntimeException('Synthetic retry failure'); }
+        });
+        $worker=app(\App\ClubUnio\Mobile\ChatPushPublications::class);
+        for($i=0;$i<5;$i++) {
+            $this->db->table('clubora.mobile_chat_publications')->update(['next_attempt_at'=>now()->subMinute()->toIso8601String()]);
+            $this->assertTrue($worker->processOne());
+        }
+        $job=$this->db->table('clubora.mobile_chat_publications')->first();
+        $this->assertSame('attention',$job->state); $this->assertSame(5,(int)$job->attempts);
+        $this->assertFalse($worker->processOne()); $this->assertSame(0,$this->db->transactionLevel());
     }
 
     public function test_message_projection_query_count_is_constant_and_attachment_payloads_are_not_selected(): void

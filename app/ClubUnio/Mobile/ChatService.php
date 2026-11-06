@@ -310,7 +310,7 @@ final class ChatService
             $result[(int) $row->id] = ['id' => (int) $row->id, 'conversation_id' => (int) $row->conversation_id, 'author_id' => (int) $row->account_id,
                 'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
                 'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
-                'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => $row->client_id,
+                'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => (int)$row->account_id === (int)$actor->id ? $row->client_id : null,
                 'can_react' => $canSend && !$row->deleted_at,
                 'reactions' => ($reactions[(int) $row->id] ?? collect())->groupBy('emoji')->map(fn ($group, $emoji) => [
                     'emoji' => $emoji, 'count' => $group->count(), 'mine' => $group->contains(fn ($reaction) => (int) $reaction->account_id === (int) $actor->id),
@@ -326,7 +326,28 @@ final class ChatService
         return $result;
     }
 
+    public function messageByClient(Account $actor,Tenant $tenant,int $chatId,string $client): array
+    {
+        abort_unless(Str::isUuid($client),404);
+        app(ChatAccess::class)->authorize($actor,$tenant,'view');
+        $chat=$this->table($tenant,'chat_conversations')->where('id',$chatId)->first();
+        abort_unless($chat && $this->allowed($actor,$tenant,$chat),404);
+        $membership=$this->table($tenant,'chat_memberships')->where('conversation_id',$chatId)->where('account_id',$actor->id)->first();
+        abort_unless($membership && $membership->left_at===null,404);
+        $row=$this->table($tenant,'chat_messages')->where('conversation_id',$chatId)->where('account_id',$actor->id)->where('client_id',$client)->firstOrFail();
+        abort_unless((int)$row->id>(int)$membership->joined_after,404);
+        return $this->messageDto($actor,$tenant,$row);
+    }
+
     public function send(Account $actor, Tenant $tenant, int $chatId, array $input): object
+    {
+        return DB::connection('clubunio')->transaction(function()use($actor,$tenant,$chatId,$input){
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            return $this->persistMessage($actor,$tenant,$chatId,$input);
+        });
+    }
+
+    private function persistMessage(Account $actor, Tenant $tenant, int $chatId, array $input): object
     {
         app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $chat = $this->chat($actor, $tenant, $chatId, true);
@@ -397,7 +418,7 @@ final class ChatService
         }
         app(ChatControls::class)->record($actor, $tenant, $row, 'send');
         if (config('clubunio-mobile-push.enabled', false)) {
-            app(MobilePushOutbox::class)->chatMessage($actor, $tenant, $row);
+            app(ChatPushPublications::class)->record($actor, $tenant, $row);
         }
         return $row;
     }

@@ -97,6 +97,12 @@ final class MobileController
         return response()->json(app(ChatService::class)->messages($this->actor($r), $this->tenant($r), (int) $r->route('chat'), (int) ($d['after'] ?? 0), (int) ($d['before'] ?? 0)));
     }
 
+    public function messageByClient(Request $r)
+    {
+        return $this->data(app(ChatService::class)->messageByClient($this->actor($r),$this->tenant($r),
+            (int)$r->route('chat'),$r->route('client')));
+    }
+
     public function send(Request $r)
     {
         return $this->write($r, function () use ($r) {

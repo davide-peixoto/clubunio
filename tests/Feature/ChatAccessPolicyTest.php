@@ -29,6 +29,8 @@ final class ChatAccessPolicyTest extends TestCase
         $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $this->db->unprepared(<<<'SQL'
 CREATE TABLE clubora.accounts (id integer PRIMARY KEY, active boolean, api_only boolean, display_name text);
+CREATE TABLE clubora.tenants (id integer PRIMARY KEY);
+INSERT INTO clubora.tenants VALUES (10);
 CREATE TABLE clubora.tenant_accounts (account_id integer, tenant_id integer, role text, access_profile_id integer);
 CREATE TABLE clubora.account_roles (code text PRIMARY KEY, active boolean);
 CREATE TABLE clubora.access_profiles (id integer PRIMARY KEY, tenant_id integer, active boolean, permissions text);
