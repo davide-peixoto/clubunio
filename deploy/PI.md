@@ -2280,3 +2280,16 @@ Mitteilungen reproduziert/behoben. Posteingang und Push verwenden dieselbe
 strikte Zielzuordnung; Mandanten-/Objektprüfungen bleiben.30Flutterfälle grün,
 Analyse sauber. Kein Backend-/DB-/DEV-Wechsel; aktueller Appbuild erforderlich.
 CLUBUNIO-PITCH-NOTIFICATIONS.md; App docs/PERSONAL-NOTIFICATIONS.md.
+
+
+## 06.11.2026: Chatversand ohne Push-Timeout
+
+DEV aktiv20261106-clubunio-chat-send-push-candidates, Runtimefae451d,
+Basisassistant-v1 unverändert erhalten. Sendeversuch499 bei bereits gespeicherter
+Nachricht: Pushfanout prüfte36Konten/2024SQL/55.199s auch ohne Gerät. Jetzt aktive
+Bindingkandidaten zuerst, danach frische Objekt-/Mute-/Leave-/Revoke-Rechte.
+Lesendes Gate31ms/1SQL; Teiloperation, keine neueNachricht/Pushqueue für Abnahme.
+55Backendtests/1019Assertions und27Fluttertests grün,2806DE/EN-Schlüssel geprüft.
+KompletteConfig/Assistant-/Pushflags/Registry/ENV/Composer erhalten, FPM/Timeraktiv,
+Health200/context401. Keine Migration/Appcodeänderung/neuerBuild erforderlich.
+MOBILE-CHAT-SEND-PERFORMANCE.md.

@@ -50,3 +50,17 @@ READ-ONLY-Transaktionskontext; keine Neuveröffentlichung oder Queuemutation.
 Vollständige MobileCommunicationTest:55Tests/1019Assertions grün,3neue
 Pushfälle/29Assertions separat grün. PHP-Lint/diffcheck sauber.
 Rolloutmessung wird nach Durchführung ergänzt.
+
+
+## DEV-Auslieferung 06.11.2026
+
+Aktiv20261106-clubunio-chat-send-push-candidates ausfae451d, Basisassistant-v1.
+ZweiManifestdateien/Baselinehash geprüft. Kandidatgate41ms/1SQL, vorAktivierung
+31ms/1SQL; dieselbe bestehende Nachricht, READ ONLY, keine neueNachricht/Pushqueue.
+Bisherige Empfängerrechteprojektion55199ms/2024SQL (36Kandidaten), jetzt nur
+zustellfähigeKonten. Diese Messung betrifft Fanout, nicht die gesamte HTTP-Anfrage.
+ENV-/Composerbytes und kompletteKonfiguration einschliesslich Assistant-/Pushflags
+und privaterRegistry erhalten. FPM/Push-Timer aktiv, Health200/context401.
+Manifestc69980b000d332657afe2ae4a6af4335ac5baec1807d425e28a578a25c8eff2b.
+55Backendtests/1019Assertions,27Fluttertests grün,2806DE/EN-Schlüssel geprüft.
+Keine künstliche Nachricht oder Providerzustellung. Kein neuerAppbuild nötig.
