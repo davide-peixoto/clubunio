@@ -276,7 +276,7 @@ final class ChatService
     /** Fresh scope/capabilities, even when a delta has no changed message DTOs. */
     public function deltaMeta(Account $actor, Tenant $tenant, object $chat, int $joinedAfter): array
     {
-        return ['delta_version' => 1, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
+        return ['delta_version' => 1, 'reply_supported' => true, 'server_time' => now()->toIso8601String(), 'joined_after' => $joinedAfter,
             'can_moderate' => app(ChatControls::class)->moderator($actor, $tenant, $chat),
             'can_write' => app(ChatAccess::class)->allows($actor, $tenant, 'send') && ($chat->kind !== 'announcements' || app(ChatAccess::class)->allows($actor, $tenant, 'announce'))];
     }
@@ -299,6 +299,13 @@ final class ChatService
         $attachments = app(ChatAttachments::class)->forMessages($tenant, $visible->pluck('id')->all());
         $polls = $this->pollDtos($actor, $tenant, $visible->where('kind', 'poll')->pluck('object_id')->unique()->all());
         $reactions = $this->table($tenant, 'chat_reactions')->whereIn('message_id', $visible->pluck('id'))->get(['message_id', 'account_id', 'emoji'])->groupBy('message_id');
+        $replyIds=$visible->pluck('reply_to_message_id')->filter()->unique();
+        $quotes=$replyIds->isEmpty()?collect():DB::connection('clubunio')->table('clubora.chat_messages as quote')
+            ->join('clubora.chat_memberships as qm',function($join)use($actor){
+                $join->on('qm.tenant_id','=','quote.tenant_id')->on('qm.conversation_id','=','quote.conversation_id')->where('qm.account_id',$actor->id);
+            })->leftJoin('clubora.accounts as qa','qa.id','=','quote.account_id')
+            ->where('quote.tenant_id',$tenant->id)->whereIn('quote.id',$replyIds)->whereNull('qm.left_at')
+            ->whereColumn('quote.id','>','qm.joined_after')->get(['quote.id','quote.conversation_id','quote.kind','quote.body_encrypted','quote.deleted_at','qa.display_name'])->keyBy('id');
         $moderated = [];
         $foreign = $visible->filter(fn ($row) => (int) $row->account_id !== (int) $actor->id
             || ($row->kind === 'announcement' && !$canAnnounce))->pluck('conversation_id')->unique()->all();
@@ -307,7 +314,17 @@ final class ChatService
         }
         $result = [];
         foreach ($rows as $row) {
+            $reply=null;
+            if(!$row->deleted_at && ($replyId=$row->reply_to_message_id??null)) {
+                $quote=$quotes[$replyId]??null;
+                $readable=$quote && !$quote->deleted_at && (int)$quote->conversation_id===(int)$row->conversation_id;
+                $reply=['id'=>(int)$replyId,'deleted'=>!$readable,
+                    'author_name'=>$readable?$quote->display_name:null,
+                    'text'=>$readable?mb_substr(Crypt::decryptString($quote->body_encrypted),0,240):null,
+                    'kind'=>$readable?$quote->kind:null];
+            }
             $result[(int) $row->id] = ['id' => (int) $row->id, 'conversation_id' => (int) $row->conversation_id, 'author_id' => (int) $row->account_id,
+                'reply'=>$reply,
                 'author_name' => $authors[$row->account_id] ?? null, 'kind' => $row->kind,
                 'text' => $row->deleted_at ? '' : Crypt::decryptString($row->body_encrypted), 'deleted' => (bool) $row->deleted_at,
                 'revision' => (int) $row->revision, 'created_at' => $row->created_at, 'client_id' => (int)$row->account_id === (int)$actor->id ? $row->client_id : null,
@@ -363,6 +380,7 @@ final class ChatService
         if($chat->kind==='announcements') app(ChatAccess::class)->authorize($actor,$tenant,'announce');
         $this->membership($actor,$tenant,$chat);
         $data = Validator::make($input, ['client_id' => 'required|uuid', 'text' => 'required|string|max:4000',
+            'reply_to_message_id'=>'sometimes|nullable|integer|min:1',
             'kind' => 'nullable|in:text,event,poll,announcement', 'event_id' => 'nullable|integer|min:1',
             'recipient_fingerprint' => 'nullable|string|size:64', 'attachment_id' => 'nullable|uuid',
             'poll' => 'nullable|array', 'poll.options' => 'required_if:kind,poll|array|min:2|max:10',
@@ -382,6 +400,12 @@ final class ChatService
             abort_unless((int) $old->conversation_id === $chatId && hash_equals($old->content_hash, $hash), 409);
 
             return $old;
+        }
+        $reply=$data['reply_to_message_id']??null;
+        if($reply!==null) {
+            $joined=$this->table($tenant,'chat_memberships')->where('conversation_id',$chatId)->where('account_id',$actor->id)->value('joined_after');
+            abort_unless($this->table($tenant,'chat_messages')->where('id',$reply)->where('conversation_id',$chatId)
+                ->where('id','>',$joined)->whereNull('deleted_at')->exists(),404);
         }
         if ($kind === 'announcement') {
             $preview = app(ChatControls::class)->preview($actor, $tenant);
@@ -416,6 +440,7 @@ final class ChatService
             }
         }
         $id = $this->table($tenant, 'chat_messages')->insertGetId(['tenant_id' => $tenant->id, 'conversation_id' => $chat->id,
+            'reply_to_message_id'=>$reply,
             'account_id' => $actor->id, 'client_id' => $data['client_id'], 'content_hash' => $hash, 'kind' => $kind,
             'body_encrypted' => Crypt::encryptString($data['text']), 'object_id' => $object, 'created_at' => now()->toIso8601String()]);
         foreach (array_unique($recipients) as $recipient) {

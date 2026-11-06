@@ -82,6 +82,7 @@ SQL);
         $sql = preg_replace('/CREATE INDEX (\w+) ON clubora\.(\w+)/', 'CREATE INDEX clubora.$1 ON $2', $sql);
         $this->db->unprepared($sql);
         }
+        $this->db->statement('ALTER TABLE clubora.chat_messages ADD COLUMN reply_to_message_id integer');
         $this->tenant = Tenant::create(['slug' => 'mobile-test', 'name' => 'Mobile fixture']);
         foreach (\App\ClubUnio\Services\MobileModuleSettings::MODULES as $key => $name) {
             $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key, 'name' => $name]);
@@ -759,6 +760,66 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->assertSame(1, $this->db->table('clubora.chat_messages')->count());
         $this->assertStringNotContainsString($data['text'], $this->db->table('clubora.chat_messages')->get()->toJson());
         $this->withToken($token)->getJson($this->url('chats/'.$chat.'/messages'))->assertOk()->assertJsonPath('data.0.text', $data['text']);
+    }
+
+    public function test_replies_persist_with_fresh_same_chat_visibility_and_owned_idempotency(): void
+    {
+        $chat=$this->teamChat($this->parent); $this->teamChat($this->trainer);
+        $source=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Original private message']);
+        $token=$this->token($this->parent); $data=['client_id'=>(string)Str::uuid(),'text'=>'My reply','reply_to_message_id'=>$source->id];
+        $reply=$this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'),$data)->assertCreated()
+            ->assertJsonPath('data.reply.id',$source->id)->assertJsonPath('data.reply.text','Original private message')->json('data');
+        $this->assertSame($source->id,$this->db->table('clubora.chat_messages')->where('id',$reply['id'])->value('reply_to_message_id'));
+        $this->postJson($this->url('chats/'.$chat.'/messages'),$data)->assertCreated()->assertJsonPath('data.id',$reply['id']);
+        $this->postJson($this->url('chats/'.$chat.'/messages'),array_replace($data,['reply_to_message_id'=>null]))->assertConflict();
+        $this->getJson($this->url('chats/'.$chat.'/messages'))->assertOk()->assertJsonPath('meta.reply_supported',true);
+        $other=app(ChatService::class)->ensure($this->tenant,'team',$this->team,key:'another-reply-chat');
+        $this->postJson($this->url('chats/'.$other->id.'/messages'),array_replace($data,['client_id'=>(string)Str::uuid()]))->assertNotFound();
+        $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id)->update(['joined_after'=>$source->id]);
+        $this->postJson($this->url('chats/'.$chat.'/messages'),array_replace($data,['client_id'=>(string)Str::uuid()]))->assertNotFound();
+        $dto=app(ChatService::class)->messageDto($this->parent,$this->tenant,$this->db->table('clubora.chat_messages')->where('id',$reply['id'])->first());
+        $this->assertSame(['id'=>$source->id,'deleted'=>true,'author_name'=>null,'text'=>null,'kind'=>null],$dto['reply']);
+        $this->assertSame(2,$this->db->table('clubora.chat_messages')->count());
+    }
+
+    public function test_reply_quote_edits_and_deletes_refresh_children_through_change_feed_without_leaking_deleted_content(): void
+    {
+        $chat=$this->teamChat($this->parent); $this->teamChat($this->trainer); $s=app(ChatService::class);
+        $source=$s->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Original']);
+        $reply=$s->send($this->parent,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Response','reply_to_message_id'=>$source->id]);
+        $cursor=$this->db->table('clubora.chat_changes')->max('id');
+        $controls=app(\App\ClubUnio\Mobile\ChatControls::class);
+        $controls->edit($this->trainer,$this->tenant,$source->id,1,'Updated original');
+        $this->assertTrue($this->db->table('clubora.chat_changes')->where('id','>',$cursor)->where('message_id',$reply->id)->where('revision',1)->exists());
+        $this->assertSame('Updated original',$s->messageDto($this->parent,$this->tenant,$reply)['reply']['text']);
+        $controls->edit($this->trainer,$this->tenant,$source->id,2,null);
+        $quote=$s->messageDto($this->parent,$this->tenant,$reply)['reply'];
+        $this->assertTrue($quote['deleted']); $this->assertNull($quote['text']); $this->assertNull($quote['author_name']);
+        $this->withToken($this->token($this->parent))->postJson($this->url('chats/'.$chat.'/messages'),[
+            'client_id'=>(string)Str::uuid(),'text'=>'Cannot quote deleted','reply_to_message_id'=>$source->id,
+        ])->assertNotFound();
+        $this->assertSame(1,(int)$this->db->table('clubora.chat_messages')->where('id',$reply->id)->value('revision'));
+    }
+
+    public function test_reply_projection_is_batched_and_cross_tenant_or_corrupt_cross_chat_quotes_are_closed(): void
+    {
+        $chat=$this->teamChat($this->parent); $s=app(ChatService::class);
+        $source=$s->send($this->parent,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>str_repeat('a',300)]);
+        $rows=[];
+        for($i=0;$i<35;$i++) $rows[]=$s->send($this->parent,$this->tenant,$chat,[
+            'client_id'=>(string)Str::uuid(),'text'=>'Bounded reply','reply_to_message_id'=>$source->id,
+        ]);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $single=$s->messageDtos($this->parent,$this->tenant,[$rows[0]]); $one=count($this->db->getQueryLog());
+        $this->db->flushQueryLog(); $many=$s->messageDtos($this->parent,$this->tenant,$rows); $all=count($this->db->getQueryLog());
+        $this->db->disableQueryLog();
+        $this->assertSame($one,$all); $this->assertSame(240,mb_strlen($many[$rows[0]->id]['reply']['text']));
+        $other=$s->ensure($this->tenant,'team',$this->team,key:'corrupt-reply-fixture');
+        $this->db->table('clubora.chat_messages')->where('id',$source->id)->update(['conversation_id'=>$other->id]);
+        $this->assertTrue($s->messageDto($this->parent,$this->tenant,$rows[0])['reply']['deleted']);
+        $this->db->table('clubora.chat_messages')->where('id',$source->id)->update(['tenant_id'=>$this->tenant->id+999]);
+        $quote=$s->messageDto($this->parent,$this->tenant,$rows[0])['reply'];
+        $this->assertTrue($quote['deleted']); $this->assertNull($quote['author_name']);
     }
 
     public function test_poll_votes_are_per_account_changeable_and_deadline_enforced(): void

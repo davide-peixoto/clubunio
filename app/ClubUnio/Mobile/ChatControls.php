@@ -26,6 +26,16 @@ final class ChatControls
         $this->service()->table($tenant, 'chat_changes')->insert(['tenant_id' => $tenant->id,
             'conversation_id' => $row->conversation_id, 'message_id' => $row->id, 'actor_id' => $actor->id,
             'action' => $action, 'revision' => $row->revision, 'created_at' => now()->toIso8601String()]);
+        if(in_array($action,['edit','delete'],true)) {
+            // Refresh live quotes in already-cached replies without claiming their body was edited.
+            $children=$this->service()->table($tenant,'chat_messages')->where('conversation_id',$row->conversation_id)
+                ->where('reply_to_message_id',$row->id)->whereNull('deleted_at')
+                ->selectRaw('tenant_id, conversation_id, id, ? as actor_id, ? as action, revision, ? as created_at',[
+                    $actor->id,'edit',now()->toIso8601String(),
+                ]);
+            $this->service()->table($tenant,'chat_changes')->insertUsing(
+                ['tenant_id','conversation_id','message_id','actor_id','action','revision','created_at'],$children);
+        }
     }
 
     public function visible(Account $actor, Tenant $tenant, int $id): object
