@@ -14,15 +14,11 @@ final class MobilePushOutbox
     {
         if (! config('clubunio-mobile-push.enabled', false)) return 0;
         if (strlen($eventKey) > 160 || ! preg_match('/^[a-z0-9:._-]+$/D', $eventKey)) throw new \InvalidArgumentException('Invalid push event key');
-        if (! $this->targetAllowed($actor, $tenant, $kind, $object)) return 0;
         $db = DB::connection('clubunio'); $count = 0;
-        $bindings = $db->table('clubora.mobile_push_bindings as b')->join('clubora.mobile_push_devices as d', 'd.id', '=', 'b.device_id')
-            ->join('clubora.mobile_sessions as s', fn ($j) => $j->on('s.id', '=', 'b.session_id')->on('s.account_id', '=', 'b.account_id'))
-            ->where('b.account_id', $actor->id)->whereNull('b.revoked_at')->whereNull('d.revoked_at')->whereNull('s.revoked_at')
-            ->where('s.expires_at', '>', now()->toIso8601String())
-            ->when($sourceCreatedAt, fn ($q) => $q->where('b.created_at', '<=', $sourceCreatedAt))
-            ->where(fn ($q) => $q->whereNull('d.fixed_tenant_id')->orWhere('d.fixed_tenant_id', $tenant->id))
+        // No delivery candidate means no reason to enumerate fresh domain rights.
+        $bindings = $this->bindings($tenant, $sourceCreatedAt)->where('b.account_id', $actor->id)
             ->select(['b.id', 'b.device_id', 'b.revision as binding_revision', 'd.revision as device_revision'])->get();
+        if ($bindings->isEmpty() || ! $this->targetAllowed($actor, $tenant, $kind, $object)) return 0;
         foreach ($bindings as $binding) {
             $count += $db->table('clubora.mobile_push_outbox')->insertOrIgnore(['id' => (string) Str::uuid(), 'binding_id' => $binding->id,
                 'account_id' => $actor->id, 'device_id' => $binding->device_id, 'tenant_id' => $tenant->id, 'kind' => $kind,
@@ -30,6 +26,18 @@ final class MobilePushOutbox
                 'binding_revision' => $binding->binding_revision, 'created_at' => now()->toIso8601String()]);
         }
         return $count;
+    }
+
+    /** Device opt-in is only a cheap candidate filter, never object authorization. */
+    private function bindings(Tenant $tenant, ?string $sourceCreatedAt = null)
+    {
+        return DB::connection('clubunio')->table('clubora.mobile_push_bindings as b')
+            ->join('clubora.mobile_push_devices as d', 'd.id', '=', 'b.device_id')
+            ->join('clubora.mobile_sessions as s', fn ($j) => $j->on('s.id', '=', 'b.session_id')->on('s.account_id', '=', 'b.account_id'))
+            ->whereNull('b.revoked_at')->whereNull('d.revoked_at')->whereNull('s.revoked_at')
+            ->where('s.expires_at', '>', now()->toIso8601String())
+            ->when($sourceCreatedAt, fn ($q) => $q->where('b.created_at', '<=', $sourceCreatedAt))
+            ->where(fn ($q) => $q->whereNull('d.fixed_tenant_id')->orWhere('d.fixed_tenant_id', $tenant->id));
     }
 
     public function targetAllowed(Account $actor, Tenant $tenant, string $kind, int $object, bool $delivery = true): bool
@@ -128,7 +136,8 @@ final class MobilePushOutbox
     public function chatMessage(Account $sender, Tenant $tenant, object $message): void
     {
         if (! config('clubunio-mobile-push.enabled', false)) return;
-        foreach ($tenant->accounts()->where('active', true)->where('api_only', false)->where('accounts.id', '<>', $sender->id)->get() as $actor) {
+        foreach ($tenant->accounts()->where('active', true)->where('api_only', false)->where('accounts.id', '<>', $sender->id)
+            ->whereExists($this->bindings($tenant)->whereColumn('b.account_id', 'clubora.accounts.id')->selectRaw('1'))->get() as $actor) {
             $this->enqueue($actor, $tenant, $message->kind === 'announcement' ? 'announcement' : 'chat',
                 (int) $message->conversation_id, 'chat.message:'.$message->id);
         }

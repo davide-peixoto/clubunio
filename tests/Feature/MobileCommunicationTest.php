@@ -415,6 +415,105 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $this->assertContains('team', array_column($after, 'kind'));
     }
 
+    private function pushDeliveryFixture(): void
+    {
+        $this->db->unprepared('CREATE TABLE clubora.mobile_push_devices (id text PRIMARY KEY, fixed_tenant_id integer, revision integer DEFAULT 1, revoked_at text);
+CREATE TABLE clubora.mobile_push_bindings (id text PRIMARY KEY, device_id text, account_id integer, session_id text, revision integer DEFAULT 1, revoked_at text, created_at text);
+CREATE TABLE clubora.mobile_push_outbox (id text PRIMARY KEY, binding_id text, account_id integer, device_id text, tenant_id integer,
+kind text, object_id integer, event_key text, device_revision integer, binding_revision integer, created_at text,
+UNIQUE(binding_id,tenant_id,event_key));');
+        config(['clubunio-mobile-push.enabled'=>true]);
+    }
+
+    private function pushBinding(Account $actor): array
+    {
+        $session = explode('.', $this->token($actor))[0];
+        $device = (string) Str::uuid(); $binding = (string) Str::uuid();
+        $this->db->table('clubora.mobile_push_devices')->insert(['id'=>$device,'revision'=>2]);
+        $this->db->table('clubora.mobile_push_bindings')->insert(['id'=>$binding,'device_id'=>$device,'account_id'=>$actor->id,
+            'session_id'=>$session,'revision'=>3,'created_at'=>now()->toIso8601String()]);
+        return compact('session','device','binding');
+    }
+
+    public function test_chat_push_candidates_without_bound_devices_have_constant_queries_and_no_target_checks(): void
+    {
+        $this->pushDeliveryFixture();
+        $outbox = app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+        $message = (object)['id'=>91,'kind'=>'text','conversation_id'=>999999];
+        $measure = function () use ($outbox,$message) {
+            $this->db->flushQueryLog(); $this->db->enableQueryLog();
+            try { $outbox->chatMessage($this->admin,$this->tenant,$message); return $this->db->getQueryLog(); }
+            finally { $this->db->disableQueryLog(); }
+        };
+        $small = $measure();
+        for ($i=0;$i<33;$i++) $this->account('admin');
+        $many = $measure();
+        $this->assertCount(1,$small); $this->assertCount(1,$many);
+        foreach ($many as $query) $this->assertStringNotContainsString('chat_conversations',$query['query']);
+        $this->db->flushQueryLog(); $this->db->enableQueryLog();
+        try {
+            $this->assertSame(0,$outbox->enqueue($this->parent,$this->tenant,'chat',999999,'synthetic.no.device'));
+            $queries = $this->db->getQueryLog();
+        } finally { $this->db->disableQueryLog(); }
+        $this->assertCount(1,$queries,'No binding must return before any account/member/chat authorization query');
+        $this->assertSame(0,$this->db->table('clubora.mobile_push_outbox')->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_eligible_chat_push_still_checks_mute_leave_roles_binding_session_and_fixed_tenant_freshly(): void
+    {
+        $this->pushDeliveryFixture();
+        $chat = $this->teamChat($this->parent); $proof = $this->pushBinding($this->parent);
+        $outbox = app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+        $emit = fn ($id) => $outbox->chatMessage($this->trainer,$this->tenant,(object)['id'=>$id,'kind'=>'text','conversation_id'=>$chat]);
+        $emit(101); $emit(101);
+        $this->assertSame(1,$this->db->table('clubora.mobile_push_outbox')->count(),'Same binding/event is idempotent');
+        $row = $this->db->table('clubora.mobile_push_outbox')->first();
+        $this->assertSame($this->parent->id,(int)$row->account_id);
+        $this->assertSame(2,(int)$row->device_revision); $this->assertSame(3,(int)$row->binding_revision);
+        $membership = $this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id);
+        $membership->update(['muted'=>true]); $emit(102);
+        $membership->update(['muted'=>false,'left_at'=>now()->toIso8601String()]); $emit(103);
+        $membership->update(['left_at'=>null]);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']); $emit(104);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'approved']);
+        $this->assertSame(1,$this->db->table('clubora.mobile_push_outbox')->count(),'Opt-in is never a replacement for live object access');
+        foreach (['binding','device','session','expired','foreign','wrong_session_actor'] as $blocked) {
+            if($blocked==='binding') $this->db->table('clubora.mobile_push_bindings')->where('id',$proof['binding'])->update(['revoked_at'=>now()->toIso8601String()]);
+            if($blocked==='device') $this->db->table('clubora.mobile_push_devices')->where('id',$proof['device'])->update(['revoked_at'=>now()->toIso8601String()]);
+            if($blocked==='session') $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['revoked_at'=>now()->toIso8601String()]);
+            if($blocked==='expired') $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['expires_at'=>now()->subHour()->toIso8601String()]);
+            if($blocked==='foreign') $this->db->table('clubora.mobile_push_devices')->where('id',$proof['device'])->update(['fixed_tenant_id'=>$this->tenant->id+99]);
+            if($blocked==='wrong_session_actor') $this->db->table('clubora.mobile_push_bindings')->where('id',$proof['binding'])->update(['session_id'=>explode('.',$this->token($this->trainer))[0]]);
+            $this->db->flushQueryLog(); $this->db->enableQueryLog();
+            try { $emit(105); $queries=$this->db->getQueryLog(); } finally { $this->db->disableQueryLog(); }
+            $this->assertCount(1,$queries,$blocked.' proof must disappear before any domain authorization');
+            $this->db->table('clubora.mobile_push_bindings')->where('id',$proof['binding'])->update(['revoked_at'=>null,'session_id'=>$proof['session']]);
+            $this->db->table('clubora.mobile_push_devices')->where('id',$proof['device'])->update(['revoked_at'=>null,'fixed_tenant_id'=>null]);
+            $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['revoked_at'=>null,'expires_at'=>now()->addHour()->toIso8601String()]);
+        }
+        $this->assertSame(1,$this->db->table('clubora.mobile_push_outbox')->count());
+        $this->db->table('clubora.mobile_push_devices')->where('id',$proof['device'])->update(['fixed_tenant_id'=>$this->tenant->id]);
+        $emit(106);
+        $this->assertSame(2,$this->db->table('clubora.mobile_push_outbox')->count(),'Matching custom tenant remains supported');
+        $this->assertSame(0,$outbox->enqueue($this->parent,$this->tenant,'chat',$chat,'source.old',now()->subDay()->toIso8601String()));
+        $this->assertSame(1,$outbox->enqueue($this->parent,$this->tenant,'chat',$chat,'source.current',now()->addDay()->toIso8601String()));
+        Http::assertNothingSent();
+    }
+
+    public function test_disabled_push_keeps_chat_path_closed_without_accessing_delivery_tables(): void
+    {
+        config(['clubunio-mobile-push.enabled'=>false]);
+        $this->db->flushQueryLog(); $this->db->enableQueryLog();
+        try {
+            $outbox=app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+            $this->assertSame(0,$outbox->enqueue($this->admin,$this->tenant,'chat',1,'synthetic.closed'));
+            $outbox->chatMessage($this->admin,$this->tenant,(object)['id'=>1,'kind'=>'text','conversation_id'=>1]);
+            $queries=$this->db->getQueryLog();
+        } finally { $this->db->disableQueryLog(); }
+        $this->assertSame([],$queries);
+    }
+
     public function test_message_projection_query_count_is_constant_and_attachment_payloads_are_not_selected(): void
     {
         $chat = $this->teamChat($this->parent); $s = app(ChatService::class);
