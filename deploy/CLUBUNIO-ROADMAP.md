@@ -1835,3 +1835,18 @@ Beide Rollouts ohne Migration, komplette Config/Registry/Flags/ENV/Composer erha
 Lesende Gates erfolgreich, final149SQL/3741 beziehungsweise3624msCLI, keine
 Testnachricht/Push erzeugt. FPM/Timer aktiv, Worker erfolgreich, Health200/context401.
 CHAT-READ-RECEIPTS.md; aktueller Appstand erforderlich.
+
+## 06.11.2026: Posteingang schneller als gelesen markieren
+
+DEV aktiv: 20261106-clubunio-notifications-read-all, Runtime05ad543, Basisreaders-i18n.
+Historische Nachprüfung entfernt, Ziele einmal je gesperrter Rechteprojektion
+geprüft und Marker gebündelt. Frame endet vor Writes; übrige POSTs ohne Rechtecache.
+Stichtag, Sourcebindung und frische Session-/Mandantenrechte bleiben erhalten.
+Baseline: bereits24 von26 Prüfungen40.160s/1489SQL. Voller korrigierter Controller:
+26 Marker und20 beobachtete ACKs,130SQL/3572ms beziehungsweise3558ms in beiden Gates.
+Sämtliche Testmarker und synthetische Sitzung nachweislich zurückgerollt.
+93 Backendtests/2521Assertions, drei PG-Fälle/44Assertions und33 Appfälle grün.
+Analyse und2052/5App- sowie2806DE/EN-Katalogprüfung sauber. Keine Migration,
+vollständige Config/Registry/Flags/ENV/Composer erhalten. FPM/Timer aktiv,
+Worker erfolgreich, Health200/context401. Doku MOBILE-NOTIFICATIONS-READ-ALL.md.
+App übernimmt ACK ohne Folgeabrufe; Netzwerkfehler erhalten die Liste. Neuer Appstand nötig.

@@ -43,4 +43,32 @@ Count-/Vollistenkaskade. Ladezustand bleibt an der Aktion sichtbar. Netzwerkfehl
 erhalten die bestehende Liste; echte Sitzungs-/Berechtigungs-/Kontextverluste
 schließen weiterhin den privaten Inhalt. Oberflächentexte bleiben lokal übersetzt.
 
-Release und abschließende Prüfergebnisse werden nach Durchführung ergänzt.
+## DEV-Abnahme
+
+Runtime `05ad543` als `20261106-clubunio-notifications-read-all` aktiv,
+Basis `20261106-clubunio-chat-readers-i18n`. Vier Runtimequellen plus Gate,
+Rohdateihashes und Baselines geprüft. Keine Migration. Vollständige Konfiguration
+einschließlich privater Firebase-Registry, Push-/Assistantflags, ENV und Composer erhalten.
+
+Der Gate legt eine synthetische Sitzung innerhalb einer SQL-Transaktion an und
+stellt für die vorhandenen 26 Ziele ungelesene Marker nach. Der echte Controller
+authentifiziert diese Sitzung erneut. Ergebnis: alle26 markiert,20 beobachtete
+IDs bestätigt,130SQL,3572ms beim inaktiven Kandidaten und3558ms vor Aktivierung.
+Alle Inbox-/Quellmarker und die synthetische Sitzung wurden zurückgerollt und der
+Originalzustand danach verglichen. Keine Nachricht/Pushpublikation erzeugt.
+Die vollständige Serveroperation ist damit wesentlich kürzer als bereits die
+zuvor gemessene Teilprüfung; die Zahlen sind keine identische HTTP-Messreihe.
+
+FPM und Pushtimer aktiv, Worker erfolgreich, `/up`200 und anonymer Context401.
+93 Backendtests mit2521Assertions grün, zusätzlich drei PostgreSQL-
+Benachrichtigungsregressionen mit44Assertions auf zurückgerollten synthetischen Daten.
+Unabhängiger Review ohne konkreten Sicherheits-/Race-Befund.
+33 gezielte Appfälle grün, darunter elf neue Request-/Widgetfälle für exakt einen
+POST ohne Folgereads, alte ACKs, Timeoutretry, Navigation während Speicherung,
+Watermark/100er-Grenze, neue Mitteilungen und private Scopewechsel. Fünf Dateien
+ohne Analysebefund, 2052 Apptexte in fünf Katalogen und2806 Backendtexte DE/EN geprüft.
+Backend bereits wirksam; neuer Appstand für ACK-/Fehleranzeigepfad erforderlich.
+Vertiefung: PERFORMANCE-NOTIFICATION-READ.md; App docs/NOTIFICATIONS-READ-ALL.md.
+
+Manifest `be1b57ebcf2c7cca586b9d32e587aebc1c62e5e52fb08647396617f4ec7fae27`,
+Script `b56f38381dfb72d6985f48dbd92ecab4732ad0bc40a457f4d598e5f266e1c7e8`.
