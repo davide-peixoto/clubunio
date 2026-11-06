@@ -13,7 +13,7 @@ final class ChatReadReceipts
     public function readers(Request $request,Account $actor,Tenant $tenant,int $id): array
     {
         if(array_diff(array_keys($request->query()),['after','limit'])) {
-            throw ValidationException::withMessages(['query'=>__('validation.prohibited',['attribute'=>'query'])]);
+            throw ValidationException::withMessages(['query'=>__('Ungültige Anfrage.')]);
         }
         $input=Validator::make($request->query(),['after'=>'sometimes|required|integer|min:0','limit'=>'sometimes|required|integer|min:1|max:50'])->validate();
         $after=(int)($input['after']??0); $limit=(int)($input['limit']??30);

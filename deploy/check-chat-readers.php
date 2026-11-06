@@ -2,7 +2,7 @@
 // Authorized read-only reconciliation/schema check. Never creates a message, job or push.
 try {
  $root=dirname(__DIR__);
- if(PHP_SAPI!=='cli'||$root!=='/var/www/svs-laravel/releases/20261106-clubunio-chat-readers') throw new LogicException('Fixed release required');
+ if(PHP_SAPI!=='cli'||$root!=='/var/www/svs-laravel/releases/20261106-clubunio-chat-readers-i18n') throw new LogicException('Fixed release required');
  require $root.'/vendor/autoload.php';$app=require $root.'/bootstrap/app.php';
  $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
  if(config('app.url')!=='https://dev.clubunio.ch'||!config('clubunio-mobile-push.enabled')||!config('clubunio-mobile-push.delivery_enabled')) throw new LogicException('Unexpected flags');
