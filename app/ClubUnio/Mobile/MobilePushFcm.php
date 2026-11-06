@@ -10,7 +10,7 @@ use Psr\Http\Message\RequestInterface;
 /** One FCMv1 attempt. Transport uncertainty must never trigger an automatic resend. */
 final class MobilePushFcm
 {
-    public function send(array $serverApp, string $registrationToken, MobilePushEnvelope $envelope): array
+    public function send(array $serverApp, string $registrationToken, MobilePushEnvelope $envelope, ?array $notification = null): array
     {
         $project = $serverApp['project_id'] ?? '';
         if (! preg_match('/^[a-z][a-z0-9-]{4,61}[a-z0-9]$/D', $project)
@@ -47,9 +47,9 @@ final class MobilePushFcm
             $response = Http::withToken($token['access_token'])->connectTimeout(5)->timeout(20)->withoutRedirecting()
                 ->post('https://fcm.googleapis.com/v1/projects/'.$project.'/messages:send', ['message' => [
                     'token' => $registrationToken, 'data' => $envelope->data(),
-                    'notification' => ['title' => 'Neue Mitteilung', 'body' => 'App öffnen, um die Mitteilung anzusehen.'],
-                    'android' => ['priority' => 'normal', 'ttl' => '3600s'],
-                    'apns' => ['headers' => ['apns-expiration' => (string) (time() + 3600)],
+                    'notification' => $notification ?? app(MobilePushPresentation::class)->notification(config('clubunio-languages.default', 'de')),
+                    'android' => ['priority' => 'high', 'ttl' => '3600s'],
+                    'apns' => ['headers' => ['apns-expiration' => (string) (time() + 3600), 'apns-priority' => '10', 'apns-push-type' => 'alert'],
                         'payload' => ['aps' => ['sound' => 'default']]],
                 ]]);
         } catch (\Throwable) {

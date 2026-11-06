@@ -1,5 +1,12 @@
 # Persoenliche Pushanbindung
 
+Aktueller Nachlauf06.11.2026: [Chatvorschau und kurze DEV-Pushintervalle](MOBILE-PUSH-PREVIEW-LATENCY.md).
+Auf Benutzerwunsch dürfen Chatpushs jetzt nach frischer Zustellberechtigung
+Absender und gekürzten aktuellen Nachrichtentext im notification-Feld enthalten.
+Der ID-Routingumschlag bleibt textfrei. Die unten beschriebene rein generische
+Darstellung ist historisch; andere Pusharten bleiben generisch.
+DEV-Timer zwei Sekunden nach Abschluss statt einer Minute.
+
 Nachlauf05.11.2026: Serviceaccount privat installiert und iOS-Registry fuer
 ClubUnio vorbereitet. Google OAuth funktioniert; beide Pushflags weiterhin
 false, eigenes Konto ohne Geraetebindung. Kein FCM-/APNs-Versandnachweis.

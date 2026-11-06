@@ -45,7 +45,22 @@ final class MobilePushFcmTest extends TestCase
         Http::assertSent(fn ($r) => $r->url() === 'https://fcm.googleapis.com/v1/projects/synthetic-project/messages:send'
             && $r['message']['data'] === ['v' => '1', 'account_id' => '12', 'tenant_id' => '34', 'kind' => 'planning',
                 'object_id' => '56', 'delivery_id' => '00000000-0000-4000-8000-000000000001']
+            && $r['message']['android']['priority'] === 'high'
+            && $r['message']['apns']['headers']['apns-priority'] === '10'
+            && $r['message']['apns']['headers']['apns-push-type'] === 'alert'
             && $r->hasHeader('Authorization', 'Bearer synthetic-access'));
+    }
+    public function test_chat_preview_is_in_notification_only_and_not_in_routing_data(): void
+    {
+        Http::fake(['oauth2.googleapis.com/token' => Http::response(['access_token' => 'synthetic-access', 'expires_in' => 3600]),
+            'fcm.googleapis.com/*' => Http::response(['name' => 'projects/synthetic-project/messages/preview'])]);
+        $preview = ['title' => 'Synthetic sender', 'body' => 'See you at training'];
+        $envelope = new MobilePushEnvelope(12, 34, 'chat', 56, '00000000-0000-4000-8000-000000000001');
+        $result = app(MobilePushFcm::class)->send(['project_id' => 'synthetic-project', 'credentials_file' => $this->keyFile],
+            str_repeat('synthetic-device-token', 3), $envelope, $preview);
+        self::assertSame('accepted', $result['state']);
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'messages:send')
+            && $r['message']['notification'] === $preview && $r['message']['data'] === $envelope->data());
     }
     public function test_uncertain_post_is_never_retried(): void
     {

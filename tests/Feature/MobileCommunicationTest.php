@@ -659,6 +659,52 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->assertFalse($membership->exists());
     }
 
+    public function test_chat_push_preview_uses_live_text_and_closes_for_join_floor_deletion_and_revocation(): void
+    {
+        $this->pushDeliveryFixture();
+        foreach (['state text DEFAULT \'pending\'', 'lease_until text', 'outcome_code text', 'provider_reference text', 'finished_at text'] as $column)
+            $this->db->statement('ALTER TABLE clubora.mobile_push_outbox ADD COLUMN '.$column);
+        foreach (['app_id text', 'platform text', 'origin text', 'token_cipher text'] as $column)
+            $this->db->statement('ALTER TABLE clubora.mobile_push_devices ADD COLUMN '.$column);
+        config(['clubunio-mobile-push.delivery_enabled'=>true]);
+        $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent); $proof=$this->pushBinding($this->parent);
+        $this->db->table('clubora.mobile_push_devices')->where('id',$proof['device'])->update([
+            'app_id'=>'synthetic','platform'=>'ios','origin'=>'https://synthetic.example',
+            'token_cipher'=>\Illuminate\Support\Facades\Crypt::encryptString('synthetic-token')]);
+        $this->db->table('clubora.mobile_preferences')->updateOrInsert(['account_id'=>$this->parent->id],['language'=>'en']);
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushRegistry::class,new class {
+            public function app(...$args): array { return ['fixed_tenant_id'=>null]; }
+        });
+        $transport=new class {
+            public array $notifications=[];
+            public function send($app,$token,$envelope,$notification): array {
+                $this->notifications[]=$notification; return ['state'=>'accepted','code'=>'provider_accepted'];
+            }
+        };
+        $this->app->instance(\App\ClubUnio\Mobile\MobilePushFcm::class,$transport);
+        $worker=app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+        foreach (['edited','floor','deleted','revoked'] as $case) {
+            $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Old text']);
+            $this->assertSame(1,$worker->enqueue($this->parent,$this->tenant,'chat',$chat,'chat.message:'.$message->id));
+            $row=$this->db->table('clubora.mobile_push_outbox')->where('event_key','chat.message:'.$message->id)->sole();
+            $membership=$this->db->table('clubora.chat_memberships')->where('tenant_id',$this->tenant->id)
+                ->where('conversation_id',$chat)->where('account_id',$this->parent->id);
+            if($case==='edited') $this->db->table('clubora.chat_messages')->where('id',$message->id)->update([
+                'body_encrypted'=>\Illuminate\Support\Facades\Crypt::encryptString('Current preview')]);
+            if($case==='floor') $membership->update(['joined_after'=>$message->id]);
+            if($case==='deleted') $this->db->table('clubora.chat_messages')->where('id',$message->id)->update(['deleted_at'=>now()->toIso8601String()]);
+            if($case==='revoked') $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+            $this->assertTrue($worker->deliverOne($row->id));
+            $this->assertSame(in_array($case,['deleted','revoked'],true)?'discarded':'accepted',
+                $this->db->table('clubora.mobile_push_outbox')->where('id',$row->id)->value('state'));
+            $membership->update(['joined_after'=>0]);
+        }
+        $this->assertCount(2,$transport->notifications);
+        $this->assertSame('Current preview',$transport->notifications[0]['body']);
+        $this->assertSame('Open the app to view the notification.',$transport->notifications[1]['body']);
+        Http::assertNothingSent();
+    }
+
     public function test_message_and_publication_are_atomic_and_post_never_calculates_push_recipients(): void
     {
         $this->pushDeliveryFixture(); $chat=$this->teamChat($this->parent);

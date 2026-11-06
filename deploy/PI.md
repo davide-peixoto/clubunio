@@ -2369,3 +2369,20 @@ grün. Zwölf Dartdateien analysefrei,2052/5App- und2806DE/EN-Katalogprüfung sa
 Keine Migration, komplette Config/Registry/Flags/ENV/Composer erhalten; Diensteaktiv,
 Worker erfolgreich, Health200/context401. PERFORMANCE-HOTPATH-AUDIT.md und
 App PERFORMANCE-UX-AUDIT.md. Neuer Appstand erforderlich, native Messgrenzen dokumentiert.
+
+
+## 06.11.2026: Chatpush mit Vorschau und kurzem Versandintervall
+
+DEV aktiv: 20261106-clubunio-push-preview, Basis mobile-hotpaths. Bisher zwei
+Chatpushs mit 35,5s Mittel/48s Maximum bis Providerannahme, keine Gerätezeit.
+Timerwartezeit von 60s auf 2s nach Abschluss, Genauigkeit 1s; Journal bestätigt
+nun etwa 3s für leere Zyklen. Bis 100 Outboxeinträge, Versand unmittelbar je
+Fanout. Kurzvorschau Absender80/Text180 erst nach frischen Quell-/Empfängerrechten
+und Joinfloor; Routing bleibt IDs, andere Pusharten generisch. DE/EN-Systemtexte,
+Freitext unverändert. Firebase/APNs erhalten den Kurztext; OS-Vorschau wirkt.
+87 lokale Regressionen/2367 Assertions plus 18 PG-Pushfälle/219 Assertions grün;
+Sprachprüfung2806 DE/EN plus PHP-Gruppen. PG-Fixtures zurückgerollt, Provider gefälscht.
+Keine Migration/Appänderung, gesamte Config/Registry/Flags/ENV/Composer erhalten.
+FPM/Timer aktiv, Worker success/Exit0, Health200/context401. Physische Ankunft noch
+nicht neu gemessen. MOBILE-PUSH-PREVIEW-LATENCY.md; Manifest
+1f56877364ae8196a1efbeff4aead1947145ffb71639e364a6be7e91d9d8b7dd.

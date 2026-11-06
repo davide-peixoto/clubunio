@@ -108,12 +108,13 @@ final class MobilePushOutbox
                 $db->table('clubora.mobile_push_outbox')->where('id', $row->id)->update(['state' => $result['state'],
                     'outcome_code' => $result['code'], 'provider_reference' => $result['reference'] ?? null, 'finished_at' => now()->toIso8601String()]);
             };
+            $chatSource = null;
             if (! $device || ! $binding || ! $session || ! $actor || ! $tenant || $device->revoked_at || $binding->revoked_at || $session->revoked_at
                 || (int) $session->account_id !== (int) $actor->id || \Carbon\CarbonImmutable::parse($session->expires_at)->isPast()
                 || (int) $device->revision !== (int) $row->device_revision || (int) $binding->revision !== (int) $row->binding_revision
                 || ($device->fixed_tenant_id !== null && (int) $device->fixed_tenant_id !== (int) $tenant->id)
                 || ! $this->targetAllowed($actor, $tenant, $row->kind, (int) $row->object_id)
-                || ! $this->publicationCurrent($tenant, $row)) {
+                || ! $this->publicationCurrent($tenant, $row, $chatSource)) {
                 $finish(['state' => 'discarded', 'code' => 'authorization_changed']); return true;
             }
             try {
@@ -122,8 +123,15 @@ final class MobilePushOutbox
                 $token = Crypt::decryptString($device->token_cipher);
             } catch (\Throwable) { $finish(['state' => 'discarded', 'code' => 'app_binding_changed']); return true; }
             try {
+                // Source and recipient rights were just checked under the delivery locks.
+                // A newly joined reader must not receive historical message text.
+                if ($chatSource && ! $db->table('clubora.chat_memberships')->where('tenant_id', $tenant->id)
+                    ->where('conversation_id', $row->object_id)->where('account_id', $actor->id)->whereNull('left_at')
+                    ->where('joined_after', '<', $chatSource['message']->id)->exists()) $chatSource = null;
+                $locale = app(MobileLanguages::class)->forAccount($actor)['language'];
+                $notification = app(MobilePushPresentation::class)->notification($locale ?? config('clubunio-languages.default', 'de'), $chatSource);
                 $result = app(MobilePushFcm::class)->send($app, $token,
-                    new MobilePushEnvelope((int) $actor->id, (int) $tenant->id, $row->kind, (int) $row->object_id, $row->id));
+                    new MobilePushEnvelope((int) $actor->id, (int) $tenant->id, $row->kind, (int) $row->object_id, $row->id), $notification);
             } catch (\Throwable) { $result = ['state' => 'attention', 'code' => 'provider_configuration']; }
             if ($result['code'] === 'token_unregistered') {
                 $db->table('clubora.mobile_push_devices')->where('id', $device->id)->update(['revoked_at' => now()->toIso8601String(),
@@ -146,14 +154,16 @@ final class MobilePushOutbox
         return $count;
     }
 
-    private function publicationCurrent(Tenant $tenant, object $row): bool
+    private function publicationCurrent(Tenant $tenant, object $row, ?array &$chatSource = null): bool
     {
         if ($row->kind === 'admin_notice') return app(MobileAdminNoticeAccess::class)->publicationCurrent($tenant, (int) $row->object_id);
         if (str_starts_with($row->event_key, 'chat.message:')) {
             if (! preg_match('/^chat\.message:([1-9][0-9]*)$/D', $row->event_key, $matches)) return false;
             $source = app(ChatPushPublications::class)->source($tenant, (int) $matches[1]);
-            return $source && (int) $source['message']->conversation_id === (int) $row->object_id
+            $current = $source && (int) $source['message']->conversation_id === (int) $row->object_id
                 && $row->kind === ($source['message']->kind === 'announcement' ? 'announcement' : 'chat');
+            if ($current) $chatSource = $source;
+            return $current;
         }
         if ($row->kind !== 'planning' || ! str_starts_with($row->event_key, 'squad:')) return true;
         if (! preg_match('/^squad:([1-9][0-9]*):([0-9a-f-]{36})$/D', $row->event_key, $matches)) return false;
