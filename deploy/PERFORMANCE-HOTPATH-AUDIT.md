@@ -62,5 +62,46 @@ bedingten Upsert und prüft unveränderte aktive Grenzen. SQL-Locktypen werden
 über die ausgeführte Queryprojektion mit PostgreSQL-Grammatik geprüft; die
 reale Zwei-Verbindungs-Lockkompatibilität misst Root auf DEV.
 
-Reale DEV-Zeiten und Veröffentlichung koordiniert Root. Synthetische Query-
+## DEV-Messung und Veröffentlichung
+
+Runtime `85378af` als `20261106-clubunio-mobile-hotpaths` aktiv, Basis
+`20261106-clubunio-notifications-read-all`. Drei Runtimequellen plus zwei Gates
+über Rohdateihashes und Baselines ausgerollt. Keine Migration; vollständige
+Konfiguration einschließlich privater Firebase-Registry, Push-/Assistantflags,
+ENV und Composer erhalten. FPM/Pushtimer aktiv, Worker erfolgreich,
+Health200/context401. Keine Providerzustellung oder neue Fachnachricht erzeugt.
+
+Vergleich am gleichen vorhandenen Konto und Datenumfang (direkte Controller-
+Projektionen, nicht iPhone-Netzwerk/Rendering):
+
+| Ablauf | Vorher | Inaktiver Kandidat | Aktivierungsgate |
+| --- | --- | --- | --- |
+| Inbox26/Page20/Unread0 | 3926ms/138SQL | 691ms/26SQL | 766ms/26SQL |
+| Read-all26/Observed20 | 3558ms/130SQL | 1339ms/40SQL | 1185ms/40SQL |
+| Chatliste7/Direct0 | 749ms/23SQL | 744ms/26SQL | 759ms/26SQL |
+| Chatdetail unter Provider-Sharedlock | nicht gemessen | 641ms/25SQL | 710ms/25SQL |
+
+Die drei zusätzlichen Chatlistenqueries sind die beabsichtigte neue frische
+Prüfung nach Sperrerwerb, kein pauschaler Durchsatzgewinn der warmen Liste.
+Das Gate hält in einer zweiten echten PostgreSQL-Verbindung einen Tenant-
+Sharedlock wie beim Provider. Liste und Einzelchat sind damit tatsächlich
+kompatibel; ein exklusiver Rollenwrite wird weiterhin blockiert. Im realen
+Kontobestand existieren keine Direktchats: deren Titelquerybudget wird durch
+synthetische Tests belegt, ohne einen realen Geschwindigkeitswert zu erfinden.
+
+Synthetische Sitzung, Marker- und Metadatenwrites werden in allen Gates
+zurückgerollt; das Read-all-Gate vergleicht anschließend auch die Originalmarker.
+97 SQLite-/FCM-Regressionen mit2555Assertions und fünf PostgreSQL-Paritätsfälle
+mit103Assertions grün. Sprachprüfung2806DE/EN ohne Backlog. Synthetische Query-
 Parität ist kein Nachweis für physische iPhone-, Netzwerk- oder Providerlatenz.
+
+Manifest `4c48dc94d002029bdab033d4918ec7c0bedf0e4c44946db4d4de0d409d293b0c`,
+Script `464c5bed8dbe099ba098814d3d07947a2fc0fc2b9e6d8164345fac428b790015`.
+Appänderungen, Grenzen und Gesamttest: mobile/docs/PERFORMANCE-UX-AUDIT.md.
+
+Finale Appabnahme: gesamte894Fluttertests grün, zwölf geänderte Quell-/Testdateien
+ohne Analysebefund,2052Texte in fünf lokalen Katalogen einschließlich Literalprüfung
+sauber. App spart redundante Metadaten-/Navigations-/Spesenrückkehrrequests und
+parallelisiert unabhängige My-Teams-Sammelreads begrenzt. Kontokontextnachweise
+bleiben getrennt; keine abgeschlossenen Rechte-/Betriebswerte werden zwischengespeichert.
+Für den neuen Appablauf aktuellen Stand neu bauen/installieren.

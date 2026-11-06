@@ -2353,3 +2353,19 @@ Analyse und2052/5App- sowie2806DE/EN-Katalogprüfung sauber. Keine Migration,
 vollständige Config/Registry/Flags/ENV/Composer erhalten. FPM/Timer aktiv,
 Worker erfolgreich, Health200/context401. Doku MOBILE-NOTIFICATIONS-READ-ALL.md.
 App übernimmt ACK ohne Folgeabrufe; Netzwerkfehler erhalten die Liste. Neuer Appstand nötig.
+
+## 06.11.2026: Performance-Abgleich häufiger Appabläufe
+
+DEV aktiv20261106-clubunio-mobile-hotpaths aus85378af, Basisnotifications-read-all.
+Planningrechte der Inbox gebündelt, akzeptierte Direktchatnamen gemeinsam geladen;
+Chat-GETs mit Provider-Sharedlock kompatibel und Rechte nach Sperrerwerb frisch.
+Echte Zweiverbindungsprüfung: Liste/Detail laden, exklusive Rollenwrites blockiert.
+Gleiche Inbox26/Page20 von3926ms/138SQL auf766ms/26SQL, Read-all26 von3558ms/130SQL
+auf1185ms/40SQL. Chatliste7/Direct0 von749ms/23SQL auf759ms/26SQL; zusätzliche
+frische Prüfung bewusst, kein erfundener warmer Geschwindigkeitsgewinn.
+Alle Gate-Sitzungen/Marker-/Metadatenwrites zurückgerollt, keine Provideraktionen.
+97 Backendtests/2555Assertions, fünf PG-Fälle/103Assertions und gesamte894Appfälle
+grün. Zwölf Dartdateien analysefrei,2052/5App- und2806DE/EN-Katalogprüfung sauber.
+Keine Migration, komplette Config/Registry/Flags/ENV/Composer erhalten; Diensteaktiv,
+Worker erfolgreich, Health200/context401. PERFORMANCE-HOTPATH-AUDIT.md und
+App PERFORMANCE-UX-AUDIT.md. Neuer Appstand erforderlich, native Messgrenzen dokumentiert.
