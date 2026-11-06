@@ -1,5 +1,19 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Backoffice-Assistent (06.11.2026)
+
+Umsetzung der drei Pakete Tagesbericht/Fachabfragen, bestaetigte Fachaktionen
+und begrenzte mehrstufige Vorbereitung. Normale ClubUnio-Weboberflaeche DE/EN,
+mandanten- und benutzerbezogene Historie, Budgetreservierung und Fehlernachweis.
+Externe KI bleibt gesperrt, bis Anbietervereinbarung, Verarbeitung und
+Aufbewahrung geprueft sind. Keine autonomen Zahlungen oder Rechteaenderungen.
+Live-KI-Abnahme und zusaetzliche Fachaktionen sind getrennte Folgeschritte;
+Stand und Abnahmeprotokoll in `CLUBUNIO-ASSISTANT.md`.
+
+Auf ClubUnio ausgerollt; 173 Tests/3155 Assertions und lesender Servergate gruen.
+Offen: angemeldete visuelle Abnahme, Mehrprozess-Racetest und ausdrueckliche
+Datenschutz-/Providerfreigabe. Keine automatische Aktivierung externer KI.
+
 ## Drittel und Viertel auf Sportplaetzen (05.11.2026)
 
 Fuer die drei aktiven SVS-Plaetze sind Drittel A-C und Viertel A-D in DE/EN

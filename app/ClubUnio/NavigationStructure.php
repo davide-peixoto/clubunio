@@ -53,7 +53,7 @@ class NavigationStructure
 
                     continue;
                 }
-                if ($name === 'Dashboard') {
+                if (in_array($name, ['Dashboard', 'BackofficeAssistant'], true)) {
                     $main[''][] = $item;
 
                     continue;

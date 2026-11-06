@@ -1,5 +1,27 @@
 # ClubUnio migration work packages
 
+## Backoffice-Assistent (06.11.2026)
+
+Drei additive Tabellen fuer verschluesselte Gespraeche, Kostenreservierungen und
+bestaetigte Aktionen: Migration `2026_11_06_000100_backoffice_assistant`.
+Keine Uebernahme alter Chats, keine Anpassung bestehender Benutzerrechte oder
+Fachdaten. Nur Admin/Geschaeftsstelle, keine Simulation. Tagesbericht lokal;
+externe KI bleibt bis Datenschutzfreigabe deaktiviert. Sieben begrenzte
+Fachaktionen nutzen bestehende Services mit Vorschau, Revisionspruefung und
+Einmalausfuehrung. Mehrstufige Abfragen bereiten nur einzelne Bestaetigungen vor.
+Release-/Backup-/Rueckweg, Datenschutzgrenzen und Abnahme:
+`CLUBUNIO-ASSISTANT.md`. PHPMaker DEV/PROD bleiben unveraendert.
+
+ClubUnio-Release `20261106-clubunio-assistant-v1` aktiviert; vorheriges Release
+`20261105-clubunio-planning-detail-loading` bleibt fuer Rollback erhalten.
+Manifest: `a6e1cbf14bfdb7a00f80a12db2ac0f87f184d01cd0c803dd65efcc1803a3460c`.
+Verschluesselte Sicherung vor Migration: `shared/assistant-backups/` mit
+Decrypt-/Hash-Pruefung und unveraenderten Eltern-/Berechtigungsdaten.
+173 Tests/3155 Assertions, 2806 DE/EN-Schluessel und lesender Servercheck gruen.
+Purge-Vorschau: 0; keine Fachbuchungen, kein externer KI-Aufruf. Angemeldete
+Desktop-/Mobile-Sichtpruefung wegen abgelaufener Browsersitzung offen.
+Live-Provider und vollstaendiger Mehrprozess-Racetest bleiben Aktivierungsgates.
+
 ## Drittel und Viertel bei Platzbelegungen (05.11.2026)
 
 Additive Konfiguration von 21 Teilflaechen fuer die drei aktiven SVS-Plaetze,
