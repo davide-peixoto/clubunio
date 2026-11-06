@@ -164,7 +164,15 @@ final class ChatService
             ->whereColumn('m.id', '>', 'membership.joined_after')->whereColumn('m.id', '>', 'membership.read_message_id')
             ->where('m.account_id', '<>', $actor->id)->whereNull('m.deleted_at')->groupBy('m.conversation_id')->selectRaw('m.conversation_id,count(*) as total')->pluck('total','m.conversation_id');
         $latest = $this->latestMessages($actor, $tenant, $accepted->pluck('id')->all());
+        // Names are projected only for chats which already passed fresh contact/block checks.
+        $directIds=$accepted->where('kind','direct')->pluck('id');
+        $others=$directIds->isEmpty()?collect():DB::connection('clubunio')->table('clubora.chat_memberships as other_member')
+            ->join('clubora.accounts as other_account','other_account.id','=','other_member.account_id')
+            ->where('other_member.tenant_id',$tenant->id)->whereIn('other_member.conversation_id',$directIds)
+            ->where('other_member.account_id','<>',$actor->id)->whereNull('other_member.left_at')
+            ->get(['other_member.conversation_id','other_member.account_id','other_account.display_name'])->keyBy('conversation_id');
         return $accepted->map(fn ($chat) => $this->conversationDto($actor, $tenant, $chat, $teams, [
+            'other'=>$others[$chat->id]??null,
             'membership' => $memberships[$chat->id], 'admin' => $admin, 'profile' => $profile, 'staff' => in_array((int) $chat->team_season_id, $permittedStaff, true),
             'send' => $canSend, 'announce' => $canAnnounce, 'poll' => $canPoll, 'moderate' => $canModerate,
             'upload' => $canUpload, 'download' => $canDownload,
@@ -217,8 +225,14 @@ final class ChatService
             'announcements' => __('Vereinsankündigungen'), 'event' => __('Terminbesprechung'), default => __('Direktnachricht'),
         };
         if ($chat->kind === 'direct') {
-            $other = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', '<>', $actor->id)->value('account_id');
-            $title = Account::whereKey($other)->value('display_name') ?? $title;
+            if($projection!==null) {
+                $person=$projection['other']??null;
+                $other=$person?->account_id;
+                $title=$person?->display_name??$title;
+            } else {
+                $other = $this->table($tenant, 'chat_memberships')->where('conversation_id', $chat->id)->where('account_id', '<>', $actor->id)->value('account_id');
+                $title = Account::whereKey($other)->value('display_name') ?? $title;
+            }
         }
         $canSend = $projection['send'] ?? $access->allows($actor, $tenant, 'send');
         $canWrite = $canSend && ($chat->kind !== 'announcements' || ($projection['announce'] ?? $access->allows($actor, $tenant, 'announce')));

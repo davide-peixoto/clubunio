@@ -23,6 +23,31 @@ final class MobileNotificationService
         return $rights[$key] ??= app(MobilePushOutbox::class)->targetAllowed($actor, $tenant, $kind, $object, false);
     }
 
+    /** Same fresh event visibility as targetAllowed(planning), projected in bounded SQL batches. */
+    private function planningRights(Account $actor,Tenant $tenant,array $ids,array &$rights): void
+    {
+        $ids=array_values(array_filter(array_unique(array_map('intval',$ids)),fn($id)=>$id>0&&!array_key_exists('planning:'.$id,$rights)));
+        if(!$ids) return;
+        $request=request(); $previous=$request->attributes->get('mobile.season_scope');
+        $request->attributes->set('mobile.season_scope',true);
+        foreach(array_keys($request->attributes->all()) as $key) if(str_starts_with($key,'mobile.current_season.'.$tenant->id.'.')) $request->attributes->remove($key);
+        try {
+            app(MobileAccess::class)->enter($actor,$tenant);
+            foreach(array_chunk($ids,500) as $chunk) {
+                foreach($chunk as $id) $rights['planning:'.$id]=false;
+                try {
+                    $visible=app(\App\ClubUnio\Services\PlanningCalendarService::class)->visible($actor,$tenant)->whereIn('id',$chunk)->pluck('id');
+                    foreach($visible as $id) $rights['planning:'.$id]=true;
+                } catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface|\Illuminate\Database\Eloquent\ModelNotFoundException|\Illuminate\Database\RecordNotFoundException) {
+                    // A denied module/source contributes no visible notification.
+                }
+            }
+        } finally {
+            if($previous===null) $request->attributes->remove('mobile.season_scope');
+            else $request->attributes->set('mobile.season_scope',$previous);
+        }
+    }
+
     private function materialize(Account $actor, Tenant $tenant, array &$rights): void
     {
         app(MobileAccess::class)->enter($actor, $tenant);
@@ -33,6 +58,7 @@ final class MobileNotificationService
             ->whereIn('object_type', array_keys(self::SOURCES))->select(['id', 'object_type', 'object_id', 'created_at', 'read_at'])
             ->chunkById(100, function ($rows) use ($actor, $tenant, &$rights) {
                 $insert = [];
+                $this->planningRights($actor,$tenant,$rows->where('object_type','team_event')->pluck('object_id')->all(),$rights);
                 foreach ($rows as $row) {
                     $kind = self::SOURCES[$row->object_type];
                     if (! $this->allowed($actor, $tenant, $kind, (int) $row->object_id, $rights)) continue;
@@ -60,7 +86,9 @@ final class MobileNotificationService
         $rights = [];
         $this->materialize($actor, $tenant, $rights);
         $visible = [];
-        foreach ($this->rows($actor, $tenant)->orderByDesc('id')->cursor() as $row) {
+        $rows=$this->rows($actor,$tenant)->orderByDesc('id')->get();
+        $this->planningRights($actor,$tenant,$rows->where('kind','planning')->pluck('object_id')->all(),$rights);
+        foreach ($rows as $row) {
             if ($this->allowed($actor, $tenant, $row->kind, (int) $row->object_id, $rights)) $visible[] = $row;
         }
         return $visible;
@@ -111,7 +139,9 @@ final class MobileNotificationService
     public function count(Account $actor, Tenant $tenant): array
     {
         $rights=[]; $this->materialize($actor,$tenant,$rights); $unread=0;
-        foreach($this->rows($actor,$tenant)->whereNull('read_at')->cursor() as $row) {
+        $rows=$this->rows($actor,$tenant)->whereNull('read_at')->get();
+        $this->planningRights($actor,$tenant,$rows->where('kind','planning')->pluck('object_id')->all(),$rights);
+        foreach($rows as $row) {
             if($this->allowed($actor,$tenant,$row->kind,(int)$row->object_id,$rights)) $unread++;
         }
         return ['unreadCount'=>$unread,'watermark'=>(int)($this->rows($actor,$tenant)->max('id')??0)];
@@ -133,7 +163,9 @@ final class MobileNotificationService
                     : ($observed ? $this->rows($actor,$tenant)->whereIn('id',$observed)->where('id','<=',$through)->get() : collect());
                 if($id!==null && $checked->isEmpty()) abort(404);
                 $marked=[]; $confirmed=[]; $remaining=0;
-                foreach($unread->concat($checked)->unique('id') as $row) {
+                $rows=$unread->concat($checked)->unique('id');
+                $this->planningRights($actor,$tenant,$rows->where('kind','planning')->pluck('object_id')->all(),$rights);
+                foreach($rows as $row) {
                     $allowed=$this->allowed($actor,$tenant,$row->kind,(int)$row->object_id,$rights);
                     if(!$allowed) { if($id!==null && (int)$row->id===$id) abort(404); continue; }
                     $selected=$id!==null ? (int)$row->id===$id : (int)$row->id<=(int)$through;

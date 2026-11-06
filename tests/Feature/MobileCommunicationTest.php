@@ -40,7 +40,7 @@ class MobileCommunicationTest extends TestCase
                 return preg_replace('/"clubora"\."([^"]+)"\.\*/', '"$1".*', $wrapped);
             }
             public function compileWheres($query) {
-                return str_replace("birth_date + interval '18 years' > CAST(? AS date)", "date(birth_date, '+18 years') > date(?)", parent::compileWheres($query));
+                return str_replace(["birth_date + interval '18 years' > CAST(? AS date)",'source.id::text'], ["date(birth_date, '+18 years') > date(?)",'CAST(source.id AS text)'], parent::compileWheres($query));
             }
             protected function compileLock(\Illuminate\Database\Query\Builder $query, $value) {
                 return '/* '.(new \Illuminate\Database\Query\Grammars\PostgresGrammar($query->getConnection()))->compileSelect(
@@ -399,6 +399,97 @@ CREATE TABLE clubora.banks (id integer PRIMARY KEY, tenant_id integer, name text
         $parentList = $s->conversations($this->parent, $this->tenant);
         $this->assertNotContains($staff, array_column($parentList, 'id'));
         $this->assertNotNull($this->db->table('clubora.chat_memberships')->where('conversation_id', $staff)->where('account_id', $this->parent->id)->value('left_at'));
+    }
+
+    public function test_chat_gets_use_shared_tenant_and_detail_chat_lock_and_discard_prelock_role_facts(): void
+    {
+        $chat=$this->teamChat($this->parent); $token=$this->token($this->parent);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $this->withToken($token)->getJson($this->url('chats/'.$chat))->assertOk();
+        $queries=$this->db->getQueryLog(); $this->db->disableQueryLog();
+        $this->assertTrue(collect($queries)->contains(fn($q)=>str_contains($q['query'],'from "clubora"."tenants"')&&str_contains($q['query'],'for share')));
+        $this->assertTrue(collect($queries)->contains(fn($q)=>str_contains($q['query'],'from "clubora"."chat_conversations"')&&str_contains($q['query'],'for update')));
+        $this->assertFalse(collect($queries)->contains(fn($q)=>str_contains($q['query'],'from "clubora"."tenants"')&&str_contains($q['query'],'for update')));
+        $left=now()->toIso8601String();
+        $membership=$this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id);
+        $membership->update(['left_at'=>$left]);
+        $changed=false;
+        $this->db->listen(function($query)use(&$changed){
+            if($changed || !str_contains($query->sql,'from "clubora"."tenants"') || !str_contains($query->sql,'for share')) return;
+            $changed=true;
+            // Simulates a revocation committed while the request waited for its tenant lock.
+            $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+        });
+        $this->getJson($this->url('chats'))->assertForbidden(); $this->assertTrue($changed);
+        $this->assertSame($left,$membership->value('left_at'),'A revoked requester must not be silently rejoined');
+        $this->assertFalse(request()->attributes->has(\App\ClubUnio\Mobile\MobileReadContext::class));
+    }
+
+    public function test_list_conditional_upsert_never_overwrites_a_concurrent_active_join_or_read_cursor(): void
+    {
+        $chat=$this->teamChat($this->parent); $service=app(ChatService::class);
+        $membership=$this->db->table('clubora.chat_memberships')->where('conversation_id',$chat)->where('account_id',$this->parent->id);
+        $membership->update(['left_at'=>now()->toIso8601String()]); $joined=false;
+        $this->db->listen(function($query)use(&$joined,$membership){
+            if($joined || !str_contains($query->sql,'max(id) as latest')) return;
+            $joined=true;
+            // A separate request completes its active join/read before this list's upsert.
+            $membership->update(['left_at'=>null,'joined_after'=>7,'read_message_id'=>9,'muted'=>true]);
+        });
+        $this->withToken($this->token($this->parent))->getJson($this->url('chats'))->assertOk();
+        $this->assertTrue($joined); $fresh=$membership->first();
+        $this->assertNull($fresh->left_at); $this->assertSame(7,(int)$fresh->joined_after);
+        $this->assertSame(9,(int)$fresh->read_message_id); $this->assertTrue((bool)$fresh->muted);
+    }
+
+    public function test_direct_chat_titles_are_batched_after_fresh_contact_authorization(): void
+    {
+        $s=app(ChatService::class); $ids=[];
+        foreach([$this->parent,$this->player] as $other) $ids[$s->direct($this->trainer,$this->tenant,$other->id)->id]=$other;
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $rows=collect($s->conversations($this->trainer,$this->tenant))->keyBy('id'); $queries=$this->db->getQueryLog();
+        $this->db->disableQueryLog();
+        foreach($ids as $id=>$other) { $this->assertSame($other->display_name,$rows[$id]['title']); $this->assertSame($other->id,$rows[$id]['other_account_id']); }
+        $titles=array_filter($queries,fn($q)=>str_contains($q['query'],'other_account')&&str_contains($q['query'],'display_name'));
+        $this->assertCount(1,$titles);
+        $this->assertCount(0,array_filter($queries,fn($q)=>str_starts_with($q['query'],'select "display_name" from "clubora"."accounts"')));
+        $blocked=array_search($this->parent,$ids,true);
+        $this->db->table('clubora.chat_blocks')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->parent->id,'other_account_id'=>$this->trainer->id]);
+        $this->assertNotContains($blocked,array_column($s->conversations($this->trainer,$this->tenant),'id'));
+    }
+
+    public function test_planning_notification_batches_match_single_event_rights_and_scale_for_distinct_history(): void
+    {
+        $this->db->unprepared('CREATE TABLE clubora.team_invitations(tenant_id integer,event_id integer,member_id integer);
+CREATE TABLE clubora.notifications(id integer PRIMARY KEY,tenant_id integer,account_id integer,object_type text,object_id integer,title text,body text,created_at text,read_at text);');
+        $source=$this->db->table('clubora.team_seasons')->where('id',$this->team)->first();
+        $otherTeam=$this->db->table('clubora.team_seasons')->insertGetId(['tenant_id'=>$this->tenant->id,'team_id'=>$source->team_id,'season_id'=>$source->season_id,'label'=>'Other']);
+        $ids=[];
+        for($i=0;$i<23;$i++) $ids[]=$this->db->table('clubora.team_events')->insertGetId(['tenant_id'=>$this->tenant->id,'team_season_id'=>$this->team]);
+        $invited=$this->db->table('clubora.team_events')->insertGetId(['tenant_id'=>$this->tenant->id,'team_season_id'=>$otherTeam]);
+        $hidden=$this->db->table('clubora.team_events')->insertGetId(['tenant_id'=>$this->tenant->id,'team_season_id'=>$otherTeam]);
+        $deleted=$this->db->table('clubora.team_events')->insertGetId(['tenant_id'=>$this->tenant->id,'team_season_id'=>$this->team,'deleted_at'=>now()->toIso8601String()]);
+        $own=$this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->value('member_id');
+        $this->db->table('clubora.team_invitations')->insert(['tenant_id'=>$this->tenant->id,'event_id'=>$invited,'member_id'=>$own]);
+        $all=[...$ids,$invited,$hidden,$deleted];
+        $notifications=app(\App\ClubUnio\Mobile\MobileNotificationService::class);
+        $batch=new \ReflectionMethod($notifications,'planningRights');
+        foreach([$this->parent,$this->trainer,$this->admin,$this->player] as $actor) {
+            $baseline=[]; foreach($all as $id) $baseline['planning:'.$id]=app(\App\ClubUnio\Mobile\MobilePushOutbox::class)->targetAllowed($actor,$this->tenant,'planning',$id,false);
+            $rights=[]; $args=[$actor,$this->tenant,$all,&$rights]; $batch->invokeArgs($notifications,$args);
+            $this->assertSame($baseline,$rights);
+        }
+        $measure=function(array $events)use($batch,$notifications){
+            $rights=[]; $args=[$this->parent,$this->tenant,$events,&$rights];
+            $this->db->enableQueryLog(); $this->db->flushQueryLog(); $batch->invokeArgs($notifications,$args);
+            $count=count($this->db->getQueryLog()); $this->db->disableQueryLog(); return $count;
+        };
+        $this->assertSame($measure([$ids[0]]),$measure($ids));
+        foreach($ids as $id) $this->db->table('clubora.mobile_inbox')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->parent->id,'kind'=>'planning','object_id'=>$id,'event_key'=>'event:'.$id]);
+        $page=$notifications->page($this->parent,$this->tenant,0,20,false); $this->assertSame(23,$page['totalRecordCount']);
+        $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface::class);
+        $notifications->page($this->parent,$this->tenant,0,20,false);
     }
 
     public function test_conversation_list_still_rechecks_direct_and_event_revocation(): void

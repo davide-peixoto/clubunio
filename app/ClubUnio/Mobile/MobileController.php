@@ -22,6 +22,15 @@ final class MobileController
             ($sharedTenant ? $tenant->sharedLock() : $tenant->lockForUpdate())->firstOrFail();
             DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $r->attributes->set('mobile.actor', app(MobileSessions::class)->authenticate($r));
+            if($r->isMethod('GET')) {
+                // Middleware facts precede lock waits. Never restore them after a locked GET.
+                foreach([MobileReadContext::class,ChatAccess::class,\App\ClubUnio\Services\BackofficeReadContext::class] as $context) $r->attributes->remove($context);
+                $r->attributes->set(ChatAccess::class.'.generation',$r->attributes->get(ChatAccess::class.'.generation',0)+1);
+                return app(MobileReadContext::class)->during($r,$this->actor($r),function()use($r,$operation){
+                    app(MobileAccess::class)->enter($this->actor($r),$this->tenant($r));
+                    return $operation();
+                });
+            }
             app(MobileAccess::class)->enter($this->actor($r), $this->tenant($r));
 
             return $operation();
@@ -71,12 +80,15 @@ final class MobileController
 
     public function chats(Request $r)
     {
-        return $this->write($r, fn () => $this->data(app(ChatService::class)->conversations($this->actor($r), $this->tenant($r))));
+        return $this->write($r, fn () => $this->data(app(ChatService::class)->conversations($this->actor($r), $this->tenant($r))),sharedTenant:true);
     }
 
     public function chat(Request $r)
     {
-        return $this->write($r, fn () => $this->data(app(ChatService::class)->conversation($this->actor($r), $this->tenant($r), (int) $r->route('chat'))));
+        return $this->write($r, function()use($r){
+            app(ChatService::class)->table($this->tenant($r),'chat_conversations')->where('id',(int)$r->route('chat'))->lockForUpdate()->firstOrFail();
+            return $this->data(app(ChatService::class)->conversation($this->actor($r),$this->tenant($r),(int)$r->route('chat')));
+        },sharedTenant:true);
     }
 
     public function contacts(Request $r)
