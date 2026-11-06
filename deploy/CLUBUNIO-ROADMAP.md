@@ -1902,3 +1902,20 @@ Worker enabled/running ohne Restartschleife, Timer disabled/inactive,
 Health200/context401. Keine Testnachricht/Providerzustellung erzeugt. Neue
 physische iPhone-Ankunft noch nicht gemessen. MOBILE-PUSH-RESIDENT-WORKER.md.
 Manifest cbbe1480e8b7217efaf5bbb622b44490720c4ee3ca7a8488cca1df83d3fb471d.
+
+
+## 07.11.2026: Chatpush-Empfängerprüfung an echte Sitzung gebunden
+
+DEV aktiv: 20261107-clubunio-push-bound, Basis push-worker. Letzte zwei neuen
+Pushs vor diesem Release jeweils5s bis Firebase, nicht bis zum iPhone gemessen.
+Privater CLI-Chatadapter liest die reale aktive Empfängersitzung frisch und
+verwendet den bestehenden Leserahmen nur während eines Zielrechtechecks;
+endet vor Writes/Quellprüfung/Provider, nächste Auslieferung wieder frisch.
+HTTP-Aufrufe und Nicht-Chatziele unverändert. Ziel47SQL/1084ms auf11SQL/268ms
+im Lesegate; Aktivierung11SQL/295ms. Keine TTL-/Prozess-Rechtecacheablage.
+104 lokale Fälle/2593 Assertions plus18 PG-Fälle/219 Assertions grün;
+Sprachprüfung2806 DE/EN plus PHP-Gruppen erfolgreich. Keine Migration/Appänderung.
+Komplette Config/Registry/Flags/ENV/Composer erhalten. FPM und Worker aktiv,
+keine Restartschleife, Health200/context401. Neue physische Pushzeit noch offen;
+APNs-Best-Effort ausdrücklich dokumentiert. MOBILE-PUSH-BOUND-PROOF.md.
+Manifest217585196c29b306be750ac1bb36d8393e1b1368fc6b56c9ca639e6418229a19.

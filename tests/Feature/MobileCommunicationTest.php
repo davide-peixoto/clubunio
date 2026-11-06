@@ -659,6 +659,33 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->assertFalse($membership->exists());
     }
 
+    public function test_worker_bound_session_proof_reuses_facts_without_leaking_or_reusing_revoked_rights(): void
+    {
+        $this->pushDeliveryFixture(); $chat=$this->teamChat($this->parent); $proof=$this->pushBinding($this->parent);
+        $original=request(); app()->instance('request',\Illuminate\Http\Request::create('https://synthetic.example','GET'));
+        $worker=app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+        $method=new \ReflectionMethod($worker,'boundTargetAllowed');
+        try {
+            $this->db->enableQueryLog(); $this->db->flushQueryLog();
+            $this->assertTrue($method->invoke($worker,$this->parent,$this->tenant,'chat',$chat,$proof['session']));
+            $optimized=count($this->db->getQueryLog()); $this->db->flushQueryLog();
+            $this->assertTrue($worker->targetAllowed($this->parent,$this->tenant,'chat',$chat));
+            $ordinary=count($this->db->getQueryLog()); $this->db->disableQueryLog();
+            $this->assertLessThan($ordinary,$optimized);
+            $this->assertLessThanOrEqual(15,$optimized);
+            foreach (['mobile.actor','mobile.session',\App\ClubUnio\Mobile\MobileReadContext::class,\App\ClubUnio\Mobile\ChatAccess::class] as $key)
+                $this->assertFalse(request()->attributes->has($key));
+            $this->assertFalse($method->invoke($worker,$this->trainer,$this->tenant,'chat',$chat,$proof['session']),'Session must belong to this recipient');
+            $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['revoked_at'=>now()->toIso8601String()]);
+            $this->assertFalse($method->invoke($worker,$this->parent,$this->tenant,'chat',$chat,$proof['session']));
+            $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['revoked_at'=>null,'expires_at'=>now()->subMinute()->toIso8601String()]);
+            $this->assertFalse($method->invoke($worker,$this->parent,$this->tenant,'chat',$chat,$proof['session']));
+            $this->db->table('clubora.mobile_sessions')->where('id',$proof['session'])->update(['expires_at'=>now()->addHour()->toIso8601String()]);
+            $this->db->table('clubora.account_member_links')->where('account_id',$this->parent->id)->update(['state'=>'revoked']);
+            $this->assertFalse($method->invoke($worker,$this->parent,$this->tenant,'chat',$chat,$proof['session']),'Next proof must see fresh domain rights');
+        } finally { $this->db->disableQueryLog(); app()->instance('request',$original); }
+    }
+
     public function test_worker_read_proofs_are_fresh_per_source_and_recipient_and_remove_local_frames(): void
     {
         $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent);
@@ -701,7 +728,8 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         };
         $this->app->instance(\App\ClubUnio\Mobile\MobilePushFcm::class,$transport);
         $worker=app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
-        foreach (['edited','floor','deleted','revoked'] as $case) {
+        $originalRequest=request(); app()->instance('request',\Illuminate\Http\Request::create('https://synthetic.example','GET'));
+        try { foreach (['edited','floor','deleted','revoked'] as $case) {
             $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Old text']);
             $this->assertSame(1,$worker->enqueue($this->parent,$this->tenant,'chat',$chat,'chat.message:'.$message->id));
             $row=$this->db->table('clubora.mobile_push_outbox')->where('event_key','chat.message:'.$message->id)->sole();
@@ -716,7 +744,7 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
             $this->assertSame(in_array($case,['deleted','revoked'],true)?'discarded':'accepted',
                 $this->db->table('clubora.mobile_push_outbox')->where('id',$row->id)->value('state'));
             $membership->update(['joined_after'=>0]);
-        }
+        } } finally { app()->instance('request',$originalRequest); }
         $this->assertCount(2,$transport->notifications);
         $this->assertSame('Current preview',$transport->notifications[0]['body']);
         $this->assertSame('Open the app to view the notification.',$transport->notifications[1]['body']);

@@ -17,8 +17,8 @@ final class MobilePushOutbox
         $db = DB::connection('clubunio'); $count = 0;
         // No delivery candidate means no reason to enumerate fresh domain rights.
         $bindings = $this->bindings($tenant, $sourceCreatedAt)->where('b.account_id', $actor->id)
-            ->select(['b.id', 'b.device_id', 'b.revision as binding_revision', 'd.revision as device_revision'])->get();
-        if ($bindings->isEmpty() || ! $this->targetAllowed($actor, $tenant, $kind, $object)) return 0;
+            ->select(['b.id', 'b.device_id', 'b.session_id', 'b.revision as binding_revision', 'd.revision as device_revision'])->get();
+        if ($bindings->isEmpty() || ! $this->boundTargetAllowed($actor, $tenant, $kind, $object, $bindings->pluck('session_id')->all())) return 0;
         foreach ($bindings as $binding) {
             $count += $db->table('clubora.mobile_push_outbox')->insertOrIgnore(['id' => (string) Str::uuid(), 'binding_id' => $binding->id,
                 'account_id' => $actor->id, 'device_id' => $binding->device_id, 'tenant_id' => $tenant->id, 'kind' => $kind,
@@ -26,6 +26,32 @@ final class MobilePushOutbox
                 'binding_revision' => $binding->binding_revision, 'created_at' => now()->toIso8601String()]);
         }
         return $count;
+    }
+
+    /** CLI session adapter: reuse read facts only inside one freshly bound target proof. */
+    private function boundTargetAllowed(Account $actor, Tenant $tenant, string $kind, int $object, string|array $sessionIds): bool
+    {
+        $request = request();
+        // Real HTTP requests retain their existing authorization and write semantics.
+        if (!in_array($kind, ['chat', 'announcement'], true) || !app()->runningInConsole() || !$request->isMethod('GET'))
+            return $this->targetAllowed($actor, $tenant, $kind, $object);
+        $session = DB::connection('clubunio')->table('clubora.mobile_sessions')->whereIn('id', (array) $sessionIds)
+            ->where('account_id', $actor->id)->whereNull('revoked_at')->where('expires_at', '>', now()->toIso8601String())->first();
+        if (!$session) return false;
+        $previous = [];
+        foreach (['mobile.actor' => $actor, 'mobile.tenant' => $tenant, 'mobile.session' => $session] as $key => $value) {
+            $previous[$key] = [$request->attributes->has($key), $request->attributes->get($key)];
+            $request->attributes->set($key, $value);
+        }
+        try {
+            return app(MobileReadContext::class)->during($request, $actor,
+                fn () => $this->targetAllowed($actor, $tenant, $kind, $object));
+        } finally {
+            foreach ($previous as $key => [$existed, $value]) {
+                if ($existed) $request->attributes->set($key, $value);
+                else $request->attributes->remove($key);
+            }
+        }
     }
 
     /** Device opt-in is only a cheap candidate filter, never object authorization. */
@@ -115,7 +141,7 @@ final class MobilePushOutbox
                 || (int) $session->account_id !== (int) $actor->id || \Carbon\CarbonImmutable::parse($session->expires_at)->isPast()
                 || (int) $device->revision !== (int) $row->device_revision || (int) $binding->revision !== (int) $row->binding_revision
                 || ($device->fixed_tenant_id !== null && (int) $device->fixed_tenant_id !== (int) $tenant->id)
-                || ! $this->targetAllowed($actor, $tenant, $row->kind, (int) $row->object_id)
+                || ! $this->boundTargetAllowed($actor, $tenant, $row->kind, (int) $row->object_id, $session->id)
                 || ! $this->publicationCurrent($tenant, $row, $chatSource)) {
                 $finish(['state' => 'discarded', 'code' => 'authorization_changed']); return true;
             }

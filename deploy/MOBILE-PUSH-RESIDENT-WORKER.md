@@ -1,5 +1,8 @@
 # Verbleibende Chatpush-Latenz
 
+Nachlauf: [Sitzungsgebundene Empfängerprüfung](MOBILE-PUSH-BOUND-PROOF.md),
+11 statt47Abfragen im aktuellen DEV-Gate, getrennt von der iPhone-Ankunftszeit.
+
 Stand 07.11.2026. Benutzer misst 10–12 Sekunden vom Absenden bis zur Anzeige auf
 dem iPhone. Zwei neue bereits akzeptierte Chatpushs nach dem vorigen Release
 brauchten 8 und 9 Sekunden von Quellerfassung bis Firebase-Annahme. Davon jeweils
