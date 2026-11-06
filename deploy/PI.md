@@ -2293,3 +2293,18 @@ Lesendes Gate31ms/1SQL; Teiloperation, keine neueNachricht/Pushqueue für Abnahm
 KompletteConfig/Assistant-/Pushflags/Registry/ENV/Composer erhalten, FPM/Timeraktiv,
 Health200/context401. Keine Migration/Appcodeänderung/neuerBuild erforderlich.
 MOBILE-CHAT-SEND-PERFORMANCE.md.
+
+
+## 06.11.2026: Chat mit dauerhafter Pushqueue und Timeout-Abgleich
+
+DEV aktiv20261106-clubunio-chat-async-locks, Runtimefd2e181; vorherasync-send
+31e25fd mit genauadditiverMigration200. Nachricht+Pushintentatomar, Workerfanout
+undProviderhintergründig. OwnclientUUIDGET striktlesend, keineWiederbeitritte.
+SharedSend-/Providerlocks kompatibel, UUIDadvisory+Chatsperre gegenDoppelversand,
+Widerrufeweiterexklusiv. PG2-Verbindungscheck22msShared, Exclusiveblockiert,
+UUIDserialisiert; keineFachnachricht/Push erzeugt.77Backendtests/1416Assertions
+und830Appfällegrün, Analyse/I18n2029/5App und2806DE/ENBackend sauber.
+KompletteConfig/Registry/Flags/ENV/Composererhalten, FPM/Timeraktiv, Health200.
+AppzeigtsofortPending, sichereverschlüsselteWiederaufnahme/Timeoutlookup,
+keinAutoReplaybei404, alterBody/UUIDbeiRetry. NeuerAppstandfürUIerforderlich.
+MOBILE-CHAT-ASYNC-SEND.md / App CHAT-RELIABLE-SEND.md.

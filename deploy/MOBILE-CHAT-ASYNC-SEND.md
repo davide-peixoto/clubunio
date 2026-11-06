@@ -104,3 +104,26 @@ separat erfolgreich, inklusive Commit+Timeout ohneResend, eigenerUUID-Abfrage,
 404Retry mit gleichemBody, verschlüsselter Wiederaufnahme, unmittelbarerAnzeige,
 Storagefehler/403/History-/Kontowechsel, isoliertem Logout und Compare-and-remove.
 DE/EN Backend2806Schlüssel, App2029Nachrichten in5Katalogen ohne Literalbefund.
+
+
+## DEV-Auslieferung06.11.2026
+
+Zuerst20261106-clubunio-chat-async-send aus31e25fd: neunManifestdateien mit
+Baselines geprüft, genauMigration200 atomar(additiveTabelle+Ledger) angewendet.
+READ-ONLY-Abgleich erkennt vorhandene eigeneNachricht; keine neueNachricht/Push.
+Manifest a41d8c0897f858358e3147356d6c6920ee20e5b26d213bc2dd9fc31b9674b742.
+
+Aktuell20261106-clubunio-chat-async-locks ausfd2e181, Basisasync-send erhalten.
+DreiManifestdateien/zweiRuntimebaselines geprüft, keine weitereDDL. Echter
+PG-Test mit zwei unabhängigen Verbindungen, ausschliesslichSELECT/Locks und
+Rollback: zweiteSharedsperre37ms imKandidaten/22ms vorAktivierung trotz
+gehaltenerProviderSharedsperre; TenantExclusive-NOWAIT korrektgesperrt, gleicher
+UUID-Advisorykey gesperrtundnachRollbackwiederfrei. DieseZahlen betreffen nur
+Sperrerwerb, keinen vollständigenHTTP-Sendeversuch. Own-UUID-Abgleich reinlesend
+2060ms/81SQL im nichtmemoisierten CLI-Check. Keine privaten Inhalte ausgegeben.
+Manifest008de81de29d92cec1a662b78df80d8fb41327a18c1bdfd02b78407805d5222c.
+
+77Backendtests/1416Assertions grün;830Appfälle grün. VollständigeKonfiguration
+inklusiveAssistant-/Pushflags/Registry, ENV-/Composerbytes erhalten. FPM/Timeraktiv,
+HintergrunddienstResultsuccess/Exit0, Health200/context401. Keinekünstliche
+Providerzustellung oder neueFachnachricht zurServerabnahme. AppneubaufürneueUI.
