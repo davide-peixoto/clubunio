@@ -1822,3 +1822,16 @@ Antwort per Wischgeste. Abschließende Appprüfungen in MOBILE-CHAT-INTERACTION.
 App-Gesamtsuite mit 855 Fällen und anschließend 46 gezielte Regressionen nach der
 letzten Sitzungsablaufkorrektur grün. Neun Dateien ohne Analysebefund; 2042 Texte
 in fünf Appkatalogen und 2806 Backendschlüssel DE/EN geprüft. Aktueller Appstand nötig.
+
+## 06.11.2026: Persönliche Chat-Lesemarkierungen
+
+DEV aktiv: 20261106-clubunio-chat-readers-i18n, Runtime67ee58e, Basisreaders/be81c6c.
+Autorengebundener rein lesender GET mit frischen Leserrechten und Joinfloor;
+minimale Namenliste, begrenztes Paging und bestehende Cursor statt Lesezeit.
+App-Langdruckaktion nur für eigene gespeicherte Nachrichten, Abruf auf Nachfrage.
+84 Backendtests/2382Assertions, abschließend vier Leserfälle/929Assertions und
+40 Appregressionen grün. Analyse sauber, 2046Texte/5Appkataloge und2806DE/EN geprüft.
+Beide Rollouts ohne Migration, komplette Config/Registry/Flags/ENV/Composer erhalten.
+Lesende Gates erfolgreich, final149SQL/3741 beziehungsweise3624msCLI, keine
+Testnachricht/Push erzeugt. FPM/Timer aktiv, Worker erfolgreich, Health200/context401.
+CHAT-READ-RECEIPTS.md; aktueller Appstand erforderlich.
