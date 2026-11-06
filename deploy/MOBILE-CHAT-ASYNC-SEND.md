@@ -7,7 +7,8 @@ bereits begrenzt; jetzt wird auch diese Berechnung aus dem Senderequest entfernt
 
 Die bestehende eindeutige (tenant_id,account_id,client_id)-Beziehung und der
 Inhaltsfingerprint verhindern Duplikate derselben Operation. ChatService::send
-serialisiert weiterhin über den Tenantlock und führt Nachricht sowie neuen
+verwendet eine gemeinsame Tenantsperre, eine exklusive Chatsperre und einen
+UUID-bezogenen Advisory-Transaktionslock; es führt Nachricht sowie neuen
 mobile_chat_publications-Auftrag in einer Transaktion aus. Bei Rollback existiert
 keines von beiden. Ein UUID-Replay gibt die vorhandene Nachricht zurück; geänderter
 Inhalt mit gleicher UUID bleibt409. Keine Empfängerberechnung/Provider-HTTP im
@@ -37,9 +38,11 @@ Worker clubunio:deliver-mobile-push verarbeitet begrenzt Fanouts und danach
 Provider-Outboxeinträge. --outbox bleibt ohne Nebensammlung. Vor Providerzustellung
 wird jetzt auch die ursprüngliche Chatnachricht auf Löschung, Autor-/Joinrechte
 und richtigen Chat/Kind geprüft. Bestehender Delivery-Shared-Tenantlock und die
-Absicherung gegen ungewisse Providerwiederholung bleiben erhalten. Dieser kurze
-kritische Abschnitt kann weiterhin eine Schreibbestätigung verzögern; die teure
-Fanoutberechnung blockiert keinen Chat-POST-Tenantlock mehr.
+Absicherung gegen ungewisse Providerwiederholung bleiben erhalten. Die gemeinsame
+Tenantsperre beim Chat-POST ist damit kompatibel: Provider-HTTP hält das Speichern
+nicht auf. Rechteänderungen/Edit/Delete behalten exklusive Tenantsperren und
+serialisieren weiter gegen Send/Zustellung. Verschiedene Chats können parallel
+speichern; dieselbe UUID bleibt auch chatübergreifend serialisiert.
 
 Der vorhandene DEV-Timer läuft weiterhin alle60s nach Laufende mit Limit10,
 kein neuer dauerhafter Prozess/Provider oder Flageingriff. Push ist zeitversetzt,
@@ -85,3 +88,19 @@ Code-Rollback auf einen alten Worker verarbeitet neue pending-Publikationen nich
 Vor Rollback Jobs geordnet abschliessen oder kompatiblen neuen Fanoutworker
 beibehalten. Nachrichtspeicherung bleibt erhalten. Unsichere Provider-Sendeversuche
 werden weiterhin nicht blind erneut abgesendet.
+
+
+## Ergänzung: Sendesperren und vollständige Appprüfung
+
+Weiterer kleiner Backenddelta: MobileController/ChatService teilen den Tenantlock
+nur für send. Die App kann deshalb auch während eines Providerrequests speichern.
+PostgreSQL-Advisorylock nutzt tenant/account/normalisierteUUID als gebundene Werte,
+Chatsperre serialisiert Mitgliedschaft und Nachrichteneinfügung. Andere Schreib-
+operationen unverändert exklusiv.71Communication-/ChatAccessTests/1405Assertions
+grün nach dieser Ergänzung; vorherige FCM-Regressionen unverändert.
+
+Gesamte App-Testsuite830Fälle grün.26gezielte Pending-/SDK-/Logout-/Composerfälle
+separat erfolgreich, inklusive Commit+Timeout ohneResend, eigenerUUID-Abfrage,
+404Retry mit gleichemBody, verschlüsselter Wiederaufnahme, unmittelbarerAnzeige,
+Storagefehler/403/History-/Kontowechsel, isoliertem Logout und Compare-and-remove.
+DE/EN Backend2806Schlüssel, App2029Nachrichten in5Katalogen ohne Literalbefund.

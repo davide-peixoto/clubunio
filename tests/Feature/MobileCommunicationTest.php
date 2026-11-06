@@ -42,6 +42,10 @@ class MobileCommunicationTest extends TestCase
             public function compileWheres($query) {
                 return str_replace("birth_date + interval '18 years' > CAST(? AS date)", "date(birth_date, '+18 years') > date(?)", parent::compileWheres($query));
             }
+            protected function compileLock(\Illuminate\Database\Query\Builder $query, $value) {
+                return '/* '.(new \Illuminate\Database\Query\Grammars\PostgresGrammar($query->getConnection()))->compileSelect(
+                    $query->getConnection()->query()->selectRaw('1')->lock($value)).' */';
+            }
         });
         Http::preventStrayRequests();
         $this->db->unprepared(<<<'SQL'
@@ -722,6 +726,25 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { $this->assertSame(404, $e->getStatusCode()); }
     }
 
+    public function test_send_uses_shared_tenant_session_and_exclusive_chat_without_changing_other_write_locks(): void
+    {
+        $chat=$this->teamChat($this->parent); $token=$this->token($this->parent);
+        $this->db->enableQueryLog(); $this->db->flushQueryLog();
+        $message=$this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'),[
+            'client_id'=>(string)Str::uuid(),'text'=>'Shared tenant send',
+        ])->assertCreated()->json('data');
+        $queries=collect($this->db->getQueryLog())->pluck('query');
+        $tenantLocks=$queries->filter(fn($sql)=>str_contains($sql,'from "clubora"."tenants"') && str_contains($sql,'/*'));
+        $this->assertCount(2,$tenantLocks);
+        foreach($tenantLocks as $sql) $this->assertStringContainsString('for share',$sql);
+        $this->assertTrue($queries->contains(fn($sql)=>str_contains($sql,'from "clubora"."mobile_sessions"') && str_contains($sql,'for share')));
+        $this->assertTrue($queries->contains(fn($sql)=>str_contains($sql,'from "clubora"."chat_conversations"') && str_contains($sql,'for update')));
+        $this->db->flushQueryLog();
+        $this->postJson($this->url('chats/'.$chat.'/read'),['message_id'=>$message['id']])->assertOk();
+        $this->assertTrue(collect($this->db->getQueryLog())->contains(fn($q)=>str_contains($q['query'],'from "clubora"."tenants"') && str_contains($q['query'],'for update')));
+        $this->db->disableQueryLog();
+    }
+
     public function test_messages_are_encrypted_idempotent_and_replay_conflicts_fail(): void
     {
         $chat = $this->teamChat($this->parent);
@@ -731,6 +754,8 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'), $data)->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
         $this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'), $data + ['extra' => 1])->assertCreated();
         $this->withToken($token)->postJson($this->url('chats/'.$chat.'/messages'), array_replace($data, ['text' => 'Changed']))->assertConflict();
+        $second=app(ChatService::class)->ensure($this->tenant,'team',$this->team,key:'second-authorized-chat');
+        $this->postJson($this->url('chats/'.$second->id.'/messages'),$data)->assertConflict();
         $this->assertSame(1, $this->db->table('clubora.chat_messages')->count());
         $this->assertStringNotContainsString($data['text'], $this->db->table('clubora.chat_messages')->get()->toJson());
         $this->withToken($token)->getJson($this->url('chats/'.$chat.'/messages'))->assertOk()->assertJsonPath('data.0.text', $data['text']);

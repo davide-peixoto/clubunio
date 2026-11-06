@@ -342,7 +342,15 @@ final class ChatService
     public function send(Account $actor, Tenant $tenant, int $chatId, array $input): object
     {
         return DB::connection('clubunio')->transaction(function()use($actor,$tenant,$chatId,$input){
-            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            Tenant::whereKey($tenant->id)->sharedLock()->firstOrFail();
+            $db=DB::connection('clubunio');
+            // Serialize the account-wide idempotency key even across distinct chats.
+            // Invalid input takes no advisory lock and is rejected by the validator.
+            if($db->getDriverName()==='pgsql' && is_string($input['client_id']??null) && Str::isUuid($input['client_id'])) {
+                $db->select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))',[
+                    'clubunio:chat-send:'.$tenant->id.':'.$actor->id.':'.strtolower($input['client_id']),
+                ]);
+            }
             return $this->persistMessage($actor,$tenant,$chatId,$input);
         });
     }
@@ -350,7 +358,10 @@ final class ChatService
     private function persistMessage(Account $actor, Tenant $tenant, int $chatId, array $input): object
     {
         app(ChatAccess::class)->authorize($actor, $tenant, 'send');
-        $chat = $this->chat($actor, $tenant, $chatId, true);
+        $chat = $this->table($tenant,'chat_conversations')->where('id',$chatId)->lockForUpdate()->first();
+        abort_unless($chat && $this->allowed($actor,$tenant,$chat),404);
+        if($chat->kind==='announcements') app(ChatAccess::class)->authorize($actor,$tenant,'announce');
+        $this->membership($actor,$tenant,$chat);
         $data = Validator::make($input, ['client_id' => 'required|uuid', 'text' => 'required|string|max:4000',
             'kind' => 'nullable|in:text,event,poll,announcement', 'event_id' => 'nullable|integer|min:1',
             'recipient_fingerprint' => 'nullable|string|size:64', 'attachment_id' => 'nullable|uuid',

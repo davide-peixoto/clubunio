@@ -15,10 +15,11 @@ final class MobileController
     private function tenant(Request $r): Tenant { return $r->attributes->get('mobile.tenant'); }
     private function data($data, int $status = 200) { return response()->json(['data' => $data], $status); }
 
-    private function write(Request $r, callable $operation)
+    private function write(Request $r, callable $operation, bool $sharedTenant = false)
     {
-        return DB::connection('clubunio')->transaction(function () use ($r, $operation) {
-            Tenant::whereKey($this->tenant($r)->id)->lockForUpdate()->firstOrFail();
+        return DB::connection('clubunio')->transaction(function () use ($r, $operation, $sharedTenant) {
+            $tenant = Tenant::whereKey($this->tenant($r)->id);
+            ($sharedTenant ? $tenant->sharedLock() : $tenant->lockForUpdate())->firstOrFail();
             DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $r->attributes->set('mobile.actor', app(MobileSessions::class)->authenticate($r));
             app(MobileAccess::class)->enter($this->actor($r), $this->tenant($r));
@@ -109,7 +110,7 @@ final class MobileController
             $service = app(ChatService::class); $a = $this->actor($r); $t = $this->tenant($r);
             $row = $service->send($a, $t, (int) $r->route('chat'), $r->all());
             return $this->data($service->messageDto($a, $t, $row), 201);
-        });
+        }, sharedTenant: true);
     }
 
     public function read(Request $r)
