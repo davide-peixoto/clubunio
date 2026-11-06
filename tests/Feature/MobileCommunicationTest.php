@@ -659,6 +659,24 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->assertFalse($membership->exists());
     }
 
+    public function test_worker_read_proofs_are_fresh_per_source_and_recipient_and_remove_local_frames(): void
+    {
+        $chat=$this->teamChat($this->trainer); $this->teamChat($this->parent);
+        $message=app(ChatService::class)->send($this->trainer,$this->tenant,$chat,['client_id'=>(string)Str::uuid(),'text'=>'Fresh worker proof']);
+        $original=request(); app()->instance('request',\Illuminate\Http\Request::create('https://synthetic.example','GET'));
+        try {
+            $source=app(\App\ClubUnio\Mobile\ChatPushPublications::class);
+            $outbox=app(\App\ClubUnio\Mobile\MobilePushOutbox::class);
+            $this->assertNotNull($source->source($this->tenant,$message->id));
+            $this->assertTrue($outbox->targetAllowed($this->parent,$this->tenant,'chat',$chat));
+            $this->assertFalse(request()->attributes->has(\App\ClubUnio\Mobile\ChatAccess::class));
+            $this->db->table('clubora.account_member_links')->whereIn('account_id',[$this->trainer->id,$this->parent->id])->update(['state'=>'revoked']);
+            $this->assertNull($source->source($this->tenant,$message->id));
+            $this->assertFalse($outbox->targetAllowed($this->parent,$this->tenant,'chat',$chat));
+            $this->assertFalse(request()->attributes->has(\App\ClubUnio\Mobile\ChatAccess::class));
+        } finally { app()->instance('request',$original); }
+    }
+
     public function test_chat_push_preview_uses_live_text_and_closes_for_join_floor_deletion_and_revocation(): void
     {
         $this->pushDeliveryFixture();

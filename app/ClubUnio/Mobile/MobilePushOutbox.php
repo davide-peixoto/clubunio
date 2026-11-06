@@ -52,11 +52,13 @@ final class MobilePushOutbox
         try {
             app(MobileAccess::class)->enter($actor, $tenant);
             if (in_array($kind, ['chat', 'announcement'], true)) {
+                return app(ChatAccess::class)->duringRead($actor, $tenant, function () use ($actor, $tenant, $kind, $object, $delivery) {
                 $chat = app(ChatService::class)->table($tenant, 'chat_conversations')->where('id', $object)->first();
                 if (! $chat || ! app(ChatService::class)->allowed($actor, $tenant, $chat)) return false;
                 $member = app(ChatService::class)->table($tenant, 'chat_memberships')->where('conversation_id', $object)->where('account_id', $actor->id)->first();
                 if (! $delivery) return true;
                 return (! $member || (! $member->muted && $member->left_at === null));
+                });
             }
             if ($kind === 'invoice') { app(MobileAccess::class)->invoice($actor, $tenant, $object); return true; }
             if ($kind === 'planning') {

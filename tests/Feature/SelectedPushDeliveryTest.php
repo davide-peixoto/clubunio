@@ -7,6 +7,41 @@ use Tests\TestCase;
 
 class SelectedPushDeliveryTest extends TestCase
 {
+    public function test_resident_worker_polls_more_than_once_without_recollecting_or_leaking_request_facts(): void
+    {
+        config(['clubunio-mobile-push.enabled' => true, 'clubunio-mobile-push.delivery_enabled' => true]);
+        $trace = new class { public int $collections = 0; public int $polls = 0; };
+        $original = request();
+        $this->instance(MobilePushSources::class, new class($trace) {
+            public function __construct(private object $trace) {}
+            public function existingNotifications(): void { $this->trace->collections++; }
+            public function challengeResets(): void {}
+        });
+        $this->instance(MobileAdminNoticeService::class, new class { public function pending(): void {} });
+        $this->instance(\App\ClubUnio\Mobile\ChatPushPublications::class, new class($trace) {
+            public function __construct(private object $trace) {}
+            public function processOne(): bool {
+                \PHPUnit\Framework\Assert::assertFalse(request()->attributes->has('mobile.synthetic_previous_cycle'));
+                request()->attributes->set('mobile.synthetic_previous_cycle', true);
+                $this->trace->polls++; return false;
+            }
+        });
+        $this->instance(MobilePushOutbox::class, new class { public function deliverOne(): bool { return false; } });
+        $this->artisan('clubunio:deliver-mobile-push', ['--dispatch' => true, '--watch' => 1])->assertSuccessful();
+        self::assertGreaterThanOrEqual(2, $trace->polls);
+        self::assertSame(1, $trace->collections);
+        self::assertSame($original, request());
+    }
+
+    public function test_watch_rejects_unbounded_duration_and_selected_delivery_combination(): void
+    {
+        config(['clubunio-mobile-push.enabled' => true, 'clubunio-mobile-push.delivery_enabled' => true]);
+        foreach (['0', '-1', '3601', 'invalid'] as $duration)
+            $this->artisan('clubunio:deliver-mobile-push', ['--dispatch' => true, '--watch' => $duration])->assertFailed();
+        $this->artisan('clubunio:deliver-mobile-push', ['--dispatch' => true, '--watch' => 1,
+            '--outbox' => '329785b2-0c70-46eb-8710-d5316b573179'])->assertFailed();
+    }
+
     public function test_worker_delivers_each_fanout_before_calculating_the_next_and_respects_budget(): void
     {
         config(['clubunio-mobile-push.enabled' => true, 'clubunio-mobile-push.delivery_enabled' => true]);

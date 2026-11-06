@@ -1,5 +1,8 @@
 # Chatvorschau und zeitnaher Pushversand
 
+Nachlauf07.11.2026: [Residenter Worker und verbleibende iPhone-Latenz](MOBILE-PUSH-RESIDENT-WORKER.md).
+Der Timerbetrieb unten wurde durch einen aktiven Hintergrunddienst ersetzt.
+
 Stand 06.11.2026. DEV aktiv: `20261106-clubunio-push-preview`, Basis
 `20261106-clubunio-mobile-hotpaths`. Keine Migration oder Appänderung.
 

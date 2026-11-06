@@ -21,9 +21,14 @@ final class ChatPushPublications
         $chat=$db->table('clubora.chat_conversations')->where('tenant_id',$tenant->id)->where('id',$message->conversation_id)->first();
         if(!$member || $member->left_at!==null || $message->id<=$member->joined_after || !$chat) return null;
         try {
-            app(ChatAccess::class)->authorize($actor,$tenant,'send');
-            if(!app(ChatService::class)->allowed($actor,$tenant,$chat)) return null;
-            if($message->kind==='announcement' && !app(ChatAccess::class)->allows($actor,$tenant,'announce')) return null;
+            // Read-only eligibility check, not a chat mutation. A fresh frame per
+            // source avoids repeating enter/profile checks inside the same proof.
+            $allowed=app(ChatAccess::class)->duringRead($actor,$tenant,function()use($actor,$tenant,$chat,$message){
+                $access=app(ChatAccess::class);
+                return $access->allows($actor,$tenant,'send') && app(ChatService::class)->allowed($actor,$tenant,$chat)
+                    && ($message->kind!=='announcement' || $access->allows($actor,$tenant,'announce'));
+            });
+            if(!$allowed) return null;
         } catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface|\Illuminate\Database\Eloquent\ModelNotFoundException) {
             return null;
         }

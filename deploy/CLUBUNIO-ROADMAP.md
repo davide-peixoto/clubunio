@@ -1883,3 +1883,22 @@ Keine Migration/Appänderung, gesamte Config/Registry/Flags/ENV/Composer erhalte
 FPM/Timer aktiv, Worker success/Exit0, Health200/context401. Physische Ankunft noch
 nicht neu gemessen. MOBILE-PUSH-PREVIEW-LATENCY.md; Manifest
 1f56877364ae8196a1efbeff4aead1947145ffb71639e364a6be7e91d9d8b7dd.
+
+
+## 07.11.2026: Verbleibende iPhone-Pushwartezeit reduziert
+
+DEV aktiv: 20261107-clubunio-push-worker, Basis push-preview. Benutzer misst
+10–12s bis iPhone; letzte zwei Pushs zuvor bereits 8/9s bis Firebase-Annahme.
+Dauerhafter einzelner Worker mit 250ms Ruhepause, maximal 300s je Prozesslauf,
+systemd-Neustart; Timer deaktiviert und als Rollbackunit erhalten. Neue Request-
+kontexte je Zyklus, keine übernommenen Saison-/Rechtefakten. Fachsammlung weiter
+alle zwei Sekunden nach Abschluss; Chat zuerst. Quell-/Empfängerprüfung jeweils
+lokaler frischer Leserahmen, keine allgemeine Rechtecachefreigabe. Ziel65SQL/1702ms
+auf47SQL/1255ms, Quelle37SQL/901ms auf12SQL/329ms im inaktiven Lesegate.
+98 lokale Fälle/2481 Assertions plus18 PG-Pushfälle/219 Assertions grün;
+Sprachprüfung2806 DE/EN plus PHP-Gruppen erfolgreich. Keine Migration/Appänderung.
+Komplette Config/Registry/Flags/ENV/Composer erhalten. FPM und Worker aktiv,
+Worker enabled/running ohne Restartschleife, Timer disabled/inactive,
+Health200/context401. Keine Testnachricht/Providerzustellung erzeugt. Neue
+physische iPhone-Ankunft noch nicht gemessen. MOBILE-PUSH-RESIDENT-WORKER.md.
+Manifest cbbe1480e8b7217efaf5bbb622b44490720c4ee3ca7a8488cca1df83d3fb471d.
