@@ -84,7 +84,7 @@ final class MobileExpenseData
             'types' => $this->table($tenant, 'expense_types')->where('active', true)->orderBy('name')->get(['id','name','receipt_required','amount_source'])->all(),
             'game_types' => $this->table($tenant, 'game_types')->where('active', true)->orderBy('id')->get(['id','code','name'])->all(),
             'institutions' => $this->table($tenant, 'banks')->where('active', true)->orderBy('name')->get(['id','name','clearing_number'])->all(),
-            'capabilities' => ['upload' => (bool) config('clubunio-mobile.uploads_enabled') && $tenant->slug === config('clubunio-integrations.azure.tenant_slug'),
+            'capabilities' => ['upload' => (bool) config('clubunio-mobile.uploads_enabled') && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant),
                 'ai' => in_array('expense-ocr-v1', array_map('trim', explode(',', substr((string) request()->header('X-ClubUnio-Mobile-Features', ''), 0, 512))), true)
                     && app(MobileExpenseOcr::class)->available($tenant),
                 'create' => $own->isNotEmpty() && count($teams) > 0]];

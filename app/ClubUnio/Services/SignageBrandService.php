@@ -31,7 +31,7 @@ class SignageBrandService
         $rgb = array_map(fn ($hex) => hexdec($hex) / 255, str_split(substr($data['color'], 1), 2));
         $rgb = array_map(fn ($value) => $value <= .04045 ? $value / 12.92 : (($value + .055) / 1.055) ** 2.4, $rgb);
         $data['ink'] = $rgb[0] * .2126 + $rgb[1] * .7152 + $rgb[2] * .0722 > .179 ? '#16191e' : '#ffffff';
-        $data['logo'] = $this->safeLogo($data['logo']) ? $data['logo'] : '/brand/blue-v1/clubunio-symbol.svg';
+        $data['logo'] = $this->safeLogo($data['logo'], $tenant) ? $data['logo'] : '/brand/blue-v1/clubunio-symbol.svg';
         $data['title'] = mb_substr(trim($data['title']), 0, 100) ?: $tenant->name;
         $data['period_id'] = app(ActiveTrainingPlan::class)->period($tenant)?->id ?? 0;
 
@@ -43,8 +43,11 @@ class SignageBrandService
         return hash('sha256', json_encode($this->read($tenant), JSON_THROW_ON_ERROR));
     }
 
-    private function safeLogo(string $url): bool
+    private function safeLogo(string $url, ?Tenant $tenant = null): bool
     {
+        if (str_starts_with($url, '/club-logo/')) {
+            return $tenant && preg_match('~^/club-logo/'.$tenant->id.'/[a-f0-9]{64}\.png$~D', $url);
+        }
         if (preg_match('~^/(images|brand)/[a-zA-Z0-9_./-]+\.(png|jpg|jpeg|webp|svg)$~D', $url) && ! str_contains($url, '..')) {
             return true;
         }
@@ -55,11 +58,11 @@ class SignageBrandService
             && ! isset($parts['user']) && ! isset($parts['pass']);
     }
 
-    public function validateDesign(array $input): array
+    public function validateDesign(array $input, ?Tenant $tenant = null): array
     {
         $data = Validator::make($input, ['color' => ['required', 'regex:/^#[a-f0-9]{6}$/iD'],
             'logo' => 'required|string|max:2048', 'title' => 'required|string|max:100'])->validate();
-        if (! $this->safeLogo($data['logo'])) {
+        if (! $this->safeLogo($data['logo'], $tenant)) {
             throw ValidationException::withMessages(['logo' => __('Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Vereinslogo verwenden.')]);
         }
 
@@ -72,7 +75,7 @@ class SignageBrandService
         $data = Validator::make($input, ['color' => ['required', 'regex:/^#[a-f0-9]{6}$/iD'], 'logo' => 'required|string|max:2048',
             'title' => 'required|string|max:100', 'version' => 'required|string|size:64',
             'period_id' => 'prohibited'])->validate();
-        if (! $this->safeLogo($data['logo'])) {
+        if (! $this->safeLogo($data['logo'], $tenant)) {
             throw ValidationException::withMessages(['logo' => __('Öffentliche HTTPS-Bildadresse ohne Zugangsdaten/Query oder lokales Bild unter /images bzw. /brand verwenden.')]);
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data) {

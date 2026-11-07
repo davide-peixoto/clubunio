@@ -25,7 +25,7 @@ class SyncWorkService
         'invoice_result' => 'Bexio · Rechnungsaktion klären',
         'finance_result' => 'Bexio · Finanzaktion klären',
         'training_review' => 'KI-Training · Anfrage prüfen',
-        'azure_upload' => 'Azure · Dokument übertragen',
+        'azure_upload' => 'Transfer document',
         'sponsor_run_billing' => 'Sponsorenlauf · Bexio-Abrechnung prüfen',
     ];
 

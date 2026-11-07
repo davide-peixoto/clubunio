@@ -117,15 +117,20 @@ final class PlatformAdministrationService
     {
         $this->authorize($actor);
         $data = Validator::make($input, ['revision' => 'required|integer|min:1',
-            'operation' => ['required', Rule::in(['name', 'brand', 'domain', 'membership', 'revoke'])],
+            'operation' => ['required', Rule::in(['name', 'brand', 'storage', 'domain', 'membership', 'revoke'])],
             'reason' => 'required|string|min:10|max:500'])->validate();
         $fields = match ($data['operation']) {
-            'name' => ['name'], 'brand' => ['color', 'logo', 'title'],
+            'name' => ['name'], 'brand' => ['color', 'logo', 'title', 'logo_file'],
+            'storage' => ['provider', 'storage_account', 'storage_container', 'storage_key', 'storage_owner', 'storage_private_confirmed', 'storage_action'],
             'domain' => ['host', 'ownership_verified', 'dns_verified', 'tls_verified', 'active'],
             'membership' => ['username', 'role', 'portal_enabled', 'access_profile_id'],
             'revoke' => ['username'],
         };
         abort_if(array_diff(array_keys($input), ['revision', 'reason', 'operation', ...$fields]), 422);
+        if (isset($input['logo_file'])) {
+            Validator::make($input, ['logo_file' => 'required|file'])->validate();
+            $input['logo_png'] = app(TenantLogoService::class)->encode($input['logo_file']);
+        }
         DB::connection('clubunio')->transaction(function () use ($actor, $id, $data, $input) {
             $this->authorize($actor, true);
             $tenant = Tenant::whereKey($id)->lockForUpdate()->firstOrFail();
@@ -133,6 +138,7 @@ final class PlatformAdministrationService
             $details = match ($data['operation']) {
                 'name' => $this->rename($tenant, $input),
                 'brand' => $this->brand($tenant, $input),
+                'storage' => app(TenantDocumentStorage::class)->select($tenant, $input),
                 'domain' => $this->domain($actor, $tenant, $input),
                 'membership' => $this->membership($tenant, $input),
                 'revoke' => $this->revokeMembership($tenant, $input),
@@ -153,8 +159,15 @@ final class PlatformAdministrationService
 
     private function brand(Tenant $tenant, array $input): array
     {
-        $data = app(SignageBrandService::class)->validateDesign($input);
+        $upload = $input['logo_png'] ?? null;
+        if ($upload !== null) {
+            $input['logo'] = '/brand/blue-v1/clubunio-symbol.svg';
+        }
+        $data = app(SignageBrandService::class)->validateDesign($input, $tenant);
         $before = array_intersect_key(app(SignageBrandService::class)->read($tenant), $data);
+        if ($upload !== null) {
+            $data['logo'] = app(TenantLogoService::class)->store($tenant, $upload);
+        }
         foreach (['color', 'logo', 'title'] as $field) {
             $row = Setting::where('tenant_id', $tenant->id)->where('area', 'signage')
                 ->where('key', SignageBrandService::KEYS[$field])->first() ?? new Setting;

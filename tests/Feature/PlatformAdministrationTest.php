@@ -85,6 +85,22 @@ class PlatformAdministrationTest extends TestCase
             'tls_verified' => false, 'active' => false, ...$data];
     }
 
+    public function test_logo_upload_is_reencoded_and_only_current_tenant_logo_is_served(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $file = \Illuminate\Http\UploadedFile::fake()->image('synthetic-logo.png', 64, 48);
+        $this->change('brand', ['color' => '#164b8a', 'title' => 'Synthetic logo', 'logo_file' => $file])->assertRedirect();
+        $logo = app(SignageBrandService::class)->read($this->one)['logo'];
+        $this->assertMatchesRegularExpression('~^/club-logo/'.$this->one->id.'/[a-f0-9]{64}\.png$~D', $logo);
+        $this->get('http://localhost'.$logo)->assertOk()->assertHeader('Content-Type', 'image/png');
+        $this->get('http://localhost'.str_replace('/'.$this->one->id.'/', '/'.$this->two->id.'/', $logo))->assertNotFound();
+        $this->change('brand', ['color' => '#164b8a', 'title' => 'Synthetic logo', 'logo' => $logo], $this->two)->assertSessionHasErrors('logo');
+        $svg = \Illuminate\Http\UploadedFile::fake()->createWithContent('attack.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+        $this->change('brand', ['color' => '#164b8a', 'title' => 'Synthetic logo', 'logo_file' => $svg])->assertSessionHasErrors('logo_file');
+        $this->change('brand', ['color' => '#164b8a', 'title' => 'Synthetic logo', 'logo' => '/images/svs-logo.png'])->assertRedirect();
+        $this->get('http://localhost'.$logo)->assertNotFound();
+    }
+
     public function test_club_admins_guests_and_technical_accounts_cannot_enter_platform(): void
     {
         $this->get('/platform')->assertRedirect(route('clubunio.platform.login'));

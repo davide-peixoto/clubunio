@@ -153,7 +153,7 @@ class ExpenseService
             if (in_array($status->code, ['F', 'Z'], true)) {
                 if (app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('state', 'pending')
                     ->whereIn('object_id', $expense->activeLines()->select('id'))->exists()) {
-                    throw ValidationException::withMessages(['status_id' => __('Beleganhänge warten auf die Azure-Übertragung. Bitte zuerst Synchronisation prüfen.')]);
+                    throw ValidationException::withMessages(['status_id' => __('Receipts are pending transfer. Check Synchronisation first.')]);
                 }
                 if (! $expense->activeLines()->exists() || $expense->activeLines()->where(fn ($q) => $q->whereNull('amount')->orWhere('amount', '<=', 0))->exists()) {
                     throw ValidationException::withMessages(['status_id' => __('Der Beleg benötigt gültige Positionen mit positivem Betrag.')]);

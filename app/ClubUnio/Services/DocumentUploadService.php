@@ -25,7 +25,6 @@ class DocumentUploadService
 
     public function stage(?Account $actor, Tenant $tenant, string $kind, int $id, array $metadata, UploadedFile $file, ?string $publicRequest = null): int
     {
-        abort_unless($tenant->slug === config('clubunio-integrations.azure.tenant_slug'), 403);
         $types = $kind === 'expense' ? 'application/pdf,image/jpeg,image/png' : 'application/pdf,image/jpeg,image/png,image/webp';
         Validator::make(['file' => $file], ['file' => 'required|file|max:20480|mimetypes:'.$types])->validate();
         $bytes = $file->get();
@@ -36,14 +35,16 @@ class DocumentUploadService
             throw ValidationException::withMessages(['file' => __('Ein Passfoto muss ein Bild sein.')]);
         }
         $metadata['original_filename'] = mb_substr(preg_replace('/[\x00-\x1f\x7f]/', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))), 0, 255);
-        $metadata['storage_fingerprint'] = $this->storageFingerprint();
         $sha = hash('sha256', $bytes);
-        // Public and staff uploads never share an authority grant or retry identity.
-        $key = hash('sha256', json_encode([$kind, $id, $actor?->id, $publicRequest, $sha, array_diff_key($metadata, ['original_filename' => true])], JSON_THROW_ON_ERROR));
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $kind, $id, $metadata, $bytes, $mime, $extension, $sha, $key, $publicRequest) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $kind, $id, $metadata, $bytes, $mime, $extension, $sha, $publicRequest) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorizeSource($actor, $tenant, $kind, $id, $metadata, $publicRequest);
+            $namespace = ['member' => 'members', 'registration' => 'registrations', 'expense' => 'expenses'][$kind];
+            $folder = app(TenantDocumentStorage::class)->folder($tenant, $namespace, $id);
+            $metadata['storage_fingerprint'] = $this->storageFingerprint($folder);
+            // Public and staff uploads never share an authority grant or retry identity.
+            $key = hash('sha256', json_encode([$kind, $id, $actor?->id, $publicRequest, $sha, array_diff_key($metadata, ['original_filename' => true])], JSON_THROW_ON_ERROR));
             if ($kind === 'expense' && ($published = $this->table()->where('tenant_id', $tenant->id)->where('kind', $kind)->where('object_id', $id)
                 ->where('sha256', $sha)->where('state', 'published')->value('id'))) {
                 return (int) $published;
@@ -71,10 +72,9 @@ class DocumentUploadService
             if ((clone $held)->count() >= 100 || (int) (clone $held)->sum('byte_count') + strlen($bytes) > 100 * 1024 * 1024) {
                 throw ValidationException::withMessages(['file' => __('Der geschützte Upload-Zwischenspeicher ist voll. Bitte Synchronisation prüfen.')]);
             }
-            $namespace = ['member' => 'members', 'registration' => 'registrations', 'expense' => 'expenses'][$kind];
             $upload = $this->table()->insertGetId(['tenant_id' => $tenant->id, 'kind' => $kind, 'object_id' => $id,
                 'deduplication_key' => $key, 'sha256' => $sha, 'byte_count' => strlen($bytes), 'mime_type' => $mime,
-                'folder' => 'clubunio/'.$namespace.'/'.$tenant->id.'/'.$id.'/', 'filename' => Str::uuid().'.'.$extension,
+                'folder' => $folder, 'filename' => Str::uuid().'.'.$extension,
                 'encrypted_metadata' => Crypt::encryptString(json_encode($metadata, JSON_THROW_ON_ERROR)),
                 'encrypted_bytes' => Crypt::encryptString($bytes), 'created_by' => $actor?->id, 'public_request_id' => $publicRequest]);
             app(SyncWorkService::class)->rememberDocument($tenant, $upload);
@@ -134,14 +134,15 @@ class DocumentUploadService
         abort_unless($upload->state === 'pending', 409);
         $actor = $upload->created_by ? Account::findOrFail($upload->created_by) : null;
         $metadata = json_decode(Crypt::decryptString($upload->encrypted_metadata), true, 512, JSON_THROW_ON_ERROR);
-        abort_unless(hash_equals($metadata['storage_fingerprint'], $this->storageFingerprint()), 409, __('Azure-Ziel wurde geändert. Upload zuerst prüfen.'));
+        abort_unless(hash_equals($metadata['storage_fingerprint'], $this->storageFingerprint($upload->folder)), 409, __('The upload destination changed. Check the upload first.'));
+        $storage = app(TenantDocumentStorage::class);
         $this->authorizeSource($actor, $tenant, $upload->kind, $upload->object_id, $metadata, $upload->public_request_id);
         $bytes = Crypt::decryptString($upload->encrypted_bytes);
         abort_unless(strlen($bytes) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $bytes)), 409, __('Dateiprüfsumme stimmt nicht überein.'));
         $found = false;
         if ($upload->provider_started_at) {
             try {
-                $stored = app(AzureDocumentReader::class)->read($upload->folder, $upload->filename);
+                $stored = $storage->read($tenant, $upload->folder, $upload->filename);
                 abort_unless(strlen($stored) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $stored)), 409, __('Datei im Zielsystem stimmt nicht überein.'));
                 $found = true;
             } catch (\Throwable $error) {
@@ -152,7 +153,7 @@ class DocumentUploadService
         }
         if (! $found) {
             $this->table()->where('id', $id)->where('state', 'pending')->update(['provider_started_at' => now()->toIso8601String()]);
-            app(RegistrationBlobStore::class)->put($upload->folder, $upload->filename, $bytes, $upload->mime_type);
+            $storage->put($tenant, $upload->folder, $upload->filename, $bytes, $upload->mime_type);
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $upload, $metadata) {
@@ -185,12 +186,15 @@ class DocumentUploadService
         try {
             return app(SyncWorkService::class)->runDocument($actor, $tenant, $id);
         } catch (\Throwable) {
-            throw ValidationException::withMessages(['file' => __('Datei geschützt gespeichert; Azure-Übertragung noch offen. Bitte unter Synchronisation prüfen. Referenz: Upload #:value1', ['value1' => $id])]);
+            throw ValidationException::withMessages(['file' => __('File stored securely; transfer pending. Check Synchronisation. Reference: Upload #:value1', ['value1' => $id])]);
         }
     }
 
-    private function storageFingerprint(): string
+    private function storageFingerprint(string $folder): string
     {
+        if (TenantDocumentStorage::parse($folder)) {
+            return hash('sha256', $folder);
+        }
         return hash('sha256', json_encode(array_intersect_key(config('clubunio-integrations.azure'), array_flip(['account', 'container', 'tenant_slug'])), JSON_THROW_ON_ERROR));
     }
 }

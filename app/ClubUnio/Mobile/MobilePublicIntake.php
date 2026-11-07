@@ -13,7 +13,7 @@ final class MobilePublicIntake
     private function table() { return DB::connection('clubunio')->table('clubora.mobile_public_intake_commands'); }
     private function canUpload(Tenant $tenant): bool
     {
-        return config('clubunio-mobile.uploads_enabled', false) && $tenant->slug === config('clubunio-integrations.azure.tenant_slug')
+        return config('clubunio-mobile.uploads_enabled', false) && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
             && is_string(config('clubunio-mobile.attachments.clamd_socket')) && config('clubunio-mobile.attachments.clamd_socket') !== '';
     }
     private function choices(Tenant $tenant): array

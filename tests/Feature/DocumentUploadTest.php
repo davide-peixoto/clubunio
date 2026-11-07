@@ -182,7 +182,7 @@ class DocumentUploadTest extends TestCase
             app(ExpenseService::class)->transition($this->actor, $this->tenant, $line->expense_id, ['revision' => 1, 'status_id' => $released, 'reason' => 'Synthetic release test']);
             $this->fail('Pending upload must block release');
         } catch (ValidationException $error) {
-            $this->assertStringContainsString('Azure', $error->getMessage());
+            $this->assertSame(__('Receipts are pending transfer. Check Synchronisation first.'), $error->errors()['status_id'][0]);
         }
         $line->increment('revision');
         $this->mock(RegistrationBlobStore::class)->shouldNotReceive('put');

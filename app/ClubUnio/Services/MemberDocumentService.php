@@ -45,18 +45,25 @@ class MemberDocumentService
 
     private function readResponse(Account $actor, Tenant $tenant, object $document, bool $download, string $objectType)
     {
-        abort_unless($tenant->slug === config('clubunio-integrations.azure.tenant_slug'), 404);
-        if (str_starts_with($document->storage_path, 'clubunio/')) {
+        if ($path = TenantDocumentStorage::parse($document->storage_path)) {
+            $registration = $path['namespace'] === 'registrations' && (($objectType === 'member' && $document->registration_document_id)
+                || ($objectType === 'registration' && $path['object'] === (string) $document->registration_id));
+            abort_unless($path['tenant'] === (string) $tenant->id && ($registration
+                || ($objectType === 'member' && $path['namespace'] === 'members' && $path['object'] === (string) $document->member_id)
+                || ($objectType === 'expense' && $path['namespace'] === 'expenses' && $path['object'] === (string) $document->id)), 404);
+        } elseif (str_starts_with($document->storage_path, 'clubunio/')) {
             $registration = str_starts_with($document->storage_path, 'clubunio/registrations/'.$tenant->id.'/');
             $member = $objectType === 'member' && $document->storage_path === 'clubunio/members/'.$tenant->id.'/'.$document->member_id.'/';
             abort_unless($registration || $member, 404);
         }
         try {
-            $bytes = app(AzureDocumentReader::class)->read($document->storage_path, $document->filename);
+            $bytes = app(TenantDocumentStorage::class)->read($tenant, $document->storage_path, $document->filename);
         } catch (\Throwable $error) {
             $reference = (string) Str::uuid();
-            Log::warning('clubunio.document.read_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'document_id' => $document->id, 'object_type' => $objectType, 'actor_id' => $actor->id, 'code' => $error->getCode() === 404 ? 404 : 503]);
-            abort($error->getCode() === 404 ? 404 : 503, __('Dokument nicht verfügbar. Referenz: :value1', ['value1' => $reference]));
+            $status = $error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $error->getStatusCode() : $error->getCode();
+            $status = $status === 404 ? 404 : 503;
+            Log::warning('clubunio.document.read_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'document_id' => $document->id, 'object_type' => $objectType, 'actor_id' => $actor->id, 'code' => $status]);
+            abort($status, __('Dokument nicht verfügbar. Referenz: :value1', ['value1' => $reference]));
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: 'application/octet-stream';
         $inline = ! $download && in_array($mime, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'], true);
@@ -79,10 +86,8 @@ class MemberDocumentService
             ->whereIn('expense_id', app(ExpenseService::class)->visible($actor, $tenant)->select('clubora.expenses.id'))->findOrFail($id);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         abort_unless($index >= 0 && isset($files[$index]), 404);
-        if (str_starts_with($files[$index], 'clubunio/')) {
-            abort_unless(str_starts_with($files[$index], 'clubunio/expenses/'.$tenant->id.'/'.$line->id.'/'), 404);
-        }
-        $document = (object) ['id' => $id, 'filename' => $files[$index], 'storage_path' => 'azure.blob://files/', 'original_filename' => $line->filename ?: $files[$index]];
+        [$folder, $filename] = app(TenantDocumentStorage::class)->expensePath($tenant, $files[$index], (int) $line->id);
+        $document = (object) ['id' => $id, 'filename' => $filename, 'storage_path' => $folder, 'original_filename' => $line->filename ?: $filename];
 
         return $this->readResponse($actor, $tenant, $document, $download, 'expense');
     }

@@ -76,6 +76,8 @@ final class PlatformAdministrationController
 
         return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user('clubunio'),
             'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts,
+            'storageProfile' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->active($tenant),
+            'storageDestinations' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->destinations($tenant),
             'roles' => AccountRole::where('active', true)->orderBy('sort_order')->get(),
             'profiles' => AccessProfile::where('tenant_id', $id)->where('active', true)->orderBy('name')->get(['id', 'name']),
             'domains' => $db->table('clubora.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
@@ -88,6 +90,11 @@ final class PlatformAdministrationController
         $service->change($request->user('clubunio'), $id, $request->except('_token'));
 
         return redirect()->route('clubunio.platform.show', $id)->with('notice', __('Änderung gespeichert.'));
+    }
+
+    public function logo(int $id, string $version, \App\ClubUnio\Services\TenantLogoService $logos)
+    {
+        return $logos->response($id, $version);
     }
 
     public function logout(Request $request)

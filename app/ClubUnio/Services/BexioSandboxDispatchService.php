@@ -368,7 +368,7 @@ class BexioSandboxDispatchService
             if ($row->kind === 'expense' && $row->source_trial_id) {
                 $fileIds = [];
                 foreach ($prepared['_attachments']['files'] ?? [] as $file) {
-                    $bytes = app(AzureDocumentReader::class)->read('azure.blob://files/', $file['source']);
+                    $bytes = app(TenantDocumentStorage::class)->readExpense($tenant, $file['source']);
                     abort_unless(strlen($bytes) === $file['size'] && hash_equals($file['sha256'], hash('sha256', $bytes)), 409, __('Anhang wurde geaendert.'));
                     $this->step($id, $actor, 'upload', 'started');
                     $result = $this->client()->send($token, 'upload', [], $bytes, $file['filename'], $file['mime']);

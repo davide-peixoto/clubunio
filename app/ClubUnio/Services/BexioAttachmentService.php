@@ -43,11 +43,8 @@ class BexioAttachmentService
                 $this->invalid(__('Die Speicherzuordnung des Belegs fehlt bei Position #:value1.', ['value1' => $line->id]));
             }
             foreach ($names as $name) {
-                if (str_starts_with($name, 'clubunio/') && ! str_starts_with($name, 'clubunio/expenses/'.$tenant->id.'/'.$line->id.'/')) {
-                    $this->invalid(__('Belegreferenz gehört nicht zu dieser Position.'));
-                }
                 try {
-                    app(AzureDocumentReader::class)->blobPath('azure.blob://files/', $name);
+                    app(TenantDocumentStorage::class)->expensePath($tenant, $name, (int) $line->id);
                 } catch (\Throwable) {
                     $this->invalid(__('Ungültige Belegreferenz bei Position #:value1.', ['value1' => $line->id]));
                 }
@@ -64,9 +61,6 @@ class BexioAttachmentService
 
     public function prepare(Tenant $tenant, int $expenseId, array $plan): array
     {
-        if ($plan['names'] !== [] && $tenant->slug !== config('clubunio-integrations.azure.tenant_slug')) {
-            abort(404);
-        }
         $manifest = [];
         $total = 0;
         $deadline = microtime(true) + 20;
@@ -75,7 +69,7 @@ class BexioAttachmentService
                 $this->invalid(__('Zeitlimit der Belegprüfung erreicht. Bitte später erneut prüfen.'));
             }
             try {
-                $bytes = app(AzureDocumentReader::class)->read('azure.blob://files/', $name);
+                $bytes = app(TenantDocumentStorage::class)->readExpense($tenant, $name);
             } catch (\Throwable $error) {
                 $reference = (string) Str::uuid();
                 Log::warning('clubunio.bexio.attachment_read_failed', ['reference' => $reference, 'tenant_id' => $tenant->id,

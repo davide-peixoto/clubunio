@@ -19,7 +19,7 @@ final class MobileRegistrationData
     private function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id); }
     private function canUpload(Account $actor, Tenant $tenant): bool
     {
-        return (bool) config('clubunio-mobile.uploads_enabled') && $tenant->slug === config('clubunio-integrations.azure.tenant_slug')
+        return (bool) config('clubunio-mobile.uploads_enabled') && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
             && app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'upload');
     }
     public function authorizeReader(Account $actor, Tenant $tenant): void

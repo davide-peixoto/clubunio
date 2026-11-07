@@ -20,7 +20,7 @@ class RegistrationAcceptanceService
         }
         abort_unless(app(RegistrationReviewService::class)->canReview($actor, $tenant, $r), 403);
         if (app(DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'registration')->where('object_id', $r->id)->where('state', 'pending')->exists()) {
-            throw ValidationException::withMessages(['status_id' => __('Anhänge warten auf die Azure-Übertragung. Bitte zuerst Synchronisation abschliessen.')]);
+            throw ValidationException::withMessages(['status_id' => __('Attachments are pending transfer. Complete synchronisation first.')]);
         }
         if (! $r->details_complete) {
             throw ValidationException::withMessages(['status_id' => __('Die vollständigen Anmeldedaten fehlen.')]);

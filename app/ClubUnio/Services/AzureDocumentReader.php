@@ -24,7 +24,7 @@ class AzureDocumentReader
             'upload/anmeldungen/' => 'upload/anmeldungen/',
             'upload/mitglieder/anhaenge/' => 'upload/mitglieder/anhaenge/',
             'var/member-documents/' => 'member-documents/',
-            default => preg_match('~^clubunio/(registrations|members|expenses)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder) ? $folder : throw new \InvalidArgumentException('Unsupported document folder'),
+            default => (TenantDocumentStorage::parse($folder) || preg_match('~^clubunio/(registrations|members|expenses)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder)) ? $folder : throw new \InvalidArgumentException('Unsupported document folder'),
         };
         if ($filename === '' || $filename === '.' || $filename === '..' || preg_match('~[/\\\\:\x00-\x1f\x7f]~', $filename)) {
             throw new \InvalidArgumentException('Invalid document filename');
@@ -35,10 +35,19 @@ class AzureDocumentReader
 
     public function read(string $folder, string $filename): string
     {
+        return $this->readAt($folder, $filename, null);
+    }
+
+    public function readAt(string $folder, string $filename, ?array $destination): string
+    {
+        if (($destination !== null) !== (TenantDocumentStorage::parse($folder) !== null)) {
+            throw new \RuntimeException('Document storage reference does not match destination', 404);
+        }
         $path = $this->blobPath($folder, $filename);
-        $config = config('clubunio-integrations.azure');
+        $config = $destination ?? config('clubunio-integrations.azure');
         $container = $config['container'];
-        if (! $config['enabled'] || ! preg_match('/^[a-z0-9]{3,24}$/', $config['account']) || ! $config['key']) {
+        if (! $config['enabled'] || ! preg_match('/^[a-z0-9]{3,24}$/D', $config['account']) || ! $config['key']
+            || ($destination && ! preg_match('/^[a-z0-9-]{3,63}$/D', $container))) {
             throw new \RuntimeException('Document storage disabled');
         }
         // SDK-generated, read-only SAS stays server-side. A single bounded GET, no retry loop.

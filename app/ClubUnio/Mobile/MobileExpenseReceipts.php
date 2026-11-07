@@ -20,7 +20,7 @@ final class MobileExpenseReceipts
             ->update(['state' => 'expired', 'bytes_encrypted' => null, 'revision' => DB::connection('clubunio')->raw('revision + 1')]);
     }
     public function stage(Account $actor, Tenant $tenant, string $clientId, UploadedFile $file): array {
-        abort_unless(config('clubunio-mobile.uploads_enabled') && $tenant->slug === config('clubunio-integrations.azure.tenant_slug'), 503);
+        abort_unless(config('clubunio-mobile.uploads_enabled') && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant), 503);
         abort_unless(app(ExpenseService::class)->portalAllowed($actor, $tenant), 403);
         Validator::make(['client_id' => $clientId, 'file' => $file], ['client_id' => 'required|uuid',
             'file' => 'required|file|max:5120|mimetypes:application/pdf,image/jpeg,image/png'])->validate();

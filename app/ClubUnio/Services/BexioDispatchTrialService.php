@@ -230,7 +230,7 @@ class BexioDispatchTrialService
             $payload = $prepared['_request']['payload'];
             $fileIds = [];
             foreach ($prepared['_attachments']['files'] ?? [] as $file) {
-                $bytes = app(AzureDocumentReader::class)->read('azure.blob://files/', $file['source']);
+                $bytes = app(TenantDocumentStorage::class)->readExpense($tenant, $file['source']);
                 if (strlen($bytes) !== $file['size'] || ! hash_equals($file['sha256'], hash('sha256', $bytes))) {
                     throw new \RuntimeException('Attachment changed');
                 }

@@ -196,6 +196,7 @@ class MaterialReceiptTest extends TestCase
 
     public function test_legacy_signed_pdf_is_preserved_scoped_and_hash_checked(): void
     {
+        config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         $bytes = "%PDF-1.4\nSynthetic historical receipt";
         $type = $this->insert('document_types', ['name' => 'Synthetic receipt', 'code' => 'synthetic']);
         $document = $this->insert('member_documents', ['member_id' => $this->child->id, 'document_type_id' => $type, 'filename' => 'synthetic.pdf', 'storage_path' => 'synthetic/', 'active' => true]);
