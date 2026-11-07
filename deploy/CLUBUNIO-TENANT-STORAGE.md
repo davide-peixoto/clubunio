@@ -1,6 +1,11 @@
 # Tenant Document Storage and Logo Upload
 
-## Available Locally
+## Available on ClubUnio DEV
+
+Released to `dev.clubunio.ch` as `20261107-clubunio-tenant-storage` from
+`961afff`. The logo upload is available. The storage tables exist, are empty
+and have no public grants. All storage flags are off and the existing SV
+Sissach destination is unchanged. Rollout details and rollback: [PI.md](PI.md).
 
 - `/platform/tenants/{id}` > Vereinsdesign accepts PNG, JPEG and WebP, maximum
   5 MiB and 2048 by 2048 pixels. GD decodes and re-encodes to PNG. SVG upload
@@ -82,7 +87,8 @@ After first use, preserve both tables, APP_KEY, profile credentials and
 compatible readers. Disable the individual provider flag to stop new writes
 while keeping reads enabled, or select a different target. Do not revert to
 code that cannot resolve profile references. No destructive `down()`.
-PHPMaker DEV/PROD are unchanged. No deployment or migration applied in this task.
+PHPMaker DEV/PROD are unchanged. ClubUnio DEV already has both migrations;
+do not apply them again when configuring a test provider.
 
 ## Provider Setup
 
@@ -134,6 +140,7 @@ provider APIs/SDK. They cover the switch, rotation, cross-tenant isolation,
 privacy checks, resumable requests, conflict handling, and DE/EN forms (9 tests,
 61 assertions). Both migrations were also exercised on disposable
 PostgreSQL (PGlite), preserving a pre-existing Azure profile and checking the
-uniqueness and provider constraints. Live provider tests, target schema
-application, server rollout and managed storage operations/billing are not
-part of this implementation.
+uniqueness and provider constraints. The server release also passed the
+synthetic logo feature test (13 assertions) with a rolled-back database
+transaction. Live provider tests and managed storage operations/billing remain
+open.

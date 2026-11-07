@@ -6,6 +6,8 @@ Kommunikationsmodul fuer die Flutter-App: [API und Entwicklungsstand](deploy/CLU
 Zentrale [Plattformverwaltung fuer Vereine, Domains, Design und Benutzerzuordnungen](deploy/CLUBUNIO-PLATFORM-ADMINISTRATION.md)
 unter `/platform`, eigene Anmeldung `/platform/login`. Nur separat freigeschaltete
 Plattformadmins, keine automatische Fachdatenberechtigung oder SaaS-Abrechnung.
+Mandantenbezogener [Dokumentenspeicher und Logo-Upload](deploy/CLUBUNIO-TENANT-STORAGE.md)
+mit Azure Blob, Amazon S3, Google Workspace, Microsoft 365 und privatem ClubUnio-Speicher.
 
 Persoenlich freigeschalteter [Nur-Lesen-Supportmodus](deploy/CLUBUNIO-IMPERSONATION.md)
 unter `/support/impersonation`, ohne automatische Freischaltung bestehender Konten.

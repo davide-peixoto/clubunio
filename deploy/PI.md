@@ -1,5 +1,21 @@
 # Pi staging: dev.clubunio.ch
 
+## Mandantenspeicher und Logo-Upload (07.11.2026)
+
+Aktiv `20261107-clubunio-tenant-storage` aus `961afff`, Basis und Rueckweg
+`20261107-clubunio-push-bound`. 42 Paketdateien, bestehende Dateibaselines,
+Composer-Plattform, unveraenderte Konfiguration und Push-Servergate geprueft.
+Vollstaendig lesbare verschluesselte PostgreSQL-, APP_KEY/ENV- und
+Privatdatei-Sicherung unter `shared/backups/tenant-storage-20261107`. Additive
+Migrationen000100/000200 atomar ausgefuehrt, Tabellen leer und ohne
+PUBLIC-Rechte. Alle Speicherflags bleiben aus; keine Providerverbindung und
+keine Verlagerung bestehender Dateien. Logo-Upload ist verfuegbar.
+FPM und Push-Worker aktiv; Health/Login/Plattformlogin200, Plattform anonym302,
+unbekanntes Logo404. Lokal9 Speicher- und1 synthetischer Logo-Test gruen, DE/EN
+geprueft. Rueckweg: vorherigen Release-Symlink wiederherstellen, FPM neu laden
+und den Push-Worker neu starten; additive Tabellen nicht zurueckrollen.
+PHPMaker DEV/PROD unveraendert. [Einrichtung](CLUBUNIO-TENANT-STORAGE.md).
+
 ## Offene Reservierungsanfragen im Dashboard (05.11.2026)
 
 Aktiv20261105-clubunio-dashboard-reservations-v2, Basis/Rueckweg pitch-request-inbox.

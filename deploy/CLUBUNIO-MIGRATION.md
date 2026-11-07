@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## Mandantenspeicher und Logo-Upload (07.11.2026)
+
+Auf ClubUnio DEV bereitgestellt: Azure Blob, AWS S3, Google Workspace Shared Drive, OneDrive
+for Business/SharePoint und privater ClubUnio-Datentraeger pro Verein. Neue
+Dokumentreferenzen halten ihr Profil fest; SVS-Bestandsdateien bleiben
+unveraendert. Migrationen000100/000200 wurden nach verifizierter verschluesselter
+Sicherung atomar auf ClubUnio DEV angewendet; alle Storage-Flags bleiben aus.
+Logo-Upload im Vereinsdesign ist aktiv. Echte Providerabnahme,
+Betreiberfreigabe und Abrechnung bleiben getrennt. Freigabe- und Rueckweg:
+`CLUBUNIO-TENANT-STORAGE.md`. PHPMaker DEV/PROD unveraendert.
+
 ## Synthetischer Modellvergleich (06.11.2026)
 
 Reine lokale API-Abnahme ohne Migration oder Deployment: GPT-5.4 mini und

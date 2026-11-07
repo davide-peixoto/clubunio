@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Mandantenspeicher und Vereinslogos (07.11.2026)
+
+Anbieteradapter fuer Azure Blob, AWS S3, Google Workspace Shared Drive,
+OneDrive for Business/SharePoint und privaten ClubUnio-Speicher. Speicherziel
+und Berechtigungen bleiben mandantenbezogen; historische Dateien behalten ihre
+Referenz. Auf ClubUnio DEV bereitgestellt, Logo-Upload aktiv, zwei additive
+Migrationen angewendet. Keine externe Aktivierung und keine Abrechnung.
+Anleitung: CLUBUNIO-TENANT-STORAGE.md.
+
 ## Modellabnahme mit synthetischen Daten (06.11.2026)
 
 72 gewertete Backoffice-Aufgaben ueber die echte OpenAI-API verglichen:
