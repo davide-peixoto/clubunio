@@ -95,9 +95,11 @@ mkdir -m 700 "$backup"
     php deploy/prepare-tenant-storage-release.php dump |
         openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -pass "file:$backup/backup.key" -out "$backup/clubora.pg.enc"
     openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$backup/backup.key" -in "$backup/clubora.pg.enc" |
-        docker run --rm --network none --read-only -i --entrypoint pg_restore postgres:18-alpine --list > "$backup/clubora.toc"
-    grep -Eq 'TABLE .* clubora tenants ' "$backup/clubora.toc"
-    grep -Eq 'TABLE DATA .* clubora migrations ' "$backup/clubora.toc"
+        docker run --rm --network none --read-only -i --entrypoint pg_restore postgres:18-alpine --file=/dev/null
+    openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$backup/backup.key" -in "$backup/clubora.pg.enc" |
+        { docker run --rm --network none --read-only -i --entrypoint pg_restore postgres:18-alpine --list > "$backup/clubora.toc"; cat >/dev/null; }
+    grep -Fq ' TABLE clubora tenants ' "$backup/clubora.toc"
+    grep -Fq ' TABLE DATA clubora migrations ' "$backup/clubora.toc"
     tar -czf - -C "$previous" .env -C "$base/shared/storage/app" private |
         openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -pass "file:$backup/backup.key" -out "$backup/private-files.tar.gz.enc"
     openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "file:$backup/backup.key" -in "$backup/private-files.tar.gz.enc" |
