@@ -1,5 +1,12 @@
 # Sportneutrale Anlagen und Trainingszeiten
 
+Seit 09.11.2026 auf [ClubUnio DEV](https://dev.clubunio.ch/) aktiv
+(`20261109-clubunio-sport-neutral-facilities`, Fachcode `79293a0`).
+Zum Testen in der [Plattformverwaltung](https://dev.clubunio.ch/platform/login)
+einen separaten Verein mit einem bestehenden Test-/Administrationskonto
+anlegen. Beim Release wurde kein neutraler Testverein vorab angelegt und
+kein bestehender Verein umgestellt.
+
 ## Bedienung
 
 - Neue Vereine aus der Plattformverwaltung erhalten nach der Migration den
@@ -33,7 +40,7 @@
 
 ## Migration und Rueckweg
 
-1. ClubUnio-Datenbank sichern. Die additive Migration
+1. ClubUnio-Datenbank sichern. Auf DEV bereits erledigt. Die additive Migration
    `2026_11_09_000100_sport_neutral_facilities.php` erweitert nur
    `clubora.tenants` und `clubora.training_options`. Bestehende Vereine behalten
    `legacy`; bestehende Optionen erhalten keinen geratenen Anlagentyp.
@@ -63,7 +70,10 @@ PHPMaker DEV/PROD.
 - Winter-/Sommerwechsel, Pflichtstatus, Sperren, Ganzflaeche, Konflikte zwischen
   Mannschaften, parallele Belegung verschiedener Anlagen, Deaktivierungsschutz
   und Mandantentrennung getestet. Flutter-Widgettests mit 1, 2 und 4 Anlagen.
-- DDL auf einer isolierten PostgreSQL-Instanz geprueft. Keine Migration
-  in ClubUnio DEV angewendet und kein Server- oder App-Release vorgenommen.
-  Angemeldete Browser-/native Geraeteabnahme auf einer bereitgestellten
-  Testumgebung bleibt getrennt.
+- DDL auf einer isolierten PostgreSQL-Instanz geprueft und auf ClubUnio DEV
+  nach vollstaendig lesbarer verschluesselter Sicherung einmalig atomar
+  angewendet. Fuenf Sissacher Datenbestaende blieben unveraendert, der aktive
+  Leser meldet drei Anlagen im bisherigen Modus. Login, Health und anonymer
+  Zugriffsschutz geprueft. [Release und Rueckweg](PI.md#sportneutrale-anlagen-09112026).
+- Kein App-Release noetig. Angemeldete Browser-/native Geraeteabnahme mit
+  separatem Testverein bleibt offen.

@@ -5,7 +5,8 @@
 Anlagen mit Typ, Anfangsstatus und optionalen Teilflaechen; Trainings binden
 Anlage und Periode statt fester Platzvarianten. Fussball-Winterhalle und
 gemeinsame Nutzung mehrerer Teams geprueft. SV Sissach bleibt unveraendert.
-Lokal umgesetzt; Sportartenwahl und Verbandsadapter folgen getrennt.
+Auf ClubUnio DEV ausgerollt und Migration angewendet. Angemeldete
+Testvereinsabnahme, Sportartenwahl und Verbandsadapter folgen getrennt.
 [Bedienung und Migration](CLUBUNIO-SPORT-NEUTRAL-FACILITIES.md).
 
 ## Mandantenspeicher und Vereinslogos (07.11.2026)

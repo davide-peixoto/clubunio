@@ -1,5 +1,23 @@
 # Pi staging: dev.clubunio.ch
 
+## Sportneutrale Anlagen (09.11.2026)
+
+Aktiv `20261109-clubunio-sport-neutral-facilities` mit Fachcode `79293a0`;
+Basis und Rueckweg `20261109-clubunio-my-teams-trial`. 23 Paketdateien und
+bestehende Baselines geprueft. ENV, Shared Storage und Composer unveraendert.
+Vollstaendig lesbare verschluesselte PostgreSQL-Sicherung unter
+`shared/backups/sport-neutral-facilities-20261109`. Nur additive Migration
+`2026_11_09_000100_sport_neutral_facilities` atomar ausgefuehrt.
+Sissacher Optionen, Trainingszeiten, Anlagenstatus, Statuswerte und
+Mandanteneinstellungen per Fingerabdruck unveraendert; Live-Projektion
+drei aktive Plaetze im bisherigen Modus. Kein Testverein angelegt.
+FPM und Push-Worker aktiv; Health/Login/Plattformlogin200, Anlagenbelegung
+und Signage-Vorschau anonym302, persoenliche API anonym401. 16 gezielte
+Backendtests/182 Assertions und DE/EN geprueft. Vor erster neutraler Nutzung
+kann der Symlink zurueckgestellt werden, additive Spalten erhalten; danach
+kompatible Leser beibehalten. Kein PHPMaker- oder App-Release.
+[Einrichtung und Abnahme](CLUBUNIO-SPORT-NEUTRAL-FACILITIES.md).
+
 ## Mandantenspeicher und Logo-Upload (07.11.2026)
 
 Aktiv `20261107-clubunio-tenant-storage` aus `961afff`, Basis und Rueckweg
