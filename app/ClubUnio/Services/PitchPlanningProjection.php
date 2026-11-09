@@ -33,11 +33,13 @@ class PitchPlanningProjection
         $areas = $this->table('pitch_areas', $tenant)->orderBy('id')->get()->groupBy('field_id');
         return TrainingOption::where('tenant_id', $tenant->id)->where('category', 'field')
             ->where(fn ($query) => $query->where('active', true)->orWhereIn('id', $referencedIds))
-            ->orderBy('id')->get()->map(function ($field) use ($availability, $areas) {
+            ->when(FacilityPlanningMode::neutral($tenant), fn ($query) => $query->orderBy('sort_order'))
+            ->orderBy('id')->get()->map(function ($field) use ($availability, $areas, $tenant) {
             $status = $availability->get($field->id)?->status;
             return ['id' => (int) $field->id, 'name' => app(LookupTranslations::class)->label('training_options', $field, null, $field->tenant_id),
                 'available' => $field->active && $status && $status->active && ! $status->blocks_training,
-                'areas' => ($areas->get($field->id) ?? collect())->map(fn ($area) => $this->area($area))->all()];
+                'areas' => ($areas->get($field->id) ?? collect())->map(fn ($area) => $this->area($area))->all()]
+                + (FacilityPlanningMode::neutral($tenant) ? ['facility_kind' => $field->facility_kind ?? 'field'] : []);
         })->all();
     }
 
@@ -55,10 +57,13 @@ class PitchPlanningProjection
         $entries = [];
         $queryFrom = Time::parse($from)->subDay()->toDateString();
         $period ??= app(ActiveTrainingPlan::class)->period($tenant)?->id;
-        $variant = app(SignageService::class)->trainingVariant($tenant);
+        $neutral = FacilityPlanningMode::neutral($tenant);
+        $fields = $neutral ? TrainingOption::where('tenant_id', $tenant->id)->where('category', 'field')
+            ->where('active', true)->pluck('id')->flip() : null;
         if ($period) {
             $slots = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $period)
-                ->where($variant, true)->with(['weekday', 'teamSeason.team', 'teamSeason.season'])->get();
+                ->when(! $neutral, fn ($query) => $query->where(app(SignageService::class)->trainingVariant($tenant), true))
+                ->with(['weekday', 'teamSeason.team', 'teamSeason.season'])->get();
             // Both interval ends matter: an original outside the visible range may move
             // into it, while an outgoing exception must suppress its original occurrence.
             $exceptions = $this->table('pitch_training_exceptions', $tenant)->whereIn('training_slot_id', $slots->pluck('id'))
@@ -74,7 +79,7 @@ class PitchPlanningProjection
                     $exception = $own->get($original);
                     if ($exception?->cancelled) continue;
                     $entry = $this->training($slot, $original, $exception, $areas);
-                    if ($entry) $entries[] = $entry;
+                    if ($entry && (! $neutral || $fields->has($entry['field_id']))) $entries[] = $entry;
                 }
             }
         }
@@ -140,13 +145,22 @@ class PitchPlanningProjection
     /** Signage consumes effective occurrences without modifying the weekly models. */
     public function trainingModels(Tenant $tenant, string $date, int $period): Collection
     {
-        $entries = collect($this->entries($tenant, $date, $date, $period))->where('source', 'training')->where('date', $date);
+        $calendar = collect($this->entries($tenant, $date, $date, $period));
+        $entries = $calendar->where('source', 'training')->where('date', $date);
+        if (FacilityPlanningMode::neutral($tenant)) {
+            $fields = collect($this->fields($tenant))->keyBy('id');
+            $areas = $fields->pluck('areas')->collapse()->keyBy('id')->all();
+            $blocks = $calendar->where('source', 'block')->where('status', 'approved');
+            $entries = $entries->filter(fn ($entry) => ($fields->get($entry['field_id'])['available'] ?? false)
+                && ! $blocks->contains(fn ($block) => PitchPlanningGeometry::overlaps($entry, $block, $areas)));
+        }
         $slots = TrainingSlot::where('tenant_id', $tenant->id)->whereIn('id', $entries->pluck('source_id'))->with('teamSeason.team')->get()->keyBy('id');
         $areas = $this->table('pitch_areas', $tenant)->whereIn('id', $entries->pluck('area_id')->filter()->unique())->get()->keyBy('id');
-        return $entries->map(function ($entry) use ($slots, $areas) {
+        return $entries->map(function ($entry) use ($slots, $areas, $tenant) {
             $slot = clone $slots[$entry['source_id']];
             $slot->field_id = $entry['field_id'];
             $slot->area_id = $entry['area_id'];
+            if (FacilityPlanningMode::neutral($tenant)) $slot->hall = null;
             $slot->pitch_area_name = ($area = $areas->get($entry['area_id'])) ? app(PitchWeeklyAreas::class)->label($area) : null;
             $slot->unsetRelation('field');
             $slot->starts_at = $entry['starts_at'];

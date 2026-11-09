@@ -26,10 +26,11 @@ class FacilityService
         }
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input, $module) {
-            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $tenant = Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
-            if ($model === FieldAvailability::class && $id && ! app(ModulePermissionService::class)->allows($actor, $tenant, 'facilities', 'update')) {
+            if ($model === FieldAvailability::class && $id && (FacilityPlanningMode::neutral($tenant)
+                || ! app(ModulePermissionService::class)->allows($actor, $tenant, 'facilities', 'update'))) {
                 // Narrow caretakers may change status/note, not move or deactivate the field record.
                 abort_if((array_key_exists('field_id', $input) && (int) $input['field_id'] !== (int) $record->field_id)
                     || (array_key_exists('active', $input) && (bool) $input['active'] !== (bool) $record->active), 403);
@@ -47,7 +48,7 @@ class FacilityService
                 throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde geändert. Bitte neu laden.')]);
             }
             $rules = ['active' => 'required|boolean', 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:1'];
-            $option = fn ($category, $required = false) => [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->where('active', true))];
+            $option = fn ($category, $required = false, $onlyActive = true) => [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->when($onlyActive, fn ($query) => $query->where('active', true)))];
             if ($model === Competition::class) {
                 $rules += ['plays_on' => 'required|date_format:Y-m-d', 'starts_at' => 'nullable|date_format:H:i:s', 'host_name' => 'required|string|max:255', 'guest_name' => 'required|string|max:255', 'host_category' => 'nullable|string|max:100', 'guest_category' => 'nullable|string|max:100', 'host_club_number' => 'nullable|integer|min:1', 'guest_club_number' => 'nullable|integer|min:1', 'remarks' => 'nullable|string|max:10000', 'show_on_signage' => 'required|boolean', 'field_id' => $option('field')];
                 foreach (['host', 'guest'] as $side) {
@@ -66,7 +67,7 @@ class FacilityService
             } elseif ($model === SignageNotice::class) {
                 $rules += ['shows_on' => 'required|date_format:Y-m-d', 'title' => 'required|string|max:255', 'body' => 'required|string|max:10000'];
             } elseif ($model === FieldAvailability::class) {
-                $rules += ['field_id' => $option('field', true), 'status_id' => ['required', 'integer', Rule::exists('clubunio.clubora.facility_statuses', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))], 'note' => 'nullable|string|max:500'];
+                $rules += ['field_id' => $option('field', true, ! FacilityPlanningMode::neutral($tenant)), 'status_id' => ['required', 'integer', Rule::exists('clubunio.clubora.facility_statuses', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))], 'note' => 'nullable|string|max:500'];
             } else {
                 $rules += ['name' => 'required|string|max:160', 'blocks_training' => 'required|boolean', 'sort_order' => 'required|integer|min:0|max:10000'];
                 if (! $id) {

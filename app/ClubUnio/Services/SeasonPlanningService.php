@@ -361,7 +361,8 @@ final class SeasonPlanningService
                 || ! app(PitchWeeklyAreas::class)->matches($tenant->id, $slot['field_id'] ?? null, $slot['area_id']))) {
                 $errors[] = __('Das ausgewählte Spielfeld oder die Teilfläche ist nicht verfügbar.');
             }
-            if (! $teams->has($slot['team_key'] ?? '') || empty($slot['starts_at']) || empty($slot['ends_at']) || $slot['ends_at'] <= $slot['starts_at'] || (empty($slot['field_id']) && empty($slot['hall']))) {
+            if (! $teams->has($slot['team_key'] ?? '') || empty($slot['starts_at']) || empty($slot['ends_at']) || $slot['ends_at'] <= $slot['starts_at']
+                || (empty($slot['field_id']) && (FacilityPlanningMode::neutral($tenant) || empty($slot['hall'])))) {
                 $errors[] = __('Eine Trainingszeit ist unvollständig oder ungültig.');
             }
             foreach (['period', 'weekday', 'field', 'room', 'side'] as $category) {

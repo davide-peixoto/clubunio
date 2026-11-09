@@ -54,16 +54,20 @@ class SignageService
         $date = CarbonImmutable::createFromFormat('!Y-m-d', $data['date'], 'Europe/Zurich');
         $fields = FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)->whereHas('field', fn ($q) => $q->where('active', true))->with(['field', 'status'])->get();
         // Unknown/inactive status is not interpreted as an open field.
-        $flag = $this->variant($fields);
+        $neutral = FacilityPlanningMode::neutral($tenant);
+        if ($neutral) $fields = $fields->sortBy([fn ($a, $b) => $a->field->sort_order <=> $b->field->sort_order,
+            fn ($a, $b) => $a->field_id <=> $b->field_id])->values();
+        $flag = $neutral ? 'neutral' : $this->variant($fields);
         $trainings = collect();
         if (! empty($data['period_id'])) {
-            $trainings = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $data['period_id'])
-                ->where($flag, true)->whereHas('weekday', fn ($q) => $q->where('active', true)->where('code', (string) ($date->dayOfWeek + 1)))
-                ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $data['date'])->where('ends_on', '>=', $data['date'])))
-                ->with('teamSeason.team')->orderBy('starts_at')->orderBy('id')->get();
             $pitch = app(PitchPlanningProjection::class);
             if ($pitch->ready()) {
                 $trainings = $pitch->trainingModels($tenant, $data['date'], (int) $data['period_id']);
+            } elseif (! $neutral) {
+                $trainings = TrainingSlot::where('tenant_id', $tenant->id)->where('active', true)->where('period_id', $data['period_id'])
+                    ->where($flag, true)->whereHas('weekday', fn ($q) => $q->where('active', true)->where('code', (string) ($date->dayOfWeek + 1)))
+                    ->whereHas('teamSeason', fn ($q) => $q->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true))->whereHas('season', fn ($q) => $q->where('active', true)->where('starts_on', '<=', $data['date'])->where('ends_on', '>=', $data['date'])))
+                    ->with('teamSeason.team')->orderBy('starts_at')->orderBy('id')->get();
             }
         }
 

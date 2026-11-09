@@ -28,12 +28,14 @@ class ContributionTrainingService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $model, $id, $input, $module) {
             // Serialize catalog edits so overlapping rule inserts cannot race.
-            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $tenant = Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $neutral = FacilityPlanningMode::neutral($tenant);
             $record = $id ? $model::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new $model;
             if ($id && (int) ($input['revision'] ?? 0) !== (int) $record->revision) {
                 throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde geändert. Bitte neu laden.')]);
             }
             $exists = fn ($table) => Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true));
+            $facility = $neutral && $model === TrainingOption::class && ($record->category ?? $input['category'] ?? '') === 'field';
             $rules = ['active' => 'required|boolean', 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:1'];
             if ($model === ContributionPrice::class) {
                 $rules += ['name' => 'required|string|max:160', 'amount' => 'required|numeric|min:0|max:999999999.99|decimal:0,4', 'bexio_product_id' => 'nullable|string|max:100', 'bexio_article_id' => 'nullable|integer|min:1'];
@@ -45,14 +47,21 @@ class ContributionTrainingService
                 if (! $id) {
                     $rules += ['category' => ['required', Rule::in(['period', 'weekday', 'field', 'room', 'side'])], 'code' => ['required', 'string', 'max:30', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('clubunio.clubora.training_options')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $input['category'] ?? ''))]];
                 }
+                if ($facility) {
+                    $rules['facility_kind'] = ['required', Rule::in(array_keys(FacilityPlanningMode::KINDS))];
+                    if (! $id) {
+                        $rules['initial_status_id'] = ['required', 'integer', $exists('facility_statuses')];
+                        app(ModulePermissionService::class)->authorize($actor, $tenant, 'field_availability', 'create');
+                    }
+                }
             } else {
                 $rules['area_id'] = 'sometimes|nullable|integer|min:0';
                 $rules += ['team_season_id' => ['required', 'integer', $exists('team_seasons')], 'starts_at' => 'required|date_format:H:i:s', 'ends_at' => 'required|date_format:H:i:s|after:starts_at', 'hall' => 'nullable|string|max:255'];
                 foreach (['period', 'weekday', 'field', 'room', 'side'] as $category) {
-                    $rules[$category.'_id'] = [in_array($category, ['period', 'weekday']) ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->where('active', true))];
+                    $rules[$category.'_id'] = [in_array($category, ['period', 'weekday']) || ($neutral && $category === 'field') ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->where('active', true))];
                 }
                 foreach (['all_fields', 'without_main', 'synthetic_only', 'website_visible'] as $field) {
-                    $rules[$field] = 'required|boolean';
+                    $rules[$field] = $neutral && $field !== 'website_visible' ? 'sometimes|boolean' : 'required|boolean';
                 }
                 foreach (['starts_at', 'ends_at'] as $field) {
                     if (preg_match('/^\d{2}:\d{2}$/', (string) ($input[$field] ?? ''))) {
@@ -65,11 +74,17 @@ class ContributionTrainingService
             }
             $data = Validator::make($input, $rules)->validate();
             if ($model === TrainingSlot::class) {
+                if ($neutral) {
+                    $data = array_replace($data, ['all_fields' => true, 'without_main' => false, 'synthetic_only' => false, 'hall' => null]);
+                }
                 $data = app(PitchWeeklyAreas::class)->forSave($tenant, $record, $data);
             }
+            $initialStatus = $data['initial_status_id'] ?? null;
+            unset($data['initial_status_id']);
             app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $id ? 'update' : 'create');
             if ($id && (bool) $record->active !== (bool) $data['active']) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, $module, $data['active'] ? 'restore' : 'deactivate');
+                if ($facility && ! $data['active']) FacilityPlanningMode::checkUnused($tenant, $id);
             }
             if ($model === TrainingSlot::class && empty($data['field_id']) && empty($data['hall'])) {
                 throw ValidationException::withMessages(['field_id' => __('Bitte Spielfeld oder Halle angeben.')]);
@@ -80,6 +95,19 @@ class ContributionTrainingService
             unset($data['revision']);
             $before = $id ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id, 'revision' => $id ? $record->revision + 1 : 1])->save();
+            if ($initialStatus !== null) {
+                app(FacilityService::class)->save($actor, $tenant, \App\ClubUnio\Models\FieldAvailability::class, null, [
+                    'field_id' => $record->id, 'status_id' => $initialStatus, 'active' => true,
+                ]);
+            }
+            if ($neutral && $model === TrainingOption::class && ! $id && $record->category === 'period' && $record->active) {
+                $settings = DB::connection('clubunio')->table('clubora.tenant_settings')->where('tenant_id', $tenant->id);
+                if (! (clone $settings)->where('key', ActiveTrainingPlan::KEY)->whereIn('area', ['general', 'signage'])->exists()) {
+                    $settings->insert(['tenant_id' => $tenant->id, 'key' => ActiveTrainingPlan::KEY, 'area' => 'general',
+                        'label' => 'Aktiver Trainingsplan', 'value_type' => 'string', 'enabled' => true, 'is_secret' => false,
+                        'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $record->id)]);
+                }
+            }
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id,
                 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
 

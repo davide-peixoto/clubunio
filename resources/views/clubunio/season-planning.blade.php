@@ -154,19 +154,22 @@
                     </div>
                 </section>
             @elseif($step === 6)
+                @php($neutralFacilities = \App\ClubUnio\Services\FacilityPlanningMode::neutral(\Filament\Facades\Filament::getTenant()))
                 <section><div class="sp-toolbar"><h2>{{ __('Trainingszeiten') }}</h2><x-filament::button wire:click="addRow('slots')" wire:loading.attr="disabled" icon="heroicon-o-plus">{{ __('Trainingszeit') }}</x-filament::button></div>
                     @foreach($document['slots'] as $i => $slot)<div class="sp-row" wire:key="slot-{{ $slot['key'] }}"><div class="sp-fields">
                         <label>{{ __('Mannschaft') }}<select wire:model.live="document.slots.{{ $i }}.team_key"><option value="">{{ __('Auswählen') }}</option>@foreach($document['teams'] as $t)<option value="{{ $t['key'] }}">{{ $t['name'] }}</option>@endforeach</select></label>
-                        @foreach(['period' => __('Periode'), 'weekday' => __('Wochentag'), 'field' => __('Platz'), 'room' => __('Garderobe'), 'side' => __('Platzteil')] as $category => $caption)
+                        @foreach(['period' => __('Periode'), 'weekday' => __('Wochentag'), 'field' => __($neutralFacilities ? 'Bookable facility' : 'Platz'), 'room' => __('Garderobe'), 'side' => __('Platzteil')] as $category => $caption)
                             <label>{{ $caption }}<select wire:model.live="document.slots.{{ $i }}.{{ $category }}_id"><option value="">{{ __('Auswählen') }}</option>@foreach($facts['training_options'] as $option)@if($option->category === $category)<option value="{{ $option->id }}">{{ $seasonLookup('training_options', $option) }}</option>@endif @endforeach</select></label>
                         @endforeach
                         <label>{{ __('Von') }}<input type="time" wire:model.live="document.slots.{{ $i }}.starts_at"></label>
                         @if(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->ready())
-                            <label>{{ __('Teilfläche') }}<select wire:model.live="document.slots.{{ $i }}.area_id"><option value="">{{ __('Ganzer Platz') }}</option>@foreach(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->trainingOptions(\Filament\Facades\Filament::getTenant(), $slot['field_id'] ?: null) as $areaId => $areaName)<option value="{{ $areaId }}">{{ $areaName }}</option>@endforeach</select></label>
+                            <label>{{ __('Teilfläche') }}<select wire:model.live="document.slots.{{ $i }}.area_id"><option value="">{{ __($neutralFacilities ? 'Entire facility' : 'Ganzer Platz') }}</option>@foreach(app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->trainingOptions(\Filament\Facades\Filament::getTenant(), $slot['field_id'] ?: null) as $areaId => $areaName)<option value="{{ $areaId }}">{{ $areaName }}</option>@endforeach</select></label>
                         @endif
                         <label>{{ __('Bis') }}<input type="time" wire:model.live="document.slots.{{ $i }}.ends_at"></label>
-                        <label>{{ __('Halle') }}<input maxlength="255" wire:model.live.debounce.1000ms="document.slots.{{ $i }}.hall"></label>
-                        @foreach(['all_fields' => __('Alle Plätze'), 'without_main' => __('Ohne Hauptplatz'), 'synthetic_only' => __('Nur Kunstrasen'), 'website_visible' => __('Auf Webseite sichtbar')] as $column => $caption)<label class="sp-check"><input type="checkbox" wire:model.live="document.slots.{{ $i }}.{{ $column }}">{{ $caption }}</label>@endforeach
+                        @unless($neutralFacilities)<label>{{ __('Halle') }}<input maxlength="255" wire:model.live.debounce.1000ms="document.slots.{{ $i }}.hall"></label>@endunless
+                        @foreach(['all_fields' => __('Alle Plätze'), 'without_main' => __('Ohne Hauptplatz'), 'synthetic_only' => __('Nur Kunstrasen'), 'website_visible' => __('Auf Webseite sichtbar')] as $column => $caption)
+                            @if(!$neutralFacilities || $column === 'website_visible')<label class="sp-check"><input type="checkbox" wire:model.live="document.slots.{{ $i }}.{{ $column }}">{{ $caption }}</label>@endif
+                        @endforeach
                         <x-filament::icon-button wire:click="removeRow('slots', '{{ $slot['key'] }}')" wire:loading.attr="disabled" icon="heroicon-o-trash" color="danger" label="{{ __('Trainingszeit entfernen') }}" tooltip="{{ __('Trainingszeit entfernen') }}" />
                     </div></div>@endforeach
                 </section>

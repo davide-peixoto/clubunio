@@ -30,7 +30,7 @@ class PitchWeeklyAreas
     /** Zero is a form-only request for a half; null remains an explicit whole pitch. */
     public function trainingOptions(Tenant $tenant, ?int $field): array
     {
-        return [0 => __('Halber Platz (automatisch)')] + $this->options($tenant, $field);
+        return (FacilityPlanningMode::neutral($tenant) ? [] : [0 => __('Halber Platz (automatisch)')]) + $this->options($tenant, $field);
     }
 
     public function suggestedHalf(Tenant $tenant, array $data, ?int $exclude = null): ?int
@@ -83,10 +83,11 @@ class PitchWeeklyAreas
             return $data;
         }
         // Older callers preserve a default on ordinary edits, but never carry it to another field.
+        $neutral = FacilityPlanningMode::neutral($tenant);
         if (! array_key_exists('area_id', $data)) {
-            $data['area_id'] = $record->exists && (int) ($data['field_id'] ?? 0) === (int) $record->field_id ? $record->area_id : 0;
+            $data['area_id'] = $record->exists && (int) ($data['field_id'] ?? 0) === (int) $record->field_id ? $record->area_id : ($neutral ? null : 0);
         }
-        if ($data['area_id'] === 0 || $data['area_id'] === '0') $data['area_id'] = $this->suggestedHalf($tenant, $data, $record->id);
+        if ($data['area_id'] === 0 || $data['area_id'] === '0') $data['area_id'] = $neutral ? null : $this->suggestedHalf($tenant, $data, $record->id);
         $data['area_id'] = empty($data['area_id']) ? null : (int) $data['area_id'];
         if ($data['area_id'] && ! $this->matches($tenant->id, $data['field_id'] ?? null, $data['area_id'])) $this->invalid();
         return $data;

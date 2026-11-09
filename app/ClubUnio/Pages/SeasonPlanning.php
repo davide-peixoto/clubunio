@@ -124,7 +124,7 @@ class SeasonPlanning extends Page
     public function updatedDocument($value = null, ?string $key = null): void
     {
         if ($key && preg_match('/^slots\.(\d+)\.field_id$/', $key, $match)) {
-            $this->document['slots'][(int) $match[1]]['area_id'] = 0;
+            $this->document['slots'][(int) $match[1]]['area_id'] = \App\ClubUnio\Services\FacilityPlanningMode::neutral(Filament::getTenant()) ? null : 0;
         }
         $this->saveDraft();
     }
@@ -194,7 +194,8 @@ class SeasonPlanning extends Page
             'teams' => ['team_id' => null, 'name' => '', 'laundry_allowance' => null, 'rule_key' => null, 'year_from' => null, 'year_to' => null, 'gender_id' => null, 'capacity' => null],
             'prices' => ['name' => '', 'amount' => null, 'bexio_product_id' => null, 'bexio_article_id' => null],
             'rules' => ['price_key' => null, 'gender_id' => null, 'year_from' => null, 'year_to' => null],
-            'slots' => ['team_key' => null, 'period_id' => null, 'weekday_id' => null, 'field_id' => null, 'area_id' => 0, 'room_id' => null, 'side_id' => null,
+            'slots' => ['team_key' => null, 'period_id' => null, 'weekday_id' => null, 'field_id' => null,
+                'area_id' => \App\ClubUnio\Services\FacilityPlanningMode::neutral(Filament::getTenant()) ? null : 0, 'room_id' => null, 'side_id' => null,
                 'starts_at' => null, 'ends_at' => null, 'hall' => null, 'all_fields' => false, 'without_main' => false, 'synthetic_only' => false, 'website_visible' => true],
             default => abort(422),
         };

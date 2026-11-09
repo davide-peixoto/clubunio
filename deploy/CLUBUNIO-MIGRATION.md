@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Sportneutrale Anlagen und Trainingszeiten (09.11.2026)
+
+Additive Migration000100 fuer Planungsmodus und Anlagentyp. Bestehende Vereine
+bleiben im bisherigen Modus; SV Sissach ist vor Umstellung geschuetzt.
+Neue Vereine nutzen Anlagen-ID und aktive Trainingsperiode, auch fuer
+Fussball in der Winterhalle. Vorgehen, Pruefung und Rueckweg:
+[Sportneutrale Anlagen](CLUBUNIO-SPORT-NEUTRAL-FACILITIES.md). Lokal geprueft,
+nicht bereitgestellt.
+
 ## Mandantenspeicher und Logo-Upload (07.11.2026)
 
 Auf ClubUnio DEV bereitgestellt: Azure Blob, AWS S3, Google Workspace Shared Drive, OneDrive

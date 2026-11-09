@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Sportneutrale Anlagen (09.11.2026)
+
+Anlagen mit Typ, Anfangsstatus und optionalen Teilflaechen; Trainings binden
+Anlage und Periode statt fester Platzvarianten. Fussball-Winterhalle und
+gemeinsame Nutzung mehrerer Teams geprueft. SV Sissach bleibt unveraendert.
+Lokal umgesetzt; Sportartenwahl und Verbandsadapter folgen getrennt.
+[Bedienung und Migration](CLUBUNIO-SPORT-NEUTRAL-FACILITIES.md).
+
 ## Mandantenspeicher und Vereinslogos (07.11.2026)
 
 Anbieteradapter fuer Azure Blob, AWS S3, Google Workspace Shared Drive,

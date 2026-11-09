@@ -151,7 +151,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
                     $options = $this->plannerOptions();
                     $this->assertSame(['fields', 'teams', 'capabilities'], array_keys($options));
                     $this->assertSame([['id' => 101, 'name' => 'U18 (2030/31)'], ['id' => 103, 'name' => 'U21 (2030/31)']], $options['teams']);
-                    $this->assertSame(['view' => true, 'manage' => true, 'approve' => true, 'request' => true], $options['capabilities']);
+                    $this->assertSame(['view' => true, 'manage' => true, 'approve' => true, 'override_field_status' => $role === 'admin', 'request' => true], $options['capabilities']);
                 }
             }
         }
@@ -204,7 +204,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
             $this->role($role);
             $options = $this->plannerOptions();
             $this->assertSame([['id' => 101, 'name' => 'U18 (2030/31)']], $options['teams']);
-            $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'request' => true], $options['capabilities']);
+            $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'override_field_status' => false, 'request' => true], $options['capabilities']);
         }
     }
 
@@ -241,7 +241,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
         $this->row('access_profiles', ['id' => 1, 'permissions' => json_encode(['competitions.view'])]);
         $this->role('profile', 1);
         $this->assertSame([], $this->plannerOptions()['teams']);
-        $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'request' => false], $this->plannerOptions()['capabilities']);
+        $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'override_field_status' => false, 'request' => false], $this->plannerOptions()['capabilities']);
     }
 
     public function test_missing_membership_and_inactive_account_are_denied(): void
@@ -261,7 +261,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
     {
         request()->attributes->set('clubunio_impersonation', (object) ['tenant_id' => 1, 'target_id' => 1]);
         $this->assertSame([], $this->plannerOptions()['teams']);
-        $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'request' => false], $this->plannerOptions()['capabilities']);
+        $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'override_field_status' => false, 'request' => false], $this->plannerOptions()['capabilities']);
     }
 
     public function test_historical_calendar_entries_and_explicit_team_filter_survive_empty_options(): void

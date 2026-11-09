@@ -104,6 +104,9 @@ final class PlatformAdministrationService
             $this->authorize($actor, true);
             $admin = $this->human($data['username']);
             $tenant = Tenant::create(['name' => trim($data['name']), 'slug' => $data['slug']]);
+            if (FacilityPlanningMode::ready() && ! FacilityPlanningMode::protected($tenant)) {
+                $tenant->forceFill(['facility_planning_mode' => 'neutral'])->save();
+            }
             DB::connection('clubunio')->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id,
                 'account_id' => $admin->id, 'role' => 'admin', 'portal_enabled' => false]);
             $this->audit($actor, $tenant, 'tenant.create', ['name' => $tenant->name, 'slug' => $tenant->slug,
@@ -117,7 +120,7 @@ final class PlatformAdministrationService
     {
         $this->authorize($actor);
         $data = Validator::make($input, ['revision' => 'required|integer|min:1',
-            'operation' => ['required', Rule::in(['name', 'brand', 'storage', 'domain', 'membership', 'revoke'])],
+            'operation' => ['required', Rule::in(['name', 'brand', 'storage', 'domain', 'membership', 'revoke', 'facility-mode'])],
             'reason' => 'required|string|min:10|max:500'])->validate();
         $fields = match ($data['operation']) {
             'name' => ['name'], 'brand' => ['color', 'logo', 'title', 'logo_file'],
@@ -125,6 +128,7 @@ final class PlatformAdministrationService
             'domain' => ['host', 'ownership_verified', 'dns_verified', 'tls_verified', 'active'],
             'membership' => ['username', 'role', 'portal_enabled', 'access_profile_id'],
             'revoke' => ['username'],
+            'facility-mode' => [],
         };
         abort_if(array_diff(array_keys($input), ['revision', 'reason', 'operation', ...$fields]), 422);
         if (isset($input['logo_file'])) {
@@ -142,6 +146,7 @@ final class PlatformAdministrationService
                 'domain' => $this->domain($actor, $tenant, $input),
                 'membership' => $this->membership($tenant, $input),
                 'revoke' => $this->revokeMembership($tenant, $input),
+                'facility-mode' => FacilityPlanningMode::activate($tenant),
             };
             $tenant->forceFill(['platform_revision' => $tenant->platform_revision + 1])->save();
             $this->audit($actor, $tenant, 'tenant.'.$data['operation'], $details + ['reason' => $data['reason']]);

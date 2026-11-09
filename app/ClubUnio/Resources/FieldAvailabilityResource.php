@@ -11,6 +11,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Facades\Filament;
 use App\ClubUnio\Services\ModulePermissionService;
+use App\ClubUnio\Services\FacilityPlanningMode;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -28,13 +30,19 @@ class FieldAvailabilityResource extends FacilityResource
 
     public static function form(Schema $schema): Schema
     {
-        $restricted = fn ($record) => $record !== null && ! app(ModulePermissionService::class)->allows(Filament::auth()->user(), Filament::getTenant(), 'facilities', 'update');
-        return $schema->components([Hidden::make('revision'), Select::make('field_id')->label('Spielfeld')->options(fn () => TrainingSlotResource::choices('field'))->required()->disabled($restricted), Select::make('status_id')->label('Status')->options(fn () => static::options(FacilityStatus::class))->required(), Textarea::make('note')->label('Bemerkung')->maxLength(500), Toggle::make('active')->label('Aktiv')->default(true)->disabled($restricted)]);
+        $restricted = fn ($record) => $record !== null && (FacilityPlanningMode::neutral(Filament::getTenant())
+            || ! app(ModulePermissionService::class)->allows(Filament::auth()->user(), Filament::getTenant(), 'facilities', 'update'));
+        return $schema->components([Hidden::make('revision'), Select::make('field_id')->label(fn () => __(FacilityPlanningMode::neutral(Filament::getTenant()) ? 'Bookable facility' : 'Spielfeld'))->options(fn () => TrainingSlotResource::choices('field'))->required()->disabled($restricted), Select::make('status_id')->label('Status')->options(fn () => static::options(FacilityStatus::class))->required(), Textarea::make('note')->label('Bemerkung')->maxLength(500), Toggle::make('active')->label('Aktiv')->default(true)->disabled($restricted)]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table->columns([TextColumn::make('field.name')->label('Spielfeld')->searchable(), TextColumn::make('status.name')->label('Status')->badge(), TextColumn::make('note')->label('Bemerkung')->wrap(), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])->headerActions([static::createAction()])->recordActions([static::editAction()])->deferFilters(false);
+        return $table->columns([TextColumn::make('field.name')->label(fn () => __(FacilityPlanningMode::neutral(Filament::getTenant()) ? 'Bookable facility' : 'Spielfeld'))->searchable(), TextColumn::make('status.name')->label('Status')->badge(), TextColumn::make('note')->label('Bemerkung')->wrap(), IconColumn::make('active')->label('Aktiv')->boolean()])->filters([TernaryFilter::make('active')->label('Aktiv')])->headerActions([
+            static::createAction()->visible(fn () => ! FacilityPlanningMode::neutral(Filament::getTenant())),
+            Action::make('view')->label(__('Manage bookable facilities'))->icon('heroicon-o-adjustments-horizontal')
+                ->visible(fn () => FacilityPlanningMode::neutral(Filament::getTenant()) && TrainingOptionResource::canViewAny())
+                ->url(fn () => TrainingOptionResource::getUrl('index', ['filters' => ['category' => ['value' => 'field']]])),
+        ])->recordActions([static::editAction()])->deferFilters(false);
     }
 
     public static function getPages(): array

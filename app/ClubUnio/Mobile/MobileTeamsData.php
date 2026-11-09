@@ -190,19 +190,24 @@ final class MobileTeamsData
     /** Internal projection only: both callers first resolve the same fresh team scope. */
     private function trainingsForAuthorizedTeam(Tenant $tenant, int $id): array
     {
-        $flag = app(SignageService::class)->trainingVariant($tenant);
+        $neutral = \App\ClubUnio\Services\FacilityPlanningMode::neutral($tenant);
+        $period = $neutral ? app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period($tenant) : null;
+        if ($neutral && ! $period) return [];
         $options = $this->table($tenant, 'training_options')->where('active', true)->pluck('name', 'id');
-        $slots = $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)->where($flag, true)
+        $slots = $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)
+            ->when($neutral, fn ($query) => $query->where('period_id', $period->id)->whereIn('field_id',
+                $this->table($tenant, 'training_options')->where('category', 'field')->where('active', true)->select('id')),
+                fn ($query) => $query->where(app(SignageService::class)->trainingVariant($tenant), true))
             ->orderBy('weekday_id')->orderBy('starts_at')->orderBy('id')->get();
         $areaIds = $slots->pluck('area_id')->filter()->unique();
         $areas = $areaIds->isEmpty() ? collect() : $this->table($tenant, 'pitch_areas')->whereIn('id', $areaIds)->get()->keyBy('id');
-        return $slots->map(function ($r) use ($id, $options, $areas) {
+        return $slots->map(function ($r) use ($id, $options, $areas, $neutral) {
             $area = $areas->get($r->area_id ?? null);
             if ($area && (int) $area->field_id !== (int) $r->field_id) $area = null;
             return [
                 'TrainingID' => (int) $r->id, 'TeamSaisonID' => (int) $id, 'Wochentag' => $options->get($r->weekday_id, ''),
                 'ZeitVon' => $r->starts_at, 'ZeitBis' => $r->ends_at, 'SommerWinter' => $options->get($r->period_id, ''),
-                'Feld' => $options->get($r->field_id, ''), 'Halle' => $r->hall,
+                'Feld' => $options->get($r->field_id, ''), 'Halle' => $neutral ? null : $r->hall,
                 'field_id' => $r->field_id ? (int) $r->field_id : null, 'area_id' => $area ? (int) $area->id : null,
                 'area_name' => $area ? app(\App\ClubUnio\Services\PitchWeeklyAreas::class)->label($area) : null,
                 'trainingAll' => (bool) $r->all_fields, 'trainingOhneHauptplatz' => (bool) $r->without_main, 'trainingNurKunstrasen' => (bool) $r->synthetic_only];

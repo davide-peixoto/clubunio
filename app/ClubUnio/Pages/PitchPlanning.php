@@ -5,6 +5,7 @@ namespace App\ClubUnio\Pages;
 use App\ClubUnio\Pages\Components\PitchPlanningCalendar;
 use App\ClubUnio\Services\PitchPlanningService;
 use App\ClubUnio\Services\PitchFriendlyRequestService;
+use App\ClubUnio\Services\FacilityPlanningMode;
 use Illuminate\Support\Str;
 use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
@@ -44,7 +45,15 @@ class PitchPlanning extends Page
 
     public static function getNavigationGroup(): ?string { return 'Anlagen & Kommunikation'; }
     public static function getNavigationIcon(): string { return 'heroicon-o-calendar-days'; }
-    public static function getNavigationLabel(): string { return __('Sportplatzbelegung'); }
+    public static function getNavigationLabel(): string
+    {
+        return __(FacilityPlanningMode::neutral(Filament::getTenant()) ? 'Facility schedule' : 'Sportplatzbelegung');
+    }
+
+    public function getTitle(): string
+    {
+        return static::getNavigationLabel();
+    }
 
     public static function canAccess(): bool
     {
