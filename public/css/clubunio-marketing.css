@@ -731,3 +731,22 @@ footer>div:last-child {
 * {
     transition:none!important}
 }
+
+.inquiry-form { text-align: left; max-width: 720px; }
+.inquiry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.inquiry-form label { display: block; font-weight: 600; }
+.inquiry-form input:not([type="checkbox"]), .inquiry-form select, .inquiry-form textarea {
+    display: block;
+    width: 100%;
+    padding: .65rem;
+    margin-top: .3rem;
+    border: 1px solid #8293a4;
+    border-radius: .35rem;
+    background: white;
+    color: #152a40;
+    font: inherit;
+}
+.inquiry-form fieldset { margin: 1rem 0; border: 1px solid #8293a4; border-radius: .35rem; }
+.inquiry-form fieldset label { display: inline-block; margin: .25rem .8rem .25rem 0; }
+.inquiry-form p a, .privacy-page a { text-decoration: underline; }
+.privacy-page { max-width: 850px; }

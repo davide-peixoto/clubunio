@@ -84,3 +84,17 @@ bestehendes Dashboard und Demobestand bleiben davon unabhaengig.
 
 Vorhandene fremde Aenderungen in README, Roadmap, Migrationsplan, AGENTS,
 .gitignore und Mobile-Uebernahmewerkzeugen nicht Bestandteil dieses Commits.
+
+## Aktualisierung 09.11.2026
+
+DE/EN-Produktseite mit Baselbieter Herkunft, Hosting in Deutschland und Backups
+in Finnland. Ergaenzt um Chat, Sponsorenlauf, Dokumentenserien und konfigurierbare
+Dokumentenspeicher. Das Anfrageformular erzeugt im Browser einen Mailentwurf an
+info@clubunio.com. Es benoetigt JavaScript und ein E-Mail-Programm.
+
+Datenschutz fuer Website und App unter /de/privacy und /en/privacy mit der
+bestaetigten Betreiberanschrift. Vor Store-Einreichung die oeffentliche URL
+in App und Store-Metadaten hinterlegen und Angaben zu Dienstleistern,
+Datenstandorten, Aufbewahrung und Kontoloeschung mit dem Zielbetrieb abgleichen.
+Bei Kontoerstellung in der App die separaten Loeschanforderungen der Stores
+beruecksichtigen. Keine Veroeffentlichung oder Betriebsaenderung.
