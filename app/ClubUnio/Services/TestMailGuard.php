@@ -13,6 +13,14 @@ class TestMailGuard
         if (\App\ClubUnio\Mobile\MobileIdentityMailGuard::recognizes($event)) {
             return app(\App\ClubUnio\Mobile\MobileIdentityMailGuard::class)->handle($event);
         }
+        if (($event->data['mailer'] ?? null) === 'clubunio_marketing') {
+            $message = $event->message;
+            $to = $message->getTo();
+
+            return config('clubunio-marketing.mail_enabled')
+                && count($to) === 1 && $to[0]->getAddress() === config('clubunio-marketing.contact')
+                && !$message->getCc() && !$message->getBcc() ? null : false;
+        }
         if (! app()->environment(['local', 'testing', 'staging']) || ! config('clubunio-integrations.test_mail_enabled')) {
             return false;
         }

@@ -6,7 +6,7 @@ return json_decode(<<<'JSON'
   "controller_title": "Responsibility and contact",
   "controller_text": "ClubUnio GmbH operates the website and app. Your club generally determines how membership and club data is processed. ClubUnio processes this data on the club’s behalf and is responsible for its own enquiries and operations.",
   "website_title": "Website and enquiries",
-  "website_text": "When you visit, technical access data such as your IP address, access time and requested page may be processed to provide and secure the site. The site uses technical session cookies. The enquiry form prepares an email draft locally. When you send it, we process your details and correspondence to respond.",
+  "website_text": "When you visit, technical access data such as your IP address, access time and requested page may be processed to provide and secure the site. The site uses technical session cookies. Submitting the form sends your details to ClubUnio by email so we can respond.",
   "appdata_title": "Data in the app",
   "appdata_text": "Depending on your club role and the features you use, the app processes account and session data, membership and family details, teams, events and attendance, messages, attachments, documents, membership fees and expenses. This supports sign-in, club administration, communication and club workflows. Access is limited to authorised users. Junior members’ data is handled in the club context with roles for parents and designated staff.",
   "permissions_title": "Camera, files and notifications",

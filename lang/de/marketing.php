@@ -129,8 +129,8 @@ return json_decode(<<<'JSON'
   "inquiry_interests": "Interesse an",
   "inquiry_options": "Bexio|SFV|Mobile App|Signage|Eigene Domain|Marken-App|Datenübernahme",
   "inquiry_message": "Nachricht (optional)",
-  "inquiry_send": "E-Mail-Entwurf öffnen",
-  "inquiry_note": "Das Formular erstellt einen Entwurf in deinem E-Mail-Programm. Du entscheidest dort, ob du ihn abschickst.",
+  "inquiry_send": "Anfrage senden",
+  "inquiry_note": "Wir verwenden deine Angaben zur Bearbeitung deiner Anfrage.",
   "privacy": "Datenschutz",
   "back": "Zur Webseite",
   "storage_title": "Dokumentenspeicher nach Vereinsbedarf",
@@ -138,6 +138,9 @@ return json_decode(<<<'JSON'
   "chat_title": "Chat und Vereinskommunikation",
   "chat_text": "Team- und Direktchat mit Anhängen, Reaktionen und Lesebestätigungen. Push-Mitteilungen je nach App- und Vereinseinstellungen.",
   "sponsor_title": "Sponsorenlauf und Dokumentenserien",
-  "sponsor_text": "Organisiert Sponsorenläufe, Zusagen und Abrechnung sowie Serien für Vereinsdokumente."
+  "sponsor_text": "Organisiert Sponsorenläufe, Zusagen und Abrechnung sowie Serien für Vereinsdokumente.",
+  "inquiry_success": "Danke! Deine Anfrage wurde gesendet.",
+  "inquiry_failure": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es später erneut.",
+  "inquiry_invalid": "Bitte prüfe deine Angaben und die ausgewählten Optionen."
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

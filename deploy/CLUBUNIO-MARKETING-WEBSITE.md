@@ -98,3 +98,18 @@ in App und Store-Metadaten hinterlegen und Angaben zu Dienstleistern,
 Datenstandorten, Aufbewahrung und Kontoloeschung mit dem Zielbetrieb abgleichen.
 Bei Kontoerstellung in der App die separaten Loeschanforderungen der Stores
 beruecksichtigen. Keine Veroeffentlichung oder Betriebsaenderung.
+
+## Direktversand fuer Demo- und Angebotsanfragen
+
+Das Formular sendet serverseitig an info@clubunio.com. Die Bestätigung erscheint
+nach Annahme durch den Mailtransport. Antworten gehen an die im Formular
+angegebene Adresse. Laravel-Route mit CSRF, Eingabeprüfung und Rate-Limit.
+Die Website braucht für diesen Versand einen Laravel-Endpunkt.
+
+Für den Zielbetrieb den dedizierten SMTP-Zugang privat konfigurieren:
+CLUBUNIO_MARKETING_SMTP_HOST, CLUBUNIO_MARKETING_SMTP_PORT (Standard 465, SMTPS),
+CLUBUNIO_MARKETING_SMTP_USERNAME, CLUBUNIO_MARKETING_SMTP_PASSWORD und
+CLUBUNIO_MARKETING_MAIL_FROM. Erst danach CLUBUNIO_MARKETING_MAIL_ENABLED=true
+setzen und den Konfigurationscache neu laden. Der Mailguard beschränkt diesen
+Versandweg auf info@clubunio.com. Ohne Konfiguration zeigt das Formular einen
+Fehler. Der Transporttest nutzt ausschließlich den In-Memory-Transport.

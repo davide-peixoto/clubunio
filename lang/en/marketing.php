@@ -129,8 +129,8 @@ return json_decode(<<<'JSON'
   "inquiry_interests": "Interested in",
   "inquiry_options": "Bexio|SFV|Mobile app|Signage|Custom domain|Branded app|Data migration",
   "inquiry_message": "Message (optional)",
-  "inquiry_send": "Open email draft",
-  "inquiry_note": "This form prepares a draft in your email app. You can review and send it there.",
+  "inquiry_send": "Send enquiry",
+  "inquiry_note": "We use your details to respond to your enquiry.",
   "privacy": "Privacy",
   "back": "Back to website",
   "storage_title": "Document storage for your club",
@@ -138,6 +138,9 @@ return json_decode(<<<'JSON'
   "chat_title": "Chat and club communications",
   "chat_text": "Team and direct chats with attachments, reactions and read receipts. Push notifications depend on app and club settings.",
   "sponsor_title": "Sponsored runs and document batches",
-  "sponsor_text": "Organise sponsored runs, pledges and billing, and manage batches of club documents."
+  "sponsor_text": "Organise sponsored runs, pledges and billing, and manage batches of club documents.",
+  "inquiry_success": "Thank you! Your enquiry was sent.",
+  "inquiry_failure": "Your enquiry could not be sent. Please try again later.",
+  "inquiry_invalid": "Please check your details and selected options."
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

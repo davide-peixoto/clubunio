@@ -36,6 +36,17 @@ return [
     */
 
     'mailers' => [
+        'clubunio_marketing' => [
+            'transport' => 'smtp',
+            'scheme' => 'smtps',
+            'host' => env('CLUBUNIO_MARKETING_SMTP_HOST'),
+            'port' => env('CLUBUNIO_MARKETING_SMTP_PORT', 465),
+            'username' => env('CLUBUNIO_MARKETING_SMTP_USERNAME'),
+            'password' => env('CLUBUNIO_MARKETING_SMTP_PASSWORD'),
+            'require_tls' => true,
+            'timeout' => 15,
+        ],
+
         'clubunio_identity' => require __DIR__.'/clubunio-identity-smtp.php',
 
         'smtp' => [

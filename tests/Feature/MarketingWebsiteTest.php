@@ -30,4 +30,24 @@ final class MarketingWebsiteTest extends TestCase
         config(['clubunio-languages.enabled' => ['de' => 'Deutsch']]);
         $this->get('/en')->assertNotFound();
     }
+    public function test_valid_enquiry_sends_to_clubunio_and_confirms_after_transport_accepts_it(): void
+    {
+        config([
+            'mail.mailers.clubunio_marketing' => ['transport' => 'array', 'host' => 'smtp.example.invalid'],
+            'clubunio-marketing.mail_enabled' => true,
+            'clubunio-marketing.mail_from' => 'website@example.invalid',
+        ]);
+        $mailer = \Illuminate\Support\Facades\Mail::mailer('clubunio_marketing');
+
+        $this->post('/en/inquiry', [
+            'kind' => 'both', 'club' => 'Demo Club', 'name' => 'Demo Contact',
+            'email' => 'contact@example.invalid', 'members' => 300,
+            'interests' => ['Signage'],
+        ])->assertStatus(303)->assertSessionHas('marketing_inquiry_sent', true);
+
+        $message = $mailer->getSymfonyTransport()->messages()->sole()->getOriginalMessage();
+        $this->assertSame('info@clubunio.com', $message->getTo()[0]->getAddress());
+        $this->assertSame('contact@example.invalid', $message->getReplyTo()[0]->getAddress());
+        $this->assertStringContainsString('Signage', $message->getTextBody());
+    }
 }

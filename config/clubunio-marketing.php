@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'mail_enabled' => env('CLUBUNIO_MARKETING_MAIL_ENABLED', false),
+    'mail_from' => env('CLUBUNIO_MARKETING_MAIL_FROM'),
     'contact' => 'info@clubunio.com',
     // Proposed annual-billing prices. No checkout, provisioning or billing.
     'plans' => [
