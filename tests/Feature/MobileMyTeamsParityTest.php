@@ -81,8 +81,13 @@ class MobileMyTeamsParityTest extends TestCase
         $reg=$this->insert('registrations',['first_name'=>'Trial','last_name'=>'Applicant','team_season_id'=>$this->team,
             'email'=>'PRIVATE@example.invalid','applicant_encrypted'=>Crypt::encryptString(json_encode(['mother_name'=>'PRIVATE-MOTHER','ahv'=>'PRIVATE-AHV']))]);
         $other=$this->insert('registrations',['first_name'=>'Other','last_name'=>'Applicant','team_season_id'=>$this->otherTeam]);
+        $acceptedStatus=$this->insert('registration_statuses',['code'=>'APPROVED','name'=>'Approved','workflow_key'=>'accepted']);
+        $accepted=$this->insert('registrations',['first_name'=>'Accepted','last_name'=>'Applicant','team_season_id'=>$this->team,
+            'status_id'=>$acceptedStatus,'member_id'=>$this->child,'accepted_at'=>now()]);
         $url=$this->base.'/my-teams/'.$this->team.'/registrations';
         $response=$this->getJson($url)->assertOk()->assertJsonCount(1,'data.Registrations')->assertJsonPath('data.Registrations.0.AnmeldungID',$reg);
+        $this->getJson($this->base.'/my-teams/'.$this->team)->assertOk()->assertJsonCount(1,'data.Registrations')
+            ->assertJsonPath('data.Registrations.0.AnmeldungID',$reg)->assertJsonCount(1,'data.Players');
         $this->assertStringNotContainsString('PRIVATE',$response->getContent());
         $response=$this->getJson($url.'/'.$reg)->assertOk()->assertJsonPath('data.Registration.CanReadPrivateDetails',false)
             ->assertJsonPath('data.Registration.CanReview',false)->assertJsonMissingPath('data.Registration.Email')
@@ -94,6 +99,9 @@ class MobileMyTeamsParityTest extends TestCase
         $this->withToken($this->tokens['outside'])->getJson($url.'/'.$reg)->assertNotFound();
         $this->withToken($this->tokens['admin'])->getJson($url.'/'.$reg)->assertOk()
             ->assertJsonPath('data.Registration.CanReadPrivateDetails',true)->assertJsonPath('data.Registration.Email','PRIVATE@example.invalid');
+        $this->getJson($url)->assertOk()->assertJsonCount(1,'data.Registrations')->assertJsonPath('data.Registrations.0.AnmeldungID',$reg);
+        $this->getJson($this->base.'/registrations')->assertOk()->assertJsonFragment(['AnmeldungID'=>$accepted]);
+        $this->getJson($this->base.'/registrations/'.$accepted)->assertOk()->assertJsonPath('data.Registration.AnmeldungID',$accepted);
         $foreign=Tenant::create(['slug'=>'foreign-trial-'.bin2hex(random_bytes(6)),'name'=>'Foreign synthetic']);
         $this->withToken($this->tokens['trainer'])->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/my-teams/'.$this->team.'/registrations/'.$reg)->assertForbidden();
         $this->withToken($this->tokens['trainer']);

@@ -143,6 +143,8 @@ final class MobileTeamsData
     {
         $private=$this->privateRegistrations($actor,$tenant);
         $records = $this->teamRegistrations($actor, $tenant, (int)$team->id)
+            ->whereDoesntHave('status', fn ($q) => $q->withoutGlobalScopes()
+                ->where('tenant_id', $tenant->id)->where('workflow_key', 'accepted'))
             ->with(['status' => fn ($q) => $q->withoutGlobalScopes()->where('tenant_id', $tenant->id)])->orderBy('id')->get();
         $catalogs = [];
         if ($private && $records->isNotEmpty()) {

@@ -2438,3 +2438,15 @@ Komplette Config/Registry/Flags/ENV/Composer erhalten. FPM und Worker aktiv,
 keine Restartschleife, Health200/context401. Neue physische Pushzeit noch offen;
 APNs-Best-Effort ausdrücklich dokumentiert. MOBILE-PUSH-BOUND-PROOF.md.
 Manifest217585196c29b306be750ac1bb36d8393e1b1368fc6b56c9ca639e6418229a19.
+
+
+## 09.11.2026: Akzeptierte Probetrainings aus My Teams ausblenden
+
+Die Teamdetails und die separate teambezogene Liste blenden Anmeldungen mit
+`workflow_key=accepted` aus. Die Filterung erfolgt mandantenbezogen in der
+Abfrage und unabhängig von der Anzeigesprache. Im Modul Anmeldungen bleiben
+Liste und Detail verfügbar. Die Mannschaftsliste zeigt übernommene Mitglieder.
+
+DEV-Release `20261109-clubunio-my-teams-trial`, Basis `20261107-clubunio-tenant-storage`.
+Zwei PostgreSQL-Tests mit 57 Assertions bestanden. DE/EN-Sprachprüfung grün.
+Health200/context401 und FPM/Pushdienst aktiv. Keine Migration und kein App-Build erforderlich.
