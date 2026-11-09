@@ -113,3 +113,19 @@ CLUBUNIO_MARKETING_MAIL_FROM. Erst danach CLUBUNIO_MARKETING_MAIL_ENABLED=true
 setzen und den Konfigurationscache neu laden. Der Mailguard beschränkt diesen
 Versandweg auf info@clubunio.com. Ohne Konfiguration zeigt das Formular einen
 Fehler. Der Transporttest nutzt ausschließlich den In-Memory-Transport.
+
+## Statische Bereitstellung auf dem VPS
+
+Die Website liegt unter /home/runcloud/webapps/unio. Der Export aus der lokalen
+Vorschau auf Port 8093 erfolgt mit python tools/export-clubunio-static.py und
+einem neuen Ausgabeordner. Startseite, DE/EN und Datenschutz werden als HTML
+ausgeliefert. Der Anmelden-Link führt zur bestehenden ClubUnio-DEV-Anmeldung.
+Die alte Startseite wurde vor dem Kopieren ausserhalb des Webverzeichnisses
+gesichert. Der Export benötigt Laravel lokal zur Ausgabe der Vorlagen.
+
+Nur inquiry.php läuft auf dem Webserver. Es verwendet die cURL-Erweiterung
+und SMTPS. Die fünf SMTP- und Absenderwerte aus dem vorherigen Abschnitt
+müssen dem PHP-Pool als Umgebungsvariablen bereitgestellt werden. Das PHP-Skript
+enthält keine Zugangsdaten. Die Abnahme prüfte die öffentliche Startseite,
+beide Sprachfassungen, Datenschutzseiten, CSS und einen ungültigen Formular-POST.
+Der echte Mailversand benötigt die SMTP-Konfiguration und einen Zustelltest.
