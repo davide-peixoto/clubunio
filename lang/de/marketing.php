@@ -34,7 +34,7 @@ return json_decode(<<<'JSON'
   "expenses_text": "Spesen mit Belegen erfassen und prüfen. Mitgliederbeiträge, Rechnungen und Bearbeitungsstände nachvollziehbar verwalten.",
   "app_title": "Euer Verein. Auch unterwegs.",
   "app_text": "Die gemeinsame ClubUnio-App bringt Termine, Teams, persönliche Unterlagen und Kommunikation zu Mitgliedern, Eltern und Trainern.",
-  "app_note": "Mobile App in Entwicklung und Geräteabnahme. Noch kein öffentlicher Store-Download.",
+  "app_note": "Die ClubUnio-App ist für den Produktlaunch vorgesehen.",
   "signage_title": "Vom Kalender auf den Bildschirm.",
   "signage_text": "Trainings, Belegungen und Vereinsinformationen auf dem Bildschirm im Clubhaus anzeigen – im Auftritt eures Vereins.",
   "communication_title": "Kommunikation & Dokumente",
@@ -141,6 +141,14 @@ return json_decode(<<<'JSON'
   "sponsor_text": "Organisiert Sponsorenläufe, Zusagen und Abrechnung sowie Serien für Vereinsdokumente.",
   "inquiry_success": "Danke! Deine Anfrage wurde gesendet.",
   "inquiry_failure": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es später erneut.",
-  "inquiry_invalid": "Bitte prüfe deine Angaben und die ausgewählten Optionen."
+  "inquiry_invalid": "Bitte prüfe deine Angaben und die ausgewählten Optionen.",
+  "about": "Über uns",
+  "about_title": "Aus dem Vereinsalltag entstanden.",
+  "about_story": "ClubUnio hat seine Wurzeln beim Sportverein Sissach. Seit 25 Jahren engagiere ich mich im Verein, davon 22 Jahre aktiv als Trainer. Dazu kamen Aufgaben als Funktionär und zeitweise im Vorstand. Vor rund 15 Jahren entstand daraus die Idee zu ClubUnio. Seither ist sie mit den Anforderungen aus dem Vereinsalltag stetig gewachsen.",
+  "about_purpose": "Ob Trainingsplanung, Mitgliederverwaltung oder die Abstimmung zwischen Trainerteam und Vorstand: Wir kennen diese Arbeit aus eigener Erfahrung. Mit ClubUnio vereinfachen wir die Abläufe, damit mehr Zeit für den Sport und das Vereinsleben bleibt.",
+  "ai_nav": "KI",
+  "ai_title": "KI für den Vereinsalltag.",
+  "ai_text": "Der ClubUnio-Assistent unterstützt die Geschäftsstelle dabei, den Tagesüberblick zu erstellen, Fragen zu Mitgliedern, Anmeldungen und Reservationen zu beantworten und nächste Schritte vorzubereiten. KI kann auch bei der Erstellung von Trainingsplänen helfen.",
+  "ai_note": "Externe KI-Funktionen werden nach Freigabe aktiviert. Vorgeschlagene Änderungen werden von berechtigten Personen geprüft und bestätigt."
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

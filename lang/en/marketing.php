@@ -34,7 +34,7 @@ return json_decode(<<<'JSON'
   "expenses_text": "Submit and review expenses with receipts. Manage membership fees, invoices and processing statuses with a clear record.",
   "app_title": "Your club. On the go.",
   "app_text": "The shared ClubUnio app brings events, teams, personal documents and communication to members, parents and coaches.",
-  "app_note": "Mobile app in development and device acceptance testing. No public app store download yet.",
+  "app_note": "The ClubUnio app is planned for the product launch.",
   "signage_title": "From your calendar to the screen.",
   "signage_text": "Display training sessions, bookings and club information on your clubhouse screen, in your club’s visual identity.",
   "communication_title": "Communication & documents",
@@ -141,6 +141,14 @@ return json_decode(<<<'JSON'
   "sponsor_text": "Organise sponsored runs, pledges and billing, and manage batches of club documents.",
   "inquiry_success": "Thank you! Your enquiry was sent.",
   "inquiry_failure": "Your enquiry could not be sent. Please try again later.",
-  "inquiry_invalid": "Please check your details and selected options."
+  "inquiry_invalid": "Please check your details and selected options.",
+  "about": "About us",
+  "about_title": "Built from club experience.",
+  "about_story": "ClubUnio grew out of my involvement with Sportverein Sissach. I have been part of the club for 25 years, including 22 years as an active coach. I have also served as a club official and spent time on the board. The idea for ClubUnio took shape around 15 years ago and has grown with the needs of everyday club life ever since.",
+  "about_purpose": "From training schedules and membership administration to coordination between coaches and the board, we know the work first-hand. ClubUnio simplifies those tasks so clubs can spend more time on sport and their community.",
+  "ai_nav": "AI",
+  "ai_title": "AI for everyday club work.",
+  "ai_text": "The ClubUnio assistant helps club administrators prepare a daily overview, answer questions about members, registrations and bookings, and prepare next steps. AI can also help create training plans.",
+  "ai_note": "External AI features are enabled after approval. Authorised users review and confirm proposed changes."
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

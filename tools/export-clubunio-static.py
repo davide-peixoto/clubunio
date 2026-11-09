@@ -30,7 +30,7 @@ for locale in ('de', 'en'):
             attrs = ' '.join(f'data-{key}="{escape(copy["inquiry_"+key], quote=True)}"' for key in ('success', 'failure', 'invalid'))
             html = html.replace('<form method="post"', f'<p id="inquiry-result" role="status" hidden {attrs}></p><form method="post"', 1)
         (target / 'index.html').write_text(html, encoding='utf-8')
-assets = ['favicon.ico', 'css/clubunio-marketing.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg']
+assets = ['favicon.ico', 'css/clubunio-marketing.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg', 'brand/blue-v1/clubunio-app-icon.svg']
 for asset in assets:
     target = output / asset
     target.parent.mkdir(parents=True, exist_ok=True)

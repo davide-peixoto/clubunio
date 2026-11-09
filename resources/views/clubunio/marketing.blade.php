@@ -9,13 +9,13 @@ $t = fn ($key, $replace = []) => trans('marketing.'.$key, $replace);
 <meta name="theme-color" content="#164b8a"><meta property="og:title" content="{{ $t('page_title') }}"><meta property="og:description" content="{{ $t('description') }}"><meta property="og:type" content="website">
 <link rel="canonical" href="{{ route('clubunio.marketing', ['locale' => $locale]) }}">
 @foreach($languages as $code => $name)<link rel="alternate" hreflang="{{ $code }}" href="{{ route('clubunio.marketing', ['locale' => $code]) }}">@endforeach
-<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/css/clubunio-marketing.css">
+<link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-app-icon.svg?v=2"><link rel="stylesheet" href="/css/clubunio-marketing.css">
 <script src="/js/clubunio-marketing.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">{{ $t('skip') }}</a>
 <header class="header"><a class="brand" href="{{ route('clubunio.marketing', ['locale' => $locale]) }}"><img src="/brand/blue-v1/clubunio-logo-horizontal.svg" alt="ClubUnio" width="164" height="46"></a>
-<nav aria-label="{{ $t('nav') }}"><a href="#features">{{ $t('features') }}</a><a href="#integrations">{{ $t('integrations') }}</a><a href="#pricing">{{ $t('prices') }}</a><a href="#extras">{{ $t('extras') }}</a></nav>
+<nav aria-label="{{ $t('nav') }}"><a href="#features">{{ $t('features') }}</a><a href="#integrations">{{ $t('integrations') }}</a><a href="#ai">{{ $t('ai_nav') }}</a><a href="#about">{{ $t('about') }}</a><a href="#pricing">{{ $t('prices') }}</a><a href="#extras">{{ $t('extras') }}</a></nav>
 <div class="header-actions"><div class="languages" aria-label="{{ $t('language') }}">@foreach($languages as $code => $name)<a lang="{{ $code }}" hreflang="{{ $code }}" href="{{ route('clubunio.marketing', ['locale' => $code]) }}" @if($code === $locale) aria-current="page" @endif>{{ strtoupper($code) }}</a>@endforeach</div><a class="login" href="/login">{{ $t('login') }} ↗</a></div></header>
 <main id="main">
 <section class="hero wrap"><div class="hero-copy"><p class="eyebrow"><span></span>{{ $t('eyebrow') }}</p><h1>{{ $t('hero_a') }}<br>{{ $t('hero_b') }}<br><em>{{ $t('hero_c') }}</em></h1><p class="lead">{{ $t('hero_text') }}</p><div class="buttons"><a class="button" href="#inquiry">{{ $t('demo') }} <span>↗</span></a><a class="text-link" href="#features">{{ $t('explore') }} ↓</a></div><p class="hero-note">{{ $t('hero_note') }}</p><p class="small-note">{{ $t('origin') }}</p></div>
@@ -24,6 +24,20 @@ $t = fn ($key, $replace = []) => trans('marketing.'.$key, $replace);
 <section class="wrap section" id="features"><p class="eyebrow">{{ $t('section_label') }}</p><div class="section-heading"><h2>{{ $t('feature_title') }}</h2><p>{{ $t('feature_intro') }}</p></div><div class="feature-grid">@foreach(['members' => '01', 'planning' => '02', 'expenses' => '03', 'communication' => '04', 'chat' => '05', 'sponsor' => '06', 'storage' => '07'] as $key => $number)<article class="feature"><span class="feature-number">{{ $number }} /</span><h3>{{ $t($key.'_title') }}</h3><p>{{ $t($key.'_text') }}</p></article>@endforeach</div>
 <div class="spotlights"><article class="app-spot"><span class="eyebrow">CLUBUNIO MOBILE</span><h3>{{ $t('app_title') }}</h3><p>{{ $t('app_text') }}</p><span class="small-note">{{ $t('app_note') }}</span></article><article class="signage-spot"><span class="eyebrow">CLUBUNIO SIGNAGE</span><h3>{{ $t('signage_title') }}</h3><p>{{ $t('signage_text') }}</p></article></div></section>
 <section class="integration-section" id="integrations"><div class="wrap section"><p class="eyebrow">{{ $t('integration_label') }}</p><h2>{{ $t('integration_title') }}</h2><div class="integration-grid">@foreach(['bexio' => 'bexio', 'sfv' => 'SFV / ASF', 'api' => $t('api_title')] as $key => $name)<article><div class="integration-name">{{ $name }}<span>↗</span></div><p>{{ $t($key.'_text') }}</p>@if($key !== 'api')<small>{{ $t($key.'_note') }}</small>@endif</article>@endforeach</div><p class="small-note">{{ $t('integration_note') }}</p></div></section>
+<section class="wrap section" id="ai">
+    <p class="eyebrow">{{ $t('ai_nav') }}</p>
+    <h2>{{ $t('ai_title') }}</h2>
+    <p class="section-intro">{{ $t('ai_text') }}</p>
+    <p class="small-note">{{ $t('ai_note') }}</p>
+</section>
+<section class="extras-section" id="about">
+    <div class="wrap section">
+        <p class="eyebrow">{{ $t('about') }} · SV Sissach</p>
+        <h2>{{ $t('about_title') }}</h2>
+        <p class="section-intro">{{ $t('about_story') }}</p>
+        <p class="section-intro">{{ $t('about_purpose') }}</p>
+    </div>
+</section>
 @if(is_file(public_path('images/marketing/'.$locale.'/members.png')))
 <section class="wrap section" id="product"><p class="eyebrow">CLUBUNIO / FC HORIZON</p><h2>{{ $t('gallery_title') }}</h2><p class="section-intro">{{ $t('gallery_intro') }}</p><div class="gallery">@foreach(['members','expenses','signage'] as $screen)@if(is_file(public_path('images/marketing/'.$locale.'/'.$screen.'.png')))<figure><a href="/images/marketing/{{ $locale }}/{{ $screen }}.png" target="_blank" rel="noopener" aria-label="{{ $t('enlarge') }}: {{ $t('screen_'.$screen) }}"><img loading="lazy" src="/images/marketing/{{ $locale }}/{{ $screen }}.png" alt="{{ $t('screenshot', ['feature' => $t('screen_'.$screen)]) }}" width="1440" height="1000"></a><figcaption>{{ $t('screen_'.$screen) }}</figcaption></figure>@endif @endforeach</div></section>
 @endif
