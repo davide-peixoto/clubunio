@@ -55,7 +55,7 @@ try {
     $phase = 'inventory';
     $allowed = explode(' ', 'access_profiles account_member_links accounts announcement_statuses banks billing_recipients bus_reservations bus_statuses buses club_events club_functions competitions contribution_prices contribution_rules countries document_types event_guests expense_lines expense_rounds expense_statuses expense_types expenses facility_statuses families family_members field_availabilities financial_adjustment_statuses football_clubs game_types genders invoice_categories invoice_line_statuses invoice_lines invoice_statuses invoice_workflow_statuses invoices material_receipt_statuses member_bank_accounts member_change_requests member_change_statuses member_documents member_functions member_keys member_notes member_statuses member_types members message_template_revisions message_templates mobile_module_options planning_options qualifications registration_documents registration_statuses registrations seasons signage_notices sponsor_run_statuses sponsorships staff_functions status_styles team_absences team_events team_invitations team_participations team_players team_seasons team_staff teams technical_leads tenant_accounts tenant_settings tenants training_options training_slots');
     $global = ['account_roles', 'imports', 'migrations'];
-    $withoutIdentity = ['mobile_module_options'];
+    $withoutIdentity = ['mobile_module_options', 'team_invitations'];
     $identifier = static function (string $name): string {
         if (! preg_match('/^[a-z_][a-z0-9_]*$/D', $name)) {
             throw new LogicException('Unexpected SQL identifier.');
@@ -86,7 +86,7 @@ try {
     }
     $fkSql = <<<'SQL'
         SELECT s.relname AS child, t.relname AS parent, a.attname AS child_key, b.attname AS parent_key,
-               c.conname AS fk
+               regexp_replace(c.conname, '^clubora_', 'clubunio_') AS fk
         FROM pg_constraint c JOIN pg_class s ON s.oid=c.conrelid JOIN pg_class t ON t.oid=c.confrelid
         CROSS JOIN LATERAL unnest(c.conkey,c.confkey) AS k(skey,tkey)
         JOIN pg_attribute a ON a.attrelid=s.oid AND a.attnum=k.skey
@@ -148,8 +148,10 @@ try {
             }
             if ($name === 'tenant_settings') {
                 if ($row['is_secret'] === 't') $row['enabled'] = false;
-                $catalog = match ($row['key']) { 'SaisonID' => 'seasons', 'SIGNAGE_PERIOD_ID' => 'training_options', default => null };
-                if ($catalog) $row['encrypted_value'] = Crypt::encryptString($resolve($catalog, Crypt::decryptString($old['encrypted_value'])));
+                // Imported seasons use the original season code, while the training period uses a native ID.
+                if ($row['area'] === 'general' && $row['key'] === 'SIGNAGE_PERIOD_ID') {
+                    $row['encrypted_value'] = Crypt::encryptString($resolve('training_options', Crypt::decryptString($old['encrypted_value'])));
+                }
             }
             if ($name === 'member_change_requests') {
                 $snapshot = json_decode(Crypt::decryptString($old['snapshot_encrypted']), true, 32, JSON_THROW_ON_ERROR);

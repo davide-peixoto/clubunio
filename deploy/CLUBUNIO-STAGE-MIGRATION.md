@@ -150,9 +150,14 @@ Inventar: `mobile_module_options` hat den zusammengesetzten Schluessel
 `(tenant_id,key)` und keine eigene `id`. Der Transfer beruecksichtigt
 diese Ausnahme jetzt. Die Wiederholung nach der Korrektur scheiterte
 bereits am SSH-Verbindungsaufbau. Keine Live-Integration.
-Vor einem Live-Transfer bleiben der vollstaendige
-Fachabgleich, die Pruefung nicht per FK modellierter Verweise und die
-Abnahme der Berechtigungen Pflicht.
+Die naechste Probe erreichte das Mapping der verschluesselten Einstellungen.
+Sie beruecksichtigt nun auch Team-Einladungen ohne eigene ID und ignoriert
+beim FK-Katalogvergleich den alten Namenspraefix `clubora_`. Der Saisonwert
+aus dem PROD-Abzug ist ein Legacy-Code und bleibt erhalten; die aktive
+Trainingsperiode verwendet dagegen eine native ID und wird umgeschluesselt.
+Der erneute Lauf nach dieser Korrektur war wegen SSH-Timeout nicht moeglich.
+Vor einem Live-Transfer bleiben Fachabgleich, Pruefung nicht per FK
+modellierter Verweise und Abnahme der Berechtigungen Pflicht.
 
 ### Pflichtpunkte und bisherige Importversuche
 
