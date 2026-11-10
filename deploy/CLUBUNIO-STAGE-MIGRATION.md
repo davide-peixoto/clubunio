@@ -133,16 +133,16 @@ laufenden Stage weiterhin nicht vorhanden. Die Probe ist kein Fachtransfer.
 Fuer diesen fehlt ein gepruefter Transfer mit Mandanten-FK-Mapping und
 Uebersetzung eingebetteter nativer IDs. Keine Browserabnahme erfolgt.
 
-Ein separater CLI-Entwurf fuer die Fachprobe liegt unter
-`tools/clubunio-stage-tenant-transfer.php`. Er erlaubt nur die Quelle
-`clubunio_stage_refresh_20261110` und das Ziel
-`clubunio_stage_transfer_rehearsal`. Erwartete Tabellen, Fremdschluessel,
+Das separate CLI-Werkzeug `tools/clubunio-stage-tenant-transfer.php`
+erlaubt nur die Quelle `clubunio_stage_refresh_20261110`, das Probe-Ziel
+`clubunio_stage_transfer_rehearsal` und bei explizitem
+`--apply sv-sissach-refresh` das Ziel `clubunio_stage`. Erwartete Tabellen, Fremdschluessel,
 verschluesselte Saison-/Periodenwerte und Lookup-IDs in Antragssnapshots
 werden explizit geprueft. Die Probe setzt genau eine aktive Mitgliedschaft
 und 75 nicht anmeldbare historische Identitaeten voraus; sie rollt alle
 Fachzeilen zurueck. Sequenzen der Testkopie koennen dabei vorruecken.
 Offene Altantraege muessen vor einer Anwendung gegen den neuen
-Mitgliederstand geprueft werden. Kein Live-Modus vorhanden.
+Mitgliederstand geprueft werden.
 
 Die separate Stage-Kopie wurde per direktem Windows-SSH erstellt und
 enthaelt beide bisherigen Mandanten. Der erste Probelauf stoppte beim
@@ -158,6 +158,20 @@ Trainingsperiode verwendet dagegen eine native ID und wird umgeschluesselt.
 Der erneute Lauf nach dieser Korrektur war wegen SSH-Timeout nicht moeglich.
 Vor einem Live-Transfer bleiben Fachabgleich, Pruefung nicht per FK
 modellierter Verweise und Abnahme der Berechtigungen Pflicht.
+
+### Integration in die laufende Stage (10.11.2026)
+
+Korrigierte Probe erfolgreich und zurueckgerollt. Danach wurde ein privater
+Stage-Dump erzeugt und mit `pg_restore` gelesen. Der Transfer wurde
+in einer Transaktion auf `clubunio_stage` ausgefuehrt: 75 Tabellen,
+36'946 uebernommene Zeilen, 18 Aenderungsantraege und 61 projizierte
+Trainings im Wochenfenster. Nur das freigegebene Konto erhielt eine
+aktive Geschaeftsstellen-Mitgliedschaft; 75 historische Identitaeten
+sind nicht anmeldbar. Der Fingerabdruck der bisherigen Mitgliedschaften
+blieb unveraendert. Oeffentliches Signage und Registrierung antworteten
+fuer den neuen Mandanten mit HTTP 404. DEV und PROD unveraendert.
+Die angemeldete Browserabnahme setzt eine Stage-Sitzung des freigegebenen
+Kontos voraus.
 
 ### Pflichtpunkte und bisherige Importversuche
 

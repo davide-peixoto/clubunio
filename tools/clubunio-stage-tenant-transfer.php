@@ -7,8 +7,9 @@ use App\ClubUnio\Services\{ActiveTrainingPlan, PitchPlanningProjection};
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\{Crypt, DB, Http};
 
-if (PHP_SAPI !== 'cli' || $argv !== [__FILE__, '--rehearse']) {
-    fwrite(STDERR, "Use the absolute script path with --rehearse. No live transfer is enabled.\n");
+$apply = ($argv ?? []) === [__FILE__, '--apply', 'sv-sissach-refresh'];
+if (PHP_SAPI !== 'cli' || (! $apply && $argv !== [__FILE__, '--rehearse'])) {
+    fwrite(STDERR, "Use the absolute script path with --rehearse or --apply sv-sissach-refresh.\n");
     exit(1);
 }
 
@@ -26,7 +27,7 @@ try {
     }
     Http::preventStrayRequests();
     $sourceName = 'clubunio_stage_refresh_20261110';
-    $targetName = 'clubunio_stage_transfer_rehearsal';
+    $targetName = $apply ? 'clubunio_stage' : 'clubunio_stage_transfer_rehearsal';
     config(['database.connections.refresh_source' => array_replace($live, ['database' => $sourceName]),
         'database.connections.clubunio' => array_replace($live, ['database' => $targetName])]);
     DB::purge('clubunio');
@@ -42,6 +43,9 @@ try {
     $source->exec('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
     $target->beginTransaction();
     $target->exec("SET LOCAL lock_timeout='3s'");
+    $target->exec('LOCK TABLE clubunio.tenants, clubunio.accounts, clubunio.tenant_accounts IN SHARE ROW EXCLUSIVE MODE');
+    $rights = static fn () => $target->query("SELECT md5(coalesce(string_agg(to_jsonb(m)::text,'' ORDER BY m.id),'')) FROM clubunio.tenant_accounts m JOIN clubunio.tenants t ON t.id=m.tenant_id WHERE t.slug <> 'sv-sissach-refresh'")->fetchColumn();
+    $rightsBefore = $rights();
     $tenant = $source->query("SELECT * FROM clubunio.tenants WHERE slug='sv-sissach-refresh'")->fetch(PDO::FETCH_ASSOC);
     if (! $tenant || $source->query('SELECT count(*) FROM clubunio.tenants')->fetchColumn() !== '1'
         || $target->query("SELECT count(*) FROM clubunio.tenants WHERE slug='sv-sissach-refresh'")->fetchColumn() !== '0') {
@@ -147,7 +151,7 @@ try {
                 if ($cipher !== null && $cipher !== '') Crypt::decryptString($cipher);
             }
             if ($name === 'tenant_settings') {
-                if ($row['is_secret'] === 't') $row['enabled'] = false;
+                if (in_array($row['is_secret'], [true, '1', 't'], true) || $row['area'] === 'public') $row['enabled'] = false;
                 // Imported seasons use the original season code, while the training period uses a native ID.
                 if ($row['area'] === 'general' && $row['key'] === 'SIGNAGE_PERIOD_ID') {
                     $row['encrypted_value'] = Crypt::encryptString($resolve('training_options', Crypt::decryptString($old['encrypted_value'])));
@@ -192,15 +196,20 @@ try {
     $active = $target->prepare('SELECT a.id FROM clubunio.tenant_accounts m JOIN clubunio.accounts a ON a.id=m.account_id WHERE m.tenant_id=? AND a.active AND NOT a.api_only');
     $active->execute([$newTenant]);
     if ($active->fetchAll(PDO::FETCH_COLUMN) !== $operator) throw new LogicException('Unexpected active memberships.');
+    $historical = $target->prepare('SELECT count(*) FROM clubunio.tenant_accounts m JOIN clubunio.accounts a ON a.id=m.account_id WHERE m.tenant_id=? AND NOT a.active AND a.api_only AND NOT m.portal_enabled');
+    $historical->execute([$newTenant]);
+    if ($historical->fetchColumn() !== '75' || $rights() !== $rightsBefore) throw new LogicException('Historical or existing rights differ.');
     $model = Tenant::whereKey($newTenant)->sole();
+    $public = app(\App\ClubUnio\Services\PublicWebService::class);
+    if ($public->enabled($model, 'signage') || $public->enabled($model, 'registration')) throw new LogicException('Unexpected public surface.');
     $period = app(ActiveTrainingPlan::class)->period($model);
     $entries = app(PitchPlanningProjection::class)->entries($model, now('Europe/Zurich')->toDateString(), now('Europe/Zurich')->addWeek()->toDateString());
     $training = count(array_filter($entries, fn ($row) => $row['source'] === 'training'));
     if ($period?->code !== 'W' || $training < 1) throw new LogicException('Occupancy acceptance failed.');
     $target->exec('SET CONSTRAINTS ALL IMMEDIATE');
-    $target->rollBack();
+    if ($apply) $target->commit(); else $target->rollBack();
     $source->exec('ROLLBACK');
-    echo json_encode(['mode' => 'rolled-back rehearsal', 'tables' => count($written), 'rows' => array_sum($written),
+    echo json_encode(['mode' => $apply ? 'committed Stage transfer' : 'rolled-back rehearsal', 'tables' => count($written), 'rows' => array_sum($written),
         'active_memberships' => 1, 'historical_memberships' => 75, 'requests' => $written['member_change_requests'],
         'training' => $training], JSON_THROW_ON_ERROR).PHP_EOL;
 } catch (Throwable $error) {
