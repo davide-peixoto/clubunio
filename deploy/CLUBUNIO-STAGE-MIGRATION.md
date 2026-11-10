@@ -53,6 +53,35 @@ Fachschicht wiederholen. Erfolgreiche Ziele werden nicht nochmals importiert.
 
 ## Abnahme und Grenzen
 
+### Pflichtpunkte fuer den naechsten PROD-Abzug
+
+Den neuen, lesenden PROD-Abzug in einer separaten, leeren Stage-Datenbank
+aufbauen. Den bisherigen Stand und die Stage-spezifischen Testkonten und
+Einstellungen erhalten. Erst nach Abnahme und separater Freigabe umschalten.
+
+- **Mitgliederaenderungsantraege:** Den fehlenden Fachimport fuer
+  `legacy_prod.MitgliederAenderungsantraege` nach
+  `clubunio.member_change_requests` ergaenzen. Im bisherigen Abzug lagen
+  18 Antraege, im Ziel 0. Mitglieder und weitere Verknuepfungen ueber
+  Legacy-IDs im Zielmandanten aufloesen. Status und Historie erhalten;
+  keine Genehmigung, E-Mail oder Push ausloesen. Wiederholbarkeit und
+  Vollstaendigkeit pruefen; ausgeschlossene Datensaetze begruenden.
+- **Trainingsperiode und Sportplatzbelegung:** Den aktiven Trainingsplan
+  aus PROD ermitteln, auf eine aktive Periode des Zielmandanten abbilden
+  und den Zielwert `general/SIGNAGE_PERIOD_ID` setzen. Keine Quell-ID
+  ungeprueft als native ID uebernehmen. Fehlt die eindeutige Zuordnung,
+  vor der Umschaltung zur manuellen Entscheidung melden. Im bisherigen
+  Stand waren 651 Trainingszeiten und 34 nicht geloeschte Teamtermine
+  vorhanden, aber die aktive Periode fehlte. Die Sportplatzbelegung
+  deshalb fuer einen bekannten Zeitraum als berechtigte Person im
+  SV-Sissach-Mandanten pruefen; ein Pilotkonto ist kein Ersatz.
+- **Datenabgleich:** Mitgliederanmeldungen, Aenderungsantraege,
+  Trainingszeiten und Teamtermine fuer den neuen Abzug zwischen Quelle
+  und Ziel abgleichen. Neben Summen auch Verknuepfungen und Anzeige in
+  den relevanten Ansichten pruefen.
+
+### Allgemeine Abnahme
+
 - Verifizierter Snapshot, genau ein Mandant, vollstaendiges Migrationsjournal,
   Fachimport-Marker, gueltige Saisonauflosung und keine fremden oder unerklaert
   geaenderten Saisonreferenzen. Der Runner gibt nur technische Summen aus.
