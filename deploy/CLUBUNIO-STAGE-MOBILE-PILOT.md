@@ -31,6 +31,16 @@ Separates Firebase-Projekt und darauf konfigurierte iOS-/Android-Testbuilds
 bereitstellen. Fuer iOS auch die APNs-Konfiguration des Testbuilds pruefen.
 Credential ausserhalb des Webroots hinterlegen, nicht nach Git uebertragen.
 
+Private Uebergabe auf Windows:
+`C:\ClubUnio-Secrets\firebase\clubunio-stage-service-account.json`.
+Nicht die DEV-Datei ersetzen. Die Datei nicht in OneDrive, im Repository,
+im Chat oder in der mobilen App ablegen. Nur dem eigenen Windows-Konto
+und Administratoren Zugriff geben (SYSTEM fuer Systemverwaltung).
+Das geplante Ziel auf dem VPS ist
+`/home/runcloud/.clubunio-stage-mobile/firebase-service-account.json`
+(Verzeichnis 0700, Datei 0600, Besitzer runcloud). Vor Aktivierung das
+Firebase-Projekt des Servicekontos mit beiden Stage-Testbuilds abgleichen.
+
 Vor der Zustellung Stage-Origin, Testmandant, Konto, Plattform und
 Gerätebindung pruefen. Nur vorab gepruefte synthetische Outbox-IDs mit
 einem Stage-eigenen, begrenzten Worker verarbeiten. Keinen allgemeinen
