@@ -26,3 +26,11 @@ Stage-Schreibprofil. Bexio-PDFs sind davon unabhaengig.
 Nur Branch `stage`; DEV, PROD und Snapshot-Schemas unveraendert.
 Rueckweg: Stage-Leseflag in der privaten Konfiguration deaktivieren und
 Stage-Konfigurationscache erneuern. Nicht auf den PROD-Container zurueckfallen.
+
+## Stage-Abnahme
+
+Code `50822ba` auf RunCloud Stage bestaetigt. Drei vorhandene Spesenanhaenge
+ueber den berechtigten Anwendungsleser in einer Read-only-Transaktion
+erfolgreich gelesen. Stage-SAS auf PROD mit HTTP 403 abgewiesen; anonymer
+Stage-Blobzugriff ebenfalls abgewiesen. Drei lokale Reader-Tests mit
+25 Assertions erfolgreich. Keine Dokumentinhalte oder Signaturen ausgegeben.
