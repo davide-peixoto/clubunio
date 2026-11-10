@@ -41,6 +41,9 @@ nicht uebertragen. Im gemeinsamen Testprojekt einen neuen Serviceaccount
 anlegen und dessen JSON verwenden; ein neuer Schluessel fuer den bisherigen
 DEV-Serviceaccount reicht nicht. Keine Credentialwerte protokollieren.
 Auf Stage wurden null Push-Geraete und null Versandauftraege festgestellt.
+Nach gemeldetem Dateiaustausch erneut geprueft: Am vereinbarten Pfad
+weiterhin identische Dienstidentitaet und Schluessel-ID zu DEV; Stage
+weiterhin ohne Push-Geraete und Versandauftraege. Kein Transfer.
 Stage-App-Registry, Push-Versand und Worker bleiben bis zur isolierten
 Abnahme deaktiviert. Es wurde kein Push versendet.
 
