@@ -35,7 +35,11 @@ Codewechsel. Datenfingerabdruecke aller Tabellen im nativen und beiden
 Snapshot-Schemas muessen vorher/nachher uebereinstimmen. Die Stage-Anwendung
 prueft lesend Suchpfad, Mandant, Saisonreferenzen, Journal und deaktivierte
 Konten. Nach Freigabe: Health, Login und geschuetzte Mitgliederliste pruefen.
-Keine Aenderung der Stage-Umgebungsdateien oder Neustart gemeinsamer Dienste.
+Keine Aenderung der Inhalte von Stage-Umgebungsdateien oder Neustart
+gemeinsamer Dienste. Falls die Stage-PostgreSQL-Datei fuer den Webbenutzer
+nicht lesbar ist, wird ihr ACL privat gesichert und nur diesem Benutzer
+Leserecht gegeben. Der Anwendungstest vor der Wartung muss bestehen;
+bei Abbruch wird auch der vorherige ACL wiederhergestellt.
 
 Bei Fehler: Stage in Wartung belassen, nur auf `clubunio_stage`
 `ALTER SCHEMA clubunio RENAME TO clubora` ausfuehren, Code auf `b4dc92b`
@@ -45,4 +49,10 @@ bricht bei einer fehlgeschlagenen Ruecknahme ohne weitere Freigabe ab.
 
 ## Status
 
-Vorbereitet; Ausfuehrungs- und Pruefnachweis folgen nach dem Stage-Wechsel.
+10.11.2026: 219 automatisierte Tests bestanden, ein optionaler uebersprungen.
+Ein bestehender, unveraenderter Marketing-Uebersetzungstest separat gelassen.
+Erster Stage-Versuch: verschluesseltes Archiv erstellt und vollstaendig
+gelesen, Rollback-Probe bestanden. Der Anwendungstest scheiterte am fehlenden
+Leserecht der Stage-PostgreSQL-Datei. Code und Schema automatisch auf den
+vorigen Stand zurueckgesetzt. Das Skript prueft dies jetzt vor Wartung und
+Umbenennung. Der direkte SSH-Zugang ist zeitweise nicht erreichbar.

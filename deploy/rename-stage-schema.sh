@@ -52,6 +52,7 @@ clear_app_caches() {
 renamed=0
 code_changed=0
 maintenance=0
+acl_changed=0
 rollback() {
     rc=$?
     trap - EXIT
@@ -68,11 +69,32 @@ rollback() {
         as_app git switch --detach "$old" || exit 2
         clear_app_caches || exit 2
     fi
+    if (( acl_changed )); then setfacl --restore="$backup/postgresql-config.acl" || exit 2; fi
     if (( maintenance )); then as_app "$php" artisan up || exit 2; fi
     echo 'Stage cutover failed; prior code and schema restored.' >&2
     exit "$rc"
 }
 trap rollback EXIT
+if ! as_app test -r "$app/.env.postgresql.local"; then
+    getfacl -p "$app/.env.postgresql.local" > "$backup/postgresql-config.acl"
+    setfacl -m u:runcloud:r--,o::--- "$app/.env.postgresql.local"
+    acl_changed=1
+fi
+as_app "$php" <<'PHP'
+<?php
+try {
+    require 'vendor/autoload.php';
+    $app = require 'bootstrap/app.php';
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    $db = Illuminate\Support\Facades\DB::connection('clubunio');
+    $identity = $db->selectOne('SELECT current_database() AS db, current_schema() AS schema');
+    if ($identity->db !== 'clubunio_stage' || $identity->schema !== 'clubora') throw new LogicException('Unexpected baseline');
+    echo "Stage runtime database preflight passed.\n";
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Stage runtime database preflight failed ('.$e->getCode().').'.PHP_EOL);
+    exit(1);
+}
+PHP
 as_app "$php" artisan down --retry=60
 maintenance=1
 fingerprint clubora > "$backup/before.tsv"
