@@ -11,6 +11,24 @@ use Tests\TestCase;
 
 class AzureDocumentReaderTest extends TestCase
 {
+    public function test_stage_read_uses_only_the_stage_container_token(): void
+    {
+        config(['clubunio-integrations.azure' => ['enabled' => true, 'account' => 'fixturestore',
+            'container' => 'svs-stage-private', 'key' => '', 'read_sas' => 'sr=c&sp=r&spr=https&sig=fixture']]);
+        $mock = new MockHandler([function ($request) {
+            $this->assertSame('/svs-stage-private/spesen/example.pdf', $request->getUri()->getPath());
+            parse_str($request->getUri()->getQuery(), $token);
+            $this->assertSame('r', $token['sp']);
+            $this->assertSame('c', $token['sr']);
+            return new Response(200, [], 'fixture');
+        }]);
+        $reader = new AzureDocumentReader(new Client(['handler' => HandlerStack::create($mock)]));
+        $this->assertSame('fixture', $reader->read('azure.blob://files/', 'example.pdf'));
+        config(['clubunio-integrations.azure.read_sas' => 'sr=c&sp=rw&spr=https&sig=fixture']);
+        $this->expectExceptionMessage('Stage document storage disabled');
+        $reader->read('azure.blob://files/', 'example.pdf');
+    }
+
     public function test_path_mapping_and_unicode_names(): void
     {
         $reader = new AzureDocumentReader;

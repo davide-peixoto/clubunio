@@ -113,3 +113,6 @@ Revision und Zeitstempel nachgefuehrt. 14 Audit-Eintraege enthalten vorherige
 Zuordnung, Revision und Zeitstempel fuer einen gezielten Rueckweg. Separater
 Lesecheck: 0 verbleibende Beleg-/Teamsaison-Konflikte, 14 verifizierte
 Audit-Eintraege. Kein neuer PROD-Abzug, DEV und PROD unveraendert.
+
+Historische Dateireferenzen koennen nach der separat freigegebenen
+Container-Kopie gelesen werden: [Stage-Azure](CLUBUNIO-STAGE-AZURE.md).

@@ -7,6 +7,7 @@ if (!is_file($file)) {
     $file = base_path('.env.clubora-integrations.local');
 }
 $values = is_file($file) ? Dotenv::parse(file_get_contents($file)) : [];
+$stage = env('APP_ENV') === 'staging' && rtrim((string) env('APP_URL'), '/') === 'https://stage.clubunio.com';
 
 return [
     'test_mail_enabled' => ($values['TEST_MAIL_ENABLED'] ?? '0') === '1',
@@ -22,7 +23,8 @@ return [
     'azure' => [
         'enabled' => ($values['AZURE_READ_ENABLED'] ?? '0') === '1',
         'tenant_slug' => 'sv-sissach',
-        'account' => $values['AZURE_ACCOUNT'] ?? '', 'key' => $values['AZURE_KEY'] ?? '',
-        'container' => 'svs-prod-private',
+        'account' => $values['AZURE_ACCOUNT'] ?? '', 'key' => $stage ? '' : ($values['AZURE_KEY'] ?? ''),
+        'container' => $stage ? 'svs-stage-private' : 'svs-prod-private',
+        'read_sas' => $stage ? ($values['AZURE_STAGE_READ_SAS'] ?? '') : '',
     ],
 ];
