@@ -121,7 +121,17 @@ Vor Commit der Datenbanktransaktion genau eine neue aktive Berechtigung
 pruefen und die bisherigen Berechtigungen vergleichen. Danach Antraege
 und Winterbelegung angemeldet pruefen, ohne einen Antrag zu entscheiden
 oder Benachrichtigungen auszuloesen. Der Integrationsversuch konnte
-wegen direktem Windows-SSH-Timeout nicht begonnen werden.
+wegen direktem Windows-SSH-Timeout zunaechst nicht begonnen werden.
+
+Beim Wiederanlauf war direkter Windows-SSH erreichbar. Die lesende
+Vorpruefung bestaetigte das freigegebene aktive Stage-Konto mit Rolle
+Geschaeftsstelle im bisherigen Mandanten. Eine transaktionale Probe mit
+synthetischen Identitaeten und expliziten negativen IDs bestaetigte genau
+eine aktive Mitgliedschaft und 75 nicht anmeldbare historische
+Mitgliedschaften. Vollstaendiger Rollback; der Slug war danach in der
+laufenden Stage weiterhin nicht vorhanden. Die Probe ist kein Fachtransfer.
+Fuer diesen fehlt ein gepruefter Transfer mit Mandanten-FK-Mapping und
+Uebersetzung eingebetteter nativer IDs. Keine Browserabnahme erfolgt.
 
 ### Pflichtpunkte und bisherige Importversuche
 
