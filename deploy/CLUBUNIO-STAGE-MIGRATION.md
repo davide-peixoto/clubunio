@@ -65,7 +65,29 @@ Die Datenbank ist nicht mit der Stage-Webanwendung verbunden. Nur
 Snapshot und Audit wurden angelegt; kein Fachimport und keine Aktivierung
 eines weiteren Mandanten. Der bestehende Stand bleibt erhalten.
 
-### Pflichtpunkte fuer den Fachimport
+### Fachimport des isolierten Kandidaten abgeschlossen
+
+Am 10.11.2026 wurde der vorhandene Abzug per `--resume-build` in
+`clubunio_stage_refresh_20261110` verarbeitet. Der Lauf wurde direkt von
+Windows per SSH gestartet und serverlokal in einem separaten Checkout
+ausgefuehrt. Kein neuer PROD-Abzug und keine Aenderung der laufenden Stage.
+
+- Mandant `sv-sissach-refresh`, 118 Migrationen, elf Basisimporte und
+  Saison 2026/2027 (Legacy-ID 38) bestaetigt; 697 Trainingszeiten.
+- 18 Aenderungsantraege im Ziel: 15 genehmigt, zwei offen, einer abgelehnt.
+- Aktive Winterperiode `W`; Projektionspruefung der Sportplatzbelegung
+  ergibt 61 Trainings fuer den geprueften Wochenzeitraum. Das ist keine
+  angemeldete Browserabnahme der laufenden Stage.
+- Keine aktiven importierten Konten und kein Providerbetrieb. 14 historische
+  Spesen-/Teamsaison-Konflikte sind im Kandidaten ausgewiesen und ungeaendert.
+
+Der Kandidat ist noch nicht als weiterer Mandant in die laufende Stage
+integriert. Der Abgleich ergab 75 gleiche globale Kontoidentitaeten.
+Vor der Uebernahme eine explizite, gepruefte Konto- und FK-Zuordnung
+festlegen; bestehende Benutzer, Rollen und Sitzungen nicht ueberschreiben
+oder automatisch berechtigen.
+
+### Pflichtpunkte und bisherige Importversuche
 
 **Versuch 10.11.2026:** Der isolierte Aufbau in
 `clubunio_stage_refresh_20261110` verifiziert den bestehenden Snapshot
