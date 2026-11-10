@@ -67,6 +67,25 @@ eines weiteren Mandanten. Der bestehende Stand bleibt erhalten.
 
 ### Pflichtpunkte fuer den Fachimport
 
+**Versuch 10.11.2026:** Der isolierte Aufbau in
+`clubunio_stage_refresh_20261110` verifiziert den bestehenden Snapshot
+erneut, ohne PROD neu zu lesen. Der vorbereitete Zusatzimport bildet
+`iniParameter.SommerWinter = W` auf die native Winterperiode ab, uebernimmt
+die Aenderungsantraege mit Status und verschluesseltem Alt-/Neuwert und
+prueft projizierte Trainings in der Sportplatzbelegung. Der erste Lauf
+stoppte beim Trainingsimport; der aktuelle PHPMaker-Katalog belegt den
+fehlenden Platzcode `L` (Halle) fuer zehn aktive Wintertrainings. Die
+Zuordnung wurde ergaenzt. Der Wiederanlauf stoppte frueher im Objektimport;
+parallel brach der direkte SSH-Pruefzugriff mit Timeout ab. Kein
+erfolgreicher Fachimport und keine Abnahme behauptet.
+
+Der Erstimport-Runner baut den Kandidaten separat auf und erzeugt keine
+zweite Mandanteninstanz in der laufenden Stage-Datenbank. Vor einer
+Uebernahme in die laufende Stage sind globale Konten und native
+Fremdschluessel fuer den neuen Mandanten explizit zuzuordnen. Keine
+bestehenden Konten oder Zuordnungen ueberschreiben. Im Kandidaten bleiben
+importierte Logins und Provider deaktiviert.
+
 Den neuen, lesenden PROD-Abzug in einer separaten, leeren Stage-Datenbank
 aufbauen. Den bisherigen Stand und die Stage-spezifischen Testkonten und
 Einstellungen erhalten. Erst nach Abnahme und separater Freigabe umschalten.

@@ -68,7 +68,7 @@ try {
         'mail.default' => 'array', 'mail.mailers' => ['array' => ['transport' => 'array']],
         'database.default' => 'clubunio', 'database.migrations.table' => 'clubunio.migrations',
         'database.connections' => ['clubunio' => [
-            'driver' => 'pgsql', 'host' => $settings['PGHOST'], 'port' => $settings['PGPORT'],
+            'driver' => 'pgsql', 'host' => $settings['PGHOST'].(isset($settings['PGHOSTADDR']) ? ';hostaddr=127.0.0.1' : ''), 'port' => $settings['PGPORT'],
             'database' => $expected, 'username' => $settings['PGUSER'], 'password' => $settings['PGPASSWORD'],
             'sslmode' => 'verify-full', 'sslrootcert' => $settings['PGSSLROOTCERT'],
             'charset' => 'utf8', 'search_path' => 'clubunio', 'prefix' => '',
@@ -76,6 +76,7 @@ try {
         ]],
     ]);
     Http::preventStrayRequests();
+    $phase = 'Stage connection verification';
     DB::purge('clubunio');
     $db = DB::connection('clubunio');
     StageMigrationTarget::authorize($db, $expected);
@@ -127,12 +128,19 @@ try {
             || array_sum(array_column($audit['snapshot_mappings'], 'unexplained_reference_differences')) !== 0) {
             throw new LogicException('Season reference audit failed');
         }
+        $refresh = [];
+        if ($db->getDatabaseName() === 'clubunio_stage_refresh_20261110') {
+            $phase = 'Stage refresh requests and occupancy';
+            $refresh = app(\App\ClubUnio\Services\StageRefreshImport::class)->run($db, $tenant);
+            $tenant->forceFill(['slug' => 'sv-sissach-refresh', 'name' => 'SV Sissach (Stage Refresh)'])->saveQuietly();
+        }
         return [
             'tenant' => $tenant->slug,
             'migration_count' => count($names),
             'import_count' => count($checkpoints),
             'season' => $audit['configured_lookup'],
             'source_expense_season_conflicts_for_review' => $audit['expense_team_season_disagreement'],
+            'refresh' => $refresh,
         ];
     });
     echo json_encode($result, JSON_THROW_ON_ERROR).PHP_EOL;

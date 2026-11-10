@@ -4420,7 +4420,7 @@
                 "FldTypeName": "nvarchar",
                 "FldRequired": "1",
                 "FldSelectType": "Values",
-                "FldTagValues": "\"H\",\"Hauptfeld\"|\"K\",\"Kunstrasen\"|\"T\",\"Trainingsplatz\""
+                "FldTagValues": "\"H\",\"Hauptfeld\"|\"K\",\"Kunstrasen\"|\"T\",\"Trainingsplatz\"|\"L\",\"Halle\""
             },
             {
                 "FldName": "Garderobe",
