@@ -1,0 +1,17 @@
+[Unit]
+Description=ClubUnio DEV private PostgreSQL tunnel
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=admin
+ExecStart=/usr/bin/ssh -4 -NT -F /dev/null -i /home/admin/.ssh/clubunio-dev-db -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/home/admin/.ssh/clubunio-dev-db.known_hosts -o ExitOnForwardFailure=yes -o ConnectTimeout=8 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -L 127.0.0.1:15432:127.0.0.1:5432 clubunio-dev-tunnel@vps.clubunio.com
+Restart=always
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+
+[Install]
+WantedBy=multi-user.target

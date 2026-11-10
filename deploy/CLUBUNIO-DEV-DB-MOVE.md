@@ -51,6 +51,21 @@ Quellschema und Snapshot-Schemas werden nicht umbenannt.
    und Cache wiederherstellen. Nach neuen Schreibvorgaengen zuerst die
    Aenderungen sichern und abgleichen, damit der Rueckweg nichts verliert.
 
-Status: Kompatibilitaetsprobe abgeschlossen; kein produktiver Restore und
-keine Umschaltung des Pi oder Schema-Umbenennung. Beim erneuten direkten
-SSH-Zugriff von Windows war der VPS nicht erreichbar (Timeout an Port 22).
+## Privater Zugang: aktueller Stand
+
+Der direkte Windows-Zugriff bestaetigte erneut PostgreSQL 16.15. Der Pi
+erreichte den VPS an Port 22. Der dedizierte Pi-Schluessel wurde erzeugt;
+die SSH-Verbindung brach beim Einrichten des VPS-Kontos jedoch ab. Vor
+dem Wiederanlauf den Zustand von `clubunio-dev-tunnel` und dessen
+`authorized_keys` auf dem VPS pruefen. Nur Forwarding zu
+`127.0.0.1:5432` erlauben, ohne Shell oder sonstige Ziele.
+
+Die vorbereitete Unit `clubunio-dev-db-tunnel.service` bindet nur lokal
+am Pi auf `127.0.0.1:15432` und verlangt einen ueber den bestehenden
+VPS-Adminzugang verifizierten SSH-Hostschluessel. Sie ist noch nicht
+installiert. Erst nach verifiziertem Tunnel und erfolgreichem Login mit
+der separaten DEV-Datenbankrolle den finalen Restore beginnen.
+
+Status: Kompatibilitaetsprobe abgeschlossen. Kein finaler Restore, keine
+Schema-Umbenennung oder Umschaltung des Pi. Der erneute Windows-SSH-Zugriff
+endete nach dem Abbruch wieder mit einem Timeout an Port 22.
