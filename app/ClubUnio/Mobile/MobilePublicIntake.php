@@ -29,9 +29,10 @@ final class MobilePublicIntake
     {
         app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
         $choices=$this->choices($tenant); $upload=(bool)$this->canUpload($tenant);
+        $createAccount=app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant);
         $claim=['v'=>1,'tenant'=>(int)$tenant->id,'origin'=>$request->attributes->get('mobile.public.origin'),'key'=>(string)Str::uuid(),
-            'at'=>time(),'expires'=>time()+3600,'choices'=>hash('sha256',json_encode($choices,JSON_THROW_ON_ERROR)),'upload'=>$upload];
-        return $choices+['claim'=>Crypt::encryptString(json_encode($claim,JSON_THROW_ON_ERROR)),'CanUpload'=>$upload,
+            'at'=>time(),'expires'=>time()+3600,'choices'=>hash('sha256',json_encode($choices,JSON_THROW_ON_ERROR)),'upload'=>$upload,'account'=>$createAccount];
+        return $choices+['claim'=>Crypt::encryptString(json_encode($claim,JSON_THROW_ON_ERROR)),'CanUpload'=>$upload,'CreateAccount'=>$createAccount,
             'Limits'=>['portrait_count'=>1,'portrait_bytes'=>5242880,'identity_count'=>3,'identity_bytes'=>10485760,'total_file_bytes'=>36700160]];
     }
     private function claim(Request $request, Tenant $tenant): array
@@ -46,8 +47,13 @@ final class MobilePublicIntake
     public function submit(Request $request, Tenant $tenant): array
     {
         app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
-        abort_if(array_diff(array_keys($request->all()),['claim','values','consent','portrait','identity']),422);
+        abort_if(array_diff(array_keys($request->all()),['claim','values','consent','portrait','identity','account_password']),422);
         $claim=$this->claim($request,$tenant);
+        $password=$request->validate(['account_password'=>'sometimes|required|string|min:12|max:72'])['account_password'] ?? null;
+        if ($password !== null) {
+            abort_unless(($claim['account'] ?? false) && app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
+            abort_if(strlen($password) > 72, 422);
+        }
         $raw=$request->input('values');
         if (is_string($raw)) { abort_if(strlen($raw)>65536,413); try { $raw=json_decode($raw,true,16,JSON_THROW_ON_ERROR); } catch (\Throwable) { abort(422); } }
         abort_unless(is_array($raw) && strlen(json_encode($raw,JSON_THROW_ON_ERROR))<=65536,422);
@@ -65,7 +71,7 @@ final class MobilePublicIntake
             $bytes=$entry['file']->get(); $entry['sha256']=hash('sha256',$bytes);
             $digests[]=['kind'=>$entry['kind'],'sha256'=>$entry['sha256'],'name'=>$entry['file']->getClientOriginalName()];
         } unset($entry);
-        $hash=hash_hmac('sha256',json_encode([$raw,$digests],JSON_THROW_ON_ERROR),(string)config('app.key'));
+        $hash=hash_hmac('sha256',json_encode($password === null ? [$raw,$digests] : [$raw,$digests,$password],JSON_THROW_ON_ERROR),(string)config('app.key'));
         $old=$this->table()->where('tenant_id',$tenant->id)->where('request_key',$claim['key'])->first();
         if ($old) { abort_unless(hash_equals($old->payload_sha256,$hash),409,'Dieser Formularstand wurde bereits anders eingereicht.'); return ['Submitted'=>true,'PendingAttachments'=>(int)$old->pending_attachments]; }
         $rate='public-intake:'.$tenant->id.':'.hash('sha256',$request->ip());
@@ -78,7 +84,7 @@ final class MobilePublicIntake
             abort_unless(($scan['clean']??false)===true && is_string($scan['version']??null) && strlen($scan['version'])>=1 && strlen($scan['version'])<=160,422,'Anhang konnte nicht sicher geprüft werden.');
             $evidence[]=['kind'=>$entry['kind'],'sha256'=>$entry['sha256'],'scanner'=>$scan['version'],'scanned_at'=>now()->toIso8601String()];
         }
-        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash) {
+        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash,$password) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
             $old=$this->table()->where('tenant_id',$tenant->id)->where('request_key',$claim['key'])->first();
@@ -97,6 +103,15 @@ final class MobilePublicIntake
                 ->where('public_request_id',$claim['key'])->where('state','pending')->count();
             $this->table()->insert(['tenant_id'=>$tenant->id,'request_key'=>$claim['key'],'payload_sha256'=>$hash,'registration_id'=>$registration->id,
                 'pending_attachments'=>$pending,'scan_evidence_encrypted'=>$evidence?Crypt::encryptString(json_encode($evidence,JSON_THROW_ON_ERROR)):null]);
+            if ($password !== null) {
+                abort_unless(app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
+                $identity = $request->duplicate();
+                $identity->setJson(new \Symfony\Component\HttpFoundation\InputBag());
+                $identity->replace(['email' => $registration->email, 'first_name' => $registration->first_name,
+                    'last_name' => $registration->last_name, 'password' => $password, 'request_key' => $claim['key']]);
+                $identity->files->replace([]);
+                app(MobileIdentityChallenges::class)->request($identity, 'register', (int) $registration->id);
+            }
             return ['Submitted'=>true,'PendingAttachments'=>$pending];
         });
         if ($files) {

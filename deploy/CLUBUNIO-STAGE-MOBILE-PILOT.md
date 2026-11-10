@@ -40,3 +40,14 @@ bestaetigen. DEV-/PROD-Firebase-Konfiguration nicht uebernehmen.
 
 Rueckweg: Mobile-Hauptflag ausschalten und nur den Stage-Konfigurationscache
 neu aufbauen. Synthetische Konten bei Bedarf separat sperren.
+
+
+## Umgebungswahl und Mitgliedsanmeldung
+
+Die ClubUnio-App bietet `https://stage.clubunio.com` als Stage-Auswahl an.
+Der Stage-Branch enthält die additive Antragsverknüpfung für das Schema
+`clubunio`. Die Pilotgrenze gilt für öffentliche Anmeldungen, Login und
+Statusabfrage. Zusätzlich zu den vorhandenen Testkonten sind nach der
+Identity-Freigabe per E-Mail bestätigte neue Konten des Pilotvereins erlaubt.
+Importierte Konten erhalten dadurch keinen Mobile-Zugang. Details und
+Aktivierungsvoraussetzungen: [Mitgliedsanmeldung](CLUBUNIO-MOBILE-MEMBERSHIP-TRACKING.md).

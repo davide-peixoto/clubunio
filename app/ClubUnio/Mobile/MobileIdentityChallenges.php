@@ -24,13 +24,16 @@ final class MobileIdentityChallenges
         if (strlen($data['password']) > 72) { throw ValidationException::withMessages(['password' => 'Bitte ein kürzeres Passwort wählen.']); }
         return $data['password'];
     }
-    public function request(Request $request, string $purpose): array
+    public function request(Request $request, string $purpose, ?int $registrationId = null): array
     {
         abort_unless(in_array($purpose, ['register','reset'], true), 422);
         $tenant = $request->attributes->get('mobile.public.tenant'); $origin = $request->attributes->get('mobile.public.origin');
         app(MobilePublicIdentityPolicy::class)->authorize($tenant, $purpose === 'register' ? 'registration' : 'password_reset');
         $rules = ['email' => 'required|email:rfc|max:254', 'request_key' => 'required|uuid'];
-        if ($purpose === 'register') { $rules += ['first_name' => 'required|string|min:2|max:255','last_name' => 'required|string|min:2|max:255','password' => 'required|string|min:12|max:72']; }
+        if ($purpose === 'register') {
+            $nameRule = $registrationId === null ? 'required|string|min:2|max:255' : 'required|string|max:255';
+            $rules += ['first_name' => $nameRule, 'last_name' => $nameRule, 'password' => 'required|string|min:12|max:72'];
+        }
         abort_if(array_diff(array_keys($request->all()), array_keys($rules)), 422);
         $d = $request->validate($rules); $d['email'] = mb_strtolower(trim($d['email']));
         if ($purpose === 'register') { $this->password(['password' => $d['password']], false); $d['first_name'] = trim($d['first_name']); $d['last_name'] = trim($d['last_name']); }
@@ -38,11 +41,15 @@ final class MobileIdentityChallenges
         $fingerprint = hash_hmac('sha256', json_encode($identity, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), (string) config('app.key'));
         $this->rate('identity-ip:'.hash('sha256', $request->ip().'|'.$tenant->id), 10, 60);
         $password = $purpose === 'register' ? Hash::make($d['password']) : null;
-        $created = DB::connection('clubunio')->transaction(function () use ($tenant, $origin, $purpose, $d, $fingerprint, $password) {
+        $created = DB::connection('clubunio')->transaction(function () use ($tenant, $origin, $purpose, $d, $fingerprint, $password, $registrationId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(MobilePublicIdentityPolicy::class)->authorize($tenant, $purpose === 'register' ? 'registration' : 'password_reset');
             $old = $this->table()->where('tenant_id', $tenant->id)->where('purpose', $purpose)->where('request_key', $d['request_key'])->first();
-            if ($old) { abort_unless(hash_equals($old->request_fingerprint, $fingerprint), 409); return null; }
+            if ($old) {
+                abort_unless(hash_equals($old->request_fingerprint, $fingerprint)
+                    && (isset($old->registration_id) ? (int) $old->registration_id : null) === $registrationId, 409);
+                return null;
+            }
             $this->rate('identity-email:'.$tenant->id.':'.$purpose.':'.$this->emailHash($d['email']), 3, 3600);
             if ($purpose === 'register' && Account::whereRaw('lower(username) = ?', [$d['email']])->exists()) { return null; }
             $candidates = $purpose === 'reset' ? $this->candidates($tenant,$this->emailHash($d['email'])) : [];
@@ -57,7 +64,8 @@ final class MobileIdentityChallenges
                 'request_fingerprint' => $fingerprint, 'email_hash' => $this->emailHash($d['email']), 'secret_hash' => hash('sha256', $secret),
                 'account_id' => count($candidates)===1 ? $candidates[0]['id'] : null, 'payload_encrypted' => Crypt::encryptString(json_encode($payload, JSON_THROW_ON_ERROR)),
                 'delivery_encrypted' => Crypt::encryptString(MobileIdentityMail::canonical($delivery)),
-                'expires_at' => ($purpose === 'register' ? now()->addDay() : now()->addMinutes(30))->toIso8601String()]);
+                'expires_at' => ($purpose === 'register' ? now()->addDay() : now()->addMinutes(30))->toIso8601String()]
+                + ($registrationId === null ? [] : ['registration_id' => $registrationId]));
             $expired = $this->table()->where('tenant_id', $tenant->id)->where('state', 'pending')->where('expires_at', '<', now()->toIso8601String())->limit(100)->pluck('id');
             $this->table()->whereIn('id', $expired)->update(['state' => 'invalidated','payload_encrypted' => null,'delivery_encrypted' => null,'delivery_state' => 'skipped']);
             return $id;
@@ -68,6 +76,26 @@ final class MobileIdentityChallenges
             });
         }
         return ['accepted' => true, 'message' => 'Falls dieser Vorgang für deine Angaben möglich ist, erhältst du einen zeitlich begrenzten Link per E-Mail.'];
+    }
+
+    public function applications(Account $actor, ?Tenant $bound): array
+    {
+        if (!config('clubunio-mobile.public_identity.enabled', false)
+            || !config('clubunio-mobile.public_identity.membership_account_enabled', false)) return [];
+
+        return $this->table()->join('clubunio.registrations as r', fn ($join) => $join
+            ->on('r.tenant_id', 'mobile_identity_challenges.tenant_id')->on('r.id', 'mobile_identity_challenges.registration_id'))
+            ->join('clubunio.tenants as t', 't.id', '=', 'r.tenant_id')
+            ->leftJoin('clubunio.registration_statuses as s', fn ($join) => $join
+                ->on('s.tenant_id', 'r.tenant_id')->on('s.id', 'r.status_id'))
+            ->join('clubunio.tenant_accounts as a', fn ($join) => $join
+                ->on('a.tenant_id', 'r.tenant_id')->on('a.account_id', 'mobile_identity_challenges.account_id'))
+            ->where('mobile_identity_challenges.account_id', $actor->id)
+            ->where('mobile_identity_challenges.purpose', 'register')->where('mobile_identity_challenges.state', 'completed')
+            ->where('t.slug', StageMobilePilot::TENANT)->where('a.portal_enabled', true)->where('r.active', true)
+            ->when($bound, fn ($q) => $q->where('r.tenant_id', $bound->id))
+            ->orderByDesc('r.id')->limit(50)->get(['r.tenant_id', 't.name as club', 's.name as status', 'r.submitted_at'])
+            ->map(fn ($row) => (array) $row)->all();
     }
     private function resetAllowed(Tenant $tenant, Account $account): bool
     {
