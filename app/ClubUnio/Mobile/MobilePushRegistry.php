@@ -11,7 +11,8 @@ final class MobilePushRegistry
     {
         abort_unless(config('clubunio-mobile-push.enabled', false), 503);
         // Config keys contain dots: read exact keys rather than treating native IDs as config paths.
-        $app = config('clubunio-mobile-push.apps', [])[$id] ?? null;
+        $apps = config('clubunio-mobile-push.apps', []);
+        $app = $apps[$platform.':'.$id] ?? $apps[$id] ?? null;
         abort_unless(is_array($app) && in_array($platform, ['android', 'ios'], true)
             && ($app['platform'] ?? null) === $platform && ($app['origin'] ?? null) === $origin
             && preg_match('~^https://[a-z0-9.-]+(?::[0-9]{1,5})?$~D', $origin)

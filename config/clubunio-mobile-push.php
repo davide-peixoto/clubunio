@@ -6,9 +6,10 @@ try { $apps = strlen($raw) <= 65536 ? json_decode($raw, true, 8, JSON_THROW_ON_E
 catch (Throwable) { $apps = []; }
 if (! is_array($apps) || count($apps) > 100) $apps = [];
 foreach ($apps as $id => $app) {
-    if (! is_string($id) || ! preg_match('/^[a-zA-Z0-9_.-]{3,180}$/D', $id) || ! is_array($app)
+    if (! is_string($id) || ! preg_match('/^(?:(?:ios|android):)?[a-zA-Z0-9_.-]{3,180}$/D', $id) || ! is_array($app)
         || array_diff(array_keys($app), ['platform', 'origin', 'fixed_tenant_id', 'project_id', 'credentials_file'])
         || ! in_array($app['platform'] ?? null, ['android', 'ios'], true)
+        || (str_contains($id, ':') && ! str_starts_with($id, $app['platform'].':'))
         || ! is_string($app['origin'] ?? null) || ! is_string($app['project_id'] ?? null)
         || ! preg_match('/^[a-z][a-z0-9-]{4,61}[a-z0-9]$/D', $app['project_id'])
         || ! array_key_exists('fixed_tenant_id', $app)

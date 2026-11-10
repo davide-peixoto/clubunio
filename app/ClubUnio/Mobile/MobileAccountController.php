@@ -22,7 +22,7 @@ final class MobileAccountController
             'recovery_tenants' => $this->recoveryTenants($request, $actor),
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
-            'password_change' => true, 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
+            'password_change' => true, 'push' => app(MobilePushReady::class)->available($request, registration: true), 'registration' => false,
             'password_reset' => false]]);
     }
 

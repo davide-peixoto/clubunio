@@ -10,6 +10,15 @@ final class StageMobilePilot
 
     public const ACCOUNTS = ['stage-mobile-ios@example.invalid', 'stage-mobile-android@example.invalid'];
 
+    public static function pushPlatform(?string $username): ?string
+    {
+        return match ($username) {
+            self::ACCOUNTS[0] => 'ios',
+            self::ACCOUNTS[1] => 'android',
+            default => null,
+        };
+    }
+
     public static function allowsAccount(string $username): bool
     {
         if (config('app.url') !== 'https://stage.clubunio.com') return false;

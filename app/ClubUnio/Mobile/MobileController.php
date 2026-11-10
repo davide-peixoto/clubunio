@@ -49,7 +49,7 @@ final class MobileController
             'language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback'],
             'tenants' => $tenants->filter(fn ($t) => ! $bound || $bound->is($t))->map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name])->values(),
             'membership_applications' => app(MobileIdentityChallenges::class)->applications($actor, $bound),
-            'capabilities' => ['push' => app(MobilePushReady::class)->available($r), 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
+            'capabilities' => ['push' => app(MobilePushReady::class)->available($r, registration: true), 'uploads' => (bool) config('clubunio-mobile.uploads_enabled'), 'ai' => (bool) config('clubunio-mobile.ai.enabled')]]);
     }
 
     public function sessions(Request $r)

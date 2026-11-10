@@ -15,6 +15,7 @@ final class MobilePushDevices
             'app_id' => 'required|string|max:180', 'platform' => 'required|in:android,ios']);
         app(MobilePushRegistry::class)->request($request, $data['app_id'], $data['platform']);
         $actor = app(MobileSessions::class)->authenticate($request);
+        $this->guardStagePlatform($actor->username, $data['platform']);
         $device = DB::connection('clubunio')->table('clubunio.mobile_push_devices')->where('id', $data['installation_id'])->first();
         if (! $device) return ['revision' => 0, 'bound' => false];
         abort_unless(hash_equals($device->proof_hash, hash('sha256', $data['installation_secret']))
@@ -30,6 +31,7 @@ final class MobilePushDevices
             'token' => 'required|string|min:20|max:4096|regex:/^[^\s\x00-\x1f\x7f]+$/D', 'revision' => 'required|integer|min:0']);
         $app = app(MobilePushRegistry::class)->request($request, $data['app_id'], $data['platform']);
         $actor = app(MobileSessions::class)->authenticate($request);
+        $this->guardStagePlatform($actor->username, $data['platform']);
         if ($app['fixed_tenant_id'] !== null) {
             $tenant = \App\ClubUnio\Models\Tenant::findOrFail($app['fixed_tenant_id']);
             app(MobileAccess::class)->enter($actor, $tenant);
@@ -81,6 +83,13 @@ final class MobilePushDevices
         }); } catch (\Illuminate\Database\QueryException $error) {
             if ($error->getCode() === '23505') abort(409, 'Push token already bound.');
             throw $error;
+        }
+    }
+
+    private function guardStagePlatform(string $username, string $platform): void
+    {
+        if (config('app.url') === 'https://stage.clubunio.com') {
+            abort_unless(StageMobilePilot::pushPlatform($username) === $platform, 403);
         }
     }
 

@@ -12,9 +12,10 @@ require 'vendor/autoload.php';
 $app = require 'bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $db = DB::connection('clubunio');
+$pushRegistration = ($argv[1] ?? '') === '--push-registration';
 if (! StageMobilePilot::allowsAccount(StageMobilePilot::ACCOUNTS[0])
     || $db->getDatabaseName() !== 'clubunio_stage' || config('clubunio.outbound_enabled')
-    || config('clubunio-mobile-push.enabled') || config('clubunio-mobile-push.delivery_enabled')) {
+    || (bool) config('clubunio-mobile-push.enabled') !== $pushRegistration || config('clubunio-mobile-push.delivery_enabled')) {
     throw new LogicException('Expected isolated Stage without outbound delivery.');
 }
 
@@ -68,9 +69,23 @@ foreach ($passwords as $username => $password) {
     if (! is_string($token) || $token === '') {
         throw new LogicException('Expected Stage session token.');
     }
-    $session = Http::acceptJson()->timeout(12)->withToken($token);
+    $session = Http::acceptJson()->timeout(12)->withToken($token)
+        ->withHeaders(['X-ClubUnio-Mobile-Features' => 'personal-push-v1']);
     try {
-        $expect($session->get($base.'/context'), 200, 'Context');
+        $context = $session->get($base.'/context');
+        $expect($context, 200, 'Context');
+        if ($pushRegistration) {
+            if ($context->json('data.capabilities.push') !== true) {
+                throw new LogicException('Expected Stage push registration capability.');
+            }
+            $platform = StageMobilePilot::pushPlatform($username);
+            $probe = ['app_id' => 'com.my.clubunio.core', 'platform' => $platform,
+                'installation_id' => (string) Illuminate\Support\Str::uuid(),
+                'installation_secret' => bin2hex(random_bytes(32))];
+            $expect($session->post($base.'/push/devices/status', $probe), 200, 'Pilot device status');
+            $probe['platform'] = $platform === 'ios' ? 'android' : 'ios';
+            $expect($session->post($base.'/push/devices/status', $probe), 403, 'Wrong test platform');
+        }
         foreach (['modules', 'planning/teams', 'my-teams', 'expenses'] as $path) {
             $expect($session->get($base.'/clubs/'.$tenant.'/'.$path), 200, $path);
         }
