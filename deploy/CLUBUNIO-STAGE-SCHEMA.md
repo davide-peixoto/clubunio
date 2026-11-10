@@ -66,3 +66,9 @@ Beim naechsten Verbindungsfenster wurde der neuere Stage-Basiscommit
 Aenderung; dessen Marketing-Updates wurden in den Stage-Branch uebernommen.
 PostgreSQL-Hostname und Loopback-Aufloesung wurden bestaetigt. Das angepasste
 Paket konnte wegen erneuter SSH-Timeouts noch nicht aktiviert werden.
+
+Stage verwendet den RunCloud-Pool fuer PHP 8.3; dort ist PDO-PgSQL fuer
+die CLI vorhanden. Die Vorpruefung unterscheidet jetzt CLI-Treiber,
+FPM-Treiber, Checkout und Schema-Zustand. Eine Stage-spezifische Sperre
+verhindert parallele Umstellungslaeufe. Der direkte Wiederanlauf stoppte
+erneut an SSH-Port 22, bevor die erweiterten Pruefungen ausgefuehrt wurden.
