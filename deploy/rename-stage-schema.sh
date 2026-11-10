@@ -2,7 +2,7 @@
 set -euo pipefail
 umask 077
 app=/home/runcloud/webapps/ClubUnioStage
-php=/RunCloud/Packages/php84rc/bin/php
+php=/RunCloud/Packages/php83rc/bin/php
 branch=codex/stage-clubunio-schema
 old=6621b86
 test "$#" -eq 2
@@ -11,6 +11,9 @@ bundle=$2
 [[ "$candidate" =~ ^[0-9a-f]{40}$ ]]
 test -f "$bundle"
 test -x "$php"
+test -f /etc/php83rc/fpm.d/ClubUnioStage.conf
+"$php" -m | grep -qx pdo_pgsql
+/RunCloud/Packages/php83rc/sbin/php-fpm -m | grep -qx pdo_pgsql
 cd "$app"
 as_app() { runuser -u runcloud -- "$@"; }
 psql_stage() { runuser -u postgres -- psql -X -qAt -v ON_ERROR_STOP=1 -d clubunio_stage "$@"; }
