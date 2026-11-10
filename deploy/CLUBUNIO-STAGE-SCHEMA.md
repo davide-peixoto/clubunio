@@ -88,3 +88,16 @@ Snapshot-Schemas. Journal mit 117 Migrationen, Mandant und Saisonreferenzen
 lesend geprueft. Health und Login HTTP 200, Mitgliederseite anonym HTTP 302.
 Importierte Konten und geheime Integrationen bleiben deaktiviert. Kein
 PROD-Neuabzug; DEV und PROD unveraendert. Rueckweg wie oben beschrieben.
+
+## Kontostatus und Passwort-Hashes
+
+10.11.2026: Nach ausdruecklicher Freigabe auf Stage aus dem vorhandenen
+verifizierten PROD-Snapshot uebernommen. Alle 75 Konten eindeutig nach
+Benutzername und Legacy-Rollenstufe zugeordnet. 37 gemaess Quelle aktiv,
+38 gesperrt, deaktiviert oder geloescht und weiterhin ohne Zugang.
+Rollback-Probe, Commit und separater Lesecheck bestanden.
+`restore-stage-account-auth.sql` ist nur fuer den urspruenglichen
+gesperrten Stage-Importstand vorgesehen und lehnt eine Wiederholung ab.
+Keine Hashes oder Zugangsdaten in Git oder Protokollen. Kein Cloudflare
+Access eingerichtet, keine Integrationen aktiviert. DEV, PROD und beide
+Snapshot-Schemas unveraendert.
