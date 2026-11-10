@@ -5,6 +5,17 @@ DEV, PROD und PHPMaker unveraendert. Keine Benachrichtigungen versendet.
 
 ## Mobile
 
+Das explizit freigegebene bestehende Stage-Konto darf jetzt auch Mobile
+fuer `sv-sissach-refresh` verwenden. Die Web-Mitgliedschaft allein
+hatte nicht gereicht, weil die separate Mobile-Pilotgrenze das Konto
+abgewiesen hatte (App-Login HTTP 401). Kontoaktivierung und bestehender
+Hash bleiben unveraendert. Loginliste, Kontext und Mandanten-Endpunkte
+sind fuer dieses Konto auf den neuen Mandanten begrenzt; die bisherigen
+Testkonten bleiben im Pilotverein. Andere importierte Konten sind
+weiterhin ausgeschlossen. Bestehende Stage-HTTPS-Pilottests bestanden;
+die Reviewer-Freigabe wurde serverseitig geprueft, ohne dessen Passwort
+zu verwenden. Kein Push freigeschaltet und kein DEV-/PROD-Release.
+
 - Der Stage-Branch begrenzt Mobile-Login und bestehende Mobile-Sitzungen
   auf zwei dedizierte synthetische Testkonten. Mandanten-Endpunkte sind auf
   `stage-mobile-pilot` begrenzt. Die Konten gehoeren nur diesem Testverein.
