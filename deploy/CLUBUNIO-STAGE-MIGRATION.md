@@ -53,7 +53,19 @@ Fachschicht wiederholen. Erfolgreiche Ziele werden nicht nochmals importiert.
 
 ## Abnahme und Grenzen
 
-### Pflichtpunkte fuer den naechsten PROD-Abzug
+### Neuer PROD-Abzug fuer den zweiten Mandanten
+
+Am 10.11.2026, 15:58:54 bis 16:00:14 Uhr (Europe/Zurich), wurde
+`db_acdf8d_mysvs` lesend in `clubunio_stage_refresh_20261110` kopiert.
+Der erneute Verifikationslauf bestaetigte 100 Tabellen, 53'388 Zeilen
+und die Pruefsumme jeder Tabelle. Die Kopie enthaelt 81
+Mitgliederanmeldungen, 18 Mitgliederaenderungsantraege, 697
+Trainingszeiten und 35 Teamtermine (inklusive ggf. geloeschter Zeilen).
+Die Datenbank ist nicht mit der Stage-Webanwendung verbunden. Nur
+Snapshot und Audit wurden angelegt; kein Fachimport und keine Aktivierung
+eines weiteren Mandanten. Der bestehende Stand bleibt erhalten.
+
+### Pflichtpunkte fuer den Fachimport
 
 Den neuen, lesenden PROD-Abzug in einer separaten, leeren Stage-Datenbank
 aufbauen. Den bisherigen Stand und die Stage-spezifischen Testkonten und
