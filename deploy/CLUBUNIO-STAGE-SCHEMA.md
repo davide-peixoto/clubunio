@@ -72,3 +72,19 @@ die CLI vorhanden. Die Vorpruefung unterscheidet jetzt CLI-Treiber,
 FPM-Treiber, Checkout und Schema-Zustand. Eine Stage-spezifische Sperre
 verhindert parallele Umstellungslaeufe. Der direkte Wiederanlauf stoppte
 erneut an SSH-Port 22, bevor die erweiterten Pruefungen ausgefuehrt wurden.
+
+## Erfolgreicher Wechsel
+
+10.11.2026: Direkt von Windows, ohne Pi oder offenen SSH-Tunnel. Stage
+verwendet jetzt `clubunio_stage.clubunio` mit Codecommit `89baee5`.
+PDO-PgSQL fuer PHP 8.3 CLI und FPM geprueft. Die vorhandene private
+PostgreSQL-Konfiguration ist fuer den Stage-Webbenutzer lesbar; ihr Inhalt
+blieb unveraendert. Keine gemeinsamen Dienste neu gestartet.
+
+Verschluesseltes, vollstaendig lesbares Backup unter
+`/root/clubunio-stage-schema-SAxjzr2n`. Rollback-Probe bestanden. Alle 308
+Tabellenfingerabdruecke vor/nach Wechsel identisch, einschliesslich beider
+Snapshot-Schemas. Journal mit 117 Migrationen, Mandant und Saisonreferenzen
+lesend geprueft. Health und Login HTTP 200, Mitgliederseite anonym HTTP 302.
+Importierte Konten und geheime Integrationen bleiben deaktiviert. Kein
+PROD-Neuabzug; DEV und PROD unveraendert. Rueckweg wie oben beschrieben.
