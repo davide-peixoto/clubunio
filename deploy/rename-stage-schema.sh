@@ -5,23 +5,26 @@ app=/home/runcloud/webapps/ClubUnioStage
 php=/RunCloud/Packages/php83rc/bin/php
 branch=codex/stage-clubunio-schema
 old=6621b86
+fail() { printf 'Stage preflight: %s\n' "$1" >&2; exit 1; }
 test "$#" -eq 2
 candidate=$1
 bundle=$2
 [[ "$candidate" =~ ^[0-9a-f]{40}$ ]]
-test -f "$bundle"
-test -x "$php"
-test -f /etc/php83rc/fpm.d/ClubUnioStage.conf
-"$php" -m | grep -qx pdo_pgsql
-/RunCloud/Packages/php83rc/sbin/php-fpm -m | grep -qx pdo_pgsql
+test -f "$bundle" || fail 'bundle not found'
+test -x "$php" || fail 'Stage PHP 8.3 CLI not found'
+test -f /etc/php83rc/fpm.d/ClubUnioStage.conf || fail 'Stage PHP 8.3 pool not found'
+exec 9>/var/lock/clubunio-stage-schema.lock
+flock -n 9 || fail 'another Stage schema cutover is running'
+"$php" -m | grep -x pdo_pgsql >/dev/null || fail 'PDO-PgSQL missing in PHP 8.3 CLI'
+/RunCloud/Packages/php83rc/sbin/php-fpm -m | grep -x pdo_pgsql >/dev/null || fail 'PDO-PgSQL missing in PHP 8.3 FPM'
 cd "$app"
 as_app() { runuser -u runcloud -- "$@"; }
 psql_stage() { runuser -u postgres -- psql -X -qAt -v ON_ERROR_STOP=1 -d clubunio_stage "$@"; }
-test "$(as_app git rev-parse --short=7 HEAD)" = "$old"
-test -z "$(as_app git status --porcelain --untracked-files=no)"
-test ! -e storage/framework/down
-test "$(psql_stage -c "SELECT current_database() || ':' || (to_regnamespace('clubora') IS NOT NULL)::text || ':' || (to_regnamespace('clubunio') IS NULL)::text")" = 'clubunio_stage:true:true'
-test "$(psql_stage -c "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='clubora' AND p.prosrc ~ '\mclubora\M'")" = 0
+test "$(as_app git rev-parse --short=7 HEAD)" = "$old" || fail 'Stage baseline changed'
+test -z "$(as_app git status --porcelain --untracked-files=no)" || fail 'Stage checkout has tracked changes'
+test ! -e storage/framework/down || fail 'Stage already in maintenance mode'
+test "$(psql_stage -c "SELECT current_database() || ':' || (to_regnamespace('clubora') IS NOT NULL)::text || ':' || (to_regnamespace('clubunio') IS NULL)::text")" = 'clubunio_stage:true:true' || fail 'unexpected Stage schema state'
+test "$(psql_stage -c "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='clubora' AND p.prosrc ~ '\mclubora\M'")" = 0 || fail 'stored routines still reference clubora'
 as_app git fetch --no-tags "$bundle" "refs/heads/$branch"
 test "$(as_app git rev-parse FETCH_HEAD)" = "$candidate"
 
