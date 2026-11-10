@@ -59,12 +59,15 @@ pruefen. Beim Start der Aktivierung waren keine aktiven Geraete vorhanden.
 Beim erneuten HTTPS-Test reproduziert: Der private FastCGI-Test auf dem
 Stage-Pool zeigte beide Registry-Eintraege, aber `open_basedir` sperrt den
 Zugriff auf die bisherige Schluesseldatei. CLI und FPM unterscheiden sich
-hier absichtlich. Die vorgesehene Loesung ist eine private Datei unter
+hier absichtlich. Die Stage-Registry verweist jetzt auf die private Datei unter
 `storage/framework/stage-secrets/` (0700/0600, runcloud, Git-ignoriert)
 innerhalb der Stage-App, aber ausserhalb des Nginx-Webroots `public/`.
-Nur die zwei Stage-Registry-Pfade umstellen und den Stage-Konfigurationscache
-erneuern; PHP-Zugriffsgrenzen nicht erweitern. Die Aenderung konnte wegen
-erneutem SSH-Timeout noch nicht durchgefuehrt werden.
+Nur die zwei Stage-Registry-Pfade wurden umgestellt und der
+Stage-Konfigurationscache erneuert. Die PHP-Zugriffsgrenzen blieben
+unveraendert. Die bisherige private Datei bleibt bis zur Abnahme als
+Rueckweg erhalten. Beide anschliessenden Windows-SSH-Versuche fuer den
+authentifizierten HTTPS-Test endeten mit Timeout; der Test nach der
+Pfadkorrektur steht deshalb noch aus.
 Kein bestaetigtes Testgeraet, kein Worker und kein Push-Versand.
 
 Private Uebergabe auf Windows:
@@ -72,8 +75,8 @@ Private Uebergabe auf Windows:
 Nicht die DEV-Datei ersetzen. Die Datei nicht in OneDrive, im Repository,
 im Chat oder in der mobilen App ablegen. Nur dem eigenen Windows-Konto
 und Administratoren Zugriff geben (SYSTEM fuer Systemverwaltung).
-Das geplante Ziel auf dem VPS ist
-`/home/runcloud/.clubunio-stage-mobile/firebase-service-account.json`
+Der aktive Registry-Pfad auf dem VPS ist
+`/home/runcloud/webapps/ClubUnioStage/storage/framework/stage-secrets/firebase-service-account.json`
 (Verzeichnis 0700, Datei 0600, Besitzer runcloud). Vor Aktivierung das
 Firebase-Projekt des Servicekontos mit beiden Stage-Testbuilds abgleichen.
 
