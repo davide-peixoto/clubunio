@@ -101,3 +101,20 @@ gesperrten Stage-Importstand vorgesehen und lehnt eine Wiederholung ab.
 Keine Hashes oder Zugangsdaten in Git oder Protokollen. Kein Cloudflare
 Access eingerichtet, keine Integrationen aktiviert. DEV, PROD und beide
 Snapshot-Schemas unveraendert.
+
+## Deployment-Branch und Login
+
+10.11.2026: Nach dem Livewire-Fix lief auf Stage zwischenzeitlich der
+`main`-Commit `8aeb91d`. Der Login scheiterte mit SQLSTATE 42P01 auf
+`clubora.accounts`, da die Stage-Datenbank bereits `clubunio` verwendet.
+Nur Code auf `7d9e168` zurueckgestellt, Livewire-Dateien erneut geprueft und
+Stage-Caches neu gebaut. Keine Datenbank- oder Kontenaenderung. Lesender
+Kontozugriff mit dem Anwendungsmodell erfolgreich; Livewire-JavaScript 200
+und synthetischer Login liefert regulaere Validierung statt 500.
+
+In RunCloud muss `ClubUnioStage` ausschliesslich vom Branch
+`codex/stage-clubunio-schema` deployen. Automatische Deployments von `main`
+fuer diese App deaktivieren oder auf diesen Branch umstellen. Die Einstellung
+in RunCloud wurde in diesem Lauf nicht geaendert. Vor Aktivierung mit der
+tatsaechlichen Stage-Verbindung einen lesenden Zugriff auf
+`clubunio.accounts` pruefen; ein Loginseiten-200 allein reicht nicht.
