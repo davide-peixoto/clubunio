@@ -98,11 +98,23 @@ Dieser Absatz beschreibt den Stand vor der unten protokollierten Umschaltung.
 - Die private Verbindungsdatei ist nur im neuen Release verlinkt. Die alte
   Verbindung am vorherigen Release bleibt als Rueckweg erhalten. Vor einem
   Rueckwechsel nach neuen Schreibvorgaengen Daten sichern und abgleichen.
-- Naechste Pi-Releases muessen das Schema-Mapping auf der inaktiven Kopie
-  erhalten bzw. erneut anwenden und vor Aktivierung mit
-  `verify-pi-dev-vps-database.php` pruefen. Ein unveraendertes `main`-Archiv
-  enthaelt weiterhin alte SQL-Schemaqualifizierungen und ist kein direkt
-  lauffaehiger Pi-Release. Alte Import- und Migrationswerkzeuge mit
-  fest verdrahtetem Quellnamen nicht ungeprueft gegen das VPS-Ziel starten.
+- `release-clubunio-pi.sh` erledigt das Schema-Mapping auf der inaktiven
+  Kopie, verlinkt nur die private VPS-Konfiguration und prueft als Web-User
+  Datenbank, Rolle, PostgreSQL 16, TLS, Schema und lesbare Kernobjekte vor
+  der Aktivierung. Der Runner startet den DEV-Push-Worker nach einem Wechsel
+  neu. `--prepare-only` baut und prueft ohne Symlinkwechsel oder Dienstneustart.
+  Der Runner fuehrt keine Datenmigrationen aus. Alte Import- und
+  Migrationswerkzeuge mit fest verdrahtetem Quellnamen nicht ungeprueft gegen
+  das VPS-Ziel starten. Historische, fest gepinnte Paket-Runner bleiben nur
+  als Release-Historie erhalten.
 
 Stage und PROD wurden nicht geaendert. Es wurde kein PROD-Abzug erstellt.
+
+## Release-Pflichtcheck
+
+Der versionierte Runner ist auf dem Pi unter `shared/release-clubunio-pi.sh`
+hinterlegt. Der komplette Vorbereitungsmodus wurde auf dem Pi mit einem
+unveraenderten SQL-Schema im Quellarchiv und einem separaten Release-Namen
+getestet. Mapping ist wiederholbar; die alte Verbindung wird vor jeder
+Datenbankabfrage abgelehnt. Die aktuelle Web-Version blieb aktiv, `/login`
+antwortete mit HTTP 200 und Tunnel sowie Worker blieben aktiv.

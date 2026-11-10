@@ -4,8 +4,14 @@
 
 Die Anwendung bleibt auf dem Pi. Aktiver Release `20261110-clubunio-vps-db`,
 PostgreSQL 16 auf dem VPS ueber privaten Pi-Tunnel, Schema `clubunio`.
-Vor dem naechsten Pi-Release den [Migrations- und Abnahmeplan](CLUBUNIO-DEV-DB-MOVE.md)
-beachten, insbesondere Schema-Mapping und releasebezogene Verbindung.
+Fuer neue Releases auf dem Pi
+`bash /var/www/svs-laravel/shared/release-clubunio-pi.sh <release-name>` verwenden.
+Versionierte Quelle: `deploy/release-clubunio-pi.sh`.
+Der Runner bindet die private VPS-Verbindung ein, mappt das Schema in der
+inaktiven Kopie und verlangt den DB-Pflichtcheck vor dem Wechsel von `current`.
+Mit `--prepare-only` und einem separaten Release-Namen ohne Umschaltung testen.
+Paketgebundene historische Runner nicht fuer neue VPS-DEV-Releases verwenden.
+Details: [Migrations- und Abnahmeplan](CLUBUNIO-DEV-DB-MOVE.md).
 
 ## Sportneutrale Anlagen (09.11.2026)
 
@@ -1706,7 +1712,8 @@ No SmarterASP deployment, external notifications, Bexio or Azure writes.
 
 Releases can now use release-clubunio-pi.sh with an explicitly named, reviewed
 archive in shared. It refuses an existing release and keeps a rollback target.
-Do not include .env, runtime cache/logs, uploads or local vendor in the archive.
+Do not include .env, the storage directory, runtime cache/logs, uploads or
+local vendor in the archive.
 
 ## ClubUnio release 11.10.2026
 

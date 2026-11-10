@@ -8,6 +8,13 @@ require 'vendor/autoload.php';
 $app = require 'bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $db = Illuminate\Support\Facades\DB::connection('clubunio');
+if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== 'clubunio_dev'
+    || $db->getConfig('host') !== 'clubunio.com;hostaddr=127.0.0.1'
+    || (string) $db->getConfig('port') !== '15432' || $db->getConfig('sslmode') !== 'verify-full'
+    || $db->getConfig('search_path') !== 'clubunio') {
+    fwrite(STDERR, "Unexpected DEV PostgreSQL connection configuration.\n");
+    exit(1);
+}
 $row = $db->selectOne("SELECT current_database() AS db, current_schema() AS schema, current_user AS role, current_setting('server_version_num')::int AS version, (SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()) AS tls");
 if ($row->db !== 'clubunio_dev' || $row->role !== 'clubunio_dev_app' || $row->version < 160000 || $row->version >= 170000 || ! $row->tls) {
     exit(1);

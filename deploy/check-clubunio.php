@@ -4,7 +4,7 @@ $app=require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $count=0;
 try {
-    foreach (\Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.tenant_settings')->pluck('encrypted_value') as $cipher) {
+    foreach (\Illuminate\Support\Facades\DB::connection('clubunio')->table('tenant_settings')->pluck('encrypted_value') as $cipher) {
         if ($cipher!==null) {
             \Illuminate\Support\Facades\Crypt::decryptString($cipher);
             $count++;
@@ -23,7 +23,7 @@ try {
     }
     echo 'Message template rendering verified: '.$templates->count()."\n";
     $db = \Illuminate\Support\Facades\DB::connection('clubunio');
-    foreach ($db->table('clubora.account_member_links')->selectRaw('kind, state, count(*) as total')->groupBy('kind', 'state')->get() as $group) {
+    foreach ($db->table('account_member_links')->selectRaw('kind, state, count(*) as total')->groupBy('kind', 'state')->get() as $group) {
         echo "Identity links: {$group->kind}/{$group->state} {$group->total}\n";
     }
 } catch (\Throwable) {

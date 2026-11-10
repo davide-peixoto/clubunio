@@ -1,11 +1,10 @@
 <?php
 
-if (PHP_SAPI !== 'cli' || ! preg_match('~^/var/www/svs-laravel/releases/[0-9]+-clubunio-vps-db$~D', getcwd())
+if (PHP_SAPI !== 'cli' || ! preg_match('~^/var/www/svs-laravel/releases/[0-9]{8}-[a-z0-9-]+$~D', getcwd())
     || getcwd() === realpath('/var/www/svs-laravel/current')) {
     exit(1);
 }
 
-$changed = 0;
 foreach (['app', 'config', 'routes', 'resources', 'database/clubunio'] as $root) {
     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)) as $file) {
         if ($file->isLink() || ! $file->isFile() || $file->getExtension() !== 'php') {
@@ -25,9 +24,6 @@ foreach (['app', 'config', 'routes', 'resources', 'database/clubunio'] as $root)
                 exit(1);
             }
             echo $path.PHP_EOL;
-            $changed++;
         }
     }
 }
-
-exit($changed > 100 ? 0 : 1);
