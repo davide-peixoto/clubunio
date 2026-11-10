@@ -87,6 +87,26 @@ Vor der Uebernahme eine explizite, gepruefte Konto- und FK-Zuordnung
 festlegen; bestehende Benutzer, Rollen und Sitzungen nicht ueberschreiben
 oder automatisch berechtigen.
 
+### Kontoabgleich vor Aufnahme in die laufende Stage
+
+Der lesende Abgleich der Mitgliedschaften ergab 75 eindeutige Treffer
+ueber normalisierte Benutzernamen und keine Rollenabweichung. In der
+laufenden Stage sind 37 dieser Konten aktiv, davon sechs mit Rolle
+Geschaeftsstelle. Eine direkte Uebernahme der Mitgliedschaften wuerde
+deren Zugriff erweitern; `portal_enabled=false` allein sperrt
+Geschaeftsstelle/Admin nicht. Der isolierte Kandidat bleibt unveraendert.
+
+Vor der Integration in einer separaten Kopie der laufenden Stage
+proben: globale Konten nicht duplizieren oder ueberschreiben; historische
+Antragsteller und Entscheider explizit zuordnen; Zugriffsfreigaben separat
+festlegen. Native IDs und zusammengesetzte Mandanten-FKs neu zuordnen.
+Auch native IDs in verschluesselten Einstellungen (Saison und
+Trainingsperiode) sowie Lookup-IDs in Antragssnapshots pruefen.
+Abnahme: Altmandanten und ihre Rechte unveraendert, Nicht-Testkonten
+ohne neuen Zugriff, Browserpruefung der Antraege und Sportplatzbelegung
+mit explizit berechtigtem Stage-Konto. Noch keine Uebernahme oder
+Browserabnahme erfolgt.
+
 ### Pflichtpunkte und bisherige Importversuche
 
 **Versuch 10.11.2026:** Der isolierte Aufbau in
