@@ -56,3 +56,7 @@ gelesen, Rollback-Probe bestanden. Der Anwendungstest scheiterte am fehlenden
 Leserecht der Stage-PostgreSQL-Datei. Code und Schema automatisch auf den
 vorigen Stand zurueckgesetzt. Das Skript prueft dies jetzt vor Wartung und
 Umbenennung. Der direkte SSH-Zugang ist zeitweise nicht erreichbar.
+
+Weiterer direkter Versuch von Windows am 10.11.2026: SSH auf Port 22
+brach erneut vor der Lesepruefung ab. Stage-Health ueber HTTPS antwortete
+weiterhin mit 200. Keine erneute Umbenennung und keine ACL-Aenderung.
