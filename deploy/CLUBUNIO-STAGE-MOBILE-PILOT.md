@@ -61,3 +61,16 @@ Statusabfrage. Zusätzlich zu den vorhandenen Testkonten sind nach der
 Identity-Freigabe per E-Mail bestätigte neue Konten des Pilotvereins erlaubt.
 Importierte Konten erhalten dadurch keinen Mobile-Zugang. Details und
 Aktivierungsvoraussetzungen: [Mitgliedsanmeldung](CLUBUNIO-MOBILE-MEMBERSHIP-TRACKING.md).
+
+10.11.2026: Migration `2026_11_10_000100_mobile_membership_tracking` atomar
+auf `clubunio_stage` angewendet und im Ledger erfasst. Der Stage-Bootstrap ist
+für die exakte Stage-Origin aktiv. Extern HTTP 200 beim Bootstrap und HTTP 401
+beim anonymen Context. Der HTTP-Pilottest bestätigte Login, Module,
+Mandantentrennung und Logout mit beiden bestehenden Testkonten.
+
+Der Stage-Identity-Mailer hat noch keinen SMTP-Host, keine Zugangsdaten und
+keinen Absender. Öffentliche Registrierung und Mitgliedsanmeldung bleiben
+bis zur Stage-Mailkonfiguration und Testpostfachprüfung geschlossen. Die
+Pilotvereins-Lookups und die öffentliche Anmeldefreigabe sind bei der
+Aktivierung zu prüfen. Push und Uploads sind vom bestehenden Pilotbetrieb
+weiterhin getrennt.
