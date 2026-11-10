@@ -133,6 +133,23 @@ laufenden Stage weiterhin nicht vorhanden. Die Probe ist kein Fachtransfer.
 Fuer diesen fehlt ein gepruefter Transfer mit Mandanten-FK-Mapping und
 Uebersetzung eingebetteter nativer IDs. Keine Browserabnahme erfolgt.
 
+Ein separater CLI-Entwurf fuer die Fachprobe liegt unter
+`tools/clubunio-stage-tenant-transfer.php`. Er erlaubt nur die Quelle
+`clubunio_stage_refresh_20261110` und das Ziel
+`clubunio_stage_transfer_rehearsal`. Erwartete Tabellen, Fremdschluessel,
+verschluesselte Saison-/Periodenwerte und Lookup-IDs in Antragssnapshots
+werden explizit geprueft. Die Probe setzt genau eine aktive Mitgliedschaft
+und 75 nicht anmeldbare historische Identitaeten voraus; sie rollt alle
+Fachzeilen zurueck. Sequenzen der Testkopie koennen dabei vorruecken.
+Offene Altantraege muessen vor einer Anwendung gegen den neuen
+Mitgliederstand geprueft werden. Kein Live-Modus vorhanden.
+
+PHP-Syntax geprueft. Das Erstellen der Stage-Kopie konnte wegen
+SSH-Timeout nicht bestaetigt werden. Den CLI-Entwurf erst gegen die
+separate Kopie pruefen; vor einem Live-Transfer bleiben der vollstaendige
+Fachabgleich, die Pruefung nicht per FK modellierter Verweise und die
+Abnahme der Berechtigungen Pflicht.
+
 ### Pflichtpunkte und bisherige Importversuche
 
 **Versuch 10.11.2026:** Der isolierte Aufbau in
