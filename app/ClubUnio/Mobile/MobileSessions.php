@@ -30,7 +30,7 @@ final class MobileSessions
         // Existing hashes/provider; no password copying, rehash or second account store.
         abort_unless($actor instanceof Account && $provider->validateCredentials($actor, $credentials), 401);
         $bound = app(TenantDomainService::class)->resolve($request);
-        $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $tenant->slug === StageMobilePilot::TENANT && (! $bound || $bound->is($tenant))
+        $tenants = $actor->tenants()->get()->filter(fn ($tenant) => StageMobilePilot::allowsTenant($actor->username, $tenant->slug) && (! $bound || $bound->is($tenant))
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant));
         $canTrack = $tenants->isEmpty() && app(MobileIdentityChallenges::class)->applications($actor, $bound) !== [];
         if ($tenants->isEmpty() && !$canTrack && config('clubunio-mobile.public_identity.enabled', false)

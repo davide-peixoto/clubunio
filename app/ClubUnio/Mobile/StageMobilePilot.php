@@ -10,6 +10,15 @@ final class StageMobilePilot
 
     public const ACCOUNTS = ['stage-mobile-ios@example.invalid', 'stage-mobile-android@example.invalid'];
 
+    public const REVIEW_ACCOUNT = 'davide.peixoto@svsissach.ch';
+
+    public static function allowsTenant(string $username, string $slug): bool
+    {
+        return $username === self::REVIEW_ACCOUNT
+            ? $slug === 'sv-sissach-refresh'
+            : $slug === self::TENANT;
+    }
+
     public static function pushPlatform(?string $username): ?string
     {
         return match ($username) {
@@ -23,6 +32,13 @@ final class StageMobilePilot
     {
         if (config('app.url') !== 'https://stage.clubunio.com') return false;
         if (in_array($username, self::ACCOUNTS, true)) return true;
+        if ($username === self::REVIEW_ACCOUNT) {
+            return DB::connection('clubunio')->table('clubunio.accounts as a')
+                ->join('clubunio.tenant_accounts as m', 'm.account_id', '=', 'a.id')
+                ->join('clubunio.tenants as t', 't.id', '=', 'm.tenant_id')
+                ->where('a.username', $username)->where('a.active', true)->where('a.api_only', false)
+                ->where('t.slug', 'sv-sissach-refresh')->where('m.role', 'office')->exists();
+        }
         if (!config('clubunio-mobile.public_identity.enabled', false)) return false;
 
         return DB::connection('clubunio')->table('clubunio.mobile_identity_challenges as proof')

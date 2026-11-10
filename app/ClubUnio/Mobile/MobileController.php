@@ -42,7 +42,8 @@ final class MobileController
     public function context(Request $r)
     {
         $actor = $this->actor($r);
-        $tenants = $actor->tenants()->get()->filter(fn ($t) => app(MemberAccessService::class)->canEnter($actor, $t));
+        $tenants = $actor->tenants()->get()->filter(fn ($t) => StageMobilePilot::allowsTenant($actor->username, $t->slug)
+            && app(MemberAccessService::class)->canEnter($actor, $t));
         $bound = app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($r);
         $language = app(MobileLanguages::class)->forAccount($actor);
         return $this->data(['account' => ['id' => (int) $actor->id, 'name' => $actor->display_name, 'username' => $actor->username],
