@@ -60,3 +60,9 @@ Umbenennung. Der direkte SSH-Zugang ist zeitweise nicht erreichbar.
 Weiterer direkter Versuch von Windows am 10.11.2026: SSH auf Port 22
 brach erneut vor der Lesepruefung ab. Stage-Health ueber HTTPS antwortete
 weiterhin mit 200. Keine erneute Umbenennung und keine ACL-Aenderung.
+
+Beim naechsten Verbindungsfenster wurde der neuere Stage-Basiscommit
+6621b86 lesend festgestellt. Die Sicherheitspruefung stoppte vor jeder
+Aenderung; dessen Marketing-Updates wurden in den Stage-Branch uebernommen.
+PostgreSQL-Hostname und Loopback-Aufloesung wurden bestaetigt. Das angepasste
+Paket konnte wegen erneuter SSH-Timeouts noch nicht aktiviert werden.
