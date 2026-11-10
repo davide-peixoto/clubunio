@@ -49,9 +49,9 @@ final class LookupTranslationsPostgresTest extends TestCase
         $this->assertSame('db_acdf8d_dclubora', $db->selectOne('SELECT current_database() AS name')->name);
         $this->assertSame(0, $db->transactionLevel());
         $schema = $db->getSchemaBuilder();
-        $tableExisted = $schema->hasTable('clubora.lookup_translations');
+        $tableExisted = $schema->hasTable('clubunio.lookup_translations');
         $ledger = [];
-        foreach (['clubora.migrations', 'public.migrations'] as $table) {
+        foreach (['clubunio.migrations', 'public.migrations'] as $table) {
             if ($schema->hasTable($table)) {
                 $ledger[$table] = $db->table($table)->where('migration', 'like', '%001300_lookup_languages%')->get()->toJson();
             }
@@ -71,7 +71,7 @@ final class LookupTranslationsPostgresTest extends TestCase
                 (require database_path('clubunio/2026_11_04_001300_lookup_languages.php'))->up();
                 $createdMigration = true;
             }
-            $this->assertTrue($schema->hasTable('clubora.lookup_translations'));
+            $this->assertTrue($schema->hasTable('clubunio.lookup_translations'));
             $this->assertSame(1, $db->transactionLevel());
             $this->assertTrue($db->getPdo()->inTransaction());
             app()->forgetInstance(LookupTranslations::class);
@@ -119,7 +119,7 @@ final class LookupTranslationsPostgresTest extends TestCase
             $this->assertSame('Ready', MemberStatus::whereKey($sources[0])->localizedPluck('name')->first());
             $this->assertSame('Open', MemberStatus::whereKey($sources[1])->localizedPluck('name')->first());
             app()->setLocale('de');
-            $this->assertSame('Verfügbar', $db->table('clubora.member_statuses')->where('id', $sources[0])->localizedPluck('name')->first());
+            $this->assertSame('Verfügbar', $db->table('clubunio.member_statuses')->where('id', $sources[0])->localizedPluck('name')->first());
             $this->assertSame('Offen', MemberStatus::findOrFail($sources[0])->name);
             app()->setLocale('en');
 
@@ -169,11 +169,11 @@ final class LookupTranslationsPostgresTest extends TestCase
             $admin->tenants()->updateExistingPivot($tenant, ['role' => 'office']);
             $this->forbidden(fn () => $service->save($admin, $tenant, null, $input));
             $admin->tenants()->updateExistingPivot($tenant, ['role' => 'admin']);
-            $db->table('clubora.accounts')->where('id', $admin->id)->update(['active' => false]);
+            $db->table('clubunio.accounts')->where('id', $admin->id)->update(['active' => false]);
             $this->forbidden(fn () => $service->save($admin, $tenant, null, $input));
-            $db->table('clubora.accounts')->where('id', $admin->id)->update(['active' => true]);
+            $db->table('clubunio.accounts')->where('id', $admin->id)->update(['active' => true]);
 
-            $audits = $db->table('clubora.object_changes')->whereIn('tenant_id', $tenants)->orderBy('id')->get();
+            $audits = $db->table('clubunio.object_changes')->whereIn('tenant_id', $tenants)->orderBy('id')->get();
             $this->assertCount(4, $audits);
             $this->assertNull($audits[0]->before_value);
             $this->assertSame('Available', json_decode($audits[1]->before_value, true)['label']);
@@ -191,7 +191,7 @@ final class LookupTranslationsPostgresTest extends TestCase
             foreach ([['locale' => 'fr'], ['revision' => 0], ['label' => ' '], []] as $change) {
                 $db->beginTransaction();
                 try {
-                    $db->table('clubora.lookup_translations')->insert(array_replace($base, $change));
+                    $db->table('clubunio.lookup_translations')->insert(array_replace($base, $change));
                     $this->fail('Migration constraint did not reject invalid data.');
                 } catch (QueryException $exception) {
                     $this->assertContains($exception->errorInfo[0], ['23514', '23505']);
@@ -201,7 +201,7 @@ final class LookupTranslationsPostgresTest extends TestCase
             }
             $this->assertSame($before, MemberStatus::whereIn('id', $sources)->orderBy('id')->get()->toJson());
             $this->assertSame(3, LookupTranslation::whereIn('tenant_id', $tenants)->count());
-            $this->assertSame(4, $db->table('clubora.object_changes')->whereIn('tenant_id', $tenants)->count());
+            $this->assertSame(4, $db->table('clubunio.object_changes')->whereIn('tenant_id', $tenants)->count());
             $this->assertSame(1, $db->transactionLevel());
             $this->assertTrue($db->getPdo()->inTransaction());
         } finally {
@@ -215,14 +215,14 @@ final class LookupTranslationsPostgresTest extends TestCase
                 request()->session()->forget(ImpersonationService::KEY);
             }
             $this->assertFalse($db->getPdo()->inTransaction());
-            $this->assertSame($tableExisted, $schema->hasTable('clubora.lookup_translations'));
-            $this->assertSame(0, $db->table('clubora.tenants')->whereIn('id', $tenants)->count());
-            $this->assertSame(0, $db->table('clubora.accounts')->whereIn('id', array_values($accounts))->count());
-            $this->assertSame(0, $db->table('clubora.member_statuses')->whereIn('id', $sources)->count());
-            $this->assertSame(0, $db->table('clubora.tenant_accounts')->whereIn('tenant_id', $tenants)->count());
-            $this->assertSame(0, $db->table('clubora.object_changes')->whereIn('tenant_id', $tenants)->count());
+            $this->assertSame($tableExisted, $schema->hasTable('clubunio.lookup_translations'));
+            $this->assertSame(0, $db->table('clubunio.tenants')->whereIn('id', $tenants)->count());
+            $this->assertSame(0, $db->table('clubunio.accounts')->whereIn('id', array_values($accounts))->count());
+            $this->assertSame(0, $db->table('clubunio.member_statuses')->whereIn('id', $sources)->count());
+            $this->assertSame(0, $db->table('clubunio.tenant_accounts')->whereIn('tenant_id', $tenants)->count());
+            $this->assertSame(0, $db->table('clubunio.object_changes')->whereIn('tenant_id', $tenants)->count());
             if ($tableExisted) {
-                $this->assertSame(0, $db->table('clubora.lookup_translations')->whereIn('id', $translationIds)->count());
+                $this->assertSame(0, $db->table('clubunio.lookup_translations')->whereIn('id', $translationIds)->count());
             }
             foreach ($ledger as $table => $beforeLedger) {
                 $this->assertSame($beforeLedger, $db->table($table)->where('migration', 'like', '%001300_lookup_languages%')->get()->toJson());

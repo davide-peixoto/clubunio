@@ -139,9 +139,9 @@ class SponsorRunTable extends Component implements HasActions, HasSchemas, HasTa
             'pledges' => $service->pledges($actor, $tenant, $this->participantId)
                 ->when($search !== '', fn ($q) => $q->where('sponsor_name', 'ilike', '%'.$search.'%'))
                 ->when($filters['payment_mode']['value'] ?? null, fn ($q, $value) => $q->where('payment_mode', $value)),
-            'outbox' => $service->db()->table('clubora.sponsor_run_public_outbox as o')
-                ->join('clubora.sponsor_run_public_pending as p', fn ($j) => $j->on('p.id', '=', 'o.pending_id')->on('p.tenant_id', '=', 'o.tenant_id'))
-                ->join('clubora.sponsor_run_links as l', fn ($j) => $j->on('l.id', '=', 'p.link_id')->on('l.tenant_id', '=', 'p.tenant_id'))
+            'outbox' => $service->db()->table('clubunio.sponsor_run_public_outbox as o')
+                ->join('clubunio.sponsor_run_public_pending as p', fn ($j) => $j->on('p.id', '=', 'o.pending_id')->on('p.tenant_id', '=', 'o.tenant_id'))
+                ->join('clubunio.sponsor_run_links as l', fn ($j) => $j->on('l.id', '=', 'p.link_id')->on('l.tenant_id', '=', 'p.tenant_id'))
                 ->where('o.tenant_id', $tenant->id)->where('l.event_id', $this->eventId)
                 ->when($search !== '', fn ($q) => $q->where('l.alias', 'ilike', '%'.$search.'%'))
                 ->select('o.id', 'o.delivery_state', 'o.created_at', 'l.alias')->orderByDesc('o.id'),

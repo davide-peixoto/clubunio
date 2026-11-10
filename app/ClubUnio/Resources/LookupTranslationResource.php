@@ -93,7 +93,7 @@ final class LookupTranslationResource extends Resource
         if ($service->tableName($table) !== $table) {
             return null;
         }
-        $query = DB::connection('clubunio')->table('clubora.'.$table)->where($service->sourceKey($table), $id);
+        $query = DB::connection('clubunio')->table('clubunio.'.$table)->where($service->sourceKey($table), $id);
         if (! $service->isGlobal($table)) {
             $query->where('tenant_id', Filament::getTenant()->id);
         }

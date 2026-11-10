@@ -41,7 +41,7 @@ class BexioConnectionTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'oidc-'.bin2hex(random_bytes(6)), 'name' => 'OIDC fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => bin2hex(random_bytes(8)), 'display_name' => 'OIDC admin', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         foreach (['BEXIO_CLIENT_ID' => 'test-client', 'BEXIO_CLIENT_SECRET' => 'test-secret', 'BEXIO_AUTHORIZE_SCOPES' => 'kb_invoice_show', 'BEXIO_REFRESH_TOKEN' => 'NEVER-ROTATE-LEGACY'] as $key => $value) {
             $row = new Setting;
             $row->forceFill(['tenant_id' => $this->tenant->id, 'area' => 'bexio', 'key' => $key, 'label' => $key, 'value_type' => 'string', 'enabled' => false, 'is_secret' => true, 'encrypted_value' => Crypt::encryptString($value)])->save();
@@ -117,7 +117,7 @@ class BexioConnectionTest extends TestCase
         $this->post('/integrations/bexio/connect', ['tenant' => $other->slug] + $this->workspaceForm())->assertForbidden();
         $this->get('/integrations/bexio?tenant='.$other->slug)->assertForbidden();
         $query = $this->begin();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $this->get('/integrations/bexio/callback?'.http_build_query(['state' => $query['state'], 'code' => 'test-code']))->assertForbidden();
         Http::assertNothingSent();
     }
@@ -152,7 +152,7 @@ class BexioConnectionTest extends TestCase
         $this->begin();
         $this->get($this->base().'/callback?state=wrong&code=test')->assertSessionHas('connection_error');
         Http::assertNothingSent();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $this->get($this->base())->assertForbidden();
         $this->post($this->base().'/connect')->assertForbidden();
         $this->get($this->base().'/callback?state=wrong&code=test')->assertForbidden();

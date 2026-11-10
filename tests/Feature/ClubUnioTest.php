@@ -483,7 +483,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame($expected, $service->previewMany($this->actor, $this->own, $season, $ids));
         $queries = $this->db->getQueryLog();
         foreach (['contribution_rules', 'contribution_prices', 'family_members', 'team_players'] as $table) {
-            $this->assertCount(1, array_filter($queries, fn ($q) => str_starts_with(explode(' from ', $q['query'], 2)[1] ?? '', '"clubora"."'.$table.'"')), $table);
+            $this->assertCount(1, array_filter($queries, fn ($q) => str_starts_with(explode(' from ', $q['query'], 2)[1] ?? '', '"clubunio"."'.$table.'"')), $table);
         }
         $this->db->disableQueryLog();
         $invoice = $service->create($this->actor, $this->own, $member->id, $season, $expected[0]['fingerprint']);
@@ -982,11 +982,11 @@ class ClubUnioTest extends TestCase
     {
         Carbon::setTestNow('2026-10-12 12:00:00');
         try {
-            $this->db->table('clubora.members')->where('tenant_id', $this->own->id)->update(['recorded_at' => null]);
+            $this->db->table('clubunio.members')->where('tenant_id', $this->own->id)->update(['recorded_at' => null]);
             foreach (['2025-11-01 00:00:00', '2026-10-01 00:00:00', '2025-10-31 23:59:59', '2026-11-01 00:00:00'] as $date) {
-                $this->db->table('clubora.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Month fixture', 'recorded_at' => $date]);
+                $this->db->table('clubunio.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Month fixture', 'recorded_at' => $date]);
             }
-            $this->db->table('clubora.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Archived month', 'recorded_at' => '2026-10-01', 'archived_at' => now()]);
+            $this->db->table('clubunio.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Archived month', 'recorded_at' => '2026-10-01', 'archived_at' => now()]);
             $data = app(DashboardService::class)->newMembersMonthly($this->actor, $this->own);
             $this->assertCount(12, $data);
             $this->assertSame(1, $data['2025-11']);
@@ -1003,13 +1003,13 @@ class ClubUnioTest extends TestCase
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         $statuses = [];
         foreach (['O', 'B', 'P'] as $code) {
-            $statuses[$code] = $this->db->table('clubora.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $code]);
+            $statuses[$code] = $this->db->table('clubunio.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $code]);
         }
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Dashboard season']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Dashboard season']);
         foreach ([['O', 'B'], ['B', 'B'], ['B', 'P'], [], ['inactive']] as $codes) {
-            $invoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'season_id' => $season]);
+            $invoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'season_id' => $season]);
             foreach ($codes as $code) {
-                $this->db->table('clubora.invoice_lines')->insert(['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'status_id' => $statuses[$code === 'inactive' ? 'O' : $code], 'net_amount' => 10, 'gross_amount' => 12, 'active' => $code !== 'inactive']);
+                $this->db->table('clubunio.invoice_lines')->insert(['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'status_id' => $statuses[$code === 'inactive' ? 'O' : $code], 'net_amount' => 10, 'gross_amount' => 12, 'active' => $code !== 'inactive']);
             }
         }
         $service = app(DashboardService::class);
@@ -1038,7 +1038,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame('#123456', StatusAppearance::hex('offen'));
         $this->assertSame('#123456', StatusAppearance::hex('  Offen  '));
         $this->assertSame(Color::hex('#123456'), StatusAppearance::palette('Offen'));
-        $this->db->table('clubora.status_styles')->insert(['tenant_id' => $this->other->id, 'name' => 'Offen', 'value_key' => 'offen', 'color' => '#abcdef']);
+        $this->db->table('clubunio.status_styles')->insert(['tenant_id' => $this->other->id, 'name' => 'Offen', 'value_key' => 'offen', 'color' => '#abcdef']);
         $this->assertSame('#123456', StatusAppearance::hex('Offen'));
         foreach ([['name' => 'offen', 'color' => '#999999', 'active' => true], ['name' => 'Unsafe', 'color' => 'red;display:none', 'active' => true]] as $bad) {
             try {
@@ -1084,14 +1084,14 @@ class ClubUnioTest extends TestCase
         $ids = [];
         foreach (['field' => ['H', 'K', 'T'], 'room' => ['1', '2'], 'side' => ['L', 'R'], 'period' => ['S'], 'weekday' => [(string) (now('Europe/Zurich')->dayOfWeek + 1)]] as $category => $codes) {
             foreach ($codes as $code) {
-                $ids[$category][$code] = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => $code, 'name' => $category.' '.$code]);
+                $ids[$category][$code] = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => $code, 'name' => $category.' '.$code]);
             }
         }
         foreach (['O' => false, 'G' => true] as $code => $blocked) {
-            $ids['status'][$code] = $this->db->table('clubora.facility_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $blocked ? 'Gesperrt' : 'Offen', 'blocks_training' => $blocked]);
+            $ids['status'][$code] = $this->db->table('clubunio.facility_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $blocked ? 'Gesperrt' : 'Offen', 'blocks_training' => $blocked]);
         }
         foreach ($ids['field'] as $field) {
-            $this->db->table('clubora.field_availabilities')->insert(['tenant_id' => $this->own->id, 'field_id' => $field, 'status_id' => $ids['status']['O']]);
+            $this->db->table('clubunio.field_availabilities')->insert(['tenant_id' => $this->own->id, 'field_id' => $field, 'status_id' => $ids['status']['O']]);
         }
 
         return $ids;
@@ -1105,7 +1105,7 @@ class ClubUnioTest extends TestCase
     public function test_competition_edit_preserves_source_identity_and_audits_revision(): void
     {
         $ids = $this->facilityFixture();
-        $id = $this->db->table('clubora.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => now()->toDateString(), 'host_name' => 'Fixture host', 'guest_name' => 'Fixture guest', 'association_match_id' => 123, 'source' => 'SFV']);
+        $id = $this->db->table('clubunio.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => now()->toDateString(), 'host_name' => 'Fixture host', 'guest_name' => 'Fixture guest', 'association_match_id' => 123, 'source' => 'SFV']);
         $service = app(FacilityService::class);
         $data = ['active' => true, 'revision' => 1, 'plays_on' => now()->toDateString(), 'starts_at' => '20:15', 'host_name' => 'Fixture host', 'guest_name' => 'Fixture guest', 'show_on_signage' => true, 'host_room_id' => $ids['room']['1'], 'field_id' => $ids['field']['H']];
         $record = $service->save($this->actor, $this->own, Competition::class, $id, $data);
@@ -1113,7 +1113,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame('SFV', $record->source);
         $this->assertEquals($ids['room']['1'], $record->host_room_id);
         $this->assertEquals(2, $record->revision);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'competitions')->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'competitions')->count());
         foreach ([$data, array_replace($data, ['revision' => 2, 'association_match_id' => null]), array_replace($data, ['revision' => 2, 'field_id' => $ids['room']['1']])] as $bad) {
             try {
                 $service->save($this->actor, $this->own, Competition::class, $id, $bad);
@@ -1128,7 +1128,7 @@ class ClubUnioTest extends TestCase
     public function test_facility_permissions_and_cross_tenant_lookups_are_enforced(): void
     {
         $ids = $this->facilityFixture();
-        $other = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->other->id, 'category' => 'field', 'code' => 'OTHER', 'name' => 'Foreign field']);
+        $other = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->other->id, 'category' => 'field', 'code' => 'OTHER', 'name' => 'Foreign field']);
         $service = app(FacilityService::class);
         $data = ['active' => true, 'field_id' => $other, 'status_id' => $ids['status']['O']];
         try {
@@ -1166,7 +1166,7 @@ class ClubUnioTest extends TestCase
         $ids = $this->facilityFixture();
         $records = [];
         foreach (['today', 'past', 'other-field', 'other-name'] as $type) {
-            $id = $this->db->table('clubora.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => $type === 'past' ? now('Europe/Zurich')->subDay()->toDateString() : now('Europe/Zurich')->toDateString(), 'host_name' => $type === 'other-name' ? 'Notmatching' : 'Searchfixture', 'guest_name' => 'Guest', 'field_id' => $ids['field'][$type === 'other-field' ? 'K' : 'H']]);
+            $id = $this->db->table('clubunio.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => $type === 'past' ? now('Europe/Zurich')->subDay()->toDateString() : now('Europe/Zurich')->toDateString(), 'host_name' => $type === 'other-name' ? 'Notmatching' : 'Searchfixture', 'guest_name' => 'Guest', 'field_id' => $ids['field'][$type === 'other-field' ? 'K' : 'H']]);
             $records[$type] = Competition::findOrFail($id);
         }
         $page = Livewire::test(ManageCompetitions::class)->assertCountTableRecords(3)
@@ -1182,7 +1182,7 @@ class ClubUnioTest extends TestCase
     {
         $this->facilityFixture();
         foreach (['today', 'hidden', 'inactive', 'past', 'foreign'] as $type) {
-            $this->db->table('clubora.competitions')->insert(['tenant_id' => $type === 'foreign' ? $this->other->id : $this->own->id, 'plays_on' => $type === 'past' ? now('Europe/Zurich')->subDay()->toDateString() : now('Europe/Zurich')->toDateString(), 'host_name' => $type, 'guest_name' => 'Guest', 'show_on_signage' => $type !== 'hidden', 'active' => $type !== 'inactive']);
+            $this->db->table('clubunio.competitions')->insert(['tenant_id' => $type === 'foreign' ? $this->other->id : $this->own->id, 'plays_on' => $type === 'past' ? now('Europe/Zurich')->subDay()->toDateString() : now('Europe/Zurich')->toDateString(), 'host_name' => $type, 'guest_name' => 'Guest', 'show_on_signage' => $type !== 'hidden', 'active' => $type !== 'inactive']);
         }
         app(FacilityService::class)->save($this->actor, $this->own, SignageNotice::class, null, ['active' => true, 'shows_on' => now('Europe/Zurich')->toDateString(), 'title' => 'Escaped notice', 'body' => '<script>alert(1)</script>']);
         $data = app(SignageService::class)->preview($this->actor, $this->own, ['date' => now('Europe/Zurich')->toDateString()]);
@@ -1199,21 +1199,21 @@ class ClubUnioTest extends TestCase
     {
         $ids = $this->facilityFixture();
         $today = now('Europe/Zurich')->toDateString();
-        $foreign = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->other->id, 'category' => 'room', 'code' => 'foreign', 'name' => 'Private foreign room']);
-        $this->db->table('clubora.training_options')->where('id', $ids['room']['2'])->update(['active' => false]);
+        $foreign = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->other->id, 'category' => 'room', 'code' => 'foreign', 'name' => 'Private foreign room']);
+        $this->db->table('clubunio.training_options')->where('id', $ids['room']['2'])->update(['active' => false]);
         foreach (range(1, 20) as $i) {
-            $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => $today,
+            $this->db->table('clubunio.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => $today,
                 'host_name' => 'Batch host '.$i, 'guest_name' => 'Batch guest', 'show_on_signage' => true,
                 'field_id' => $ids['field']['H'], 'host_room_id' => $ids['room']['1'], 'guest_room_id' => $ids['room']['2'],
                 'host_side_id' => $ids['side']['L'], 'guest_side_id' => $i === 20 ? null : $ids['side']['R']]);
         }
-        $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->other->id, 'plays_on' => $today,
+        $this->db->table('clubunio.competitions')->insert(['tenant_id' => $this->other->id, 'plays_on' => $today,
             'host_name' => 'Private foreign game', 'guest_name' => 'Foreign guest', 'show_on_signage' => true, 'host_room_id' => $foreign]);
         $service = app(SignageService::class);
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         $data = $service->preview($this->actor, $this->own, ['date' => $today]);
-        $optionQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubora"."training_options"'));
+        $optionQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubunio"."training_options"'));
         $this->assertCount(2, $optionQueries);
         $this->assertCount(20, $data['competitions']);
         $this->db->flushQueryLog();
@@ -1226,7 +1226,7 @@ class ClubUnioTest extends TestCase
         $this->assertNull($data['competitions']->last()->guestSide);
         $this->assertCount(0, $this->db->getQueryLog());
         $this->db->disableQueryLog();
-        $this->db->table('clubora.training_options')->where('id', $ids['room']['1'])->update(['name' => 'Updated room']);
+        $this->db->table('clubunio.training_options')->where('id', $ids['room']['1'])->update(['name' => 'Updated room']);
         $updated = $service->preview($this->actor, $this->own, ['date' => $today]);
         $this->assertSame('Updated room', $updated['competitions']->first()->hostRoom->name);
     }
@@ -1234,20 +1234,20 @@ class ClubUnioTest extends TestCase
     public function test_signage_training_variants_follow_field_status_and_day(): void
     {
         $ids = $this->facilityFixture();
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Facilities season', 'starts_on' => now()->subYear()->toDateString(), 'ends_on' => now()->addYear()->toDateString()]);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Facilities team']);
-        $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Facilities team / season']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Facilities season', 'starts_on' => now()->subYear()->toDateString(), 'ends_on' => now()->addYear()->toDateString()]);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Facilities team']);
+        $ts = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Facilities team / season']);
         foreach (['all_fields', 'without_main', 'synthetic_only'] as $flag) {
-            $this->db->table('clubora.training_slots')->insert(['tenant_id' => $this->own->id, 'team_season_id' => $ts, 'period_id' => $ids['period']['S'], 'weekday_id' => array_values($ids['weekday'])[0], 'starts_at' => '18:00:00', 'ends_at' => '19:00:00', 'field_id' => $ids['field']['K'], 'room_id' => $ids['room']['1'], 'side_id' => $ids['side']['L'], 'hall' => $flag, $flag => true]);
+            $this->db->table('clubunio.training_slots')->insert(['tenant_id' => $this->own->id, 'team_season_id' => $ts, 'period_id' => $ids['period']['S'], 'weekday_id' => array_values($ids['weekday'])[0], 'starts_at' => '18:00:00', 'ends_at' => '19:00:00', 'field_id' => $ids['field']['K'], 'room_id' => $ids['room']['1'], 'side_id' => $ids['side']['L'], 'hall' => $flag, $flag => true]);
         }
         $service = app(SignageService::class);
         $input = ['date' => now('Europe/Zurich')->toDateString(), 'period_id' => $ids['period']['S']];
-        $plan = $this->db->table('clubora.tenant_settings')->insertGetId([
+        $plan = $this->db->table('clubunio.tenant_settings')->insertGetId([
             'tenant_id' => $this->own->id, 'area' => 'general', 'key' => 'SIGNAGE_PERIOD_ID',
             'label' => 'Aktiver Trainingsplan', 'value_type' => 'integer', 'enabled' => true, 'is_secret' => false,
             'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $ids['period']['S']),
         ]);
-        $this->db->table('clubora.tenant_settings')->insert([
+        $this->db->table('clubunio.tenant_settings')->insert([
             'tenant_id' => $this->own->id, 'area' => 'public', 'key' => 'SIGNAGE_PUBLIC_ENABLED',
             'label' => 'Signage', 'value_type' => 'boolean', 'enabled' => true,
             'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('1'),
@@ -1255,12 +1255,12 @@ class ClubUnioTest extends TestCase
         // A bookmarked old display URL must not override the central plan.
         $this->assertSame(['all_fields'], $service->publicDisplay($this->own, ['period_id' => 99999999])['trainings']->pluck('hall')->all());
         $this->assertSame(['all_fields'], $service->preview($this->actor, $this->own, ['date' => $input['date']])['trainings']->pluck('hall')->all());
-        $this->db->table('clubora.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('0')]);
+        $this->db->table('clubunio.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString('0')]);
         $this->assertCount(0, $service->publicDisplay($this->own, $input)['trainings']);
-        $this->db->table('clubora.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $ids['period']['S'])]);
+        $this->db->table('clubunio.tenant_settings')->where('id', $plan)->update(['encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $ids['period']['S'])]);
         foreach (['all_fields' => null, 'without_main' => 'H', 'synthetic_only' => 'T'] as $expected => $close) {
             if ($close) {
-                $this->db->table('clubora.field_availabilities')->where('tenant_id', $this->own->id)->where('field_id', $ids['field'][$close])->update(['status_id' => $ids['status']['G']]);
+                $this->db->table('clubunio.field_availabilities')->where('tenant_id', $this->own->id)->where('field_id', $ids['field'][$close])->update(['status_id' => $ids['status']['G']]);
             }
             $data = $service->preview($this->actor, $this->own, $input);
             $this->assertSame($expected, $data['training_variant']);
@@ -1270,15 +1270,15 @@ class ClubUnioTest extends TestCase
             $this->assertSame($ids['side']['L'], $data['trainings']->first()->side->id);
         }
         $this->assertCount(0, $service->preview($this->actor, $this->own, array_replace($input, ['date' => now('Europe/Zurich')->addDay()->toDateString()]))['trainings']);
-        $this->db->table('clubora.teams')->where('id', $team)->update(['active' => false]);
+        $this->db->table('clubunio.teams')->where('id', $team)->update(['active' => false]);
         $this->assertCount(0, $service->preview($this->actor, $this->own, $input)['trainings']);
     }
 
     private function membershipReportFixture(): array
     {
-        $status = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-current', 'name' => 'Mitglied', 'restores_membership' => true]);
-        $type = $this->db->table('clubora.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-playing', 'name' => 'Spielend', 'team_required' => true]);
-        $passive = $this->db->table('clubora.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-passive', 'name' => 'Passiv', 'passive_membership' => true]);
+        $status = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-current', 'name' => 'Mitglied', 'restores_membership' => true]);
+        $type = $this->db->table('clubunio.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-playing', 'name' => 'Spielend', 'team_required' => true]);
+        $passive = $this->db->table('clubunio.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture-passive', 'name' => 'Passiv', 'passive_membership' => true]);
         $members = [];
         foreach (['missing', 'assigned', 'old', 'inactive', 'honorary', 'free_membership', 'supporter', 'sponsor', 'exited', 'archived', 'passive'] as $name) {
             $values = ['tenant_id' => $this->own->id, 'first_name' => $name, 'last_name' => 'Report fixture', 'status_id' => $status, 'type_id' => $name === 'passive' ? $passive : $type];
@@ -1291,14 +1291,14 @@ class ClubUnioTest extends TestCase
             if ($name === 'archived') {
                 $values['archived_at'] = now();
             }
-            $members[$name] = Member::findOrFail($this->db->table('clubora.members')->insertGetId($values));
+            $members[$name] = Member::findOrFail($this->db->table('clubunio.members')->insertGetId($values));
         }
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report current', 'starts_on' => now()->subDay()->toDateString(), 'ends_on' => now()->addDay()->toDateString()]);
-        $old = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report old']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report team']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report current', 'starts_on' => now()->subDay()->toDateString(), 'ends_on' => now()->addDay()->toDateString()]);
+        $old = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report old']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Report team']);
         foreach (['assigned' => $season, 'old' => $old, 'inactive' => $season] as $name => $sid) {
-            $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'season_id' => $sid, 'team_id' => $team, 'label' => $name]);
-            $this->db->table('clubora.team_players')->insert(['tenant_id' => $this->own->id, 'member_id' => $members[$name]->id, 'team_season_id' => $ts, 'active' => $name !== 'inactive']);
+            $ts = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'season_id' => $sid, 'team_id' => $team, 'label' => $name]);
+            $this->db->table('clubunio.team_players')->insert(['tenant_id' => $this->own->id, 'member_id' => $members[$name]->id, 'team_season_id' => $ts, 'active' => $name !== 'inactive']);
         }
 
         return [$members, $season, $old, $type];
@@ -1370,11 +1370,11 @@ class ClubUnioTest extends TestCase
     public function test_membership_report_season_scope_and_role_are_fail_closed(): void
     {
         [$members, $season] = $this->membershipReportFixture();
-        $foreign = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->other->id, 'name' => 'Foreign']);
+        $foreign = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->other->id, 'name' => 'Foreign']);
         $page = Livewire::test(ListUnassignedMembers::class);
         $page->filterTable('season', $foreign)->assertCountTableRecords(0);
         $page->filterTable('season', null)->assertCountTableRecords(0);
-        $this->db->table('clubora.seasons')->where('id', $season)->update(['starts_on' => null]);
+        $this->db->table('clubunio.seasons')->where('id', $season)->update(['starts_on' => null]);
         $this->assertNull(app(MembershipReportService::class)->currentSeason($this->own));
         $this->get('/clubunio/'.$this->other->slug.'/unassigned-members')->assertNotFound();
         [$trainer] = $this->portalActor('trainer');
@@ -1388,7 +1388,7 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManageMemberTypes::class)
             ->callTableAction('edit', MemberType::findOrFail($type), data: ['name' => 'New meaning', 'sort_order' => 0, 'active' => true, 'team_required' => false, 'passive_membership' => true])->assertHasNoTableActionErrors();
         $this->assertSame(0, app(MembershipReportService::class)->teamCandidates($this->actor, $this->own)->count());
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'member_types')->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'member_types')->count());
         $this->assertTrue(app(MembershipReportService::class)->passive($this->actor, $this->own)->whereKey($members['missing']->id)->exists());
     }
 
@@ -1396,10 +1396,10 @@ class ClubUnioTest extends TestCase
     {
         [$members, $season] = $this->membershipReportFixture();
         $service = app(MembershipReportService::class);
-        $ts = $this->db->table('clubora.team_players')->where('member_id', $members['assigned']->id)->value('team_season_id');
-        $this->db->table('clubora.team_seasons')->where('id', $ts)->update(['active' => false]);
+        $ts = $this->db->table('clubunio.team_players')->where('member_id', $members['assigned']->id)->value('team_season_id');
+        $this->db->table('clubunio.team_seasons')->where('id', $ts)->update(['active' => false]);
         $this->assertTrue($service->withoutTeam($service->teamCandidates($this->actor, $this->own), $this->own, $season)->whereKey($members['assigned']->id)->exists());
-        $this->db->table('clubora.seasons')->insert(['tenant_id' => $this->own->id, 'name' => 'Overlapping', 'starts_on' => now()->subDay()->toDateString(), 'ends_on' => now()->addDay()->toDateString()]);
+        $this->db->table('clubunio.seasons')->insert(['tenant_id' => $this->own->id, 'name' => 'Overlapping', 'starts_on' => now()->subDay()->toDateString(), 'ends_on' => now()->addDay()->toDateString()]);
         $this->assertNull($service->currentSeason($this->own));
         Livewire::test(ListUnassignedMembers::class)->assertCountTableRecords(0)->assertSee('Keine Saison ausgewählt');
     }
@@ -1411,10 +1411,10 @@ class ClubUnioTest extends TestCase
             $this->get('/clubunio/'.$this->other->slug.'/'.$slug)->assertNotFound();
         }
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team']);
-        $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test assignment']);
-        $id = $this->db->table('clubora.team_players')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'team_season_id' => $ts]);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team']);
+        $ts = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test assignment']);
+        $id = $this->db->table('clubunio.team_players')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'team_season_id' => $ts]);
         Livewire::test(ListPlayers::class)
             ->filterTable('season', $season)->filterTable('without_contribution', true)
             ->assertCanSeeTableRecords([TeamPlayer::findOrFail($id)])
@@ -1428,11 +1428,11 @@ class ClubUnioTest extends TestCase
     public function test_open_invoice_dashboard_uses_positions_and_legacy_amount_rules(): void
     {
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
-        $open = $this->db->table('clubora.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'O', 'name' => 'Offen']);
-        $paid = $this->db->table('clubora.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'B', 'name' => 'Bezahlt']);
-        $invoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id]);
+        $open = $this->db->table('clubunio.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'O', 'name' => 'Offen']);
+        $paid = $this->db->table('clubunio.invoice_line_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'B', 'name' => 'Bezahlt']);
+        $invoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id]);
         foreach ([[40, 50, $open, true], [0, 30, $open, true], [999, 999, $paid, true], [999, 999, $open, false]] as [$net, $gross, $status, $active]) {
-            $this->db->table('clubora.invoice_lines')->insert(['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'status_id' => $status, 'net_amount' => $net, 'gross_amount' => $gross, 'active' => $active]);
+            $this->db->table('clubunio.invoice_lines')->insert(['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'status_id' => $status, 'net_amount' => $net, 'gross_amount' => $gross, 'active' => $active]);
         }
         $service = app(DashboardService::class);
         $totals = $service->openSummary($this->actor, $this->own);
@@ -1440,7 +1440,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame(70.0, (float) $totals['amount']);
         Livewire::test(ListOpenInvoices::class)
             ->assertCanSeeTableRecords([Invoice::findOrFail($invoice)])->searchTable('absent fixture')->assertCountTableRecords(0);
-        $this->db->table('clubora.invoices')->where('id', $invoice)->update(['active' => false]);
+        $this->db->table('clubunio.invoices')->where('id', $invoice)->update(['active' => false]);
         $this->assertSame(0, $service->openSummary($this->actor, $this->own)['count']);
         $this->expectException(HttpException::class);
         $service->openSummary($this->actor, $this->other);
@@ -1451,9 +1451,9 @@ class ClubUnioTest extends TestCase
         Carbon::setTestNow('2026-10-12 12:00:00');
         try {
             foreach (['2020-10-12', '2013-10-12', '2008-10-12', '1996-10-12', '1976-10-12', '2027-01-01'] as $birth) {
-                $this->db->table('clubora.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Age fixture', 'birth_date' => $birth]);
+                $this->db->table('clubunio.members')->insert(['tenant_id' => $this->own->id, 'first_name' => 'Age fixture', 'birth_date' => $birth]);
             }
-            $this->db->table('clubora.members')->insert(['tenant_id' => $this->own->id, 'birth_date' => '2025-01-01', 'exit_date' => '2026-10-12']);
+            $this->db->table('clubunio.members')->insert(['tenant_id' => $this->own->id, 'birth_date' => '2025-01-01', 'exit_date' => '2026-10-12']);
             $counts = app(DashboardService::class)->ages($this->actor, $this->own);
             $this->assertSame(['0-5' => 0, '6-12' => 1, '13-17' => 1, '18-29' => 1, '30-49' => 1, '50+' => 1, 'Unbekannt' => 2], $counts);
             Livewire::test(MembersByAge::class)->assertSee('Aktive Mitglieder nach Alter');
@@ -1466,7 +1466,7 @@ class ClubUnioTest extends TestCase
     {
         $statuses = [];
         foreach (['submitted', 'review', 'trial', 'accepted', 'rejected', 'pool'] as $key) {
-            $statuses[$key] = $this->db->table('clubora.registration_statuses')->insertGetId([
+            $statuses[$key] = $this->db->table('clubunio.registration_statuses')->insertGetId([
                 'tenant_id' => $this->own->id, 'code' => $key, 'name' => $key, 'workflow_key' => $key, 'active' => true,
             ]);
         }
@@ -1485,12 +1485,12 @@ class ClubUnioTest extends TestCase
         $result = $service->review($this->actor, $this->own, $r->id, $input);
         $this->assertSame(2, $result->revision);
         $this->assertSame('Registration Fixture', $result->first_name);
-        $this->assertSame(0, $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('object_type', 'registrations')->where('object_id', $r->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('object_type', 'registrations')->where('object_id', $r->id)->count());
         $service->review($this->actor, $this->own, $r->id, array_replace($input, ['revision' => 2]));
         $this->assertSame(2, $r->fresh()->revision);
         $service->review($this->actor, $this->own, $r->id, array_replace($input, ['revision' => 2, 'status_id' => $statuses['pool']]));
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->sole();
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->sole();
         $this->assertSame('registration.pool', $event->event_key);
         $this->assertSame('held', $event->delivery_state);
         $this->expectException(ValidationException::class);
@@ -1503,7 +1503,7 @@ class ClubUnioTest extends TestCase
         $service = app(RegistrationReviewService::class);
         foreach ([['status_id' => $statuses['accepted']], ['status_id' => $statuses['trial']],
             ['status_id' => $statuses['review'], 'team_season_id' => -10],
-            ['status_id' => $statuses['review'], 'technical_lead_member_id' => $this->db->table('clubora.members')->where('tenant_id', $this->other->id)->value('id')],
+            ['status_id' => $statuses['review'], 'technical_lead_member_id' => $this->db->table('clubunio.members')->where('tenant_id', $this->other->id)->value('id')],
             ['status_id' => $statuses['review'], 'first_name' => 'tampered']] as $changes) {
             try {
                 $service->review($this->actor, $this->own, $r->id, $changes + ['revision' => 1, 'reason' => 'Controlled test']);
@@ -1513,7 +1513,7 @@ class ClubUnioTest extends TestCase
             }
         }
         $this->assertSame(1, $r->fresh()->revision);
-        $this->assertSame(0, $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->count());
     }
 
     public function test_registration_review_tl_assignment_requires_active_identity_and_backoffice(): void
@@ -1525,7 +1525,7 @@ class ClubUnioTest extends TestCase
         $result = $service->review($this->actor, $this->own, $r->id, [
             'revision' => 1, 'status_id' => $statuses['review'], 'technical_lead_member_id' => $member->id, 'reason' => 'TL prueft Anmeldung',
         ]);
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->sole();
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->sole();
         $this->assertSame('registration.review', $event->event_key);
         $this->assertEquals($member->id, $event->technical_lead_member_id);
         $this->assertEquals($member->id, $result->technical_lead_member_id);
@@ -1555,19 +1555,19 @@ class ClubUnioTest extends TestCase
     private function completeRegistrationFixture(): array
     {
         [$r, $statuses] = $this->reviewFixture();
-        $memberStatus = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'active', 'name' => 'Mitglied', 'restores_membership' => true]);
-        $type = $this->db->table('clubora.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'active', 'name' => 'Aktiv']);
-        $billing = $this->db->table('clubora.billing_recipients')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'M', 'name' => 'Mutter', 'email_field' => 'mother_email']);
-        $country = $this->db->table('clubora.countries')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'CH', 'name' => 'Schweiz', 'iso3' => 'CHE']);
-        $gender = $this->db->table('clubora.genders')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'N', 'name' => 'Neutral']);
-        $docType = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'identity', 'name' => 'Ausweis']);
+        $memberStatus = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'active', 'name' => 'Mitglied', 'restores_membership' => true]);
+        $type = $this->db->table('clubunio.member_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'active', 'name' => 'Aktiv']);
+        $billing = $this->db->table('clubunio.billing_recipients')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'M', 'name' => 'Mutter', 'email_field' => 'mother_email']);
+        $country = $this->db->table('clubunio.countries')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'CH', 'name' => 'Schweiz', 'iso3' => 'CHE']);
+        $gender = $this->db->table('clubunio.genders')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'N', 'name' => 'Neutral']);
+        $docType = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'identity', 'name' => 'Ausweis']);
         $details = ['street' => 'Teststrasse', 'house_number' => '1', 'postal_code' => '00445', 'mobile' => '000000',
             'country_id' => $country, 'nationality_id' => $country, 'gender_id' => $gender, 'billing_recipient_id' => $billing,
             'mother_email' => 'mother@example.invalid', 'notes' => 'Registration note', 'ahv' => 'SECRET-AHV-FIXTURE'];
         $r->forceFill(['last_name' => 'Applicant', 'birth_date' => '2014-01-02', 'email' => 'applicant@example.invalid', 'city' => 'Sissach',
             'details_complete' => true, 'applicant_encrypted' => Crypt::encryptString(json_encode($details, JSON_THROW_ON_ERROR))])->save();
         foreach (['identity-one.pdf', 'identity-two.pdf'] as $file) {
-            $this->db->table('clubora.registration_documents')->insert(['tenant_id' => $this->own->id, 'registration_id' => $r->id,
+            $this->db->table('clubunio.registration_documents')->insert(['tenant_id' => $this->own->id, 'registration_id' => $r->id,
                 'kind' => 'identity', 'filename' => $file, 'storage_path' => 'upload/anmeldungen/']);
         }
 
@@ -1588,9 +1588,9 @@ class ClubUnioTest extends TestCase
         $this->assertNull($member->exit_date);
         $this->assertSame('00445', $member->postal_code);
         $this->assertSame('SECRET-AHV-FIXTURE', Crypt::decryptString($member->ahv_encrypted));
-        $this->assertSame(2, $this->db->table('clubora.member_documents')->where('member_id', $member->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.member_notes')->where('member_id', $member->id)->count());
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->sole();
+        $this->assertSame(2, $this->db->table('clubunio.member_documents')->where('member_id', $member->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.member_notes')->where('member_id', $member->id)->count());
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->sole();
         $this->assertSame('ready', $event->delivery_state);
         $payload = json_decode(Crypt::decryptString($event->payload_encrypted), true);
         $this->assertSame('mother@example.invalid', $payload['intended_to']);
@@ -1605,7 +1605,7 @@ class ClubUnioTest extends TestCase
     {
         [$r, $statuses, $memberStatus, $type, $docType] = $this->completeRegistrationFixture();
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
-        $exit = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'left', 'name' => 'Ausgetreten', 'ends_membership' => true]);
+        $exit = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'left', 'name' => 'Ausgetreten', 'ends_membership' => true]);
         $member->forceFill(['status_id' => $exit, 'exit_date' => '2020-01-01', 'pass_number' => '123456', 'email' => $r->email])->save();
         $input = ['revision' => 1, 'reason' => 'Confirmed returning member', 'status_id' => $statuses['accepted'], 'member_type_id' => $type, 'document_type_id' => $docType];
         try {
@@ -1644,8 +1644,8 @@ class ClubUnioTest extends TestCase
         $this->assertSame(1, Member::where('tenant_id', $this->own->id)->count());
         $this->assertNull($r->fresh()->member_id);
         $this->assertSame(1, $r->fresh()->revision);
-        $this->assertSame(0, $this->db->table('clubora.member_documents')->where('tenant_id', $this->own->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.member_notes')->where('tenant_id', $this->own->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.member_documents')->where('tenant_id', $this->own->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.member_notes')->where('tenant_id', $this->own->id)->count());
     }
 
     public function test_registration_tl_portal_scopes_documents_changes_and_notifications(): void
@@ -1659,13 +1659,13 @@ class ClubUnioTest extends TestCase
             'revision' => 1, 'status_id' => $statuses['review'], 'technical_lead_member_id' => $member->id, 'reason' => 'Assigned by office',
         ]);
         $this->get($prefix.'/registrations/'.$r->id)->assertOk()->assertSee('Registration Fixture')->assertDontSee('applicant_encrypted');
-        $notice = $this->db->table('clubora.notifications')->where('account_id', $tl->id)->sole();
+        $notice = $this->db->table('clubunio.notifications')->where('account_id', $tl->id)->sole();
         $this->get($prefix.'/notifications')->assertOk()->assertSee('Mitgliederanmeldung zur Prüfung');
         $this->post($prefix.'/notifications/'.$notice->id.'/read')->assertRedirect();
-        $this->assertNotNull($this->db->table('clubora.notifications')->where('id', $notice->id)->value('read_at'));
+        $this->assertNotNull($this->db->table('clubunio.notifications')->where('id', $notice->id)->value('read_at'));
         $this->post($prefix.'/registrations/'.$r->id, ['revision' => 2, 'status_id' => $statuses['pool'], 'reason' => 'No capacity currently'])->assertRedirect();
         $this->assertEquals($statuses['pool'], $r->fresh()->status_id);
-        $this->db->table('clubora.account_member_links')->where('account_id', $tl->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $tl->id)->update(['state' => 'revoked']);
         $this->get($prefix.'/registrations/'.$r->id)->assertForbidden();
         $this->get($prefix.'/notifications')->assertForbidden();
     }
@@ -1706,7 +1706,7 @@ class ClubUnioTest extends TestCase
     {
         [$a] = $this->portalActor('technical_lead');
         [$b] = $this->portalActor('technical_lead');
-        $id = $this->db->table('clubora.notifications')->insertGetId([
+        $id = $this->db->table('clubunio.notifications')->insertGetId([
             'tenant_id' => $this->own->id, 'account_id' => $b->id, 'title' => 'Private notification fixture',
             'body' => 'Private content', 'object_type' => 'registration', 'object_id' => 1,
         ]);
@@ -1714,7 +1714,7 @@ class ClubUnioTest extends TestCase
         $this->actingAs($a, 'portal')->get($prefix)->assertOk()->assertDontSee('Private notification fixture');
         $this->post($prefix.'/'.$id.'/read')->assertNotFound();
         $this->post($prefix.'/read-all')->assertRedirect();
-        $this->assertNull($this->db->table('clubora.notifications')->where('id', $id)->value('read_at'));
+        $this->assertNull($this->db->table('clubunio.notifications')->where('id', $id)->value('read_at'));
     }
 
     private Account $actor;
@@ -1722,17 +1722,17 @@ class ClubUnioTest extends TestCase
     private function expenseFixture(): array
     {
         [$owner,$member] = $this->portalActor('trainer');
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team', 'laundry_allowance' => '35.00']);
-        $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test team / season']);
-        $this->db->table('clubora.team_staff')->insert(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'team_season_id' => $ts]);
-        $bank = $this->db->table('clubora.member_bank_accounts')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'iban_encrypted' => Crypt::encryptString('CH9300762011623852957')]);
-        $round = $this->db->table('clubora.expense_rounds')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'test', 'name' => 'Test round']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team', 'laundry_allowance' => '35.00']);
+        $ts = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test team / season']);
+        $this->db->table('clubunio.team_staff')->insert(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'team_season_id' => $ts]);
+        $bank = $this->db->table('clubunio.member_bank_accounts')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'iban_encrypted' => Crypt::encryptString('CH9300762011623852957')]);
+        $round = $this->db->table('clubunio.expense_rounds')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'test', 'name' => 'Test round']);
         $statuses = [];
         foreach (['O', 'F', 'Z', 'B', 'R'] as $code) {
-            $statuses[$code] = $this->db->table('clubora.expense_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $code]);
+            $statuses[$code] = $this->db->table('clubunio.expense_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => $code, 'name' => $code]);
         }
-        $type = $this->db->table('clubora.expense_types')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Dressreinigung', 'amount_source' => 'team_laundry']);
+        $type = $this->db->table('clubunio.expense_types')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Dressreinigung', 'amount_source' => 'team_laundry']);
         $e = app(ExpenseService::class)->save($owner, $this->own, null, ['member_id' => $member->id, 'team_season_id' => $ts, 'round_id' => $round, 'bank_account_id' => $bank]);
 
         return [$e, $owner, $member, $statuses, $type];
@@ -1761,7 +1761,7 @@ class ClubUnioTest extends TestCase
     {
         [$e,$owner,,$statuses,$type] = $this->expenseFixture();
         [$tl,$tlMember] = $this->portalActor('technical_lead', true);
-        $this->db->table('clubora.technical_leads')->insert(['tenant_id' => $this->own->id, 'member_id' => $tlMember->id, 'team_season_id' => $e->team_season_id]);
+        $this->db->table('clubunio.technical_leads')->insert(['tenant_id' => $this->own->id, 'member_id' => $tlMember->id, 'team_season_id' => $e->team_season_id]);
         $service = app(ExpenseService::class);
         app(MessageTemplateService::class)->seed($this->own);
         $service->saveLine($owner, $this->own, $e->id, null, ['expense_revision' => 1, 'expense_type_id' => $type, 'amount' => '35']);
@@ -1769,7 +1769,7 @@ class ClubUnioTest extends TestCase
         $this->assertNotNull($released->released_on);
         $this->assertFalse($service->editable($owner, $this->own, $released));
         $this->assertSame(['Z', 'R'], $service->targets($tl, $this->own, $released));
-        $this->assertSame(1, $this->db->table('clubora.notifications')->where('account_id', $tl->id)->where('object_type', 'expense')->count());
+        $this->assertSame(1, $this->db->table('clubunio.notifications')->where('account_id', $tl->id)->where('object_type', 'expense')->count());
         try {
             $service->transition($tl, $this->own, $e->id, ['revision' => 3, 'status_id' => $statuses['O'], 'reason' => 'Not allowed to reopen']);
             $this->fail('TL reopened claim');
@@ -1778,8 +1778,8 @@ class ClubUnioTest extends TestCase
         }
         $paid = $service->transition($tl, $this->own, $e->id, ['revision' => 3, 'status_id' => $statuses['Z'], 'reason' => 'TL approves for payment']);
         $this->assertNotNull($paid->payment_released_on);
-        $this->assertSame(1, $this->db->table('clubora.notifications')->where('account_id', $owner->id)->where('object_type', 'expense')->count());
-        $this->assertSame(2, $this->db->table('clubora.expense_events')->where('expense_id', $e->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.notifications')->where('account_id', $owner->id)->where('object_type', 'expense')->count());
+        $this->assertSame(2, $this->db->table('clubunio.expense_events')->where('expense_id', $e->id)->count());
         $this->assertNull($paid->bexio_bill_id);
     }
 
@@ -1789,7 +1789,7 @@ class ClubUnioTest extends TestCase
         [$stranger,$strangerMember] = $this->portalActor('trainer', true);
         $service = app(ExpenseService::class);
         $this->assertFalse($service->visible($stranger, $this->own)->whereKey($e->id)->exists());
-        $bank = $this->db->table('clubora.member_bank_accounts')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $strangerMember->id, 'iban_encrypted' => Crypt::encryptString('CH9300762011623852957')]);
+        $bank = $this->db->table('clubunio.member_bank_accounts')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $strangerMember->id, 'iban_encrypted' => Crypt::encryptString('CH9300762011623852957')]);
         $this->expectException(ValidationException::class);
         $service->save($owner, $this->own, $e->id, ['revision' => 1, 'bank_account_id' => $bank]);
     }
@@ -1831,7 +1831,7 @@ class ClubUnioTest extends TestCase
         [$e,$owner,,$statuses,$type] = $this->expenseFixture();
         $service = app(ExpenseService::class);
         $line = $service->saveLine($owner, $this->own, $e->id, null, ['expense_revision' => 1, 'expense_type_id' => $type, 'amount' => '35']);
-        $this->db->table('clubora.expense_types')->where('id', $type)->update(['receipt_required' => true]);
+        $this->db->table('clubunio.expense_types')->where('id', $type)->update(['receipt_required' => true]);
         try {
             $service->transition($owner, $this->own, $e->id, ['revision' => 2, 'status_id' => $statuses['F'], 'reason' => 'Receipt is missing here']);
             $this->fail('Claim without mandatory receipt released');
@@ -1839,7 +1839,7 @@ class ClubUnioTest extends TestCase
             $this->assertArrayHasKey('status_id', $error->errors());
         }
         $this->assertEquals($statuses['O'], $e->fresh()->status_id);
-        $this->assertSame(0, $this->db->table('clubora.expense_events')->where('expense_id', $e->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.expense_events')->where('expense_id', $e->id)->count());
         $this->expectException(ValidationException::class);
         $service->saveLine($owner, $this->own, $e->id, $line->id, ['expense_revision' => 1, 'revision' => 1, 'amount' => '1']);
     }
@@ -1850,13 +1850,13 @@ class ClubUnioTest extends TestCase
     {
         [$owner,$member] = $this->portalActor('technical_lead');
         [$other,$otherMember] = $this->portalActor('trainer', true);
-        $bankId = $this->db->table('clubora.banks')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture Bank']);
+        $bankId = $this->db->table('clubunio.banks')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture Bank']);
         $service = app(BankAccountService::class);
         $account = $service->save($owner, $this->own, $member->id, null, ['bank_id' => $bankId, 'iban' => 'CH93 0076 2011 6238 5295 7', 'active' => true]);
         $this->assertSame('CH9300762011623852957', Crypt::decryptString($account->iban_encrypted));
         $this->assertStringNotContainsString('CH9300762011623852957', $account->toJson());
         $this->assertFalse($service->visible($other, $this->own)->whereKey($account->id)->exists());
-        $audit = $this->db->table('clubora.object_changes')->where('object_type', 'member_bank_accounts')->where('object_id', $account->id)->sole();
+        $audit = $this->db->table('clubunio.object_changes')->where('object_type', 'member_bank_accounts')->where('object_id', $account->id)->sole();
         $this->assertStringNotContainsString('CH9300762011623852957', $audit->after_value);
         foreach (['CH9300762011623852958', 'CH9300762011623852957'] as $iban) {
             try {
@@ -1874,7 +1874,7 @@ class ClubUnioTest extends TestCase
     public function test_bank_account_used_in_claim_cannot_change_payment_identity(): void
     {
         [$e,$owner,$member] = $this->expenseFixture();
-        $bankId = $this->db->table('clubora.banks')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Other bank']);
+        $bankId = $this->db->table('clubunio.banks')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Other bank']);
         $this->expectException(ValidationException::class);
         app(BankAccountService::class)->save($owner, $this->own, $member->id, $e->bank_account_id, ['revision' => 1, 'bank_id' => $bankId, 'active' => true]);
     }
@@ -1887,22 +1887,22 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManageRecords::class)
             ->callTableAction('create', data: ['name' => 'Fixture type', 'code' => 'test-type', 'sort_order' => 0, 'active' => true, 'receipt_required' => true, 'amount_source' => 'team_laundry'])
             ->assertHasNoTableActionErrors();
-        $this->assertSame('team_laundry', $this->db->table('clubora.expense_types')->where('tenant_id', $this->own->id)->where('code', 'test-type')->value('amount_source'));
+        $this->assertSame('team_laundry', $this->db->table('clubunio.expense_types')->where('tenant_id', $this->own->id)->where('code', 'test-type')->value('amount_source'));
         Livewire::test(\App\ClubUnio\Resources\BankResource\Pages\ManageRecords::class)
             ->callTableAction('create', data: ['name' => 'Fixture bank', 'code' => 'test-bank', 'sort_order' => 0, 'active' => true, 'city' => 'Sissach', 'swift' => ''])
             ->assertHasNoTableActionErrors();
-        $this->assertSame(1, $this->db->table('clubora.banks')->where('tenant_id', $this->own->id)->where('code', 'test-bank')->count());
+        $this->assertSame(1, $this->db->table('clubunio.banks')->where('tenant_id', $this->own->id)->where('code', 'test-bank')->count());
     }
 
     public function test_invoice_portal_filters_details_and_foreign_ids_are_scoped(): void
     {
         [$account, $member] = $this->portalActor();
         [, $stranger] = $this->portalActor('member', true);
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Invoice season']);
-        $status = $this->db->table('clubora.invoice_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'open', 'name' => 'Open fixture']);
-        $invoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'season_id' => $season, 'status_id' => $status, 'legacy_id' => 7654321]);
-        $hidden = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $stranger->id, 'legacy_id' => 7654322]);
-        $this->db->table('clubora.invoice_lines')->insert([
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Invoice season']);
+        $status = $this->db->table('clubunio.invoice_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'open', 'name' => 'Open fixture']);
+        $invoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'season_id' => $season, 'status_id' => $status, 'legacy_id' => 7654321]);
+        $hidden = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $stranger->id, 'legacy_id' => 7654322]);
+        $this->db->table('clubunio.invoice_lines')->insert([
             ['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'description' => 'Visible position', 'gross_amount' => 100, 'discount' => 10, 'net_amount' => 90, 'active' => true],
             ['tenant_id' => $this->own->id, 'invoice_id' => $invoice, 'description' => 'Inactive position', 'gross_amount' => 200, 'discount' => 0, 'net_amount' => 200, 'active' => false],
         ]);
@@ -1916,7 +1916,7 @@ class ClubUnioTest extends TestCase
         $this->get($base.'/'.$invoice)->assertOk()->assertSee('Visible position')->assertDontSee('Inactive position')->assertSee('90.00');
         $this->get($base.'/'.$hidden)->assertNotFound();
         $this->get('/portal/'.$this->other->slug.'/invoices/'.$invoice)->assertForbidden();
-        $this->db->table('clubora.account_member_links')->where('account_id', $account->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $account->id)->update(['state' => 'revoked']);
         $this->get($base.'/'.$invoice)->assertForbidden();
     }
 
@@ -1924,9 +1924,9 @@ class ClubUnioTest extends TestCase
     {
         $fields = [];
         foreach (['H', 'K', 'T'] as $code) {
-            $fields[$code] = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'field', 'code' => $code, 'name' => 'Field '.$code]);
+            $fields[$code] = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'field', 'code' => $code, 'name' => 'Field '.$code]);
         }
-        $match = $this->db->table('clubora.sfv_schedule')->insertGetId(['tenant_id' => $this->own->id, 'match_id' => 987654, 'season_id' => 2027, 'title' => 'Fixture A - Fixture B', 'host_name' => 'Fixture A', 'guest_name' => 'Fixture B', 'starts_at' => now('Europe/Zurich')->addDay()->setTime(19, 30)->toIso8601String(), 'location' => 'Sportzentrum Tannenbrunn - 2, Sissach', 'state' => 'Angesetzt', 'home' => false]);
+        $match = $this->db->table('clubunio.sfv_schedule')->insertGetId(['tenant_id' => $this->own->id, 'match_id' => 987654, 'season_id' => 2027, 'title' => 'Fixture A - Fixture B', 'host_name' => 'Fixture A', 'guest_name' => 'Fixture B', 'starts_at' => now('Europe/Zurich')->addDay()->setTime(19, 30)->toIso8601String(), 'location' => 'Sportzentrum Tannenbrunn - 2, Sissach', 'state' => 'Angesetzt', 'home' => false]);
 
         return [$match, $fields, app(SfvCompetitionService::class)];
     }
@@ -1934,8 +1934,8 @@ class ClubUnioTest extends TestCase
     public function test_sfv_competition_preserves_local_data_and_is_idempotent(): void
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
-        $room = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'room', 'code' => 'R', 'name' => 'Room']);
-        $side = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'side', 'code' => 'S', 'name' => 'Side']);
+        $room = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'room', 'code' => 'R', 'name' => 'Room']);
+        $side = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'side', 'code' => 'S', 'name' => 'Side']);
         $local = ['host_room_id' => $room, 'guest_room_id' => $room, 'host_side_id' => $side, 'guest_side_id' => $side, 'remarks' => 'Local note', 'host_category' => 'Ba', 'guest_category' => 'Guest category', 'host_club_number' => 3560, 'guest_club_number' => 42, 'show_on_signage' => false];
         $record = new Competition;
         $record->forceFill($local + ['tenant_id' => $this->own->id, 'plays_on' => now()->addDay()->toDateString(), 'host_name' => 'Old A', 'guest_name' => 'Old B', 'field_id' => $fields['H'], 'association_match_id' => 987654, 'active' => true])->save();
@@ -1950,7 +1950,7 @@ class ClubUnioTest extends TestCase
         $service->apply($this->actor, $this->own, $service->preview($this->actor, $this->own, $match));
         $this->assertSame($revision, $record->fresh()->revision);
         $this->assertSame(1, Competition::where('tenant_id', $this->own->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'competitions')->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'competitions')->count());
     }
 
     public function test_sfv_competition_manual_link_and_stale_preview(): void
@@ -1983,7 +1983,7 @@ class ClubUnioTest extends TestCase
     public function test_sfv_competition_venue_status_and_source_revision_guards(): void
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
-        $query = $this->db->table('clubora.sfv_schedule')->where('id', $match);
+        $query = $this->db->table('clubunio.sfv_schedule')->where('id', $match);
         foreach ([['location' => 'Basel'], ['location' => 'Sportzentrum Tannenbrunn - 2, Sissach', 'state' => 'Abgesagt'], ['state' => 'Angesetzt', 'host_name' => null], ['host_name' => 'A', 'starts_at' => now()->subDay()->toIso8601String()]] as $invalid) {
             $query->update($invalid);
             try {
@@ -2006,7 +2006,7 @@ class ClubUnioTest extends TestCase
         $this->get('/sfv-competitions')->assertOk()->assertSee('SFV abrufen');
         Livewire::test(SfvCompetitions::class)->set('match', (string) $match)->call('inspect')->assertHasNoErrors()->assertSee('Field K')->call('apply')->assertHasNoErrors();
         $this->assertSame(1, Competition::where('tenant_id', $this->own->id)->count());
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         $service->preview($this->actor, $this->own, $match);
     }
@@ -2020,7 +2020,7 @@ class ClubUnioTest extends TestCase
         $this->assertNotEquals($id, $manual->id);
         $this->assertNull($manual->fresh()->association_match_id);
         foreach (['1' => 'H', '2' => 'K', '3' => 'T'] as $number => $code) {
-            $this->db->table('clubora.sfv_schedule')->where('id', $match)->update(['location' => 'Sportzentrum Tannenbrunn, Sissach - '.$number]);
+            $this->db->table('clubunio.sfv_schedule')->where('id', $match)->update(['location' => 'Sportzentrum Tannenbrunn, Sissach - '.$number]);
             $service->apply($this->actor, $this->own, $service->preview($this->actor, $this->own, $match));
             $this->assertEquals($fields[$code], Competition::findOrFail($id)->field_id);
         }
@@ -2060,7 +2060,7 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManageAccounts::class)->callTableAction('manage', $link, data: $edit)->assertHasNoTableActionErrors();
         $this->assertSame('trainer', $link->fresh()->role);
         $this->assertTrue($link->fresh()->portal_enabled);
-        $audit = $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'tenant_accounts')->get()->toJson();
+        $audit = $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'tenant_accounts')->get()->toJson();
         $this->assertStringNotContainsString($input['password'], $audit);
         $this->assertStringNotContainsString($account->password, $audit);
         Livewire::test(ManageAccounts::class)->filterTable('role', 'trainer')->searchTable('Edited fixture')->assertCanSeeTableRecords([$link]);
@@ -2100,7 +2100,7 @@ class ClubUnioTest extends TestCase
         } catch (ModelNotFoundException) {
             $this->assertTrue(true);
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->own->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
         $this->get('/tenant-accounts')->assertForbidden();
         $this->expectException(HttpException::class);
         $service->save($this->actor, $this->own, null, $this->accountAdminInput());
@@ -2118,7 +2118,7 @@ class ClubUnioTest extends TestCase
             }
         }
         $link = $service->save($this->actor, $this->own, null, $this->accountAdminInput());
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->other->id, 'account_id' => $link->account_id, 'role' => 'member']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->other->id, 'account_id' => $link->account_id, 'role' => 'member']);
         $this->expectException(ValidationException::class);
         $service->save($this->actor, $this->own, $link->id, ['display_name' => 'Changed global name', 'role' => 'member', 'active' => true, 'portal_enabled' => false, 'reason' => 'Shared identity test', 'revision' => $link->revision, 'account_revision' => $link->account->revision]);
     }
@@ -2126,18 +2126,18 @@ class ClubUnioTest extends TestCase
     public function test_sfv_batch_preserves_manual_conflicts_and_rolls_back_stale_batch(): void
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
-        $source = (array) $this->db->table('clubora.sfv_schedule')->where('id', $match)->first();
+        $source = (array) $this->db->table('clubunio.sfv_schedule')->where('id', $match)->first();
         unset($source['id']);
         $source['match_id']++;
-        $second = $this->db->table('clubora.sfv_schedule')->insertGetId($source);
+        $second = $this->db->table('clubunio.sfv_schedule')->insertGetId($source);
         $source['match_id']++;
         $source['location'] = 'Away field';
-        $this->db->table('clubora.sfv_schedule')->insert($source);
+        $this->db->table('clubunio.sfv_schedule')->insert($source);
         $date = now('Europe/Zurich')->addDay()->toDateString();
         $preview = $service->previewBatch($this->actor, $this->own, $date, $date);
         $this->assertCount(2, $preview['entries']);
         $this->assertCount(1, $preview['issues']);
-        $this->db->table('clubora.sfv_schedule')->where('id', $second)->increment('revision');
+        $this->db->table('clubunio.sfv_schedule')->where('id', $second)->increment('revision');
         try {
             $service->applyBatch($this->actor, $this->own, $preview['entries']);
             $this->fail('Stale batch accepted');
@@ -2155,14 +2155,14 @@ class ClubUnioTest extends TestCase
     public function test_sfv_batch_limit_and_locked_preview(): void
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
-        $source = (array) $this->db->table('clubora.sfv_schedule')->where('id', $match)->first();
+        $source = (array) $this->db->table('clubunio.sfv_schedule')->where('id', $match)->first();
         unset($source['id']);
         $rows = [];
         for ($i = 0; $i < 100; $i++) {
             $source['match_id']++;
             $rows[] = $source;
         }
-        $this->db->table('clubora.sfv_schedule')->insert($rows);
+        $this->db->table('clubunio.sfv_schedule')->insert($rows);
         $date = now('Europe/Zurich')->addDay()->toDateString();
         try {
             $service->previewBatch($this->actor, $this->own, $date, $date);
@@ -2178,9 +2178,9 @@ class ClubUnioTest extends TestCase
     {
         [$match,$fields,$service] = $this->sfvCompetitionFixture();
         $id = $service->apply($this->actor, $this->own, $service->preview($this->actor, $this->own, $match));
-        $room = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'room', 'code' => 'R', 'name' => 'Room']);
+        $room = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => 'room', 'code' => 'R', 'name' => 'Room']);
         Competition::whereKey($id)->update(['host_room_id' => $room, 'remarks' => 'Keep']);
-        $query = $this->db->table('clubora.sfv_schedule')->where('id', $match);
+        $query = $this->db->table('clubunio.sfv_schedule')->where('id', $match);
         $query->update(['state' => 'Abgesagt']);
         $preview = $service->review($this->actor, $this->own, $match);
         $this->assertSame('withdrawal', $preview['kind']);
@@ -2198,7 +2198,7 @@ class ClubUnioTest extends TestCase
         $preview = $service->review($this->actor, $this->own, $match);
         $service->apply($this->actor, $this->own, $preview);
         $this->assertFalse($record->fresh()->show_on_signage);
-        $this->assertSame(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->whereRaw("after_value->>'action' = 'sfv_withdrawal'")->count());
+        $this->assertSame(2, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->whereRaw("after_value->>'action' = 'sfv_withdrawal'")->count());
     }
 
     public function test_account_administration_password_reset_and_duplicate_username(): void
@@ -2217,7 +2217,7 @@ class ClubUnioTest extends TestCase
         $service->save($this->actor, $this->own, $link->id, ['display_name' => $account->display_name, 'role' => 'member', 'active' => false, 'portal_enabled' => false, 'reason' => 'Password change fixture', 'revision' => $link->revision, 'account_revision' => $account->revision, 'password' => $password, 'password_confirmation' => $password]);
         $this->assertTrue(Hash::check($password, $account->fresh()->password));
         $this->assertFalse($account->fresh()->active);
-        $audit = $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'tenant_accounts')->get()->toJson();
+        $audit = $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'tenant_accounts')->get()->toJson();
         $this->assertStringNotContainsString($password, $audit);
     }
 
@@ -2230,7 +2230,7 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManageClubs::class)->callTableAction('edit', $club, data: ['name' => 'Changed fixture', 'logo_enabled' => false])->assertHasNoTableActionErrors();
         $this->assertNull($club->fresh()->logo_url);
         $this->assertEquals(2, $club->fresh()->revision);
-        $this->assertEquals(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'football_clubs')->count());
+        $this->assertEquals(2, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'football_clubs')->count());
         $base = ['revision' => 2, 'name' => 'Changed fixture', 'active' => true, 'logo_enabled' => false];
         foreach ([['revision' => 1], ['club_number' => 123], ['logo_url' => 'https://untrusted.invalid/logo'], ['tenant_id' => $this->other->id]] as $bad) {
             try {
@@ -2250,7 +2250,7 @@ class ClubUnioTest extends TestCase
         $service = app(FacilityService::class);
         $club = $service->save($this->actor, $this->own, FootballClub::class, null, ['club_number' => 3560, 'name' => 'Sissach fixture', 'active' => true, 'logo_enabled' => true]);
         $service->save($this->actor, $this->own, FootballClub::class, null, ['club_number' => 42, 'name' => 'Inactive fixture', 'active' => false, 'logo_enabled' => true]);
-        $foreignId = $this->db->table('clubora.football_clubs')->insertGetId(['tenant_id' => $this->other->id, 'club_number' => 991, 'name' => 'Foreign fixture']);
+        $foreignId = $this->db->table('clubunio.football_clubs')->insertGetId(['tenant_id' => $this->other->id, 'club_number' => 991, 'name' => 'Foreign fixture']);
         $this->assertSame([3560 => 'Sissach fixture (3560)'], FootballClubResource::searchClubs('fixture'));
         $this->assertSame([3560 => 'Sissach fixture (3560)'], FootballClubResource::searchClubs('356'));
         $this->assertStringContainsString('Altbestand', FootballClubResource::clubLabel(991));
@@ -2280,7 +2280,7 @@ class ClubUnioTest extends TestCase
         $ids = $this->facilityFixture();
         $service = app(FacilityService::class);
         $club = $service->save($this->actor, $this->own, FootballClub::class, null, ['club_number' => 3560, 'name' => 'SV Sissach', 'active' => true, 'logo_enabled' => true]);
-        $id = $this->db->table('clubora.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Sissach Ba', 'guest_name' => 'Guest B', 'guest_club_number' => 9876, 'host_room_id' => $ids['room']['1'], 'association_match_id' => 999, 'source' => 'SFV']);
+        $id = $this->db->table('clubunio.competitions')->insertGetId(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Sissach Ba', 'guest_name' => 'Guest B', 'guest_club_number' => 9876, 'host_room_id' => $ids['room']['1'], 'association_match_id' => 999, 'source' => 'SFV']);
         $game = Competition::findOrFail($id);
         Livewire::test(ManageCompetitions::class)->callTableAction('edit', $game, data: ['host_club_number' => 3560])->assertHasNoTableActionErrors();
         $game->refresh();
@@ -2293,7 +2293,7 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManageCompetitions::class)->callTableAction('edit', $game, data: ['remarks' => 'Room note'])->assertHasNoTableActionErrors();
         $this->assertEquals(3560, $game->fresh()->host_club_number);
         $base = ['plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'New', 'guest_name' => 'Guest', 'active' => true, 'show_on_signage' => true];
-        $this->db->table('clubora.football_clubs')->insert(['tenant_id' => $this->other->id, 'club_number' => 9999, 'name' => 'Foreign']);
+        $this->db->table('clubunio.football_clubs')->insert(['tenant_id' => $this->other->id, 'club_number' => 9999, 'name' => 'Foreign']);
         foreach ([3560, 9876, 9999, 2147483648] as $number) {
             try {
                 $service->save($this->actor, $this->own, Competition::class, null, $base + ['host_club_number' => $number]);
@@ -2306,16 +2306,16 @@ class ClubUnioTest extends TestCase
 
     public function test_football_club_signage_logo_scope_and_disabled_fallback(): void
     {
-        $this->db->table('clubora.football_clubs')->insert([
+        $this->db->table('clubunio.football_clubs')->insert([
             ['tenant_id' => $this->own->id, 'club_number' => 3560, 'name' => 'Own club', 'logo_enabled' => true],
             ['tenant_id' => $this->own->id, 'club_number' => 42, 'name' => 'Disabled logo', 'logo_enabled' => false],
             ['tenant_id' => $this->other->id, 'club_number' => 99, 'name' => 'Foreign logo', 'logo_enabled' => true],
         ]);
         foreach ([[3560, 42], [99, null]] as [$host, $guest]) {
-            $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Team host', 'guest_name' => 'Team guest', 'host_club_number' => $host, 'guest_club_number' => $guest]);
+            $this->db->table('clubunio.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Team host', 'guest_name' => 'Team guest', 'host_club_number' => $host, 'guest_club_number' => $guest]);
         }
         Livewire::test(SignagePreview::class)->assertSeeHtml('/logos/Verein/3560.gif')->assertDontSeeHtml('/logos/Verein/42.gif')->assertDontSeeHtml('/logos/Verein/99.gif')->assertSeeHtml('referrerpolicy="no-referrer"')->assertSeeHtml('x-on:error="failed = true"');
-        $this->db->table('clubora.football_clubs')->where('tenant_id', $this->own->id)->update(['active' => false]);
+        $this->db->table('clubunio.football_clubs')->where('tenant_id', $this->own->id)->update(['active' => false]);
         Livewire::test(SignagePreview::class)->assertDontSeeHtml('/logos/Verein/3560.gif')->assertSee('Team host');
     }
 
@@ -2339,13 +2339,13 @@ class ClubUnioTest extends TestCase
 
     public function test_football_club_missing_mapping_filter_remains_tenant_scoped_and_saved(): void
     {
-        $this->db->table('clubora.football_clubs')->insert([
+        $this->db->table('clubunio.football_clubs')->insert([
             ['tenant_id' => $this->own->id, 'club_number' => 1, 'name' => 'Active', 'active' => true],
             ['tenant_id' => $this->own->id, 'club_number' => 2, 'name' => 'Inactive', 'active' => false],
             ['tenant_id' => $this->other->id, 'club_number' => 3, 'name' => 'Foreign', 'active' => true],
         ]);
         foreach ([1, 2, 3, null] as $number) {
-            $this->db->table('clubora.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Mapping fixture', 'guest_name' => 'Guest', 'host_club_number' => 1, 'guest_club_number' => $number]);
+            $this->db->table('clubunio.competitions')->insert(['tenant_id' => $this->own->id, 'plays_on' => now('Europe/Zurich')->toDateString(), 'host_name' => 'Mapping fixture', 'guest_name' => 'Guest', 'host_club_number' => 1, 'guest_club_number' => $number]);
         }
         $page = Livewire::test(ManageCompetitions::class)->filterTable('missing_club')->searchTable('Mapping fixture')->assertCountTableRecords(3);
         $page->callAction('saveView', data: ['name' => 'Missing clubs', 'is_default' => true])->assertHasNoActionErrors();
@@ -2361,7 +2361,7 @@ class ClubUnioTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $suffix = bin2hex(random_bytes(6));
         $this->own = Tenant::create(['slug' => 'test-'.$suffix, 'name' => 'Test club']);
         $this->other = Tenant::create(['slug' => 'other-'.$suffix, 'name' => 'Other club']);
@@ -2387,8 +2387,8 @@ class ClubUnioTest extends TestCase
         Livewire::test(ManagePrices::class)
             ->callTableAction('create', data: ['name' => 'Fixture tariff', 'amount' => '250.00', 'active' => true])->assertHasNoTableActionErrors();
         $price = ContributionPrice::where('tenant_id', $this->own->id)->sole();
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture season']);
-        $gender = $this->db->table('clubora.genders')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'M', 'name' => 'Male fixture']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture season']);
+        $gender = $this->db->table('clubunio.genders')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'M', 'name' => 'Male fixture']);
         $service = app(ContributionTrainingService::class);
         $input = ['season_id' => $season, 'gender_id' => $gender, 'price_id' => $price->id, 'year_from' => 2010, 'year_to' => 2015, 'active' => true];
         $rule = $service->save($this->actor, $this->own, ContributionRule::class, null, $input);
@@ -2406,14 +2406,14 @@ class ClubUnioTest extends TestCase
 
     public function test_training_slot_form_lookups_times_audit_and_tenant_boundary(): void
     {
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture season']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture training']);
-        $ts = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Fixture training / season']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture season']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Fixture training']);
+        $ts = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Fixture training / season']);
         $ids = [];
         foreach (['period', 'weekday', 'field'] as $category) {
-            $ids[$category.'_id'] = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => 'fixture', 'name' => $category]);
+            $ids[$category.'_id'] = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->own->id, 'category' => $category, 'code' => 'fixture', 'name' => $category]);
         }
-        $half = $this->db->table('clubora.pitch_areas')->insertGetId(['tenant_id' => $this->own->id, 'field_id' => $ids['field_id'],
+        $half = $this->db->table('clubunio.pitch_areas')->insertGetId(['tenant_id' => $this->own->id, 'field_id' => $ids['field_id'],
             'name_de' => 'Hälfte A', 'name_en' => 'Half A', 'x' => 0, 'y' => 0, 'width' => .5, 'height' => 1]);
         $input = $ids + ['team_season_id' => $ts, 'starts_at' => '18:00', 'ends_at' => '19:30', 'all_fields' => true, 'without_main' => false, 'synthetic_only' => false, 'website_visible' => true, 'active' => true];
         $this->get('/training-slots')->assertOk();
@@ -2421,7 +2421,7 @@ class ClubUnioTest extends TestCase
         $slot = TrainingSlot::where('tenant_id', $this->own->id)->sole();
         $this->assertSame('18:00:00', $slot->starts_at);
         $this->assertSame($half, $slot->area_id);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'training_slots')->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->where('object_type', 'training_slots')->count());
         $service = app(ContributionTrainingService::class);
         foreach ([['ends_at' => '17:00'], ['field_id' => $ids['period_id']]] as $bad) {
             try {
@@ -2484,7 +2484,7 @@ class ClubUnioTest extends TestCase
         $this->assertSame($appearance::hex('Offen'), $appearance::hex(' offen '));
         $this->assertNotSame($appearance::hex('Offen'), $appearance::hex('Bezahlt'));
         $this->assertMatchesRegularExpression('/^#[0-9a-f]{6}$/', $appearance::hex('Future custom value'));
-        $status = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture', 'name' => 'Fixture status']);
+        $status = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture', 'name' => 'Fixture status']);
         Member::where('tenant_id', $this->own->id)->update(['status_id' => $status]);
         $chart = Livewire::test(MembersByStatus::class);
         $data = (new \ReflectionMethod($chart->instance(), 'getData'))->invoke($chart->instance());
@@ -2535,11 +2535,11 @@ class ClubUnioTest extends TestCase
 
     public function test_saved_view_rejects_stale_lookup_and_keeps_current_selection(): void
     {
-        $status = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'saved', 'name' => 'Saved status']);
+        $status = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'saved', 'name' => 'Saved status']);
         $page = Livewire::test(ListMembers::class)->filterTable('status_id', $status);
         $page->callAction('saveView', data: ['name' => 'Statusansicht', 'is_default' => false])->assertHasNoActionErrors();
         $view = SavedView::where('tenant_id', $this->own->id)->sole();
-        $this->db->table('clubora.member_statuses')->where('id', $status)->delete();
+        $this->db->table('clubunio.member_statuses')->where('id', $status)->delete();
         $page->searchTable('Retain');
         $page->callAction('loadView', data: ['view_id' => $view->id])->assertHasActionErrors()->assertSet('tableSearch', 'Retain');
     }
@@ -2575,13 +2575,13 @@ class ClubUnioTest extends TestCase
         $account = new Account;
         $account->forceFill(['username' => 'portal-'.bin2hex(random_bytes(5)).'@example.invalid', 'display_name' => 'Portal Fixture',
             'password' => password_hash('fixture-password', PASSWORD_BCRYPT), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->own->id, 'account_id' => $account->id, 'role' => $role, 'portal_enabled' => true]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->own->id, 'account_id' => $account->id, 'role' => $role, 'portal_enabled' => true]);
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         if ($newMember) {
             $member = new Member;
             $member->forceFill(['tenant_id' => $this->own->id, 'first_name' => 'Separate', 'last_name' => 'Fixture'])->save();
         }
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->own->id, 'account_id' => $account->id,
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->own->id, 'account_id' => $account->id,
             'member_id' => $member->id, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
 
         return [$account, $member];
@@ -2603,16 +2603,16 @@ class ClubUnioTest extends TestCase
     public function test_portal_status_and_account_revocation_and_filters(): void
     {
         [$account, $member] = $this->portalActor();
-        $status = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'test', 'name' => 'Fixture status']);
+        $status = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'test', 'name' => 'Fixture status']);
         $member->forceFill(['status_id' => $status, 'mother_name' => 'PRIVATE-MOTHER', 'bexio_contact_id' => 987654321])->save();
         $url = '/portal/'.$this->own->slug.'/members?status='.$status.'&q=OWN';
         $this->actingAs($account, 'portal')->get($url)->assertOk()->assertSee('OWN-MEMBER')->assertDontSee('PRIVATE-MOTHER')->assertDontSee('987654321');
         $access = app(MemberAccessService::class);
-        $this->db->table('clubora.member_statuses')->where('id', $status)->update(['ends_membership' => true]);
+        $this->db->table('clubunio.member_statuses')->where('id', $status)->update(['ends_membership' => true]);
         $this->assertFalse($access->canEnter($account, $this->own));
         $this->get($url)->assertForbidden();
-        $this->db->table('clubora.member_statuses')->where('id', $status)->update(['ends_membership' => false]);
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $account->id)->update(['portal_enabled' => false]);
+        $this->db->table('clubunio.member_statuses')->where('id', $status)->update(['ends_membership' => false]);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $account->id)->update(['portal_enabled' => false]);
         $this->assertFalse($access->canEnter($account, $this->own));
         $account->forceFill(['active' => false])->save();
         $this->assertFalse($access->canEnter($account, $this->own));
@@ -2639,9 +2639,9 @@ class ClubUnioTest extends TestCase
         $ownMember->forceFill(['exit_date' => '2026-10-11'])->save();
         $child = new Member;
         $child->forceFill(['tenant_id' => $this->own->id, 'first_name' => 'Child Fixture', 'birth_date' => '2012-02-29'])->save();
-        $id = $this->db->table('clubora.account_member_links')->insertGetId(['tenant_id' => $this->own->id, 'account_id' => $account->id,
+        $id = $this->db->table('clubunio.account_member_links')->insertGetId(['tenant_id' => $this->own->id, 'account_id' => $account->id,
             'member_id' => $child->id, 'kind' => 'parent', 'state' => 'pending', 'source' => 'test']);
-        $childInvoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $child->id]);
+        $childInvoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $child->id]);
         $invoiceAccess = app(InvoiceAccessService::class);
         $this->assertFalse($invoiceAccess->visible($account, $this->own)->whereKey($childInvoice)->exists());
         $access = app(MemberAccessService::class);
@@ -2664,37 +2664,37 @@ class ClubUnioTest extends TestCase
         $child->forceFill(['birth_date' => '2012-02-29'])->save();
         $service->save($this->actor, $this->own, $id, array_replace($data, ['state' => 'revoked', 'revision' => 2]));
         $this->assertFalse($access->canEnter($account, $this->own));
-        $this->assertSame(2, $this->db->table('clubora.object_changes')->where('object_type', 'account_member_links')->where('object_id', $id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.object_changes')->where('object_type', 'account_member_links')->where('object_id', $id)->count());
     }
 
     public function test_trainer_and_tl_only_see_active_assigned_team_members(): void
     {
         [$account, $ownMember] = $this->portalActor('trainer');
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team']);
-        $teamSeason = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test team / season']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test season']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->own->id, 'name' => 'Test team']);
+        $teamSeason = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->own->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Test team / season']);
         $player = new Member;
         $player->forceFill(['tenant_id' => $this->own->id, 'first_name' => 'Team Player'])->save();
         $unrelated = new Member;
         $unrelated->forceFill(['tenant_id' => $this->own->id, 'first_name' => 'Unrelated'])->save();
-        $this->db->table('clubora.team_staff')->insert(['tenant_id' => $this->own->id, 'member_id' => $ownMember->id, 'team_season_id' => $teamSeason]);
-        $this->db->table('clubora.team_players')->insert(['tenant_id' => $this->own->id, 'member_id' => $player->id, 'team_season_id' => $teamSeason]);
-        $playerInvoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $player->id]);
-        $foreignInvoice = $this->db->table('clubora.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $unrelated->id]);
+        $this->db->table('clubunio.team_staff')->insert(['tenant_id' => $this->own->id, 'member_id' => $ownMember->id, 'team_season_id' => $teamSeason]);
+        $this->db->table('clubunio.team_players')->insert(['tenant_id' => $this->own->id, 'member_id' => $player->id, 'team_season_id' => $teamSeason]);
+        $playerInvoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $player->id]);
+        $foreignInvoice = $this->db->table('clubunio.invoices')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $unrelated->id]);
         $invoiceAccess = app(InvoiceAccessService::class);
         $this->assertSame([$playerInvoice], $invoiceAccess->visible($account, $this->own)->pluck('id')->all());
         $access = app(MemberAccessService::class);
         $this->assertEqualsCanonicalizing([$ownMember->id, $player->id], $access->visibleMembers($account, $this->own)->pluck('id')->all());
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $account->id)->update(['role' => 'technical_lead']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $account->id)->update(['role' => 'technical_lead']);
         $this->assertSame([$ownMember->id], $access->visibleMembers($account, $this->own)->pluck('id')->all());
         $this->assertFalse($invoiceAccess->visible($account, $this->own)->whereKey($playerInvoice)->exists());
-        $this->db->table('clubora.technical_leads')->insert(['tenant_id' => $this->own->id, 'member_id' => $ownMember->id, 'team_season_id' => $teamSeason]);
+        $this->db->table('clubunio.technical_leads')->insert(['tenant_id' => $this->own->id, 'member_id' => $ownMember->id, 'team_season_id' => $teamSeason]);
         $this->assertEqualsCanonicalizing([$ownMember->id, $player->id], $access->visibleMembers($account, $this->own)->pluck('id')->all());
         $this->assertTrue($invoiceAccess->visible($account, $this->own)->whereKey($playerInvoice)->exists());
         $this->assertFalse($invoiceAccess->visible($account, $this->own)->whereKey($foreignInvoice)->exists());
         $player->forceFill(['exit_date' => now('Europe/Zurich')->toDateString()])->save();
         $this->assertSame([$ownMember->id], $access->visibleMembers($account, $this->own)->pluck('id')->all());
-        $this->db->table('clubora.technical_leads')->where('tenant_id', $this->own->id)->update(['active' => false]);
+        $this->db->table('clubunio.technical_leads')->where('tenant_id', $this->own->id)->update(['active' => false]);
         $this->assertSame([], $access->responsibleTeams($account, $this->own));
         $this->assertFalse($invoiceAccess->visible($account, $this->own)->whereKey($playerInvoice)->exists());
     }
@@ -2722,7 +2722,7 @@ class ClubUnioTest extends TestCase
         } catch (ValidationException $error) {
             $this->assertArrayHasKey('member_id', $error->errors());
         }
-        $id = $this->db->table('clubora.account_member_links')->where('account_id', $account->id)->value('id');
+        $id = $this->db->table('clubunio.account_member_links')->where('account_id', $account->id)->value('id');
         $this->expectException(ValidationException::class);
         $service->save($this->actor, $this->own, $id, ['account_id' => $account->id, 'member_id' => $member->id, 'kind' => 'self', 'state' => 'revoked', 'revision' => 0, 'reason' => 'Outdated review fixture']);
     }
@@ -2737,7 +2737,7 @@ class ClubUnioTest extends TestCase
         $key = (string) Str::uuid();
         $this->assertSame('accepted', $service->sendPreview($this->actor, $this->own, $template->id, $key));
         $this->assertSame('accepted', $service->sendPreview($this->actor, $this->own, $template->id, $key));
-        $this->assertSame(1, $this->db->table('clubora.test_mail_attempts')->where('tenant_id', $this->own->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.test_mail_attempts')->where('tenant_id', $this->own->id)->count());
         $this->assertCount(1, Mail::mailer('clubunio_test')->getSymfonyTransport()->messages());
         $this->expectException(HttpException::class);
         $service->sendPreview($this->actor, $this->other, $template->id, (string) Str::uuid());
@@ -2746,9 +2746,9 @@ class ClubUnioTest extends TestCase
     public function test_document_download_requires_tenant_access_and_serves_safe_headers(): void
     {
         config(['clubunio-integrations.azure.tenant_slug' => $this->own->slug]);
-        $type = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture', 'name' => 'Fixture']);
+        $type = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->own->id, 'code' => 'fixture', 'name' => 'Fixture']);
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
-        $id = $this->db->table('clubora.member_documents')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id,
+        $id = $this->db->table('clubunio.member_documents')->insertGetId(['tenant_id' => $this->own->id, 'member_id' => $member->id,
             'document_type_id' => $type, 'filename' => 'fixture.pdf', 'storage_path' => 'var/member-documents/', 'original_filename' => 'Prüfung.pdf']);
         $reader = \Mockery::mock(AzureDocumentReader::class);
         $reader->shouldReceive('read')->once()->with('var/member-documents/', 'fixture.pdf')->andReturn("%PDF-1.4\nfixture");
@@ -2757,7 +2757,7 @@ class ClubUnioTest extends TestCase
         $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/documents/members/'.$id);
         $this->get('/documents/members/'.$id)->assertOk()->assertHeader('Content-Type', 'application/pdf')
             ->assertHeader('X-Content-Type-Options', 'nosniff')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
-        $this->db->table('clubora.member_documents')->where('id', $id)->update(['active' => false]);
+        $this->db->table('clubunio.member_documents')->where('id', $id)->update(['active' => false]);
         $this->get('/documents/members/'.$id)->assertNotFound();
         auth('clubunio')->logout();
         $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/login');
@@ -3227,7 +3227,7 @@ class ClubUnioTest extends TestCase
         $this->get('/members')->assertOk()->assertSee('OWN-MEMBER');
         $member = app(MemberService::class)->update($this->actor, $this->own, $member->id, array_merge($this->memberInput($member), ['city' => 'Schema-safe']));
         $this->assertSame('Schema-safe', $member->city);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->own->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->own->id)->count());
     }
 
     public function test_extended_member_pages_and_country_form(): void

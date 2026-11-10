@@ -32,7 +32,7 @@ final class MobileAppAnnouncements {
             $row->forceFill(['tenant_id'=>$tenant->id,'title'=>trim($d['title']),'body'=>trim($d['body']),'audience'=>$d['audience'],
                 'starts_at'=>Time::parse($d['starts_at']),'ends_at'=>Time::parse($d['ends_at']),'active'=>$d['active'],
                 'revision'=>$id?$row->revision+1:1,'created_by'=>$id?$row->created_by:$actor->id,'updated_by'=>$actor->id])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,'object_type'=>'mobile_app_announcements',
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,'object_type'=>'mobile_app_announcements',
                 'object_id'=>$row->id,'before_value'=>$old?json_encode($old,JSON_THROW_ON_ERROR):null,
                 'after_value'=>json_encode($row->only(['title','body','audience','starts_at','ends_at','active','revision']),JSON_THROW_ON_ERROR)]);
             return $row->refresh();

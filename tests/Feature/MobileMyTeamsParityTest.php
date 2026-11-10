@@ -58,7 +58,7 @@ class MobileMyTeamsParityTest extends TestCase
     }
     private function insert(string $table,array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
     }
     public function test_trainer_directory_is_personal_but_team_roster_is_still_visible_and_pending_children_are_not_granted(): void
     {
@@ -68,10 +68,10 @@ class MobileMyTeamsParityTest extends TestCase
             ->assertJsonPath('data.Members.0.MitgliederID',$this->members['trainer'])->assertJsonPath('data.PendingParentLinks',1);
         $this->getJson($this->base.'/members/'.$pending)->assertNotFound();
         $this->getJson($this->base.'/my-teams/'.$this->team)->assertOk()->assertJsonCount(1,'data.Players');
-        $this->db->table('clubora.account_member_links')->where('id',$link)->update(['state'=>'approved']);
+        $this->db->table('clubunio.account_member_links')->where('id',$link)->update(['state'=>'approved']);
         $this->getJson($this->base.'/members')->assertOk()->assertJsonCount(2,'data.Members')->assertJsonPath('data.PendingParentLinks',0);
         $this->getJson($this->base.'/members/'.$pending)->assertOk()->assertJsonPath('data.Member.ChangeMode','request');
-        $this->db->table('clubora.account_member_links')->where('id',$link)->update(['state'=>'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('id',$link)->update(['state'=>'revoked']);
         $this->getJson($this->base.'/members')->assertOk()->assertJsonCount(1,'data.Members');
         $this->getJson($this->base.'/members/'.$pending)->assertNotFound();
         $this->withToken($this->tokens['admin'])->getJson($this->base.'/members')->assertOk()->assertJsonCount(6,'data.Members');
@@ -105,7 +105,7 @@ class MobileMyTeamsParityTest extends TestCase
         $foreign=Tenant::create(['slug'=>'foreign-trial-'.bin2hex(random_bytes(6)),'name'=>'Foreign synthetic']);
         $this->withToken($this->tokens['trainer'])->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/my-teams/'.$this->team.'/registrations/'.$reg)->assertForbidden();
         $this->withToken($this->tokens['trainer']);
-        $this->db->table('clubora.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
+        $this->db->table('clubunio.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
         $this->getJson($url.'/'.$reg)->assertNotFound();
     }
 }

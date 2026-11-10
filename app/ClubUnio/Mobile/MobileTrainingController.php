@@ -17,7 +17,7 @@ final class MobileTrainingController implements \Illuminate\Routing\Controllers\
         $rows = $service->visible($actor, $tenant)->whereNull('archived_at')->orderByDesc('created_at')->orderByDesc('id')
             ->offset($d['start'] ?? 0)->limit($d['limit'] ?? 20)->get(['id','title','team_season_id','shared','input_json','created_at']);
         $download = $rows->isNotEmpty() && $service->can($actor, $tenant, 'download');
-        $shares = $rows->isEmpty() ? [] : DB::connection('clubunio')->table('clubora.mobile_training_plan_shares')->where('tenant_id', $tenant->id)
+        $shares = $rows->isEmpty() ? [] : DB::connection('clubunio')->table('clubunio.mobile_training_plan_shares')->where('tenant_id', $tenant->id)
             ->whereIn('plan_id', $rows->where('shared', true)->pluck('id'))->pluck('team_season_id', 'plan_id')->all();
         return response()->json(['data' => ['trainingPlans' => $rows->map(function ($row) use ($download, $shares) {
             $input = json_decode($row->input_json, true, 64, JSON_THROW_ON_ERROR);
@@ -61,11 +61,11 @@ final class MobileTrainingController implements \Illuminate\Routing\Controllers\
             abort_unless($target === null || $service->teams($actor, $tenant)->contains('id', $target), 403);
             $before = $service->sharedTeam($tenant, $row);
             $service->save($actor, $tenant, $row->id, $d['revision'], $row->plan, $target !== null);
-            $q = DB::connection('clubunio')->table('clubora.mobile_training_plan_shares')->where('tenant_id', $tenant->id)->where('plan_id', $row->id);
+            $q = DB::connection('clubunio')->table('clubunio.mobile_training_plan_shares')->where('tenant_id', $tenant->id)->where('plan_id', $row->id);
             $q->delete();
-            if ($target !== null) { DB::connection('clubunio')->table('clubora.mobile_training_plan_shares')->insert([
+            if ($target !== null) { DB::connection('clubunio')->table('clubunio.mobile_training_plan_shares')->insert([
                 'tenant_id' => $tenant->id, 'plan_id' => $row->id, 'team_season_id' => $target, 'shared_by' => $actor->id, 'created_at' => now()]); }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'training_plan', 'object_id' => $row->id,
                 'before_value' => json_encode(['revision' => $d['revision'], 'shared_team_season_id' => $before], JSON_THROW_ON_ERROR),
                 'after_value' => json_encode(['revision' => $d['revision'] + 1, 'shared_team_season_id' => $target, 'event' => 'native_team_share'], JSON_THROW_ON_ERROR),
@@ -103,7 +103,7 @@ final class MobileTrainingController implements \Illuminate\Routing\Controllers\
         return DB::connection('clubunio')->transaction(function () use ($request, $action) {
             $tenant = $request->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobileAccess::class)->enter($actor, $tenant);
             return $action($actor, $tenant, app(MobileTrainingPlanService::class));

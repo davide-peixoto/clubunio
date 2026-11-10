@@ -54,7 +54,7 @@ class TeamPlanningTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'planning-'.bin2hex(random_bytes(6)), 'name' => 'Planning fixture']);
         $this->service = app(TeamPlanningService::class);
         TeamPlanningService::seedOptions($this->tenant->id);
@@ -161,8 +161,8 @@ class TeamPlanningTest extends TestCase
             $this->db->disableQueryLog();
         }
         $this->assertSame(1, $result['skipped']);
-        $this->assertCount(2, $reads->filter(fn ($sql) => str_contains($sql, 'from "clubora"."team_absences"')));
-        $participations = $reads->filter(fn ($sql) => str_starts_with($sql, 'select * from "clubora"."team_participations"'));
+        $this->assertCount(2, $reads->filter(fn ($sql) => str_contains($sql, 'from "clubunio"."team_absences"')));
+        $participations = $reads->filter(fn ($sql) => str_starts_with($sql, 'select * from "clubunio"."team_participations"'));
         $this->assertCount(4, $participations);
         foreach ($participations as $sql) {
             $this->assertStringContainsString('"member_id" = ?', $sql);
@@ -615,7 +615,7 @@ class TeamPlanningTest extends TestCase
     {
         // This synthetic tenant needs the same explicit menu setup as the real admin form.
         foreach (['Teams','Teamplanung','Spesen'] as $key) {
-            $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key,
+            $this->db->table('clubunio.mobile_module_options')->insert(['tenant_id' => $this->tenant->id, 'key' => $key,
                 'name' => \App\ClubUnio\Services\MobileModuleSettings::MODULES[$key], 'active' => true, 'sort_order' => 0]);
         }
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array', 'clubunio-mobile.native_my_teams_enabled' => false,
@@ -800,7 +800,7 @@ class TeamPlanningTest extends TestCase
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
         $this->db->statement("SET LOCAL lock_timeout TO '5s'");
-        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubora.team_participations', 'attendance_comment_encrypted'));
+        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubunio.team_participations', 'attendance_comment_encrypted'));
         $login = function ($actor) {
             return $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Native fixture'])
                 ->assertOk()->json('data.token');
@@ -888,7 +888,7 @@ class TeamPlanningTest extends TestCase
     {
         config(['clubunio-mobile.enabled' => true, 'cache.default' => 'array']);
         $this->db->statement("SET LOCAL lock_timeout TO '5s'");
-        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubora.team_guests', 'attendance_comment_encrypted'));
+        $this->assertTrue($this->db->getSchemaBuilder()->hasColumn('clubunio.team_guests', 'attendance_comment_encrypted'));
         $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Guest fixture'])->assertOk()->json('data.token');
         $admin = $login($this->admin);
         $event = $this->service->saveEvent($this->admin, $this->tenant, null, $this->input());
@@ -924,14 +924,14 @@ class TeamPlanningTest extends TestCase
         $this->db->statement("SET LOCAL lock_timeout TO '5s'");
         // Test the additive DDL and real PostgreSQL service on an empty temporary table.
         // Do not demand an exclusive lock on the shared DEV absence table.
-        $this->db->statement('CREATE TEMP TABLE team_absences (LIKE clubora.team_absences INCLUDING ALL) ON COMMIT DROP');
+        $this->db->statement('CREATE TEMP TABLE team_absences (LIKE clubunio.team_absences INCLUDING ALL) ON COMMIT DROP');
         $this->db->statement('ALTER TABLE pg_temp.team_absences DROP COLUMN IF EXISTS starts_at CASCADE, DROP COLUMN IF EXISTS ends_at CASCADE');
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000085_planning_absence_windows.php'))->up());
         $this->assertCount(1, $ddl);
-        $this->db->statement(str_replace('clubora.team_absences', 'pg_temp.team_absences', $ddl[0]['query']));
+        $this->db->statement(str_replace('clubunio.team_absences', 'pg_temp.team_absences', $ddl[0]['query']));
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table, $prefix = null) {
-                return parent::wrapTable($table === 'clubora.team_absences' ? 'pg_temp.team_absences' : $table, $prefix);
+                return parent::wrapTable($table === 'clubunio.team_absences' ? 'pg_temp.team_absences' : $table, $prefix);
             }
         });
         $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Absence fixture'])->assertOk()->json('data.token');
@@ -990,11 +990,11 @@ class TeamPlanningTest extends TestCase
         $this->db->statement('CREATE TEMP TABLE batch_test_accounts (id bigint PRIMARY KEY) ON COMMIT DROP');
         $this->db->table('pg_temp.batch_test_tenants')->insert(['id' => $this->tenant->id]);
         $this->db->table('pg_temp.batch_test_accounts')->insert(array_map(fn ($actor) => ['id' => $actor->id], [$this->admin, $this->player, $this->trainer]));
-        $this->db->statement(str_replace(['CREATE TABLE clubora.mobile_planning_commands', 'REFERENCES clubora.tenants', 'REFERENCES clubora.accounts'],
+        $this->db->statement(str_replace(['CREATE TABLE clubunio.mobile_planning_commands', 'REFERENCES clubunio.tenants', 'REFERENCES clubunio.accounts'],
             ['CREATE TEMP TABLE mobile_planning_commands', 'REFERENCES pg_temp.batch_test_tenants', 'REFERENCES pg_temp.batch_test_accounts'], $ddl[0]['query']).' ON COMMIT DROP');
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table, $prefix = null) {
-                return parent::wrapTable($table === 'clubora.mobile_planning_commands' ? 'pg_temp.mobile_planning_commands' : $table, $prefix);
+                return parent::wrapTable($table === 'clubunio.mobile_planning_commands' ? 'pg_temp.mobile_planning_commands' : $table, $prefix);
             }
         });
         $login = fn ($actor) => $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Series fixture'])->assertOk()->json('data.token');

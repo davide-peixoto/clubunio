@@ -14,13 +14,13 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
     private function tenant(Request $r) { return $r->attributes->get('mobile.tenant'); }
     private function pending(Tenant $tenant, int $expense): bool {
         return app(\App\ClubUnio\Services\DocumentUploadService::class)->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('state', 'pending')
-            ->whereIn('object_id', ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('expense_id', $expense)->select('clubora.expense_lines.id'))->exists();
+            ->whereIn('object_id', ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('expense_id', $expense)->select('clubunio.expense_lines.id'))->exists();
     }
     private function write(Request $r, callable $operation) {
         return DB::connection('clubunio')->transaction(function () use ($r, $operation) {
             $tenant = $this->tenant($r);
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             app(MobileAccess::class)->enter($actor, $tenant);
             return response()->json(['data' => $operation($actor, $tenant)]);
@@ -71,7 +71,7 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
     public function banks(Request $r) {
         $actor = $this->actor($r); $tenant = $this->tenant($r);
         // Original bank management is personal, even for staff with wider member access.
-        $own = app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant, true)->select('clubora.members.id');
+        $own = app(\App\ClubUnio\Services\MemberAccessService::class)->represented($actor, $tenant, true)->select('clubunio.members.id');
         $banks = app(BankAccountService::class)->visible($actor, $tenant)->whereIn('member_id', $own)->where('active', true)->orderBy('id')->get();
         return response()->json(['data' => ['rows' => $banks->map(fn ($bank) => app(MobileExpenseData::class)->bank($actor, $tenant, $bank))->all()]]);
     }
@@ -134,7 +134,7 @@ final class MobileExpenseController implements \Illuminate\Routing\Controllers\H
         $actor = app(MobileSessions::class)->authenticate($r); $tenant = $this->tenant($r);
         app(MobileAccess::class)->enter($actor, $tenant);
         $service = app(\App\ClubUnio\Services\DocumentUploadService::class);
-        $lineIds = ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('expense_id', $expense)->select('clubora.expense_lines.id');
+        $lineIds = ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('expense_id', $expense)->select('clubunio.expense_lines.id');
         app(ExpenseService::class)->visible($actor, $tenant)->findOrFail($expense);
         $upload = $service->table()->where('tenant_id', $tenant->id)->where('kind', 'expense')->whereIn('object_id', $lineIds)->find($uploadId);
         abort_unless($upload && in_array($upload->state, ['pending','published'], true), 404);

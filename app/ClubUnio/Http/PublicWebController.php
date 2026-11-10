@@ -35,7 +35,7 @@ class PublicWebController
         app(PublicWebService::class)->authorize($tenant, 'registration');
         $key = 'public-registration.'.$tenant->id;
         $form = $request->session()->get($key);
-        if ($request->boolean('new') && $form && DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists()) {
+        if ($request->boolean('new') && $form && DB::connection('clubunio')->table('clubunio.public_registration_submissions')->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists()) {
             $form = null;
         }
         if (! $form || $form['at'] < time() - 3600) {
@@ -44,7 +44,7 @@ class PublicWebController
         }
         $choices = [];
         foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-            $choices[$field] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id');
+            $choices[$field] = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id');
         }
 
         return response()->view('clubunio.public.registration', compact('tenant', 'form', 'choices'))->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
@@ -66,7 +66,7 @@ class PublicWebController
         try {
             DB::connection('clubunio')->transaction(function () use ($request, $tenant, $form) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-                if (DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists()) {
+                if (DB::connection('clubunio')->table('clubunio.public_registration_submissions')->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists()) {
                     return;
                 }
                 $r = app(RegistrationDataService::class)->submitPublic($tenant, $request->only([...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS]), $form['id']);
@@ -89,7 +89,7 @@ class PublicWebController
 
         // The application and all encrypted files are committed before any external upload.
         $uploads = app(DocumentUploadService::class);
-        $registrationId = DB::connection('clubunio')->table('clubora.public_registration_submissions')
+        $registrationId = DB::connection('clubunio')->table('clubunio.public_registration_submissions')
             ->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->value('registration_id');
         foreach ($uploads->table()->where('tenant_id', $tenant->id)->where('kind', 'registration')->where('object_id', $registrationId)
             ->where('public_request_id', $form['id'])->where('state', 'pending')->orderBy('id')->pluck('id') as $upload) {

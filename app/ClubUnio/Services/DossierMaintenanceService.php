@@ -54,7 +54,7 @@ class DossierMaintenanceService
             }
             $row = $id ? $model::where('tenant_id', $tenant->id)->when($memberObject, fn ($q) => $q->where('member_id', $memberId))->lockForUpdate()->findOrFail($id) : new $model;
             $reference = fn (string $table, string $field, bool $required = true) => [$required ? 'required' : 'nullable', 'integer',
-                Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $row->$field ?? -1)))];
+                Rule::exists('clubunio.clubunio.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $row->$field ?? -1)))];
             $rules = ['revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:0|max:0', 'active' => 'required|boolean'];
             if (in_array($model, [ClubFunction::class, Qualification::class], true)) {
                 $rules['name'] = 'required|string|max:160';
@@ -89,7 +89,7 @@ class DossierMaintenanceService
                 $candidate->forceFill(array_diff_key($data, array_flip(['revision', 'active', 'qualification_ids'])));
                 $qualificationChanged = $model === MemberFunction::class
                     && collect($data['qualification_ids'])->map(fn ($id) => (int) $id)->sort()->values()->all()
-                        !== $row->qualifications()->pluck('clubora.qualifications.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+                        !== $row->qualifications()->pluck('clubunio.qualifications.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
                 if (! $statusChanged || $candidate->isDirty() || $qualificationChanged) {
                     app(ModulePermissionService::class)->authorize($actor, $tenant, $module, 'update');
                 }
@@ -98,7 +98,7 @@ class DossierMaintenanceService
                 throw ValidationException::withMessages(['revision' => __('Datensatz wurde geändert. Bitte erneut öffnen.')]);
             }
             $qualificationIds = $data['qualification_ids'] ?? [];
-            $oldQualifications = $model === MemberFunction::class && $id ? $row->qualifications()->pluck('clubora.qualifications.id')->all() : [];
+            $oldQualifications = $model === MemberFunction::class && $id ? $row->qualifications()->pluck('clubunio.qualifications.id')->all() : [];
             if ($model === MemberFunction::class) {
                 $valid = Qualification::where('tenant_id', $tenant->id)->whereIn('id', $qualificationIds)
                     ->where(fn ($q) => $q->where('active', true)->orWhereIn('id', $oldQualifications))->count();
@@ -135,7 +135,7 @@ class DossierMaintenanceService
             if ($model === MemberFunction::class) {
                 $row->qualifications()->sync(array_fill_keys($qualificationIds, ['tenant_id' => $tenant->id]));
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => str($row->getTable())->afterLast('.')->toString(), 'object_id' => $row->id,
                 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($row->only([...array_keys($data), 'member_id', 'revision']) + ($model === MemberFunction::class ? ['qualification_ids' => $qualificationIds] : []), JSON_THROW_ON_ERROR)]);

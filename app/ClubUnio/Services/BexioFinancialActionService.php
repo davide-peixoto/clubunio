@@ -15,7 +15,7 @@ class BexioFinancialActionService
 {
     private function table()
     {
-        return DB::connection('clubunio')->table('clubora.bexio_financial_actions');
+        return DB::connection('clubunio')->table('clubunio.bexio_financial_actions');
     }
 
     private function remote(Account $actor, Tenant $tenant, string $kind, int $objectId): array
@@ -113,7 +113,7 @@ class BexioFinancialActionService
             $this->released($tenant, $kind, $objectId);
             abort_unless(hash_equals($current->connection_hash, $row->connection_hash), 409);
             abort_if($this->table()->where('dispatch_id', $row->id)->where(fn ($q) => $q->where('operation', $operation)->orWhereIn('state', ['running', 'uncertain']))->exists()
-                || DB::connection('clubunio')->table('clubora.bexio_invoice_actions')->where('dispatch_id', $row->id)->where('state', '<>', 'accepted')->exists(), 409);
+                || DB::connection('clubunio')->table('clubunio.bexio_invoice_actions')->where('dispatch_id', $row->id)->where('state', '<>', 'accepted')->exists(), 409);
 
             return $this->table()->insertGetId(['dispatch_id' => $row->id, 'actor_id' => $actor->id, 'operation' => $operation, 'state' => 'running',
                 'reference' => $reference, 'connection_hash' => $row->connection_hash, 'amount_cents' => $cents, 'bank_id' => (int) $bankId, 'payment_date' => $date,
@@ -195,7 +195,7 @@ class BexioFinancialActionService
         });
         $service = app(BexioReconciliationService::class);
         $checkId = $service->preview($actor, $tenant, $kind, $objectId);
-        $check = DB::connection('clubunio')->table('clubora.bexio_checks')->find($checkId);
+        $check = DB::connection('clubunio')->table('clubunio.bexio_checks')->find($checkId);
         abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, __('Finanzabgleich noch offen.'));
         if ($check->state === 'ready') {
             $service->apply($actor, $tenant, $checkId);

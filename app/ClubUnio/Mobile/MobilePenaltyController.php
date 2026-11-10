@@ -20,7 +20,7 @@ final class MobilePenaltyController implements \Illuminate\Routing\Controllers\H
         return DB::connection('clubunio')->transaction(function () use ($request, $action) {
             $tenant = $this->tenant($request);
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobilePenaltyAccess::class)->authorize($actor, $tenant);
             return response()->json(['data' => $action($actor, $tenant, app(MobilePenaltyService::class))]);

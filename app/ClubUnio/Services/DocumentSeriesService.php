@@ -115,7 +115,7 @@ class DocumentSeriesService
         $labels = $teams->mapWithKeys(fn ($t) => [$t->id => $t->team->name.' / '.$t->season->name])->all();
         $links = collect();
         foreach ($input['target'] === 'both' ? ['team_players', 'team_staff'] : [$input['target'] === 'players' ? 'team_players' : 'team_staff'] as $table) {
-            $links = $links->concat(DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)
+            $links = $links->concat(DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('team_season_id', $input['teams'])->orderBy('team_season_id')->get(['member_id', 'team_season_id']));
         }
         $people = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->whereIn('id', $links->pluck('member_id')->unique())->orderBy('id')->get();
@@ -376,7 +376,7 @@ class DocumentSeriesService
             $access = app(MemberAccessService::class);
             abort_unless($actor->fresh() && $access->canEnter($actor->fresh(), $tenant), 403);
             $row = DocumentSeriesRecipient::where('tenant_id', $tenant->id)->where('series_id', $series)
-                ->whereIn('member_id', $access->represented($actor->fresh(), $tenant)->select('clubora.members.id'))->findOrFail($recipient);
+                ->whereIn('member_id', $access->represented($actor->fresh(), $tenant)->select('clubunio.members.id'))->findOrFail($recipient);
             $parent = DocumentSeries::where('tenant_id', $tenant->id)->findOrFail($series);
             abort_unless(hash_equals($parent->snapshot_hash, DocumentSeriesRenderer::hash($parent->snapshot))
                 && hash_equals($row->snapshot_hash, DocumentSeriesRenderer::hash($row->snapshot)), 409);
@@ -407,7 +407,7 @@ class DocumentSeriesService
 
     private function audit(Account $actor, Tenant $tenant, string $type, int $id, string $action): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => $type, 'object_id' => $id, 'after_value' => json_encode(['action' => $action], JSON_THROW_ON_ERROR)]);
     }
 }

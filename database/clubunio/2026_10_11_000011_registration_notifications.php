@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $db->unprepared(<<<'SQL'
 ALTER TABLE seasons ADD starts_on date, ADD ends_on date, ADD CHECK(ends_on IS NULL OR starts_on IS NULL OR ends_on>=starts_on);
 UPDATE seasons s SET starts_on=make_date(substring(s.name,1,4)::int,7,1), ends_on=make_date(substring(s.name,6,4)::int,6,30)

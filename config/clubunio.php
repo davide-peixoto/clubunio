@@ -9,7 +9,7 @@ return [
         'driver' => 'pgsql', 'host' => $v['PGHOST'] ?? '',
         'port' => $v['PGPORT'] ?? '6432', 'database' => $v['PGDATABASE'] ?? '',
         'username' => $v['PGUSER'] ?? '', 'password' => $v['PGPASSWORD'] ?? '',
-        'charset' => 'utf8', 'prefix' => '', 'search_path' => 'clubora',
+        'charset' => 'utf8', 'prefix' => '', 'search_path' => 'clubunio',
         'sslmode' => 'verify-full', 'sslrootcert' => $v['PGSSLROOTCERT'] ?? '',
         'options' => defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')
             ? [PDO::ATTR_EMULATE_PREPARES => false, constant('PDO::PGSQL_ATTR_DISABLE_PREPARES') => true]

@@ -25,7 +25,7 @@ class BexioCatalogFixtureService
         return $db->transaction(function () use ($actor, $tenant, $remote, $db, $hash) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
-            $binding = $db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+            $binding = $db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
             abort_unless($binding && hash_equals($hash, $binding->connection_hash)
                 && hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
             $existing = Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')
@@ -56,7 +56,7 @@ class BexioCatalogFixtureService
         $token = app(BexioConnectionService::class)->accessToken($tenant);
         $client = app(BexioSandboxClient::class);
         $client->verify($token);
-        $table = DB::connection('clubunio')->table('clubora.bexio_catalog_fixture_actions');
+        $table = DB::connection('clubunio')->table('clubunio.bexio_catalog_fixture_actions');
         $existing = (clone $table)->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->first();
         if ($existing) {
             return $this->reconcile($tenant, $token, $existing->id);
@@ -100,7 +100,7 @@ class BexioCatalogFixtureService
 
     private function reconcile(Tenant $tenant, string $token, int $id): int
     {
-        $table = DB::connection('clubunio')->table('clubora.bexio_catalog_fixture_actions')->where('tenant_id', $tenant->id)->where('id', $id);
+        $table = DB::connection('clubunio')->table('clubunio.bexio_catalog_fixture_actions')->where('tenant_id', $tenant->id)->where('id', $id);
         $action = (clone $table)->firstOrFail();
         $client = app(BexioSandboxClient::class);
         $client->verify($token);

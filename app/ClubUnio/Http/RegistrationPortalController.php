@@ -51,7 +51,7 @@ class RegistrationPortalController
         $statuses = RegistrationStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereIn('workflow_key', ['review', 'trial', 'accepted', 'rejected', 'pool'])->orderBy('sort_order')->get();
         $types = MemberType::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->get();
         $documentTypes = DocumentType::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->get();
-        $documents = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $r->id)->where('active', true)->get();
+        $documents = DB::connection('clubunio')->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $r->id)->where('active', true)->get();
         $tenants = collect([$tenant]);
 
         return response()->view('clubunio.portal.registration', compact('tenant', 'tenants', 'r', 'values', 'teams', 'statuses', 'types', 'documentTypes', 'documents'))

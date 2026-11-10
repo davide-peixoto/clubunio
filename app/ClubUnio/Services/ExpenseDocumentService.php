@@ -34,7 +34,7 @@ class ExpenseDocumentService
             $files[] = $reference;
             $line->forceFill(['storage_reference' => implode(',', $files), 'filename' => $line->filename ?: $metadata['original_filename'], 'revision' => $line->revision + 1])->save();
             $line->expense()->increment('revision');
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'expense_lines', 'object_id' => $line->id, 'after_value' => json_encode(['action' => 'document_uploaded', 'upload_id' => $upload->id, 'sha256' => $upload->sha256], JSON_THROW_ON_ERROR)]);
         }
 

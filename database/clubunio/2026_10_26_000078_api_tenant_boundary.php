@@ -16,8 +16,8 @@ return new class extends Migration
         $db->statement("SET LOCAL lock_timeout TO '5s'");
         $db->statement("SET LOCAL statement_timeout TO '60s'");
         // Validate existing data; never silently rewrite a foreign profile assignment.
-        $db->statement('ALTER TABLE clubora.api_integrations ADD CONSTRAINT api_integration_tenant_profile_fk '
-            .'FOREIGN KEY (tenant_id,access_profile_id) REFERENCES clubora.access_profiles(tenant_id,id)');
+        $db->statement('ALTER TABLE clubunio.api_integrations ADD CONSTRAINT api_integration_tenant_profile_fk '
+            .'FOREIGN KEY (tenant_id,access_profile_id) REFERENCES clubunio.access_profiles(tenant_id,id)');
     }
 
     public function down(): void

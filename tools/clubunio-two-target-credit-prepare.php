@@ -69,7 +69,7 @@ foreach (['SOURCE' => '30.00', 'TARGET-A' => '20.00', 'TARGET-B' => '25.00'] as 
     }
     abort_unless($invoice->active && $invoice->member_id === $template->member_id, 409);
     if ($mode === '--send') {
-        $dispatches = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches');
+        $dispatches = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches');
         $dispatch = (clone $dispatches)->where('tenant_id', $tenant->id)->where('invoice_id', $invoice->id)->first();
         if (! $dispatch) {
             $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $invoice->id);

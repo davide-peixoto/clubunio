@@ -47,7 +47,7 @@ class SyncWorkService
 
     public function table()
     {
-        return DB::connection('clubunio')->table('clubora.sync_work_items');
+        return DB::connection('clubunio')->table('clubunio.sync_work_items');
     }
 
     public function authorize(Account $actor, Tenant $tenant): void
@@ -57,7 +57,7 @@ class SyncWorkService
 
     private function event(int $id, ?Account $actor, string $event, ?string $code = null, ?string $note = null): void
     {
-        DB::connection('clubunio')->table('clubora.sync_work_events')->insert([
+        DB::connection('clubunio')->table('clubunio.sync_work_events')->insert([
             'work_item_id' => $id, 'actor_id' => $actor?->id, 'event' => $event, 'code' => $code,
             'encrypted_note' => $note === null ? null : Crypt::encryptString($note),
         ]);
@@ -193,7 +193,7 @@ class SyncWorkService
     {
         $service = app(BexioReconciliationService::class);
         $check = $service->previewNow($actor, $tenant, $kind, $id);
-        if (DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $check)->value('state') === 'ready') {
+        if (DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $check)->value('state') === 'ready') {
             $service->apply($actor, $tenant, $check);
         }
 
@@ -214,13 +214,13 @@ class SyncWorkService
 
     private function invoiceAction(Account $actor, Tenant $tenant, int $id, string $operation): void
     {
-        $existing = DB::connection('clubunio')->table('clubora.bexio_invoice_actions as a')
-            ->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
+        $existing = DB::connection('clubunio')->table('clubunio.bexio_invoice_actions as a')
+            ->join('clubunio.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
             ->where('d.tenant_id', $tenant->id)->where('d.invoice_id', $id)->where('a.operation', $operation)->exists();
         if ($existing) {
             app(BexioInvoiceActionService::class)->reconcile($actor, $tenant, $id);
-            $open = DB::connection('clubunio')->table('clubora.bexio_invoice_actions as a')
-                ->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
+            $open = DB::connection('clubunio')->table('clubunio.bexio_invoice_actions as a')
+                ->join('clubunio.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
                 ->where('d.tenant_id', $tenant->id)->where('d.invoice_id', $id)->where('a.operation', $operation)->where('a.state', '<>', 'accepted')->exists();
             abort_if($open, 409, __('Bexio-Aktion weiterhin unbestätigt. Keine erneute Übertragung.'));
         } else {
@@ -231,7 +231,7 @@ class SyncWorkService
     private function dispatchResult(Account $actor, Tenant $tenant, int $id): void
     {
         // The existing dispatch owns the payload and remote marker. Never manufacture a replacement.
-        $row = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->find($id);
+        $row = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->find($id);
         abort_unless($row, 404);
         $service = app(BexioSandboxDispatchService::class);
         if ($row->state === 'ready') {
@@ -250,18 +250,18 @@ class SyncWorkService
             return 'provider_unconfirmed';
         }
         if (in_array($row->operation, ['invoice_status', 'expense_status', 'invoice_sync', 'expense_sync'], true)) {
-            $state = DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $result)->value('state');
+            $state = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $result)->value('state');
 
             return in_array($state, ['ready', 'unchanged', 'applied'], true) ? null : 'status_unconfirmed';
         }
         if ($row->operation === 'dispatch_result') {
-            return DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('id', $row->object_id)->value('state') === 'accepted' ? null : 'provider_unconfirmed';
+            return DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('id', $row->object_id)->value('state') === 'accepted' ? null : 'provider_unconfirmed';
         }
         if (in_array($row->operation, ['invoice_action', 'invoice_result', 'finance_result'], true)) {
             $payload = json_decode(Crypt::decryptString($row->encrypted_payload), true, 512, JSON_THROW_ON_ERROR);
             $kind = $row->operation !== 'finance_result' ? 'invoice' : $payload['kind'];
             $table = $row->operation !== 'finance_result' ? 'bexio_invoice_actions' : 'bexio_financial_actions';
-            $open = DB::connection('clubunio')->table('clubora.'.$table.' as a')->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
+            $open = DB::connection('clubunio')->table('clubunio.'.$table.' as a')->join('clubunio.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
                 ->where('d.tenant_id', $row->tenant_id)->where('d.'.$kind.'_id', $row->object_id)->where('a.state', '<>', 'accepted')->exists();
 
             return $open ? 'provider_unconfirmed' : null;
@@ -291,23 +291,23 @@ class SyncWorkService
         $this->authorize($actor, $tenant);
         $db = DB::connection('clubunio');
         $candidates = [];
-        foreach ($db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('state', '<>', 'accepted')->orderBy('id')->limit(500)->get() as $row) {
+        foreach ($db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('state', '<>', 'accepted')->orderBy('id')->limit(500)->get() as $row) {
             $candidates[] = ['dispatch_result', $row->id, []];
         }
         foreach (['bexio_invoice_actions' => 'invoice_result', 'bexio_financial_actions' => 'finance_result'] as $table => $operation) {
-            $rows = $db->table('clubora.'.$table.' as a')->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
+            $rows = $db->table('clubunio.'.$table.' as a')->join('clubunio.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
                 ->where('d.tenant_id', $tenant->id)->where('a.state', '<>', 'accepted')->select('d.kind', 'd.invoice_id', 'd.expense_id')->distinct()->limit(500)->get();
             foreach ($rows as $row) {
                 $candidates[] = [$operation, $row->{$row->kind.'_id'}, $operation === 'finance_result' ? ['kind' => $row->kind] : []];
             }
         }
-        $lastChecks = $db->table('clubora.bexio_checks')->where('tenant_id', $tenant->id)
+        $lastChecks = $db->table('clubunio.bexio_checks')->where('tenant_id', $tenant->id)
             ->selectRaw('max(id)')->groupBy('object_type', 'object_id');
-        foreach ($db->table('clubora.bexio_checks')->whereIn('id', $lastChecks)->where('state', 'failed')->limit(500)->get() as $check) {
+        foreach ($db->table('clubunio.bexio_checks')->whereIn('id', $lastChecks)->where('state', 'failed')->limit(500)->get() as $check) {
             $candidates[] = [$check->object_type.'_status', $check->object_id, []];
         }
         $existingTraining = $this->table()->where('tenant_id', $tenant->id)->where('operation', 'training_review')->pluck('object_id')->all();
-        foreach ($db->table('clubora.training_plan_requests')->where('tenant_id', $tenant->id)->where('state', 'failed')->whereNotIn('id', $existingTraining)->limit(500)->get() as $request) {
+        foreach ($db->table('clubunio.training_plan_requests')->where('tenant_id', $tenant->id)->where('state', 'failed')->whereNotIn('id', $existingTraining)->limit(500)->get() as $request) {
             $candidates[] = ['training_review', $request->id, []];
         }
 
@@ -345,7 +345,7 @@ class SyncWorkService
             $events = $this->table()->where('tenant_id', $tenant->id)->whereIn('deduplication_key', array_keys($rows))->pluck('id')
                 ->map(fn ($id) => ['work_item_id' => $id, 'actor_id' => $actor->id, 'event' => 'recorded'])->all();
             foreach (array_chunk($events, 100) as $chunk) {
-                DB::connection('clubunio')->table('clubora.sync_work_events')->insert($chunk);
+                DB::connection('clubunio')->table('clubunio.sync_work_events')->insert($chunk);
             }
 
             return count($rows);

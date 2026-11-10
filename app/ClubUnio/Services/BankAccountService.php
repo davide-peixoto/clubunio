@@ -26,7 +26,7 @@ class BankAccountService
         }
 
         // A technical lead's team scope never extends to bank details.
-        return $q->whereIn('member_id', $access->represented($actor, $tenant, true)->select('clubora.members.id'));
+        return $q->whereIn('member_id', $access->represented($actor, $tenant, true)->select('clubunio.members.id'));
     }
 
     public function save(Account $actor, Tenant $tenant, int $memberId, ?int $id, array $input): MemberBankAccount
@@ -47,7 +47,7 @@ class BankAccountService
                 throw ValidationException::withMessages(['revision' => __('Das Konto wurde inzwischen geändert.')]);
             }
             $data = Validator::make($input, [
-                'bank_id' => ['required', 'integer', Rule::exists('clubunio.clubora.banks', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
+                'bank_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.banks', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
                 'iban' => [$id ? 'nullable' : 'required', 'string', 'max:60'], 'active' => 'required|boolean',
             ])->validate();
             $access = app(MemberAccessService::class);
@@ -65,7 +65,7 @@ class BankAccountService
             if (! $id || $iban !== Crypt::decryptString($bank->iban_encrypted)) {
                 $this->validateIban($iban);
             }
-            $used = $id && DB::connection('clubunio')->table('clubora.expenses')->where('tenant_id', $tenant->id)->where('bank_account_id', $id)->exists();
+            $used = $id && DB::connection('clubunio')->table('clubunio.expenses')->where('tenant_id', $tenant->id)->where('bank_account_id', $id)->exists();
             if ($used && ($iban !== Crypt::decryptString($bank->iban_encrypted) || (int) $data['bank_id'] !== (int) $bank->bank_id)) {
                 throw ValidationException::withMessages(['iban' => __('Dieses Konto ist bereits in Belegen verwendet. Bitte ein neues Konto erfassen.')]);
             }
@@ -76,7 +76,7 @@ class BankAccountService
             }
             $before = $id ? ['bank_id' => $bank->bank_id, 'active' => $bank->active, 'revision' => $bank->revision, 'iban_last4' => substr(Crypt::decryptString($bank->iban_encrypted), -4)] : null;
             $bank->forceFill(['tenant_id' => $tenant->id, 'member_id' => $memberId, 'bank_id' => $data['bank_id'], 'iban_encrypted' => Crypt::encryptString($iban), 'active' => $data['active'], 'revision' => $id ? $bank->revision + 1 : 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'member_bank_accounts', 'object_id' => $bank->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'member_bank_accounts', 'object_id' => $bank->id,
                 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null, 'after_value' => json_encode(['bank_id' => $bank->bank_id, 'active' => $bank->active, 'revision' => $bank->revision, 'iban_last4' => substr($iban, -4)], JSON_THROW_ON_ERROR)]);
 
             return $bank;

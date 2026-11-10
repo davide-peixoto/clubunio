@@ -63,7 +63,7 @@ final class ModulePermissionService
         if (($cached = $reads->permissionCache($actor, $key)) !== null) {
             return $cached['value'];
         }
-        $value = app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'profile-role:'.$tenant->id, fn () => DB::connection('clubunio')->table('clubora.tenant_accounts')
+        $value = app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'profile-role:'.$tenant->id, fn () => DB::connection('clubunio')->table('clubunio.tenant_accounts')
             ->where('account_id', $actor->id)->where('tenant_id', $tenant->id)->where('role', 'profile')->exists());
         $reads->permissionCache($actor, $key, ['value' => $value]);
         return $value;
@@ -77,10 +77,10 @@ final class ModulePermissionService
         if (! $this->isProfile($actor, $tenant)) {
             return false;
         }
-        $profile = DB::connection('clubunio')->table('clubora.tenant_accounts as membership')
-            ->join('clubora.accounts as account', 'account.id', '=', 'membership.account_id')
-            ->join('clubora.account_roles as role', 'role.code', '=', 'membership.role')
-            ->join('clubora.access_profiles as profile', function ($join) {
+        $profile = DB::connection('clubunio')->table('clubunio.tenant_accounts as membership')
+            ->join('clubunio.accounts as account', 'account.id', '=', 'membership.account_id')
+            ->join('clubunio.account_roles as role', 'role.code', '=', 'membership.role')
+            ->join('clubunio.access_profiles as profile', function ($join) {
                 $join->on('profile.id', '=', 'membership.access_profile_id')->on('profile.tenant_id', '=', 'membership.tenant_id');
             })->where('membership.account_id', $actor->id)->where('membership.tenant_id', $tenant->id)
             ->where('membership.role', 'profile')->where('account.active', true)->where('role.active', true)
@@ -114,8 +114,8 @@ final class ModulePermissionService
         }
         $db = DB::connection('clubunio');
         $mobileReads = app(\App\ClubUnio\Mobile\MobileReadContext::class);
-        $link = $mobileReads->remember($actor, 'module-link:'.$tenant->id, fn () => $db->table('clubora.tenant_accounts as membership')
-            ->join('clubora.accounts as account', 'account.id', '=', 'membership.account_id')
+        $link = $mobileReads->remember($actor, 'module-link:'.$tenant->id, fn () => $db->table('clubunio.tenant_accounts as membership')
+            ->join('clubunio.accounts as account', 'account.id', '=', 'membership.account_id')
             ->where('membership.account_id', $actor->id)->where('membership.tenant_id', $tenant->id)
             ->where('account.active', true)->select('membership.*')->first());
         if (! $link) {
@@ -127,10 +127,10 @@ final class ModulePermissionService
         if ($link->role !== 'profile' || ! ($link->access_profile_id ?? null)) {
             return false;
         }
-        if (! $mobileReads->remember($actor, 'profile-role-active', fn () => $db->table('clubora.account_roles')->where('code', 'profile')->where('active', true)->exists())) {
+        if (! $mobileReads->remember($actor, 'profile-role-active', fn () => $db->table('clubunio.account_roles')->where('code', 'profile')->where('active', true)->exists())) {
             return false;
         }
-        $profile = $mobileReads->remember($actor, 'access-profile:'.$tenant->id.':'.$link->access_profile_id, fn () => $db->table('clubora.access_profiles')->where('tenant_id', $tenant->id)
+        $profile = $mobileReads->remember($actor, 'access-profile:'.$tenant->id.':'.$link->access_profile_id, fn () => $db->table('clubunio.access_profiles')->where('tenant_id', $tenant->id)
             ->where('id', $link->access_profile_id)->where('active', true)->first());
         if (! $profile) {
             return false;

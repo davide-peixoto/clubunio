@@ -21,10 +21,10 @@ class MemberDossierImporter
         }
         $this->db->transaction(function () {
             $this->db->select('SELECT pg_advisory_xact_lock(20261011)');
-            if ($this->db->table('clubora.imports')->where('name', 'member-dossier-v1')->exists()) {
+            if ($this->db->table('clubunio.imports')->where('name', 'member-dossier-v1')->exists()) {
                 return;
             }
-            $this->tenant = (int) $this->db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
+            $this->tenant = (int) $this->db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
             if (! $this->tenant) {
                 throw new \LogicException('Foundation required');
             }
@@ -41,12 +41,12 @@ class MemberDossierImporter
                 $values = collect($metadata['tables'][$table])->firstWhere('FldName', $field)['FldTagValues'] ?? '';
                 foreach (explode('|', $values) as $value) {
                     [$code,$label] = str_getcsv($value, ',', '"', '');
-                    $this->db->table('clubora.'.$target)->insert(['tenant_id' => $this->tenant, 'code' => $code, 'name' => $label]);
+                    $this->db->table('clubunio.'.$target)->insert(['tenant_id' => $this->tenant, 'code' => $code, 'name' => $label]);
                 }
                 $this->map($target, 'code');
             }
             foreach ($this->db->table('legacy_prod.BexioStatusMapping')->get() as $r) {
-                $this->db->table('clubora.invoice_statuses')->insert(['tenant_id' => $this->tenant, 'code' => $r->BexioStatus, 'name' => $r->StatusName, 'position_code' => $r->PositionStatus]);
+                $this->db->table('clubunio.invoice_statuses')->insert(['tenant_id' => $this->tenant, 'code' => $r->BexioStatus, 'name' => $r->StatusName, 'position_code' => $r->PositionStatus]);
             }
             $this->map('invoice_statuses', 'code');
             $this->copy('BankkontoStaff', 'member_bank_accounts', 'BankkontoStaffID', fn ($r) => [
@@ -55,7 +55,7 @@ class MemberDossierImporter
             $this->copy('Funktionaere', 'member_functions', 'FunktionaerID', fn ($r) => ['member_id' => $this->ref('members', $r->MitgliederID), 'club_function_id' => $this->ref('club_functions', $r->FunktionsID), 'legacy_qualifications' => $r->QualiID]);
             foreach ($this->db->table('legacy_prod.Funktionaere')->get() as $r) {
                 foreach (array_unique(array_filter(array_map('trim', explode(',', (string) $r->QualiID)), fn ($v) => $v !== '')) as $id) {
-                    $this->db->table('clubora.member_function_qualifications')->insert(['tenant_id' => $this->tenant, 'member_function_id' => $this->ref('member_functions', $r->FunktionaerID), 'qualification_id' => $this->ref('qualifications', $id)]);
+                    $this->db->table('clubunio.member_function_qualifications')->insert(['tenant_id' => $this->tenant, 'member_function_id' => $this->ref('member_functions', $r->FunktionaerID), 'qualification_id' => $this->ref('qualifications', $id)]);
                 }
             }
             $this->copy('Schluesselliste', 'member_keys', 'SchuesselID', fn ($r) => ['member_id' => $this->ref('members', $r->MitgliederID), 'number' => $r->SchluesselNummer, 'name' => $r->SchluesselBezeichnung, 'color' => $r->{'Schlüsselfarbe'}]);
@@ -81,18 +81,18 @@ class MemberDossierImporter
                 'suggestion_accepted' => $r->AiBetragUebernommen, 'notes' => $r->BemerkungenPos, 'filename' => $r->BelegFileName,
                 'storage_reference' => $r->FileUploadName, 'file_size' => $r->BelegLength, 'content_type' => $r->BelegContentType]);
             foreach ($this->db->table('legacy_prod.MitgliederAnmeldungen')->get() as $r) {
-                $this->db->table('clubora.registrations')->where('tenant_id', $this->tenant)->where('legacy_id', $r->AnmeldungID)
+                $this->db->table('clubunio.registrations')->where('tenant_id', $this->tenant)->where('legacy_id', $r->AnmeldungID)
                     ->update(['member_id' => $this->ref('members', $r->MitgliederID), 'active' => $r->sdeletedAt === null]);
             }
             // TeamList.PositionsID is a financial reference, not a sporting position.
-            $this->db->statement('UPDATE clubora.team_players p SET invoice_line_id=l.id FROM clubora.invoice_lines l WHERE p.tenant_id=? AND l.tenant_id=p.tenant_id AND l.legacy_id=p.legacy_invoice_position_id', [$this->tenant]);
-            $this->db->table('clubora.imports')->insert(['name' => 'member-dossier-v1']);
+            $this->db->statement('UPDATE clubunio.team_players p SET invoice_line_id=l.id FROM clubunio.invoice_lines l WHERE p.tenant_id=? AND l.tenant_id=p.tenant_id AND l.legacy_id=p.legacy_invoice_position_id', [$this->tenant]);
+            $this->db->table('clubunio.imports')->insert(['name' => 'member-dossier-v1']);
         });
     }
 
     private function map(string $table, string $key = 'legacy_id'): void
     {
-        $this->maps[$table] = $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant)->pluck('id', $key)->all();
+        $this->maps[$table] = $this->db->table('clubunio.'.$table)->where('tenant_id', $this->tenant)->pluck('id', $key)->all();
     }
 
     private function ref(string $table, mixed $key): ?int
@@ -111,7 +111,7 @@ class MemberDossierImporter
         }
         if (! isset($this->maps[$table][$code])) {
             // Preserve historic codes explicitly, never silently map to a current status.
-            $this->maps[$table][$code] = $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant, 'code' => $code, 'name' => 'Unbekannt ('.$code.')', 'active' => false]);
+            $this->maps[$table][$code] = $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant, 'code' => $code, 'name' => 'Unbekannt ('.$code.')', 'active' => false]);
         }
 
         return $this->maps[$table][$code];
@@ -119,7 +119,7 @@ class MemberDossierImporter
 
     private function copy(string $source, string $target, string $key, callable $convert): void
     {
-        if ($this->db->table('clubora.'.$target)->where('tenant_id', $this->tenant)->exists()) {
+        if ($this->db->table('clubunio.'.$target)->where('tenant_id', $this->tenant)->exists()) {
             throw new \LogicException('Target populated: '.$target);
         }
         $this->db->table('legacy_prod.'.$source)->orderBy($key)->chunk(200, function ($rows) use ($target, $key, $convert) {
@@ -127,7 +127,7 @@ class MemberDossierImporter
             foreach ($rows as $row) {
                 $batch[] = array_merge(['tenant_id' => $this->tenant, 'legacy_id' => $row->$key, 'active' => ($row->sdeletedAt ?? null) === null], $convert($row));
             }
-            $this->db->table('clubora.'.$target)->insert($batch);
+            $this->db->table('clubunio.'.$target)->insert($batch);
         });
         $this->map($target);
     }

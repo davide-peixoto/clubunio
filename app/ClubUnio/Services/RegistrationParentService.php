@@ -23,19 +23,19 @@ class RegistrationParentService
         $values = app(RegistrationDataService::class)->values($registration);
         $ids = [];
         foreach (array_unique(array_filter(array_map(fn ($field) => mb_strtolower(trim($values[$field] ?? '')), ['mother_email', 'father_email']))) as $email) {
-            $accounts = $db->table('clubora.accounts as a')->join('clubora.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
+            $accounts = $db->table('clubunio.accounts as a')->join('clubunio.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
                 ->where('ta.tenant_id', $tenant->id)->where('a.active', true)
                 ->whereRaw('lower(trim(a.username)) = ?', [$email])->pluck('a.id');
             if ($accounts->count() !== 1) {
                 continue;
             }
             $account = $accounts->sole();
-            if ($db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('account_id', $account)->where('member_id', $member->id)->exists()) {
+            if ($db->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)->where('account_id', $account)->where('member_id', $member->id)->exists()) {
                 continue;
             }
-            $id = $db->table('clubora.account_member_links')->insertGetId(['tenant_id' => $tenant->id, 'account_id' => $account,
+            $id = $db->table('clubunio.account_member_links')->insertGetId(['tenant_id' => $tenant->id, 'account_id' => $account,
                 'member_id' => $member->id, 'kind' => 'parent', 'state' => 'pending', 'source' => 'registration_review']);
-            $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'account_member_links', 'object_id' => $id,
                 'after_value' => json_encode(['registration_id' => $registration->id, 'operation' => 'parent_proposed', 'state' => 'pending'], JSON_THROW_ON_ERROR)]);
             $ids[] = $id;

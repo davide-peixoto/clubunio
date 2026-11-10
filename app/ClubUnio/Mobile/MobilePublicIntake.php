@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 final class MobilePublicIntake
 {
-    private function table() { return DB::connection('clubunio')->table('clubora.mobile_public_intake_commands'); }
+    private function table() { return DB::connection('clubunio')->table('clubunio.mobile_public_intake_commands'); }
     private function canUpload(Tenant $tenant): bool
     {
         return config('clubunio-mobile.uploads_enabled', false) && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
@@ -21,7 +21,7 @@ final class MobilePublicIntake
         $data = [];
         foreach (['Countries'=>'countries','Genders'=>'genders','BillingRecipients'=>'billing_recipients'] as $field=>$table) {
             $columns=['id','code','name']; if ($table==='countries') { $columns[]='iso3'; }
-            $data[$field]=DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id',$tenant->id)->where('active',true)->orderBy('id')->get($columns)->map(fn ($row)=>(array)$row)->all();
+            $data[$field]=DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id',$tenant->id)->where('active',true)->orderBy('id')->get($columns)->map(fn ($row)=>(array)$row)->all();
         }
         return $data;
     }

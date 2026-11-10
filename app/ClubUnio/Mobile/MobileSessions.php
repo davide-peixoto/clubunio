@@ -42,7 +42,7 @@ final class MobileSessions
         DB::connection('clubunio')->transaction(function () use ($actor, $provider, $credentials, $id, $secret, $data, $expiry) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && ! $fresh->api_only && $provider->validateCredentials($fresh, $credentials), 401);
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
                 'token_hash' => hash('sha256', $secret), 'device_name' => $data['device_name'], 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]);
         });
         RateLimiter::clear(array_key_first($keys));
@@ -56,7 +56,7 @@ final class MobileSessions
     {
         $token = $request->bearerToken();
         abort_unless(is_string($token) && preg_match('/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([0-9a-f]{64})$/D', $token, $parts), 401);
-        $session = DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $parts[1])->whereNull('revoked_at')
+        $session = DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $parts[1])->whereNull('revoked_at')
             ->where('expires_at', '>', now()->toIso8601String())->first();
         abort_unless($session && hash_equals($session->token_hash, hash('sha256', $parts[2])), 401);
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();

@@ -291,7 +291,7 @@ class TeamPlanningController
             unset($absence->note_encrypted);
         }
         $data['absenceEditableIds'] = \App\ClubUnio\Resources\ProfileUi::profileAllows($data['actor'], $tenant, 'planning', 'update')
-            ? $this->service->absenceMembers($data['actor'], $tenant, 'update')->whereIn('clubora.members.id', $absences->pluck('member_id'))->pluck('id')->all()
+            ? $this->service->absenceMembers($data['actor'], $tenant, 'update')->whereIn('clubunio.members.id', $absences->pluck('member_id'))->pluck('id')->all()
             : [];
         $record = null;
         if ($request->filled('edit')) {
@@ -336,7 +336,7 @@ class TeamPlanningController
                 $id = $data['id'];
             } else {
                 abort_unless(in_array($data['category'], ['kind', 'absence'], true), 422);
-                Validator::make($data, ['code' => [Rule::unique('clubunio.clubora.planning_options', 'code')->where('tenant_id', $tenant->id)->where('category', $data['category'])]])->validate();
+                Validator::make($data, ['code' => [Rule::unique('clubunio.clubunio.planning_options', 'code')->where('tenant_id', $tenant->id)->where('category', $data['category'])]])->validate();
                 unset($data['id']);
                 $id = $q->insertGetId($data + ['tenant_id' => $tenant->id]);
             }

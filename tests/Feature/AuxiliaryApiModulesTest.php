@@ -34,9 +34,9 @@ class AuxiliaryApiModulesTest extends TestCase
         $tenant = Tenant::create(['slug' => 'aux-api-'.Str::random(12), 'name' => 'Synthetic API auxiliary']);
         $actor = new Account;
         $actor->forceFill(['username' => Str::random(20), 'display_name' => 'API fixture', 'password' => bcrypt(Str::random(40)), 'active' => true, 'api_only' => true])->save();
-        $profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture', 'active' => true,
+        $profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Fixture', 'active' => true,
             'permissions' => json_encode(PermissionCatalog::keys(), JSON_THROW_ON_ERROR)]);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'profile', 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'profile', 'access_profile_id' => $profile]);
         $scopes = [];
         foreach (PermissionCatalog::keys() as $permission) {
             [$module, $function] = explode('.', $permission);
@@ -54,7 +54,7 @@ class AuxiliaryApiModulesTest extends TestCase
 
     private function tokenScopes(array $scopes): void
     {
-        $this->db->table('clubora.api_access_tokens')->where('id', $this->context->token->id)
+        $this->db->table('clubunio.api_access_tokens')->where('id', $this->context->token->id)
             ->update(['abilities' => json_encode($scopes, JSON_THROW_ON_ERROR)]);
     }
 
@@ -83,9 +83,9 @@ class AuxiliaryApiModulesTest extends TestCase
     {
         $definitions = app(AuxiliaryApiModules::class)->definitions();
         $this->assertCount(14, $definitions);
-        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubora')->get(['table_name', 'column_name'])->groupBy('table_name');
+        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubunio')->get(['table_name', 'column_name'])->groupBy('table_name');
         foreach ($definitions as $key => $definition) {
-            $table = Str::after((new $definition['model'])->getTable(), 'clubora.');
+            $table = Str::after((new $definition['model'])->getTable(), 'clubunio.');
             $this->assertSame([], array_values(array_diff($definition['read_fields'], $columns->get($table)->pluck('column_name')->all())), $key);
             foreach (['tenant_id', 'storage_path', 'filename', 'blob_url', 'snapshot_encrypted', 'source_snapshot', 'external_snapshot', 'connection_hash', 'proof_reference', 'iban'] as $field) {
                 $this->assertNotContains($field, $definition['read_fields'], $key);
@@ -97,7 +97,7 @@ class AuxiliaryApiModulesTest extends TestCase
 
     public function test_every_registered_read_field_exists_in_postgresql_with_explicit_query_builder_tables(): void
     {
-        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubora')
+        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubunio')
             ->get(['table_name', 'column_name'])->groupBy('table_name');
         $queryBuilderTables = ['team_events' => 'team_events', 'team_absences' => 'team_absences',
             'team_participations' => 'team_participations', 'team_guests' => 'team_guests',
@@ -109,7 +109,7 @@ class AuxiliaryApiModulesTest extends TestCase
         $issues = [];
         foreach ($this->registry->definitions() as $resource => $definition) {
             if ($definition['model'] !== null) {
-                $table = Str::after((new $definition['model'])->getTable(), 'clubora.');
+                $table = Str::after((new $definition['model'])->getTable(), 'clubunio.');
             } else {
                 $this->assertArrayHasKey($resource, $queryBuilderTables, 'Unreviewed query-builder projection: '.$resource);
                 $table = $queryBuilderTables[$resource];
@@ -167,9 +167,9 @@ class AuxiliaryApiModulesTest extends TestCase
     {
         $status = [];
         foreach (['draft', 'released', 'confirmed', 'cancelled'] as $code) {
-            $status[$code] = $this->db->table('clubora.financial_adjustment_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'name' => $code, 'code' => $code]);
+            $status[$code] = $this->db->table('clubunio.financial_adjustment_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'name' => $code, 'code' => $code]);
         }
-        $workflow = $this->db->table('clubora.invoice_workflow_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'name' => 'Released', 'code' => 'released']);
+        $workflow = $this->db->table('clubunio.invoice_workflow_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'name' => 'Released', 'code' => 'released']);
         $invoice = new Invoice;
         $invoice->forceFill(['tenant_id' => $this->context->tenant->id, 'member_id' => $this->member->id, 'workflow_status_id' => $workflow])->save();
         $line = new InvoiceLine;
@@ -211,7 +211,7 @@ class AuxiliaryApiModulesTest extends TestCase
     public function test_document_metadata_exposes_original_name_but_not_storage_or_opaque_filename(): void
     {
         $type = $this->registry->create($this->context, 'document_types', ['name' => 'Synthetic', 'code' => 'fixture', 'sort_order' => 1, 'active' => true]);
-        $id = $this->db->table('clubora.member_documents')->insertGetId(['tenant_id' => $this->context->tenant->id,
+        $id = $this->db->table('clubunio.member_documents')->insertGetId(['tenant_id' => $this->context->tenant->id,
             'member_id' => $this->member->id, 'document_type_id' => $type['id'], 'filename' => 'opaque-secret-name',
             'storage_path' => 'private/secret', 'original_filename' => 'Synthetic.pdf', 'file_size' => 100, 'content_type' => 'application/pdf']);
         $dto = $this->registry->show($this->context, 'documents', $id);
@@ -227,9 +227,9 @@ class AuxiliaryApiModulesTest extends TestCase
     public function test_member_change_review_is_revision_guarded_and_requires_member_write_scope_to_approve(): void
     {
         foreach (['pending', 'approved', 'rejected', 'withdrawn'] as $state) {
-            $statuses[$state] = $this->db->table('clubora.member_change_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'code' => $state, 'name' => $state, 'color' => 'gray']);
+            $statuses[$state] = $this->db->table('clubunio.member_change_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id, 'code' => $state, 'name' => $state, 'color' => 'gray']);
         }
-        $id = $this->db->table('clubora.member_change_requests')->insertGetId(['tenant_id' => $this->context->tenant->id,
+        $id = $this->db->table('clubunio.member_change_requests')->insertGetId(['tenant_id' => $this->context->tenant->id,
             'member_id' => $this->member->id, 'requested_by' => $this->context->actor->id, 'status_id' => $statuses['pending'],
             'snapshot_encrypted' => Crypt::encryptString('{"before":{},"changes":{}}'), 'member_version' => str_repeat('a', 64), 'revision' => 1]);
         $this->tokenScopes(['member_changes:read', 'member_changes:approve']);

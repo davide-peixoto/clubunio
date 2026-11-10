@@ -48,7 +48,7 @@ class FacilityService
                 throw ValidationException::withMessages(['revision' => __('Der Datensatz wurde geändert. Bitte neu laden.')]);
             }
             $rules = ['active' => 'required|boolean', 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|min:1'];
-            $option = fn ($category, $required = false, $onlyActive = true) => [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->when($onlyActive, fn ($query) => $query->where('active', true)))];
+            $option = fn ($category, $required = false, $onlyActive = true) => [$required ? 'required' : 'nullable', 'integer', Rule::exists('clubunio.clubunio.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('category', $category)->when($onlyActive, fn ($query) => $query->where('active', true)))];
             if ($model === Competition::class) {
                 $rules += ['plays_on' => 'required|date_format:Y-m-d', 'starts_at' => 'nullable|date_format:H:i:s', 'host_name' => 'required|string|max:255', 'guest_name' => 'required|string|max:255', 'host_category' => 'nullable|string|max:100', 'guest_category' => 'nullable|string|max:100', 'host_club_number' => 'nullable|integer|min:1', 'guest_club_number' => 'nullable|integer|min:1', 'remarks' => 'nullable|string|max:10000', 'show_on_signage' => 'required|boolean', 'field_id' => $option('field')];
                 foreach (['host', 'guest'] as $side) {
@@ -62,16 +62,16 @@ class FacilityService
             } elseif ($model === FootballClub::class) {
                 $rules += ['name' => 'required|string|max:255', 'logo_enabled' => 'required|boolean'];
                 if (! $id) {
-                    $rules['club_number'] = ['bail', 'required', 'integer', 'min:1', 'max:2147483647', Rule::unique('clubunio.clubora.football_clubs')->where('tenant_id', $tenant->id)];
+                    $rules['club_number'] = ['bail', 'required', 'integer', 'min:1', 'max:2147483647', Rule::unique('clubunio.clubunio.football_clubs')->where('tenant_id', $tenant->id)];
                 }
             } elseif ($model === SignageNotice::class) {
                 $rules += ['shows_on' => 'required|date_format:Y-m-d', 'title' => 'required|string|max:255', 'body' => 'required|string|max:10000'];
             } elseif ($model === FieldAvailability::class) {
-                $rules += ['field_id' => $option('field', true, ! FacilityPlanningMode::neutral($tenant)), 'status_id' => ['required', 'integer', Rule::exists('clubunio.clubora.facility_statuses', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))], 'note' => 'nullable|string|max:500'];
+                $rules += ['field_id' => $option('field', true, ! FacilityPlanningMode::neutral($tenant)), 'status_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.facility_statuses', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))], 'note' => 'nullable|string|max:500'];
             } else {
                 $rules += ['name' => 'required|string|max:160', 'blocks_training' => 'required|boolean', 'sort_order' => 'required|integer|min:0|max:10000'];
                 if (! $id) {
-                    $rules['code'] = ['required', 'string', 'max:30', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('clubunio.clubora.facility_statuses')->where(fn ($q) => $q->where('tenant_id', $tenant->id))];
+                    $rules['code'] = ['required', 'string', 'max:30', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('clubunio.clubunio.facility_statuses')->where(fn ($q) => $q->where('tenant_id', $tenant->id))];
                 }
             }
             // Source identifiers and sync timestamps never come from an edit form.
@@ -101,7 +101,7 @@ class FacilityService
             $pitchBefore = $model === Competition::class
                 ? app(PitchCompetitionEdits::class)->beforeSave($actor, $tenant, $record, $data) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id, 'revision' => $id ? $record->revision + 1 : 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
             if ($pitchBefore !== null) {
                 app(PitchCompetitionEdits::class)->afterSave($actor, $tenant, $record, $pitchBefore);
             }

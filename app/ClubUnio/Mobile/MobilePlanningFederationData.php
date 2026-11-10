@@ -16,8 +16,8 @@ final class MobilePlanningFederationData
         $p = app(TeamPlanningService::class);
         $teams = $p->teams($actor, $tenant, true)->select(['id', 'team_id', 'label']);
         return DB::connection('clubunio')->query()->fromSub($teams, 'ts')
-            ->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->where('t.tenant_id', $tenant->id)->where('t.active', true))
-            ->join('clubora.sfv_schedule as sfv', fn ($j) => $j->where('sfv.tenant_id', $tenant->id)
+            ->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->where('t.tenant_id', $tenant->id)->where('t.active', true))
+            ->join('clubunio.sfv_schedule as sfv', fn ($j) => $j->where('sfv.tenant_id', $tenant->id)
                 ->on(fn ($j) => $j->on('sfv.team_a_id', '=', 't.sfv_team_id')->orOn('sfv.team_b_id', '=', 't.sfv_team_id')))
             // Retain removed matches in the join, so they cannot become eligible new imports.
             ->leftJoinSub($p->table($tenant, 'team_events', true), 'event', fn ($j) => $j->on('event.team_season_id', '=', 'ts.id')->on('event.sfv_match_id', '=', 'sfv.match_id'))

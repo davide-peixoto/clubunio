@@ -25,7 +25,7 @@ class TestOutboxDispatcher
         if ($db->transactionLevel() !== 0) {
             throw new \LogicException('Dispatch requires a committed transaction');
         }
-        $table = 'clubora.'.$table;
+        $table = 'clubunio.'.$table;
         for ($i = 0; $i < min(50, max(0, $limit)); $i++) {
             $event = $db->transaction(function () use ($db, $table, $tenantId, $eventId, $pitch) {
                 $row = $db->table($table)

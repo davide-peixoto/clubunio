@@ -61,10 +61,10 @@ class CatalogService
                 $rules += ['starts_on' => 'nullable|date_format:Y-m-d', 'ends_on' => 'nullable|date_format:Y-m-d|after_or_equal:starts_on'];
             }
             if ($model === Country::class) {
-                $rules['iso3'] = $id ? 'prohibited' : ['required', 'regex:/^[A-Z]{3}$/', Rule::unique('clubunio.clubora.countries', 'iso3')->where('tenant_id', $tenant->id)];
+                $rules['iso3'] = $id ? 'prohibited' : ['required', 'regex:/^[A-Z]{3}$/', Rule::unique('clubunio.clubunio.countries', 'iso3')->where('tenant_id', $tenant->id)];
             }
             if ($model === Country::class && ! $id) {
-                $rules['code'] = ['required', 'regex:/^[A-Z]{2}$/', Rule::unique('clubunio.clubora.countries', 'code')->where('tenant_id', $tenant->id)];
+                $rules['code'] = ['required', 'regex:/^[A-Z]{2}$/', Rule::unique('clubunio.clubunio.countries', 'code')->where('tenant_id', $tenant->id)];
             }
             if ($model === BillingRecipient::class) {
                 $rules['email_field'] = $id ? 'prohibited' : ['required', Rule::in(['email', 'mother_email', 'father_email'])];
@@ -93,7 +93,7 @@ class CatalogService
                 unset($rules['sort_order']);
             }
             if ($model === InvoiceStatus::class) {
-                $rules['position_code'] = ['required', 'string', Rule::exists('clubunio.clubora.invoice_line_statuses', 'code')->where('tenant_id', $tenant->id)->where('active', true)];
+                $rules['position_code'] = ['required', 'string', Rule::exists('clubunio.clubunio.invoice_line_statuses', 'code')->where('tenant_id', $tenant->id)->where('active', true)];
                 if (! $id) {
                     $rules['code'][] = 'regex:/^[0-9]{1,10}$/';
                 }
@@ -112,10 +112,10 @@ class CatalogService
             $before = $record->exists ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id])->save();
             if ($id && in_array($model, [Team::class, Season::class], true)) {
-                DB::connection('clubunio')->update("UPDATE clubora.team_seasons ts SET label=t.name || ' / ' || s.name
-                    FROM clubora.teams t,clubora.seasons s WHERE ts.tenant_id=? AND t.tenant_id=ts.tenant_id AND s.tenant_id=ts.tenant_id AND t.id=ts.team_id AND s.id=ts.season_id", [$tenant->id]);
+                DB::connection('clubunio')->update("UPDATE clubunio.team_seasons ts SET label=t.name || ' / ' || s.name
+                    FROM clubunio.teams t,clubunio.seasons s WHERE ts.tenant_id=? AND t.tenant_id=ts.tenant_id AND s.tenant_id=ts.tenant_id AND t.id=ts.team_id AND s.id=ts.season_id", [$tenant->id]);
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id,
                 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
 

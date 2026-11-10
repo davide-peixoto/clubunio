@@ -58,7 +58,7 @@ class BexioReconciliationTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'bexio-check-'.Str::random(10), 'name' => 'Test Club']);
         $this->db->table('tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'bexio', 'key' => 'BEXIO_ACTIVE', 'label' => 'Bexio aktiv', 'value_type' => 'boolean', 'encrypted_value' => Crypt::encryptString('1')]);
         $this->actor = $this->account('admin');

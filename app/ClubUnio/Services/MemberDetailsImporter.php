@@ -15,15 +15,15 @@ class MemberDetailsImporter
         }
         $db->transaction(function () use ($db) {
             $db->select('SELECT pg_advisory_xact_lock(20261011)');
-            if ($db->table('clubora.imports')->where('name', 'member-details-v1')->exists()) {
+            if ($db->table('clubunio.imports')->where('name', 'member-details-v1')->exists()) {
                 return;
             }
-            $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
+            $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
             if (! $tenant) {
                 throw new \LogicException('Foundation required');
             }
             foreach (['countries', 'genders', 'billing_recipients', 'families', 'family_members', 'document_types', 'member_documents'] as $table) {
-                if ($db->table('clubora.'.$table)->where('tenant_id', $tenant)->exists()) {
+                if ($db->table('clubunio.'.$table)->where('tenant_id', $tenant)->exists()) {
                     throw new \LogicException('Target already populated');
                 }
             }
@@ -32,20 +32,20 @@ class MemberDetailsImporter
                 $countries[] = [
                     'tenant_id' => $tenant, 'code' => $r->ISO2, 'iso3' => $r->ISO3, 'name' => $r->NameDE, 'sort_order' => $r->SortOrder ?? 0];
             }
-            $db->table('clubora.countries')->insert($countries);
+            $db->table('clubunio.countries')->insert($countries);
             foreach (['M' => 'Männlich', 'F' => 'Weiblich', 'N' => 'Neutral'] as $code => $name) {
-                $db->table('clubora.genders')->insert(compact('code', 'name') + ['tenant_id' => $tenant]);
+                $db->table('clubunio.genders')->insert(compact('code', 'name') + ['tenant_id' => $tenant]);
             }
             foreach (['S' => ['Mitglied', 'email'], 'M' => ['Mutter', 'mother_email'], 'V' => ['Vater', 'father_email']] as $code => [$name,$field]) {
-                $db->table('clubora.billing_recipients')->insert(['tenant_id' => $tenant, 'code' => $code, 'name' => $name, 'email_field' => $field]);
+                $db->table('clubunio.billing_recipients')->insert(['tenant_id' => $tenant, 'code' => $code, 'name' => $name, 'email_field' => $field]);
             }
-            $db->table('clubora.member_statuses')->where('tenant_id', $tenant)->where('legacy_id', 1)->update(['ends_membership' => true]);
-            $db->table('clubora.member_statuses')->where('tenant_id', $tenant)->where('legacy_id', 2)->update(['restores_membership' => true]);
-            $country = $db->table('clubora.countries')->where('tenant_id', $tenant)->pluck('id', 'code');
-            $familyCountries = $country->merge($db->table('clubora.countries')->where('tenant_id', $tenant)->pluck('id', 'name'));
-            $nationality = $db->table('clubora.countries')->where('tenant_id', $tenant)->pluck('id', 'iso3');
-            $gender = $db->table('clubora.genders')->where('tenant_id', $tenant)->pluck('id', 'code');
-            $billing = $db->table('clubora.billing_recipients')->where('tenant_id', $tenant)->pluck('id', 'code');
+            $db->table('clubunio.member_statuses')->where('tenant_id', $tenant)->where('legacy_id', 1)->update(['ends_membership' => true]);
+            $db->table('clubunio.member_statuses')->where('tenant_id', $tenant)->where('legacy_id', 2)->update(['restores_membership' => true]);
+            $country = $db->table('clubunio.countries')->where('tenant_id', $tenant)->pluck('id', 'code');
+            $familyCountries = $country->merge($db->table('clubunio.countries')->where('tenant_id', $tenant)->pluck('id', 'name'));
+            $nationality = $db->table('clubunio.countries')->where('tenant_id', $tenant)->pluck('id', 'iso3');
+            $gender = $db->table('clubunio.genders')->where('tenant_id', $tenant)->pluck('id', 'code');
+            $billing = $db->table('clubunio.billing_recipients')->where('tenant_id', $tenant)->pluck('id', 'code');
             $resolve = static function ($map, $key) {
                 if ($key === null || trim((string) $key) === '') {
                     return null;
@@ -97,33 +97,33 @@ class MemberDetailsImporter
             }
             $sets[] = "exit_date=(x.data->>'exit_date')::date";
             $sets[] = "ahv_encrypted=x.data->>'ahv_encrypted'";
-            $db->update('UPDATE clubora.members m SET '.implode(',', $sets).' FROM pg_temp.member_details_import x WHERE m.tenant_id=? AND m.legacy_id=x.legacy_id', [$tenant]);
+            $db->update('UPDATE clubunio.members m SET '.implode(',', $sets).' FROM pg_temp.member_details_import x WHERE m.tenant_id=? AND m.legacy_id=x.legacy_id', [$tenant]);
             foreach ($db->table('legacy_prod.Familie')->get() as $r) {
-                $db->table('clubora.families')->insert([
+                $db->table('clubunio.families')->insert([
                     'tenant_id' => $tenant, 'legacy_id' => $r->FamilieID, 'name' => $r->FamilieName ?? 'Familie '.$r->FamilieID,
                     'street' => $r->FamilieStrasse, 'postal_code' => $r->FamiliePLZ, 'city' => $r->FamilieOrt,
                     'country_id' => $resolve($familyCountries, $r->FamilieLand), 'active' => $r->sdeletedAt === null]);
             }
-            $families = $db->table('clubora.families')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
-            $members = $db->table('clubora.members')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $families = $db->table('clubunio.families')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $members = $db->table('clubunio.members')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
             foreach ($db->table('legacy_prod.FamilieMitglieder')->get() as $r) {
-                $db->table('clubora.family_members')->insert([
+                $db->table('clubunio.family_members')->insert([
                     'tenant_id' => $tenant, 'family_id' => $resolve($families, $r->FamilieID), 'member_id' => $resolve($members, $r->FamilieMID),
                     'discount' => $r->FamilieRabatt ?? 0, 'notes' => $r->Bemerkungen, 'active' => $r->sdeletedAt === null]);
             }
             foreach ($db->table('legacy_prod.DokumentTyp')->get() as $r) {
-                $db->table('clubora.document_types')->insert([
+                $db->table('clubunio.document_types')->insert([
                     'tenant_id' => $tenant, 'legacy_id' => $r->DokumentTypID, 'code' => $r->Code, 'name' => $r->Bezeichnung, 'active' => $r->Aktiv]);
             }
-            $types = $db->table('clubora.document_types')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $types = $db->table('clubunio.document_types')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
             foreach ($db->table('legacy_prod.MitgliederAnhaenge')->get() as $r) {
-                $db->table('clubora.member_documents')->insert([
+                $db->table('clubunio.member_documents')->insert([
                     'tenant_id' => $tenant, 'legacy_id' => $r->AnhangID, 'member_id' => $resolve($members, $r->MitgliederID),
                     'document_type_id' => $resolve($types, $r->DokumentTypID), 'filename' => $r->FileName,
                     'original_filename' => $r->OriginalFileName, 'storage_path' => $r->StoragePath, 'file_size' => $r->FileSize,
                     'content_type' => $r->ContentType, 'source_created_at' => $r->CreatedAt, 'active' => $r->sdeletedAt === null]);
             }
-            $db->table('clubora.imports')->insert(['name' => 'member-details-v1']);
+            $db->table('clubunio.imports')->insert(['name' => 'member-details-v1']);
         });
     }
 }

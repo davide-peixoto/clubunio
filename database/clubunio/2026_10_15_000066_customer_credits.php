@@ -13,7 +13,7 @@ return new class extends Migration
     {
         abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
         $schema = Schema::connection('clubunio');
-        $schema->create('clubora.customer_credits', function (Blueprint $t) {
+        $schema->create('clubunio.customer_credits', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');
             $t->bigInteger('member_id');
@@ -32,10 +32,10 @@ return new class extends Migration
             $t->unique(['tenant_id', 'connection_hash', 'voucher_id'], 'customer_credit_voucher_unique');
             $t->index(['tenant_id', 'member_id']);
         });
-        $schema->create('clubora.customer_credit_allocations', function (Blueprint $t) {
+        $schema->create('clubunio.customer_credit_allocations', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');
-            $t->foreignId('customer_credit_id')->constrained('clubora.customer_credits')->restrictOnDelete();
+            $t->foreignId('customer_credit_id')->constrained('clubunio.customer_credits')->restrictOnDelete();
             $t->bigInteger('invoice_id');
             $t->string('connection_hash', 64);
             $t->string('voucher_id', 30);

@@ -124,7 +124,7 @@ final class WebChatController
                 return $data(['id' => (int)$s->ensure($t, 'event', (int)$event->team_season_id, (int)$event->id)->id]);
             case 'blocks':
                 $ids = $s->table($t, 'chat_blocks')->where('account_id', $a->id)->pluck('other_account_id');
-                return $data($t->accounts()->whereIn('clubora.accounts.id', $ids)->orderBy('clubora.accounts.id')->limit(100)->get(['clubora.accounts.id', 'display_name as name']));
+                return $data($t->accounts()->whereIn('clubunio.accounts.id', $ids)->orderBy('clubunio.accounts.id')->limit(100)->get(['clubunio.accounts.id', 'display_name as name']));
             case 'block':
                 $d = $r->validate(['blocked' => 'required|boolean']); $other = $id('account_id');
                 $q = $s->table($t, 'chat_blocks')->where('account_id', $a->id)->where('other_account_id', $other);

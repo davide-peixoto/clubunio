@@ -11,7 +11,7 @@ final class MobileKeyboxAdministration {
             &&!$actor->fresh()?->api_only&&app(AccountAdministrationService::class)->allowed($actor,$tenant);
     }
     private function authorize(Account $actor,Tenant $tenant): void { abort_unless($this->allowed($actor,$tenant),403); }
-    private function table(string $table) { return DB::connection('clubunio')->table('clubora.'.$table); }
+    private function table(string $table) { return DB::connection('clubunio')->table('clubunio.'.$table); }
     private function audit(Account $actor,Tenant $tenant,int $box,string $action,array $details): void {
         $this->table('object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,'object_type'=>'mobile_keybox','object_id'=>$box,
             'after_value'=>json_encode(['action'=>$action]+$details,JSON_THROW_ON_ERROR)]);

@@ -143,19 +143,22 @@ Artisan::command('clubunio:import-objects', function () {
 Artisan::command('clubunio:status', function () {
     $db = DB::connection('clubunio');
     foreach (['tenants', 'accounts', 'members', 'tenant_settings', 'teams', 'seasons', 'team_seasons', 'registrations', 'member_statuses', 'member_types', 'registration_statuses'] as $table) {
-        $this->line($table.': '.$db->table('clubora.'.$table)->count());
+        $this->line($table.': '.$db->table('clubunio.'.$table)->count());
     }
     $this->line('Outbound enabled: '.(config('clubunio.outbound_enabled') ? 'yes' : 'no'));
 })->purpose('Read only ClubUnio counts without confidential values');
 
 Artisan::command('clubunio:foundation', function () {
     $db = DB::connection('clubunio');
+    if (app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com') {
+        \App\ClubUnio\Services\StageMigrationTarget::authorize($db, 'clubunio_stage');
+    }
     if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
         throw new LogicException('Unexpected database');
     }
-    $db->statement('CREATE SCHEMA IF NOT EXISTS clubora');
-    $db->statement('REVOKE ALL ON SCHEMA clubora FROM PUBLIC');
-    config(['database.migrations.table' => 'clubora.migrations']);
+    $db->statement('CREATE SCHEMA IF NOT EXISTS clubunio');
+    $db->statement('REVOKE ALL ON SCHEMA clubunio FROM PUBLIC');
+    config(['database.migrations.table' => 'clubunio.migrations']);
     $this->call('migrate', ['--database' => 'clubunio', '--path' => 'database/clubunio', '--force' => true]);
 })->purpose('Create only the new ClubUnio schema; preserve the PROD snapshot');
 
@@ -167,29 +170,29 @@ Artisan::command('clubunio:import-foundation', function () {
     try {
         $db->transaction(function () use ($db) {
             $db->select('SELECT pg_advisory_xact_lock(20261011)');
-            if ($db->table('clubora.imports')->where('name', 'foundation-v1')->exists()) {
+            if ($db->table('clubunio.imports')->where('name', 'foundation-v1')->exists()) {
                 return;
             }
-            if ($db->table('clubora.tenants')->exists()) {
+            if ($db->table('clubunio.tenants')->exists()) {
                 throw new LogicException('Non-empty foundation');
             }
-            $tenant = $db->table('clubora.tenants')->insertGetId(['slug' => 'sv-sissach', 'name' => 'SV Sissach']);
+            $tenant = $db->table('clubunio.tenants')->insertGetId(['slug' => 'sv-sissach', 'name' => 'SV Sissach']);
             foreach ($db->table('legacy_prod.Users')->orderBy('Username')->get() as $u) {
                 $active = $u->sdeletedAt === null && in_array(strtoupper((string) $u->Activated), ['1', 'Y', 'TRUE'], true)
                     && ! in_array(strtoupper((string) $u->Locked), ['1', 'Y', 'TRUE'], true);
-                $id = $db->table('clubora.accounts')->insertGetId([
+                $id = $db->table('clubunio.accounts')->insertGetId([
                     'username' => mb_strtolower(trim($u->Username)),
                     'display_name' => trim(($u->First_Name ?? '').' '.($u->Last_Name ?? '')) ?: $u->Username,
                     'password' => $u->Password ?? '', 'active' => $active,
                 ]);
                 $level = (int) $u->User_Level;
-                $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant, 'account_id' => $id,
+                $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant, 'account_id' => $id,
                     'role' => match ($level) {
                         -1 => 'admin',1 => 'office',default => 'member'
                     }, 'legacy_user_level' => $level]);
             }
             $members = [];
-            $recordedAtAvailable = $db->getSchemaBuilder()->hasColumn('clubora.members', 'recorded_at');
+            $recordedAtAvailable = $db->getSchemaBuilder()->hasColumn('clubunio.members', 'recorded_at');
             foreach ($db->table('legacy_prod.Mitglieder')->whereNull('sdeletedAt')->orderBy('MitgliederID')->get() as $m) {
                 $members[] = ['tenant_id' => $tenant, 'legacy_id' => $m->MitgliederID,
                     'first_name' => $m->Vorname, 'last_name' => $m->Nachname, 'company' => $m->Firma ?? null,
@@ -197,12 +200,12 @@ Artisan::command('clubunio:import-foundation', function () {
                     + ($recordedAtAvailable ? ['recorded_at' => $m->ErfasstAm ?? null] : []);
             }
             foreach (array_chunk($members, 100) as $batch) {
-                $db->table('clubora.members')->insert($batch);
+                $db->table('clubunio.members')->insert($batch);
             }
             foreach (['iniApp' => 'app', 'iniBexio' => 'bexio', 'iniWhatsApp' => 'integrations'] as $table => $area) {
                 foreach ($db->table('legacy_prod.'.$table)->get() as $s) {
                     if (\App\ClubUnio\Services\RetiredIntegrationParameters::contains($area, $s->ParameterName)) { continue; }
-                    $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => $area,
+                    $db->table('clubunio.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => $area,
                         'key' => $s->ParameterName, 'label' => $s->ParameterName, 'value_type' => 'string',
                         'encrypted_value' => Crypt::encryptString((string) $s->ParameterValue),
                         // Unknown historical parameters remain confidential pending classification.
@@ -213,12 +216,12 @@ Artisan::command('clubunio:import-foundation', function () {
             if ($ini) {
                 // Training period and field availability now have dedicated controls.
                 foreach (['SaisonID'] as $key) {
-                    $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => 'general', 'key' => $key,
+                    $db->table('clubunio.tenant_settings')->insert(['tenant_id' => $tenant, 'area' => 'general', 'key' => $key,
                         'label' => $key, 'value_type' => $key === 'SaisonID' ? 'integer' : 'string',
                         'encrypted_value' => Crypt::encryptString((string) $ini->$key), 'is_secret' => false, 'enabled' => false]);
                 }
             }
-            $db->table('clubora.imports')->insert(['name' => 'foundation-v1']);
+            $db->table('clubunio.imports')->insert(['name' => 'foundation-v1']);
         });
         $this->info('Foundation imported or already present. No outbound actions enabled.');
     } catch (Throwable $e) {

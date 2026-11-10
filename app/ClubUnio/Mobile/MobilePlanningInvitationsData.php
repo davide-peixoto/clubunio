@@ -65,7 +65,7 @@ final class MobilePlanningInvitationsData
         $q = trim($d['q'] ?? '');
         if (mb_strlen($q) < 2) { return ['success' => true, 'records' => [], 'totalRecordCount' => 0]; }
         $p = app(TeamPlanningService::class);
-        $query = app(MemberAccessService::class)->activeMembers($tenant)->whereNotIn('id', $p->roster($tenant, $event)->select('clubora.members.id'))
+        $query = app(MemberAccessService::class)->activeMembers($tenant)->whereNotIn('id', $p->roster($tenant, $event)->select('clubunio.members.id'))
             ->where(fn ($b) => $b->where('first_name', 'ilike', '%'.$q.'%')->orWhere('last_name', 'ilike', '%'.$q.'%'));
         $total = (clone $query)->count();
         $rows = $query->orderBy('last_name')->orderBy('first_name')->orderBy('id')->offset($d['start'] ?? 0)->limit(20)

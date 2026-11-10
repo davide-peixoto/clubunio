@@ -41,8 +41,8 @@ class MessageLanguageService
 
     private function accounts(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.accounts as a')
-            ->join('clubora.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
+        return DB::connection('clubunio')->table('clubunio.accounts as a')
+            ->join('clubunio.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
             ->where('ta.tenant_id', $tenant->id)->where('a.active', true);
     }
 

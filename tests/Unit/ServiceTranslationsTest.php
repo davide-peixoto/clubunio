@@ -143,7 +143,7 @@ class ServiceTranslationsTest extends TestCase
         $dashboard->shouldReceive('scopeOpenInvoices')->once();
         $this->app->instance(\App\ClubUnio\Services\DashboardService::class, $dashboard);
         $audit = \Mockery::mock();
-        $audit->shouldReceive('table')->with('clubora.object_changes')->andReturnSelf();
+        $audit->shouldReceive('table')->with('clubunio.object_changes')->andReturnSelf();
         $audit->shouldReceive('insert')->times(3)->andReturn(true);
         \Illuminate\Support\Facades\DB::shouldReceive('connection')->with('clubunio')->andReturn($audit);
 

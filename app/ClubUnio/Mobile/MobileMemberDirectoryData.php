@@ -26,7 +26,7 @@ final class MobileMemberDirectoryData
         $total = (clone $query)->count();
         $rows = $query->orderBy('last_name')->orderBy('first_name')->orderBy('id')
             ->offset($data['start'] ?? 0)->limit($data['recperpage'] ?? 20)->get(['id', 'first_name', 'last_name', 'email', 'mobile', 'city']);
-        $pending=\Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.account_member_links')->where('tenant_id',$tenant->id)
+        $pending=\Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.account_member_links')->where('tenant_id',$tenant->id)
             ->where('account_id',$actor->id)->where('state','pending')->where('kind','parent')->count();
         return ['Members' => $rows->map(fn ($member) => ['MitgliederID' => (int) $member->id,
             'Vorname' => $member->first_name, 'Nachname' => $member->last_name, 'Email' => $member->email,
@@ -40,7 +40,7 @@ final class MobileMemberDirectoryData
         $permissions = app(ModulePermissionService::class); $permissions->authorize($actor, $tenant, 'member_changes', 'view');
         $d = $request->validate(['status' => 'nullable|in:OFFEN,GENEHMIGT,ABGELEHNT,ZURUECKGEZOGEN',
             'start' => 'nullable|integer|min:0|max:100000', 'recperpage' => 'nullable|integer|min:1|max:100']);
-        $query = MemberChangeRequest::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('member_id', $scope->select('clubora.members.id'));
+        $query = MemberChangeRequest::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('member_id', $scope->select('clubunio.members.id'));
         if (!empty($d['status'])) { $query->where('state', array_search($d['status'], MobileMemberData::STATES, true)); }
         $total = (clone $query)->count(); $approve = $permissions->allows($actor, $tenant, 'member_changes', 'approve');
         $update = $permissions->allows($actor, $tenant, 'members', 'update');

@@ -20,7 +20,7 @@ class MessageTemplateLanguagesTest extends TestCase
             'clubunio-languages.enabled' => ['de' => 'Deutsch', 'en' => 'English'], 'clubunio-languages.default' => 'de']);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id integer primary key, name text, default_locale text',
             'accounts' => 'id integer primary key, username text, preferred_locale text, active boolean',
@@ -40,17 +40,17 @@ class MessageTemplateLanguagesTest extends TestCase
             'expense_events' => 'id integer primary key autoincrement, tenant_id integer, expense_id integer, revision integer, event_key text, delivery_state text, payload_encrypted text',
             'bus_reservations' => 'id integer, tenant_id integer, member_id integer, team_season_id integer, starts_at text',
         ] as $table => $columns) {
-            $db->statement("CREATE TABLE clubora.$table ($columns)");
+            $db->statement("CREATE TABLE clubunio.$table ($columns)");
         }
-        $db->statement('ALTER TABLE clubora.notifications ADD COLUMN expense_event_id integer');
-        $db->table('clubora.tenants')->insert(['id' => 1, 'name' => 'Fixture Club', 'default_locale' => 'de']);
+        $db->statement('ALTER TABLE clubunio.notifications ADD COLUMN expense_event_id integer');
+        $db->table('clubunio.tenants')->insert(['id' => 1, 'name' => 'Fixture Club', 'default_locale' => 'de']);
         $this->tenant = Tenant::findOrFail(1);
-        $db->table('clubora.accounts')->insert([
+        $db->table('clubunio.accounts')->insert([
             ['id' => 1, 'username' => 'english@example.invalid', 'preferred_locale' => 'en', 'active' => true],
             ['id' => 2, 'username' => 'german@example.invalid', 'preferred_locale' => 'de', 'active' => true],
             ['id' => 3, 'username' => 'foreign@example.invalid', 'preferred_locale' => 'en', 'active' => true],
         ]);
-        $db->table('clubora.tenant_accounts')->insert([
+        $db->table('clubunio.tenant_accounts')->insert([
             ['tenant_id' => 1, 'account_id' => 1, 'role' => 'office'],
             ['tenant_id' => 1, 'account_id' => 2, 'role' => 'admin'],
             ['tenant_id' => 2, 'account_id' => 3, 'role' => 'office'],
@@ -92,7 +92,7 @@ class MessageTemplateLanguagesTest extends TestCase
         $german = MessageTemplate::where('event_key', 'registration.received')->where('locale', 'de-CH')->firstOrFail();
         $german->forceFill(['title' => 'Tenant custom title', 'body' => 'Tenant custom text', 'active' => false])->save();
         MessageTemplate::where('event_key', 'registration.received')->where('locale', 'en-GB')->delete();
-        DB::connection('clubunio')->table('clubora.message_template_revisions')->where('template_id', '<>', $german->id)->delete();
+        DB::connection('clubunio')->table('clubunio.message_template_revisions')->where('template_id', '<>', $german->id)->delete();
         $service = app(MessageTemplateService::class);
         $service->seed($this->tenant);
         $count = MessageTemplate::count();
@@ -156,7 +156,7 @@ class MessageTemplateLanguagesTest extends TestCase
         app()->setLocale('de');
         $service = app(RegistrationMessageService::class);
         $service->record($this->tenant, $registration, 'registration.created');
-        $notifications = DB::connection('clubunio')->table('clubora.notifications')->pluck('title', 'account_id')->all();
+        $notifications = DB::connection('clubunio')->table('clubunio.notifications')->pluck('title', 'account_id')->all();
         $this->assertSame([1 => 'New membership registration', 2 => 'Neue Mitgliederanmeldung'], $notifications);
         $payload = $service->prepare($this->tenant, $registration, 'registration.received');
         $this->assertSame('en-GB', $payload['locale']);
@@ -179,7 +179,7 @@ class MessageTemplateLanguagesTest extends TestCase
         Mail::shouldReceive('mailer')->times(3)->with('clubunio_test')->andReturn($mailer);
         $db = DB::connection('clubunio');
         foreach ([['title' => 'Legacy', 'body' => 'Legacy'], ['deliveries' => [['title' => 'English', 'body' => 'Hello'], ['title' => 'Deutsch', 'body' => 'Hallo']]]] as $payload) {
-            $db->table('clubora.registration_events')->insert(['tenant_id' => 1, 'delivery_state' => 'ready', 'payload_encrypted' => Crypt::encryptString(json_encode($payload))]);
+            $db->table('clubunio.registration_events')->insert(['tenant_id' => 1, 'delivery_state' => 'ready', 'payload_encrypted' => Crypt::encryptString(json_encode($payload))]);
         }
         config(['clubunio-integrations.test_mail_enabled' => false]);
         $dispatcher = app(TestOutboxDispatcher::class);
@@ -192,8 +192,8 @@ class MessageTemplateLanguagesTest extends TestCase
     public function test_trial_copies_keep_staff_routing_and_their_own_language(): void
     {
         $db = DB::connection('clubunio');
-        $db->table('clubora.members')->insert(['id' => 2, 'tenant_id' => 1, 'email' => 'german@example.invalid']);
-        $db->table('clubora.team_staff')->insert(['tenant_id' => 1, 'team_season_id' => 5, 'member_id' => 2, 'active' => true]);
+        $db->table('clubunio.members')->insert(['id' => 2, 'tenant_id' => 1, 'email' => 'german@example.invalid']);
+        $db->table('clubunio.team_staff')->insert(['tenant_id' => 1, 'team_season_id' => 5, 'member_id' => 2, 'active' => true]);
         $registration = (new Registration)->forceFill(['id' => 10, 'revision' => 1, 'first_name' => 'Alex', 'email' => 'english@example.invalid', 'team_season_id' => 5]);
         $payload = app(RegistrationMessageService::class)->prepare($this->tenant, $registration, 'registration.trial');
         $this->assertSame('en-GB', $payload['deliveries'][0]['locale']);
@@ -206,22 +206,22 @@ class MessageTemplateLanguagesTest extends TestCase
     public function test_expense_review_keeps_tl_and_office_routing_with_localized_snapshots(): void
     {
         $db = DB::connection('clubunio');
-        $db->table('clubora.members')->insert(['id' => 2, 'tenant_id' => 1, 'email' => 'german@example.invalid']);
-        $db->table('clubora.technical_leads')->insert(['tenant_id' => 1, 'team_season_id' => 5, 'member_id' => 2, 'active' => true]);
-        $db->table('clubora.account_member_links')->insert(['tenant_id' => 1, 'account_id' => 2, 'member_id' => 2, 'kind' => 'self', 'state' => 'approved']);
-        $db->table('clubora.tenant_accounts')->where('account_id', 2)->update(['portal_enabled' => true]);
+        $db->table('clubunio.members')->insert(['id' => 2, 'tenant_id' => 1, 'email' => 'german@example.invalid']);
+        $db->table('clubunio.technical_leads')->insert(['tenant_id' => 1, 'team_season_id' => 5, 'member_id' => 2, 'active' => true]);
+        $db->table('clubunio.account_member_links')->insert(['tenant_id' => 1, 'account_id' => 2, 'member_id' => 2, 'kind' => 'self', 'state' => 'approved']);
+        $db->table('clubunio.tenant_accounts')->where('account_id', 2)->update(['portal_enabled' => true]);
         $expense = (new \App\ClubUnio\Models\Expense)->forceFill(['id' => 10, 'revision' => 1, 'member_id' => 2, 'team_season_id' => 5]);
         $expense->setRelation('status', (new \App\ClubUnio\Models\ExpenseStatus)->forceFill(['code' => 'F']));
         foreach (['member', 'season', 'round', 'teamSeason'] as $relation) {
             $expense->setRelation($relation, null);
         }
         $db->transaction(fn () => app(\App\ClubUnio\Services\ExpenseMessageService::class)->record($this->tenant, $expense));
-        $row = $db->table('clubora.expense_events')->first();
+        $row = $db->table('clubunio.expense_events')->first();
         $payload = json_decode(Crypt::decryptString($row->payload_encrypted), true);
         $this->assertSame('ready', $row->delivery_state);
         $this->assertSame(['german@example.invalid', 'english@example.invalid'], $payload['intended_to']);
         $this->assertSame(['de-CH', 'en-GB'], array_column($payload['deliveries'], 'locale'));
-        $notifications = $db->table('clubora.notifications')->pluck('title', 'account_id')->all();
+        $notifications = $db->table('clubunio.notifications')->pluck('title', 'account_id')->all();
         $this->assertSame('Expense claim ready for review', $notifications[1]);
         $this->assertSame('Spesenbeleg zur Kontrolle', $notifications[2]);
         $this->assertCount(2, $notifications);
@@ -236,12 +236,12 @@ class MessageTemplateLanguagesTest extends TestCase
         Mail::shouldReceive('mailer')->twice()->with('clubunio_test')->andReturn($mailer);
         $db = DB::connection('clubunio');
         foreach ([['deliveries' => [['title' => 'One', 'body' => 'One'], ['title' => 'Two', 'body' => 'Two']]], ['deliveries' => []]] as $payload) {
-            $db->table('clubora.registration_events')->insert(['tenant_id' => 1, 'delivery_state' => 'ready', 'payload_encrypted' => Crypt::encryptString(json_encode($payload))]);
+            $db->table('clubunio.registration_events')->insert(['tenant_id' => 1, 'delivery_state' => 'ready', 'payload_encrypted' => Crypt::encryptString(json_encode($payload))]);
         }
         $dispatcher = app(TestOutboxDispatcher::class);
         $this->assertSame(['accepted' => 0, 'failed' => 2], $dispatcher->dispatch('registration_events'));
         $this->assertSame(['accepted' => 0, 'failed' => 0], $dispatcher->dispatch('registration_events'));
-        $this->assertSame(2, $db->table('clubora.registration_events')->where('delivery_state', 'failed')->count());
+        $this->assertSame(2, $db->table('clubunio.registration_events')->where('delivery_state', 'failed')->count());
     }
 
     public function test_disabled_languages_cannot_be_created_or_reactivated_but_history_is_preserved(): void
@@ -305,38 +305,38 @@ class MessageTemplateLanguagesTest extends TestCase
         $request = (new \App\ClubUnio\Models\MemberChangeRequest)->forceFill(['id' => 9, 'requested_by' => 1]);
         $method = new \ReflectionMethod(\App\ClubUnio\Services\MemberChangeService::class, 'notify');
         $method->invoke(app(\App\ClubUnio\Services\MemberChangeService::class), $this->tenant, $request, 'member.change.requested', true);
-        $titles = DB::connection('clubunio')->table('clubora.notifications')->pluck('title', 'account_id')->all();
+        $titles = DB::connection('clubunio')->table('clubunio.notifications')->pluck('title', 'account_id')->all();
         $this->assertCount(2, $titles);
         $this->assertSame('Member change request submitted', $titles[1]);
         $this->assertSame('Mitgliederänderungsantrag eingereicht', $titles[2]);
-        DB::connection('clubunio')->table('clubora.notifications')->delete();
+        DB::connection('clubunio')->table('clubunio.notifications')->delete();
         $method->invoke(app(\App\ClubUnio\Services\MemberChangeService::class), $this->tenant, $request, 'member.change.approved', false);
-        $this->assertSame([1 => 'Member details updated'], DB::connection('clubunio')->table('clubora.notifications')->pluck('title', 'account_id')->all());
+        $this->assertSame([1 => 'Member details updated'], DB::connection('clubunio')->table('clubunio.notifications')->pluck('title', 'account_id')->all());
     }
 
     public function test_bus_request_and_approval_keep_their_distinct_recipient_routes(): void
     {
         $db = DB::connection('clubunio');
-        $db->table('clubora.bus_reservations')->insert(['id' => 5, 'tenant_id' => 1, 'member_id' => 2, 'starts_at' => '2026-11-04 12:00:00']);
-        $db->table('clubora.account_member_links')->insert(['tenant_id' => 1, 'account_id' => 2, 'member_id' => 2, 'kind' => 'self', 'state' => 'approved']);
-        $db->table('clubora.tenant_accounts')->where('account_id', 2)->update(['portal_enabled' => true]);
+        $db->table('clubunio.bus_reservations')->insert(['id' => 5, 'tenant_id' => 1, 'member_id' => 2, 'starts_at' => '2026-11-04 12:00:00']);
+        $db->table('clubunio.account_member_links')->insert(['tenant_id' => 1, 'account_id' => 2, 'member_id' => 2, 'kind' => 'self', 'state' => 'approved']);
+        $db->table('clubunio.tenant_accounts')->where('account_id', 2)->update(['portal_enabled' => true]);
         $method = new \ReflectionMethod(\App\ClubUnio\Services\BusReservationService::class, 'notify');
         $service = app(\App\ClubUnio\Services\BusReservationService::class);
         $method->invoke($service, $this->tenant, 5, 'ANGEFRAGT');
-        $this->assertSame([1 => 'New bus reservation request'], $db->table('clubora.notifications')->pluck('title', 'account_id')->all());
-        $db->table('clubora.notifications')->delete();
+        $this->assertSame([1 => 'New bus reservation request'], $db->table('clubunio.notifications')->pluck('title', 'account_id')->all());
+        $db->table('clubunio.notifications')->delete();
         $method->invoke($service, $this->tenant, 5, 'GENEHMIGT');
-        $this->assertSame([2 => 'Busreservierung bestätigt'], $db->table('clubora.notifications')->pluck('title', 'account_id')->all());
+        $this->assertSame([2 => 'Busreservierung bestätigt'], $db->table('clubunio.notifications')->pluck('title', 'account_id')->all());
     }
 
     public function test_invoice_notification_uses_recipient_language_and_approved_self_link_only(): void
     {
         $db = DB::connection('clubunio');
-        $db->table('clubora.account_member_links')->insert([
+        $db->table('clubunio.account_member_links')->insert([
             ['tenant_id' => 1, 'account_id' => 1, 'member_id' => 2, 'kind' => 'self', 'state' => 'approved'],
             ['tenant_id' => 1, 'account_id' => 2, 'member_id' => 2, 'kind' => 'parent', 'state' => 'approved'],
         ]);
-        $db->table('clubora.tenant_accounts')->where('tenant_id', 1)->update(['portal_enabled' => true]);
+        $db->table('clubunio.tenant_accounts')->where('tenant_id', 1)->update(['portal_enabled' => true]);
         $taxes = \Mockery::mock(\App\ClubUnio\Services\InvoiceTaxService::class);
         $taxes->shouldReceive('summary')->once()->andReturn(['total_cents' => 1000]);
         $this->app->instance(\App\ClubUnio\Services\InvoiceTaxService::class, $taxes);
@@ -344,7 +344,7 @@ class MessageTemplateLanguagesTest extends TestCase
         $invoice->setRelation('member', null)->setRelation('season', null);
         $method = new \ReflectionMethod(\App\ClubUnio\Services\BexioReconciliationService::class, 'invoiceNotification');
         $method->invoke(app(\App\ClubUnio\Services\BexioReconciliationService::class), $this->tenant, $invoice, 'Offen', false);
-        $this->assertSame([1 => 'Invoice updated'], $db->table('clubora.notifications')->pluck('title', 'account_id')->all());
-        $this->assertSame('Your invoice has the status Open.', $db->table('clubora.notifications')->value('body'));
+        $this->assertSame([1 => 'Invoice updated'], $db->table('clubunio.notifications')->pluck('title', 'account_id')->all());
+        $this->assertSame('Your invoice has the status Open.', $db->table('clubunio.notifications')->value('body'));
     }
 }

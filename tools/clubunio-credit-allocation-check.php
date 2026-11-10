@@ -55,9 +55,9 @@ if (($argv[1] ?? 'read') === 'apply') {
 }
 echo json_encode(['invoice' => array_intersect_key($invoice, array_flip(['id', 'document_nr', 'contact_id', 'currency_id', 'total', 'total_received_payments', 'total_credit_vouchers', 'total_remaining_payments', 'kb_item_status_id'])),
     'payments' => array_map(fn ($p) => array_intersect_key($p, array_flip(['id', 'value', 'kb_invoice_id', 'kb_credit_voucher_id', 'kb_credit_voucher_text', 'is_client_account_redemption', 'is_cash_discount'])), $payments),
-    'own_invoices' => $db->table('clubora.invoices')->where('tenant_id', $tenant->id)->where('bexio_invoice_id', '9')->get(['id', 'legacy_id', 'revision', 'status_id']),
-    'own_credits' => $db->table('clubora.credit_notes')->where('tenant_id', $tenant->id)->whereIn('invoice_id', $db->table('clubora.invoices')->where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('bexio_invoice_id', '9')->select('id'))->get(['id', 'invoice_id', 'status_id', 'revision', 'amount_cents', 'external_reference']),
-    'stored_balance' => $db->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', 'invoice')->where('object_id', $local->id)
+    'own_invoices' => $db->table('clubunio.invoices')->where('tenant_id', $tenant->id)->where('bexio_invoice_id', '9')->get(['id', 'legacy_id', 'revision', 'status_id']),
+    'own_credits' => $db->table('clubunio.credit_notes')->where('tenant_id', $tenant->id)->whereIn('invoice_id', $db->table('clubunio.invoices')->where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('bexio_invoice_id', '9')->select('id'))->get(['id', 'invoice_id', 'status_id', 'revision', 'amount_cents', 'external_reference']),
+    'stored_balance' => $db->table('clubunio.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', 'invoice')->where('object_id', $local->id)
         ->first(['remote_id', 'remote_status', 'total_cents', 'paid_cents', 'credit_cents', 'remaining_cents', 'cash_received_cents', 'cash_excess_cents']),
-    'dispatches' => $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('remote_id', '9')->get(['id', 'invoice_id', 'state']),
+    'dispatches' => $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('remote_id', '9')->get(['id', 'invoice_id', 'state']),
 ], JSON_THROW_ON_ERROR).PHP_EOL;

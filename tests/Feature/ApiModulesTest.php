@@ -42,11 +42,11 @@ class ApiModulesTest extends TestCase
         $tenant = Tenant::create(['slug' => 'api-module-'.Str::random(12), 'name' => 'API module fixture']);
         $actor = new Account;
         $actor->forceFill(['username' => Str::random(20), 'display_name' => 'API fixture', 'password' => bcrypt(Str::random(40)), 'active' => true, 'api_only' => true])->save();
-        $this->profile = $this->db->table('clubora.access_profiles')->insertGetId([
+        $this->profile = $this->db->table('clubunio.access_profiles')->insertGetId([
             'tenant_id' => $tenant->id, 'name' => 'API module fixture', 'active' => true,
             'permissions' => json_encode(PermissionCatalog::keys(), JSON_THROW_ON_ERROR),
         ]);
-        $this->db->table('clubora.tenant_accounts')->insert([
+        $this->db->table('clubunio.tenant_accounts')->insert([
             'tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile,
         ]);
         $scopes = [];
@@ -65,7 +65,7 @@ class ApiModulesTest extends TestCase
 
     private function tokenScopes(array $scopes): void
     {
-        $this->db->table('clubora.api_access_tokens')->where('id', $this->context->token->id)
+        $this->db->table('clubunio.api_access_tokens')->where('id', $this->context->token->id)
             ->update(['abilities' => json_encode($scopes, JSON_THROW_ON_ERROR)]);
     }
 
@@ -125,7 +125,7 @@ class ApiModulesTest extends TestCase
     public function test_all_definitions_round_trip_reads_without_unknown_columns(): void
     {
         $this->fixture();
-        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubora')->get(['table_name', 'column_name'])->groupBy('table_name');
+        $columns = $this->db->table('information_schema.columns')->where('table_schema', 'clubunio')->get(['table_name', 'column_name'])->groupBy('table_name');
         foreach (array_intersect_key($this->registry->definitions(), ApiModuleDefinitions::all()) as $key => $definition) {
             $table = (new $definition['model'])->getTable();
             $fields = $definition['read_fields'];
@@ -134,7 +134,7 @@ class ApiModulesTest extends TestCase
                 $fields = array_values(array_diff($fields, ['area_id']));
                 $this->assertCount(0, $this->registry->module($key)->query($this->context)->get());
             }
-            $this->assertSame([], array_values(array_diff($fields, $columns->get(Str::after($table, 'clubora.'))->pluck('column_name')->all())), $key);
+            $this->assertSame([], array_values(array_diff($fields, $columns->get(Str::after($table, 'clubunio.'))->pluck('column_name')->all())), $key);
             $this->assertSame([], $this->registry->list($this->context, $key)['data'], $key);
         }
     }
@@ -182,7 +182,7 @@ class ApiModulesTest extends TestCase
     {
         $this->fixture();
         $this->tokenScopes(['catalogs:read']);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)
             ->update(['permissions' => '["catalogs.view"]']);
         $resources = ['invoice_statuses', 'invoice_line_statuses', 'invoice_workflow_statuses', 'invoice_categories',
             'financial_adjustment_statuses', 'member_change_statuses', 'banks'];
@@ -222,7 +222,7 @@ class ApiModulesTest extends TestCase
             $this->rejects(fn () => $this->registry->update($this->context, $resource, $id, ['name' => 'Denied']), HttpException::class, 405);
         }
         $other = Tenant::create(['slug' => 'lookup-other-'.Str::random(10), 'name' => 'Other lookup tenant']);
-        $foreign = $this->db->table('clubora.banks')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign bank', 'code' => 'foreign']);
+        $foreign = $this->db->table('clubunio.banks')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign bank', 'code' => 'foreign']);
         $this->rejects(fn () => $this->registry->show($this->context, 'banks', $foreign), ModelNotFoundException::class);
         $this->assertCount(1, $this->registry->list($this->context, 'banks')['data']);
         $this->tokenScopes(['invoices:read']);
@@ -230,7 +230,7 @@ class ApiModulesTest extends TestCase
             $this->rejects(fn () => $this->registry->list($this->context, $resource), HttpException::class, 403);
         }
         $this->tokenScopes(['catalogs:read']);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)
             ->update(['permissions' => '["invoices.view"]']);
         $this->rejects(fn () => $this->registry->list($this->context, 'invoice_statuses'), HttpException::class, 403);
         Http::assertNothingSent();
@@ -244,7 +244,7 @@ class ApiModulesTest extends TestCase
         $this->assertContains('workflow_key', $definition['read_fields']);
         $this->assertNotContains('workflow_key', $definition['create_fields']);
         $this->assertNotContains('workflow_key', $definition['update_fields']);
-        $id = $this->db->table('clubora.registration_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id,
+        $id = $this->db->table('clubunio.registration_statuses')->insertGetId(['tenant_id' => $this->context->tenant->id,
             'name' => 'Submitted fixture', 'code' => 'fixture', 'workflow_key' => 'submitted', 'sort_order' => 1, 'active' => true]);
         $dto = $this->registry->show($this->context, 'registration_statuses', $id);
         $this->assertSame('submitted', $dto['workflow_key']);
@@ -259,10 +259,10 @@ class ApiModulesTest extends TestCase
     {
         $this->fixture();
         $this->registry->authorize($this->context, 'team_players', 'create');
-        $this->db->table('clubora.api_integrations')->where('id', $this->context->integration->id)->update(['scopes' => '["teams:read"]']);
+        $this->db->table('clubunio.api_integrations')->where('id', $this->context->integration->id)->update(['scopes' => '["teams:read"]']);
         $this->rejects(fn () => $this->registry->authorize($this->context, 'team_players', 'create'), HttpException::class);
         $this->registry->authorize($this->context, 'team_players', 'list');
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => false]);
         $this->rejects(fn () => $this->registry->authorize($this->context, 'team_players', 'show'), HttpException::class);
     }
 
@@ -270,13 +270,13 @@ class ApiModulesTest extends TestCase
     {
         $this->fixture();
         $this->registry->authorize($this->context, 'teams', 'read');
-        $token = $this->db->table('clubora.api_access_tokens')->where('id', $this->context->token->id);
+        $token = $this->db->table('clubunio.api_access_tokens')->where('id', $this->context->token->id);
         $token->update(['revoked_at' => now()]);
         $this->rejects(fn () => $this->registry->list($this->context, 'teams'), HttpException::class);
         $token->update(['revoked_at' => null, 'expires_at' => now()->subMinute()->toIso8601String()]);
         $this->rejects(fn () => $this->registry->authorize($this->context, 'teams', 'create'), HttpException::class);
         $token->update(['expires_at' => now()->addHour()->toIso8601String()]);
-        $this->db->table('clubora.accounts')->where('id', $this->context->actor->id)->update(['api_only' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->context->actor->id)->update(['api_only' => false]);
         $this->rejects(fn () => $this->registry->list($this->context, 'teams'), HttpException::class);
     }
 
@@ -327,7 +327,7 @@ class ApiModulesTest extends TestCase
         $this->rejects(fn () => $this->registry->update($this->context, 'team_seasons', $assignment['id'], [
             'team_id' => $team['id'], 'season_id' => $season['id'], 'active' => true, '_version' => $assignment['_version'],
         ]));
-        $this->assertSame(4, $this->db->table('clubora.object_changes')->where('tenant_id', $this->context->tenant->id)->count());
+        $this->assertSame(4, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->context->tenant->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -353,7 +353,7 @@ class ApiModulesTest extends TestCase
             $this->rejects(fn () => $this->registry->list($this->context, 'teams', $input));
         }
         $other = Tenant::create(['slug' => 'api-other-'.Str::random(10), 'name' => 'Other']);
-        $foreign = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $other->id, 'name' => 'Other team', 'active' => true]);
+        $foreign = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $other->id, 'name' => 'Other team', 'active' => true]);
         $this->rejects(fn () => $this->registry->show($this->context, 'teams', $foreign), ModelNotFoundException::class);
         $this->rejects(fn () => $this->registry->update($this->context, 'teams', $foreign, ['name' => 'Changed', 'active' => true]), ModelNotFoundException::class);
         $this->assertCount(3, $this->registry->list($this->context, 'teams')['data']);
@@ -369,7 +369,7 @@ class ApiModulesTest extends TestCase
         request()->attributes->set(BackofficeReadContext::class, [
             'account' => $this->context->actor->id, 'permissionCache' => [], 'tenants' => collect([$this->context->tenant]),
         ]);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
         $this->rejects(fn () => $this->registry->show($this->context, 'teams', $team['id']), HttpException::class);
         $this->assertNotNull(request()->attributes->get(BackofficeReadContext::class));
         request()->attributes->remove(BackofficeReadContext::class);
@@ -379,7 +379,7 @@ class ApiModulesTest extends TestCase
     {
         $this->fixture();
         foreach (['admin', 'office', 'trainer', 'technical_lead', 'member'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => $role, 'access_profile_id' => null]);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => $role, 'access_profile_id' => null]);
             $this->rejects(fn () => $this->registry->create($this->context, 'teams', ['name' => 'Denied', 'active' => true]), HttpException::class);
             $this->rejects(fn () => $this->registry->list($this->context, 'members'), HttpException::class);
         }
@@ -416,7 +416,7 @@ class ApiModulesTest extends TestCase
         $this->assertNotSame($team['_version'], $updated['_version']);
         $this->rejects(fn () => $this->registry->update($this->context, 'teams', $team['id'], ['name' => 'Stale overwrite', 'active' => true, '_version' => $team['_version']]));
         $this->assertSame('Changed', $this->registry->show($this->context, 'teams', $team['id'])['name']);
-        $this->assertSame(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->context->tenant->id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->context->tenant->id)->count());
     }
 
     public function test_training_competition_and_facility_revision_workflows(): void
@@ -436,7 +436,7 @@ class ApiModulesTest extends TestCase
         ]);
         $this->assertSame(1, $slot['revision']);
         $status = $this->registry->create($this->context, 'facility_statuses', ['name' => 'Open', 'code' => 'fixture', 'blocks_training' => false, 'sort_order' => 1, 'active' => true]);
-        $fieldId = $this->db->table('clubora.field_availabilities')->insertGetId(['tenant_id' => $this->context->tenant->id,
+        $fieldId = $this->db->table('clubunio.field_availabilities')->insertGetId(['tenant_id' => $this->context->tenant->id,
             'field_id' => $options['field'], 'status_id' => $status['id'], 'note' => 'Synthetic', 'active' => true, 'revision' => 1]);
         $field = $this->registry->update($this->context, 'field_availability', $fieldId, ['field_id' => $options['field'],
             'status_id' => $status['id'], 'note' => 'Updated synthetic', 'active' => true, 'revision' => 1]);

@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Stage-Schema clubunio (10.11.2026)
+
+Stage-spezifischer Code und Migrationspfad auf `codex/stage-clubunio-schema`.
+Umbenennung statt Neuimport; Backup, Abnahme und Rueckweg:
+[Stage-Schema](CLUBUNIO-STAGE-SCHEMA.md). Snapshot-Schemas, DEV und PROD
+werden nicht umgestellt.
+
 ## Stage-Erstimport SV Sissach (09.11.2026)
 
 Eigener leerer Zielbestand `clubunio_stage` auf dem VPS. Aktueller lesender

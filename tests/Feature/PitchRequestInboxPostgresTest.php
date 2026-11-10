@@ -49,7 +49,7 @@ class PitchRequestInboxPostgresTest extends TestCase
             'password' => bcrypt('fixture'), 'active' => true]);
         $this->other->save();
         $this->insert('tenant_accounts', ['account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);
-        $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.mobile_module_options')->insert(['tenant_id' => $this->tenant->id,
             'key' => 'Platzverfugbarkeit', 'name' => 'Pitch', 'active' => true, 'sort_order' => 1]);
         foreach ([$this->tenant, $this->foreign] as $tenant) {
             $season = $this->insert('seasons', ['tenant_id' => $tenant->id, 'name' => '2026/27', 'starts_on' => '2026-07-01', 'ends_on' => '2027-06-30']);
@@ -70,17 +70,17 @@ class PitchRequestInboxPostgresTest extends TestCase
         $this->insert('technical_leads', ['team_season_id' => $this->team, 'member_id' => $member]);
 
         foreach (['tenants', 'accounts', 'training_options', 'training_slots', 'team_seasons', 'competitions'] as $table) {
-            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubora.$table INCLUDING ALL) ON COMMIT DROP");
+            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubunio.$table INCLUDING ALL) ON COMMIT DROP");
             $column = in_array($table, ['tenants', 'accounts'], true) ? 'id' : 'tenant_id';
             $ids = $table === 'accounts' ? [$this->actor->id, $this->other->id] : [$this->tenant->id, $this->foreign->id];
-            $this->db->statement("INSERT INTO pg_temp.$table SELECT * FROM clubora.$table WHERE $column IN (?, ?)", $ids);
+            $this->db->statement("INSERT INTO pg_temp.$table SELECT * FROM clubunio.$table WHERE $column IN (?, ?)", $ids);
         }
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_04_001500_pitch_planning.php'))->up());
-        foreach ($ddl as $query) $this->db->statement(str_replace(['clubora.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']));
+        foreach ($ddl as $query) $this->db->statement(str_replace(['clubunio.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']));
         $this->db->setQueryGrammar(new class($this->db, self::TABLES) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function __construct($connection, private array $tables) { parent::__construct($connection); }
             public function wrapTable($table, $prefix = null) {
-                if (in_array(str_replace('clubora.', '', $table), $this->tables, true)) $table = str_replace('clubora.', 'pg_temp.', $table);
+                if (in_array(str_replace('clubunio.', '', $table), $this->tables, true)) $table = str_replace('clubunio.', 'pg_temp.', $table);
                 return parent::wrapTable($table, $prefix);
             }
         });
@@ -103,7 +103,7 @@ class PitchRequestInboxPostgresTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function booking(array $data = []): int
@@ -115,7 +115,7 @@ class PitchRequestInboxPostgresTest extends TestCase
 
     private function role(string $role, array $data = []): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
             ->where('account_id', $this->actor->id)->update($data + ['role' => $role]);
     }
 
@@ -219,7 +219,7 @@ class PitchRequestInboxPostgresTest extends TestCase
         $area = $this->insert('pitch_areas', ['field_id' => $this->field, 'name_de' => 'Links', 'name_en' => 'Left',
             'x' => 0, 'y' => 0, 'width' => .5, 'height' => 1]);
         $id = $this->booking(['date' => '2020-01-01', 'area_id' => $area]);
-        $this->db->table('clubora.training_options')->where('id', $this->field)->update(['active' => false]);
+        $this->db->table('clubunio.training_options')->where('id', $this->field)->update(['active' => false]);
         try {
             $this->service->requestFriendly($this->actor, $this->tenant, ['field_id' => $this->field, 'area_id' => $area,
                 'team_season_id' => $this->team, 'date' => '2026-11-05', 'starts_at' => '12:00', 'opponent' => 'New request']);
@@ -227,8 +227,8 @@ class PitchRequestInboxPostgresTest extends TestCase
         } catch (HttpException $error) {
             $this->assertSame(404, $error->getStatusCode());
         }
-        $this->assertSame(1, $this->db->table('clubora.pitch_requests')->count());
-        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $this->assertSame(1, $this->db->table('clubunio.pitch_requests')->count());
+        $this->db->table('clubunio.team_seasons')->where('id', $this->team)->update(['active' => false]);
         foreach (config('clubunio-languages.enabled') as $locale => $label) {
             app()->setLocale($locale);
             $data = $this->inbox();
@@ -264,7 +264,7 @@ class PitchRequestInboxPostgresTest extends TestCase
         } catch (HttpException $error) {
             $this->assertSame(409, $error->getStatusCode());
         }
-        $this->assertSame('pending', $this->db->table('clubora.pitch_requests')->where('id', $own)->value('status'));
+        $this->assertSame('pending', $this->db->table('clubunio.pitch_requests')->where('id', $own)->value('status'));
     }
 
     public function test_role_profile_portal_and_account_revocation_do_not_reuse_old_authority(): void
@@ -275,7 +275,7 @@ class PitchRequestInboxPostgresTest extends TestCase
         $this->role('profile', ['access_profile_id' => $profile, 'portal_enabled' => false]);
         $this->assertTrue($this->service->canView($this->actor, $this->tenant));
         $this->forbidden(fn () => $this->inbox());
-        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['active' => false]);
         $this->assertFalse($this->service->canView($this->actor, $this->tenant));
         $this->forbidden(fn () => $this->inbox());
         $this->role('member', ['access_profile_id' => null, 'portal_enabled' => true]);
@@ -287,11 +287,11 @@ class PitchRequestInboxPostgresTest extends TestCase
             $this->forbidden(fn () => $this->inbox());
         }
         $this->role('admin');
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
         $this->forbidden(fn () => $this->inbox());
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => true]);
-        $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->delete();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->delete();
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => true]);
+        $this->db->table('clubunio.account_member_links')->where('tenant_id', $this->tenant->id)->delete();
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->delete();
         $this->forbidden(fn () => $this->inbox());
     }
 
@@ -301,14 +301,14 @@ class PitchRequestInboxPostgresTest extends TestCase
         foreach (['trainer' => 'team_staff', 'technical_lead' => 'technical_leads'] as $role => $table) {
             $this->role($role);
             $this->assertTrue($this->inbox()['capabilities']['request']);
-            $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+            $this->db->table('clubunio.'.$table)->where('tenant_id', $this->tenant->id)->update(['active' => false]);
             $data = $this->inbox();
             $this->assertSame([], $data['teams']);
             $this->assertFalse($data['capabilities']['request']);
             $this->assertSame([$id], array_column($data['entries'], 'source_id'));
             $this->forbidden(fn () => $this->service->authorizeFriendlyRequest($this->actor, $this->tenant, $this->team));
         }
-        $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->update(['state' => 'pending']);
+        $this->db->table('clubunio.account_member_links')->where('tenant_id', $this->tenant->id)->update(['state' => 'pending']);
         $this->forbidden(fn () => $this->inbox());
     }
 
@@ -319,7 +319,7 @@ class PitchRequestInboxPostgresTest extends TestCase
             'team_season_id' => $this->team, 'requester_account_id' => $this->actor->id,
             'date' => Carbon::parse('2026-11-05')->addDays($i * 10)->toDateString(), 'starts_at' => '10:00',
             'duration_minutes' => 120, 'opponent' => 'Synthetic visitors'];
-        $this->db->table('clubora.pitch_requests')->insert($rows);
+        $this->db->table('clubunio.pitch_requests')->insert($rows);
         foreach (['admin', 'trainer', 'technical_lead'] as $role) {
             $this->role($role);
             $counts = [];
@@ -351,19 +351,19 @@ class PitchRequestInboxPostgresTest extends TestCase
         foreach (['trainer', 'technical_lead'] as $role) {
             $this->role($role, ['mobile_profile_id' => $profile]);
             $this->assertCount(1, $this->inbox()['entries']);
-            $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['mobile_modules' => json_encode([])]);
+            $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['mobile_modules' => json_encode([])]);
             $this->forbidden(fn () => $this->inbox());
-            $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['mobile_modules' => json_encode(['Platzverfugbarkeit'])]);
+            $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['mobile_modules' => json_encode(['Platzverfugbarkeit'])]);
             $this->assertCount(1, $this->inbox()['entries']);
-            $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['active' => false]);
+            $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['active' => false]);
             $this->forbidden(fn () => $this->inbox());
-            $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['active' => true]);
+            $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['active' => true]);
             $this->assertCount(1, $this->inbox()['entries']);
-            $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+            $this->db->table('clubunio.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
             $this->forbidden(fn () => $this->inbox());
-            $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => true]);
+            $this->db->table('clubunio.mobile_module_options')->where('tenant_id', $this->tenant->id)->update(['active' => true]);
         }
-        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['active' => false]);
         foreach (['admin', 'office'] as $role) {
             $this->role($role);
             $data = $this->inbox();

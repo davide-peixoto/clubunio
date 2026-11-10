@@ -9,15 +9,15 @@ use Illuminate\Support\Facades\DB;
 
 final class MobileTeamsData
 {
-    public function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id); }
+    public function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id); }
 
     public function teams(Account $actor, Tenant $tenant)
     {
         app(MobileAccess::class)->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
-        $q = DB::connection('clubunio')->table('clubora.team_seasons as ts')
-            ->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
-            ->join('clubora.seasons as s', fn ($j) => $j->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
+        $q = DB::connection('clubunio')->table('clubunio.team_seasons as ts')
+            ->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
+            ->join('clubunio.seasons as s', fn ($j) => $j->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
             ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true);
         app(MobileSeasonScope::class)->teams($q, $tenant, 'ts.season_id');
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'teams', 'view')) {
@@ -75,14 +75,14 @@ final class MobileTeamsData
     {
         $team = $this->team($actor, $tenant, $id);
         $access = app(MemberAccessService::class);
-        $active = $access->activeMembers($tenant)->select('clubora.members.id');
+        $active = $access->activeMembers($tenant)->select('clubunio.members.id');
         $staff = TeamStaff::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('team_season_id', $id)->where('active', true)->whereIn('member_id', clone $active)->orderBy('id')->get();
         $players = TeamPlayer::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('team_season_id', $id)->where('active', true)->whereIn('member_id', clone $active)->orderBy('id')->get();
         $ids = $staff->pluck('member_id')->merge($players->pluck('member_id'))->unique();
         $mode = app(MemberTeamAccessService::class)->forAuthorizedTeam($actor, $tenant, $id);
         $staffIds = array_fill_keys($staff->pluck('member_id')->all(), true);
         $direct = app(MobileMemberData::class)->direct($actor, $tenant);
-        $own = array_fill_keys($access->represented($actor, $tenant)->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+        $own = array_fill_keys($access->represented($actor, $tenant)->whereIn('clubunio.members.id', $ids)->pluck('id')->all(), true);
         $full = in_array($mode, ['full', 'trainer'], true);
         $members = Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('id', $ids)->get(['id', 'first_name', 'last_name',
             'email', 'mobile', 'city', 'birth_date', 'street', 'house_number', 'postal_code', 'phone_private', 'phone_business',

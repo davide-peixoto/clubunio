@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $tables = [
             'banks' => 'name text NOT NULL, city text, swift text',
             'club_functions' => 'name text NOT NULL',

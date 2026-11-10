@@ -43,7 +43,7 @@ final class AuthenticateApiIntegration
             $tenant = Tenant::find($integration->tenant_id);
             $profile = AccessProfile::where('tenant_id', $integration->tenant_id)->where('active', true)->find($integration->access_profile_id);
             abort_unless($actor?->active && $actor->api_only && $tenant && $profile, 401);
-            abort_unless(DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)
+            abort_unless(DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)
                 ->where('account_id', $actor->id)->where('role', 'profile')->where('access_profile_id', $profile->id)->exists(), 401);
             $context = new ApiContext($actor, $tenant, $integration, $token);
             $request->attributes->set('clubunio.api.context', $context);

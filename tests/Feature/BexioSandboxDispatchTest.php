@@ -47,9 +47,9 @@ class BexioSandboxDispatchTest extends TestCase
     {
         $category = app(CatalogService::class)->save($this->actor, $this->tenant, InvoiceCategory::class,
             null, ['name' => 'Dressbezug', 'code' => 'kit', 'active' => true, 'sort_order' => 0]);
-        $this->db->table('clubora.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
-        $memberId = $this->db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('member_id');
+        $this->db->table('clubunio.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
+        $memberId = $this->db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('member_id');
         $workflow = app(InvoiceWorkflowService::class);
         $invoice = $workflow->create($this->actor, $this->tenant, ['member_id' => $memberId, 'invoice_category_id' => $category->id, 'tax_mode' => 'inclusive']);
         $invoice = $workflow->change($this->actor, $this->tenant, $invoice->id, $invoice->revision, 'line',
@@ -75,10 +75,10 @@ class BexioSandboxDispatchTest extends TestCase
         $category = app(CatalogService::class)->save($this->actor, $this->tenant, InvoiceCategory::class,
             null, ['name' => 'Merchandising', 'code' => 'merchandise', 'active' => true, 'sort_order' => 0]);
         foreach (['P', 'E', 'O', 'T', 'B', 'S'] as $code) {
-            $this->db->table('clubora.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
+            $this->db->table('clubunio.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
         }
         foreach ([7 => 'E', 8 => 'O', 16 => 'T', 9 => 'B', 19 => 'S'] as $status => $code) {
-            $this->db->table('clubora.invoice_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $code, 'position_code' => $code]);
+            $this->db->table('clubunio.invoice_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $code, 'position_code' => $code]);
         }
         $hash = app(BexioSandboxFixtureService::class)->connectionHash($this->tenant);
         $taxes = [];
@@ -117,7 +117,7 @@ class BexioSandboxDispatchTest extends TestCase
         app(BexioInvoiceActionService::class)->execute($this->actor, $this->tenant, $invoice->id, 'issue');
         app(BexioFinancialActionService::class)->execute($this->actor, $this->tenant, 'invoice', $invoice->id, 'payment_full');
         $this->assertSame('9', $invoice->fresh()->status->code);
-        $balance = $this->db->table('clubora.bexio_balances')->where('tenant_id', $this->tenant->id)->where('object_id', $invoice->id)->first();
+        $balance = $this->db->table('clubunio.bexio_balances')->where('tenant_id', $this->tenant->id)->where('object_id', $invoice->id)->first();
         $this->assertSame(4025, $balance->paid_cents);
         $this->assertSame(0, $balance->remaining_cents);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
@@ -157,14 +157,14 @@ class BexioSandboxDispatchTest extends TestCase
                 $this->assertSame(409, $error->getStatusCode());
             }
         }
-        $this->assertSame(1, $this->db->table('clubora.bexio_catalog_fixture_actions')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.bexio_catalog_fixture_actions')->where('tenant_id', $this->tenant->id)->count());
         $articles = [['id' => 42, 'intern_code' => $fixture::CODE, 'intern_name' => 'ClubUnio Sandbox Testartikel',
             'remarks' => $fixture::MARKER, 'article_type_id' => 2, 'is_stock' => false]];
         $this->assertSame(42, app($fixture)->create($this->actor, $this->tenant));
         $this->assertSame(42, app($fixture)->create($this->actor, $this->tenant));
-        $this->assertSame('accepted', $this->db->table('clubora.bexio_catalog_fixture_actions')->where('tenant_id', $this->tenant->id)->value('state'));
-        $this->db->table('clubora.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
+        $this->assertSame('accepted', $this->db->table('clubunio.bexio_catalog_fixture_actions')->where('tenant_id', $this->tenant->id)->value('state'));
+        $this->db->table('clubunio.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
         $invoiceId = app($fixture)->prepareInvoice($this->actor, $this->tenant);
         $this->assertSame($invoiceId, app($fixture)->prepareInvoice($this->actor, $this->tenant));
         $invoice = Invoice::findOrFail($invoiceId);
@@ -196,10 +196,10 @@ class BexioSandboxDispatchTest extends TestCase
         $service = app(BexioCatalogService::class);
         $service->sync($this->actor, $this->tenant);
         $entry = BexioCatalogEntry::where('tenant_id', $this->tenant->id)->firstOrFail();
-        $invoiceId = $this->db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('invoice_id');
+        $invoiceId = $this->db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('invoice_id');
         $invoice = Invoice::findOrFail($invoiceId);
-        $invoice->forceFill(['workflow_status_id' => $this->db->table('clubora.invoice_workflow_statuses')->where('tenant_id', $this->tenant->id)->value('id')])->save();
-        $this->db->table('clubora.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
+        $invoice->forceFill(['workflow_status_id' => $this->db->table('clubunio.invoice_workflow_statuses')->where('tenant_id', $this->tenant->id)->value('id')])->save();
+        $this->db->table('clubunio.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'P', 'name' => 'Pendent']);
         $data = ['description' => 'Artikelposition', 'gross_amount' => '12.00', 'discount' => '2.00', 'bexio_catalog_article_id' => $entry->id];
         app(InvoiceWorkflowService::class)->change($this->actor, $this->tenant, $invoice->id, $invoice->revision, 'line', $data);
         $line = $invoice->activeLines()->firstOrFail();
@@ -274,14 +274,14 @@ class BexioSandboxDispatchTest extends TestCase
         $articles = [];
         $taxes = [];
         $this->catalogProvider($articles, $taxes);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'trainer']);
         try {
             app(BexioCatalogService::class)->sync($this->actor, $this->tenant);
             $this->fail('Trainer imported provider catalog');
         } catch (HttpException $error) {
             $this->assertSame(403, $error->getStatusCode());
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'admin']);
         $this->connectedAt = '2026-10-15';
         $this->expectException(HttpException::class);
         app(BexioCatalogService::class)->sync($this->actor, $this->tenant);
@@ -333,9 +333,9 @@ class BexioSandboxDispatchTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'dispatch-'.bin2hex(random_bytes(6)), 'name' => 'Sandbox fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => bin2hex(random_bytes(8)), 'display_name' => 'Test admin', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Entwurf']);
-        $this->db->table('clubora.expense_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'O', 'name' => 'Offen']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Entwurf']);
+        $this->db->table('clubunio.expense_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'O', 'name' => 'Offen']);
         $this->mock(BexioConnectionService::class, function ($mock) {
             $mock->shouldReceive('connection')->andReturnUsing(fn () => ['fingerprint' => 'fixture', 'connected_at' => $this->connectedAt]);
             $mock->shouldReceive('accessToken')->andReturn('synthetic-token');
@@ -346,7 +346,7 @@ class BexioSandboxDispatchTest extends TestCase
         $supplier->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Supplier', 'bexio_contact_id' => 4])->save();
         $invoice = new Invoice;
         $invoice->forceFill(['tenant_id' => $this->tenant->id, 'member_id' => $member->id])->save();
-        $this->db->table('clubora.bexio_sandbox_fixtures')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.bexio_sandbox_fixtures')->insert(['tenant_id' => $this->tenant->id,
             'member_id' => $member->id, 'parent_id' => $member->id, 'supplier_id' => $supplier->id,
             'invoice_id' => $invoice->id, 'remote_invoice_id' => 1, 'remote_contact_id' => 2,
             'connection_hash' => app(BexioSandboxFixtureService::class)->connectionHash($this->tenant)]);
@@ -465,13 +465,13 @@ class BexioSandboxDispatchTest extends TestCase
 
     private function row(int $id)
     {
-        return $this->db->table('clubora.bexio_sandbox_dispatches')->find($id);
+        return $this->db->table('clubunio.bexio_sandbox_dispatches')->find($id);
     }
 
     private function actions()
     {
-        return $this->db->table('clubora.bexio_invoice_actions')->whereIn('dispatch_id',
-            $this->db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $this->tenant->id)->select('id'));
+        return $this->db->table('clubunio.bexio_invoice_actions')->whereIn('dispatch_id',
+            $this->db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $this->tenant->id)->select('id'));
     }
 
     private function generalFixtures(): array
@@ -481,15 +481,15 @@ class BexioSandboxDispatchTest extends TestCase
             $service->send($this->actor, $this->tenant, $service->prepare($this->actor, $this->tenant, $kind));
         }
         foreach (['MWST_TYPE', 'INVOICE_DUE_DAYS', 'BILL_DUE_DAYS', 'UNIT_ID', 'TAX_ID', 'BILL_CONTACT_PARTNER_ID', 'USER_ID', 'LANGUAGE_ID', 'BANK_ACCOUNT_ID', 'CURRENCY_ID', 'PAYMENT_TYPE_ID'] as $key) {
-            $this->db->table('clubora.tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'bexio', 'key' => 'BEXIO_'.$key, 'label' => $key, 'value_type' => 'integer', 'encrypted_value' => Crypt::encryptString('1')]);
+            $this->db->table('clubunio.tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'bexio', 'key' => 'BEXIO_'.$key, 'label' => $key, 'value_type' => 'integer', 'encrypted_value' => Crypt::encryptString('1')]);
         }
-        $this->db->table('clubora.countries')->insert(['tenant_id' => $this->tenant->id, 'code' => 'CH', 'name' => 'Schweiz']);
-        $this->db->table('clubora.billing_recipients')->insert(['tenant_id' => $this->tenant->id, 'code' => 'self', 'name' => 'Mitglied', 'email_field' => 'email']);
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
+        $this->db->table('clubunio.countries')->insert(['tenant_id' => $this->tenant->id, 'code' => 'CH', 'name' => 'Schweiz']);
+        $this->db->table('clubunio.billing_recipients')->insert(['tenant_id' => $this->tenant->id, 'code' => 'self', 'name' => 'Mitglied', 'email_field' => 'email']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
         foreach (['Z', 'B'] as $code) {
-            $this->db->table('clubora.expense_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
+            $this->db->table('clubunio.expense_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
         }
-        $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->update(['last_name' => 'Synthetic', 'street' => 'Teststrasse', 'house_number' => '1', 'postal_code' => '4450', 'city' => 'Sissach']);
+        $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->update(['last_name' => 'Synthetic', 'street' => 'Teststrasse', 'house_number' => '1', 'postal_code' => '4450', 'city' => 'Sissach']);
 
         return app(BexioGeneralSandboxFixtureService::class)->prepare($this->actor, $this->tenant);
     }
@@ -510,7 +510,7 @@ class BexioSandboxDispatchTest extends TestCase
         foreach ($fixtures as $kind => $id) {
             $trial = app(BexioDispatchTrialService::class)->preview($this->actor, $this->tenant, $kind, $id);
             Livewire::test(BexioDispatchTrials::class)->call('sendSandbox', $trial)->assertHasNoErrors();
-            $dispatch = $this->db->table('clubora.bexio_sandbox_dispatches')->where('source_trial_id', $trial)->value('id');
+            $dispatch = $this->db->table('clubunio.bexio_sandbox_dispatches')->where('source_trial_id', $trial)->value('id');
             $this->assertSame('accepted', $this->row($dispatch)->state);
             $this->assertSame(2000, (int) $this->row($dispatch)->expected_cents);
             $before = count(Http::recorded());
@@ -526,22 +526,22 @@ class BexioSandboxDispatchTest extends TestCase
         $reconcile->apply($this->actor, $this->tenant, $check);
         $reconcile->apply($this->actor, $this->tenant, $check);
         $this->assertSame('B', Expense::find($fixtures['expense'])->status->code);
-        $this->assertSame(1, $this->db->table('clubora.expense_events')->where('expense_id', $fixtures['expense'])->count());
+        $this->assertSame(1, $this->db->table('clubunio.expense_events')->where('expense_id', $fixtures['expense'])->count());
     }
 
     private function parentInvoice(): int
     {
         $this->generalFixtures();
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'cancelled', 'name' => 'Storniert']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'cancelled', 'name' => 'Storniert']);
         $parent = new Member;
         $parent->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Parent', 'bexio_contact_id' => 3])->save();
-        $this->db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->update(['parent_id' => $parent->id]);
-        $this->db->table('clubora.billing_recipients')->insert(['tenant_id' => $this->tenant->id, 'code' => 'mother', 'name' => 'Mutter', 'email_field' => 'mother_email']);
+        $this->db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->update(['parent_id' => $parent->id]);
+        $this->db->table('clubunio.billing_recipients')->insert(['tenant_id' => $this->tenant->id, 'code' => 'mother', 'name' => 'Mutter', 'email_field' => 'mother_email']);
         foreach (['P', 'E', 'O', 'S', 'T', 'B'] as $code) {
-            $this->db->table('clubora.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
+            $this->db->table('clubunio.invoice_line_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $code]);
         }
         foreach ([7 => 'E', 8 => 'O', 19 => 'S', 16 => 'T', 9 => 'B'] as $status => $code) {
-            $this->db->table('clubora.invoice_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $code, 'position_code' => $code]);
+            $this->db->table('clubunio.invoice_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $code, 'position_code' => $code]);
         }
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
@@ -549,7 +549,7 @@ class BexioSandboxDispatchTest extends TestCase
         app(BexioGeneralSandboxFixtureService::class)->prepareParent($this->actor, $this->tenant);
         Livewire::test(BexioSandbox::class)->call('prepareParent')->assertHasNoErrors();
         $id = Invoice::where('tenant_id', $this->tenant->id)->where('notes', BexioGeneralSandboxFixtureService::PARENT_NOTES)->value('id');
-        $dispatch = $this->db->table('clubora.bexio_sandbox_dispatches')->where('invoice_id', $id)->first();
+        $dispatch = $this->db->table('clubunio.bexio_sandbox_dispatches')->where('invoice_id', $id)->first();
         $this->assertNotNull($dispatch);
         app(BexioSandboxDispatchService::class)->send($this->actor, $this->tenant, $dispatch->id);
         $this->assertSame('accepted', $this->row($dispatch->id)->state);
@@ -617,7 +617,7 @@ class BexioSandboxDispatchTest extends TestCase
         Livewire::test(ViewInvoice::class, ['record' => $id])
             ->callAction('bexioStatus')->assertRedirect($url);
         $this->get($url)->assertOk()->assertSee('33.00');
-        $this->assertSame('succeeded', $this->db->table('clubora.sync_work_items')->where('tenant_id', $this->tenant->id)->where('operation', 'invoice_sync')->sole()->state);
+        $this->assertSame('succeeded', $this->db->table('clubunio.sync_work_items')->where('tenant_id', $this->tenant->id)->where('operation', 'invoice_sync')->sole()->state);
     }
 
     public function test_invoice_action_rejects_changed_recipient_and_nonadmin(): void
@@ -632,7 +632,7 @@ class BexioSandboxDispatchTest extends TestCase
             $this->assertSame(409, $error->getStatusCode());
         }
         $this->invoice['contact_id'] = 3;
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         try {
             $service->execute($this->actor, $this->tenant, $id, 'issue');
             $this->fail('Nonadmin accepted');
@@ -688,7 +688,7 @@ class BexioSandboxDispatchTest extends TestCase
         $this->assertCount(1, $this->billPayments);
         $this->assertSame('MANUAL', $this->billPayments[0]['payment_type']);
         $this->assertArrayNotHasKey('receiver_iban', $this->billPayments[0]);
-        $this->assertSame(1, $this->db->table('clubora.expense_events')->where('expense_id', $id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.expense_events')->where('expense_id', $id)->count());
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
@@ -702,7 +702,7 @@ class BexioSandboxDispatchTest extends TestCase
         $service = app(BexioFinancialActionService::class);
         $this->financeTimeout = true;
         $service->execute($this->actor, $this->tenant, 'invoice', $id, 'payment_partial');
-        $row = $this->db->table('clubora.bexio_financial_actions')->where('actor_id', $this->actor->id)->first();
+        $row = $this->db->table('clubunio.bexio_financial_actions')->where('actor_id', $this->actor->id)->first();
         $this->assertSame('uncertain', $row->state);
         try {
             $service->execute($this->actor, $this->tenant, 'invoice', $id, 'payment_partial');
@@ -713,7 +713,7 @@ class BexioSandboxDispatchTest extends TestCase
         $this->invoicePayments[] = ['id' => 101, 'kb_invoice_id' => 123, 'value' => '16.50', 'date' => $row->payment_date, 'bank_account_id' => 1];
         $this->invoiceStatus = 16;
         $service->reconcile($this->actor, $this->tenant, 'invoice', $id);
-        $this->assertSame('accepted', $this->db->table('clubora.bexio_financial_actions')->where('id', $row->id)->value('state'));
+        $this->assertSame('accepted', $this->db->table('clubunio.bexio_financial_actions')->where('id', $row->id)->value('state'));
         $this->assertSame(1, count(Http::recorded(fn ($request) => $request->method() === 'POST' && str_ends_with($request->url(), '/123/payment'))));
     }
 
@@ -766,7 +766,7 @@ class BexioSandboxDispatchTest extends TestCase
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
         $page = Livewire::test(BexioSandbox::class)->call('prepare', 'invoice')->assertHasNoErrors();
-        $id = $this->db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $this->tenant->id)->value('id');
+        $id = $this->db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $this->tenant->id)->value('id');
         $page->call('send', $id)->assertHasNoErrors();
         $this->assertSame('accepted', $this->row($id)->state);
         $this->assertSame('123', Invoice::find($this->row($id)->invoice_id)->bexio_invoice_id);
@@ -813,7 +813,7 @@ class BexioSandboxDispatchTest extends TestCase
     {
         $service = app(BexioSandboxDispatchService::class);
         $id = $service->prepare($this->actor, $this->tenant, 'invoice');
-        $this->db->table('clubora.invoices')->where('id', $this->row($id)->invoice_id)->update(['notes' => 'Changed']);
+        $this->db->table('clubunio.invoices')->where('id', $this->row($id)->invoice_id)->update(['notes' => 'Changed']);
         try {
             $service->send($this->actor, $this->tenant, $id);
             $this->fail('Changed document sent');
@@ -840,7 +840,7 @@ class BexioSandboxDispatchTest extends TestCase
     {
         $service = app(BexioSandboxDispatchService::class);
         $id = $service->prepare($this->actor, $this->tenant, 'invoice');
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);

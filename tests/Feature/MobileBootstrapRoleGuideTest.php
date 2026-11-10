@@ -26,7 +26,7 @@ class MobileBootstrapRoleGuideTest extends TestCase {
         $this->setting('general','SaisonID',(string)$season);
         $team=$this->insert('teams',['name'=>'Synthetic team']); $ts=$this->insert('team_seasons',['team_id'=>$team,'season_id'=>$season,'label'=>'Selected team']);
         $this->insert('team_staff',['team_season_id'=>$ts,'member_id'=>$coach]); $this->insert('team_players',['team_season_id'=>$ts,'member_id'=>$child]);
-        foreach(['Teams','Teamplanung','Mitglieder'] as $key) $this->db->table('clubora.mobile_module_options')->insert(['tenant_id'=>$this->tenant->id,'key'=>$key,'name'=>$key]);
+        foreach(['Teams','Teamplanung','Mitglieder'] as $key) $this->db->table('clubunio.mobile_module_options')->insert(['tenant_id'=>$this->tenant->id,'key'=>$key,'name'=>$key]);
         $this->temporarySchema();
         foreach([$this->admin,$this->trainer,$this->parent] as $actor) $this->tokens[$actor->id]=$this->login($actor);
         $this->withToken($this->tokens[$this->admin->id]);
@@ -34,31 +34,31 @@ class MobileBootstrapRoleGuideTest extends TestCase {
     private function temporarySchema(): void {
         foreach(['tenants'=>'id bigint PRIMARY KEY','tenant_accounts'=>'tenant_id bigint,account_id bigint,UNIQUE(tenant_id,account_id)'] as $table=>$definition) {
             $this->db->statement('CREATE TEMP TABLE bootstrap_fixture_'.$table.'('.$definition.') ON COMMIT DROP');
-            $this->db->statement('INSERT INTO pg_temp.bootstrap_fixture_'.$table.' SELECT '.($table==='tenants'?'id':'tenant_id,account_id').' FROM clubora.'.$table.' WHERE '.($table==='tenants'?'id':'tenant_id').'=?',[$this->tenant->id]);
+            $this->db->statement('INSERT INTO pg_temp.bootstrap_fixture_'.$table.' SELECT '.($table==='tenants'?'id':'tenant_id,account_id').' FROM clubunio.'.$table.' WHERE '.($table==='tenants'?'id':'tenant_id').'=?',[$this->tenant->id]);
         }
         $ddl=$this->db->pretend(fn ()=>(require database_path('clubunio/2026_11_04_000800_mobile_app_announcements.php'))->up());
         $this->assertCount(4,$ddl); $sql=$ddl[0]['query'];
-        foreach(['tenants','tenant_accounts'] as $table) $sql=str_replace('REFERENCES clubora.'.$table.'(','REFERENCES pg_temp.bootstrap_fixture_'.$table.'(',$sql);
-        $sql=str_replace('CREATE TABLE clubora.mobile_app_announcements','CREATE TEMP TABLE mobile_app_announcements',$sql);
-        $sql=str_replace('clubora.mobile_app_announcements','pg_temp.mobile_app_announcements',$sql); $sql=str_replace("\n);","\n) ON COMMIT DROP;",$sql);
-        $this->assertStringNotContainsString('REFERENCES clubora.',$sql); $this->assertStringNotContainsString('ON clubora.',$sql); $this->db->unprepared($sql);
+        foreach(['tenants','tenant_accounts'] as $table) $sql=str_replace('REFERENCES clubunio.'.$table.'(','REFERENCES pg_temp.bootstrap_fixture_'.$table.'(',$sql);
+        $sql=str_replace('CREATE TABLE clubunio.mobile_app_announcements','CREATE TEMP TABLE mobile_app_announcements',$sql);
+        $sql=str_replace('clubunio.mobile_app_announcements','pg_temp.mobile_app_announcements',$sql); $sql=str_replace("\n);","\n) ON COMMIT DROP;",$sql);
+        $this->assertStringNotContainsString('REFERENCES clubunio.',$sql); $this->assertStringNotContainsString('ON clubunio.',$sql); $this->db->unprepared($sql);
         $this->db->statement('CREATE TEMP TABLE bootstrap_fixture_settings(tenant_id bigint,area text,key text,label text,value_type text,encrypted_value text,enabled boolean,is_secret boolean,UNIQUE(tenant_id,area,key)) ON COMMIT DROP');
         foreach([1,2] as $repeat) foreach(array_slice($ddl,1) as $query) {
-            $sql=str_replace(['clubora.tenant_settings','clubora.tenants'],['pg_temp.bootstrap_fixture_settings','pg_temp.bootstrap_fixture_tenants'],$query['query']);
+            $sql=str_replace(['clubunio.tenant_settings','clubunio.tenants'],['pg_temp.bootstrap_fixture_settings','pg_temp.bootstrap_fixture_tenants'],$query['query']);
             // Laravel's pretend ledger already substitutes the original bindings.
             $this->db->unprepared($sql);
         }
         $this->assertSame(3,$this->db->table('pg_temp.bootstrap_fixture_settings')->count());
         $this->grammar=$this->db->getQueryGrammar();
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
-            public function wrapTable($table,$prefix=null) { if(is_string($table)) $table=str_replace('clubora.mobile_app_announcements','pg_temp.mobile_app_announcements',$table); return parent::wrapTable($table,$prefix); }
-            public function wrap($value) { if(is_string($value)) $value=str_replace('clubora.mobile_app_announcements','pg_temp.mobile_app_announcements',$value); return parent::wrap($value); }
+            public function wrapTable($table,$prefix=null) { if(is_string($table)) $table=str_replace('clubunio.mobile_app_announcements','pg_temp.mobile_app_announcements',$table); return parent::wrapTable($table,$prefix); }
+            public function wrap($value) { if(is_string($value)) $value=str_replace('clubunio.mobile_app_announcements','pg_temp.mobile_app_announcements',$value); return parent::wrap($value); }
         });
     }
     protected function tearDown(): void { if(isset($this->db)) { if($this->db->transactionLevel()) $this->db->rollBack(); if($this->grammar) $this->db->setQueryGrammar($this->grammar); } parent::tearDown(); }
-    private function insert(string $table,array $values): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$values); }
+    private function insert(string $table,array $values): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$values); }
     private function setting(string $area,string $key,string $value): void {
-        $this->db->table('clubora.tenant_settings')->updateOrInsert(['tenant_id'=>$this->tenant->id,'area'=>$area,'key'=>$key],['label'=>'Synthetic '.$key,'value_type'=>'string','encrypted_value'=>Crypt::encryptString($value),'enabled'=>true,'is_secret'=>false]);
+        $this->db->table('clubunio.tenant_settings')->updateOrInsert(['tenant_id'=>$this->tenant->id,'area'=>$area,'key'=>$key],['label'=>'Synthetic '.$key,'value_type'=>'string','encrypted_value'=>Crypt::encryptString($value),'enabled'=>true,'is_secret'=>false]);
     }
     private function account(string $role): Account { $a=new Account; $a->forceFill(['username'=>'qa-bootstrap-'.bin2hex(random_bytes(5)),'display_name'=>'Synthetic '.$role,'password'=>bcrypt('synthetic-password'),'active'=>true,'api_only'=>false])->save(); $this->insert('tenant_accounts',['account_id'=>$a->id,'role'=>$role,'portal_enabled'=>true]); return $a; }
     private function login(Account $actor): string { return $this->postJson($this->origin.'/api/mobile/v1/session',['username'=>$actor->username,'password'=>'synthetic-password','device_name'=>'Synthetic bootstrap'])->assertOk()->json('data.token'); }
@@ -103,9 +103,9 @@ class MobileBootstrapRoleGuideTest extends TestCase {
         $this->withToken($this->tokens[$this->parent->id])->getJson($this->base().'/role-guide')->assertOk()->assertJsonPath('data.canRespond',true)
             ->assertJsonPath('data.canManageTeams',false)->assertJsonPath('data.canManageResponses',false)->assertJsonPath('data.canReviewMemberChanges',false);
         $this->withToken($this->tokens[$this->admin->id])->getJson($this->base().'/role-guide')->assertOk()->assertJsonPath('data.canReviewMemberChanges',true);
-        $this->db->table('clubora.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
+        $this->db->table('clubunio.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
         $this->withToken($this->tokens[$this->trainer->id])->getJson($this->base().'/role-guide')->assertOk()->assertJsonPath('data.canManageTeams',false);
-        $this->db->table('clubora.team_players')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
+        $this->db->table('clubunio.team_players')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
         $this->withToken($this->tokens[$this->parent->id])->getJson($this->base().'/role-guide')->assertOk()->assertJsonPath('data.canRespond',false);
         config(['clubunio-mobile.native_role_guide_enabled'=>false]); $this->getJson($this->base().'/role-guide')->assertStatus(503); Http::assertNothingSent(); Mail::assertNothingSent();
     }

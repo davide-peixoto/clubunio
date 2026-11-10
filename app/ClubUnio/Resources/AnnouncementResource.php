@@ -57,9 +57,9 @@ class AnnouncementResource extends CatalogResource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->select('clubora.announcements.*')->selectSub(
-            DB::connection('clubunio')->table('clubora.notifications')->selectRaw('count(*)')->whereColumn('announcement_id', 'clubora.announcements.id')
-                ->whereColumn('tenant_id', 'clubora.announcements.tenant_id')->whereNotNull('read_at'), 'read_count');
+        return parent::getEloquentQuery()->select('clubunio.announcements.*')->selectSub(
+            DB::connection('clubunio')->table('clubunio.notifications')->selectRaw('count(*)')->whereColumn('announcement_id', 'clubunio.announcements.id')
+                ->whereColumn('tenant_id', 'clubunio.announcements.tenant_id')->whereNotNull('read_at'), 'read_count');
     }
 
     public static function fields(): array
@@ -84,7 +84,7 @@ class AnnouncementResource extends CatalogResource
     {
         $save = fn ($id, $data) => app(AnnouncementService::class)->save(Filament::auth()->user(), Filament::getTenant(), $id, $data + ['target_ids' => []]);
         $preview = fn (Announcement $record) => view('clubunio.messages.announcement-preview', app(AnnouncementService::class)->preview(Filament::auth()->user(), Filament::getTenant(), $record->id));
-        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.announcement_statuses')
+        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.announcement_statuses')
             ->where('tenant_id', Filament::getTenant()->id)->orderBy('sort_order')->get();
         $rawStates = $statusRows->pluck('name', 'code')->all();
         $states = $statusRows->mapWithKeys(fn ($row) => [

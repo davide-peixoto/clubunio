@@ -18,6 +18,6 @@ class MemberFunction extends CatalogModel
 
     public function qualifications()
     {
-        return $this->belongsToMany(Qualification::class, 'clubora.member_function_qualifications');
+        return $this->belongsToMany(Qualification::class, 'clubunio.member_function_qualifications');
     }
 }

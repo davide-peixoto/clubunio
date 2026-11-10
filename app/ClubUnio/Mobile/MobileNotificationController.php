@@ -12,7 +12,7 @@ final class MobileNotificationController
     private function write(Request $r, ?int $id, ?int $through, array $observed = []) {
         return DB::connection('clubunio')->transaction(function () use ($r, $id, $through, $observed) {
             \App\ClubUnio\Models\Tenant::whereKey($r->attributes->get('mobile.tenant')->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             $r->attributes->set('mobile.actor',$actor);
             return response()->json(['data' => app(MobileNotificationService::class)->read($actor, $r->attributes->get('mobile.tenant'), $id, $through, $observed)]);

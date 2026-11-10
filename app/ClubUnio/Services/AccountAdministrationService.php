@@ -17,7 +17,7 @@ class AccountAdministrationService
 {
     public function allowed(Account $actor, Tenant $tenant): bool
     {
-        return Account::whereKey($actor->id)->where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)->where('clubora.tenant_accounts.role', 'admin'))->exists();
+        return Account::whereKey($actor->id)->where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id)->where('clubunio.tenant_accounts.role', 'admin'))->exists();
     }
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): TenantAccount
@@ -57,12 +57,12 @@ class AccountAdministrationService
                 throw ValidationException::withMessages(['role' => __('Benutzer wurde inzwischen geändert. Bitte neu öffnen.')]);
             }
             $passwordChanged = ! empty($data['password']);
-            if ($id && DB::connection('clubunio')->table('clubora.platform_admins')->where('account_id', $account->id)->exists()
+            if ($id && DB::connection('clubunio')->table('clubunio.platform_admins')->where('account_id', $account->id)->exists()
                 && ! app(PlatformAdministrationService::class)->allowed($actor)
                 && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
                 throw ValidationException::withMessages(['password' => __('Globale Plattformkonten dürfen nicht durch Vereinsadministratoren geändert werden.')]);
             }
-            if ($id && $account->tenants()->where('clubora.tenants.id', '<>', $tenant->id)->exists()
+            if ($id && $account->tenants()->where('clubunio.tenants.id', '<>', $tenant->id)->exists()
                 && ($account->display_name !== $data['display_name'] || $account->active !== (bool) $data['active'] || $passwordChanged)) {
                 throw ValidationException::withMessages(['active' => __('Vereinsübergreifendes Konto: globale Kontodaten nur nach gesonderter Prüfung ändern.')]);
             }
@@ -90,7 +90,7 @@ class AccountAdministrationService
                 $link->forceFill(['access_profile_id' => $profileId]);
             }
             $link->forceFill(['tenant_id' => $tenant->id, 'account_id' => $account->id, 'role' => $data['role'], 'portal_enabled' => (bool) $data['portal_enabled'], 'revision' => ($link->revision ?? 0) + 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'tenant_accounts', 'object_id' => $link->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'tenant_accounts', 'object_id' => $link->id,
                 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode(['account_id' => $account->id, 'display_name' => $account->display_name, 'active' => $account->active, 'role' => $link->role, 'portal_enabled' => $link->portal_enabled, 'access_profile_id' => $link->access_profile_id, 'password_changed' => $passwordChanged, 'reason' => $data['reason']], JSON_THROW_ON_ERROR)]);
 

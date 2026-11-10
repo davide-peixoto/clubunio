@@ -47,7 +47,7 @@ if (in_array('--prepare-target', $argv, true) && ! $target) {
         if ($existing) {
             return $existing;
         }
-        $category = $invoice->invoice_category_id ?: DB::connection('clubunio')->table('clubora.invoice_categories')->where('tenant_id', $tenant->id)->where('active', true)->value('id');
+        $category = $invoice->invoice_category_id ?: DB::connection('clubunio')->table('clubunio.invoice_categories')->where('tenant_id', $tenant->id)->where('active', true)->value('id');
         $target = $workflow->create($actor, $tenant, ['member_id' => $invoice->member_id, 'invoice_category_id' => $category, 'tax_mode' => 'inclusive', 'notes' => $targetNotes]);
         $tax = $invoice->activeLines()->whereNotNull('bexio_catalog_tax_id')->orderBy('id')->value('bexio_catalog_tax_id');
         abort_unless($tax, 409);
@@ -59,15 +59,15 @@ if (in_array('--prepare-target', $argv, true) && ! $target) {
 if (in_array('--send-target', $argv, true)) {
     abort_unless($target && ! config('clubunio.outbound_enabled'), 409);
     $service = app(BexioSandboxDispatchService::class);
-    $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $target->id)->first();
+    $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $target->id)->first();
     if (! $dispatch) {
         $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $target->id);
         $dispatchId = $service->prepareTrial($actor, $tenant, $trial);
-        $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->find($dispatchId);
+        $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->find($dispatchId);
     }
     abort_unless((string) json_decode($dispatch->payload, true, 512, JSON_THROW_ON_ERROR)['contact_id'] === '3', 409, 'Wrong fixture recipient; no transmission');
     app(SyncWorkService::class)->run($actor, $tenant, 'dispatch_result', $dispatch->id);
-    $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->find($dispatch->id);
+    $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->find($dispatch->id);
     abort_unless($dispatch->state === 'accepted', 409, 'Unconfirmed target dispatch; review synchronization');
     app(BexioInvoiceActionService::class)->execute($actor, $tenant, $target->id, 'issue');
 }
@@ -84,7 +84,7 @@ if ($target) {
     }
     if (in_array('--sync-target', $argv, true)) {
         $check = app(SyncWorkService::class)->run($actor, $tenant, 'invoice_sync', $target->id);
-        $row = DB::connection('clubunio')->table('clubora.bexio_checks')->find($check);
+        $row = DB::connection('clubunio')->table('clubunio.bexio_checks')->find($check);
         echo json_encode(['target_check_state' => $row->state, 'balance' => $target->fresh()->bexioBalance?->only(['total_cents', 'credit_cents', 'remaining_cents'])], JSON_THROW_ON_ERROR).PHP_EOL;
     }
 }

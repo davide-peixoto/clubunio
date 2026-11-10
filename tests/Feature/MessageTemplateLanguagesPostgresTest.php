@@ -31,13 +31,13 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
         $this->db->beginTransaction();
         $this->tenant = Tenant::create(['slug' => 'message-language-'.Str::lower(Str::random(16)), 'name' => 'Synthetic language club', 'default_locale' => 'de']);
         foreach (['draft', 'published', 'withdrawn'] as $state) {
-            $this->db->table('clubora.announcement_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $state, 'name' => $state]);
+            $this->db->table('clubunio.announcement_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $state, 'name' => $state]);
         }
         foreach (['de' => 'german', 'en' => 'english'] as $locale => $property) {
             $account = new Account;
             $account->forceFill(['username' => 'language-'.Str::lower(Str::random(16)).'@example.invalid', 'display_name' => 'Synthetic '.$locale,
                 'password' => bcrypt('synthetic-fixture'), 'active' => true, 'preferred_locale' => $locale])->save();
-            $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $account->id, 'role' => 'admin']);
+            $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $account->id, 'role' => 'admin']);
             $this->{$property} = $account;
         }
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
@@ -54,9 +54,9 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
                     $this->db->rollBack();
                 }
                 if (isset($this->tenant)) {
-                    $this->assertFalse($this->db->table('clubora.tenants')->where('id', $this->tenant->id)->exists(), 'Synthetic tenant must be rolled back');
-                    $this->assertFalse($this->db->table('clubora.message_templates')->where('tenant_id', $this->tenant->id)->exists());
-                    $this->assertFalse($this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->exists());
+                    $this->assertFalse($this->db->table('clubunio.tenants')->where('id', $this->tenant->id)->exists(), 'Synthetic tenant must be rolled back');
+                    $this->assertFalse($this->db->table('clubunio.message_templates')->where('tenant_id', $this->tenant->id)->exists());
+                    $this->assertFalse($this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->exists());
                 }
             }
         } finally {
@@ -106,7 +106,7 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
         $announcement = $draft();
         $prepared = $service->prepare($this->german, $this->tenant, $announcement->id, 1);
         $this->assertSame(2, $service->publish($this->german, $this->tenant, $announcement->id, 1, $prepared['preview_token']));
-        $notifications = $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->where('announcement_id', $announcement->id)->pluck('title', 'account_id');
+        $notifications = $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->where('announcement_id', $announcement->id)->pluck('title', 'account_id');
         $this->assertSame('DE Fixture', $notifications[$this->german->id]);
         $this->assertSame('EN Fixture', $notifications[$this->english->id]);
         $blocked = $draft();
@@ -118,8 +118,8 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
             $this->fail('Disabled required variant must block the complete announcement');
         } catch (ValidationException) {
             $this->assertSame('draft', $blocked->fresh()->state);
-            $this->assertFalse($this->db->table('clubora.announcement_recipients')->where('announcement_id', $blocked->id)->exists());
-            $this->assertFalse($this->db->table('clubora.notifications')->where('announcement_id', $blocked->id)->exists());
+            $this->assertFalse($this->db->table('clubunio.announcement_recipients')->where('announcement_id', $blocked->id)->exists());
+            $this->assertFalse($this->db->table('clubunio.notifications')->where('announcement_id', $blocked->id)->exists());
         }
     }
 
@@ -134,7 +134,7 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
             $this->fail('Changed recipient language accepted without a new preview');
         } catch (ValidationException) {
             $this->assertSame('draft', $draft->fresh()->state);
-            $this->assertFalse($this->db->table('clubora.notifications')->where('announcement_id', $draft->id)->exists());
+            $this->assertFalse($this->db->table('clubunio.notifications')->where('announcement_id', $draft->id)->exists());
         }
     }
 
@@ -166,7 +166,7 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
         $this->assertStringContainsString('Example Club', $bodies[0]);
         $this->assertStringContainsString('Guten Tag Alex Beispiel', $bodies[1]);
         $this->assertStringContainsString('Beispielverein', $bodies[1]);
-        $this->assertSame([TestMailGuard::RECIPIENT], $this->db->table('clubora.test_mail_attempts')->where('tenant_id', $this->tenant->id)->distinct()->pluck('recipient')->all());
-        $this->assertSame(2, $this->db->table('clubora.test_mail_attempts')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame([TestMailGuard::RECIPIENT], $this->db->table('clubunio.test_mail_attempts')->where('tenant_id', $this->tenant->id)->distinct()->pluck('recipient')->all());
+        $this->assertSame(2, $this->db->table('clubunio.test_mail_attempts')->where('tenant_id', $this->tenant->id)->count());
     }
 }

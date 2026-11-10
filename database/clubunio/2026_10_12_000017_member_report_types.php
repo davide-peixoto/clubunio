@@ -13,10 +13,10 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('ALTER TABLE clubora.member_types ADD team_required boolean NOT NULL DEFAULT false, ADD passive_membership boolean NOT NULL DEFAULT false');
+        $db->statement('ALTER TABLE clubunio.member_types ADD team_required boolean NOT NULL DEFAULT false, ADD passive_membership boolean NOT NULL DEFAULT false');
         // Translate legacy meanings once; runtime reports use configurable flags.
-        $db->statement("UPDATE clubora.member_types mt SET team_required=(mt.legacy_id=1), passive_membership=(mt.legacy_id=5)
-            FROM clubora.tenants t WHERE t.id=mt.tenant_id AND t.slug='sv-sissach' AND mt.legacy_id IN (1,5)");
+        $db->statement("UPDATE clubunio.member_types mt SET team_required=(mt.legacy_id=1), passive_membership=(mt.legacy_id=5)
+            FROM clubunio.tenants t WHERE t.id=mt.tenant_id AND t.slug='sv-sissach' AND mt.legacy_id IN (1,5)");
     }
 
     public function down(): void

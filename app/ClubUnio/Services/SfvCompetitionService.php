@@ -33,7 +33,7 @@ class SfvCompetitionService
     public function previewWithdrawal(Account $actor, Tenant $tenant, int $matchId): array
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
-        $match = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
+        $match = DB::connection('clubunio')->table('clubunio.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
         abort_unless($match, 404);
         $records = Competition::where('tenant_id', $tenant->id)->where('association_match_id', $match->match_id)->get();
         $record = $records->first();
@@ -61,7 +61,7 @@ class SfvCompetitionService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         Validator::make(compact('from', 'to'), ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
-        $matches = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)
+        $matches = DB::connection('clubunio')->table('clubunio.sfv_schedule')->where('tenant_id', $tenant->id)
             ->whereRaw("(starts_at AT TIME ZONE 'Europe/Zurich')::date BETWEEN ? AND ?", [$from, $to])->orderBy('starts_at')->orderBy('id')->limit(101)->get();
         if ($matches->count() > 100) {
             throw ValidationException::withMessages(['to' => __('Maximal 100 Spiele pro Prüfung. Bitte Zeitraum eingrenzen.')]);
@@ -104,7 +104,7 @@ class SfvCompetitionService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         $db = DB::connection('clubunio');
-        $match = $db->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
+        $match = $db->table('clubunio.sfv_schedule')->where('tenant_id', $tenant->id)->where('id', $matchId)->first();
         abort_unless($match, 404);
         if (! $match->starts_at || ! $match->host_name || ! $match->guest_name) {
             throw ValidationException::withMessages(['match' => __('Datum oder Teamnamen fehlen. Bitte SFV-Daten neu abrufen.')]);
@@ -118,7 +118,7 @@ class SfvCompetitionService
             throw ValidationException::withMessages(['match' => __('Kein eindeutig zugeordnetes Spielfeld in Tannenbrunn. Keine Übernahme.')]);
         }
         $code = ['1' => 'H', '2' => 'K', '3' => 'T'][$parts[1] ?: ($parts[2] ?? '')] ?? null;
-        $field = $db->table('clubora.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('code', $code)->where('active', true)->first();
+        $field = $db->table('clubunio.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('code', $code)->where('active', true)->first();
         if (! $field) {
             throw ValidationException::withMessages(['match' => __('Die Spielfeldzuordnung fehlt oder ist inaktiv.')]);
         }
@@ -184,7 +184,7 @@ class SfvCompetitionService
             if ($pitchReady) {
                 app(PitchPlanningService::class)->sfvUpdated($actor, $tenant, $record, $pitchBefore, ($fresh['kind'] ?? '') === 'withdrawal');
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'competitions', 'object_id' => $record->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'competitions', 'object_id' => $record->id,
                 'before_value' => $fresh['before'] ? json_encode($fresh['before']) : null, 'after_value' => json_encode($data + ['action' => ($fresh['kind'] ?? '') === 'withdrawal' ? 'sfv_withdrawal' : 'sfv_import', 'reason' => $fresh['reason'] ?? null])]);
 
             return $record->id;

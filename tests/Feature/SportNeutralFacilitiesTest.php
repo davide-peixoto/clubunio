@@ -23,7 +23,7 @@ class SportNeutralFacilitiesTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         Http::preventStrayRequests();
         Mail::fake();
         $common = 'id INTEGER PRIMARY KEY, tenant_id INTEGER, active BOOLEAN DEFAULT true, revision INTEGER DEFAULT 1, created_at TEXT, updated_at TEXT';
@@ -51,7 +51,7 @@ class SportNeutralFacilitiesTest extends TestCase
             'pitch_blocks' => "$common, date TEXT, field_id INTEGER, area_id INTEGER, starts_at TEXT, duration_minutes INTEGER, reason TEXT, status TEXT",
             'pitch_planning_events' => "$common",
         ] as $table => $columns) {
-            $db->statement("CREATE TABLE clubora.$table ($columns)");
+            $db->statement("CREATE TABLE clubunio.$table ($columns)");
         }
         $this->app->instance(PitchPlanningProjection::class, new class extends PitchPlanningProjection
         {
@@ -61,7 +61,7 @@ class SportNeutralFacilitiesTest extends TestCase
 
     private function add(string $table, array $row): int
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->insertGetId($row);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->insertGetId($row);
     }
 
     public static function layouts(): array
@@ -175,8 +175,8 @@ class SportNeutralFacilitiesTest extends TestCase
         $this->assertContains('block', array_column($pitch->calendar($actor, $tenant, $filters)['entries'][0]['conflicts'], 'type'));
         $this->assertNotContains($w->id, $signage()['trainings']->pluck('id'));
         $this->assertTrue(app(MobileFacilitiesData::class)->read($actor, $tenant)['fields'][0]['can_edit']);
-        DB::connection('clubunio')->table('clubora.pitch_blocks')->where('tenant_id', 1)->update(['status' => 'cancelled']);
-        DB::connection('clubunio')->table('clubora.tenant_settings')->where('tenant_id', 1)->where('key', ActiveTrainingPlan::KEY)
+        DB::connection('clubunio')->table('clubunio.pitch_blocks')->where('tenant_id', 1)->update(['status' => 'cancelled']);
+        DB::connection('clubunio')->table('clubunio.tenant_settings')->where('tenant_id', 1)->where('key', ActiveTrainingPlan::KEY)
             ->update(['encrypted_value' => Crypt::encryptString((string) $summer->id)]);
         $this->assertSame($s->id, $pitch->calendar($actor, $tenant, $filters)['entries'][0]['source_id']);
         $this->assertSame([$s->id], array_column(app(MobileTeamsData::class)->trainings($actor, $tenant, $football), 'TrainingID'));

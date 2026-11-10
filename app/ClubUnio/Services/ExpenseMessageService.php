@@ -24,14 +24,14 @@ class ExpenseMessageService
         $access = app(MemberAccessService::class);
         $members = $access->activeMembers($tenant);
         if ($expense->status->code === 'F') {
-            $members->whereIn('id', $db->table('clubora.technical_leads')->where('tenant_id', $tenant->id)->where('team_season_id', $expense->team_season_id)->where('active', true)->select('member_id'));
+            $members->whereIn('id', $db->table('clubunio.technical_leads')->where('tenant_id', $tenant->id)->where('team_season_id', $expense->team_season_id)->where('active', true)->select('member_id'));
         } else {
             $members->whereKey($expense->member_id);
         }
         $memberIds = $members->pluck('id');
-        $accounts = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true)
+        $accounts = $db->table('clubunio.tenant_accounts as ta')->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true)
             ->where(function ($q) use ($db, $tenant, $memberIds, $expense) {
-                $q->whereIn('ta.account_id', $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('kind', 'self')->where('state', 'approved')->whereIn('member_id', $memberIds)->select('account_id'))
+                $q->whereIn('ta.account_id', $db->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)->where('kind', 'self')->where('state', 'approved')->whereIn('member_id', $memberIds)->select('account_id'))
                     ->where('ta.portal_enabled', true);
                 if ($expense->status->code === 'F') {
                     $q->orWhere('ta.role', 'office');
@@ -55,12 +55,12 @@ class ExpenseMessageService
         if ($payload) {
             $payload['intended_to'] = array_merge(...array_column($deliveries, 'intended_to'));
         }
-        $id = $db->table('clubora.expense_events')->insertGetId(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'revision' => $expense->revision, 'event_key' => $event,
+        $id = $db->table('clubunio.expense_events')->insertGetId(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'revision' => $expense->revision, 'event_key' => $event,
             'delivery_state' => $payload ? 'ready' : 'held', 'payload_encrypted' => $payload ? Crypt::encryptString(json_encode($payload, JSON_THROW_ON_ERROR)) : null]);
         foreach ($accounts->unique('account_id') as $account) {
             $push = $templates->renderForAccount($tenant, $event, 'push', $values, $account->account_id);
             if ($push) {
-                $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->account_id, 'expense_event_id' => $id,
+                $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->account_id, 'expense_event_id' => $id,
                     'title' => $push['title'], 'body' => $push['body'], 'object_type' => 'expense', 'object_id' => $expense->id]);
             }
         }

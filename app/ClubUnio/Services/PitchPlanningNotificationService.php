@@ -31,7 +31,7 @@ class PitchPlanningNotificationService
         $payload = json_encode($event, JSON_THROW_ON_ERROR);
         $fingerprint = hash('sha256', $payload);
         $db->transaction(function () use ($db, $tenant, $event, $payload, $fingerprint) {
-            $db->table('clubora.pitch_planning_events')->insertOrIgnore([
+            $db->table('clubunio.pitch_planning_events')->insertOrIgnore([
                 'tenant_id' => $tenant->id, 'event_key' => $event['event_key'], 'fingerprint' => $fingerprint,
                 'action' => $event['action'], 'actor_id' => $event['actor_id'],
                 'requester_account_id' => $event['requester_account_id'],
@@ -39,7 +39,7 @@ class PitchPlanningNotificationService
                 'source_key' => $event['after']['key'], 'source_date' => $event['after']['date'],
                 'payload' => $payload, 'delivery_state' => 'held', 'created_at' => now()->toIso8601String(),
             ]);
-            $row = $db->table('clubora.pitch_planning_events')->where('tenant_id', $tenant->id)
+            $row = $db->table('clubunio.pitch_planning_events')->where('tenant_id', $tenant->id)
                 ->where('event_key', $event['event_key'])->lockForUpdate()->firstOrFail();
             if (! hash_equals($row->fingerprint, $fingerprint)) {
                 throw new \LogicException('Pitch notification event identity was reused with different data');
@@ -49,12 +49,12 @@ class PitchPlanningNotificationService
             }
             $values = [
                 'verein' => $tenant->name,
-                'mannschaft' => $db->table('clubora.team_seasons')->where('tenant_id', $tenant->id)
+                'mannschaft' => $db->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)
                     ->whereIn('id', $event['team_season_ids'])->orderBy('id')->pluck('label')->implode(', '),
                 'datum' => $event['after']['date'].' '.$event['after']['starts_at'],
             ];
             foreach (['previous' => $event['before'], 'new' => $event['after']] as $prefix => $entry) {
-                $field = $db->table('clubora.training_options')->where('tenant_id', $tenant->id)
+                $field = $db->table('clubunio.training_options')->where('tenant_id', $tenant->id)
                     ->where('category', 'field')->where('id', $entry['field_id'] ?? null)->first();
                 $values[$prefix.'_field'] = $field ? new MessageLookupValue('training_options', (array) $field) : '';
                 $values[$prefix.'_date'] = $entry['date'] ?? '';
@@ -67,13 +67,13 @@ class PitchPlanningNotificationService
                 $account = Account::findOrFail($recipient->id);
                 $message = $templates->renderForAccount($tenant, self::EVENTS[$event['action']], 'push', $values, (int) $account->id);
                 if ($message) {
-                    $notification = $db->table('clubora.notifications')->insertGetId([
+                    $notification = $db->table('clubunio.notifications')->insertGetId([
                         'tenant_id' => $tenant->id, 'account_id' => $account->id,
                         'object_type' => 'pitch_planning', 'object_id' => $row->id,
                         'title' => $message['title'], 'body' => $message['body'], 'created_at' => $row->created_at,
                     ]);
                     $key = 'notification:'.$notification;
-                    $db->table('clubora.mobile_inbox')->insertOrIgnore([
+                    $db->table('clubunio.mobile_inbox')->insertOrIgnore([
                         'tenant_id' => $tenant->id, 'account_id' => $account->id, 'kind' => 'pitch_planning',
                         'object_id' => $row->id, 'event_key' => $key, 'created_at' => $row->created_at,
                     ]);
@@ -91,7 +91,7 @@ class PitchPlanningNotificationService
                     }
                 }
             }
-            $db->table('clubora.pitch_planning_events')->where('id', $row->id)->where('tenant_id', $tenant->id)->update([
+            $db->table('clubunio.pitch_planning_events')->where('id', $row->id)->where('tenant_id', $tenant->id)->update([
                 'notifications_recorded_at' => now()->toIso8601String(),
                 'payload_encrypted' => $deliveries ? Crypt::encryptString(json_encode(['deliveries' => $deliveries], JSON_THROW_ON_ERROR)) : null,
                 'delivery_state' => $deliveries ? 'ready' : 'held',
@@ -116,8 +116,8 @@ class PitchPlanningNotificationService
     public function target(Account $actor, Tenant $tenant, int $id): array
     {
         $db = DB::connection('clubunio');
-        $row = $db->table('clubora.pitch_planning_events')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
-        abort_unless($db->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+        $row = $db->table('clubunio.pitch_planning_events')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
+        abort_unless($db->table('clubunio.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
             ->where('object_type', 'pitch_planning')->where('object_id', $id)->exists(), 404);
         $event = json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR);
         abort_unless($this->recipients($tenant, $event)->where('a.id', $actor->id)->exists(), 403);
@@ -128,7 +128,7 @@ class PitchPlanningNotificationService
     private function recipients(Tenant $tenant, array $event)
     {
         $db = DB::connection('clubunio');
-        $accounts = $db->table('clubora.accounts as a')->join('clubora.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
+        $accounts = $db->table('clubunio.accounts as a')->join('clubunio.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
             ->where('ta.tenant_id', $tenant->id)->where('a.active', true)->where('a.api_only', false);
         if ($event['action'] === 'requested') {
             return $accounts->whereIn('ta.role', ['admin', 'office']);
@@ -139,13 +139,13 @@ class PitchPlanningNotificationService
         if ($event['action'] === 'created' && $event['team_season_ids'] === []) {
             return $accounts->whereRaw('1=0');
         }
-        $members = app(MemberAccessService::class)->activeMembers($tenant)->whereIn('clubora.members.id',
-            $db->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('active', true)
+        $members = app(MemberAccessService::class)->activeMembers($tenant)->whereIn('clubunio.members.id',
+            $db->table('clubunio.team_staff')->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('team_season_id', $event['team_season_ids'])->select('member_id'));
 
-        $staffAccounts = $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)
+        $staffAccounts = $db->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)
             ->where('kind', 'self')->where('state', 'approved')
-            ->whereIn('member_id', $members->select('clubora.members.id'))->select('account_id');
+            ->whereIn('member_id', $members->select('clubunio.members.id'))->select('account_id');
 
         return $accounts->where(function ($q) use ($event, $staffAccounts) {
             $q->where(fn ($staff) => $staff

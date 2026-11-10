@@ -34,7 +34,7 @@ class SignageFeedService
             $result['http_status'] = $error->getCode() >= 400 && $error->getCode() <= 599 ? (int) $error->getCode() : null;
             Log::warning('clubunio.instagram.check_failed', ['tenant_id' => $tenant->id, 'reference' => $reference, 'http_status' => $result['http_status']]);
         }
-        DB::connection('clubunio')->table('clubora.integration_checks')->insert($result + ['kind' => 'instagram', 'tenant_id' => $tenant->id, 'actor_id' => $actor->id]);
+        DB::connection('clubunio')->table('clubunio.integration_checks')->insert($result + ['kind' => 'instagram', 'tenant_id' => $tenant->id, 'actor_id' => $actor->id]);
 
         return $result;
     }

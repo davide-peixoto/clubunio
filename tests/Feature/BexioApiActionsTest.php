@@ -59,7 +59,7 @@ class BexioApiActionsTest extends TestCase
         $this->admin = new Account;
         $this->admin->forceFill(['username' => 'bexio-api-'.Str::random(20), 'display_name' => 'Synthetic admin',
             'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $this->admin->id, 'role' => 'admin']);
         $scopes = [];
         foreach (app(BexioApiActions::class)->definitions() as $definition) {
@@ -78,8 +78,8 @@ class BexioApiActionsTest extends TestCase
         $token = ApiAccessToken::findOrFail($issued['id']);
         $token->forceFill(['abilities' => array_keys($scopes)])->save();
         $this->context = new ApiContext($this->integration->account, $this->tenant, $this->integration, $token);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Bexio API']);
-        $invoice = $this->db->table('clubora.invoices')->insertGetId([
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Bexio API']);
+        $invoice = $this->db->table('clubunio.invoices')->insertGetId([
             'tenant_id' => $this->tenant->id, 'member_id' => $member, 'active' => true, 'bexio_invoice_id' => '123']);
         $this->invoice = Invoice::findOrFail($invoice);
         $this->mock(BexioSandboxFixtureService::class, fn ($m) => $m->shouldReceive('optionalConnectionHash')->andReturn('fixture'));
@@ -112,7 +112,7 @@ class BexioApiActionsTest extends TestCase
 
     private function dispatch(string $state = 'accepted'): int
     {
-        return $this->db->table('clubora.bexio_sandbox_dispatches')->insertGetId([
+        return $this->db->table('clubunio.bexio_sandbox_dispatches')->insertGetId([
             'tenant_id' => $this->tenant->id, 'actor_id' => $this->admin->id, 'kind' => 'invoice',
             'invoice_id' => $this->invoice->id, 'reference' => (string) Str::uuid(), 'connection_hash' => 'fixture',
             'snapshot_hash' => 'fixture', 'payload' => '{"secret":"never return"}', 'state' => $state, 'remote_id' => '123',
@@ -121,7 +121,7 @@ class BexioApiActionsTest extends TestCase
 
     private function invoiceAction(int $dispatch, string $operation, string $state): void
     {
-        $this->db->table('clubora.bexio_invoice_actions')->insert(['dispatch_id' => $dispatch, 'actor_id' => $this->admin->id,
+        $this->db->table('clubunio.bexio_invoice_actions')->insert(['dispatch_id' => $dispatch, 'actor_id' => $this->admin->id,
             'operation' => $operation, 'state' => $state, 'connection_hash' => 'fixture', 'before_status' => 7]);
     }
 
@@ -160,9 +160,9 @@ class BexioApiActionsTest extends TestCase
         $this->mock(BexioSandboxDispatchService::class, fn ($m) => $m->shouldNotReceive('authorize', 'statusDocument', 'readStatus'));
         $this->assertSame([], $this->adapter()->validate($this->context, 'bexio.invoice-status', $this->invoice->id, []));
         $this->assertFalse(app(ApiTokenService::class)->isAdmin($this->context->actor, $this->tenant));
-        $this->assertSame('profile', $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+        $this->assertSame('profile', $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
             ->where('account_id', $this->context->actor->id)->value('role'));
-        $this->assertSame(0, $this->db->table('clubora.sync_work_items')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.sync_work_items')->where('tenant_id', $this->tenant->id)->count());
         Http::assertNothingSent();
     }
 
@@ -202,7 +202,7 @@ class BexioApiActionsTest extends TestCase
             'integration' => $this->integration->forceFill(['active' => false])->save(),
             'profile' => $this->profile->forceFill(['active' => false])->save(),
             'actor' => $this->context->actor->forceFill(['active' => false])->save(),
-            'membership' => $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+            'membership' => $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
                 ->where('account_id', $this->context->actor->id)->update(['role' => 'office', 'access_profile_id' => null]),
             'ceiling' => $this->integration->forceFill(['scopes' => []])->save(),
         };
@@ -224,8 +224,8 @@ class BexioApiActionsTest extends TestCase
     public function test_tenant_active_record_and_catalog_object_boundaries(): void
     {
         $other = Tenant::create(['name' => 'Other Bexio fixture', 'slug' => 'bexio-other-'.Str::random(14)]);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $other->id, 'first_name' => 'Foreign fixture']);
-        $foreignId = $this->db->table('clubora.invoices')->insertGetId([
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $other->id, 'first_name' => 'Foreign fixture']);
+        $foreignId = $this->db->table('clubunio.invoices')->insertGetId([
             'tenant_id' => $other->id, 'member_id' => $member, 'active' => true]);
         $foreign = Invoice::findOrFail($foreignId);
         try {
@@ -244,7 +244,7 @@ class BexioApiActionsTest extends TestCase
     public function test_transfer_requires_revision_and_local_internal_release_unless_resuming_existing_dispatch(): void
     {
         $this->rejects(409, fn () => $this->adapter()->validate($this->context, 'bexio.invoice-transfer', $this->invoice->id, ['revision' => 1]));
-        $workflow = $this->db->table('clubora.invoice_workflow_statuses')->insertGetId([
+        $workflow = $this->db->table('clubunio.invoice_workflow_statuses')->insertGetId([
             'tenant_id' => $this->tenant->id, 'name' => 'Released fixture', 'code' => 'released', 'active' => true,
         ]);
         $this->invoice->forceFill(['bexio_invoice_id' => null, 'workflow_status_id' => $workflow])->save();
@@ -283,14 +283,14 @@ class BexioApiActionsTest extends TestCase
         } elseif ($kind === 'technical') {
             $executor = $this->context->actor;
         } elseif (in_array($kind, ['demoted', 'foreign'], true)) {
-            $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+            $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
                 ->where('account_id', $this->admin->id)->update(['role' => 'office']);
             if ($kind === 'foreign') {
                 $other = Tenant::create(['name' => 'Foreign admin club', 'slug' => 'bexio-admin-'.Str::random(14)]);
-                $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+                $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
             }
         } else {
-            $this->db->table('clubora.accounts')->where('id', $this->admin->id)
+            $this->db->table('clubunio.accounts')->where('id', $this->admin->id)
                 ->update($kind === 'disabled' ? ['active' => false] : ['api_only' => true]);
         }
         $this->mock(SyncWorkService::class, fn ($m) => $m->shouldNotReceive('remember', 'run'));
@@ -318,9 +318,9 @@ class BexioApiActionsTest extends TestCase
     public function test_status_results_are_allowlisted_and_confirmation_is_explicit(string $action, string $state, bool $confirmed): void
     {
         $kind = str_starts_with($action, 'invoice') ? 'invoice' : 'expense';
-        $id = $kind === 'invoice' ? $this->invoice->id : $this->db->table('clubora.expenses')->insertGetId([
+        $id = $kind === 'invoice' ? $this->invoice->id : $this->db->table('clubunio.expenses')->insertGetId([
             'tenant_id' => $this->tenant->id, 'member_id' => $this->invoice->member_id, 'active' => true]);
-        $check = $this->db->table('clubora.bexio_checks')->insertGetId(['tenant_id' => $this->tenant->id, 'actor_id' => $this->admin->id,
+        $check = $this->db->table('clubunio.bexio_checks')->insertGetId(['tenant_id' => $this->tenant->id, 'actor_id' => $this->admin->id,
             'object_type' => $kind, 'object_id' => $id, 'reference' => (string) Str::uuid(), 'remote_id' => '123',
             'remote_status' => $kind === 'invoice' ? '8' : 'PAID', 'fingerprint' => 'fixture', 'state' => $state,
             'message' => 'private provider body', 'proposal' => '{"secret":"private"}']);

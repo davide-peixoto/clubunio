@@ -27,8 +27,8 @@ class MemberDocumentService
         if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'download');
         }
-        $document = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('active', true)
-            ->whereIn('registration_id', app(RegistrationReviewService::class)->visible($actor, $tenant)->select('clubora.registrations.id'))->where('id', $id)->first();
+        $document = DB::connection('clubunio')->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('active', true)
+            ->whereIn('registration_id', app(RegistrationReviewService::class)->visible($actor, $tenant)->select('clubunio.registrations.id'))->where('id', $id)->first();
         abort_unless($document, 404);
 
         return $this->readResponse($actor, $tenant, $document, $download, 'registration');
@@ -37,7 +37,7 @@ class MemberDocumentService
     public function openPortal(Account $actor, Tenant $tenant, int $id, bool $download = false)
     {
         $document = MemberDocument::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->where('portal_visible', true)
-            ->whereIn('member_id', app(MemberAccessService::class)->represented($actor->fresh(), $tenant)->select('clubora.members.id'))->findOrFail($id);
+            ->whereIn('member_id', app(MemberAccessService::class)->represented($actor->fresh(), $tenant)->select('clubunio.members.id'))->findOrFail($id);
         abort_unless(app(MemberAccessService::class)->canEnter($actor->fresh(), $tenant), 403);
 
         return $this->readResponse($actor, $tenant, $document, $download, 'member');
@@ -83,7 +83,7 @@ class MemberDocumentService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'expenses', 'download');
         }
         $line = ExpenseLine::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)
-            ->whereIn('expense_id', app(ExpenseService::class)->visible($actor, $tenant)->select('clubora.expenses.id'))->findOrFail($id);
+            ->whereIn('expense_id', app(ExpenseService::class)->visible($actor, $tenant)->select('clubunio.expenses.id'))->findOrFail($id);
         $files = array_values(array_filter(array_map('trim', explode(',', (string) $line->storage_reference))));
         abort_unless($index >= 0 && isset($files[$index]), 404);
         [$folder, $filename] = app(TenantDocumentStorage::class)->expensePath($tenant, $files[$index], (int) $line->id);

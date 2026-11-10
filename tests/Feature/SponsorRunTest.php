@@ -54,7 +54,7 @@ class SponsorRunTest extends TestCase
         }
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
-        if (! Schema::connection('clubunio')->hasTable('clubora.sponsor_run_events')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.sponsor_run_events')) {
             $this->markTestSkipped('Reviewed schema 74 must be applied by parent first');
         }
         $this->db->beginTransaction();
@@ -91,7 +91,7 @@ class SponsorRunTest extends TestCase
 
     private function insert(string $table, array $row): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($row + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($row + ['tenant_id' => $this->tenant->id]);
     }
 
     private function account(string $role, ?int $profileId = null): Account
@@ -163,7 +163,7 @@ class SponsorRunTest extends TestCase
 
     private function confirmation(): string
     {
-        $row = $this->db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->orderByDesc('id')->first();
+        $row = $this->db->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->orderByDesc('id')->first();
         $payload = json_decode(Crypt::decryptString($row->payload_encrypted), true);
         $this->assertSame(TestMailGuard::RECIPIENT, $payload['to']);
         $this->assertStringNotContainsString('sponsor@example.invalid', $row->payload_encrypted);
@@ -181,7 +181,7 @@ class SponsorRunTest extends TestCase
         $this->assertSame(min($second, $this->team), (int) $p->team_season_id);
         $this->assertSame(1, SponsorRunParticipant::where('event_id', $e->id)->count());
         $g = $this->core->addPledge($this->parent, $this->tenant, $p->id, $this->pledgeInput());
-        $this->db->table('clubora.team_players')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
+        $this->db->table('clubunio.team_players')->where('tenant_id', $this->tenant->id)->update(['active' => false]);
         $this->core->saveEvent($this->admin, $this->tenant, $e->id, $this->eventInput(['revision' => $e->revision, 'reason' => 'Roster refresh', 'team_ids' => [$second, $this->team]]));
         $this->assertFalse($p->fresh()->required);
         $this->assertNotNull($g->fresh());
@@ -242,7 +242,7 @@ class SponsorRunTest extends TestCase
         $this->assertNotEmpty($source['description']);
         $this->assertSame([['id' => (int) $g->id, 'label' => 'Synthetic sponsor (#'.$g->id.')', 'total_cents' => 500]], $this->core->billablePledges($this->admin, $this->tenant, $e->id)->all());
         $this->assertHttpStatus(409, fn () => $this->core->operations($this->admin, $this->tenant, $p->id, $final->revision, 'laps', 9));
-        $this->assertSame(0, $this->db->table('clubora.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
         Mail::assertNothingSent();
     }
 
@@ -281,7 +281,7 @@ class SponsorRunTest extends TestCase
                 'account_id' => $helper->id, 'can_checkin' => true, 'can_record_laps' => true,
                 'valid_from' => $date.' 11:00:00', 'valid_until' => $date.' 12:00:00', 'revision' => 0,
             ]);
-            $stored = $this->db->table('clubora.sponsor_run_helpers')->where('tenant_id', $this->tenant->id)
+            $stored = $this->db->table('clubunio.sponsor_run_helpers')->where('tenant_id', $this->tenant->id)
                 ->where('event_id', $e->id)->where('account_id', $helper->id)->first();
             $this->assertSame($date.' '.$utcCutoff, CarbonImmutable::parse($stored->valid_until)->utc()->format('Y-m-d H:i:s'));
             $this->travelTo($cutoff->subHour()->subSecond());
@@ -353,7 +353,7 @@ class SponsorRunTest extends TestCase
                 $this->admin->forceFill(['username' => $email])->save();
             }
             $public->submit($token, $this->pledgeInput(['consent' => true, 'email' => $email]));
-            $row = $this->db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->orderByDesc('id')->first();
+            $row = $this->db->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->orderByDesc('id')->first();
             $payload = json_decode(Crypt::decryptString($row->payload_encrypted), true);
             $this->assertSame($title, $payload['title']);
             $this->assertSame(TestMailGuard::RECIPIENT, $payload['to']);
@@ -372,12 +372,12 @@ class SponsorRunTest extends TestCase
         $public->submit($token, $data);
         $public->submit($token, $data);
         $this->assertSame(0, SponsorRunPledge::where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.sponsor_run_public_pending')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.sponsor_run_public_pending')->where('tenant_id', $this->tenant->id)->count());
         $confirm = $this->confirmation();
         $public->confirm($confirm);
         $public->confirm($confirm);
         $this->assertSame(1, SponsorRunPledge::where('tenant_id', $this->tenant->id)->count());
-        $pending = $this->db->table('clubora.sponsor_run_public_pending')->where('tenant_id', $this->tenant->id)->first();
+        $pending = $this->db->table('clubunio.sponsor_run_public_pending')->where('tenant_id', $this->tenant->id)->first();
         $this->assertNull($pending->payload_encrypted);
         $this->assertNotNull($pending->confirmed_at);
         $this->assertNull(SponsorRunPledge::where('tenant_id', $this->tenant->id)->sole()->created_by);
@@ -411,12 +411,12 @@ class SponsorRunTest extends TestCase
         $data = $this->pledgeInput(['consent' => true]);
         $public->submit($token, $data);
         $this->assertHttpStatus(409, fn () => $public->submit($token, ['amount_cents' => 900] + $data));
-        $this->assertFalse($this->db->table('clubora.sponsor_run_public_rates')->where('bucket_hash', 'like', '%example.invalid%')->exists());
+        $this->assertFalse($this->db->table('clubunio.sponsor_run_public_rates')->where('bucket_hash', 'like', '%example.invalid%')->exists());
         for ($i = 0; $i < 3; $i++) {
             $public->rate('fixture', '192.0.2.100', 3);
         }
         $this->assertHttpStatus(429, fn () => $public->rate('fixture', '192.0.2.100', 3));
-        $this->assertSame(64, strlen($this->db->table('clubora.sponsor_run_public_rates')->value('bucket_hash')));
+        $this->assertSame(64, strlen($this->db->table('clubunio.sponsor_run_public_rates')->value('bucket_hash')));
     }
 
     public function test_bulk_summary_caps_each_pledge_and_does_not_query_per_participant(): void
@@ -444,7 +444,7 @@ class SponsorRunTest extends TestCase
         $event = $this->event();
         $profile = app(AccessProfileService::class)->save($this->admin, $this->tenant, null, ['name' => 'Read Sponsor Run', 'active' => true, 'permissions' => ['sponsor_runs.view'], 'reason' => 'Synthetic test']);
         $reader = $this->account('profile', $profile->id);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $reader->id)->update(['access_profile_id' => $profile->id]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $reader->id)->update(['access_profile_id' => $profile->id]);
         $this->actingAs($reader, 'clubunio');
         $this->assertTrue(SponsorRuns::canAccess());
         Livewire::test(SponsorRuns::class)->assertSuccessful()->assertSee('Synthetic run');
@@ -533,7 +533,7 @@ class SponsorRunTest extends TestCase
         $p = $this->participant($e);
         [$public, $token] = $this->publicLink($p);
         $public->submit($token, $this->pledgeInput(['consent' => true]));
-        $id = $this->db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->value('id');
+        $id = $this->db->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $this->tenant->id)->value('id');
         config(['clubunio-integrations.test_mail_enabled' => false]);
         $this->assertHttpStatus(403, fn () => $public->dispatchTestOutbox($this->parent, $this->tenant, $id));
         $this->assertHttpStatus(409, fn () => $public->dispatchTestOutbox($this->admin, $this->tenant, $id));
@@ -543,7 +543,7 @@ class SponsorRunTest extends TestCase
         Livewire::test(SponsorRuns::class)->call('openEvent', $e->id)->assertSee('Testmail-Outbox')->assertSee('held')->assertActionVisible('testOutbox');
         $this->actingAs($this->account('office'), 'clubunio');
         Livewire::test(SponsorRuns::class)->call('openEvent', $e->id)->assertActionHidden('testOutbox');
-        $this->assertSame('held', $this->db->table('clubora.sponsor_run_public_outbox')->where('id', $id)->value('delivery_state'));
+        $this->assertSame('held', $this->db->table('clubunio.sponsor_run_public_outbox')->where('id', $id)->value('delivery_state'));
         Mail::assertNothingSent();
     }
 

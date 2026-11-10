@@ -47,7 +47,7 @@ class PlatformAdministrationTest extends TestCase
         $this->operator = $this->account('Platform operator');
         $this->admin = $this->account('Club administrator');
         $this->person = $this->account('Shared personal user');
-        $this->db->table('clubora.platform_admins')->insert(['account_id' => $this->operator->id]);
+        $this->db->table('clubunio.platform_admins')->insert(['account_id' => $this->operator->id]);
         $this->admin->tenants()->attach($this->one, ['role' => 'admin']);
         $this->admin->tenants()->attach($this->two, ['role' => 'admin']);
     }
@@ -126,7 +126,7 @@ class PlatformAdministrationTest extends TestCase
         $this->post('/platform/login', ['username' => $this->operator->username, 'password' => 'Synthetic-password-123'])
             ->assertRedirect(route('clubunio.platform.index'));
         $this->assertAuthenticatedAs($this->operator, 'clubunio');
-        $this->db->table('clubora.platform_admins')->where('account_id', $this->operator->id)->update(['active' => false]);
+        $this->db->table('clubunio.platform_admins')->where('account_id', $this->operator->id)->update(['active' => false]);
         $this->get('/platform')->assertForbidden();
         $this->change('name', ['name' => 'Never written'])->assertForbidden();
     }
@@ -139,9 +139,9 @@ class PlatformAdministrationTest extends TestCase
         $tenant = Tenant::where('slug', $slug)->firstOrFail();
         $this->assertTrue($this->person->canAccessTenant($tenant));
         $this->assertFalse($this->operator->canAccessTenant($tenant));
-        $this->assertSame(0, $this->db->table('clubora.members')->where('tenant_id', $tenant->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.tenant_settings')->where('tenant_id', $tenant->id)->count());
-        $this->assertTrue($this->db->table('clubora.platform_changes')->where('tenant_id', $tenant->id)->where('action', 'tenant.create')->exists());
+        $this->assertSame(0, $this->db->table('clubunio.members')->where('tenant_id', $tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.tenant_settings')->where('tenant_id', $tenant->id)->count());
+        $this->assertTrue($this->db->table('clubunio.platform_changes')->where('tenant_id', $tenant->id)->where('action', 'tenant.create')->exists());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -187,7 +187,7 @@ class PlatformAdministrationTest extends TestCase
         foreach (['https://bad.test', '*.bad.test', '127.0.0.1', 'good.test/path', parse_url(config('app.url'), PHP_URL_HOST)] as $host) {
             $this->change('domain', $this->domain(['host' => $host]))->assertSessionHasErrors();
         }
-        $this->assertSame(0, $this->db->table('clubora.tenant_domains')->where('tenant_id', $this->two->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.tenant_domains')->where('tenant_id', $this->two->id)->count());
     }
 
     public function test_membership_changes_never_change_shared_global_account_or_other_club(): void
@@ -222,7 +222,7 @@ class PlatformAdministrationTest extends TestCase
         $this->assertTrue(Hash::check('Synthetic-account-password-123', $created->password));
         $this->assertSame(0, $created->tenants()->count());
         $this->assertFalse(app(PlatformAdministrationService::class)->allowed($created));
-        $audit = $this->db->table('clubora.platform_changes')->where('actor_id', $this->operator->id)->pluck('details')->implode('');
+        $audit = $this->db->table('clubunio.platform_changes')->where('actor_id', $this->operator->id)->pluck('details')->implode('');
         $this->assertStringNotContainsString('Synthetic-account-password-123', $audit);
         $this->assertStringNotContainsString($created->password, $audit);
     }
@@ -254,7 +254,7 @@ class PlatformAdministrationTest extends TestCase
     public function test_club_admin_cannot_take_over_platform_account_by_password_reset(): void
     {
         $this->operator->tenants()->attach($this->one, ['role' => 'office']);
-        $link = $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->one->id)->where('account_id', $this->operator->id)->first();
+        $link = $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->one->id)->where('account_id', $this->operator->id)->first();
         $hash = $this->operator->password;
         try {
             app(AccountAdministrationService::class)->save($this->admin, $this->one, $link->id,

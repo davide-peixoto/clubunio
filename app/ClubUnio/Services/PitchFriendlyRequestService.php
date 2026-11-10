@@ -25,11 +25,11 @@ final class PitchFriendlyRequestService
         ksort($data);
         $payloadHash = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
         $keyHash = hash('sha256', $requestId);
-        abort_unless(Schema::connection('clubunio')->hasTable('clubora.pitch_request_idempotency'), 503);
+        abort_unless(Schema::connection('clubunio')->hasTable('clubunio.pitch_request_idempotency'), 503);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data, $keyHash, $payloadHash) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $ledger = DB::connection('clubunio')->table('clubora.pitch_request_idempotency')
+            $ledger = DB::connection('clubunio')->table('clubunio.pitch_request_idempotency')
                 ->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('key_hash', $keyHash);
             $service = app(PitchPlanningService::class);
             $previous = $ledger->first();

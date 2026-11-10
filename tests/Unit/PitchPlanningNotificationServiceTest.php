@@ -41,7 +41,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
             'clubunio-languages.enabled' => ['de' => 'Deutsch', 'en' => 'English'], 'clubunio-languages.default' => 'de']);
         DB::purge('clubunio');
         $this->db = DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id integer primary key, name text, default_locale text',
             'accounts' => 'id integer primary key, username text, preferred_locale text, active boolean, api_only boolean, display_name text',
@@ -64,19 +64,19 @@ class PitchPlanningNotificationServiceTest extends TestCase
             'mobile_push_outbox' => "id text primary key, binding_id text, account_id integer, device_id text, tenant_id integer, kind text, object_id integer, event_key text, device_revision integer, binding_revision integer, created_at text, state text default 'pending', unique(binding_id,tenant_id,event_key)",
             'synthetic_source' => 'id integer primary key, revision integer',
         ] as $table => $columns) {
-            $this->db->statement("CREATE TABLE clubora.$table ($columns)");
+            $this->db->statement("CREATE TABLE clubunio.$table ($columns)");
         }
-        $this->db->table('clubora.tenants')->insert(['id' => 1, 'name' => 'Synthetic Club', 'default_locale' => 'de']);
+        $this->db->table('clubunio.tenants')->insert(['id' => 1, 'name' => 'Synthetic Club', 'default_locale' => 'de']);
         $this->tenant = Tenant::findOrFail(1);
-        $this->db->table('clubora.training_options')->insert([
+        $this->db->table('clubunio.training_options')->insert([
             ['id' => 1, 'tenant_id' => 1, 'category' => 'field', 'name' => 'Hauptplatz'],
             ['id' => 2, 'tenant_id' => 1, 'category' => 'field', 'name' => 'Kunstrasen'],
         ]);
-        $this->db->table('clubora.lookup_translations')->insert([
+        $this->db->table('clubunio.lookup_translations')->insert([
             ['id' => 1, 'tenant_id' => 1, 'source_table' => 'training_options', 'source_id' => '1', 'source_name' => 'Hauptplatz', 'locale' => 'en', 'label' => 'Main pitch'],
             ['id' => 2, 'tenant_id' => 1, 'source_table' => 'training_options', 'source_id' => '2', 'source_name' => 'Kunstrasen', 'locale' => 'en', 'label' => 'Artificial pitch'],
         ]);
-        $this->db->table('clubora.team_seasons')->insert([
+        $this->db->table('clubunio.team_seasons')->insert([
             ['id' => 11, 'tenant_id' => 1, 'label' => 'Team A'], ['id' => 12, 'tenant_id' => 1, 'label' => 'Team B'],
             ['id' => 21, 'tenant_id' => 2, 'label' => 'Foreign team'],
         ]);
@@ -101,12 +101,12 @@ class PitchPlanningNotificationServiceTest extends TestCase
 
     private function account(int $id, string $role = 'trainer', string $locale = 'en', int $tenant = 1, array $overrides = []): Account
     {
-        $this->db->table('clubora.accounts')->insert(array_replace(['id' => $id, 'username' => "person$id@example.invalid",
+        $this->db->table('clubunio.accounts')->insert(array_replace(['id' => $id, 'username' => "person$id@example.invalid",
             'preferred_locale' => $locale, 'active' => true, 'api_only' => false, 'display_name' => "Person $id"], $overrides));
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant, 'account_id' => $id, 'role' => $role, 'portal_enabled' => true]);
-        $this->db->table('clubora.mobile_sessions')->insert(['id' => "session-$id", 'account_id' => $id, 'expires_at' => now()->addDay()->toIso8601String()]);
-        $this->db->table('clubora.mobile_push_devices')->insert(['id' => "device-$id", 'revision' => 1]);
-        $this->db->table('clubora.mobile_push_bindings')->insert(['id' => "binding-$id", 'device_id' => "device-$id", 'account_id' => $id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant, 'account_id' => $id, 'role' => $role, 'portal_enabled' => true]);
+        $this->db->table('clubunio.mobile_sessions')->insert(['id' => "session-$id", 'account_id' => $id, 'expires_at' => now()->addDay()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_push_devices')->insert(['id' => "device-$id", 'revision' => 1]);
+        $this->db->table('clubunio.mobile_push_bindings')->insert(['id' => "binding-$id", 'device_id' => "device-$id", 'account_id' => $id,
             'session_id' => "session-$id", 'revision' => 1, 'created_at' => now()->subMinute()->toIso8601String()]);
 
         return Account::findOrFail($id);
@@ -114,11 +114,11 @@ class PitchPlanningNotificationServiceTest extends TestCase
 
     private function staff(int $account, int $team, array $member = [], array $assignment = [], array $link = []): void
     {
-        if (! $this->db->table('clubora.members')->where('id', $account)->exists()) {
-            $this->db->table('clubora.members')->insert(array_replace(['id' => $account, 'tenant_id' => 1], $member));
+        if (! $this->db->table('clubunio.members')->where('id', $account)->exists()) {
+            $this->db->table('clubunio.members')->insert(array_replace(['id' => $account, 'tenant_id' => 1], $member));
         }
-        $this->db->table('clubora.team_staff')->insert(array_replace(['tenant_id' => 1, 'team_season_id' => $team, 'member_id' => $account, 'active' => true, 'staff_function_id' => 99], $assignment));
-        $this->db->table('clubora.account_member_links')->insert(array_replace(['tenant_id' => 1, 'account_id' => $account, 'member_id' => $account, 'kind' => 'self', 'state' => 'approved'], $link));
+        $this->db->table('clubunio.team_staff')->insert(array_replace(['tenant_id' => 1, 'team_season_id' => $team, 'member_id' => $account, 'active' => true, 'staff_function_id' => 99], $assignment));
+        $this->db->table('clubunio.account_member_links')->insert(array_replace(['tenant_id' => 1, 'account_id' => $account, 'member_id' => $account, 'kind' => 'self', 'state' => 'approved'], $link));
     }
 
     private function event(string $action = 'moved'): array
@@ -137,7 +137,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
 
     private function ids(string $table): array
     {
-        return $this->db->table('clubora.'.$table)->orderBy('account_id')->pluck('account_id')->all();
+        return $this->db->table('clubunio.'.$table)->orderBy('account_id')->pluck('account_id')->all();
     }
 
     public function test_only_new_requests_email_active_admin_office_in_recipient_language(): void
@@ -153,14 +153,14 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->assertSame([1, 2, 7], $this->ids('notifications'));
         $this->assertSame([1, 2, 7], $this->ids('mobile_inbox'));
         $this->assertSame([1, 2, 7], $this->ids('mobile_push_outbox'));
-        $row = $this->db->table('clubora.pitch_planning_events')->first();
+        $row = $this->db->table('clubunio.pitch_planning_events')->first();
         $payload = json_decode(Crypt::decryptString($row->payload_encrypted), true, 512, JSON_THROW_ON_ERROR);
         $this->assertCount(2, $payload['deliveries']);
         $this->assertSame(['de-CH', 'en-GB'], array_column($payload['deliveries'], 'locale'));
         $this->assertSame(['person1@example.invalid', 'person2@example.invalid'], array_column($payload['deliveries'], 'intended_to'));
         $this->assertSame('ready', $row->delivery_state);
-        $this->assertSame('Neue Testspielanfrage', $this->db->table('clubora.notifications')->where('account_id', 1)->value('title'));
-        $this->assertSame('New friendly match request', $this->db->table('clubora.notifications')->where('account_id', 2)->value('title'));
+        $this->assertSame('Neue Testspielanfrage', $this->db->table('clubunio.notifications')->where('account_id', 1)->value('title'));
+        $this->assertSame('New friendly match request', $this->db->table('clubunio.notifications')->where('account_id', 2)->value('title'));
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -181,13 +181,13 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->staff(8, 21);
         $this->staff(9, 11, [], ['tenant_id' => 2]);
         $this->staff(10, 12, ['status_id' => 1]);
-        $this->db->table('clubora.member_statuses')->insert(['id' => 1, 'tenant_id' => 1, 'ends_membership' => true]);
+        $this->db->table('clubunio.member_statuses')->insert(['id' => 1, 'tenant_id' => 1, 'ends_membership' => true]);
         foreach (['moved', 'sfv_moved'] as $action) {
             $this->record($this->event($action));
         }
         $this->assertSame([1, 1, 2, 2], $this->ids('notifications'));
         $this->assertSame([1, 1, 2, 2], $this->ids('mobile_push_outbox'));
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -203,7 +203,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         }
         $this->assertSame([3, 3], $this->ids('notifications'));
         $this->assertSame([3, 3], $this->ids('mobile_push_outbox'));
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
         Mail::assertNothingSent();
     }
 
@@ -212,26 +212,26 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->account(1, 'admin');
         $event = $this->event('requested');
         $this->record($event);
-        $this->db->table('clubora.notifications')->update(['read_at' => now()->toIso8601String()]);
+        $this->db->table('clubunio.notifications')->update(['read_at' => now()->toIso8601String()]);
         $event['after']['title'] = 'Another UI language';
         $event['team_season_ids'] = [11, 12];
         $this->record($event);
         foreach (['pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox'] as $table) {
-            $this->assertSame(1, $this->db->table('clubora.'.$table)->count());
+            $this->assertSame(1, $this->db->table('clubunio.'.$table)->count());
         }
-        $this->assertNotNull($this->db->table('clubora.notifications')->value('read_at'));
+        $this->assertNotNull($this->db->table('clubunio.notifications')->value('read_at'));
     }
 
     public function test_source_rollback_removes_all_notification_and_outbox_records(): void
     {
         $this->account(1, 'admin');
         $this->db->beginTransaction();
-        $this->db->table('clubora.synthetic_source')->insert(['id' => 7, 'revision' => 2]);
+        $this->db->table('clubunio.synthetic_source')->insert(['id' => 7, 'revision' => 2]);
         app(PitchPlanningNotificationService::class)->record($this->tenant, $this->event('requested'));
-        $this->assertSame(1, $this->db->table('clubora.mobile_push_outbox')->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_push_outbox')->count());
         $this->db->rollBack();
         foreach (['synthetic_source', 'pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox'] as $table) {
-            $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+            $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
         }
         Http::assertNothingSent();
         Mail::assertNothingSent();
@@ -248,7 +248,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->account(1, 'admin');
         $event = $this->event('requested');
         $this->record($event);
-        $original = $this->db->table('clubora.pitch_planning_events')->value('payload_encrypted');
+        $original = $this->db->table('clubunio.pitch_planning_events')->value('payload_encrypted');
         $event['after']['date'] = '2026-11-06';
         try {
             $this->record($event);
@@ -256,8 +256,8 @@ class PitchPlanningNotificationServiceTest extends TestCase
         } catch (\LogicException $e) {
             $this->assertStringContainsString('reused', $e->getMessage());
         }
-        $this->assertSame($original, $this->db->table('clubora.pitch_planning_events')->value('payload_encrypted'));
-        $this->assertSame(1, $this->db->table('clubora.mobile_push_outbox')->count());
+        $this->assertSame($original, $this->db->table('clubunio.pitch_planning_events')->value('payload_encrypted'));
+        $this->assertSame(1, $this->db->table('clubunio.mobile_push_outbox')->count());
     }
 
     public function test_delivery_authorization_rechecks_staff_assignment_and_preserves_original_recipient_boundary(): void
@@ -266,12 +266,12 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $second = $this->account(2);
         $this->staff(1, 11);
         $this->record($this->event());
-        $id = (int) $this->db->table('clubora.pitch_planning_events')->value('id');
+        $id = (int) $this->db->table('clubunio.pitch_planning_events')->value('id');
         $this->assertSame(['date' => '2026-11-05', 'key' => 'request:7'], app(PitchPlanningNotificationService::class)->target($first, $this->tenant, $id));
         $this->assertTrue(app(MobilePushOutbox::class)->targetAllowed($first, $this->tenant, 'pitch_planning', $id));
         $this->staff(2, 11);
         $this->assertFalse(app(MobilePushOutbox::class)->targetAllowed($second, $this->tenant, 'pitch_planning', $id));
-        $this->db->table('clubora.team_staff')->where('member_id', 1)->update(['active' => false]);
+        $this->db->table('clubunio.team_staff')->where('member_id', 1)->update(['active' => false]);
         $this->assertFalse(app(MobilePushOutbox::class)->targetAllowed($first, $this->tenant, 'pitch_planning', $id));
         $this->assertSame('pitch_planning', (new MobilePushEnvelope(1, 1, 'pitch_planning', $id, '00000000-0000-4000-8000-000000000001'))->data()['kind']);
     }
@@ -283,7 +283,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->record($this->event('requested'));
         $this->assertSame([1], $this->ids('notifications'));
         $this->assertSame([1], $this->ids('mobile_inbox'));
-        $this->assertSame(0, $this->db->table('clubora.mobile_push_outbox')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_push_outbox')->count());
         $this->assertFalse(app(MobilePushOutbox::class)->deliverOne());
         Http::assertNothingSent();
         Mail::assertNothingSent();
@@ -292,29 +292,29 @@ class PitchPlanningNotificationServiceTest extends TestCase
     public function test_disabled_template_is_respected_without_cross_language_fallback(): void
     {
         $this->account(1, 'admin');
-        $this->db->table('clubora.message_templates')->where('event_key', 'pitch.friendly.requested')
+        $this->db->table('clubunio.message_templates')->where('event_key', 'pitch.friendly.requested')
             ->where('locale', 'en-GB')->update(['active' => false]);
         $this->record($this->event('requested'));
-        $this->assertSame(0, $this->db->table('clubora.notifications')->count());
-        $this->assertSame(0, $this->db->table('clubora.mobile_push_outbox')->count());
-        $this->assertNull($this->db->table('clubora.pitch_planning_events')->value('payload_encrypted'));
+        $this->assertSame(0, $this->db->table('clubunio.notifications')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_push_outbox')->count());
+        $this->assertNull($this->db->table('clubunio.pitch_planning_events')->value('payload_encrypted'));
     }
 
     public function test_template_failure_rolls_back_source_and_partially_prepared_fanout(): void
     {
         $this->account(1, 'admin', 'de');
         $this->account(2, 'office');
-        $this->db->table('clubora.message_templates')->where('event_key', 'pitch.friendly.requested')->where('channel', 'push')
+        $this->db->table('clubunio.message_templates')->where('event_key', 'pitch.friendly.requested')->where('channel', 'push')
             ->where('locale', 'en-GB')->update(['body' => '{{ unrecognized }}']);
         try {
             $this->db->transaction(function () {
-                $this->db->table('clubora.synthetic_source')->insert(['id' => 7, 'revision' => 2]);
+                $this->db->table('clubunio.synthetic_source')->insert(['id' => 7, 'revision' => 2]);
                 app(PitchPlanningNotificationService::class)->record($this->tenant, $this->event('requested'));
             });
             $this->fail('Invalid template accepted');
         } catch (ValidationException) {
             foreach (['synthetic_source', 'pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox'] as $table) {
-                $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+                $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
             }
         }
         Http::assertNothingSent();
@@ -324,10 +324,10 @@ class PitchPlanningNotificationServiceTest extends TestCase
     public function test_email_and_push_template_switches_are_independent(): void
     {
         $this->account(1, 'admin');
-        $this->db->table('clubora.message_templates')->where('event_key', 'pitch.friendly.requested')->where('channel', 'email')->update(['active' => false]);
+        $this->db->table('clubunio.message_templates')->where('event_key', 'pitch.friendly.requested')->where('channel', 'email')->update(['active' => false]);
         $this->record($this->event('requested'));
         $this->assertSame([1], $this->ids('mobile_push_outbox'));
-        $this->assertNull($this->db->table('clubora.pitch_planning_events')->value('payload_encrypted'));
+        $this->assertNull($this->db->table('clubunio.pitch_planning_events')->value('payload_encrypted'));
     }
 
     public function test_revoked_expired_new_or_foreign_devices_are_not_queued(): void
@@ -335,10 +335,10 @@ class PitchPlanningNotificationServiceTest extends TestCase
         foreach (range(1, 5) as $id) {
             $this->account($id, 'admin');
         }
-        $this->db->table('clubora.mobile_push_bindings')->where('account_id', 1)->update(['revoked_at' => now()->toIso8601String()]);
-        $this->db->table('clubora.mobile_sessions')->where('account_id', 2)->update(['expires_at' => now()->subMinute()->toIso8601String()]);
-        $this->db->table('clubora.mobile_push_devices')->where('id', 'device-3')->update(['fixed_tenant_id' => 2]);
-        $this->db->table('clubora.mobile_push_bindings')->where('account_id', 4)->update(['created_at' => now()->addMinute()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_push_bindings')->where('account_id', 1)->update(['revoked_at' => now()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_sessions')->where('account_id', 2)->update(['expires_at' => now()->subMinute()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_push_devices')->where('id', 'device-3')->update(['fixed_tenant_id' => 2]);
+        $this->db->table('clubunio.mobile_push_bindings')->where('account_id', 4)->update(['created_at' => now()->addMinute()->toIso8601String()]);
         $this->record($this->event('requested'));
         $this->assertSame([1, 2, 3, 4, 5], $this->ids('notifications'));
         $this->assertSame([5], $this->ids('mobile_push_outbox'));
@@ -348,9 +348,9 @@ class PitchPlanningNotificationServiceTest extends TestCase
     {
         $actor = $this->account(1, 'office');
         $this->record($this->event('requested'));
-        $id = (int) $this->db->table('clubora.pitch_planning_events')->value('id');
+        $id = (int) $this->db->table('clubunio.pitch_planning_events')->value('id');
         $this->assertTrue(app(MobilePushOutbox::class)->targetAllowed($actor, $this->tenant, 'pitch_planning', $id));
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'trainer']);
         $this->assertFalse(app(MobilePushOutbox::class)->targetAllowed($actor, $this->tenant, 'pitch_planning', $id));
         $foreign = new Tenant;
         $foreign->forceFill(['id' => 2, 'name' => 'Foreign']);
@@ -367,8 +367,8 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $event['before'] = array_replace($event['after'], ['field_id' => 1, 'date' => '2026-11-04', 'starts_at' => '17:00', 'ends_at' => '19:00', 'revision' => 'revision-1']);
         app()->setLocale('de');
         $this->record($event);
-        $german = $this->db->table('clubora.notifications')->where('account_id', 1)->value('body');
-        $english = $this->db->table('clubora.notifications')->where('account_id', 2)->value('body');
+        $german = $this->db->table('clubunio.notifications')->where('account_id', 1)->value('body');
+        $english = $this->db->table('clubunio.notifications')->where('account_id', 2)->value('body');
         $this->assertStringContainsString('Bisher: Hauptplatz, 2026-11-04, 17:00-19:00', $german);
         $this->assertStringContainsString('Neu: Kunstrasen, 2026-11-05, 18:00-20:00', $german);
         $this->assertStringContainsString('Previously: Main pitch, 2026-11-04, 17:00-19:00', $english);
@@ -382,7 +382,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->account(3, 'profile');
         $this->staff(1, 11);
         $this->staff(3, 11);
-        $this->db->table('clubora.tenant_accounts')->where('account_id', 3)->update(['portal_enabled' => false]);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', 3)->update(['portal_enabled' => false]);
         $this->record($this->event());
         $this->assertSame([1], $this->ids('notifications'));
         $this->assertSame([1], $this->ids('mobile_inbox'));
@@ -391,15 +391,15 @@ class PitchPlanningNotificationServiceTest extends TestCase
 
     private function coreFixture(): PitchPlanningService
     {
-        $this->db->statement('ALTER TABLE clubora.training_options ADD COLUMN active boolean default 1');
-        $this->db->statement('ALTER TABLE clubora.team_seasons ADD COLUMN active boolean default 1');
-        $this->db->statement('ALTER TABLE clubora.team_seasons ADD COLUMN team_id integer default 1');
-        $this->db->statement('CREATE TABLE clubora.teams (id integer primary key, tenant_id integer, active boolean)');
-        $this->db->table('clubora.teams')->insert(['id' => 1, 'tenant_id' => 1, 'active' => true]);
-        $this->db->statement('CREATE TABLE clubora.pitch_requests (id integer primary key autoincrement, tenant_id integer, team_season_id integer,
+        $this->db->statement('ALTER TABLE clubunio.training_options ADD COLUMN active boolean default 1');
+        $this->db->statement('ALTER TABLE clubunio.team_seasons ADD COLUMN active boolean default 1');
+        $this->db->statement('ALTER TABLE clubunio.team_seasons ADD COLUMN team_id integer default 1');
+        $this->db->statement('CREATE TABLE clubunio.teams (id integer primary key, tenant_id integer, active boolean)');
+        $this->db->table('clubunio.teams')->insert(['id' => 1, 'tenant_id' => 1, 'active' => true]);
+        $this->db->statement('CREATE TABLE clubunio.pitch_requests (id integer primary key autoincrement, tenant_id integer, team_season_id integer,
             opponent text, notes text, field_id integer, area_id integer, date text, starts_at text, duration_minutes integer, requester_account_id integer,
             status text, revision integer, decided_by integer, created_at text, updated_at text)');
-        $this->db->statement('CREATE TABLE clubora.object_changes (id integer primary key autoincrement, tenant_id integer, actor_id integer, object_type text, object_id integer, before_value text, after_value text)');
+        $this->db->statement('CREATE TABLE clubunio.object_changes (id integer primary key autoincrement, tenant_id integer, actor_id integer, object_type text, object_id integer, before_value text, after_value text)');
         $this->partialMock(PitchPlanningProjection::class, function ($mock) {
             $mock->shouldReceive('ready')->andReturn(true);
             $mock->shouldReceive('entries')->andReturn([]);
@@ -419,19 +419,19 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $saved = $service->requestFriendly($actor, $this->tenant, ['team_season_id' => 11, 'opponent' => 'Synthetic opponent',
             'field_id' => 2, 'area_id' => null, 'date' => '2026-11-05', 'starts_at' => '18:00', 'duration_minutes' => 120]);
         $this->assertSame('pending', $saved['status']);
-        $this->assertSame(1, $this->db->table('clubora.pitch_requests')->count());
-        $this->assertSame('requested', $this->db->table('clubora.pitch_planning_events')->value('action'));
+        $this->assertSame(1, $this->db->table('clubunio.pitch_requests')->count());
+        $this->assertSame('requested', $this->db->table('clubunio.pitch_planning_events')->value('action'));
         $this->assertSame([1], $this->ids('mobile_push_outbox'));
         $saved = $service->move($actor, $this->tenant, $saved['key'], ['revision' => $saved['revision'],
             'field_id' => 2, 'area_id' => null, 'date' => '2026-11-06', 'starts_at' => '19:00', 'duration_minutes' => 120]);
-        $this->assertSame('2026-11-06', $this->db->table('clubora.pitch_requests')->value('date'));
+        $this->assertSame('2026-11-06', $this->db->table('clubunio.pitch_requests')->value('date'));
         $this->assertSame([1, 1, 2], $this->ids('mobile_push_outbox'));
-        $this->assertStringContainsString('2026-11-05, 18:00-20:00', $this->db->table('clubora.notifications')->where('account_id', 2)->value('body'));
-        $this->assertStringContainsString('2026-11-06, 19:00-21:00', $this->db->table('clubora.notifications')->where('account_id', 2)->value('body'));
+        $this->assertStringContainsString('2026-11-05, 18:00-20:00', $this->db->table('clubunio.notifications')->where('account_id', 2)->value('body'));
+        $this->assertStringContainsString('2026-11-06, 19:00-21:00', $this->db->table('clubunio.notifications')->where('account_id', 2)->value('body'));
         $service->decide($actor, $this->tenant, $saved['source_id'], ['revision' => $saved['revision'], 'decision' => 'rejected']);
-        $this->assertSame('rejected', $this->db->table('clubora.pitch_requests')->value('status'));
+        $this->assertSame('rejected', $this->db->table('clubunio.pitch_requests')->value('status'));
         $this->assertSame([1, 1, 1, 2], $this->ids('mobile_push_outbox'));
-        $this->assertSame(1, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -440,14 +440,14 @@ class PitchPlanningNotificationServiceTest extends TestCase
     {
         $actor = $this->account(1, 'admin');
         $service = $this->coreFixture();
-        $this->db->table('clubora.message_templates')->where('event_key', 'pitch.friendly.requested')->update(['body' => '{{ invalid }}']);
+        $this->db->table('clubunio.message_templates')->where('event_key', 'pitch.friendly.requested')->update(['body' => '{{ invalid }}']);
         try {
             $service->requestFriendly($actor, $this->tenant, ['team_season_id' => 11, 'opponent' => 'Synthetic opponent',
                 'field_id' => 2, 'area_id' => null, 'date' => '2026-11-05', 'starts_at' => '18:00', 'duration_minutes' => 120]);
             $this->fail('Invalid template accepted');
         } catch (ValidationException) {
             foreach (['pitch_requests', 'object_changes', 'pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox'] as $table) {
-                $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+                $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
             }
         }
     }
@@ -471,7 +471,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $transport = $this->arrayMailTransport();
         Event::listen(MessageSending::class, function () {
             $this->assertSame(0, $this->db->transactionLevel(), 'Provider work must happen after commit');
-            $this->assertSame('sending', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
+            $this->assertSame('sending', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
         });
         $service = app(PitchPlanningNotificationService::class);
         $this->assertSame(['accepted' => 1, 'failed' => 0], $service->dispatch(1));
@@ -487,7 +487,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         }
         $this->assertStringContainsString('Neue Testspielanfrage', $transport->messages()[0]->getOriginalMessage()->getSubject());
         $this->assertStringContainsString('New friendly match request', $transport->messages()[1]->getOriginalMessage()->getSubject());
-        $this->assertSame('accepted', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
+        $this->assertSame('accepted', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
         Http::assertNothingSent();
     }
 
@@ -510,7 +510,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         } finally {
             $this->app['env'] = $environment;
         }
-        $this->assertSame('ready', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
+        $this->assertSame('ready', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
         $this->assertCount(0, $transport->messages());
     }
 
@@ -536,7 +536,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
             $event['event_key'] .= ':'.$number;
             $this->record($event);
         }
-        $rows = $this->db->table('clubora.pitch_planning_events');
+        $rows = $this->db->table('clubunio.pitch_planning_events');
         (clone $rows)->where('id', 1)->update(['tenant_id' => 2]);
         (clone $rows)->where('id', 2)->update(['action' => 'approved']);
         (clone $rows)->where('id', 3)->update(['notifications_recorded_at' => null]);
@@ -567,7 +567,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
             $this->db->rollBack();
         }
         $this->assertCount(0, $transport->messages());
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->count());
     }
 
     public function test_ambiguous_partial_send_requires_attention_and_is_never_replayed(): void
@@ -581,11 +581,11 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $mailer->shouldReceive('raw')->once()->ordered()->andThrow(new \RuntimeException('Synthetic SMTP outcome unknown'));
         Mail::shouldReceive('mailer')->twice()->with('clubunio_test')->andReturn($mailer);
         $this->artisan('clubunio:deliver-pitch-mail', ['--dispatch' => true, '--tenant' => 1])->assertExitCode(1);
-        $this->assertSame('attention', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
-        $this->assertSame('SMTP_SEND_FAILED', $this->db->table('clubora.pitch_planning_events')->value('error_code'));
+        $this->assertSame('attention', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
+        $this->assertSame('SMTP_SEND_FAILED', $this->db->table('clubunio.pitch_planning_events')->value('error_code'));
         $this->assertSame(['accepted' => 0, 'failed' => 0], app(PitchPlanningNotificationService::class)->dispatch(1));
         $this->record($this->event('requested'));
-        $this->assertSame('attention', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
+        $this->assertSame('attention', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
     }
 
     public function test_interrupted_sending_and_invalid_cipher_are_never_automatically_replayed(): void
@@ -595,11 +595,11 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->record($event);
         $event['event_key'] .= ':second';
         $this->record($event);
-        $this->db->table('clubora.pitch_planning_events')->where('id', 1)->update(['delivery_state' => 'sending']);
-        $this->db->table('clubora.pitch_planning_events')->where('id', 2)->update(['payload_encrypted' => 'invalid']);
+        $this->db->table('clubunio.pitch_planning_events')->where('id', 1)->update(['delivery_state' => 'sending']);
+        $this->db->table('clubunio.pitch_planning_events')->where('id', 2)->update(['payload_encrypted' => 'invalid']);
         $transport = $this->arrayMailTransport();
         $this->assertSame(['accepted' => 0, 'failed' => 1], app(PitchPlanningNotificationService::class)->dispatch(1));
-        $this->assertSame(['sending', 'attention'], $this->db->table('clubora.pitch_planning_events')->orderBy('id')->pluck('delivery_state')->all());
+        $this->assertSame(['sending', 'attention'], $this->db->table('clubunio.pitch_planning_events')->orderBy('id')->pluck('delivery_state')->all());
         $this->assertSame(['accepted' => 0, 'failed' => 0], app(PitchPlanningNotificationService::class)->dispatch(1));
         $this->assertCount(0, $transport->messages());
     }
@@ -614,7 +614,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         Mail::shouldReceive('mailer')->once()->with('clubunio_test')->andReturn($mailer);
         $service = app(PitchPlanningNotificationService::class);
         $this->assertSame(['accepted' => 0, 'failed' => 1], $service->dispatch(1));
-        $this->assertSame('attention', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
+        $this->assertSame('attention', $this->db->table('clubunio.pitch_planning_events')->value('delivery_state'));
         $this->assertSame(['accepted' => 0, 'failed' => 0], $service->dispatch(1));
     }
 
@@ -637,10 +637,10 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->assertSame([2, 2, 3, 3], $this->ids('notifications'));
         $this->assertSame([2, 2, 3, 3], $this->ids('mobile_inbox'));
         $this->assertSame([2, 2, 3, 3], $this->ids('mobile_push_outbox'));
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
-        $this->assertSame(['held', 'held'], $this->db->table('clubora.pitch_planning_events')->orderBy('id')->pluck('delivery_state')->all());
-        $this->assertSame(['Neue Platzbelegung', 'Platzbelegung abgesagt'], $this->db->table('clubora.notifications')->where('account_id', 2)->orderBy('id')->pluck('title')->all());
-        $this->assertSame(['New pitch booking', 'Pitch booking cancelled'], $this->db->table('clubora.notifications')->where('account_id', 3)->orderBy('id')->pluck('title')->all());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(['held', 'held'], $this->db->table('clubunio.pitch_planning_events')->orderBy('id')->pluck('delivery_state')->all());
+        $this->assertSame(['Neue Platzbelegung', 'Platzbelegung abgesagt'], $this->db->table('clubunio.notifications')->where('account_id', 2)->orderBy('id')->pluck('title')->all());
+        $this->assertSame(['New pitch booking', 'Pitch booking cancelled'], $this->db->table('clubunio.notifications')->where('account_id', 3)->orderBy('id')->pluck('title')->all());
         $transport = $this->arrayMailTransport();
         $this->assertSame(['accepted' => 0, 'failed' => 0], app(PitchPlanningNotificationService::class)->dispatch(1));
         $this->assertCount(0, $transport->messages());
@@ -660,9 +660,9 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->record($event);
         $this->assertSame([3], $this->ids('notifications'));
         $this->assertSame([3], $this->ids('mobile_push_outbox'));
-        $id = (int) $this->db->table('clubora.pitch_planning_events')->where('action', 'cancelled')->value('id');
+        $id = (int) $this->db->table('clubunio.pitch_planning_events')->where('action', 'cancelled')->value('id');
         $this->assertTrue(app(MobilePushOutbox::class)->targetAllowed($actor, $this->tenant, 'pitch_planning', $id));
-        $this->db->table('clubora.accounts')->where('id', 3)->update(['active' => false]);
+        $this->db->table('clubunio.accounts')->where('id', 3)->update(['active' => false]);
         $this->assertFalse(app(MobilePushOutbox::class)->targetAllowed($actor, $this->tenant, 'pitch_planning', $id));
     }
 
@@ -696,17 +696,17 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->assertSame([1, 2], $this->ids('mobile_push_outbox'));
         $cancelled = $service->cancel($actor, $this->tenant, $saved['key'], ['revision' => $saved['revision']]);
         $this->assertSame('cancelled', $cancelled['status']);
-        $this->assertSame('cancelled', $this->db->table('clubora.pitch_requests')->value('status'));
+        $this->assertSame('cancelled', $this->db->table('clubunio.pitch_requests')->value('status'));
         $this->assertSame([1, 1, 2, 2], $this->ids('mobile_push_outbox'));
-        $this->assertSame(['created', 'cancelled'], $this->db->table('clubora.pitch_planning_events')->orderBy('id')->pluck('action')->all());
+        $this->assertSame(['created', 'cancelled'], $this->db->table('clubunio.pitch_planning_events')->orderBy('id')->pluck('action')->all());
         try {
             $service->cancel($actor, $this->tenant, $cancelled['key'], ['revision' => $cancelled['revision']]);
             $this->fail('Repeated cancellation accepted');
         } catch (HttpException $error) {
             $this->assertSame(409, $error->getStatusCode());
         }
-        $this->assertSame(2, $this->db->table('clubora.pitch_planning_events')->count());
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(2, $this->db->table('clubunio.pitch_planning_events')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
         Mail::assertNothingSent();
         Http::assertNothingSent();
     }

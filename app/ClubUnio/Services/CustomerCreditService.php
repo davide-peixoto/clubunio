@@ -27,7 +27,7 @@ class CustomerCreditService
 
     private function audit(Account $actor, CustomerCredit $credit, string $action, array $extra = []): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert([
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert([
             'tenant_id' => $credit->tenant_id, 'actor_id' => $actor->id, 'object_type' => 'customer_credits',
             'object_id' => $credit->id, 'before_value' => '{}',
             'after_value' => json_encode(['action' => $action, 'revision' => $credit->revision] + $extra, JSON_THROW_ON_ERROR),

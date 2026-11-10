@@ -57,7 +57,7 @@ class MobileMyTeamsPerformanceTest extends TestCase
     }
     private function insert(string $table,array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
     }
     private function measured(string $url): array
     {
@@ -68,7 +68,7 @@ class MobileMyTeamsPerformanceTest extends TestCase
     }
     private function teamResolutions(array $queries): int
     {
-        return count(array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubora"."team_seasons" as "ts"')
+        return count(array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubunio"."team_seasons" as "ts"')
             &&str_contains($query['query'],'"ts"."id" = ?')));
     }
     public function test_roster_query_count_does_not_grow_per_member_and_training_is_authorized_once(): void
@@ -92,7 +92,7 @@ class MobileMyTeamsPerformanceTest extends TestCase
     {
         [$response,$queries]=$this->measured($this->base.'/my-teams?recperpage=1');
         $response->assertJsonPath('data.totalRecordCount',1)->assertJsonCount(1,'data.Teams');
-        $projection=array_values(array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubora"."team_seasons" as "ts"')));
+        $projection=array_values(array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubunio"."team_seasons" as "ts"')));
         $this->assertCount(1,$projection);$this->assertStringContainsString('COUNT(*) OVER ()',$projection[0]['query']);
         $this->getJson($this->base.'/my-teams?start=99')->assertOk()->assertJsonPath('data.totalRecordCount',1)->assertJsonCount(0,'data.Teams');
         $this->withToken($this->tokens['admin'])->getJson($this->base.'/my-teams?recperpage=1')->assertOk()->assertJsonPath('data.totalRecordCount',2);
@@ -106,12 +106,12 @@ class MobileMyTeamsPerformanceTest extends TestCase
         [$response,$queries]=$this->measured($url);
         $response->assertJsonPath('data.Member.Land','CH')->assertJsonPath('data.Member.Nationalitaet','CHE')
             ->assertJsonPath('data.Member.Mutter','PRIVATE-MOTHER');
-        $countryQueries=array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubora"."countries"'));
+        $countryQueries=array_filter($queries,fn($query)=>str_contains($query['query'],'from "clubunio"."countries"'));
         $this->assertCount(1,$countryQueries);
         $this->withToken($this->tokens['trainer'])->getJson($url)->assertOk()->assertJsonPath('data.Member.CanEdit',false)->assertJsonMissingPath('data.Member.Mutter');
         $this->getJson($this->base.'/my-teams/'.$this->otherTeam)->assertNotFound();
         $this->withToken($this->tokens['parent'])->getJson($this->base.'/my-teams/'.$this->team.'/trainings')->assertOk()->assertJsonCount(1,'data');
-        $this->db->table('clubora.account_member_links')->where('tenant_id',$this->tenant->id)->where('account_id',$this->actors['parent']->id)->where('kind','parent')->update(['state'=>'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('tenant_id',$this->tenant->id)->where('account_id',$this->actors['parent']->id)->where('kind','parent')->update(['state'=>'revoked']);
         $this->getJson($url)->assertNotFound();
         $this->getJson($this->base.'/my-teams/'.$this->team.'/trainings')->assertNotFound();
         Http::assertNothingSent();Mail::assertNothingSent();

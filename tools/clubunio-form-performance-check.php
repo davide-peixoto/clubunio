@@ -23,8 +23,8 @@ try {
     $tenant = Tenant::create(['slug' => 'form-check-'.Str::random(16), 'name' => 'Synthetic performance check']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
-    $insert = fn ($table, $values) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
+    $insert = fn ($table, $values) => $db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
     $country = $insert('countries', ['code' => 'CH', 'name' => 'Synthetic']);
     $input = ['first_name' => 'Synthetic', 'last_name' => 'Performance', 'company' => null, 'email' => 'fixture@example.invalid',
         'status_id' => $insert('member_statuses', ['code' => 'M', 'name' => 'Member', 'restores_membership' => true]),
@@ -41,7 +41,7 @@ try {
     $lookupReads = 0;
     foreach ($queries as $query) {
         foreach ($lookupTables as $table) {
-            if (str_contains($query['query'], 'from "clubora"."'.$table.'"')) {
+            if (str_contains($query['query'], 'from "clubunio"."'.$table.'"')) {
                 $lookupReads++;
             }
         }

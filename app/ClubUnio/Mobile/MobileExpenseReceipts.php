@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 final class MobileExpenseReceipts
 {
-    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_expense_receipts')->where('tenant_id', $tenant->id); }
+    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_expense_receipts')->where('tenant_id', $tenant->id); }
     public function owned(Account $actor, Tenant $tenant, string $id): object {
         abort_unless(app(ExpenseService::class)->portalAllowed($actor, $tenant), 403);
         return $this->table($tenant)->where('account_id', $actor->id)->where('id', $id)->firstOrFail();

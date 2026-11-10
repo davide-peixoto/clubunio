@@ -24,7 +24,7 @@ class AssistantReadToolsTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         // Entirely synthetic in-memory schema: never connect to or mutate the shared PostgreSQL DB.
         $tables = [
             'accounts' => 'id INTEGER PRIMARY KEY, active BOOLEAN, api_only BOOLEAN, password TEXT',
@@ -47,7 +47,7 @@ class AssistantReadToolsTest extends TestCase
             'pitch_requests' => 'id INTEGER PRIMARY KEY, tenant_id INTEGER, status TEXT, date TEXT, starts_at TEXT, duration_minutes INTEGER, opponent TEXT, revision INTEGER DEFAULT 11, notes TEXT, requester_account_id INTEGER',
         ];
         foreach ($tables as $table => $columns) {
-            $db->statement('CREATE TABLE clubora.'.$table.' ('.$columns.')');
+            $db->statement('CREATE TABLE clubunio.'.$table.' ('.$columns.')');
         }
         $this->insert('accounts', ['id' => 1, 'active' => true, 'api_only' => false, 'password' => 'NEVER-EXPOSE']);
         $this->insert('tenants', ['id' => 1, 'slug' => 'synthetic']);
@@ -104,7 +104,7 @@ class AssistantReadToolsTest extends TestCase
         if (! in_array($table, ['accounts', 'tenants'], true)) {
             $values += ['tenant_id' => 1];
         }
-        DB::connection('clubunio')->table('clubora.'.$table)->insert($values);
+        DB::connection('clubunio')->table('clubunio.'.$table)->insert($values);
     }
 
     private function read(string $name, array $args = []): array
@@ -198,11 +198,11 @@ class AssistantReadToolsTest extends TestCase
     {
         $this->seedSyntheticRows();
         $db = DB::connection('clubunio');
-        $db->table('clubora.members')->where('id', 1)->update(['archived_at' => '2026-11-05']);
-        $db->table('clubora.members')->where('id', 2)->update(['exit_date' => '2026-11-06']);
-        $db->table('clubora.members')->where('id', 3)->update(['tenant_id' => 2]);
+        $db->table('clubunio.members')->where('id', 1)->update(['archived_at' => '2026-11-05']);
+        $db->table('clubunio.members')->where('id', 2)->update(['exit_date' => '2026-11-06']);
+        $db->table('clubunio.members')->where('id', 3)->update(['tenant_id' => 2]);
         $this->insert('member_statuses', ['id' => 2, 'code' => 'ended', 'name' => 'Ended', 'ends_membership' => true]);
-        $db->table('clubora.members')->where('id', 4)->update(['status_id' => 2]);
+        $db->table('clubunio.members')->where('id', 4)->update(['status_id' => 2]);
         $this->assertSame(21, $this->read('members', ['query' => ''])['total']);
     }
 
@@ -318,12 +318,12 @@ class AssistantReadToolsTest extends TestCase
     {
         $this->seedSyntheticRows();
         foreach (['registrations', 'expenses', 'invoices', 'bus_reservations'] as $table) {
-            DB::connection('clubunio')->table('clubora.'.$table)->where('id', 1)->update(['tenant_id' => 2]);
+            DB::connection('clubunio')->table('clubunio.'.$table)->where('id', 1)->update(['tenant_id' => 2]);
         }
-        DB::connection('clubunio')->table('clubora.pitch_requests')->where('id', 1)->update(['tenant_id' => 2]);
+        DB::connection('clubunio')->table('clubunio.pitch_requests')->where('id', 1)->update(['tenant_id' => 2]);
         $this->assertSame([2, 3], array_column($this->read('registrations')['rows'], 'id'));
-        DB::connection('clubunio')->table('clubora.registrations')->where('id', 2)->update(['active' => false]);
-        DB::connection('clubunio')->table('clubora.expenses')->where('id', 2)->update(['active' => false]);
+        DB::connection('clubunio')->table('clubunio.registrations')->where('id', 2)->update(['active' => false]);
+        DB::connection('clubunio')->table('clubunio.expenses')->where('id', 2)->update(['active' => false]);
         $this->assertSame([3], array_column($this->read('registrations')['rows'], 'id'));
         $this->assertSame([3], array_column($this->read('expenses')['rows'], 'id'));
         $this->assertSame([2], array_column($this->read('invoices')['rows'], 'id'));
@@ -337,20 +337,20 @@ class AssistantReadToolsTest extends TestCase
         request()->attributes->set(BackofficeReadContext::class, $frame);
         request()->attributes->set(MobileReadContext::class, ['stale' => true]);
         foreach (['trainer', 'technical_lead', 'member', 'profile'] as $role) {
-            DB::connection('clubunio')->table('clubora.tenant_accounts')->update(['role' => $role]);
+            DB::connection('clubunio')->table('clubunio.tenant_accounts')->update(['role' => $role]);
             $this->forbidden(fn () => $this->read('members', ['query' => '']));
         }
-        DB::connection('clubunio')->table('clubora.tenant_accounts')->update(['role' => 'admin']);
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')->update(['role' => 'admin']);
         $this->assertSame(0, $this->read('members', ['query' => ''])['total']);
-        DB::connection('clubunio')->table('clubora.accounts')->update(['active' => false]);
+        DB::connection('clubunio')->table('clubunio.accounts')->update(['active' => false]);
         $this->forbidden(fn () => $this->read('members', ['query' => '']));
-        DB::connection('clubunio')->table('clubora.accounts')->update(['active' => true, 'api_only' => true]);
+        DB::connection('clubunio')->table('clubunio.accounts')->update(['active' => true, 'api_only' => true]);
         $this->forbidden(fn () => $this->read('members', ['query' => '']));
-        DB::connection('clubunio')->table('clubora.accounts')->update(['api_only' => false]);
-        DB::connection('clubunio')->table('clubora.tenants')->where('id', 1)->delete();
+        DB::connection('clubunio')->table('clubunio.accounts')->update(['api_only' => false]);
+        DB::connection('clubunio')->table('clubunio.tenants')->where('id', 1)->delete();
         $this->forbidden(fn () => $this->read('members', ['query' => '']));
         $this->insert('tenants', ['id' => 1, 'slug' => 'synthetic']);
-        DB::connection('clubunio')->table('clubora.tenant_accounts')->delete();
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')->delete();
         $this->forbidden(fn () => $this->read('members', ['query' => '']));
         $this->assertSame($frame, request()->attributes->get(BackofficeReadContext::class));
         $this->assertSame(['stale' => true], request()->attributes->get(MobileReadContext::class));

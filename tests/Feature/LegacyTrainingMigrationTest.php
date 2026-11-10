@@ -42,10 +42,10 @@ class LegacyTrainingMigrationTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'legacy-plan-'.Str::random(8), 'name' => 'Fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(10).'@example.invalid', 'display_name' => 'Test owner', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture']);
-        $this->team = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Fixture', 'legacy_id' => 345]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture']);
+        $this->team = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Fixture', 'legacy_id' => 345]);
         $input = ['durationMinutes' => 75, 'playerCount' => 18, 'goal' => 'Passen', 'fieldSize' => 'Halbfeld', 'material' => 'Bälle'];
         $plan = ['title' => 'Alttraining', 'focus' => 'Passen', 'principles' => ['Alte Philosophie'], 'qualityChecks' => ['Frühere Qualitätsprüfung'],
             'exercises' => array_map(fn ($phase) => ['phase' => $phase, 'title' => 'Passspiel', 'durationMinutes' => 25, 'setup' => 'Zwei Gruppen', 'flow' => 'Passen', 'coachingPoints' => ['Ballkontrolle'],
@@ -83,7 +83,7 @@ class LegacyTrainingMigrationTest extends TestCase
         $record->refresh();
         $this->assertSame('imported', $record->state);
         $this->assertSame($record->plan_id, $service->import($this->actor, $this->tenant, $record->id, $data));
-        $plan = $this->db->table('clubora.training_plans')->find($record->plan_id);
+        $plan = $this->db->table('clubunio.training_plans')->find($record->plan_id);
         $this->assertFalse($plan->shared);
         $this->assertNotNull($plan->archived_at);
         $this->assertTrue($plan->legacy_quality_pending);

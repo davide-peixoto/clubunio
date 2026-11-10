@@ -42,7 +42,7 @@ class SyncWorkTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'sync-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(15).'@example.invalid', 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $this->mock(BexioSandboxFixtureService::class, fn ($m) => $m->shouldReceive('optionalConnectionHash')->andReturn('synthetic'));
         Http::preventStrayRequests();
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
@@ -79,7 +79,7 @@ class SyncWorkTest extends TestCase
         $this->assertSame('succeeded', $fresh->state);
         $this->assertSame(2, $fresh->attempts);
         $this->assertSame(1, $service->table()->where('tenant_id', $this->tenant->id)->count());
-        $history = $this->db->table('clubora.sync_work_events')->where('work_item_id', $row->id)->get()->toJson();
+        $history = $this->db->table('clubunio.sync_work_events')->where('work_item_id', $row->id)->get()->toJson();
         $this->assertStringNotContainsString('secret-token', $history);
         $this->assertStringContainsString('status_503', $history);
     }
@@ -127,7 +127,7 @@ class SyncWorkTest extends TestCase
         $id = $service->remember($this->actor, $this->tenant, 'catalog', $this->tenant->id, []);
         $service->close($this->actor, $this->tenant, $id, 1, 'Fachlich geprüft, Aufgabe ersetzt.');
         $this->assertSame('closed', $service->table()->find($id)->state);
-        $event = $this->db->table('clubora.sync_work_events')->where('work_item_id', $id)->orderByDesc('id')->first();
+        $event = $this->db->table('clubunio.sync_work_events')->where('work_item_id', $id)->orderByDesc('id')->first();
         $this->assertSame('closed_manually', $event->event);
         $this->assertSame('Fachlich geprüft, Aufgabe ersetzt.', Crypt::decryptString($event->encrypted_note));
         $this->expectException(HttpException::class);
@@ -139,14 +139,14 @@ class SyncWorkTest extends TestCase
         $service = app(SyncWorkService::class);
         $id = $service->remember($this->actor, $this->tenant, 'catalog', $this->tenant->id, []);
         $other = Tenant::create(['slug' => 'other-'.Str::random(10), 'name' => 'Synthetic']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         try {
             $service->retry($this->actor, $other, $id, 1);
             $this->fail('Foreign item');
         } catch (HttpException $e) {
             $this->assertSame(404, $e->getStatusCode());
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         try {
             $service->retry($this->actor, $this->tenant, $id, 1);
             $this->fail('Office must not write integrations');
@@ -172,15 +172,15 @@ class SyncWorkTest extends TestCase
     {
         $base = ['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'invoice',
             'object_id' => 91, 'remote_id' => '1', 'fingerprint' => 'synthetic'];
-        $this->db->table('clubora.bexio_checks')->insert($base + ['state' => 'failed', 'reference' => Str::uuid()]);
+        $this->db->table('clubunio.bexio_checks')->insert($base + ['state' => 'failed', 'reference' => Str::uuid()]);
         $service = app(SyncWorkService::class);
         $service->importOutstanding($this->actor, $this->tenant);
         $service->importOutstanding($this->actor, $this->tenant);
         $this->assertSame(1, $service->table()->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame('invoice_status', $service->table()->where('tenant_id', $this->tenant->id)->sole()->operation);
         // An already recovered historical failure must not introduce another item.
-        $this->db->table('clubora.bexio_checks')->insert(array_replace($base, ['object_id' => 92, 'state' => 'failed', 'reference' => Str::uuid()]));
-        $this->db->table('clubora.bexio_checks')->insert(array_replace($base, ['object_id' => 92, 'state' => 'unchanged', 'reference' => Str::uuid()]));
+        $this->db->table('clubunio.bexio_checks')->insert(array_replace($base, ['object_id' => 92, 'state' => 'failed', 'reference' => Str::uuid()]));
+        $this->db->table('clubunio.bexio_checks')->insert(array_replace($base, ['object_id' => 92, 'state' => 'unchanged', 'reference' => Str::uuid()]));
         $service->importOutstanding($this->actor, $this->tenant);
         $this->assertSame(1, $service->table()->where('tenant_id', $this->tenant->id)->count());
         Http::assertNothingSent();
@@ -205,7 +205,7 @@ class SyncWorkTest extends TestCase
             $rows[] = ['work_item_id' => $id, 'actor_id' => $this->actor->id, 'event' => 'attention', 'code' => 'status_503',
                 'encrypted_note' => Crypt::encryptString(sprintf('History entry %03d', $i))];
         }
-        $this->db->table('clubora.sync_work_events')->insert($rows);
+        $this->db->table('clubunio.sync_work_events')->insert($rows);
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         try {
@@ -221,7 +221,7 @@ class SyncWorkTest extends TestCase
         $page->call('gotoPage', 2, 'historyPage')->assertSee('History entry 024')->assertDontSee('History entry 044');
         $page->call('gotoPage', 3, 'historyPage')->assertSee('History entry 000')->assertSee('Auftrag gespeichert');
         $page->call('closeHistory')->assertSet('historyItemId', null)->assertDontSee('History entry');
-        $this->assertSame(46, $this->db->table('clubora.sync_work_events')->where('work_item_id', $id)->count());
+        $this->assertSame(46, $this->db->table('clubunio.sync_work_events')->where('work_item_id', $id)->count());
         $this->assertSame(1, app(SyncWorkService::class)->table()->find($id)->revision);
         Http::assertNothingSent();
     }
@@ -231,7 +231,7 @@ class SyncWorkTest extends TestCase
         $service = app(SyncWorkService::class);
         $first = $service->remember($this->actor, $this->tenant, 'catalog', 1, []);
         $second = $service->remember($this->actor, $this->tenant, 'sfv_schedule', 2, ['from' => '2026-10-15', 'to' => '2026-10-16']);
-        $this->db->table('clubora.sync_work_events')->insert(['work_item_id' => $second, 'actor_id' => null, 'event' => 'attention',
+        $this->db->table('clubunio.sync_work_events')->insert(['work_item_id' => $second, 'actor_id' => null, 'event' => 'attention',
             'code' => 'status_503', 'encrypted_note' => Crypt::encryptString('SFV history only')]);
         $page = Livewire::test(Synchronisation::class)->assertSee('2026-10-15')->call('showHistory', $first);
         $page->call('showHistory', $second)->assertSet('historyItemId', $second)->assertSee('SFV history only')->assertSee('Öffentliche Anmeldung');
@@ -257,11 +257,11 @@ class SyncWorkTest extends TestCase
         $service = app(SyncWorkService::class);
         $id = $service->remember($this->actor, $this->tenant, 'catalog', 1, []);
         $other = Tenant::create(['slug' => 'history-other-'.Str::random(10), 'name' => 'Synthetic']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $foreign = $service->remember($this->actor, $other, 'catalog', 2, []);
         Livewire::test(Synchronisation::class)->call('showHistory', $foreign)->assertNotFound();
         $page = Livewire::test(Synchronisation::class)->call('showHistory', $id)->assertSuccessful();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $page->call('gotoPage', 2, 'historyPage')->assertForbidden();
     }
 

@@ -15,11 +15,11 @@ return new class extends Migration
         }
         $keys = ['BEXIO_TOKEN', 'BEXIO_REFRESH_TOKEN', 'BEXIO_ACCESS_TOKEN_EXPIRES_AT',
             'BEXIO_TOKEN_ENDPOINT', 'BEXIO_PROVIDER_URL', 'BEXIO_REDIRECT_URI', 'BEXIO_CRON_TOKEN'];
-        $rows = $db->table('clubora.tenant_settings')->where('area', 'bexio')->whereIn('key', $keys)->lockForUpdate()->get();
+        $rows = $db->table('clubunio.tenant_settings')->where('area', 'bexio')->whereIn('key', $keys)->lockForUpdate()->get();
         if ($rows->isEmpty()) {
             return;
         }
-        $changes = $db->table('clubora.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->get();
+        $changes = $db->table('clubunio.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->get();
         // Preserve encrypted values and audit metadata outside the public web root before removal.
         $directory = storage_path('app/private/migration-backups');
         if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
@@ -31,8 +31,8 @@ return new class extends Migration
             throw new RuntimeException('Could not back up retired Bexio settings');
         }
         chmod($path, 0600);
-        $db->table('clubora.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->delete();
-        $db->table('clubora.tenant_settings')->whereIn('id', $rows->pluck('id'))->delete();
+        $db->table('clubunio.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->delete();
+        $db->table('clubunio.tenant_settings')->whereIn('id', $rows->pluck('id'))->delete();
     }
 
     public function down(): void

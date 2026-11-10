@@ -54,13 +54,13 @@ class CreditNoteTest extends TestCase
         $this->db->beginTransaction();
         $this->tenant = Tenant::create(['slug' => 'credit-'.Str::random(10), 'name' => 'Synthetic Club']);
         foreach (['draft' => 'Entwurf', 'released' => 'Freigegeben', 'confirmed' => 'Bestätigt', 'cancelled' => 'Storniert'] as $code => $name) {
-            $this->db->table('clubora.financial_adjustment_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $name]);
+            $this->db->table('clubunio.financial_adjustment_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $code, 'name' => $name]);
         }
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(15).'@example.invalid', 'display_name' => 'Synthetic office', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
-        $status = $this->db->table('clubora.invoice_workflow_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
+        $status = $this->db->table('clubunio.invoice_workflow_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
         $this->invoice = new Invoice;
         $this->invoice->forceFill(['tenant_id' => $this->tenant->id, 'member_id' => $member, 'workflow_status_id' => $status, 'bexio_invoice_id' => '123'])->save();
         $this->invoice->refresh();
@@ -140,12 +140,12 @@ class CreditNoteTest extends TestCase
             'paid_on' => now('Europe/Zurich')->toDateString(), 'attestation' => true])->assertHasNoActionErrors();
         $this->assertSame('confirmed', $refund->fresh()->status->code);
         $this->assertSame('20.0000', $this->line->fresh()->net_amount);
-        $this->assertSame(5, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(5, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         Filament::setTenant($this->tenant);
         $this->get('/credit-notes')->assertOk()->assertSee('Gutschriften');
         $this->get('/refunds')->assertOk()->assertSee('Rückerstattungen');
-        $this->db->table('clubora.bexio_balances')->insert(['tenant_id' => $this->tenant->id, 'object_type' => 'invoice', 'object_id' => $this->invoice->id,
+        $this->db->table('clubunio.bexio_balances')->insert(['tenant_id' => $this->tenant->id, 'object_type' => 'invoice', 'object_id' => $this->invoice->id,
             'remote_id' => '123', 'remote_status' => '9', 'total_cents' => 2000, 'paid_cents' => 2000, 'credit_cents' => 1000, 'remaining_cents' => 0, 'overpaid_cents' => 1000,
             'cash_received_cents' => 2000, 'cash_excess_cents' => 1000, 'observed_at' => now()]);
         $this->assertSame(0, app(DashboardService::class)->refundableCash($this->actor, $this->tenant));
@@ -210,7 +210,7 @@ class CreditNoteTest extends TestCase
         } catch (HttpException $e) {
             $this->assertSame(404, $e->getStatusCode());
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'member']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'member']);
         try {
             $this->create();
             $this->fail('Revoked office accepted');
@@ -266,14 +266,14 @@ class CreditNoteTest extends TestCase
     public function test_inactive_status_cannot_release(): void
     {
         $note = $this->create();
-        $this->db->table('clubora.financial_adjustment_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'released')->update(['active' => false]);
+        $this->db->table('clubunio.financial_adjustment_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'released')->update(['active' => false]);
         $this->expectException(ValidationException::class);
         app(CreditNoteService::class)->change($this->actor, $this->tenant, $note->id, $note->revision, 'release');
     }
 
     public function test_office_can_create_but_cannot_use_sandbox_provider_actions(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $note = $this->create();
         $this->assertSame('draft', $note->status->code);
         try {

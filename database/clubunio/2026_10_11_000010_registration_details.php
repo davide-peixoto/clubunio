@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $db->unprepared(<<<'SQL'
 ALTER TABLE registrations ALTER COLUMN legacy_id DROP NOT NULL;
 ALTER TABLE registrations ADD applicant_encrypted text, ADD details_complete boolean NOT NULL DEFAULT false,

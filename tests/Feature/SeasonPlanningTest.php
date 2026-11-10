@@ -79,7 +79,7 @@ class SeasonPlanningTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function service(): SeasonPlanningService
@@ -89,7 +89,7 @@ class SeasonPlanningTest extends TestCase
 
     private function rows(string $table): int
     {
-        return $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant->id)->count();
+        return $this->db->table('clubunio.'.$table)->where('tenant_id', $this->tenant->id)->count();
     }
 
     private function document(): array
@@ -164,7 +164,7 @@ class SeasonPlanningTest extends TestCase
     {
         $row = $this->draft();
         $review = $this->service()->review($this->actor, $this->tenant, $row->id);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['birth_date' => '2016-01-01']);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['birth_date' => '2016-01-01']);
         try {
             $this->service()->complete($this->actor, $this->tenant, $row->id, 1, $review['token'], true);
             $this->fail('Expected stale review');
@@ -207,7 +207,7 @@ class SeasonPlanningTest extends TestCase
     {
         $row = $this->draft();
         $review = $this->service()->review($this->actor, $this->tenant, $row->id);
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(0);
         try {
@@ -221,7 +221,7 @@ class SeasonPlanningTest extends TestCase
     {
         $row = $this->draft();
         $other = Tenant::create(['slug' => 'other-'.Str::random(15), 'name' => 'Other']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'office']);
         try {
             $this->service()->get($this->actor, $other, $row->id);
             $this->fail('Expected not found');
@@ -236,7 +236,7 @@ class SeasonPlanningTest extends TestCase
         $doc['assignments'][] = array_replace($doc['assignments'][0], ['key' => (string) Str::uuid()]);
         $row = $this->draft($doc);
         $this->assertContains('Eine Zuordnung ist doppelt enthalten.', $this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['exit_date' => now()->subDay()->toDateString()]);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['exit_date' => now()->subDay()->toDateString()]);
         $this->assertNotEmpty($this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
     }
 
@@ -338,7 +338,7 @@ class SeasonPlanningTest extends TestCase
         $review = $this->service()->review($this->actor, $this->tenant, $row->id);
         $permissions = ['seasons.view', 'teams.view', 'members.view', 'contributions.view', 'training_slots.view'];
         $profile = $this->insert('access_profiles', ['name' => 'Planner fixture', 'permissions' => json_encode($permissions), 'active' => true]);
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
         $this->assertSame($row->id, $this->service()->get($this->actor, $this->tenant, $row->id)->id);
         try {
             $this->service()->save($this->actor, $this->tenant, $row->id, 1, $row->document);
@@ -347,7 +347,7 @@ class SeasonPlanningTest extends TestCase
             $this->assertSame(403, $e->getStatusCode());
         }
         $permissions = [...$permissions, 'seasons.create', 'seasons.transfer', 'teams.create', 'contributions.create'];
-        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['permissions' => json_encode($permissions)]);
+        $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['permissions' => json_encode($permissions)]);
         try {
             $this->service()->complete($this->actor, $this->tenant, $row->id, 1, $review['token'], true);
             $this->fail('Missing training permission allowed');
@@ -384,9 +384,9 @@ class SeasonPlanningTest extends TestCase
         for ($i = 0; $i < 100; $i++) {
             $members[] = ['tenant_id' => $this->tenant->id, 'first_name' => 'Load fixture', 'last_name' => 'Synthetic', 'birth_date' => '2015-01-01', 'gender_id' => $this->gender];
         }
-        $this->db->table('clubora.members')->insert($members);
+        $this->db->table('clubunio.members')->insert($members);
         $doc = $this->document();
-        foreach ($this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->where('id', '<>', $this->member)->orderBy('id')->pluck('id') as $id) {
+        foreach ($this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->where('id', '<>', $this->member)->orderBy('id')->pluck('id') as $id) {
             $doc['assignments'][] = ['key' => (string) Str::uuid(), 'kind' => 'player', 'team_key' => $doc['teams'][0]['key'], 'member_id' => $id, 'function_id' => null];
         }
         $row = $this->draft($doc);
@@ -425,7 +425,7 @@ class SeasonPlanningTest extends TestCase
         $first = $this->insert('members', ['first_name' => 'Batch A']);
         $second = $this->insert('members', ['first_name' => 'Batch B']);
         TeamPlayer::created(function () {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         });
         try {
             $service->createMany($this->actor, $this->tenant, TeamPlayer::class,
@@ -448,7 +448,7 @@ class SeasonPlanningTest extends TestCase
         $review = $this->service()->review($this->actor, $this->tenant, $draft->id);
         $this->assertSame([], $review['errors']);
         $this->assertContains('Trainingszeit überschneidet sich mit einer bestehenden Belegung einer zeitlich überlappenden Saison; Belegung und Platzaufteilung prüfen.', $review['warnings']);
-        $this->db->table('clubora.training_slots')->where('tenant_id', $this->tenant->id)->update(['starts_at' => '19:00:00']);
+        $this->db->table('clubunio.training_slots')->where('tenant_id', $this->tenant->id)->update(['starts_at' => '19:00:00']);
         try {
             $this->service()->complete($this->actor, $this->tenant, $draft->id, 1, $review['token'], true);
             $this->fail('Changed occupation accepted');
@@ -622,9 +622,9 @@ class SeasonPlanningTest extends TestCase
             'team_players', 'team_staff', 'technical_leads', 'training_slots'];
         $before = [];
         foreach ($tables as $table) {
-            $before[$table] = $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant->id)->orderBy('id')->get()->keyBy('id')->all();
+            $before[$table] = $this->db->table('clubunio.'.$table)->where('tenant_id', $this->tenant->id)->orderBy('id')->get()->keyBy('id')->all();
         }
-        $sourceMember = $this->db->table('clubora.members')->where('id', $this->member)->first();
+        $sourceMember = $this->db->table('clubunio.members')->where('id', $this->member)->first();
         $candidate = $this->insert('members', ['first_name' => 'Next cohort', 'birth_date' => '2018-01-01', 'gender_id' => $this->gender]);
         $outside = $this->insert('members', ['first_name' => 'Outside cohort', 'birth_date' => '2000-01-01', 'gender_id' => $this->gender]);
         $doc = $this->service()->seed($this->actor, $this->tenant, $source);
@@ -659,17 +659,17 @@ class SeasonPlanningTest extends TestCase
         $season = $page->get('seasonId');
         $this->assertNotSame($source, $season);
         $this->assertSame($season, $this->service()->complete($this->actor, $this->tenant, $row->id, $revision, $reviewToken, false));
-        $results = $this->db->table('clubora.season_plan_results')->where('plan_id', $row->id)->get()->keyBy('item_key');
+        $results = $this->db->table('clubunio.season_plan_results')->where('plan_id', $row->id)->get()->keyBy('item_key');
         $this->assertCount(14, $results);
         $this->assertSame($season, $results['season']->target_id);
         foreach ($finalDoc['teams'] as $planned) {
-            $ts = $this->db->table('clubora.team_seasons')->where('id', $results[$planned['key']]->target_id)->first();
+            $ts = $this->db->table('clubunio.team_seasons')->where('id', $results[$planned['key']]->target_id)->first();
             $this->assertSame($season, $ts->season_id);
             $this->assertSame($planned['team_id'] ?? $results['master:'.$planned['key']]->target_id, $ts->team_id);
         }
         foreach ($finalDoc['assignments'] as $planned) {
             $result = $results[$planned['key']];
-            $actual = $this->db->table('clubora.'.$result->entity)->where('id', $result->target_id)->first();
+            $actual = $this->db->table('clubunio.'.$result->entity)->where('id', $result->target_id)->first();
             $this->assertSame($this->tenant->id, $actual->tenant_id);
             $this->assertSame($planned['member_id'], $actual->member_id);
             $this->assertSame($results[$planned['team_key']]->target_id, $actual->team_season_id);
@@ -678,21 +678,21 @@ class SeasonPlanningTest extends TestCase
             }
         }
         foreach ($finalDoc['slots'] as $planned) {
-            $actual = $this->db->table('clubora.training_slots')->where('id', $results[$planned['key']]->target_id)->first();
+            $actual = $this->db->table('clubunio.training_slots')->where('id', $results[$planned['key']]->target_id)->first();
             $this->assertSame($results[$planned['team_key']]->target_id, $actual->team_season_id);
             foreach (['period_id', 'weekday_id', 'field_id', 'room_id', 'side_id', 'starts_at', 'ends_at', 'hall', 'all_fields', 'without_main', 'synthetic_only', 'website_visible'] as $column) {
                 $this->assertSame($planned[$column], $actual->$column, $column);
             }
         }
-        $newRule = $this->db->table('clubora.contribution_rules')->where('id', $results[$finalDoc['rules'][0]['key']]->target_id)->first();
+        $newRule = $this->db->table('clubunio.contribution_rules')->where('id', $results[$finalDoc['rules'][0]['key']]->target_id)->first();
         $this->assertSame($season, $newRule->season_id);
         $this->assertSame($results[$finalDoc['prices'][0]['key']]->target_id, $newRule->price_id);
         $this->assertSame(2015, $newRule->year_from);
         $this->assertSame(2018, $newRule->year_to);
         foreach ($before as $table => $records) {
-            $this->assertEquals($records, $this->db->table('clubora.'.$table)->whereIn('id', array_keys($records))->orderBy('id')->get()->keyBy('id')->all(), $table);
+            $this->assertEquals($records, $this->db->table('clubunio.'.$table)->whereIn('id', array_keys($records))->orderBy('id')->get()->keyBy('id')->all(), $table);
         }
-        $this->assertEquals($sourceMember, $this->db->table('clubora.members')->where('id', $this->member)->first());
+        $this->assertEquals($sourceMember, $this->db->table('clubunio.members')->where('id', $this->member)->first());
         $this->assertSame(0, $this->rows('invoices'));
         $this->assertSame(0, $this->rows('notifications'));
         Http::assertNothingSent();
@@ -730,7 +730,7 @@ class SeasonPlanningTest extends TestCase
             $this->assertSame(0, $this->rows('seasons'));
             $this->assertSame(0, $this->rows('season_plan_results'));
         }
-        $this->db->table('clubora.members')->where('id', $extra)->update(['archived_at' => now()]);
+        $this->db->table('clubunio.members')->where('id', $extra)->update(['archived_at' => now()]);
         $this->assertNotEmpty($this->service()->review($this->actor, $this->tenant, $row->id)['errors']);
         Http::assertNothingSent();
         Mail::assertNothingSent();

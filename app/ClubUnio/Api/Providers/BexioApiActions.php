@@ -76,7 +76,7 @@ final class BexioApiActions
             // Local-only preflight: technical actors cannot call admin-only provider services.
             if ($action === 'bexio.invoice-transfer') {
                 abort_unless($document->legacy_id === null, 409);
-                $existing = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+                $existing = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                     ->where('tenant_id', $c->tenant->id)->where('kind', 'invoice')->where('invoice_id', $objectId)->exists();
                 if (! $existing) {
                     $workflow = $document->workflowStatus;
@@ -87,13 +87,13 @@ final class BexioApiActions
                 $data['revision'] = (int) $data['revision'];
             }
             if (in_array($action, ['bexio.invoice-issue', 'bexio.invoice-cancel', 'bexio.invoice-reconcile'], true)) {
-                $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+                $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                     ->where('tenant_id', $c->tenant->id)->where('kind', 'invoice')->where('invoice_id', $objectId)
                     ->where('state', 'accepted')->first(['id', 'remote_id']);
                 abort_unless($dispatch && ! $document->legacy_id
                     && (string) $document->bexio_invoice_id === (string) $dispatch->remote_id, 409);
                 if ($action === 'bexio.invoice-reconcile') {
-                    abort_unless(DB::connection('clubunio')->table('clubora.bexio_invoice_actions')
+                    abort_unless(DB::connection('clubunio')->table('clubunio.bexio_invoice_actions')
                         ->where('dispatch_id', $dispatch->id)->exists(), 409);
                 }
             }
@@ -140,7 +140,7 @@ final class BexioApiActions
                 return $base + ['state' => 'synchronized', 'confirmed' => true];
             }
             if (in_array($operation, ['invoice_status', 'invoice_sync', 'expense_status', 'expense_sync'], true)) {
-                $check = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', $c->tenant->id)
+                $check = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', $c->tenant->id)
                     ->where('object_type', str_starts_with($operation, 'invoice') ? 'invoice' : 'expense')
                     ->where('object_id', $objectId)->where('id', $result)->first(['id', 'state', 'remote_status']);
                 abort_unless($check, 409);
@@ -148,7 +148,7 @@ final class BexioApiActions
                 return $base + ['check_id' => (int) $check->id, 'state' => $check->state,
                     'status' => $check->remote_status, 'confirmed' => in_array($check->state, ['ready', 'applied', 'unchanged'], true)];
             }
-            $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+            $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                 ->where('tenant_id', $c->tenant->id)->where('kind', 'invoice')->where('invoice_id', $objectId)
                 ->first(['id', 'state']);
             abort_unless($dispatch, 409);
@@ -156,7 +156,7 @@ final class BexioApiActions
                 return $base + ['dispatch_id' => (int) $dispatch->id, 'state' => $dispatch->state,
                     'confirmed' => $dispatch->state === 'accepted'];
             }
-            $actions = DB::connection('clubunio')->table('clubora.bexio_invoice_actions')->where('dispatch_id', $dispatch->id)
+            $actions = DB::connection('clubunio')->table('clubunio.bexio_invoice_actions')->where('dispatch_id', $dispatch->id)
                 ->when($operation === 'invoice_action', fn ($q) => $q->where('operation', $payload['operation']))->pluck('state');
             $confirmed = $dispatch->state === 'accepted' && $actions->isNotEmpty()
                 && $actions->every(fn ($state) => $state === 'accepted');

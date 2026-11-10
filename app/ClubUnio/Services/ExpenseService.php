@@ -41,7 +41,7 @@ class ExpenseService
         $office = $allowed['view'];
         $portal = $this->portalAllowed($actor, $tenant);
         $access = app(MemberAccessService::class);
-        $own = $portal ? $access->represented($actor, $tenant, true)->pluck('clubora.members.id')->map(fn ($id) => (int) $id)->all() : [];
+        $own = $portal ? $access->represented($actor, $tenant, true)->pluck('clubunio.members.id')->map(fn ($id) => (int) $id)->all() : [];
         $role = ! $office && $portal ? $access->membership($actor, $tenant)?->role : null;
         $teams = $role === 'technical_lead' ? array_map('intval', $access->responsibleTeams($actor, $tenant)) : [];
 
@@ -53,7 +53,7 @@ class ExpenseService
             if (! $portal) { return $result; }
             $visible->where(fn ($q) => $q->whereIn('member_id', $own)->when($role === 'technical_lead', fn ($q) => $q->orWhereIn('team_season_id', $teams)));
         }
-        $ids = array_fill_keys($visible->pluck('clubora.expenses.id')->map(fn ($id) => (int) $id)->all(), true);
+        $ids = array_fill_keys($visible->pluck('clubunio.expenses.id')->map(fn ($id) => (int) $id)->all(), true);
         (new \Illuminate\Database\Eloquent\Collection(array_values($rows)))->loadMissing('status');
         $own = array_fill_keys($own, true); $teams = array_fill_keys($teams, true);
         foreach ($rows as $id => $expense) {
@@ -101,7 +101,7 @@ class ExpenseService
         }
 
         return $q->where(function ($q) use ($access, $actor, $tenant) {
-            $q->whereIn('member_id', $access->represented($actor, $tenant, true)->select('clubora.members.id'));
+            $q->whereIn('member_id', $access->represented($actor, $tenant, true)->select('clubunio.members.id'));
             if ($access->membership($actor, $tenant)?->role === 'technical_lead') {
                 $q->orWhereIn('team_season_id', $access->responsibleTeams($actor, $tenant));
             }
@@ -219,7 +219,7 @@ class ExpenseService
             $values = array_replace($id ? $e->only(['member_id', 'team_season_id', 'bank_account_id', 'round_id', 'notes']) : [], $input);
             $data = Validator::make($values, [
                 'member_id' => 'required|integer', 'team_season_id' => 'required|integer', 'bank_account_id' => 'required|integer',
-                'round_id' => ['required', 'integer', Rule::exists('clubunio.clubora.expense_rounds', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
+                'round_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.expense_rounds', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
                 'notes' => 'nullable|string|max:4000',
             ])->validate();
             $access = app(MemberAccessService::class);
@@ -227,7 +227,7 @@ class ExpenseService
                 abort_unless($this->portalAllowed($actor, $tenant), 403);
                 abort_unless($access->represented($actor, $tenant, true)->whereKey($data['member_id'])->exists(), 403);
                 // Personal claims only for a team on which the member is active staff.
-                abort_unless(DB::connection('clubunio')->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $data['member_id'])->where('team_season_id', $data['team_season_id'])->exists(), 403);
+                abort_unless(DB::connection('clubunio')->table('clubunio.team_staff')->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $data['member_id'])->where('team_season_id', $data['team_season_id'])->exists(), 403);
             }
             $teamQuery = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true));
             app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($teamQuery, $tenant);
@@ -277,8 +277,8 @@ class ExpenseService
             }
             $fields = ['expense_type_id', 'game_type_id', 'opponent', 'amount', 'notes', 'active'];
             $values = array_replace($id ? $line->only($fields) : ['active' => true], array_intersect_key($input, array_flip($fields)));
-            $rules = ['expense_type_id' => ['required', 'integer', Rule::exists('clubunio.clubora.expense_types', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
-                'game_type_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.game_types', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
+            $rules = ['expense_type_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.expense_types', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
+                'game_type_id' => ['nullable', 'integer', Rule::exists('clubunio.clubunio.game_types', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true))],
                 'amount' => ['nullable', 'regex:/^\d{1,9}(\.\d{1,4})?$/'], 'opponent' => 'nullable|string|max:255', 'notes' => 'nullable|string|max:4000', 'active' => 'required|boolean'];
             $data = Validator::make($values, $rules)->validate();
             if ($id && (bool) $line->active !== (bool) $data['active']) {
@@ -325,7 +325,7 @@ class ExpenseService
 
     private function audit(Account $actor, Tenant $tenant, string $type, int $id, ?array $before, array $after): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id,
             'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null, 'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);
     }
 }

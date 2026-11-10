@@ -237,19 +237,19 @@ class DialogTranslationsTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         \Illuminate\Support\Facades\DB::purge('clubunio');
         $db = \Illuminate\Support\Facades\DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->statement('CREATE TABLE clubora.training_options (id INTEGER PRIMARY KEY, tenant_id INTEGER, name TEXT, code TEXT, category TEXT, active INTEGER, sort_order INTEGER)');
-        $db->statement('CREATE TABLE clubora.team_seasons (id INTEGER PRIMARY KEY, tenant_id INTEGER, label TEXT, active INTEGER)');
-        $db->statement('CREATE TABLE clubora.lookup_translations (id INTEGER PRIMARY KEY, tenant_id INTEGER, source_table TEXT, source_id TEXT, source_name TEXT, locale TEXT, label TEXT, revision INTEGER)');
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->statement('CREATE TABLE clubunio.training_options (id INTEGER PRIMARY KEY, tenant_id INTEGER, name TEXT, code TEXT, category TEXT, active INTEGER, sort_order INTEGER)');
+        $db->statement('CREATE TABLE clubunio.team_seasons (id INTEGER PRIMARY KEY, tenant_id INTEGER, label TEXT, active INTEGER)');
+        $db->statement('CREATE TABLE clubunio.lookup_translations (id INTEGER PRIMARY KEY, tenant_id INTEGER, source_table TEXT, source_id TEXT, source_name TEXT, locale TEXT, label TEXT, revision INTEGER)');
         $db->beginTransaction();
         try {
-            $db->table('clubora.training_options')->insert([
+            $db->table('clubunio.training_options')->insert([
                 ['id' => 11, 'tenant_id' => 1, 'name' => 'Sommer', 'code' => 'S', 'category' => 'period', 'active' => 1, 'sort_order' => 1],
                 ['id' => 12, 'tenant_id' => 1, 'name' => 'Montag', 'code' => 'MO', 'category' => 'weekday', 'active' => 1, 'sort_order' => 1],
                 ['id' => 13, 'tenant_id' => 1, 'name' => 'Freier Platzname', 'code' => 'P', 'category' => 'field', 'active' => 1, 'sort_order' => 1],
             ]);
-            $db->table('clubora.team_seasons')->insert(['id' => 21, 'tenant_id' => 1, 'label' => 'Offen', 'active' => 1]);
-            $db->table('clubora.lookup_translations')->insert(['id' => 1, 'tenant_id' => 1, 'source_table' => 'training_options',
+            $db->table('clubunio.team_seasons')->insert(['id' => 21, 'tenant_id' => 1, 'label' => 'Offen', 'active' => 1]);
+            $db->table('clubunio.lookup_translations')->insert(['id' => 1, 'tenant_id' => 1, 'source_table' => 'training_options',
                 'source_id' => '13', 'source_name' => 'Freier Platzname', 'locale' => 'en', 'label' => 'North pitch', 'revision' => 1]);
             \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
             \Filament\Facades\Filament::setTenant((new \App\ClubUnio\Models\Tenant)->forceFill(['id' => 1, 'name' => 'Fixture', 'slug' => 'dialog-fixture']), isQuiet: true);
@@ -269,15 +269,15 @@ class DialogTranslationsTest extends TestCase
             $this->assertStringContainsString('Deactivate', $modalHtml);
             $this->assertStringNotContainsString('Der Eintrag und seine Historie bleiben erhalten.', $modalHtml);
             $this->assertSame('Offen - custom user text', $component->get('data.hall'));
-            $this->assertSame('Offen', $db->table('clubora.team_seasons')->value('label'));
-            $this->assertSame('Freier Platzname', $db->table('clubora.training_options')->where('id', 13)->value('name'));
+            $this->assertSame('Offen', $db->table('clubunio.team_seasons')->value('label'));
+            $this->assertSame('Freier Platzname', $db->table('clubunio.training_options')->where('id', 13)->value('name'));
             $this->assertSame([13 => 'North pitch'], \App\ClubUnio\Resources\TrainingSlotResource::choices('field'));
         } finally {
             $db->rollBack();
             \Filament\Facades\Filament::setTenant(null);
         }
-        $this->assertSame(0, $db->table('clubora.training_options')->count());
-        $this->assertSame(0, $db->table('clubora.lookup_translations')->count());
+        $this->assertSame(0, $db->table('clubunio.training_options')->count());
+        $this->assertSame(0, $db->table('clubunio.lookup_translations')->count());
     }
 }
 

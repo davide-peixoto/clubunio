@@ -74,7 +74,7 @@ class BackofficeAssistantServiceTest extends TestCase
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_06_000100_backoffice_assistant.php'))->up());
         $this->assertNotEmpty($ddl);
         foreach ($ddl as $query) {
-            $this->db->statement(str_replace(['clubora.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']));
+            $this->db->statement(str_replace(['clubunio.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']));
         }
         $this->db->setQueryGrammar(new class($this->db, self::TABLES) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function __construct($connection, private array $tables) { parent::__construct($connection); }
@@ -82,8 +82,8 @@ class BackofficeAssistantServiceTest extends TestCase
             {
                 if (is_string($table)) {
                     foreach ($this->tables as $name) {
-                        if ($table === 'clubora.'.$name || str_starts_with($table, 'clubora.'.$name.' as ')) {
-                            $table = 'pg_temp.'.substr($table, strlen('clubora.'));
+                        if ($table === 'clubunio.'.$name || str_starts_with($table, 'clubunio.'.$name.' as ')) {
+                            $table = 'pg_temp.'.substr($table, strlen('clubunio.'));
                             break;
                         }
                     }
@@ -94,8 +94,8 @@ class BackofficeAssistantServiceTest extends TestCase
             {
                 if (is_string($value)) {
                     foreach ($this->tables as $name) {
-                        if (str_starts_with($value, 'clubora.'.$name.'.')) {
-                            $value = 'pg_temp.'.substr($value, strlen('clubora.'));
+                        if (str_starts_with($value, 'clubunio.'.$name.'.')) {
+                            $value = 'pg_temp.'.substr($value, strlen('clubunio.'));
                             break;
                         }
                     }
@@ -108,7 +108,7 @@ class BackofficeAssistantServiceTest extends TestCase
             public function __construct($connection, private string $tempSchema) { parent::__construct($connection); }
             public function compileTableExists($schema, $table)
             {
-                return parent::compileTableExists($schema === 'clubora' && str_starts_with($table, 'assistant_')
+                return parent::compileTableExists($schema === 'clubunio' && str_starts_with($table, 'assistant_')
                     ? $this->tempSchema : $schema, $table);
             }
         });
@@ -120,7 +120,7 @@ class BackofficeAssistantServiceTest extends TestCase
         $this->other = $this->account(202);
         foreach ([$this->tenant, $this->foreign] as $tenant) {
             foreach ([$this->actor, $this->other] as $actor) {
-                $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id,
+                $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id,
                     'account_id' => $actor->id, 'role' => 'admin']);
             }
         }
@@ -164,7 +164,7 @@ class BackofficeAssistantServiceTest extends TestCase
 
     private function table(string $name)
     {
-        return $this->db->table('clubora.assistant_'.$name);
+        return $this->db->table('clubunio.assistant_'.$name);
     }
 
     private function encrypted(array $data): string
@@ -239,7 +239,7 @@ class BackofficeAssistantServiceTest extends TestCase
 
     private function role(string $role): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->where('tenant_id', $this->tenant->id)->update(['role' => $role]);
     }
 
@@ -268,13 +268,13 @@ class BackofficeAssistantServiceTest extends TestCase
         $id = $this->action();
         match ($reason) {
             'trainer' => $this->role('trainer'),
-            'inactive' => $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]),
-            'api_only' => $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['api_only' => true]),
+            'inactive' => $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]),
+            'api_only' => $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['api_only' => true]),
             'missing_tenant' => $this->tenant = (new Tenant)->forceFill(['id' => 999, 'slug' => 'missing', 'name' => 'Missing tenant']),
             'impersonation' => request()->attributes->set('clubunio_impersonation', false),
             'session_impersonation' => $this->enableSessionImpersonation(),
             'disabled' => config(['clubunio-assistant.enabled' => false]),
-            'no_membership' => $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->delete(),
+            'no_membership' => $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->delete(),
         };
         $this->provider->expects($this->never())->method('respond');
         $this->reads->expects($this->never())->method('execute');
@@ -637,7 +637,7 @@ class BackofficeAssistantServiceTest extends TestCase
     {
         $id = $this->action();
         $this->writes->expects($this->once())->method('prepare')->willReturnCallback(function () {
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
             return $this->proposal();
         });
         $this->writes->expects($this->never())->method('execute');

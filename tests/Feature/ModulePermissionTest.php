@@ -28,17 +28,17 @@ class ModulePermissionTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        if (! Schema::connection('clubunio')->hasTable('clubora.access_profiles')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.access_profiles')) {
             (require database_path('clubunio/2026_10_16_000069_access_profiles.php'))->up();
         }
-        if (! Schema::connection('clubunio')->hasColumn('clubora.tenant_accounts', 'access_profile_id')) {
+        if (! Schema::connection('clubunio')->hasColumn('clubunio.tenant_accounts', 'access_profile_id')) {
             (require database_path('clubunio/2026_10_16_000070_account_access_profiles.php'))->up();
         }
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
         $this->tenant = Tenant::create(['slug' => 'permission-'.Str::random(12), 'name' => 'Permission fixture']);
         $this->admin = new Account;
         $this->admin->forceFill(['username' => Str::random(20), 'display_name' => 'Admin fixture', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
     }
 
     protected function tearDown(): void
@@ -74,7 +74,7 @@ class ModulePermissionTest extends TestCase
         $this->assertTrue($link->account->canAccessTenant($this->tenant));
         $this->assertTrue($link->account->hasBackofficeTenant());
         $this->assertFalse(app(AccountAdministrationService::class)->allowed($link->account, $this->tenant));
-        $after = $this->db->table('clubora.object_changes')->where('object_type', 'tenant_accounts')->where('object_id', $link->id)->value('after_value');
+        $after = $this->db->table('clubunio.object_changes')->where('object_type', 'tenant_accounts')->where('object_id', $link->id)->value('after_value');
         $this->assertSame($profile->id, json_decode($after, true)['access_profile_id']);
     }
 
@@ -94,10 +94,10 @@ class ModulePermissionTest extends TestCase
         $this->assertFalse($gate->allows($actor, $this->tenant, 'members', 'view'));
         $profile->forceFill(['active' => true])->save();
         $this->assertTrue($gate->allows($actor, $this->tenant, 'members', 'view'));
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => false]);
         $this->assertFalse($gate->allows($actor, $this->tenant, 'members', 'view'));
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
-        $this->db->table('clubora.accounts')->where('id', $actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.accounts')->where('id', $actor->id)->update(['active' => false]);
         $this->assertFalse($gate->allows($actor, $this->tenant, 'members', 'view'));
     }
 
@@ -109,7 +109,7 @@ class ModulePermissionTest extends TestCase
             app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, $this->input($profile->id));
             $this->fail('Inactive profile accepted');
         } catch (ValidationException) {
-            $this->assertSame(1, $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->count());
+            $this->assertSame(1, $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->count());
         }
         $other = Tenant::create(['slug' => 'foreign-'.Str::random(12), 'name' => 'Foreign fixture']);
         $profile->forceFill(['tenant_id' => $other->id, 'active' => true])->save();
@@ -125,7 +125,7 @@ class ModulePermissionTest extends TestCase
                 app(AccountAdministrationService::class)->save($this->admin, $this->tenant, null, array_replace($this->input($profile->id), $override));
                 $this->fail('Invalid role/profile combination accepted');
             } catch (ValidationException) {
-                $this->assertSame(1, $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->count());
+                $this->assertSame(1, $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->count());
             }
         }
     }
@@ -133,7 +133,7 @@ class ModulePermissionTest extends TestCase
     public function test_last_admin_cannot_be_converted_to_profile(): void
     {
         $profile = $this->profile();
-        $link = $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->first();
+        $link = $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->first();
         $input = $this->input($profile->id);
         unset($input['username'], $input['password'], $input['password_confirmation']);
         $this->expectException(ValidationException::class);
@@ -256,11 +256,11 @@ class ModulePermissionTest extends TestCase
 
     public function test_activation_seeds_read_only_without_assigning_accounts(): void
     {
-        $before = $this->db->table('clubora.tenant_accounts')->orderBy('id')->get()->toJson();
+        $before = $this->db->table('clubunio.tenant_accounts')->orderBy('id')->get()->toJson();
         $migration = require database_path('clubunio/2026_10_16_000071_enable_access_profiles.php');
         $migration->up();
         $migration->up();
-        $rows = $this->db->table('clubora.access_profiles')->where('tenant_id', $this->tenant->id)->where('name', 'Nur Lesen')->get();
+        $rows = $this->db->table('clubunio.access_profiles')->where('tenant_id', $this->tenant->id)->where('name', 'Nur Lesen')->get();
         $this->assertCount(1, $rows);
         // Historical seed rights are frozen, not the current module catalog's read-only template.
         $expected = ['members.view', 'registrations.view', 'member_changes.view', 'documents.view',
@@ -272,7 +272,7 @@ class ModulePermissionTest extends TestCase
         $this->assertSame($expected, $actual);
         $this->assertNotContains('field_availability.view', $actual);
         $this->assertSame([], array_diff($actual, \App\ClubUnio\Services\PermissionCatalog::readOnly()));
-        $this->assertSame($before, $this->db->table('clubora.tenant_accounts')->orderBy('id')->get()->toJson());
+        $this->assertSame($before, $this->db->table('clubunio.tenant_accounts')->orderBy('id')->get()->toJson());
     }
 
     public function test_activation_preserves_existing_read_only_profile_without_expanding_rights(): void

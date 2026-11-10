@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 final class MobilePenaltyService
 {
-    private function table(Tenant $tenant, string $name) { return DB::connection('clubunio')->table('clubora.mobile_penalty_'.$name)->where('tenant_id', $tenant->id); }
+    private function table(Tenant $tenant, string $name) { return DB::connection('clubunio')->table('clubunio.mobile_penalty_'.$name)->where('tenant_id', $tenant->id); }
     public function options(Account $actor, Tenant $tenant): array
     {
         app(MobilePenaltyAccess::class)->authorize($actor, $tenant);

@@ -66,7 +66,7 @@ final class PitchCompetitionTeamMapping
 
     private function table(string $table, Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id);
     }
 
     private function report(Tenant $tenant, string $from, string $to, bool $lock = false): array

@@ -38,8 +38,8 @@ class BexioSandboxFixtureTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'sandbox-'.bin2hex(random_bytes(6)), 'name' => 'Sandbox fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => bin2hex(random_bytes(8)), 'display_name' => 'Test admin', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $this->db->table('clubora.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Entwurf']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.invoice_workflow_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Entwurf']);
         $this->mock(BexioConnectionService::class, function ($mock) {
             $mock->shouldReceive('connection')->andReturnUsing(fn () => $this->connection);
             $mock->shouldReceive('accessToken')->andReturn('synthetic-token');
@@ -78,7 +78,7 @@ class BexioSandboxFixtureTest extends TestCase
         $this->assertTrue($first['created']);
         $this->assertFalse($again['created']);
         $this->assertEquals($first['invoice_id'], $again['invoice_id']);
-        $this->assertSame(3, $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(3, $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->count());
         $invoice = Invoice::findOrFail($first['invoice_id']);
         $this->assertNull($invoice->legacy_id);
         $this->assertEquals(25, $invoice->lines()->sum('net_amount'));
@@ -113,7 +113,7 @@ class BexioSandboxFixtureTest extends TestCase
 
     public function test_office_cannot_seed_and_makes_no_requests(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         try {
             app(BexioSandboxFixtureService::class)->seed($this->actor, $this->tenant);
             $this->fail('Office allowed');
@@ -142,7 +142,7 @@ class BexioSandboxFixtureTest extends TestCase
             $this->fail('Wrong company accepted');
         } catch (\RuntimeException $error) {
             $this->assertSame(409, $error->getCode());
-            $this->assertSame(0, $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->count());
+            $this->assertSame(0, $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->count());
         }
     }
 }

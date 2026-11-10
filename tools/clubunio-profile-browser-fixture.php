@@ -17,10 +17,10 @@ $file = storage_path('app/profile-browser-acceptance.json');
 $mode = $argv[1] ?? 'status';
 $fingerprint = function (array $exclude = [], ?int $tenant = null) use ($db) {
     return hash('sha256', json_encode([
-        $db->table('clubora.accounts')->whereNotIn('id', $exclude)->orderBy('id')->get(['id', 'active', 'revision']),
-        $db->table('clubora.tenant_accounts')->when($tenant, fn ($q) => $q->where('tenant_id', '<>', $tenant))->orderBy('id')->get(),
-        $db->table('clubora.access_profiles')->when($tenant, fn ($q) => $q->where('tenant_id', '<>', $tenant))->orderBy('id')->get(),
-        $db->table('clubora.account_roles')->orderBy('code')->get(),
+        $db->table('clubunio.accounts')->whereNotIn('id', $exclude)->orderBy('id')->get(['id', 'active', 'revision']),
+        $db->table('clubunio.tenant_accounts')->when($tenant, fn ($q) => $q->where('tenant_id', '<>', $tenant))->orderBy('id')->get(),
+        $db->table('clubunio.access_profiles')->when($tenant, fn ($q) => $q->where('tenant_id', '<>', $tenant))->orderBy('id')->get(),
+        $db->table('clubunio.account_roles')->orderBy('code')->get(),
     ], JSON_THROW_ON_ERROR));
 };
 
@@ -32,7 +32,7 @@ if ($mode === 'create') {
     $state = $db->transaction(function () use ($db, $password, $before) {
         $suffix = bin2hex(random_bytes(6));
         $tenant = Tenant::create(['slug' => 'browser-qa-'.$suffix, 'name' => 'ClubUnio Browser-Abnahme']);
-        $insert = fn ($table, $data) => $db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $tenant->id]);
+        $insert = fn ($table, $data) => $db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $tenant->id]);
         $finance = ['members.view', 'teams.view', 'seasons.view'];
         foreach (['invoices', 'expenses', 'contributions', 'credits'] as $module) {
             foreach (['view', 'create', 'update', 'copy', 'deactivate', 'restore', 'download', 'upload', 'export'] as $function) {
@@ -80,7 +80,7 @@ if ($mode === 'create') {
 }
 if (! file_exists($file)) { throw new LogicException('No fixture state'); }
 $state = json_decode(file_get_contents($file), true, flags: JSON_THROW_ON_ERROR);
-if (! str_starts_with($state['slug'], 'browser-qa-') || ! $db->table('clubora.tenants')->where('id', $state['tenant'])->where('slug', $state['slug'])->exists()) {
+if (! str_starts_with($state['slug'], 'browser-qa-') || ! $db->table('clubunio.tenants')->where('id', $state['tenant'])->where('slug', $state['slug'])->exists()) {
     throw new LogicException('Fixture identity mismatch');
 }
 if ($fingerprint(array_values($state['accounts']), $state['tenant']) !== $state['before']) {
@@ -92,11 +92,11 @@ if ($mode === 'cleanup') {
         foreach (['object_changes', 'invoice_lines', 'invoices', 'expense_lines', 'expenses', 'member_bank_accounts',
             'members', 'team_seasons', 'teams', 'seasons', 'expense_rounds', 'expense_statuses', 'invoice_line_statuses',
             'invoice_workflow_statuses', 'invoice_categories', 'tenant_accounts', 'access_profiles'] as $table) {
-            $db->table('clubora.'.$table)->where('tenant_id', $state['tenant'])->delete();
+            $db->table('clubunio.'.$table)->where('tenant_id', $state['tenant'])->delete();
         }
-        $db->table('clubora.tenants')->where('id', $state['tenant'])->where('slug', $state['slug'])->delete();
+        $db->table('clubunio.tenants')->where('id', $state['tenant'])->where('slug', $state['slug'])->delete();
         foreach ($state['accounts'] as $key => $id) {
-            $db->table('clubora.accounts')->where('id', $id)->where('username', $state['usernames'][$key])->delete();
+            $db->table('clubunio.accounts')->where('id', $id)->where('username', $state['usernames'][$key])->delete();
         }
     });
     if ($fingerprint() !== $state['before']) { throw new LogicException('Rights fingerprint mismatch after cleanup'); }
@@ -104,7 +104,7 @@ if ($mode === 'cleanup') {
     echo "Fixture removed; original rights unchanged.\n";
 } elseif ($mode === 'status') {
     echo "Existing rights unchanged.\n";
-    echo json_encode(['invoices' => $db->table('clubora.invoices')->where('tenant_id', $state['tenant'])->get(['id', 'notes']),
-        'expenses' => $db->table('clubora.expenses')->where('tenant_id', $state['tenant'])->get(['id', 'notes']),
-        'audit_entries' => $db->table('clubora.object_changes')->where('tenant_id', $state['tenant'])->count()], JSON_PRETTY_PRINT)."\n";
+    echo json_encode(['invoices' => $db->table('clubunio.invoices')->where('tenant_id', $state['tenant'])->get(['id', 'notes']),
+        'expenses' => $db->table('clubunio.expenses')->where('tenant_id', $state['tenant'])->get(['id', 'notes']),
+        'audit_entries' => $db->table('clubunio.object_changes')->where('tenant_id', $state['tenant'])->count()], JSON_PRETTY_PRINT)."\n";
 } else { throw new LogicException('Unknown mode'); }

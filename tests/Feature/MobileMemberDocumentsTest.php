@@ -38,7 +38,7 @@ class MobileMemberDocumentsTest extends TestCase
         Http::preventStrayRequests();
         $this->db = DB::connection('clubunio'); $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction(); $this->db->statement("SET LOCAL application_name TO 'clubunio-mobile-documents-test'");
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'mobile-docs-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic document club']);
         $this->admin = $this->account('admin'); $this->parent = $this->account('member'); $this->self = $this->account('member'); $this->trainer = $this->account('trainer');
         $this->child = $this->db->table('members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Child', 'birth_date' => '2013-01-01']);
@@ -67,21 +67,21 @@ class MobileMemberDocumentsTest extends TestCase
         $this->db->table('pg_temp.receipt_test_tenants')->insert(['id' => $this->tenant->id]);
         foreach (['members', 'document_types', 'member_documents', 'legacy_material_receipts'] as $table) {
             $this->db->statement('CREATE TEMP TABLE receipt_test_'.$table.'(tenant_id bigint NOT NULL,id bigint NOT NULL,UNIQUE(tenant_id,id)) ON COMMIT DROP');
-            $this->db->statement('INSERT INTO pg_temp.receipt_test_'.$table.' SELECT tenant_id,id FROM clubora.'.$table.' WHERE tenant_id=?', [$this->tenant->id]);
+            $this->db->statement('INSERT INTO pg_temp.receipt_test_'.$table.' SELECT tenant_id,id FROM clubunio.'.$table.' WHERE tenant_id=?', [$this->tenant->id]);
         }
         $this->db->statement('CREATE TEMP TABLE receipt_test_tenant_accounts(tenant_id bigint NOT NULL,account_id bigint NOT NULL,UNIQUE(tenant_id,account_id)) ON COMMIT DROP');
-        $this->db->statement('INSERT INTO pg_temp.receipt_test_tenant_accounts SELECT tenant_id,account_id FROM clubora.tenant_accounts WHERE tenant_id=?', [$this->tenant->id]);
+        $this->db->statement('INSERT INTO pg_temp.receipt_test_tenant_accounts SELECT tenant_id,account_id FROM clubunio.tenant_accounts WHERE tenant_id=?', [$this->tenant->id]);
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000089_mobile_member_receipts.php'))->up());
         $this->assertCount(1, $ddl);
-        $sql = str_replace('CREATE TABLE clubora.mobile_member_receipts', 'CREATE TEMP TABLE mobile_member_receipts', $ddl[0]['query']);
-        $sql = str_replace(['ON clubora.mobile_member_receipts', ");\nCREATE INDEX"], ['ON pg_temp.mobile_member_receipts', ") ON COMMIT DROP;\nCREATE INDEX"], $sql);
-        $sql = str_replace('ON clubora.legacy_material_receipts(', 'ON pg_temp.receipt_test_legacy_material_receipts(', $sql);
-        foreach (['tenants', 'members', 'document_types', 'member_documents', 'legacy_material_receipts', 'tenant_accounts'] as $table) { $sql = str_replace('REFERENCES clubora.'.$table.'(', 'REFERENCES pg_temp.receipt_test_'.$table.'(', $sql); }
-        $this->assertStringNotContainsString('ON clubora.', $sql);
-        $this->assertStringNotContainsString('REFERENCES clubora.', $sql);
+        $sql = str_replace('CREATE TABLE clubunio.mobile_member_receipts', 'CREATE TEMP TABLE mobile_member_receipts', $ddl[0]['query']);
+        $sql = str_replace(['ON clubunio.mobile_member_receipts', ");\nCREATE INDEX"], ['ON pg_temp.mobile_member_receipts', ") ON COMMIT DROP;\nCREATE INDEX"], $sql);
+        $sql = str_replace('ON clubunio.legacy_material_receipts(', 'ON pg_temp.receipt_test_legacy_material_receipts(', $sql);
+        foreach (['tenants', 'members', 'document_types', 'member_documents', 'legacy_material_receipts', 'tenant_accounts'] as $table) { $sql = str_replace('REFERENCES clubunio.'.$table.'(', 'REFERENCES pg_temp.receipt_test_'.$table.'(', $sql); }
+        $this->assertStringNotContainsString('ON clubunio.', $sql);
+        $this->assertStringNotContainsString('REFERENCES clubunio.', $sql);
         $this->db->unprepared($sql);
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
-            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubora.mobile_member_receipts' ? 'pg_temp.mobile_member_receipts' : $table, $prefix); }
+            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubunio.mobile_member_receipts' ? 'pg_temp.mobile_member_receipts' : $table, $prefix); }
         });
     }
     private function token(Account $actor): string { return $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'fixture', 'device_name' => 'Synthetic document'])->assertOk()->json('data.token'); }
@@ -114,8 +114,8 @@ class MobileMemberDocumentsTest extends TestCase
         $id = $created->json('data.Dokument.QuittungID');
         $this->upload()->assertOk()->assertJsonPath('data.Dokument.QuittungID', $id);
         $this->upload(['Titel' => 'Different title'])->assertConflict();
-        $this->assertSame(1, $this->db->table('clubora.mobile_member_receipts')->count());
-        $row = $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->first();
+        $this->assertSame(1, $this->db->table('clubunio.mobile_member_receipts')->count());
+        $row = $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->first();
         $this->assertSame($this->original, Crypt::decryptString($row->original_pdf_encrypted));
         $this->assertNotSame($this->original, $row->original_pdf_encrypted);
         $this->withToken($this->token($this->parent))->getJson($this->base().'/'.$id)->assertOk()->assertJsonPath('data.Dokument.CanSign', true)->assertJsonMissingPath('data.Dokument.original_pdf_encrypted');
@@ -126,7 +126,7 @@ class MobileMemberDocumentsTest extends TestCase
         $this->postJson($url, $this->signature())->assertOk()->assertJsonPath('data.Dokument.Status', 'UNTERSCHRIEBEN')->assertJsonPath('data.Dokument.Revision', 2)->assertJsonPath('data.Dokument.CanSign', false);
         $this->postJson($url, $this->signature())->assertOk()->assertJsonPath('data.Dokument.Revision', 2);
         $this->postJson($url, $this->signature(['Strokes' => [[[0., 0.], [1., 1.]]]]))->assertConflict();
-        $row = $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->first();
+        $row = $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->first();
         $this->assertSame('parent', $row->signed_kind); $this->assertSame($this->parent->id, $row->signed_by);
         $this->assertSame($this->original, Crypt::decryptString($row->original_pdf_encrypted));
         $this->assertSame(2, $row->signed_page_count); $this->assertNotNull($row->strokes_encrypted);
@@ -162,10 +162,10 @@ class MobileMemberDocumentsTest extends TestCase
         $this->upload(['RequestKey' => 'synthetic-rejected-document'])->assertStatus(422);
         $this->scanner->verdict = ['clean' => true];
         $this->upload(['RequestKey' => 'synthetic-uncertain-document'])->assertStatus(503);
-        $this->assertSame(1, $this->db->table('clubora.mobile_member_receipts')->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_member_receipts')->count());
         $this->scanner->verdict = ['clean' => true, 'version' => 'synthetic'];
         $this->upload(['RequestKey' => 'synthetic-invalid-pdf-file'], '%PDF-invalid %%EOF')->assertStatus(422);
-        $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->update(['original_pdf_encrypted' => Crypt::encryptString('tampered')]);
+        $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->update(['original_pdf_encrypted' => Crypt::encryptString('tampered')]);
         $this->getJson($this->base().'/'.$id.'/pdf')->assertConflict();
         $this->withToken($this->token($this->self))->postJson($this->base().'/'.$id.'/sign', $this->signature())->assertConflict();
     }
@@ -174,10 +174,10 @@ class MobileMemberDocumentsTest extends TestCase
     {
         $this->withToken($this->token($this->admin)); $id = $this->upload()->assertOk()->json('data.Dokument.QuittungID');
         try {
-            $this->db->transaction(fn () => $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->update(['state' => 'signed']));
+            $this->db->transaction(fn () => $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->update(['state' => 'signed']));
             $this->fail('Incomplete signature accepted by PostgreSQL');
         } catch (\Illuminate\Database\QueryException $error) { $this->assertSame('23514', $error->getCode()); }
-        $this->assertSame('pending', $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->value('state'));
+        $this->assertSame('pending', $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->value('state'));
     }
 
     public function test_staff_sign_only_for_their_own_membership_without_an_administration_shortcut(): void
@@ -188,7 +188,7 @@ class MobileMemberDocumentsTest extends TestCase
         $this->withToken($this->token($this->parent))->getJson($this->base().'/'.$id)->assertNotFound();
         $this->withToken($this->token($this->trainer))->getJson($this->base().'/'.$id)->assertOk()->assertJsonPath('data.Dokument.CanSign', true);
         $this->postJson($this->base().'/'.$id.'/sign', $this->signature())->assertOk()->assertJsonPath('data.Dokument.Status', 'UNTERSCHRIEBEN');
-        $this->assertSame('self', $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->value('signed_kind'));
+        $this->assertSame('self', $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->value('signed_kind'));
     }
 
     public function test_existing_files_and_historical_receipts_keep_typed_sources_and_exact_authorization(): void
@@ -242,11 +242,11 @@ class MobileMemberDocumentsTest extends TestCase
         $foreignType = $this->db->table('document_types')->insertGetId(['tenant_id' => $other->id, 'code' => 'FOREIGN', 'name' => 'Foreign']);
         $this->db->table('pg_temp.receipt_test_tenants')->insert(['id' => $other->id]);
         $this->db->table('pg_temp.receipt_test_document_types')->insert(['tenant_id' => $other->id, 'id' => $foreignType]);
-        $row = (array) $this->db->table('clubora.mobile_member_receipts')->where('id', $id)->first(); unset($row['id']);
+        $row = (array) $this->db->table('clubunio.mobile_member_receipts')->where('id', $id)->first(); unset($row['id']);
         $row['document_type_id'] = $foreignType; $row['request_key'] = 'synthetic-cross-tenant-fk';
-        try { $this->db->transaction(fn () => $this->db->table('clubora.mobile_member_receipts')->insert($row)); $this->fail('Cross-tenant document type accepted'); }
+        try { $this->db->transaction(fn () => $this->db->table('clubunio.mobile_member_receipts')->insert($row)); $this->fail('Cross-tenant document type accepted'); }
         catch (\Illuminate\Database\QueryException $error) { $this->assertSame('23503', $error->getCode()); }
-        $this->assertSame(1, $this->db->table('clubora.mobile_member_receipts')->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_member_receipts')->count());
     }
 
     public function test_open_archived_assignment_continues_with_one_new_proof_without_mutating_history(): void
@@ -255,17 +255,17 @@ class MobileMemberDocumentsTest extends TestCase
         $this->withToken($this->token($this->parent)); $url = $this->base().'/archive/'.$archive->id;
         $this->getJson($url)->assertOk()->assertJsonPath('data.Dokument.CanSign', true)->assertJsonPath('data.Dokument.SourceRevision', $archive->source_hash);
         $this->getJson($this->base().'?Status=OFFEN')->assertOk()->assertJsonPath('data.totalRecordCount', 1);
-        $this->assertSame(0, $this->db->table('clubora.mobile_member_receipts')->count()); // Reads never create a forwarding proof.
+        $this->assertSame(0, $this->db->table('clubunio.mobile_member_receipts')->count()); // Reads never create a forwarding proof.
         $signature = $this->signature(['SourceRevision' => $archive->source_hash]);
         $this->postJson($url.'/sign', array_replace($signature, ['SourceRevision' => str_repeat('0', 64)]))->assertConflict();
-        $this->assertSame(0, $this->db->table('clubora.mobile_member_receipts')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_member_receipts')->count());
         $this->postJson($url.'/sign', $signature)->assertOk()->assertJsonPath('data.Dokument.SourceKind', 'archive')
             ->assertJsonPath('data.Dokument.QuittungID', $archive->id)->assertJsonPath('data.Dokument.Revision', 2)->assertJsonPath('data.Dokument.Status', 'UNTERSCHRIEBEN');
         $this->postJson($url.'/sign', $signature)->assertOk()->assertJsonPath('data.Dokument.Revision', 2);
         $this->postJson($url.'/sign', array_replace($signature, ['Strokes' => [[[0., 0.], [1., 1.]]]]))->assertConflict();
         $this->withToken($this->token($this->self))->postJson($url.'/sign', $signature)->assertConflict();
-        $this->assertSame(1, $this->db->table('clubora.mobile_member_receipts')->count());
-        $proof = $this->db->table('clubora.mobile_member_receipts')->first();
+        $this->assertSame(1, $this->db->table('clubunio.mobile_member_receipts')->count());
+        $proof = $this->db->table('clubunio.mobile_member_receipts')->first();
         $this->assertSame((int) $archive->id, $proof->archive_receipt_id); $this->assertSame($archive->source_hash, $proof->archive_source_hash);
         $this->assertSame($this->original, Crypt::decryptString($proof->original_pdf_encrypted));
         $this->assertSame($before, json_encode($this->db->table('legacy_material_receipts')->where('id', $archive->id)->first(), JSON_THROW_ON_ERROR));
@@ -274,7 +274,7 @@ class MobileMemberDocumentsTest extends TestCase
         $this->getJson($this->base().'?Status=OFFEN')->assertOk()->assertJsonPath('data.totalRecordCount', 0);
         $this->getJson($this->base().'?Status=UNTERSCHRIEBEN')->assertOk()->assertJsonPath('data.totalRecordCount', 1); // No duplicate archive + forwarding row.
         $duplicate = (array) $proof; unset($duplicate['id']); $duplicate['request_key'] = 'synthetic-duplicate-proof';
-        try { $this->db->transaction(fn () => $this->db->table('clubora.mobile_member_receipts')->insert($duplicate)); $this->fail('Duplicate archive proof accepted'); }
+        try { $this->db->transaction(fn () => $this->db->table('clubunio.mobile_member_receipts')->insert($duplicate)); $this->fail('Duplicate archive proof accepted'); }
         catch (\Illuminate\Database\QueryException $error) { $this->assertSame('23505', $error->getCode()); }
         // Same numerical archive ID in a different tenant cannot satisfy the source FK.
         $foreignTenant = Tenant::create(['slug' => 'docs-archive-fk-'.bin2hex(random_bytes(5)), 'name' => 'Foreign archive fixture']);
@@ -282,7 +282,7 @@ class MobileMemberDocumentsTest extends TestCase
         $this->db->table('pg_temp.receipt_test_legacy_material_receipts')->insert(['tenant_id' => $foreignTenant->id, 'id' => $foreignArchive]);
         $crossTenant = (array) $proof; unset($crossTenant['id']);
         $crossTenant['archive_receipt_id'] = $foreignArchive; $crossTenant['request_key'] = 'synthetic-foreign-archive-proof';
-        try { $this->db->transaction(fn () => $this->db->table('clubora.mobile_member_receipts')->insert($crossTenant)); $this->fail('Cross-tenant archive source accepted'); }
+        try { $this->db->transaction(fn () => $this->db->table('clubunio.mobile_member_receipts')->insert($crossTenant)); $this->fail('Cross-tenant archive source accepted'); }
         catch (\Illuminate\Database\QueryException $error) { $this->assertSame('23503', $error->getCode()); }
         $this->db->table('legacy_material_receipts')->where('id', $archive->id)->update(['source_hash' => str_repeat('1', 64)]);
         $this->getJson($url)->assertConflict();
@@ -297,11 +297,11 @@ class MobileMemberDocumentsTest extends TestCase
         $this->withToken($this->token($this->parent));
         $this->archiveBytes = '%PDF-tampered';
         $this->postJson($url, $signature)->assertConflict();
-        $this->assertSame(0, $this->db->table('clubora.mobile_member_receipts')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_member_receipts')->count());
         $this->archiveBytes = $this->original;
         $this->db->table('account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'pending']);
         $this->postJson($url, $signature)->assertForbidden();
-        $this->assertSame(0, $this->db->table('clubora.mobile_member_receipts')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_member_receipts')->count());
         $this->withToken($this->token($this->self))->postJson($url, $signature)->assertOk()->assertJsonPath('data.Dokument.Status', 'UNTERSCHRIEBEN');
     }
 }

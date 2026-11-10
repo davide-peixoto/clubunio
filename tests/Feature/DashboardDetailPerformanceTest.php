@@ -66,7 +66,7 @@ class DashboardDetailPerformanceTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function adjustment(string $table, string $state, int $cents, array $data = []): int
@@ -119,7 +119,7 @@ class DashboardDetailPerformanceTest extends TestCase
         } catch (HttpException $error) {
             $this->assertSame(403, $error->getStatusCode());
         }
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         app(DashboardService::class)->overview($this->actor, $this->tenant);
     }
@@ -166,7 +166,7 @@ class DashboardDetailPerformanceTest extends TestCase
         }
         $this->assertCount(1, $this->db->getQueryLog());
         $this->db->disableQueryLog();
-        $this->db->table('clubora.refunds')->where('id', $refund)->update(['amount_cents' => 450]);
+        $this->db->table('clubunio.refunds')->where('id', $refund)->update(['amount_cents' => 450]);
         $this->assertSame(450, $service->for($this->invoice->refresh())['confirmed_refunds']);
         $empty = Invoice::findOrFail($this->insert('invoices', ['member_id' => $this->member]));
         $this->assertSame([0, 0, 0, 0], array_values($service->for($empty)));
@@ -178,7 +178,7 @@ class DashboardDetailPerformanceTest extends TestCase
         $foreignMember = $this->insert('members', ['first_name' => 'Foreign', 'tenant_id' => $this->foreign->id]);
         $foreignInvoice = $this->insert('invoices', ['tenant_id' => $this->foreign->id, 'member_id' => $foreignMember]);
         $this->get('/invoices/'.$foreignInvoice)->assertNotFound();
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->get('/invoices/'.$this->invoice->id)->assertForbidden();
         $this->get('/members/'.$this->member)->assertForbidden();
     }

@@ -32,10 +32,10 @@ class ExpensesBySeason extends ChartWidget
         abort_unless(static::canView(), 403);
         $tenant = Filament::getTenant();
         abort_unless(static::canView(), 403);
-        $rows = ExpenseLine::query()->join('clubora.expenses as e', 'e.id', '=', 'clubora.expense_lines.expense_id')
-            ->leftJoin('clubora.seasons as s', 's.id', '=', 'e.season_id')
-            ->where('clubora.expense_lines.tenant_id', $tenant->id)->where('e.tenant_id', $tenant->id)
-            ->where('clubora.expense_lines.active', true)->where('e.active', true)
+        $rows = ExpenseLine::query()->join('clubunio.expenses as e', 'e.id', '=', 'clubunio.expense_lines.expense_id')
+            ->leftJoin('clubunio.seasons as s', 's.id', '=', 'e.season_id')
+            ->where('clubunio.expense_lines.tenant_id', $tenant->id)->where('e.tenant_id', $tenant->id)
+            ->where('clubunio.expense_lines.active', true)->where('e.active', true)
             ->selectRaw('s.name as season, COALESCE(sum(amount), 0) as total')
             ->groupBy('s.id', 's.name')->orderBy('s.name')->get();
 

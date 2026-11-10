@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('ALTER TABLE clubora.invoices ADD COLUMN cash_rounding boolean NOT NULL DEFAULT false');
+        $db->statement('ALTER TABLE clubunio.invoices ADD COLUMN cash_rounding boolean NOT NULL DEFAULT false');
     }
 
     public function down(): void

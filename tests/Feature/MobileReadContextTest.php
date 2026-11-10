@@ -15,15 +15,15 @@ final class MobileReadContextTest extends TestCase
         parent::setUp();
         config(['database.default'=>'clubunio','database.connections.clubunio'=>['driver'=>'sqlite','database'=>':memory:','prefix'=>'']]);
         DB::purge('clubunio');$this->db=DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $this->db->unprepared('CREATE TABLE clubora.accounts (id integer PRIMARY KEY,username text,display_name text,password text,active boolean,api_only boolean);
-CREATE TABLE clubora.tenants (id integer PRIMARY KEY,slug text,name text);
-CREATE TABLE clubora.tenant_accounts (tenant_id integer,account_id integer,role text,portal_enabled boolean,access_profile_id integer);
-CREATE TABLE clubora.account_roles (code text,active boolean);
-CREATE TABLE clubora.access_profiles (id integer,tenant_id integer,active boolean,permissions text);');
-        $this->db->table('clubora.accounts')->insert(['id'=>1,'username'=>'synthetic','active'=>true,'api_only'=>false]);
-        $this->db->table('clubora.tenants')->insert(['id'=>1,'slug'=>'synthetic','name'=>'Synthetic']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id'=>1,'account_id'=>1,'role'=>'admin','portal_enabled'=>true]);
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $this->db->unprepared('CREATE TABLE clubunio.accounts (id integer PRIMARY KEY,username text,display_name text,password text,active boolean,api_only boolean);
+CREATE TABLE clubunio.tenants (id integer PRIMARY KEY,slug text,name text);
+CREATE TABLE clubunio.tenant_accounts (tenant_id integer,account_id integer,role text,portal_enabled boolean,access_profile_id integer);
+CREATE TABLE clubunio.account_roles (code text,active boolean);
+CREATE TABLE clubunio.access_profiles (id integer,tenant_id integer,active boolean,permissions text);');
+        $this->db->table('clubunio.accounts')->insert(['id'=>1,'username'=>'synthetic','active'=>true,'api_only'=>false]);
+        $this->db->table('clubunio.tenants')->insert(['id'=>1,'slug'=>'synthetic','name'=>'Synthetic']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id'=>1,'account_id'=>1,'role'=>'admin','portal_enabled'=>true]);
         $this->actor=Account::findOrFail(1);$this->tenant=Tenant::findOrFail(1);
     }
     private function request(string $method='GET'): Request {
@@ -45,7 +45,7 @@ CREATE TABLE clubora.access_profiles (id integer,tenant_id integer,active boolea
         });
         self::assertCount(4,$this->db->getQueryLog());
         self::assertFalse($r->attributes->has(MobileReadContext::class));
-        $this->db->table('clubora.tenant_accounts')->where('account_id',1)->delete();
+        $this->db->table('clubunio.tenant_accounts')->where('account_id',1)->delete();
         $next=$this->request();
         $reads->during($next,$this->actor,function()use($members,$permissions){
             self::assertNull($members->membership($this->actor,$this->tenant));
@@ -54,26 +54,26 @@ CREATE TABLE clubora.access_profiles (id integer,tenant_id integer,active boolea
     }
     public function test_writes_never_use_a_read_snapshot_even_when_method_changes_inside_scope(): void {
         foreach(['POST','PATCH','PUT','DELETE'] as $method) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id',1)->update(['role'=>'admin']);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id',1)->update(['role'=>'admin']);
             $r=$this->request($method);$reads=new MobileReadContext;
             $reads->during($r,$this->actor,function()use($r){
                 self::assertFalse($r->attributes->has(MobileReadContext::class));
                 self::assertTrue(app(ModulePermissionService::class)->allows($this->actor,$this->tenant,'expenses','view'));
-                $this->db->table('clubora.tenant_accounts')->where('account_id',1)->update(['role'=>'member']);
+                $this->db->table('clubunio.tenant_accounts')->where('account_id',1)->update(['role'=>'member']);
                 self::assertFalse(app(ModulePermissionService::class)->allows($this->actor,$this->tenant,'expenses','view'));
             });
         }
         $r=$this->request();
         (new MobileReadContext)->during($r,$this->actor,function()use($r){
             self::assertSame('member',app(MemberAccessService::class)->membership($this->actor,$this->tenant)->role);
-            $r->setMethod('POST');$this->db->table('clubora.accounts')->where('id',1)->update(['active'=>false]);
+            $r->setMethod('POST');$this->db->table('clubunio.accounts')->where('id',1)->update(['active'=>false]);
             self::assertNull(app(MemberAccessService::class)->membership($this->actor,$this->tenant));
         });
     }
     public function test_profile_permissions_refresh_on_each_request_and_exceptions_clear_scope(): void {
-        $this->db->table('clubora.tenant_accounts')->update(['role'=>'profile','access_profile_id'=>7]);
-        $this->db->table('clubora.account_roles')->insert(['code'=>'profile','active'=>true]);
-        $this->db->table('clubora.access_profiles')->insert(['id'=>7,'tenant_id'=>1,'active'=>true,'permissions'=>json_encode(['expenses.view'])]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role'=>'profile','access_profile_id'=>7]);
+        $this->db->table('clubunio.account_roles')->insert(['code'=>'profile','active'=>true]);
+        $this->db->table('clubunio.access_profiles')->insert(['id'=>7,'tenant_id'=>1,'active'=>true,'permissions'=>json_encode(['expenses.view'])]);
         $reads=new MobileReadContext;$permissions=new ModulePermissionService;$r=$this->request();
         try {$reads->during($r,$this->actor,function()use($permissions){
             self::assertTrue($permissions->allows($this->actor,$this->tenant,'expenses','view'));
@@ -81,7 +81,7 @@ CREATE TABLE clubora.access_profiles (id integer,tenant_id integer,active boolea
             throw new \LogicException('fixture');
         });self::fail('Exception swallowed');}catch(\LogicException $e){self::assertSame('fixture',$e->getMessage());}
         self::assertFalse($r->attributes->has(MobileReadContext::class));
-        $this->db->table('clubora.access_profiles')->update(['active'=>false]);
+        $this->db->table('clubunio.access_profiles')->update(['active'=>false]);
         $reads->during($this->request(),$this->actor,fn()=>self::assertFalse($permissions->allows($this->actor,$this->tenant,'expenses','view')));
     }
     public function test_no_snapshot_for_unverified_or_copied_request_actor_or_other_tenant(): void {

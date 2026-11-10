@@ -33,9 +33,9 @@ class MobileKeyboxTest extends TestCase {
             'starts_at'=>now()->subHour()->toIso8601String(),'ends_at'=>now()->addHour()->toIso8601String()]);
         foreach([$this->owner,$this->trainer] as $actor) $this->tokens[$actor->id]=$this->postJson('/api/mobile/v1/session',['username'=>$actor->username,'password'=>'synthetic-password','device_name'=>'Synthetic keybox'])->assertOk()->json('data.token');
         $this->temporarySchema();
-        $this->box=$this->db->table('clubora.mobile_keyboxes')->insertGetId(['tenant_id'=>$this->tenant->id,'name'=>'Synthetic general box','provider_device_cipher'=>Crypt::encryptString('fixture-device'),'active'=>true]);
-        $this->busBox=$this->db->table('clubora.mobile_keyboxes')->insertGetId(['tenant_id'=>$this->tenant->id,'name'=>'Synthetic bus box','provider_device_cipher'=>Crypt::encryptString('fixture-bus'),'bus_id'=>$bus,'active'=>true]);
-        $this->db->table('clubora.mobile_keybox_grants')->insert(['tenant_id'=>$this->tenant->id,'keybox_id'=>$this->box,'account_id'=>$this->trainer->id,'active'=>true]);
+        $this->box=$this->db->table('clubunio.mobile_keyboxes')->insertGetId(['tenant_id'=>$this->tenant->id,'name'=>'Synthetic general box','provider_device_cipher'=>Crypt::encryptString('fixture-device'),'active'=>true]);
+        $this->busBox=$this->db->table('clubunio.mobile_keyboxes')->insertGetId(['tenant_id'=>$this->tenant->id,'name'=>'Synthetic bus box','provider_device_cipher'=>Crypt::encryptString('fixture-bus'),'bus_id'=>$bus,'active'=>true]);
+        $this->db->table('clubunio.mobile_keybox_grants')->insert(['tenant_id'=>$this->tenant->id,'keybox_id'=>$this->box,'account_id'=>$this->trainer->id,'active'=>true]);
         config(['clubunio-mobile.keybox.tenant_slugs'=>[$this->tenant->slug],'clubunio-mobile.keybox.approved_keybox_ids.'.$this->tenant->slug=>[$this->box,$this->busBox]]);
         $this->withToken($this->tokens[$this->owner->id]);
     }
@@ -45,32 +45,32 @@ class MobileKeyboxTest extends TestCase {
             'bus_reservations'=>'tenant_id bigint,id bigint,UNIQUE(tenant_id,id)','mobile_sessions'=>'id uuid PRIMARY KEY'] as $table=>$definition) {
             $this->db->statement('CREATE TEMP TABLE keybox_fixture_'.$table.'('.$definition.') ON COMMIT DROP');
             $columns=$table==='tenants'?'id':($table==='mobile_sessions'?'id':($table==='tenant_accounts'?'tenant_id,account_id':'tenant_id,id'));
-            $query='INSERT INTO pg_temp.keybox_fixture_'.$table.' SELECT '.$columns.' FROM clubora.'.$table;
+            $query='INSERT INTO pg_temp.keybox_fixture_'.$table.' SELECT '.$columns.' FROM clubunio.'.$table;
             if($table==='tenants') $this->db->statement($query.' WHERE id=?',[$this->tenant->id]);
             elseif($table==='mobile_sessions') $this->db->statement($query.' WHERE account_id IN (?,?)',[$this->owner->id,$this->trainer->id]);
             else $this->db->statement($query.' WHERE tenant_id=?',[$this->tenant->id]);
         }
         $ddl=$this->db->pretend(fn ()=>(require database_path('clubunio/2026_11_04_000700_mobile_keybox_codes.php'))->up()); $this->assertCount(1,$ddl); $sql=$ddl[0]['query'];
-        foreach(['tenants','buses','tenant_accounts','bus_reservations','mobile_sessions'] as $table) $sql=str_replace('REFERENCES clubora.'.$table.'(','REFERENCES pg_temp.keybox_fixture_'.$table.'(',$sql);
+        foreach(['tenants','buses','tenant_accounts','bus_reservations','mobile_sessions'] as $table) $sql=str_replace('REFERENCES clubunio.'.$table.'(','REFERENCES pg_temp.keybox_fixture_'.$table.'(',$sql);
         foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $table) {
-            $sql=str_replace('CREATE TABLE clubora.'.$table,'CREATE TEMP TABLE '.$table,$sql); $sql=str_replace('clubora.'.$table,'pg_temp.'.$table,$sql);
+            $sql=str_replace('CREATE TABLE clubunio.'.$table,'CREATE TEMP TABLE '.$table,$sql); $sql=str_replace('clubunio.'.$table,'pg_temp.'.$table,$sql);
         }
         $sql=preg_replace('/\n\);/',"\n) ON COMMIT DROP;",$sql);
-        $this->assertStringNotContainsString('REFERENCES clubora.',$sql); $this->assertStringNotContainsString('ON clubora.',$sql); $this->db->unprepared($sql);
+        $this->assertStringNotContainsString('REFERENCES clubunio.',$sql); $this->assertStringNotContainsString('ON clubunio.',$sql); $this->db->unprepared($sql);
         $this->grammar=$this->db->getQueryGrammar();
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table,$prefix=null) {
-                if(is_string($table)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $table=str_replace('clubora.'.$own,'pg_temp.'.$own,$table);
+                if(is_string($table)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $table=str_replace('clubunio.'.$own,'pg_temp.'.$own,$table);
                 return parent::wrapTable($table,$prefix);
             }
             public function wrap($value) {
-                if(is_string($value)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $value=str_replace('clubora.'.$own,'pg_temp.'.$own,$value);
+                if(is_string($value)) foreach(['mobile_keyboxes','mobile_keybox_grants','mobile_keybox_commands'] as $own) $value=str_replace('clubunio.'.$own,'pg_temp.'.$own,$value);
                 return parent::wrap($value);
             }
         });
     }
     protected function tearDown(): void { if(isset($this->db)) { if($this->db->transactionLevel()) $this->db->rollBack(); if($this->grammar) $this->db->setQueryGrammar($this->grammar); } parent::tearDown(); }
-    private function insert(string $table,array $row): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$row); }
+    private function insert(string $table,array $row): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$row); }
     private function account(string $role): Account {
         $a=new Account; $a->forceFill(['username'=>'qa-keybox-'.bin2hex(random_bytes(5)),'display_name'=>'Synthetic '.$role,'password'=>bcrypt('synthetic-password'),'active'=>true,'api_only'=>false])->save();
         $this->insert('tenant_accounts',['account_id'=>$a->id,'role'=>$role,'portal_enabled'=>true]); return $a;
@@ -89,7 +89,7 @@ class MobileKeyboxTest extends TestCase {
         $this->fakeProvider(); app(MobileKeyboxService::class)->execute($id); app(MobileKeyboxService::class)->execute($id);
         $pin=$this->getJson($url.'/'.$id)->assertOk()->assertJsonPath('data.state','issued')->assertJsonPath('data.pin','123456789')->json('data');
         $this->assertSame(168,(int)\Carbon\CarbonImmutable::parse($pin['startsAt'])->diffInHours(\Carbon\CarbonImmutable::parse($pin['expiresAt'])));
-        $cipher=$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->value('pin_encrypted'); $this->assertStringNotContainsString('123456789',$cipher);
+        $cipher=$this->db->table('clubunio.mobile_keybox_commands')->where('id',$id)->value('pin_encrypted'); $this->assertStringNotContainsString('123456789',$cipher);
         $this->postJson($url,$input)->assertStatus(202)->assertJsonPath('data.id',$id);
         Http::assertSentCount(2); Http::assertSent(fn ($r)=>str_contains($r->url(),'/algopin/hourly')&&$r['variance']===1&&$r['accessName']==='Synthetic admin');
         $this->withToken($this->tokens[$this->trainer->id])->getJson($url.'/'.$id)->assertNotFound();
@@ -99,9 +99,9 @@ class MobileKeyboxTest extends TestCase {
         $url=$this->base().'/keyboxes/'.$this->box.'/codes';
         $this->postJson($url,['request_key'=>(string)Str::uuid(),'keybox_revision'=>2])->assertConflict();
         $id=$this->postJson($url,['request_key'=>(string)Str::uuid(),'keybox_revision'=>1])->assertStatus(202)->json('data.id');
-        $this->db->table('clubora.mobile_sessions')->where('account_id',$this->owner->id)->update(['revoked_at'=>now()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_sessions')->where('account_id',$this->owner->id)->update(['revoked_at'=>now()->toIso8601String()]);
         app(MobileKeyboxService::class)->execute($id);
-        $this->assertSame('invalidated',$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->value('state')); Http::assertNothingSent();
+        $this->assertSame('invalidated',$this->db->table('clubunio.mobile_keybox_commands')->where('id',$id)->value('state')); Http::assertNothingSent();
         config(['clubunio-mobile.native_keybox_enabled'=>false]);
         $this->withToken($this->tokens[$this->trainer->id])->getJson($this->base().'/keyboxes')->assertStatus(503);
         app(MobileKeyboxService::class)->invalidateReservation($this->tenant,$this->reservation); Mail::assertNothingSent();
@@ -114,7 +114,7 @@ class MobileKeyboxTest extends TestCase {
         $this->getJson($url)->assertOk()->assertJsonPath('data.pin','123456789');
         $this->withToken($this->tokens[$this->owner->id])->postJson($this->base().'/bus/reservations/'.$this->reservation.'/cancel',['revision'=>1])->assertOk();
         $this->getJson($url)->assertForbidden();
-        $row=$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->first();
+        $row=$this->db->table('clubunio.mobile_keybox_commands')->where('id',$id)->first();
         $this->assertSame('required',$row->remote_revocation_state); $this->assertNull($row->pin_encrypted);
         $this->postJson($this->base().'/keyboxes/'.$this->busBox.'/codes',['request_key'=>(string)Str::uuid(),'keybox_revision'=>1])->assertStatus(503); Http::assertSentCount(2); Mail::assertNothingSent();
     }
@@ -152,7 +152,7 @@ class MobileKeyboxTest extends TestCase {
         $id=$this->postJson($url,['request_key'=>(string)Str::uuid(),'keybox_revision'=>1])->assertStatus(202)->json('data.id');
         $this->fakeProvider(); app(MobileKeyboxService::class)->execute($id);
         $service->saveGrant($this->owner,$this->tenant,$this->box,['account_id'=>$this->trainer->id,'active'=>false,'revision'=>1,'box_revision'=>1,'reason'=>'Synthetic access withdrawal']);
-        $row=$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->first();
+        $row=$this->db->table('clubunio.mobile_keybox_commands')->where('id',$id)->first();
         $this->assertSame('invalidated',$row->state);$this->assertSame('required',$row->remote_revocation_state);$this->assertNull($row->pin_encrypted);
         $this->getJson($url.'/'.$id)->assertNotFound();
         $box=$service->saveBox($this->owner,$this->tenant,$this->box,['name'=>'Revised device binding','provider_device_id'=>'fixture-rebound-device','bus_id'=>null,'active'=>false,'revision'=>1,'reason'=>'Synthetic device replacement']);
@@ -162,7 +162,7 @@ class MobileKeyboxTest extends TestCase {
         $this->assertNotSame($provider['fingerprint'],$service->providerSnapshot($this->owner,$this->tenant)['fingerprint']);
         try { $service->saveProvider($this->owner,$this->tenant,['fingerprint'=>$provider['fingerprint'],'client_id'=>'stale','reason'=>'Synthetic stale provider update']); $this->fail('Provider snapshot must match'); }
         catch(\Symfony\Component\HttpKernel\Exception\HttpException $e) { $this->assertSame(409,$e->getStatusCode()); }
-        $this->assertSame('required',$this->db->table('clubora.mobile_keybox_commands')->where('id',$id)->value('remote_revocation_state'));
+        $this->assertSame('required',$this->db->table('clubunio.mobile_keybox_commands')->where('id',$id)->value('remote_revocation_state'));
         Http::assertSentCount(2); Mail::assertNothingSent();
     }
 }

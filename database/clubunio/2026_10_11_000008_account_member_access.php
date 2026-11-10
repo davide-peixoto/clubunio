@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $db->unprepared(<<<'SQL'
 ALTER TABLE tenant_accounts DROP CONSTRAINT tenant_accounts_role_check;
 ALTER TABLE tenant_accounts ADD CHECK(role IN ('admin','office','member','trainer','technical_lead'));

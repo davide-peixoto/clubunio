@@ -81,7 +81,7 @@ class AnnouncementTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
     }
 
     private function account(string $role): Account
@@ -113,9 +113,9 @@ class AnnouncementTest extends TestCase
         for ($i = 0; $i < 65; $i++) {
             $accounts[] = ['username' => $prefix.'-'.$i, 'display_name' => sprintf('Choice %02d', $i), 'active' => true, 'password' => 'unusable-fixture'];
         }
-        $this->db->table('clubora.accounts')->insert($accounts);
+        $this->db->table('clubunio.accounts')->insert($accounts);
         $ids = Account::where('username', 'like', $prefix.'-%')->orderBy('display_name')->pluck('id')->all();
-        $this->db->table('clubora.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'member'], $ids));
+        $this->db->table('clubunio.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'member'], $ids));
         $choices = app(AnnouncementChoices::class);
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
@@ -140,7 +140,7 @@ class AnnouncementTest extends TestCase
         $this->assertSame([], $choices->labels($foreign, 'accounts', [$this->office->id]));
         $this->assertSame([$this->team => 'Synthetic team / season'], $choices->search($this->tenant, 'teams', 'Synthetic'));
         $this->assertSame([], $choices->labels($foreign, 'teams', [$this->team]));
-        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $this->db->table('clubunio.team_seasons')->where('id', $this->team)->update(['active' => false]);
         $this->assertSame([], $choices->labels($this->tenant, 'teams', [$this->team]));
         $this->assertSame([], $choices->labels($this->tenant, 'accounts', [['nested'], 'bad', -1]));
         $this->assertSame([], $choices->labels($this->tenant, 'accounts', array_fill(0, 501, $this->office->id)));
@@ -155,7 +155,7 @@ class AnnouncementTest extends TestCase
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         Livewire::test(ListAnnouncements::class)->assertSuccessful()->assertSee('Synthetic title');
-        $reads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."announcement_statuses"'));
+        $reads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubunio"."announcement_statuses"'));
         $this->assertNotEmpty($reads);
         $this->assertLessThanOrEqual(3, count($reads));
         $this->db->disableQueryLog();
@@ -170,7 +170,7 @@ class AnnouncementTest extends TestCase
             $r = Announcement::where('tenant_id', $this->tenant->id)->where('title', 'Async '.$type)->sole();
             $this->assertSame($ids, $r->target_ids);
         }
-        $this->assertSame(0, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_large_internal_delivery_keeps_250_row_batches_and_complete_snapshot(): void
@@ -180,17 +180,17 @@ class AnnouncementTest extends TestCase
         for ($i = 0; $i < 260; $i++) {
             $accounts[] = ['username' => $prefix.'-'.$i, 'display_name' => 'Synthetic batch', 'active' => true, 'password' => 'unusable-fixture'];
         }
-        $this->db->table('clubora.accounts')->insert($accounts);
+        $this->db->table('clubunio.accounts')->insert($accounts);
         $ids = Account::where('username', 'like', $prefix.'-%')->pluck('id')->all();
-        $this->db->table('clubora.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'office'], $ids));
+        $this->db->table('clubunio.tenant_accounts')->insert(array_map(fn ($id) => ['tenant_id' => $this->tenant->id, 'account_id' => $id, 'role' => 'office'], $ids));
         $draft = $this->draft();
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         $this->assertSame(263, $this->publish($draft));
-        $inserts = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'insert into "clubora"."notifications"'));
+        $inserts = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'insert into "clubunio"."notifications"'));
         $this->assertCount(2, $inserts);
-        $this->assertSame(263, $this->db->table('clubora.announcement_recipients')->where('announcement_id', $draft->id)->distinct()->count('account_id'));
-        $this->assertSame(263, $this->db->table('clubora.notifications')->where('announcement_id', $draft->id)->count());
+        $this->assertSame(263, $this->db->table('clubunio.announcement_recipients')->where('announcement_id', $draft->id)->distinct()->count('account_id'));
+        $this->assertSame(263, $this->db->table('clubunio.notifications')->where('announcement_id', $draft->id)->count());
         Mail::assertNothingSent();
         Http::assertNothingSent();
         $this->db->disableQueryLog();
@@ -202,10 +202,10 @@ class AnnouncementTest extends TestCase
         $inactive = $this->account('office');
         $inactive->forceFill(['active' => false])->save();
         $r = $this->draft();
-        $this->assertSame(0, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(3, $this->publish($r));
         $this->assertSame('published', $r->fresh()->state);
-        $this->assertSame(3, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(3, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
         $this->actingAs($this->player, 'portal')->get(route('clubunio.portal.announcements', $this->tenant->slug))->assertOk()->assertSee('Synthetic title');
         $this->get(route('clubunio.portal.announcement', [$this->tenant->slug, $r->id]))->assertOk()->assertSee('Second line');
         $this->actingAs($this->parent, 'portal')->get(route('clubunio.portal.notifications', $this->tenant->slug))->assertOk()->assertSee('Ankündigung öffnen');
@@ -246,7 +246,7 @@ class AnnouncementTest extends TestCase
         $service = app(AnnouncementService::class);
         $r = $this->draft();
         $p = $service->prepare($this->office, $this->tenant, $r->id, 1);
-        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
         try {
             $service->publish($this->office, $this->tenant, $r->id, 1, $p['preview_token']);
             $this->fail('Audience drift');
@@ -254,7 +254,7 @@ class AnnouncementTest extends TestCase
             $this->assertSame('draft', $r->fresh()->state);
         }
         $p = $service->prepare($this->office, $this->tenant, $r->id, 1);
-        $this->db->table('clubora.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->increment('revision');
+        $this->db->table('clubunio.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->increment('revision');
         try {
             $service->publish($this->office, $this->tenant, $r->id, 1, $p['preview_token']);
             $this->fail('Template drift');
@@ -283,7 +283,7 @@ class AnnouncementTest extends TestCase
         $this->assertSame('Synthetic title', $r->fresh()->rendered_title);
         $this->actingAs($this->player, 'portal')->get(route('clubunio.portal.announcement', [$this->tenant->slug, $r->id]))->assertNotFound();
         $this->get(route('clubunio.portal.notifications', $this->tenant->slug))->assertOk()->assertSee('Ankündigung zurückgezogen')->assertDontSee('Synthetic body');
-        $this->assertSame(3, $this->db->table('clubora.announcement_recipients')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(3, $this->db->table('clubunio.announcement_recipients')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_invalid_foreign_nested_protected_and_stale_data_are_rejected(): void
@@ -336,7 +336,7 @@ class AnnouncementTest extends TestCase
         } catch (ValidationException) {
             $this->assertTrue(true);
         }
-        $this->db->table('clubora.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->update(['active' => false]);
+        $this->db->table('clubunio.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->where('channel', 'push')->update(['active' => false]);
         $this->expectException(ValidationException::class);
         $service->prepare($this->office, $this->tenant, $r->id, 2);
     }
@@ -345,17 +345,17 @@ class AnnouncementTest extends TestCase
     {
         $r = $this->draft();
         $this->publish($r);
-        $notice = $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->where('announcement_id', $r->id)->where('account_id', $this->player->id)->sole();
+        $notice = $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->where('announcement_id', $r->id)->where('account_id', $this->player->id)->sole();
         $this->actingAs($this->player, 'portal')->post(route('clubunio.portal.notifications.read', [$this->tenant->slug, $notice->id]))->assertRedirect();
         $this->assertSame(1, (int) AnnouncementResource::getEloquentQuery()->findOrFail($r->id)->read_count);
         $copy = app(AnnouncementService::class)->duplicate($this->office, $this->tenant, $r->id);
         $this->assertSame('draft', $copy->state);
         $this->assertNull($copy->published_at);
-        $this->assertSame(3, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
-        $this->db->table('clubora.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->update(['title' => 'Changed template']);
+        $this->assertSame(3, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->db->table('clubunio.message_templates')->where('tenant_id', $this->tenant->id)->where('event_key', 'announcement.manual')->update(['title' => 'Changed template']);
         $this->get(route('clubunio.portal.announcement', [$this->tenant->slug, $r->id]))->assertOk()->assertSee('Synthetic title')->assertDontSee('Changed template');
         $foreign = Tenant::create(['name' => 'Foreign', 'slug' => 'foreign-'.Str::random(10)]);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->office->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->office->id, 'role' => 'office']);
         $this->expectException(ModelNotFoundException::class);
         app(AnnouncementService::class)->duplicate($this->office, $foreign, $r->id);
     }

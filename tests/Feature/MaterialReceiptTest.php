@@ -74,7 +74,7 @@ class MaterialReceiptTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
     }
 
     private function account(string $role): Account
@@ -115,7 +115,7 @@ class MaterialReceiptTest extends TestCase
         $pdf->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
         $this->assertStringContainsString('no-store', $pdf->headers->get('Cache-Control'));
-        $this->assertSame(3, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'material_receipts')->count());
+        $this->assertSame(3, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'material_receipts')->count());
         Mail::assertNothingSent();
         Http::assertNothingSent();
     }
@@ -142,7 +142,7 @@ class MaterialReceiptTest extends TestCase
         $this->child->forceFill(['birth_date' => '2000-01-02'])->save();
         $this->actingAs($this->parent, 'portal')->get($url)->assertForbidden();
         $this->child->forceFill(['birth_date' => '2014-01-02'])->save();
-        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
         $this->get($url)->assertForbidden();
         $this->child->forceFill(['exit_date' => '2020-01-02'])->save();
         $this->actingAs($this->player, 'portal')->get($url)->assertForbidden();
@@ -207,7 +207,7 @@ class MaterialReceiptTest extends TestCase
         $url = route('clubunio.portal.material.history.pdf', [$this->tenant->slug, $history]);
         $this->actingAs($this->player, 'portal')->get($url)->assertOk()->assertContent($bytes);
         $this->get($url)->assertStatus(409);
-        $this->db->table('clubora.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $this->parent->id)->update(['state' => 'revoked']);
         $this->actingAs($this->parent, 'portal')->get($url)->assertForbidden();
         $this->assertSame(0, MaterialReceipt::where('tenant_id', $this->tenant->id)->count());
     }

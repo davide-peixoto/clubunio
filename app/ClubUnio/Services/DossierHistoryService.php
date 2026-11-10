@@ -21,8 +21,8 @@ final class DossierHistoryService
         // Only audited business fields, never raw storage paths, credentials or banking secrets.
         $fields = ['active', 'revision', 'name', 'number', 'color', 'body', 'notes', 'amount', 'expires_on', 'description', 'gross_amount', 'discount', 'net_amount', 'status_id', 'workflow_status_id', 'member_id', 'family_id', 'team_id', 'season_id', 'team_season_id', 'staff_function_id', 'club_function_id', 'club_event_id', 'qualification_ids', 'bank_id', 'iban_last4', 'portal_visible', 'document_type_id', 'expense_type_id', 'game_type_id', 'opponent', 'suggested_amount', 'suggestion_accepted'];
 
-        return DB::connection('clubunio')->table('clubora.object_changes as changes')
-            ->leftJoin('clubora.accounts as actors', 'actors.id', '=', 'changes.actor_id')
+        return DB::connection('clubunio')->table('clubunio.object_changes as changes')
+            ->leftJoin('clubunio.accounts as actors', 'actors.id', '=', 'changes.actor_id')
             ->where('changes.tenant_id', $tenant->id)->where('changes.object_type', str($record->getTable())->afterLast('.')->toString())
             ->where('changes.object_id', $record->id)->orderByDesc('changes.id')->limit(100)
             ->get(['changes.before_value', 'changes.after_value', 'changes.created_at', 'actors.display_name'])

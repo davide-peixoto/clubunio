@@ -68,9 +68,9 @@ class SfvTrainingApiActionsTest extends TestCase
             }
         }
         $scopes = array_values(array_unique($scopes));
-        $this->profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $tenant->id,
+        $this->profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $tenant->id,
             'name' => 'Provider fixture', 'active' => true, 'permissions' => json_encode(array_values(array_unique($permissions)))]);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
             'role' => 'profile', 'access_profile_id' => $this->profile]);
         $integration = new ApiIntegration;
         $integration->forceFill(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'access_profile_id' => $this->profile,
@@ -97,7 +97,7 @@ class SfvTrainingApiActionsTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->context->tenant->id] + $data);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->context->tenant->id] + $data);
     }
 
     private function fakeProviderBoundary(): void
@@ -238,7 +238,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $worker->forceFill(['id' => 999999, 'active' => true]);
         $result = $api->execute($c, 'training.generate', 0, $payload, $worker);
         $this->assertSame($result, $api->execute($c, 'training.generate', 0, $payload));
-        $row = $this->db->table('clubora.training_plan_requests')->where('tenant_id', $c->tenant->id)->sole();
+        $row = $this->db->table('clubunio.training_plan_requests')->where('tenant_id', $c->tenant->id)->sole();
         $this->assertSame($key, $row->request_key);
         $this->assertSame($c->actor->id, $row->actor_id);
         $this->assertSame(['plan_id'], array_keys($result));
@@ -254,11 +254,11 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->mock(TrainingPlanAi::class)->shouldReceive('generate')->once()->andThrow(new \RuntimeException('Private provider body', 503));
         $this->rejects(fn () => $api->execute($this->context, 'training.generate', 0, $payload));
         $this->rejects(fn () => $api->execute($this->context, 'training.generate', 0, $payload));
-        $query = $this->db->table('clubora.training_plan_requests')->where('tenant_id', $this->context->tenant->id);
+        $query = $this->db->table('clubunio.training_plan_requests')->where('tenant_id', $this->context->tenant->id);
         $this->assertSame('failed', (clone $query)->sole()->state);
         $query->update(['state' => 'pending']);
         $this->rejects(fn () => $api->execute($this->context, 'training.generate', 0, $payload));
-        $this->assertFalse($this->db->table('clubora.training_plans')->where('tenant_id', $this->context->tenant->id)->exists());
+        $this->assertFalse($this->db->table('clubunio.training_plans')->where('tenant_id', $this->context->tenant->id)->exists());
         Http::assertNothingSent();
     }
 
@@ -291,7 +291,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->assertSame(1, $result['revision']);
         $this->assertGreaterThan(time(), $result['expires']);
         $this->assertSame($plan, $result['plan']);
-        $this->assertSame('Fixture plan', $this->db->table('clubora.training_plans')->where('id', $id)->value('title'));
+        $this->assertSame('Fixture plan', $this->db->table('clubunio.training_plans')->where('id', $id)->value('title'));
         $this->rejects(fn () => $api->execute($this->context, 'training.review', $id, ['revision' => 1, '_request_key' => $key]));
         $this->assertSame($plan, app(TrainingPlanContent::class)->validate($result['plan'], 60));
         Http::assertNothingSent();
@@ -312,7 +312,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $c->token->forceFill(['abilities' => ['training:read']])->save();
         $this->rejects(fn () => $api->execute($c, 'training.generate', 0, $payload), HttpException::class, 403);
         $c->token->forceFill(['abilities' => $c->integration->scopes])->save();
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(['training.view'])]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(['training.view'])]);
         $this->rejects(fn () => $api->execute($c, 'training.generate', 0, $payload), HttpException::class, 403);
         $this->assertSame($snapshot, request()->attributes->get(BackofficeReadContext::class));
         $c->token->forceFill(['revoked_at' => now()])->save();
@@ -326,15 +326,15 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->fakeProviderBoundary();
         $id = $this->storedPlan();
         $this->mock(TrainingPlanAi::class)->shouldReceive('generate')->once()->andReturnUsing(function () use ($id) {
-            $this->db->table('clubora.training_plans')->where('id', $id)->increment('revision');
+            $this->db->table('clubunio.training_plans')->where('id', $id)->increment('revision');
 
             return $this->plan();
         });
         $payload = ['revision' => 1, '_request_key' => (string) Str::uuid()];
         $api = new TrainingApiActions;
         $this->rejects(fn () => $api->execute($this->context, 'training.review', $id, $payload));
-        $this->assertSame(2, $this->db->table('clubora.training_plans')->where('id', $id)->value('revision'));
-        $this->assertSame('Fixture plan', $this->db->table('clubora.training_plans')->where('id', $id)->value('title'));
+        $this->assertSame(2, $this->db->table('clubunio.training_plans')->where('id', $id)->value('revision'));
+        $this->assertSame('Fixture plan', $this->db->table('clubunio.training_plans')->where('id', $id)->value('title'));
         Http::assertNothingSent();
     }
 
@@ -350,7 +350,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $payload = ['revision' => 1, '_request_key' => (string) Str::uuid()];
         $this->rejects(fn () => $api->execute($this->context, 'training.review', $id, $payload));
         $this->rejects(fn () => $api->execute($this->context, 'training.review', $id, $payload));
-        $this->assertSame(1, $this->db->table('clubora.training_plans')->where('id', $id)->value('revision'));
+        $this->assertSame(1, $this->db->table('clubunio.training_plans')->where('id', $id)->value('revision'));
         Http::assertNothingSent();
     }
 
@@ -367,7 +367,7 @@ class SfvTrainingApiActionsTest extends TestCase
         }
         $c->token->forceFill(['abilities' => ['competitions:read', 'competitions:sync']])->save();
         $this->rejects(fn () => $api->execute($c, 'sfv.competition.apply', $id, $input), HttpException::class, 403);
-        $this->assertFalse($this->db->table('clubora.competitions')->where('tenant_id', $c->tenant->id)->exists());
+        $this->assertFalse($this->db->table('clubunio.competitions')->where('tenant_id', $c->tenant->id)->exists());
         Http::assertNothingSent();
     }
 
@@ -376,16 +376,16 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->fixture();
         $training = new TrainingApiActions;
         $foreign = Tenant::create(['slug' => 'foreign-provider-'.Str::random(12), 'name' => 'Foreign fixture']);
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign']);
-        $foreignTeam = $this->db->table('clubora.team_seasons')->insertGetId(['tenant_id' => $foreign->id, 'team_id' => $team,
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign']);
+        $foreignTeam = $this->db->table('clubunio.team_seasons')->insertGetId(['tenant_id' => $foreign->id, 'team_id' => $team,
             'season_id' => $season, 'label' => 'Foreign']);
         $this->rejects(fn () => $training->validate($this->context, 'training.generate', 0,
             array_replace($this->input(), ['team_season_id' => $foreignTeam])), HttpException::class, 403);
-        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $this->db->table('clubunio.team_seasons')->where('id', $this->team)->update(['active' => false]);
         $this->rejects(fn () => $training->validate($this->context, 'training.generate', 0, $this->input()), HttpException::class, 403);
         $id = $this->matchId();
-        $this->db->table('clubora.sfv_schedule')->where('id', $id)->update(['tenant_id' => $foreign->id]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $id)->update(['tenant_id' => $foreign->id]);
         $this->rejects(fn () => (new SfvApiActions)->validate($this->context, 'sfv.competition.preview', $id, []), HttpException::class, 404);
         Http::assertNothingSent();
     }
@@ -399,11 +399,11 @@ class SfvTrainingApiActionsTest extends TestCase
         $preview = $api->execute($c, 'sfv.competition.preview', $id, []);
         $result = $api->execute($c, 'sfv.competition.apply', $id, ['fingerprint' => $preview['fingerprint']]);
         $competition = Competition::findOrFail($result['competition_id']);
-        $room = $this->db->table('clubora.training_options')->where('tenant_id', $c->tenant->id)->where('category', 'room')->value('id');
+        $room = $this->db->table('clubunio.training_options')->where('tenant_id', $c->tenant->id)->where('category', 'room')->value('id');
         $this->assertNotNull($room);
         $competition->forceFill(['host_room_id' => $room, 'guest_room_id' => $room, 'remarks' => 'Local note'])->save();
         $preview = $api->execute($c, 'sfv.competition.preview', $id, []);
-        $this->db->table('clubora.sfv_schedule')->where('id', $id)->update(['host_name' => 'Updated SFV host', 'revision' => 2]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $id)->update(['host_name' => 'Updated SFV host', 'revision' => 2]);
         $this->rejects(fn () => $api->execute($c, 'sfv.competition.apply', $id, ['fingerprint' => $preview['fingerprint']]));
         $fresh = $api->execute($c, 'sfv.competition.preview', $id, []);
         $api->execute($c, 'sfv.competition.apply', $id, ['fingerprint' => $fresh['fingerprint']]);
@@ -421,16 +421,16 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->fixture();
         $c = $this->context;
         TeamPlanningService::seedOptions($c->tenant->id);
-        $permissions = json_decode($this->db->table('clubora.access_profiles')->where('id', $this->profile)->value('permissions'), true);
+        $permissions = json_decode($this->db->table('clubunio.access_profiles')->where('id', $this->profile)->value('permissions'), true);
         $permissions = array_merge($permissions, ['planning.create', 'planning.cancel', 'planning.restore']);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
         $scopes = array_merge($c->integration->scopes, ['planning:create', 'planning:cancel', 'planning:restore']);
         $c->integration->forceFill(['scopes' => $scopes])->save();
         $c->token->forceFill(['abilities' => $scopes])->save();
-        $team = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('team_id');
-        $this->db->table('clubora.teams')->where('id', $team)->update(['sfv_team_id' => 123]);
+        $team = $this->db->table('clubunio.team_seasons')->where('id', $this->team)->value('team_id');
+        $this->db->table('clubunio.teams')->where('id', $team)->update(['sfv_team_id' => 123]);
         $match = $this->matchId();
-        $this->db->table('clubora.sfv_schedule')->where('id', $match)->update(['team_a_id' => 123, 'team_b_id' => 456]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $match)->update(['team_a_id' => 123, 'team_b_id' => 456]);
         $starts = now('Europe/Zurich')->addDays(5)->setTime(18, 0);
 
         return [$match, ['team_season_id' => $this->team, 'sfv_revision' => 1, 'event_revision' => 0,
@@ -452,23 +452,23 @@ class SfvTrainingApiActionsTest extends TestCase
         $private = Crypt::encryptString('Private participation note');
         $this->insert('team_participations', ['event_id' => $event, 'member_id' => $member, 'status' => 'ABWESEND',
             'attendance' => 'ENTSCHULDIGT', 'source' => 'trainer', 'comment_encrypted' => $private]);
-        $before = $this->db->table('clubora.team_events')->where('id', $event)->first();
+        $before = $this->db->table('clubunio.team_events')->where('id', $event)->first();
         $update = array_replace($input, ['event_revision' => 1, 'title' => 'Updated SFV fixture']);
         unset($update['description']);
         // Update needs no create scope, but import still requires update, sync and notification rights.
         $c->token->forceFill(['abilities' => array_values(array_diff($c->token->abilities, ['planning:create']))])->save();
         $this->assertSame($result, $api->execute($c, 'sfv.planning-import', $match, $update));
-        $after = $this->db->table('clubora.team_events')->where('id', $event)->first();
+        $after = $this->db->table('clubunio.team_events')->where('id', $event)->first();
         $this->assertSame(987654, $after->sfv_match_id);
         $this->assertSame(2, $after->revision);
         $this->assertSame(7, $after->capacity);
         $this->assertSame($before->deadline_at, $after->deadline_at);
         $this->assertSame($before->description, $after->description);
-        $participation = $this->db->table('clubora.team_participations')->where('event_id', $event)->sole();
+        $participation = $this->db->table('clubunio.team_participations')->where('event_id', $event)->sole();
         $this->assertSame($private, $participation->comment_encrypted);
         $this->assertSame('ENTSCHULDIGT', $participation->attendance);
         $this->assertSame(1, $participation->revision);
-        $this->assertSame(1, $this->db->table('clubora.team_events')->where('tenant_id', $c->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.team_events')->where('tenant_id', $c->tenant->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -490,7 +490,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->rejects(fn () => $api->validate($c, 'sfv.planning-import', $match, array_replace($input, ['event_revision' => 1])), HttpException::class, 409);
         $api->execute($c, 'sfv.planning-import', $match, $input);
         $this->rejects(fn () => $api->execute($c, 'sfv.planning-import', $match, $input));
-        $this->db->table('clubora.sfv_schedule')->where('id', $match)->increment('revision');
+        $this->db->table('clubunio.sfv_schedule')->where('id', $match)->increment('revision');
         $this->rejects(fn () => $api->execute($c, 'sfv.planning-import', $match, array_replace($input, ['event_revision' => 1])));
         Http::assertNothingSent();
     }
@@ -517,7 +517,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->rejects(fn () => $api->execute($c, 'sfv.planning-import', $match, $restore), HttpException::class, 403);
         $c->token->forceFill(['abilities' => $all])->save();
         $api->execute($c, 'sfv.planning-import', $match, $restore);
-        $this->assertSame(3, $this->db->table('clubora.team_events')->where('id', $result['event_id'])->value('revision'));
+        $this->assertSame(3, $this->db->table('clubunio.team_events')->where('id', $result['event_id'])->value('revision'));
         Http::assertNothingSent();
     }
 
@@ -526,14 +526,14 @@ class SfvTrainingApiActionsTest extends TestCase
         [$match, $input] = $this->planningFixture();
         $api = new SfvApiActions;
         $c = $this->context;
-        $this->db->table('clubora.sfv_schedule')->where('id', $match)->update(['team_a_id' => 789]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $match)->update(['team_a_id' => 789]);
         $this->rejects(fn () => $api->validate($c, 'sfv.planning-import', $match, $input));
-        $this->db->table('clubora.sfv_schedule')->where('id', $match)->update(['team_a_id' => 123]);
-        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => false]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $match)->update(['team_a_id' => 123]);
+        $this->db->table('clubunio.team_seasons')->where('id', $this->team)->update(['active' => false]);
         $this->rejects(fn () => $api->validate($c, 'sfv.planning-import', $match, $input), HttpException::class, 403);
-        $this->db->table('clubora.team_seasons')->where('id', $this->team)->update(['active' => true]);
+        $this->db->table('clubunio.team_seasons')->where('id', $this->team)->update(['active' => true]);
         $foreign = Tenant::create(['slug' => 'planning-foreign-'.Str::random(12), 'name' => 'Foreign fixture']);
-        $this->db->table('clubora.sfv_schedule')->where('id', $match)->update(['tenant_id' => $foreign->id]);
+        $this->db->table('clubunio.sfv_schedule')->where('id', $match)->update(['tenant_id' => $foreign->id]);
         $this->rejects(fn () => $api->validate($c, 'sfv.planning-import', $match, $input), HttpException::class, 404);
         Http::assertNothingSent();
     }
@@ -551,7 +551,7 @@ class SfvTrainingApiActionsTest extends TestCase
             $this->app->instance(SfvPlanningService::class, $real);
             if ($previousStatus !== null) {
                 $event = $api->execute($c, 'sfv.planning-import', $match, $input)['event_id'];
-                $this->db->table('clubora.team_events')->where('id', $event)->update(['status' => $previousStatus]);
+                $this->db->table('clubunio.team_events')->where('id', $event)->update(['status' => $previousStatus]);
                 $payload = array_replace($input, ['event_revision' => 1, 'status' => $previousStatus === 'AKTIV' ? 'ABGESAGT' : 'AKTIV']);
             }
             $this->mock(SfvPlanningService::class)->shouldReceive('import')->once()->andReturnUsing(function ($actor, $tenant, $id, $data) use ($real, $c, $scope, $all) {
@@ -560,17 +560,17 @@ class SfvTrainingApiActionsTest extends TestCase
 
                 return $result;
             });
-            $messages = $this->db->table('clubora.team_planning_messages')->where('tenant_id', $c->tenant->id)->count();
+            $messages = $this->db->table('clubunio.team_planning_messages')->where('tenant_id', $c->tenant->id)->count();
             $this->rejects(fn () => $api->execute($c, 'sfv.planning-import', $match, $payload), HttpException::class, 403);
-            $this->assertSame($messages, $this->db->table('clubora.team_planning_messages')->where('tenant_id', $c->tenant->id)->count());
+            $this->assertSame($messages, $this->db->table('clubunio.team_planning_messages')->where('tenant_id', $c->tenant->id)->count());
             if ($event !== null) {
-                $row = $this->db->table('clubora.team_events')->where('id', $event)->first();
+                $row = $this->db->table('clubunio.team_events')->where('id', $event)->first();
                 $this->assertSame(1, $row->revision);
                 $this->assertSame($previousStatus, $row->status);
-                $this->db->table('clubora.team_planning_messages')->where('event_id', $event)->delete();
-                $this->db->table('clubora.team_events')->where('id', $event)->delete();
+                $this->db->table('clubunio.team_planning_messages')->where('event_id', $event)->delete();
+                $this->db->table('clubunio.team_events')->where('id', $event)->delete();
             } else {
-                $this->assertFalse($this->db->table('clubora.team_events')->where('tenant_id', $c->tenant->id)->exists());
+                $this->assertFalse($this->db->table('clubunio.team_events')->where('tenant_id', $c->tenant->id)->exists());
             }
             $c->token->refresh();
         }
@@ -614,7 +614,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $input = $id ? ['revision' => 1] : $this->input();
         $payload = $input + ['_request_key' => (string) Str::uuid()];
         $abilities = $c->token->abilities;
-        $permissions = $this->db->table('clubora.access_profiles')->where('id', $this->profile)->value('permissions');
+        $permissions = $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->value('permissions');
         $this->mock(TrainingPlanAi::class)->shouldReceive('generate')->once()->andReturnUsing(function () use ($c, $action, $revocation, $abilities) {
             // There is only the test rollback fixture, no production transaction across the remote call.
             $this->assertSame(1, $this->db->transactionLevel());
@@ -624,28 +624,28 @@ class SfvTrainingApiActionsTest extends TestCase
                 $scope = $action === 'training.generate' ? 'training:create' : 'training:approve';
                 $c->token->forceFill(['abilities' => array_values(array_diff($abilities, [$scope]))])->save();
             } else {
-                $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
+                $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
             }
 
             return $this->plan();
         });
         $api = new TrainingApiActions;
         $this->rejects(fn () => $api->execute($c, $action, $id, $payload), HttpException::class, 403);
-        $attempt = $this->db->table('clubora.training_plan_requests')->where('tenant_id', $c->tenant->id)->sole();
+        $attempt = $this->db->table('clubunio.training_plan_requests')->where('tenant_id', $c->tenant->id)->sole();
         $this->assertSame($payload['_request_key'], $attempt->request_key);
         $this->assertSame('pending', $attempt->state);
         $this->assertNull($attempt->plan_id);
-        $this->assertSame($id ? 1 : 0, $this->db->table('clubora.training_plans')->where('tenant_id', $c->tenant->id)->count());
+        $this->assertSame($id ? 1 : 0, $this->db->table('clubunio.training_plans')->where('tenant_id', $c->tenant->id)->count());
         if ($id) {
-            $row = $this->db->table('clubora.training_plans')->where('id', $id)->first();
+            $row = $this->db->table('clubunio.training_plans')->where('id', $id)->first();
             $this->assertSame(1, $row->revision);
             $this->assertEquals($this->plan(), json_decode($row->plan_json, true));
         }
         // Restoring authorization does not make an uncertain, already-sent request repeatable.
         $c->token->forceFill(['revoked_at' => null, 'abilities' => $abilities])->save();
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => $permissions]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => $permissions]);
         $this->rejects(fn () => $api->execute($c, $action, $id, $payload));
-        $this->assertSame(1, $this->db->table('clubora.training_plan_requests')->where('tenant_id', $c->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.training_plan_requests')->where('tenant_id', $c->tenant->id)->count());
         Http::assertNothingSent();
     }
 
@@ -664,7 +664,7 @@ class SfvTrainingApiActionsTest extends TestCase
         });
         $this->mock(SfvCompetitionService::class)->shouldNotReceive('apply');
         $this->rejects(fn () => $api->execute($c, 'sfv.competition.apply', $id, ['fingerprint' => $preview['fingerprint']]), HttpException::class, 403);
-        $this->assertFalse($this->db->table('clubora.competitions')->where('tenant_id', $c->tenant->id)->exists());
+        $this->assertFalse($this->db->table('clubunio.competitions')->where('tenant_id', $c->tenant->id)->exists());
         Http::assertNothingSent();
     }
 
@@ -674,7 +674,7 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->fakeProviderBoundary();
         $c = $this->context;
         $existing = $this->matchId();
-        $before = (array) $this->db->table('clubora.sfv_schedule')->where('id', $existing)->first();
+        $before = (array) $this->db->table('clubunio.sfv_schedule')->where('id', $existing)->first();
         foreach (['SFV_APPLICATION_KEY' => 'fixture-key', 'SFV_APPLICATION_PASS' => 'fixture-pass', 'SFV_CLUB_ID' => '506'] as $key => $value) {
             $this->insert('tenant_settings', ['area' => 'sfv', 'key' => $key, 'label' => $key, 'value_type' => 'string',
                 'encrypted_value' => Crypt::encryptString($value), 'enabled' => true, 'is_secret' => true]);
@@ -700,9 +700,9 @@ class SfvTrainingApiActionsTest extends TestCase
         $this->rejects(fn () => (new SfvApiActions)->execute($c, 'sfv.refresh', 0,
             ['from' => now('Europe/Zurich')->toDateString(), 'to' => now('Europe/Zurich')->addDays(2)->toDateString()]), HttpException::class, 403);
         $this->assertTrue($locked);
-        $this->assertSame($before, (array) $this->db->table('clubora.sfv_schedule')->where('id', $existing)->first());
-        $this->assertSame(1, $this->db->table('clubora.sfv_schedule')->where('tenant_id', $c->tenant->id)->count());
-        $this->assertFalse($this->db->table('clubora.object_changes')->where('tenant_id', $c->tenant->id)
+        $this->assertSame($before, (array) $this->db->table('clubunio.sfv_schedule')->where('id', $existing)->first());
+        $this->assertSame(1, $this->db->table('clubunio.sfv_schedule')->where('tenant_id', $c->tenant->id)->count());
+        $this->assertFalse($this->db->table('clubunio.object_changes')->where('tenant_id', $c->tenant->id)
             ->where('object_type', 'sfv_schedule_refresh')->exists());
         Http::assertSentCount(2);
     }

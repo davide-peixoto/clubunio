@@ -12,13 +12,13 @@ class PitchPlanningProjection
 {
     public function ready(): bool
     {
-        $tables = Schema::connection('clubunio')->getTableListing('clubora', false);
+        $tables = Schema::connection('clubunio')->getTableListing('clubunio', false);
         return array_diff(['pitch_areas', 'pitch_training_exceptions', 'pitch_requests', 'pitch_blocks', 'pitch_competition_settings', 'pitch_competition_teams', 'pitch_planning_events'], $tables) === [];
     }
 
     public function table(string $table, Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id);
     }
 
     public function fields(Tenant $tenant): array
@@ -135,7 +135,7 @@ class PitchPlanningProjection
         $area = $settings?->area_id;
         // Legacy source editors can change a field without touching planner metadata.
         // A stale partial allocation then conservatively occupies the entire new field.
-        if ($area && ! DB::connection('clubunio')->table('clubora.pitch_areas')->where('tenant_id', $row->tenant_id)
+        if ($area && ! DB::connection('clubunio')->table('clubunio.pitch_areas')->where('tenant_id', $row->tenant_id)
             ->where('id', $area)->where('field_id', $row->field_id)->exists()) $area = null;
         return $this->entry('competition', $row->id, $row->plays_on->toDateString(), $row->starts_at,
             $settings?->duration_minutes ?? 120, $row->field_id, $area, $teams,

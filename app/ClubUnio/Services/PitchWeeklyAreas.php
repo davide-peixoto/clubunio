@@ -11,14 +11,14 @@ class PitchWeeklyAreas
 {
     public function ready(): bool
     {
-        return Schema::connection('clubunio')->hasColumn('clubora.training_slots', 'area_id')
-            && Schema::connection('clubunio')->hasTable('clubora.pitch_areas');
+        return Schema::connection('clubunio')->hasColumn('clubunio.training_slots', 'area_id')
+            && Schema::connection('clubunio')->hasTable('clubunio.pitch_areas');
     }
 
     public function options(Tenant $tenant, ?int $field): array
     {
         if (! $field || ! $this->ready()) return [];
-        return DB::connection('clubunio')->table('clubora.pitch_areas')->where('tenant_id', $tenant->id)
+        return DB::connection('clubunio')->table('clubunio.pitch_areas')->where('tenant_id', $tenant->id)
             ->where('field_id', $field)->orderBy('id')->get()->mapWithKeys(fn ($area) => [$area->id => $this->label($area)])->all();
     }
 
@@ -36,14 +36,14 @@ class PitchWeeklyAreas
     public function suggestedHalf(Tenant $tenant, array $data, ?int $exclude = null): ?int
     {
         if (empty($data['field_id'])) return null;
-        $areas = DB::connection('clubunio')->table('clubora.pitch_areas')->where('tenant_id', $tenant->id)
+        $areas = DB::connection('clubunio')->table('clubunio.pitch_areas')->where('tenant_id', $tenant->id)
             ->where('field_id', $data['field_id'])->orderBy('id')->get()->keyBy('id');
         $halves = $areas->filter(fn ($area) => abs((float)$area->width * (float)$area->height - .5) < .000001);
         if ($halves->isEmpty()) throw ValidationException::withMessages(['area_id' => __('Für diesen Platz ist noch keine halbe Teilfläche eingerichtet.')]);
-        $season = DB::connection('clubunio')->table('clubora.team_seasons')->where('tenant_id', $tenant->id)
+        $season = DB::connection('clubunio')->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)
             ->where('id', $data['team_season_id'] ?? 0)->value('season_id');
-        $slots = DB::connection('clubunio')->table('clubora.training_slots as slot')
-            ->join('clubora.team_seasons as ts', fn ($j) => $j->on('ts.id', '=', 'slot.team_season_id')->on('ts.tenant_id', '=', 'slot.tenant_id'))
+        $slots = DB::connection('clubunio')->table('clubunio.training_slots as slot')
+            ->join('clubunio.team_seasons as ts', fn ($j) => $j->on('ts.id', '=', 'slot.team_season_id')->on('ts.tenant_id', '=', 'slot.tenant_id'))
             ->where('slot.tenant_id', $tenant->id)->where('slot.field_id', $data['field_id'])->where('ts.season_id', $season)
             ->where('slot.period_id', $data['period_id'] ?? null)->where('slot.weekday_id', $data['weekday_id'] ?? null)
             ->where('slot.active', true)->where('ts.active', true)->where('slot.id', '<>', $exclude ?? 0)
@@ -71,7 +71,7 @@ class PitchWeeklyAreas
 
     public function matches(int $tenant, ?int $field, ?int $area): bool
     {
-        return $field && $area && DB::connection('clubunio')->table('clubora.pitch_areas')
+        return $field && $area && DB::connection('clubunio')->table('clubunio.pitch_areas')
             ->where('tenant_id', $tenant)->where('field_id', $field)->where('id', $area)->exists();
     }
 

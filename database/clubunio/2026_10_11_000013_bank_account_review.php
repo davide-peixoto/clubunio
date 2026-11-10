@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('ALTER TABLE clubora.member_bank_accounts ADD revision integer NOT NULL DEFAULT 1');
+        $db->statement('ALTER TABLE clubunio.member_bank_accounts ADD revision integer NOT NULL DEFAULT 1');
     }
 
     public function down(): void

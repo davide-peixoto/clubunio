@@ -32,18 +32,18 @@ class MobileSponsorTest extends TestCase {
         foreach(['draft','open','closed','cancelled'] as $i=>$status) $this->insert('sponsor_run_statuses',['code'=>$status,'name'=>$status,'sort_order'=>$i]);
         // All sponsor business rows and command constraints remain in this connection's private temporary tables.
         $tables=['sponsor_run_events','sponsor_run_event_teams','sponsor_run_participants','sponsor_run_helpers','sponsor_run_pledges','sponsor_run_audits','sponsor_run_links','sponsor_run_public_pending','sponsor_run_public_outbox','sponsor_run_invoices'];
-        foreach($tables as $table) $this->db->statement('CREATE TEMP TABLE '.$table.' (LIKE clubora.'.$table.' INCLUDING ALL) ON COMMIT DROP');
-        $this->db->statement('CREATE TEMP TABLE sponsor_mobile_accounts (LIKE clubora.tenant_accounts INCLUDING ALL) ON COMMIT DROP');
-        $this->db->statement('INSERT INTO pg_temp.sponsor_mobile_accounts SELECT * FROM clubora.tenant_accounts WHERE tenant_id=?',[$this->tenant->id]);
+        foreach($tables as $table) $this->db->statement('CREATE TEMP TABLE '.$table.' (LIKE clubunio.'.$table.' INCLUDING ALL) ON COMMIT DROP');
+        $this->db->statement('CREATE TEMP TABLE sponsor_mobile_accounts (LIKE clubunio.tenant_accounts INCLUDING ALL) ON COMMIT DROP');
+        $this->db->statement('INSERT INTO pg_temp.sponsor_mobile_accounts SELECT * FROM clubunio.tenant_accounts WHERE tenant_id=?',[$this->tenant->id]);
         $ddl=$this->db->pretend(fn()=>(require database_path('clubunio/2026_11_03_000200_mobile_sponsor_commands.php'))->up());
-        $sql=str_replace(['CREATE TABLE clubora.mobile_sponsor_commands','clubora.mobile_sponsor_commands','REFERENCES clubora.tenant_accounts','REFERENCES clubora.sponsor_run_events','REFERENCES clubora.sponsor_run_participants'],
+        $sql=str_replace(['CREATE TABLE clubunio.mobile_sponsor_commands','clubunio.mobile_sponsor_commands','REFERENCES clubunio.tenant_accounts','REFERENCES clubunio.sponsor_run_events','REFERENCES clubunio.sponsor_run_participants'],
             ['CREATE TEMP TABLE mobile_sponsor_commands','pg_temp.mobile_sponsor_commands','REFERENCES pg_temp.sponsor_mobile_accounts','REFERENCES pg_temp.sponsor_run_events','REFERENCES pg_temp.sponsor_run_participants'],$ddl[0]['query']);
         $sql=str_replace(");\nREVOKE ALL", ") ON COMMIT DROP;\nREVOKE ALL",$sql); $this->db->unprepared($sql);
         $tables[]='mobile_sponsor_commands';
         $this->db->setQueryGrammar(new class($this->db,$tables) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             private array $names;
             public function __construct($connection,array $names){ parent::__construct($connection); $this->names=$names; }
-            private function map($value){ foreach($this->names as $name) $value=str_replace('clubora.'.$name,'pg_temp.'.$name,$value); return $value; }
+            private function map($value){ foreach($this->names as $name) $value=str_replace('clubunio.'.$name,'pg_temp.'.$name,$value); return $value; }
             public function wrapTable($table,$prefix=null){ return parent::wrapTable($this->map($table),$prefix); }
             public function wrap($value,$prefixAlias=false){ return parent::wrap(is_string($value)?$this->map($value):$value,$prefixAlias); }
         });
@@ -54,7 +54,7 @@ class MobileSponsorTest extends TestCase {
         $this->base='/api/mobile/v1/clubs/'.$this->tenant->id.'/sponsor-run';
     }
     protected function tearDown(): void { if(isset($this->db)) while($this->db->transactionLevel()) $this->db->rollBack(); parent::tearDown(); }
-    private function insert(string $table,array $v): int { return $this->db->table('clubora.'.$table)->insertGetId($v+['tenant_id'=>$this->tenant->id]); }
+    private function insert(string $table,array $v): int { return $this->db->table('clubunio.'.$table)->insertGetId($v+['tenant_id'=>$this->tenant->id]); }
     private function account(string $role): Account {
         $a=new Account; $a->forceFill(['username'=>'sponsor-'.bin2hex(random_bytes(7)),'display_name'=>'Synthetic '.$role,'password'=>bcrypt('fixture'),'active'=>true,'api_only'=>false])->save();
         $this->insert('tenant_accounts',['account_id'=>$a->id,'role'=>$role,'portal_enabled'=>true]); return $a;
@@ -76,7 +76,7 @@ class MobileSponsorTest extends TestCase {
         $this->getJson($this->base.'/participants/'.$this->foreignParticipant.'/pledges')->assertNotFound();
         $this->postJson($this->base.'/participants/'.$this->foreignParticipant.'/pledges',$this->pledge())->assertNotFound();
         $this->getJson($this->base.'/events/'.$this->event.'/participants?view=manage')->assertForbidden();
-        $this->assertSame(1,$this->db->table('clubora.sponsor_run_pledges')->count()); Http::assertNothingSent(); Mail::assertNothingSent();
+        $this->assertSame(1,$this->db->table('clubunio.sponsor_run_pledges')->count()); Http::assertNothingSent(); Mail::assertNothingSent();
     }
     public function test_helper_rights_expiry_revisions_and_irreversible_lap_approval_are_real(): void {
         $this->helper(); $url=$this->base.'/participants/'.$this->participant;
@@ -85,8 +85,8 @@ class MobileSponsorTest extends TestCase {
         $this->patchJson($url.'/operations',['Revision'=>1,'Action'=>'checkin','CheckedIn'=>true])->assertOk()->assertJsonPath('data.Revision',2);
         $this->patchJson($url.'/operations',['Revision'=>1,'Action'=>'checkin','CheckedIn'=>false])->assertConflict();
         $this->patchJson($url.'/operations',['Revision'=>2,'Action'=>'laps','Laps'=>4])->assertForbidden();
-        $this->db->table('clubora.sponsor_run_helpers')->where('account_id',$this->helper->id)->update(['valid_until'=>now()->subMinute()->toIso8601String()]);
-        $this->assertTrue($this->db->table('clubora.sponsor_run_helpers')->where('account_id',$this->helper->id)->whereRaw('valid_until < CURRENT_TIMESTAMP')->exists());
+        $this->db->table('clubunio.sponsor_run_helpers')->where('account_id',$this->helper->id)->update(['valid_until'=>now()->subMinute()->toIso8601String()]);
+        $this->assertTrue($this->db->table('clubunio.sponsor_run_helpers')->where('account_id',$this->helper->id)->whereRaw('valid_until < CURRENT_TIMESTAMP')->exists());
         $this->patchJson($url.'/operations',['Revision'=>2,'Action'=>'checkin','CheckedIn'=>false])->assertNotFound();
         $this->withToken($this->token($this->admin))->patchJson($url.'/operations',['Revision'=>2,'Action'=>'laps','Laps'=>4])->assertOk()->assertJsonPath('data.Revision',3);
         $this->patchJson($url.'/result',['Revision'=>3,'Laps'=>4])->assertUnprocessable();
@@ -108,7 +108,7 @@ class MobileSponsorTest extends TestCase {
         $this->postJson($this->base.'/events/'.$id.'/helpers',$helper)->assertForbidden();
         $p=SponsorRunParticipant::where('event_id',$id)->where('member_id',$this->child)->sole();
         $this->postJson($this->base.'/participants/'.$p->id.'/pledges',$this->pledge())->assertConflict();
-        $this->assertSame(1,$this->db->table('clubora.mobile_sponsor_commands')->count());
+        $this->assertSame(1,$this->db->table('clubunio.mobile_sponsor_commands')->count());
     }
     public function test_link_consent_revision_rotation_replay_and_revocation_do_not_send_mail(): void {
         app(SponsorRunPublicService::class)->configurePublic($this->admin,$this->tenant,true); $url='https://synthetic.example'.$this->base.'/participants/'.$this->participant.'/share-link';
@@ -129,26 +129,26 @@ class MobileSponsorTest extends TestCase {
         $revoke=['Action'=>'revoke','RequestKey'=>(string)Str::uuid(),'Revision'=>2];
         $this->postJson($url,$revoke)->assertOk()->assertJsonPath('data.ShareUrl',null)->assertJsonPath('data.Revision',3); $this->postJson($url,$revoke)->assertOk();
         $this->withToken($this->token($this->other))->postJson($url,$rotate)->assertNotFound();
-        Http::assertNothingSent(); Mail::assertNothingSent(); $this->assertSame(0,$this->db->table('clubora.sponsor_run_public_outbox')->count());
+        Http::assertNothingSent(); Mail::assertNothingSent(); $this->assertSame(0,$this->db->table('clubunio.sponsor_run_public_outbox')->count());
     }
     public function test_parent_age_boundary_feature_gate_and_revoked_session_close_access(): void {
         $token=$this->token($this->parent); $this->withToken($token)->getJson($this->base.'/events')->assertOk();
-        $this->db->table('clubora.members')->where('id',$this->child)->update(['birth_date'=>now()->subYears(18)->toDateString()]);
+        $this->db->table('clubunio.members')->where('id',$this->child)->update(['birth_date'=>now()->subYears(18)->toDateString()]);
         $this->getJson($this->base.'/events')->assertForbidden();
         $this->withToken($this->token($this->admin)); config(['clubunio-mobile.native_sponsor_enabled'=>false]);
         $this->getJson($this->base.'/events')->assertStatus(503); config(['clubunio-mobile.native_sponsor_enabled'=>true]);
-        $this->db->table('clubora.mobile_sessions')->where('account_id',$this->admin->id)->update(['revoked_at'=>now()]); $this->getJson($this->base.'/events')->assertUnauthorized();
+        $this->db->table('clubunio.mobile_sessions')->where('account_id',$this->admin->id)->update(['revoked_at'=>now()]); $this->getJson($this->base.'/events')->assertUnauthorized();
     }
     public function test_command_foreign_keys_bind_real_actor_event_and_participant_results(): void {
         $e=app(SponsorRunService::class)->saveEvent($this->admin,$this->tenant,null,['season_id'=>$this->season,'title'=>'Another fixture','place'=>'Synthetic',
             'event_date'=>now('Europe/Zurich')->toDateString(),'registration_deadline'=>now('Europe/Zurich')->toDateString(),'status_code'=>'open','revision'=>0,'team_ids'=>[$this->team]]);
         $p=SponsorRunParticipant::where('tenant_id',$this->tenant->id)->where('event_id',$e->id)->where('member_id',$this->child)->sole();
         try {
-            $this->db->transaction(fn()=>$this->db->table('clubora.mobile_sponsor_commands')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->admin->id,
+            $this->db->transaction(fn()=>$this->db->table('clubunio.mobile_sponsor_commands')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$this->admin->id,
                 'command_key'=>(string)Str::uuid(),'operation'=>'create_link','fingerprint'=>str_repeat('a',64),'event_id'=>$this->event,'participant_id'=>$p->id,'result_revision'=>1]));
             $this->fail('A command must not bind a participant from a different event.');
         } catch(\Illuminate\Database\QueryException $error) { $this->assertSame('23503',$error->errorInfo[0]); }
-        $this->assertSame(0,$this->db->table('clubora.mobile_sponsor_commands')->count());
+        $this->assertSame(0,$this->db->table('clubunio.mobile_sponsor_commands')->count());
     }
     public function test_billing_exposes_only_local_authorized_status_without_recipient_or_provider_writes(): void {
         config(['clubunio-mobile.native_sponsor_billing_enabled'=>false]);

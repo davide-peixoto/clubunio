@@ -113,13 +113,13 @@ class PitchPlanningConcurrencyTest extends TestCase
         $this->assertSame($status, $result['status']);
         Mail::assertNothingSent();
         Http::assertNothingSent();
-        $this->assertSame(0, $this->db->table('clubora.mobile_push_outbox')->where('state', '<>', 'pending')->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_push_outbox')->where('state', '<>', 'pending')->count());
         return $result;
     }
 
     private function profile(array $permissions): int
     {
-        return $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $this->fixture['tenant']->id,
+        return $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $this->fixture['tenant']->id,
             'name' => 'Synthetic profile '.bin2hex(random_bytes(4)), 'active' => true,
             'permissions' => json_encode($permissions, JSON_THROW_ON_ERROR)]);
     }
@@ -145,9 +145,9 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => ['revision' => $two['revision'], 'decision' => 'approved']], $visible);
         $this->db->commit();
         $this->finish(409);
-        $this->assertSame(1, $this->db->table('clubora.pitch_requests')->where('status', 'approved')->count());
-        $this->assertSame('pending', $this->db->table('clubora.pitch_requests')->where('id', $two['source_id'])->value('status'));
-        $this->assertSame(1, $this->db->table('clubora.pitch_planning_events')->where('action', 'approved')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_requests')->where('status', 'approved')->count());
+        $this->assertSame('pending', $this->db->table('clubunio.pitch_requests')->where('id', $two['source_id'])->value('status'));
+        $this->assertSame(1, $this->db->table('clubunio.pitch_planning_events')->where('action', 'approved')->count());
     }
 
     public function test_simultaneous_decisions_on_one_revision_reject_the_stale_contender(): void
@@ -160,7 +160,7 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => ['revision' => $one['revision'], 'decision' => 'rejected']], $visible);
         $this->db->commit();
         $this->finish(409);
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->where('action', 'rejected')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->where('action', 'rejected')->count());
     }
 
     public function test_simultaneous_moves_to_one_destination_are_serialized(): void
@@ -173,9 +173,9 @@ class PitchPlanningConcurrencyTest extends TestCase
         $this->startBlocked(['operation' => 'move', 'key' => $two['key'], 'data' => $this->input(['revision' => $two['revision']])], $visible);
         $this->db->commit();
         $this->finish(409);
-        $this->assertSame('14:00:00', $this->db->table('clubora.pitch_requests')->where('id', $two['source_id'])->value('starts_at'));
-        $this->assertSame(1, $this->db->table('clubora.pitch_planning_events')->where('action', 'moved')->count());
-        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubora.notifications')->count());
+        $this->assertSame('14:00:00', $this->db->table('clubunio.pitch_requests')->where('id', $two['source_id'])->value('starts_at'));
+        $this->assertSame(1, $this->db->table('clubunio.pitch_planning_events')->where('action', 'moved')->count());
+        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubunio.notifications')->count());
     }
 
     public function test_same_revision_move_waits_then_fails_without_a_second_notification(): void
@@ -188,8 +188,8 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => $this->input(['revision' => $one['revision'], 'starts_at' => '20:00'])], $visible);
         $this->db->commit();
         $this->finish(409);
-        $this->assertSame('18:00:00', $this->db->table('clubora.pitch_requests')->where('id', $one['source_id'])->value('starts_at'));
-        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubora.notifications')->count());
+        $this->assertSame('18:00:00', $this->db->table('clubunio.pitch_requests')->where('id', $one['source_id'])->value('starts_at'));
+        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubunio.notifications')->count());
     }
 
     public function test_nonoverlapping_waiting_move_can_commit_after_the_first_move(): void
@@ -203,8 +203,8 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => $this->input(['revision' => $two['revision'], 'starts_at' => '20:00'])], $visible);
         $this->db->commit();
         $this->finish(200);
-        $this->assertSame(2, $this->db->table('clubora.pitch_planning_events')->where('action', 'moved')->count());
-        $this->assertSame($visible['notifications'] + 2, $this->db->table('clubora.notifications')->count());
+        $this->assertSame(2, $this->db->table('clubunio.pitch_planning_events')->where('action', 'moved')->count());
+        $this->assertSame($visible['notifications'] + 2, $this->db->table('clubunio.notifications')->count());
     }
 
     public function test_rollback_releases_waiter_without_leaking_source_audit_or_notifications(): void
@@ -218,10 +218,10 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => ['revision' => $two['revision'], 'decision' => 'approved']], $visible);
         $this->db->rollBack();
         $this->finish(200);
-        $this->assertSame('pending', $this->db->table('clubora.pitch_requests')->where('id', $one['source_id'])->value('status'));
-        $this->assertSame($visible['pitch_planning_events'] + 1, $this->db->table('clubora.pitch_planning_events')->count());
-        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubora.notifications')->count());
-        $this->assertSame($visible['object_changes'] + 1, $this->db->table('clubora.object_changes')->count());
+        $this->assertSame('pending', $this->db->table('clubunio.pitch_requests')->where('id', $one['source_id'])->value('status'));
+        $this->assertSame($visible['pitch_planning_events'] + 1, $this->db->table('clubunio.pitch_planning_events')->count());
+        $this->assertSame($visible['notifications'] + 1, $this->db->table('clubunio.notifications')->count());
+        $this->assertSame($visible['object_changes'] + 1, $this->db->table('clubunio.object_changes')->count());
     }
 
     public function test_waiting_writer_rechecks_revoked_actor_after_lock_acquisition(): void
@@ -230,7 +230,7 @@ class PitchPlanningConcurrencyTest extends TestCase
         $visible = Fixture::counts($this->db);
         $this->db->beginTransaction();
         Tenant::whereKey($this->fixture['tenant']->id)->lockForUpdate()->firstOrFail();
-        $this->db->table('clubora.accounts')->where('id', $this->fixture['actor']->id)->update(['active' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->fixture['actor']->id)->update(['active' => false]);
         $this->startBlocked(['operation' => 'decide', 'id' => $one['source_id'],
             'data' => ['revision' => $one['revision'], 'decision' => 'approved']], $visible);
         $this->db->commit();
@@ -245,7 +245,7 @@ class PitchPlanningConcurrencyTest extends TestCase
         $visible = Fixture::counts($this->db);
         $this->db->beginTransaction();
         Tenant::whereKey($this->fixture['tenant']->id)->lockForUpdate()->firstOrFail();
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'profile', 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'profile', 'access_profile_id' => $profile]);
         $this->startBlocked(['operation' => 'decide', 'id' => $one['source_id'],
             'data' => ['revision' => $one['revision'], 'decision' => 'approved']], $visible);
         $this->db->commit();
@@ -260,7 +260,7 @@ class PitchPlanningConcurrencyTest extends TestCase
         $tenant = $this->fixture['tenant'];
         $pending = $this->request();
         foreach (['trainer', 'technical_lead', 'member'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->update(['role' => $role, 'portal_enabled' => true]);
+            $this->db->table('clubunio.tenant_accounts')->update(['role' => $role, 'portal_enabled' => true]);
             $this->assertTrue($this->service->canView($actor, $tenant), $role);
             if ($role === 'member') $this->forbidden(fn () => $this->request());
             else $this->assertSame('pending', $this->request()['status']);
@@ -271,7 +271,7 @@ class PitchPlanningConcurrencyTest extends TestCase
         }
         $before = Fixture::counts($this->db);
         foreach ([PermissionCatalog::keys(), ['competitions.view'], ['field_availability.view', 'field_availability.update']] as $index => $permissions) {
-            $this->db->table('clubora.tenant_accounts')->update(['role' => 'profile', 'portal_enabled' => false, 'access_profile_id' => $this->profile($permissions)]);
+            $this->db->table('clubunio.tenant_accounts')->update(['role' => 'profile', 'portal_enabled' => false, 'access_profile_id' => $this->profile($permissions)]);
             $this->assertSame($index !== 2, $this->service->canView($actor, $tenant));
             $this->forbidden(fn () => $this->request());
             $this->forbidden(fn () => $this->approve($pending));
@@ -280,7 +280,7 @@ class PitchPlanningConcurrencyTest extends TestCase
             $this->forbidden(fn () => $this->service->configureCompetition($actor, $tenant, 1, []));
         }
         $this->assertSame($before, Fixture::counts($this->db));
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'office', 'access_profile_id' => null]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'office', 'access_profile_id' => null]);
         $this->assertSame('approved', $this->approve($pending)['status']);
         request()->attributes->set('clubunio_impersonation', (object) ['tenant_id' => $tenant->id, 'target_id' => $actor->id]);
         $this->forbidden(fn () => $this->request());
@@ -304,7 +304,7 @@ class PitchPlanningConcurrencyTest extends TestCase
             $this->assertSame('Synthetic fanout failure', $error->getMessage());
         }
         $this->assertSame($before, Fixture::counts($this->db));
-        $this->assertSame('pending', $this->db->table('clubora.pitch_requests')->where('id', $one['source_id'])->value('status'));
+        $this->assertSame('pending', $this->db->table('clubunio.pitch_requests')->where('id', $one['source_id'])->value('status'));
     }
 
     public function test_identical_concurrent_request_key_replays_one_committed_request_and_event(): void
@@ -319,7 +319,7 @@ class PitchPlanningConcurrencyTest extends TestCase
         $this->assertTrue($two['replayed']);
         $this->assertSame($one['data'], $two['data']);
         foreach (['pitch_requests', 'pitch_request_idempotency', 'pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox', 'object_changes'] as $table) {
-            $this->assertSame(1, $this->db->table('clubora.'.$table)->count(), $table.' duplicated');
+            $this->assertSame(1, $this->db->table('clubunio.'.$table)->count(), $table.' duplicated');
         }
     }
 
@@ -332,8 +332,8 @@ class PitchPlanningConcurrencyTest extends TestCase
             'data' => $this->input(['opponent' => 'Different synthetic visitors'])], $visible);
         $this->db->commit();
         $this->finish(409);
-        $this->assertSame(1, $this->db->table('clubora.pitch_requests')->count());
-        $this->assertSame(1, $this->db->table('clubora.pitch_planning_events')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_requests')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_planning_events')->count());
     }
 
     public function test_rolled_back_request_key_is_claimable_by_the_waiting_writer(): void
@@ -345,8 +345,8 @@ class PitchPlanningConcurrencyTest extends TestCase
         $this->db->rollBack();
         $two = $this->finish(200)['entry'];
         $this->assertFalse($two['replayed']);
-        $this->assertSame(1, $this->db->table('clubora.pitch_requests')->count());
-        $this->assertSame(1, $this->db->table('clubora.pitch_request_idempotency')->count());
-        $this->assertSame(1, $this->db->table('clubora.pitch_planning_events')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_requests')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_request_idempotency')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_planning_events')->count());
     }
 }

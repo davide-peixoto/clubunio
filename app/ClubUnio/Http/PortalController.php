@@ -51,14 +51,14 @@ class PortalController
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|integer']);
         $q = trim($data['q'] ?? '');
         $query = $access->visibleMembers($actor, $tenant);
-        $members = $query->select(['clubora.members.id', 'first_name', 'last_name', 'company', 'city', 'email', 'mobile', 'status_id'])
+        $members = $query->select(['clubunio.members.id', 'first_name', 'last_name', 'company', 'city', 'email', 'mobile', 'status_id'])
             ->with('status:id,name')->when($q !== '', fn ($query) => $query->where(fn ($query) => $query->where('first_name', 'ilike', '%'.$q.'%')
             ->orWhere('last_name', 'ilike', '%'.$q.'%')->orWhere('company', 'ilike', '%'.$q.'%')))
             ->when($data['status'] ?? null, fn ($query, $status) => $query->where('status_id', $status))
             ->orderBy('last_name')->orderBy('first_name')->orderBy('id')->paginate(25)->withQueryString();
         $tenants = $actor->tenants()->get()->filter(fn ($t) => $access->canEnter($actor, $t));
         $statuses = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->get(['id', 'tenant_id', 'name']);
-        $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubora.members.id')->all();
+        $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubunio.members.id')->all();
 
         return response()->view('clubunio.portal.members', compact('tenant', 'tenants', 'members', 'q', 'statuses', 'editableMemberIds'))
             ->header('Cache-Control', 'private, no-store');

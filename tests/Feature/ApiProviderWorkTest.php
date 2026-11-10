@@ -58,7 +58,7 @@ class ApiProviderWorkTest extends TestCase
         $this->tenant = Tenant::create(['name' => 'QA provider work', 'slug' => 'api-work-'.Str::random(15)]);
         $this->admin = new Account;
         $this->admin->forceFill(['username' => 'qa-work-'.Str::random(15), 'display_name' => 'QA', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
         $this->profile = new AccessProfile;
         $this->profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'QA work', 'active' => true, 'permissions' => ['teams.view', 'teams.create']])->save();
         $service = app(ApiTokenService::class);
@@ -96,7 +96,7 @@ class ApiProviderWorkTest extends TestCase
         $row = app(ApiProviderWork::class)->table()->find($first->json('data.id'));
         $this->assertStringNotContainsString('QA goal', $row->encrypted_input);
         $this->assertSame(['goal' => 'QA goal'], json_decode(Crypt::decryptString($row->encrypted_input), true));
-        $this->assertSame(1, $this->db->table('clubora.api_provider_events')->where('work_id', $row->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.api_provider_events')->where('work_id', $row->id)->count());
     }
 
     public function test_process_once_reuses_result_and_persisted_provider_key(): void
@@ -141,7 +141,7 @@ class ApiProviderWorkTest extends TestCase
         $this->assertSame($this->admin->id, $result['approved_by']);
         $this->assertSame($this->admin->id, $this->provider->executor);
         $this->assertTrue($this->integration->account->api_only);
-        $this->assertSame('profile', $this->db->table('clubora.tenant_accounts')->where('account_id', $this->integration->account_id)->value('role'));
+        $this->assertSame('profile', $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->integration->account_id)->value('role'));
     }
 
     public function test_revoked_original_token_blocks_admin_approval(): void
@@ -177,7 +177,7 @@ class ApiProviderWorkTest extends TestCase
         $this->withToken($token)->getJson('/api/v1/provider-work/'.$id)->assertNotFound();
         $this->withToken($token)->postJson('/api/v1/provider-work/'.$id.'/process', [], [], JSON_FORCE_OBJECT)->assertNotFound();
         $foreign = Tenant::create(['name' => 'Other', 'slug' => 'work-other-'.Str::random(15)]);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
         try {
             app(ApiProviderWork::class)->inspect($this->admin, $foreign, $id);
             $this->fail('Foreign work must not be shown');
@@ -217,7 +217,7 @@ class ApiProviderWorkTest extends TestCase
         $token = app(ApiTokenService::class)->issueToken($this->admin, $this->tenant, $this->integration->id, 'Schedule', ['competitions:read'], now()->addHour())['token'];
         $foreign = Tenant::create(['name' => 'Foreign fixture', 'slug' => 'schedule-other-'.Str::random(10)]);
         foreach ([$this->tenant->id, $foreign->id] as $tenant) {
-            $this->db->table('clubora.sfv_schedule')->insert(['tenant_id' => $tenant, 'match_id' => 123, 'season_id' => 2027, 'title' => 'QA', 'starts_at' => '2026-11-01T10:00:00+01:00', 'home' => true]);
+            $this->db->table('clubunio.sfv_schedule')->insert(['tenant_id' => $tenant, 'match_id' => 123, 'season_id' => 2027, 'title' => 'QA', 'starts_at' => '2026-11-01T10:00:00+01:00', 'home' => true]);
         }
         $response = $this->withToken($token)->getJson('/api/v1/sfv/schedule?from=2026-11-01&to=2026-11-01&per_page=1')
             ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.match_id', 123);

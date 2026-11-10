@@ -322,7 +322,7 @@ class PitchPlanningService
             $id = $before?->id ?? $this->insert($tenant, 'pitch_areas', $data);
             if ($before) $this->update($tenant, 'pitch_areas', $id, $data);
             $after = $this->projection->area($this->row($tenant, 'pitch_areas', $id));
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'pitch_areas', 'object_id' => $id, 'before_value' => $before ? json_encode($this->projection->area($before), JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);
             return $after;
@@ -360,9 +360,9 @@ class PitchPlanningService
         $match = $this->projection->table('sfv_schedule', $tenant)->where('match_id', $competition->association_match_id)->first();
         $teamIds = array_filter([(int) ($match?->team_a_id ?? 0), (int) ($match?->team_b_id ?? 0)]);
         if ($teamIds) {
-            $teams = DB::connection('clubunio')->table('clubora.team_seasons as ts')
-                ->join('clubora.teams as t', fn ($join) => $join->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
-                ->join('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
+            $teams = DB::connection('clubunio')->table('clubunio.team_seasons as ts')
+                ->join('clubunio.teams as t', fn ($join) => $join->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
+                ->join('clubunio.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
                 ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true)->where('s.active', true)
                 ->whereIn('t.sfv_team_id', $teamIds)->where('s.starts_on', '<=', $competition->plays_on->toDateString())->where('s.ends_on', '>=', $competition->plays_on->toDateString())
                 ->pluck('ts.id');
@@ -489,7 +489,7 @@ class PitchPlanningService
         $event = ['event_key' => $after['key'].':'.$after['revision'].':'.$action, 'action' => $action, 'actor_id' => (int) $actor->id,
             'requester_account_id' => $after['requester_account_id'] ?? $before['requester_account_id'] ?? null,
             'team_season_ids' => array_values(array_unique($teams)), 'before' => $before, 'after' => $after];
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'pitch_planning', 'object_id' => $after['source_id'], 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
             'after_value' => json_encode($event, JSON_THROW_ON_ERROR)]);
         if (in_array($action, ['requested', 'moved', 'approved', 'rejected', 'sfv_moved', 'created', 'cancelled'], true)) app(PitchPlanningNotificationService::class)->record($tenant, $event);

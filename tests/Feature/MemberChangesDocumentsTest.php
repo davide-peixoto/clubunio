@@ -84,7 +84,7 @@ class MemberChangesDocumentsTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function account(string $role): Account
@@ -112,12 +112,12 @@ class MemberChangesDocumentsTest extends TestCase
         $this->assertSame('Old City', $this->member->fresh()->city);
         $this->assertStringNotContainsString('New City', $r->snapshot_encrypted);
         $this->assertArrayNotHasKey('snapshot_encrypted', $r->toArray());
-        $this->assertSame(1, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
         $service = app(MemberChangeService::class);
         $service->review($this->office, $this->tenant, $r->id, 1, true, null);
         $this->assertSame('New City', $this->member->fresh()->city);
         $this->assertSame('approved', $r->fresh()->state);
-        $this->assertSame(2, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame('Old City', $service->comparison($r, $this->tenant)[0]['before']);
         Http::assertNothingSent();
         Mail::assertNothingSent();
@@ -162,7 +162,7 @@ class MemberChangesDocumentsTest extends TestCase
         $parent = $this->account('member');
         $this->link($parent, $this->member, 'parent');
         $r = app(MemberChangeService::class)->submit($parent, $this->tenant, $this->member->id, ['city' => 'Parent city', '_version' => MemberService::version($this->member->fresh())]);
-        $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
         try {
             app(MemberChangeService::class)->review($this->office, $this->tenant, $r->id, 1, true, null);
             $this->fail('Revoked');
@@ -170,7 +170,7 @@ class MemberChangesDocumentsTest extends TestCase
             $this->assertTrue(true);
         }
         app(MemberChangeService::class)->review($this->office, $this->tenant, $r->id, 1, false, 'Zuordnung nicht mehr gültig');
-        $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->update(['state' => 'approved']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->update(['state' => 'approved']);
         $this->member->forceFill(['birth_date' => '1990-01-01'])->save();
         $this->expectException(HttpException::class);
         app(MemberChangeService::class)->represented($parent, $this->tenant, $this->member->id);
@@ -227,7 +227,7 @@ class MemberChangesDocumentsTest extends TestCase
         app(MemberDocumentMaintenanceService::class)->update($this->office, $this->tenant, $d->id, $this->member->id, 1, true, true);
         $this->mock(AzureDocumentReader::class)->shouldReceive('read')->once()->andReturn('%PDF-1.4 Synthetic');
         $this->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $this->db->table('clubora.account_member_links')->where('account_id', $this->user->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $this->user->id)->update(['state' => 'revoked']);
         $this->get($url)->assertNotFound();
     }
 
@@ -290,7 +290,7 @@ class MemberChangesDocumentsTest extends TestCase
         $this->get($edit)->assertOk()->assertSee('Synthetic approval');
         $this->assertSame('Player request city', $this->member->fresh()->city);
         $this->get(route('clubunio.portal.notifications', $this->tenant->slug))->assertOk()->assertSee('Antrag öffnen');
-        $this->assertSame(1, $this->db->table('clubora.notifications')->where('tenant_id', $this->tenant->id)->where('account_id', $this->user->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.notifications')->where('tenant_id', $this->tenant->id)->where('account_id', $this->user->id)->count());
         Mail::assertNothingSent();
         Http::assertNothingSent();
     }
@@ -321,7 +321,7 @@ class MemberChangesDocumentsTest extends TestCase
         $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $otherChild->id]))->assertOk();
         $this->member->forceFill(['birth_date' => now()->subYears(12)->toDateString(), 'exit_date' => now()->toDateString()])->save();
         $this->get($edit)->assertNotFound();
-        $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->where('member_id', $otherChild->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->where('member_id', $otherChild->id)->update(['state' => 'revoked']);
         $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $otherChild->id]))->assertForbidden();
         Mail::assertNothingSent();
         Http::assertNothingSent();
@@ -382,7 +382,7 @@ class MemberChangesDocumentsTest extends TestCase
                 $this->get(route('clubunio.portal.member.edit', [$this->tenant->slug, $this->member->id]))->assertOk()->assertSee('ClubUnio Azure Test.pdf');
             }
             $this->actingAs($stranger, 'portal')->get($url)->assertNotFound();
-            $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
+            $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
             $this->actingAs($parent, 'portal')->get($url)->assertNotFound();
             app(MemberDocumentMaintenanceService::class)->update($this->office, $this->tenant, $d->id, $this->member->id, 2, false, true);
             $this->actingAs($this->user, 'portal')->get($url)->assertNotFound();

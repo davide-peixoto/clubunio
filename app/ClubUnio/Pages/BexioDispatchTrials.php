@@ -68,7 +68,7 @@ class BexioDispatchTrials extends Page implements HasTable
     private function authorizeTrial(int $id, string $function): void
     {
         abort_unless(static::canAccess(), 403);
-        $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+        $trial = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')
             ->where('tenant_id', Filament::getTenant()->id)->where('actor_id', Filament::auth()->id())->find($id);
         abort_unless($trial && static::canDocumentOperation($trial->object_type, $function), 403);
     }
@@ -101,7 +101,7 @@ class BexioDispatchTrials extends Page implements HasTable
                     if (! in_array($data['value'] ?? null, ['checked', 'unchecked'], true)) {
                         return $query;
                     }
-                    $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+                    $trial = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')
                         ->where('tenant_id', Filament::getTenant()->id)->where('actor_id', Filament::auth()->id())
                         ->where('object_type', $this->type)->select('object_id');
 
@@ -135,7 +135,7 @@ class BexioDispatchTrials extends Page implements HasTable
         $tenant = Filament::getTenant();
         $class = $this->type === 'invoice' ? Invoice::class : Expense::class;
         $field = $this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id';
-        $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         $documents = $class::where('tenant_id', $tenant->id)->where('active', true)
             ->when(! static::canDocumentOperation($this->type, 'view'), fn ($q) => $q->whereRaw('1 = 0'))
             ->when($binding, fn ($q) => $q->whereNull('legacy_id')->where('member_id', $this->type === 'invoice' ? $binding->member_id : $binding->supplier_id))
@@ -206,14 +206,14 @@ class BexioDispatchTrials extends Page implements HasTable
         $tenant = Filament::getTenant();
 
         $visibleTypes = array_values(array_filter(['invoice', 'expense'], fn ($type) => static::canDocumentOperation($type, 'view')));
-        $trials = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', Filament::auth()->id())
+        $trials = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', Filament::auth()->id())
             ->whereIn('object_type', $visibleTypes)->orderByDesc('id')->limit(30)->get();
 
         return ['documentTypes' => $documentTypes, 'trials' => $trials,
             'sandboxAdmin' => BexioConnectionService::canManage(Filament::auth()->user()->fresh(), $tenant)
-                && DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists(),
-            'sandboxTrials' => DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('source_trial_id')->pluck('state', 'source_trial_id'),
-            'steps' => DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->whereIn('trial_id', $trials->pluck('id'))->orderBy('id')->get()->groupBy('trial_id')];
+                && DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists(),
+            'sandboxTrials' => DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('source_trial_id')->pluck('state', 'source_trial_id'),
+            'steps' => DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->whereIn('trial_id', $trials->pluck('id'))->orderBy('id')->get()->groupBy('trial_id')];
     }
 
     public function resolve(int $id): void

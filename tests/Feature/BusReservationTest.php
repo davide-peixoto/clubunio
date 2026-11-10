@@ -41,7 +41,7 @@ class BusReservationTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'bus-'.Str::random(10), 'name' => 'Bus fixture']);
         $this->office = $this->account('office');
         $this->trainer = $this->account('trainer');
@@ -195,7 +195,7 @@ class BusReservationTest extends TestCase
         $response = $this->get(route('clubunio.bus.create', $this->tenant->slug))->assertOk()->assertSee('Applicant');
         $members = $response->viewData('members');
         $this->assertSame(['id', 'first_name', 'last_name'], array_keys($members->first()->getAttributes()));
-        $teamQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubora"."team_seasons"'));
+        $teamQueries = array_filter($this->db->getQueryLog(), fn ($q) => str_starts_with($q['query'], 'select * from "clubunio"."team_seasons"'));
         $this->assertCount(1, $teamQueries);
         $this->db->disableQueryLog();
     }

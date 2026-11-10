@@ -20,12 +20,12 @@ try {
     $tenant = Tenant::where('slug', 'sv-sissach')->lockForUpdate()->sole();
     $actor = Account::where('username', 'davide.peixoto@svsissach.ch')->sole();
     if (! app(AccountAdministrationService::class)->allowed($actor, $tenant)) { throw new LogicException('Authorized admin required'); }
-    $ids = $db->table('clubora.access_profiles')->pluck('id')->all();
+    $ids = $db->table('clubunio.access_profiles')->pluck('id')->all();
     $fingerprint = fn () => hash('sha256', json_encode([
-        $db->table('clubora.accounts')->orderBy('id')->get(['id', 'username', 'active', 'revision']),
-        $db->table('clubora.tenant_accounts')->orderBy('id')->get(),
-        $db->table('clubora.account_roles')->orderBy('code')->get(),
-        $db->table('clubora.access_profiles')->whereIn('id', $ids)->orderBy('id')->get(),
+        $db->table('clubunio.accounts')->orderBy('id')->get(['id', 'username', 'active', 'revision']),
+        $db->table('clubunio.tenant_accounts')->orderBy('id')->get(),
+        $db->table('clubunio.account_roles')->orderBy('code')->get(),
+        $db->table('clubunio.access_profiles')->whereIn('id', $ids)->orderBy('id')->get(),
     ], JSON_THROW_ON_ERROR));
     $before = $fingerprint();
     foreach ($definitions as $name => $definition) {
@@ -42,7 +42,7 @@ try {
             ]);
             $result = 'created';
         }
-        $assigned = $db->table('clubora.tenant_accounts')->where('access_profile_id', $profile->id)->count();
+        $assigned = $db->table('clubunio.tenant_accounts')->where('access_profile_id', $profile->id)->count();
         if ($assigned !== 0) { throw new LogicException('Expected unassigned profile: '.$name); }
         echo json_encode(['name' => $name, 'id' => $profile->id, 'result' => $result, 'permissions' => count($profile->permissions), 'assigned' => $assigned], JSON_UNESCAPED_UNICODE).PHP_EOL;
     }

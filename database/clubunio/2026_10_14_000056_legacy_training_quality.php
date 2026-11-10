@@ -13,8 +13,8 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->unprepared('ALTER TABLE clubora.legacy_training_plans ADD COLUMN requires_quality_review boolean NOT NULL DEFAULT false;
-            ALTER TABLE clubora.training_plans ADD COLUMN legacy_quality_pending boolean NOT NULL DEFAULT false;');
+        $db->unprepared('ALTER TABLE clubunio.legacy_training_plans ADD COLUMN requires_quality_review boolean NOT NULL DEFAULT false;
+            ALTER TABLE clubunio.training_plans ADD COLUMN legacy_quality_pending boolean NOT NULL DEFAULT false;');
     }
 
     public function down(): void

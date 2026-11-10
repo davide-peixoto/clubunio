@@ -13,17 +13,17 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->unprepared('CREATE TABLE clubora.bexio_sandbox_fixtures (
-            tenant_id bigint PRIMARY KEY REFERENCES clubora.tenants(id),
+        $db->unprepared('CREATE TABLE clubunio.bexio_sandbox_fixtures (
+            tenant_id bigint PRIMARY KEY REFERENCES clubunio.tenants(id),
             connection_hash varchar(64) NOT NULL,
             member_id bigint NOT NULL, parent_id bigint NOT NULL, supplier_id bigint NOT NULL,
             invoice_id bigint NOT NULL, remote_invoice_id bigint NOT NULL,
             remote_contact_id bigint NOT NULL,
             created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(tenant_id,member_id) REFERENCES clubora.members(tenant_id,id),
-            FOREIGN KEY(tenant_id,parent_id) REFERENCES clubora.members(tenant_id,id),
-            FOREIGN KEY(tenant_id,supplier_id) REFERENCES clubora.members(tenant_id,id),
-            FOREIGN KEY(tenant_id,invoice_id) REFERENCES clubora.invoices(tenant_id,id))');
+            FOREIGN KEY(tenant_id,member_id) REFERENCES clubunio.members(tenant_id,id),
+            FOREIGN KEY(tenant_id,parent_id) REFERENCES clubunio.members(tenant_id,id),
+            FOREIGN KEY(tenant_id,supplier_id) REFERENCES clubunio.members(tenant_id,id),
+            FOREIGN KEY(tenant_id,invoice_id) REFERENCES clubunio.invoices(tenant_id,id))');
     }
 
     public function down(): void

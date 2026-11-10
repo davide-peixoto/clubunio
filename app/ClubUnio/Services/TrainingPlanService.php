@@ -31,7 +31,7 @@ class TrainingPlanService
     {
         $this->authorizeOperation($actor, $tenant, 'view');
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
-            return DB::connection('clubunio')->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('label')->get();
+            return DB::connection('clubunio')->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('label')->get();
         }
         abort_unless($actor->fresh()?->active, 403);
         $teams = app(TeamPlanningService::class)->teams($actor, $tenant, true)->orderBy('label')->get();
@@ -43,7 +43,7 @@ class TrainingPlanService
     public function visible(Account $actor, Tenant $tenant)
     {
         $this->authorizeOperation($actor, $tenant, 'view');
-        $q = DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id);
+        $q = DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
             $teams = $this->teams($actor, $tenant)->pluck('id');
             $q->whereIn('team_season_id', $teams)->where(fn ($q) => $q->where('owner_id', $actor->id)->orWhere('shared', true));
@@ -101,7 +101,7 @@ class TrainingPlanService
             $authorization?->__invoke();
             $this->authorizeOperation($actor, $tenant, 'create');
             $this->input($actor, $tenant, $input);
-            $id = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId([
+            $id = DB::connection('clubunio')->table('clubunio.training_plans')->insertGetId([
                 'tenant_id' => $tenant->id, 'owner_id' => $actor->id, 'team_season_id' => $input['team_season_id'],
                 'title' => $plan['title'], 'input_json' => json_encode($input, JSON_THROW_ON_ERROR), 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR),
             ]);
@@ -156,7 +156,7 @@ class TrainingPlanService
     {
         $this->authorizeOperation($actor, $tenant, 'update');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $plan, $shared, $inputChanges) {
-            DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
+            DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id, true);
             if ($shared !== (bool) $row->shared) {
                 $this->authorizeOperation($actor, $tenant, 'send');
@@ -168,7 +168,7 @@ class TrainingPlanService
                 $plan['exercises'][$i]['markers'] ??= $row->plan['exercises'][$i]['markers'] ?? [];
             }
             $plan = app(TrainingPlanContent::class)->validate($plan, (int) $row->input['durationMinutes']);
-            DB::connection('clubunio')->table('clubora.training_plans')->where('id', $id)->where('tenant_id', $tenant->id)->update([
+            DB::connection('clubunio')->table('clubunio.training_plans')->where('id', $id)->where('tenant_id', $tenant->id)->update([
                 'title' => $plan['title'], 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => $shared,
                 'input_json' => json_encode($input, JSON_THROW_ON_ERROR),
                 'revision' => $revision + 1, 'updated_at' => now()->toIso8601String(),
@@ -189,7 +189,7 @@ class TrainingPlanService
     {
         $this->authorizeOperation($actor, $tenant, $archived ? 'deactivate' : 'restore');
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $archived) {
-            DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
+            DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id);
             $this->authorizeOperation($actor, $tenant, $archived ? 'deactivate' : 'restore');
             abort_unless(app(ModulePermissionService::class)->allows($actor, $tenant, 'training', $archived ? 'deactivate' : 'restore') || $row->owner_id === $actor->id, 403);
@@ -200,7 +200,7 @@ class TrainingPlanService
             if (! $archived && $row->legacy_quality_pending) {
                 throw ValidationException::withMessages(['revision' => __('Altplan braucht eine aktuelle Qualitätsprüfung. Zuerst eine private Kopie erstellen und prüfen.')]);
             }
-            DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)
+            DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)
                 ->update(['archived_at' => $archived ? now() : null, 'updated_at' => now(), 'revision' => $revision + 1]);
             $this->audit($actor, $tenant, $id, $revision, $revision + 1, $archived ? 'archived' : 'restored');
         });
@@ -213,7 +213,7 @@ class TrainingPlanService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $key) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorizeOperation($actor, $tenant, 'copy');
-            DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
+            DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             $row = $this->get($actor, $tenant, $id);
             $this->revision($row, $revision);
             $this->input($actor, $tenant, $row->input);
@@ -223,7 +223,7 @@ class TrainingPlanService
             }
             $plan = app(TrainingPlanContent::class)->validate($row->plan, (int) $row->input['durationMinutes'], ! $row->legacy_quality_pending);
             $plan['title'] = mb_substr($plan['title'], 0, 150).' (Kopie)';
-            $new = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId([
+            $new = DB::connection('clubunio')->table('clubunio.training_plans')->insertGetId([
                 'tenant_id' => $tenant->id, 'owner_id' => $actor->id, 'team_season_id' => $row->team_season_id,
                 'title' => $plan['title'], 'input_json' => $row->input_json, 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => false,
                 'legacy_quality_pending' => $row->legacy_quality_pending,
@@ -241,7 +241,7 @@ class TrainingPlanService
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $key, $kind) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $q = DB::connection('clubunio')->table('clubora.training_plan_requests')->where('tenant_id', $tenant->id);
+            $q = DB::connection('clubunio')->table('clubunio.training_plan_requests')->where('tenant_id', $tenant->id);
             $old = (clone $q)->where('actor_id', $actor->id)->where('request_key', $key)->first();
             if ($old) {
                 if ($old->state === 'completed' && ($kind === 'generate' || str_starts_with($kind, 'copy:')) && $old->kind === $kind) {
@@ -262,7 +262,7 @@ class TrainingPlanService
                 || $quota->tenant_day >= ($copy ? 500 : 100)) {
                 throw ValidationException::withMessages(['request' => __('Das Anfragelimit ist erreicht. Bitte später erneut versuchen.')]);
             }
-            $id = DB::connection('clubunio')->table('clubora.training_plan_requests')->insertGetId([
+            $id = DB::connection('clubunio')->table('clubunio.training_plan_requests')->insertGetId([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'request_key' => $key, 'kind' => $kind, 'reference' => (string) Str::uuid(),
             ]);
 
@@ -277,7 +277,7 @@ class TrainingPlanService
             return $this->providerCall($tenant, $input, $draft);
         } catch (\Throwable $error) {
             $this->finish($attempt, 'failed');
-            DB::connection('clubunio')->table('clubora.training_plan_requests')->where('id', $attempt->id)->update(['provider_status' => (int) $error->getCode()]);
+            DB::connection('clubunio')->table('clubunio.training_plan_requests')->where('id', $attempt->id)->update(['provider_status' => (int) $error->getCode()]);
             app(SyncWorkService::class)->remember($actor, $tenant, 'training_review', $attempt->id, ['input' => $input]);
             Log::warning('clubunio.training.failed', ['reference' => $attempt->reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['request' => __('Der Trainingsplan konnte nicht erstellt werden. Referenz: :value1', ['value1' => $attempt->reference])]);
@@ -291,12 +291,12 @@ class TrainingPlanService
 
     private function finish(object $attempt, string $state, ?int $id = null): void
     {
-        DB::connection('clubunio')->table('clubora.training_plan_requests')->where('id', $attempt->id)->update(['state' => $state, 'plan_id' => $id]);
+        DB::connection('clubunio')->table('clubunio.training_plan_requests')->where('id', $attempt->id)->update(['state' => $state, 'plan_id' => $id]);
     }
 
     private function audit(Account $actor, Tenant $tenant, int $id, int $before, int $after, string $event): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert([
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert([
             'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'training_plan', 'object_id' => $id,
             'before_value' => json_encode(['revision' => $before]), 'after_value' => json_encode(['revision' => $after, 'event' => $event]),
         ]);

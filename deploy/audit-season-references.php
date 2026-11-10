@@ -14,10 +14,10 @@ if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== 'db_acdf8d_dc
 $db->beginTransaction();
 try {
     $db->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY');
-    $tenant = $db->table('clubora.tenants')->where('slug', $options['tenant'] ?? 'sv-sissach')->value('id');
+    $tenant = $db->table('clubunio.tenants')->where('slug', $options['tenant'] ?? 'sv-sissach')->value('id');
     if (! $tenant) { throw new LogicException('Unknown audit tenant'); }
     $report = (new App\ClubUnio\Services\SeasonReferenceAudit)->inspect($db, (int) $tenant);
     $report['read_only'] = $db->selectOne("SELECT current_setting('transaction_read_only') AS value")->value === 'on';
-    $report['basis'] = 'clubora versus legacy_prod imported snapshot; not live DEV/PROD';
+    $report['basis'] = 'clubunio versus legacy_prod imported snapshot; not live DEV/PROD';
     echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).PHP_EOL;
 } finally { $db->rollBack(); }

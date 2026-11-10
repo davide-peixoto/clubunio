@@ -68,7 +68,7 @@ class InvoiceDirectSandboxTest extends TestCase
             $m->shouldReceive('accessToken')->andReturn('synthetic-token');
             $m->shouldReceive('connection')->andReturn(['fingerprint' => 'synthetic', 'connected_at' => '2026-10-15']);
         });
-        $this->db->table('clubora.bexio_sandbox_fixtures')->insert(['tenant_id' => $this->tenant->id, 'member_id' => $fixture->id, 'parent_id' => $fixture->id, 'supplier_id' => $fixture->id,
+        $this->db->table('clubunio.bexio_sandbox_fixtures')->insert(['tenant_id' => $this->tenant->id, 'member_id' => $fixture->id, 'parent_id' => $fixture->id, 'supplier_id' => $fixture->id,
             'invoice_id' => $this->invoice->id, 'remote_invoice_id' => 1, 'remote_contact_id' => 2, 'connection_hash' => app(BexioSandboxFixtureService::class)->connectionHash($this->tenant)]);
         foreach (['USER_ID', 'LANGUAGE_ID', 'BANK_ACCOUNT_ID', 'CURRENCY_ID', 'PAYMENT_TYPE_ID', 'UNIT_ID', 'TAX_ID', 'MWST_TYPE', 'INVOICE_DUE_DAYS'] as $key) {
             $this->insert('tenant_settings', ['area' => 'bexio', 'key' => 'BEXIO_'.$key, 'label' => $key, 'value_type' => 'integer', 'encrypted_value' => Crypt::encryptString($key === 'MWST_TYPE' ? '2' : '1')]);
@@ -112,7 +112,7 @@ class InvoiceDirectSandboxTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function transfer(): object
@@ -208,14 +208,14 @@ class InvoiceDirectSandboxTest extends TestCase
     public function test_foreign_member_registry_and_nonadmin_are_rejected(): void
     {
         $registry = app(BexioSandboxRecipientService::class)->prepare($this->actor, $this->tenant, $this->invoice);
-        $this->db->table('clubora.bexio_sandbox_recipients')->where('id', $registry)->update(['member_id' => $this->db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('member_id')]);
+        $this->db->table('clubunio.bexio_sandbox_recipients')->where('id', $registry)->update(['member_id' => $this->db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $this->tenant->id)->value('member_id')]);
         try {
             app(BexioSandboxRecipientService::class)->resolve($this->tenant, $this->invoice, $registry);
             $this->fail('Foreign member');
         } catch (HttpException $e) {
             $this->assertSame(409, $e->getStatusCode());
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $this->expectException(HttpException::class);
         $this->transfer();
     }

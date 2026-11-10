@@ -96,14 +96,14 @@ class RegistrationCompletionTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function account(string $role, ?string $username = null): Account
     {
         $account = new Account;
         $account->forceFill(['username' => $username ?? Str::random(14), 'display_name' => 'Synthetic '.$role, 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $account->id, 'role' => $role, 'portal_enabled' => true]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $account->id, 'role' => $role, 'portal_enabled' => true]);
 
         return $account;
     }
@@ -157,7 +157,7 @@ class RegistrationCompletionTest extends TestCase
             ['ownerRecord' => TeamSeason::findOrFail($this->team), 'pageClass' => ViewTeamSeason::class]);
         $manager->callTableAction('review', $this->registration, data: ['status_id' => $this->statuses['pool'], 'reason' => 'Synthetic capacity decision'])->assertHasNoTableActionErrors()->assertNoRedirect();
         $this->assertSame('pool', $this->registration->fresh()->status->workflow_key);
-        $this->assertTrue($this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->exists());
+        $this->assertTrue($this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->exists());
         $other = Member::findOrFail($this->insert('members', ['first_name' => 'Other']));
         Livewire::test(RegistrationsRelationManager::class, ['ownerRecord' => $other, 'pageClass' => ViewMember::class])
             ->assertCanNotSeeTableRecords([$this->registration]);
@@ -167,8 +167,8 @@ class RegistrationCompletionTest extends TestCase
     {
         $parent = $this->account('member', 'parent@example.invalid');
         $r = $this->review('accepted', ['team_season_id' => $this->team]);
-        $this->assertTrue($this->db->table('clubora.team_players')->where('tenant_id', $this->tenant->id)->where('member_id', $r->member_id)->where('team_season_id', $this->team)->where('active', true)->exists());
-        $link = $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->sole();
+        $this->assertTrue($this->db->table('clubunio.team_players')->where('tenant_id', $this->tenant->id)->where('member_id', $r->member_id)->where('team_season_id', $this->team)->where('active', true)->exists());
+        $link = $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->sole();
         $this->assertSame('pending', $link->state);
         $this->assertSame([$link->id], $r->acceptance_summary['parent_link_ids']);
         $this->assertSame(0, app(MemberAccessService::class)->represented($parent, $this->tenant)->count());
@@ -194,8 +194,8 @@ class RegistrationCompletionTest extends TestCase
         $this->assertSame('Fixture street', $member->street);
         $this->assertTrue($r->acceptance_summary['returning']);
         $this->assertNotEquals($old, $r->acceptance_summary['team_player_id']);
-        $this->assertFalse($this->db->table('clubora.team_players')->where('id', $old)->value('active'));
-        $this->assertSame(123, $this->db->table('clubora.team_players')->where('id', $old)->value('legacy_invoice_position_id'));
+        $this->assertFalse($this->db->table('clubunio.team_players')->where('id', $old)->value('active'));
+        $this->assertSame(123, $this->db->table('clubunio.team_players')->where('id', $old)->value('legacy_invoice_position_id'));
     }
 
     public function test_trial_cc_and_pool_email_are_snapshotted_review_has_no_email(): void
@@ -203,13 +203,13 @@ class RegistrationCompletionTest extends TestCase
         $staff = $this->insert('members', ['first_name' => 'Coach', 'email' => 'coach@example.invalid']);
         $this->insert('team_staff', ['member_id' => $staff, 'team_season_id' => $this->team]);
         $this->review('review');
-        $this->assertSame(0, $this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.review')->count());
+        $this->assertSame(0, $this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.review')->count());
         $this->review('trial', ['team_season_id' => $this->team]);
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.trial')->sole();
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.trial')->sole();
         $payload = json_decode(Crypt::decryptString($event->payload_encrypted), true);
         $this->assertSame(['coach@example.invalid'], $payload['intended_cc']);
         $this->review('pool');
-        $this->assertSame('ready', $this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.pool')->value('delivery_state'));
+        $this->assertSame('ready', $this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.pool')->value('delivery_state'));
         Mail::assertNothingSent();
     }
 
@@ -219,12 +219,12 @@ class RegistrationCompletionTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('Ausweis Ü.pdf', "%PDF-1.4\nfixture");
         $service = app(RegistrationDocumentService::class);
         $service->add($this->actor, $this->tenant, $this->registration->id, 1, 'identity', $file);
-        $doc = $this->db->table('clubora.registration_documents')->where('registration_id', $this->registration->id)->sole();
+        $doc = $this->db->table('clubunio.registration_documents')->where('registration_id', $this->registration->id)->sole();
         $this->assertSame('Ausweis Ü.pdf', $doc->original_filename);
         $this->assertSame(64, strlen($doc->sha256));
         $this->assertSame(2, $this->registration->fresh()->revision);
         $service->remove($this->actor, $this->tenant, $this->registration->id, $doc->id, 2);
-        $this->assertFalse($this->db->table('clubora.registration_documents')->where('id', $doc->id)->value('active'));
+        $this->assertFalse($this->db->table('clubunio.registration_documents')->where('id', $doc->id)->value('active'));
         $this->expectException(ValidationException::class);
         $service->add($this->actor, $this->tenant, $this->registration->id, 1, 'identity', $file);
     }
@@ -240,7 +240,7 @@ class RegistrationCompletionTest extends TestCase
             $this->assertStringNotContainsString('secret', $error->getMessage());
         }
         $this->assertSame(1, $this->registration->fresh()->revision);
-        $this->assertSame(0, $this->db->table('clubora.registration_documents')->where('registration_id', $this->registration->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.registration_documents')->where('registration_id', $this->registration->id)->count());
     }
 
     public function test_staff_cannot_upload_or_edit_applicant_and_foreign_team_is_rejected(): void
@@ -262,7 +262,7 @@ class RegistrationCompletionTest extends TestCase
     public function test_disabled_test_mail_does_not_claim_delivery(): void
     {
         config(['clubunio-integrations.test_mail_enabled' => false]);
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.received')->value('id');
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.received')->value('id');
         $this->assertSame(['accepted' => 0, 'failed' => 0], app(RegistrationMessageService::class)->dispatchOne($this->actor, $this->tenant, $this->registration->id, $event));
         Mail::assertNothingSent();
     }
@@ -277,9 +277,9 @@ class RegistrationCompletionTest extends TestCase
         } catch (\RuntimeException $error) {
             $this->assertSame('Synthetic event failure', $error->getMessage());
         }
-        $this->assertSame(0, $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.team_players')->where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.team_players')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.account_member_links')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(1, $this->registration->fresh()->revision);
         $this->assertNull($this->registration->fresh()->accepted_at);
     }
@@ -291,24 +291,24 @@ class RegistrationCompletionTest extends TestCase
         $link = $this->insert('account_member_links', ['account_id' => $parent->id, 'member_id' => $member, 'kind' => 'parent', 'state' => 'revoked', 'source' => 'fixture']);
         $r = $this->review('accepted', ['member_id' => $member, 'member_version' => MemberService::version(Member::findOrFail($member))]);
         $this->assertSame([], $r->acceptance_summary['parent_link_ids']);
-        $this->assertSame('revoked', $this->db->table('clubora.account_member_links')->where('id', $link)->value('state'));
+        $this->assertSame('revoked', $this->db->table('clubunio.account_member_links')->where('id', $link)->value('state'));
     }
 
     public function test_role_revocation_is_checked_even_with_stale_actor_instance(): void
     {
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
         $this->expectException(HttpException::class);
         $this->review('pool');
     }
 
     public function test_single_mail_dispatch_is_scoped_to_the_selected_registration_and_tenant(): void
     {
-        $event = $this->db->table('clubora.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.received')->value('id');
+        $event = $this->db->table('clubunio.registration_events')->where('registration_id', $this->registration->id)->where('event_key', 'registration.received')->value('id');
         $this->mock(TestOutboxDispatcher::class)->shouldReceive('dispatch')->once()
             ->with('registration_events', 1, $this->tenant->id, $event)->andReturn(['accepted' => 1, 'failed' => 0]);
         $result = app(RegistrationMessageService::class)->dispatchOne($this->actor, $this->tenant, $this->registration->id, $event);
         $this->assertSame(1, $result['accepted']);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'registration_events')->where('object_id', $event)->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'registration_events')->where('object_id', $event)->count());
         $this->expectException(HttpException::class);
         app(RegistrationMessageService::class)->dispatchOne($this->actor, $this->tenant, $this->registration->id + 1, $event);
     }

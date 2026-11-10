@@ -26,7 +26,7 @@ final class MobileExpenseOcr
             'fingerprint' => hash('sha256', json_encode([$origin, hash('sha256', (string) config('clubunio-expense-ocr.key')), AzureExpenseOcrProvider::MODEL,
                 AzureExpenseOcrProvider::VERSION, $reserve, (float) config('clubunio-expense-ocr.min_confidence', 0.75), 'expense-ocr-v1'], JSON_THROW_ON_ERROR))];
     }
-    private function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_ai_work')->where('tenant_id', $tenant->id); }
+    private function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_ai_work')->where('tenant_id', $tenant->id); }
     private function source(Account $actor, Tenant $tenant, string $id, int $revision): array {
         $request = request();
         abort_unless($request->attributes->has('mobile.session'), 401);
@@ -46,7 +46,7 @@ final class MobileExpenseOcr
     }
     private function lockSession(Tenant $tenant): void {
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-        DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', request()->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+        DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', request()->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
     }
     public function execute(Account $actor, Tenant $tenant, string $receipt, array $input): array {
         $d = Validator::make($input, ['request_key' => 'required|uuid', 'draft_revision' => 'required|integer|min:1', 'consent' => 'required|accepted'])->validate();

@@ -24,19 +24,19 @@ final class MobileProjectionPerformanceTest extends TestCase
             $actor = new \App\ClubUnio\Models\Account;
             $actor->forceFill(['username' => 'perf-chat-'.bin2hex(random_bytes(6)),
                 'display_name' => 'Synthetic chat actor', 'password' => 'not-an-authentication-fixture', 'active' => true, 'api_only' => false])->save();
-            $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
-            $season = $db->table('clubora.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Synthetic season', 'active' => true]);
-            $db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant->id, 'area' => 'general', 'key' => 'SaisonID',
+            $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
+            $season = $db->table('clubunio.seasons')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Synthetic season', 'active' => true]);
+            $db->table('clubunio.tenant_settings')->insert(['tenant_id' => $tenant->id, 'area' => 'general', 'key' => 'SaisonID',
                 'label' => 'Synthetic current season', 'value_type' => 'integer', 'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString((string) $season)]);
-            $team = $db->table('clubora.teams')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Synthetic team', 'active' => true]);
-            $db->table('clubora.team_seasons')->insert(['tenant_id' => $tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic team season', 'active' => true]);
+            $team = $db->table('clubunio.teams')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Synthetic team', 'active' => true]);
+            $db->table('clubunio.team_seasons')->insert(['tenant_id' => $tenant->id, 'team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic team season', 'active' => true]);
             // LIKE INCLUDING ALL copies indexes/checks, never FKs. All added FK parents are TEMP.
             $db->unprepared(<<<'SQL'
 CREATE TEMP TABLE performance_chat_tenants (id bigint PRIMARY KEY) ON COMMIT DROP;
 CREATE TEMP TABLE performance_chat_accounts (id bigint PRIMARY KEY) ON COMMIT DROP;
-CREATE TEMP TABLE performance_chats (LIKE clubora.chat_conversations INCLUDING ALL) ON COMMIT DROP;
-CREATE TEMP TABLE performance_memberships (LIKE clubora.chat_memberships INCLUDING ALL) ON COMMIT DROP;
-CREATE TEMP TABLE performance_messages (LIKE clubora.chat_messages INCLUDING ALL) ON COMMIT DROP;
+CREATE TEMP TABLE performance_chats (LIKE clubunio.chat_conversations INCLUDING ALL) ON COMMIT DROP;
+CREATE TEMP TABLE performance_memberships (LIKE clubunio.chat_memberships INCLUDING ALL) ON COMMIT DROP;
+CREATE TEMP TABLE performance_messages (LIKE clubunio.chat_messages INCLUDING ALL) ON COMMIT DROP;
 ALTER TABLE pg_temp.performance_chats ADD FOREIGN KEY(tenant_id) REFERENCES pg_temp.performance_chat_tenants(id);
 ALTER TABLE pg_temp.performance_memberships ADD FOREIGN KEY(tenant_id,conversation_id) REFERENCES pg_temp.performance_chats(tenant_id,id),
  ADD FOREIGN KEY(account_id) REFERENCES pg_temp.performance_chat_accounts(id);
@@ -47,7 +47,7 @@ SQL);
             $db->table('pg_temp.performance_chat_accounts')->insert([['id' => $actor->id], ['id' => -1]]);
             $db->setQueryGrammar(new class($db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
                 private function redirect($value) { return is_string($value) ? str_replace(
-                    ['clubora.chat_conversations','clubora.chat_memberships','clubora.chat_messages'],
+                    ['clubunio.chat_conversations','clubunio.chat_memberships','clubunio.chat_messages'],
                     ['pg_temp.performance_chats','pg_temp.performance_memberships','pg_temp.performance_messages'], $value) : $value; }
                 public function wrapTable($table, $prefix = null) { return parent::wrapTable($this->redirect($table), $prefix); }
                 public function wrap($value, $prefixAlias = false) { return parent::wrap($this->redirect($value), $prefixAlias); }
@@ -86,7 +86,7 @@ SQL);
                     'conversation_id' => $chat, 'account_id' => -1]));
                 self::fail('Cross-tenant membership passed composite FK');
             } catch (\Illuminate\Database\QueryException $e) { self::assertSame('23503', $e->errorInfo[0]); }
-            $db->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->delete();
+            $db->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->delete();
             try { $service->conversations($actor, $tenant); self::fail('Revoked admin entered chat list'); }
             catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { self::assertSame(403, $e->getStatusCode()); }
             Http::assertNothingSent();
@@ -117,7 +117,7 @@ CREATE TEMP TABLE performance_uploads (id bigint PRIMARY KEY, tenant_id bigint, 
 SQL);
             $db->setQueryGrammar(new class($db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
                 private function redirect($value) { return is_string($value) ? str_replace(
-                    ['clubora.mobile_expense_ocr_provenance','clubora.mobile_expense_receipts','clubora.document_uploads'],
+                    ['clubunio.mobile_expense_ocr_provenance','clubunio.mobile_expense_receipts','clubunio.document_uploads'],
                     ['pg_temp.performance_provenance','pg_temp.performance_drafts','pg_temp.performance_uploads'], $value) : $value; }
                 public function wrapTable($table, $prefix = null) { return parent::wrapTable($this->redirect($table), $prefix); }
                 public function wrap($value, $prefixAlias = false) { return parent::wrap($this->redirect($value), $prefixAlias); }

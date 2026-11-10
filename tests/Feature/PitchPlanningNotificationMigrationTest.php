@@ -26,7 +26,7 @@ class PitchPlanningNotificationMigrationTest extends TestCase
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
         foreach (['tenants', 'accounts', 'tenant_accounts', 'mobile_sessions', 'team_events'] as $table) {
-            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubora.$table INCLUDING ALL) ON COMMIT DROP");
+            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubunio.$table INCLUDING ALL) ON COMMIT DROP");
         }
         $this->temporaryDdl('2026_11_04_000500_mobile_push_devices.php');
         $this->temporaryDdl('2026_11_04_001600_pitch_planning_notifications.php');
@@ -41,11 +41,11 @@ class PitchPlanningNotificationMigrationTest extends TestCase
         // Pretend also suppresses template seeding reads/writes. Only the captured DDL is executed.
         $queries = $this->db->pretend(fn () => (require database_path('clubunio/'.$migration))->up());
         foreach ($queries as $query) {
-            if (! str_contains($query['query'], 'CREATE TABLE clubora.')) {
+            if (! str_contains($query['query'], 'CREATE TABLE clubunio.')) {
                 continue;
             }
-            $sql = str_replace(['clubora.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
-            $this->assertStringNotContainsString('clubora.', $sql);
+            $sql = str_replace(['clubunio.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
+            $this->assertStringNotContainsString('clubunio.', $sql);
             $this->db->unprepared($sql);
         }
     }

@@ -14,8 +14,8 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.bexio_catalog_entries (
- id bigserial PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
+CREATE TABLE clubunio.bexio_catalog_entries (
+ id bigserial PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubunio.tenants(id),
  kind text NOT NULL CHECK(kind IN ('article','tax')), remote_id bigint NOT NULL CHECK(remote_id > 0),
  connection_hash text NOT NULL, code text NOT NULL, provider_name text NOT NULL,
  name varchar(160) NOT NULL, active boolean NOT NULL DEFAULT true,
@@ -26,7 +26,7 @@ CREATE TABLE clubora.bexio_catalog_entries (
  UNIQUE(tenant_id,kind,connection_hash,remote_id),
  CHECK(valid_from IS NULL OR valid_until IS NULL OR valid_until >= valid_from)
 );
-ALTER TABLE clubora.invoice_lines ADD COLUMN bexio_catalog_article_id bigint REFERENCES clubora.bexio_catalog_entries(id);
+ALTER TABLE clubunio.invoice_lines ADD COLUMN bexio_catalog_article_id bigint REFERENCES clubunio.bexio_catalog_entries(id);
 SQL);
     }
 

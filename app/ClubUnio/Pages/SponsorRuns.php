@@ -110,7 +110,7 @@ class SponsorRuns extends Page implements HasTable
     public function table(Table $table): Table
     {
         $choices = $this->service()->choices($this->actor(), Filament::getTenant());
-        $rawStatuses = DB::connection('clubunio')->table('clubora.sponsor_run_statuses')
+        $rawStatuses = DB::connection('clubunio')->table('clubunio.sponsor_run_statuses')
             ->where('tenant_id', Filament::getTenant()->id)->where('active', true)->pluck('name', 'code')->all();
 
         return $table->query(fn () => $this->service()->events($this->actor(), Filament::getTenant(), [
@@ -186,7 +186,7 @@ class SponsorRuns extends Page implements HasTable
                 $r = $this->service()->event(Filament::getTenant(), $this->eventId);
 
                 return $r->only(['season_id', 'title', 'place', 'status_code', 'revision']) + ['event_date' => $r->event_date->toDateString(), 'registration_deadline' => $r->registration_deadline->toDateString(),
-                    'team_ids' => $this->service()->db()->table('clubora.sponsor_run_event_teams')->where('tenant_id', $r->tenant_id)->where('event_id', $r->id)->pluck('team_season_id')->all()];
+                    'team_ids' => $this->service()->db()->table('clubunio.sponsor_run_event_teams')->where('tenant_id', $r->tenant_id)->where('event_id', $r->id)->pluck('team_season_id')->all()];
             })->action(fn (array $data) => $this->service()->saveEvent($this->actor(), Filament::getTenant(), $this->eventId, $data));
     }
 
@@ -242,7 +242,7 @@ class SponsorRuns extends Page implements HasTable
             ->schema([Select::make('account_id')->label('Benutzer')->searchable()->required()->live()->afterStateUpdated(function ($state, $set) {
                 $this->service()->authorize($this->actor(), Filament::getTenant(), 'update');
                 $e = $this->service()->event(Filament::getTenant(), $this->eventId);
-                $old = $this->service()->db()->table('clubora.sponsor_run_helpers')->where('tenant_id', Filament::getTenant()->id)->where('event_id', $e->id)->where('account_id', $state)->first();
+                $old = $this->service()->db()->table('clubunio.sponsor_run_helpers')->where('tenant_id', Filament::getTenant()->id)->where('event_id', $e->id)->where('account_id', $state)->first();
                 $day = CarbonImmutable::parse($e->event_date->toDateString(), 'Europe/Zurich');
                 foreach (['revision' => $old->revision ?? 0, 'can_checkin' => $old->can_checkin ?? false, 'can_record_laps' => $old->can_record_laps ?? false,
                     'valid_from' => $old->valid_from ?? $day->startOfDay()->toIso8601String(), 'valid_until' => $old->valid_until ?? $day->endOfDay()->toIso8601String()] as $key => $value) {
@@ -254,9 +254,9 @@ class SponsorRuns extends Page implements HasTable
                 }
                 $tenant = Filament::getTenant();
 
-                return Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id))
-                    ->whereIn('id', $this->service()->db()->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('kind', 'self')->where('state', 'approved')
-                        ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubora.members.id'))->select('account_id'))
+                return Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id))
+                    ->whereIn('id', $this->service()->db()->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)->where('kind', 'self')->where('state', 'approved')
+                        ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubunio.members.id'))->select('account_id'))
                     ->where('display_name', 'ilike', '%'.mb_substr($search, 0, 100).'%')->limit(20)->pluck('display_name', 'id')->all();
             }), Hidden::make('revision')->default(0),
                 Checkbox::make('can_checkin')->label('Check-in'), Checkbox::make('can_record_laps')->label('Rundenentwurf'),
@@ -286,9 +286,9 @@ class SponsorRuns extends Page implements HasTable
 
     private function outbox()
     {
-        return $this->service()->db()->table('clubora.sponsor_run_public_outbox as o')
-            ->join('clubora.sponsor_run_public_pending as p', fn ($j) => $j->on('p.id', '=', 'o.pending_id')->on('p.tenant_id', '=', 'o.tenant_id'))
-            ->join('clubora.sponsor_run_links as l', fn ($j) => $j->on('l.id', '=', 'p.link_id')->on('l.tenant_id', '=', 'p.tenant_id'))
+        return $this->service()->db()->table('clubunio.sponsor_run_public_outbox as o')
+            ->join('clubunio.sponsor_run_public_pending as p', fn ($j) => $j->on('p.id', '=', 'o.pending_id')->on('p.tenant_id', '=', 'o.tenant_id'))
+            ->join('clubunio.sponsor_run_links as l', fn ($j) => $j->on('l.id', '=', 'p.link_id')->on('l.tenant_id', '=', 'p.tenant_id'))
             ->where('o.tenant_id', Filament::getTenant()->id)->where('l.event_id', $this->eventId);
     }
 

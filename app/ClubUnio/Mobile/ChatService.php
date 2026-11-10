@@ -13,7 +13,7 @@ final class ChatService
 {
     public function table(Tenant $tenant, string $name)
     {
-        return DB::connection('clubunio')->table('clubora.'.$name)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$name)->where('tenant_id', $tenant->id);
     }
 
     public function ensure(Tenant $tenant, string $kind, ?int $team = null, ?int $event = null, ?string $key = null): object
@@ -151,14 +151,14 @@ final class ChatService
             // A competing request may have joined/read since our first SELECT.
             // Preserve its active row; only a still-left membership may rejoin.
             $updates = [];
-            $target = Str::afterLast(DB::connection('clubunio')->getQueryGrammar()->wrapTable('clubora.chat_memberships'), '.');
+            $target = Str::afterLast(DB::connection('clubunio')->getQueryGrammar()->wrapTable('clubunio.chat_memberships'), '.');
             foreach (['joined_after','left_at','read_message_id','muted'] as $column) {
                 $updates[$column] = new \Illuminate\Database\Query\Expression('CASE WHEN '.$target.'."left_at" IS NOT NULL THEN "excluded"."'.$column.'" ELSE '.$target.'."'.$column.'" END');
             }
             $this->table($tenant, 'chat_memberships')->upsert($records, ['conversation_id','account_id'], $updates);
             $memberships = $this->table($tenant, 'chat_memberships')->whereIn('conversation_id', $accepted->pluck('id'))->where('account_id', $actor->id)->get()->keyBy('conversation_id');
         }
-        $unread = DB::connection('clubunio')->table('clubora.chat_messages as m')->join('clubora.chat_memberships as membership', function ($join) use ($actor) {
+        $unread = DB::connection('clubunio')->table('clubunio.chat_messages as m')->join('clubunio.chat_memberships as membership', function ($join) use ($actor) {
             $join->on('membership.tenant_id', '=', 'm.tenant_id')->on('membership.conversation_id', '=', 'm.conversation_id')->where('membership.account_id', $actor->id);
         })->where('m.tenant_id', $tenant->id)->whereIn('m.conversation_id', $accepted->pluck('id'))
             ->whereColumn('m.id', '>', 'membership.joined_after')->whereColumn('m.id', '>', 'membership.read_message_id')
@@ -166,8 +166,8 @@ final class ChatService
         $latest = $this->latestMessages($actor, $tenant, $accepted->pluck('id')->all());
         // Names are projected only for chats which already passed fresh contact/block checks.
         $directIds=$accepted->where('kind','direct')->pluck('id');
-        $others=$directIds->isEmpty()?collect():DB::connection('clubunio')->table('clubora.chat_memberships as other_member')
-            ->join('clubora.accounts as other_account','other_account.id','=','other_member.account_id')
+        $others=$directIds->isEmpty()?collect():DB::connection('clubunio')->table('clubunio.chat_memberships as other_member')
+            ->join('clubunio.accounts as other_account','other_account.id','=','other_member.account_id')
             ->where('other_member.tenant_id',$tenant->id)->whereIn('other_member.conversation_id',$directIds)
             ->where('other_member.account_id','<>',$actor->id)->whereNull('other_member.left_at')
             ->get(['other_member.conversation_id','other_member.account_id','other_account.display_name'])->keyBy('conversation_id');
@@ -186,16 +186,16 @@ final class ChatService
     private function latestMessages(Account $actor, Tenant $tenant, array $conversations): array
     {
         if (!$conversations) return [];
-        $latest = DB::connection('clubunio')->table('clubora.chat_messages as m')
-            ->join('clubora.chat_memberships as membership', function ($join) use ($actor) {
+        $latest = DB::connection('clubunio')->table('clubunio.chat_messages as m')
+            ->join('clubunio.chat_memberships as membership', function ($join) use ($actor) {
                 $join->on('membership.tenant_id', '=', 'm.tenant_id')->on('membership.conversation_id', '=', 'm.conversation_id')
                     ->where('membership.account_id', $actor->id)->whereNull('membership.left_at');
             })->where('m.tenant_id', $tenant->id)->whereIn('m.conversation_id', $conversations)
             ->whereColumn('m.id', '>', 'membership.joined_after')->whereNull('m.deleted_at')
             ->groupBy('m.conversation_id')->selectRaw('m.conversation_id, MAX(m.id) as id');
-        $rows = DB::connection('clubunio')->table('clubora.chat_messages as message')
+        $rows = DB::connection('clubunio')->table('clubunio.chat_messages as message')
             ->joinSub($latest, 'latest', fn ($join) => $join->on('latest.id', '=', 'message.id')->on('latest.conversation_id', '=', 'message.conversation_id'))
-            ->leftJoin('clubora.accounts as author', 'author.id', '=', 'message.account_id')
+            ->leftJoin('clubunio.accounts as author', 'author.id', '=', 'message.account_id')
             ->where('message.tenant_id', $tenant->id)->whereNull('message.deleted_at')
             ->get(['message.id', 'message.conversation_id', 'message.body_encrypted', 'message.created_at', 'author.display_name as author_name']);
         $result = [];
@@ -314,10 +314,10 @@ final class ChatService
         $polls = $this->pollDtos($actor, $tenant, $visible->where('kind', 'poll')->pluck('object_id')->unique()->all());
         $reactions = $this->table($tenant, 'chat_reactions')->whereIn('message_id', $visible->pluck('id'))->get(['message_id', 'account_id', 'emoji'])->groupBy('message_id');
         $replyIds=$visible->pluck('reply_to_message_id')->filter()->unique();
-        $quotes=$replyIds->isEmpty()?collect():DB::connection('clubunio')->table('clubora.chat_messages as quote')
-            ->join('clubora.chat_memberships as qm',function($join)use($actor){
+        $quotes=$replyIds->isEmpty()?collect():DB::connection('clubunio')->table('clubunio.chat_messages as quote')
+            ->join('clubunio.chat_memberships as qm',function($join)use($actor){
                 $join->on('qm.tenant_id','=','quote.tenant_id')->on('qm.conversation_id','=','quote.conversation_id')->where('qm.account_id',$actor->id);
-            })->leftJoin('clubora.accounts as qa','qa.id','=','quote.account_id')
+            })->leftJoin('clubunio.accounts as qa','qa.id','=','quote.account_id')
             ->where('quote.tenant_id',$tenant->id)->whereIn('quote.id',$replyIds)->whereNull('qm.left_at')
             ->whereColumn('quote.id','>','qm.joined_after')->get(['quote.id','quote.conversation_id','quote.kind','quote.body_encrypted','quote.deleted_at','qa.display_name'])->keyBy('id');
         $moderated = [];

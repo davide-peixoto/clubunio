@@ -58,9 +58,9 @@ final class PitchConcurrencyDatabase
 
                 protected function run($query, $bindings, \Closure $callback)
                 {
-                    $query = str_replace(['"clubora".', 'clubora.', "'clubora'"],
+                    $query = str_replace(['"clubunio".', 'clubunio.', "'clubunio'"],
                         ['"'.$this->schema.'".', $this->schema.'.', "'{$this->schema}'"], $query);
-                    $bindings = array_map(fn ($value) => $value === 'clubora' ? $this->schema : $value, $bindings);
+                    $bindings = array_map(fn ($value) => $value === 'clubunio' ? $this->schema : $value, $bindings);
                     if (preg_match('/\bclubora\b/i', $query)) {
                         throw new \LogicException('Unredirected business schema query');
                     }
@@ -86,7 +86,7 @@ final class PitchConcurrencyDatabase
             $pdo->exec('REVOKE ALL ON SCHEMA "'.$schema.'" FROM PUBLIC');
             foreach (self::TABLES as $table) {
                 // LIKE copies no rows, FKs or triggers. Identity sequences are independent.
-                $pdo->exec("CREATE TABLE $schema.$table (LIKE clubora.$table INCLUDING ALL)");
+                $pdo->exec("CREATE TABLE $schema.$table (LIKE clubunio.$table INCLUDING ALL)");
                 $defaults = $pdo->query("SELECT column_name FROM information_schema.columns WHERE table_schema='$schema' AND table_name='$table' AND column_default LIKE 'nextval(%'")->fetchAll(\PDO::FETCH_COLUMN);
                 foreach ($defaults as $column) {
                     if (! preg_match('/^[a-z_]+$/D', $column)) throw new \LogicException('Unexpected catalog column');
@@ -99,7 +99,7 @@ final class PitchConcurrencyDatabase
             (require database_path('clubunio/2026_11_04_001700_pitch_weekly_areas.php'))->up();
             (require database_path('clubunio/2026_11_04_001800_pitch_request_idempotency.php'))->up();
             $foreign = $pdo->query("SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid JOIN pg_namespace n ON n.oid=t.relnamespace JOIN pg_class r ON r.oid=c.confrelid JOIN pg_namespace rn ON rn.oid=r.relnamespace WHERE n.nspname='$schema' AND rn.nspname <> '$schema'")->fetchColumn();
-            $defaults = $pdo->query("SELECT count(*) FROM pg_attrdef d JOIN pg_class t ON t.oid=d.adrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='$schema' AND pg_get_expr(d.adbin,d.adrelid) LIKE '%clubora%'")->fetchColumn();
+            $defaults = $pdo->query("SELECT count(*) FROM pg_attrdef d JOIN pg_class t ON t.oid=d.adrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='$schema' AND pg_get_expr(d.adbin,d.adrelid) LIKE '%clubunio%'")->fetchColumn();
             if ($foreign || $defaults) throw new \LogicException('Fixture references business schema');
         });
     }
@@ -110,7 +110,7 @@ final class PitchConcurrencyDatabase
         $actor = new Account;
         $actor->forceFill(['username' => 'pitch-race@example.invalid', 'display_name' => 'Synthetic operator',
             'password' => 'not-a-login-hash', 'active' => true, 'preferred_locale' => 'en'])->save();
-        $insert = fn ($table, $data) => $db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $tenant->id]);
+        $insert = fn ($table, $data) => $db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $tenant->id]);
         $insert('tenant_accounts', ['account_id' => $actor->id, 'role' => 'admin']);
         $season = $insert('seasons', ['name' => 'Synthetic season', 'starts_on' => '2026-01-01', 'ends_on' => '2026-12-31']);
         $insert('tenant_settings', ['area' => 'general', 'key' => 'SaisonID', 'label' => 'Synthetic season',
@@ -126,15 +126,15 @@ final class PitchConcurrencyDatabase
         $function = $insert('staff_functions', ['code' => 'TRAINER', 'name' => 'Trainer']);
         $insert('team_staff', ['team_season_id' => $team, 'member_id' => $member, 'staff_function_id' => $function]);
         $insert('technical_leads', ['team_season_id' => $team, 'member_id' => $member]);
-        $db->table('clubora.account_roles')->insert(['code' => 'profile', 'name' => 'Synthetic profile', 'description' => 'Concurrency fixture']);
+        $db->table('clubunio.account_roles')->insert(['code' => 'profile', 'name' => 'Synthetic profile', 'description' => 'Concurrency fixture']);
         $session = '00000000-0000-4000-8000-000000000001';
         $device = '00000000-0000-4000-8000-000000000002';
-        $db->table('clubora.mobile_sessions')->insert(['id' => $session, 'account_id' => $actor->id,
+        $db->table('clubunio.mobile_sessions')->insert(['id' => $session, 'account_id' => $actor->id,
             'token_hash' => str_repeat('1', 64), 'device_name' => 'Synthetic race device', 'expires_at' => now()->addDay()->toIso8601String()]);
-        $db->table('clubora.mobile_push_devices')->insert(['id' => $device, 'proof_hash' => str_repeat('2', 64),
+        $db->table('clubunio.mobile_push_devices')->insert(['id' => $device, 'proof_hash' => str_repeat('2', 64),
             'app_id' => 'synthetic.pitch-race', 'platform' => 'android', 'origin' => 'https://example.invalid',
             'token_cipher' => 'not-a-provider-token', 'token_hash' => str_repeat('3', 64)]);
-        $db->table('clubora.mobile_push_bindings')->insert(['id' => '00000000-0000-4000-8000-000000000003',
+        $db->table('clubunio.mobile_push_bindings')->insert(['id' => '00000000-0000-4000-8000-000000000003',
             'device_id' => $device, 'account_id' => $actor->id, 'session_id' => $session, 'created_at' => now()->subMinute()->toIso8601String()]);
         foreach (array_keys(config('clubunio-languages.enabled')) as $language) {
             foreach (MessageEventCatalog::all($language) as $key => $event) {
@@ -153,7 +153,7 @@ final class PitchConcurrencyDatabase
     {
         $counts = [];
         foreach (['pitch_requests', 'pitch_request_idempotency', 'object_changes', 'pitch_planning_events', 'notifications', 'mobile_inbox', 'mobile_push_outbox'] as $table) {
-            $counts[$table] = $db->table('clubora.'.$table)->count();
+            $counts[$table] = $db->table('clubunio.'.$table)->count();
         }
         return $counts;
     }

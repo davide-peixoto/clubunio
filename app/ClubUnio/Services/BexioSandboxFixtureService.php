@@ -93,7 +93,7 @@ class BexioSandboxFixtureService
             if (! hash_equals($hash, $this->connectionHash($tenant))) {
                 throw new \RuntimeException('Connection changed', 409);
             }
-            $table = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures');
+            $table = DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures');
             $existing = (clone $table)->where('tenant_id', $tenant->id)->first();
             if ($existing) {
                 if (! hash_equals($hash, $existing->connection_hash) || (int) $existing->remote_invoice_id !== $remoteId
@@ -124,7 +124,7 @@ class BexioSandboxFixtureService
             $table->insert(['tenant_id' => $tenant->id, 'connection_hash' => $hash,
                 'member_id' => $members['Member'], 'parent_id' => $members['Parent'], 'supplier_id' => $members['Supplier'],
                 'invoice_id' => $invoice->id, 'remote_invoice_id' => $remoteId, 'remote_contact_id' => $ids['Member']]);
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id,
                 'actor_id' => $actor->id, 'object_type' => 'invoices', 'object_id' => $invoice->id,
                 'before_value' => '{}', 'after_value' => json_encode(['action' => 'sandbox_fixture_created',
                     'members' => $members, 'remote_invoice_id' => $remoteId], JSON_THROW_ON_ERROR)]);
@@ -135,12 +135,12 @@ class BexioSandboxFixtureService
 
     public function guardPdf(Tenant $tenant, Invoice $invoice, string $token): void
     {
-        $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         if (! $binding) {
             return;
         }
         $reference = self::REFERENCE;
-        $dispatch = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+        $dispatch = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
             ->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $invoice->id)
             ->where('state', 'accepted')->first();
         if ($dispatch && hash_equals($binding->connection_hash, $dispatch->connection_hash)) {
@@ -149,7 +149,7 @@ class BexioSandboxFixtureService
             $reference = 'clubora-sandbox:'.$dispatch->reference;
             $payload = json_decode($dispatch->payload, true, 512, JSON_THROW_ON_ERROR);
             app(BexioSandboxDispatchService::class)->invoiceContactLabel($tenant, (int) $payload['contact_id']);
-            $recipient = $dispatch->source_trial_id ? DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $dispatch->source_trial_id)->value('sandbox_recipient_id') : null;
+            $recipient = $dispatch->source_trial_id ? DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $dispatch->source_trial_id)->value('sandbox_recipient_id') : null;
             if ($recipient) {
                 app(BexioSandboxRecipientService::class)->resolve($tenant, $invoice, (int) $recipient, (int) $payload['contact_id']);
                 $binding->member_id = $invoice->member_id;

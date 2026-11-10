@@ -40,7 +40,7 @@ final class MobileLanguages
 
     public function forAccount(Account $actor): array
     {
-        $saved=DB::connection('clubunio')->table('clubora.mobile_preferences')->where('account_id',$actor->id)->value('language');
+        $saved=DB::connection('clubunio')->table('clubunio.mobile_preferences')->where('account_id',$actor->id)->value('language');
         return $this->effective($saved);
     }
 

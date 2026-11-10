@@ -19,7 +19,7 @@ class TeamPlanningService
 
     protected function removalSchemaAvailable(): bool
     {
-        return $this->eventRemovalSchema ??= \Illuminate\Support\Facades\Schema::connection('clubunio')->hasColumn('clubora.team_events', 'deleted_at');
+        return $this->eventRemovalSchema ??= \Illuminate\Support\Facades\Schema::connection('clubunio')->hasColumn('clubunio.team_events', 'deleted_at');
     }
     public static function seedOptions(int $tenant): void
     {
@@ -33,15 +33,15 @@ class TeamPlanningService
         ];
         foreach ($groups as $category => $values) {
             foreach ($values as $code => $name) {
-                DB::connection('clubunio')->table('clubora.planning_options')->insertOrIgnore(compact('category', 'code', 'name') + ['tenant_id' => $tenant]);
+                DB::connection('clubunio')->table('clubunio.planning_options')->insertOrIgnore(compact('category', 'code', 'name') + ['tenant_id' => $tenant]);
             }
         }
     }
 
     public function table(Tenant $tenant, string $table, bool $withRemoved = false)
     {
-        $query = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
-        if ($table === 'team_events' && ! $withRemoved && $this->removalSchemaAvailable()) { $query->whereNull('clubora.team_events.deleted_at'); }
+        $query = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id);
+        if ($table === 'team_events' && ! $withRemoved && $this->removalSchemaAvailable()) { $query->whereNull('clubunio.team_events.deleted_at'); }
         return app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->table($query, $tenant, $table);
     }
 
@@ -114,7 +114,7 @@ class TeamPlanningService
         }
         $access = app(MemberAccessService::class);
         $responsible = $access->responsibleTeams($actor, $tenant);
-        $own = $manage ? null : $access->represented($actor, $tenant)->select('clubora.members.id');
+        $own = $manage ? null : $access->represented($actor, $tenant)->select('clubunio.members.id');
 
         return $q->where(function ($q) use ($tenant, $responsible, $own, $manage) {
             $q->whereIn('id', $responsible);
@@ -143,7 +143,7 @@ class TeamPlanningService
             return $this->table($tenant, 'team_invitations')->whereRaw('1=0');
         }
 
-        return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id'));
+        return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubunio.members.id'));
     }
 
     public function options(Tenant $tenant): array
@@ -166,7 +166,7 @@ class TeamPlanningService
     public function lock(Tenant $tenant): void
     {
         // All event, participation and absence writes share a lock to make reconciliation atomic.
-        DB::connection('clubunio')->table('clubora.tenants')->where('id', $tenant->id)->lockForUpdate()->firstOrFail();
+        DB::connection('clubunio')->table('clubunio.tenants')->where('id', $tenant->id)->lockForUpdate()->firstOrFail();
     }
 
     public function saveEvent(Account $actor, Tenant $tenant, ?int $id, array $input, bool $seriesWrite = false): int
@@ -313,7 +313,7 @@ class TeamPlanningService
     public function effectiveCount(Tenant $tenant, object $event, ?int $except = null): int
     {
         $participations = $this->table($tenant, 'team_participations')->where('event_id', $event->id)
-            ->whereColumn('member_id', 'clubora.members.id')->selectRaw('1');
+            ->whereColumn('member_id', 'clubunio.members.id')->selectRaw('1');
 
         return $this->roster($tenant, $event)->when($except !== null, fn ($q) => $q->whereKeyNot($except))
             ->where(function ($q) use ($participations, $event) {
@@ -355,9 +355,9 @@ class TeamPlanningService
         $teams = $access->responsibleTeams($actor, $tenant);
 
         return $members->where(function ($query) use ($access, $actor, $tenant, $teams) {
-            $query->whereIn('clubora.members.id', $access->represented($actor, $tenant)->select('clubora.members.id'));
+            $query->whereIn('clubunio.members.id', $access->represented($actor, $tenant)->select('clubunio.members.id'));
             foreach (['team_players', 'team_staff'] as $table) {
-                $query->orWhereIn('clubora.members.id', $this->table($tenant, $table)
+                $query->orWhereIn('clubunio.members.id', $this->table($tenant, $table)
                     ->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
             }
         });
@@ -515,9 +515,9 @@ class TeamPlanningService
         $members = $this->roster($tenant, $event)->pluck('id');
         $accounts = $this->table($tenant, 'tenant_accounts')->where('portal_enabled', true)->pluck('account_id');
         $today = now('Europe/Zurich')->toDateString();
-        $recipients = DB::connection('clubunio')->table('clubora.account_member_links as l')
-            ->join('clubora.accounts as a', 'a.id', '=', 'l.account_id')
-            ->join('clubora.members as m', fn ($j) => $j->on('m.id', '=', 'l.member_id')->on('m.tenant_id', '=', 'l.tenant_id'))
+        $recipients = DB::connection('clubunio')->table('clubunio.account_member_links as l')
+            ->join('clubunio.accounts as a', 'a.id', '=', 'l.account_id')
+            ->join('clubunio.members as m', fn ($j) => $j->on('m.id', '=', 'l.member_id')->on('m.tenant_id', '=', 'l.tenant_id'))
             ->where('l.tenant_id', $tenant->id)->where('l.state', 'approved')->where('a.active', true)
             ->whereIn('l.member_id', $members)->whereIn('a.id', $accounts)
             ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => $q->where('l.kind', 'parent')->where('m.birth_date', '<=', $today)->whereRaw("m.birth_date + interval '18 years' > CAST(? AS date)", [$today])))

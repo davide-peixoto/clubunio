@@ -26,7 +26,7 @@ class SponsorRunPortalController
         $filters = $request->validate(['season_id' => 'nullable|integer|min:1', 'scope' => 'nullable|in:mine,teams,helper,manage,all', 'search' => 'nullable|string|max:100']);
         $filters['scope'] ??= 'mine';
         $events = $service->events($this->actor($request), $tenant, $filters)->paginate(20)->withQueryString();
-        $seasons = $service->db()->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->pluck('name', 'id')->all();
+        $seasons = $service->db()->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->pluck('name', 'id')->all();
 
         return $this->view('clubunio.portal.sponsor-runs', compact('tenant', 'events', 'seasons', 'filters'));
     }
@@ -41,7 +41,7 @@ class SponsorRunPortalController
         $event = $service->event($tenant, $event);
         $summaries = $service->summaries($actor, $tenant, $participants->pluck('id')->all());
         $rights = $service->capabilities($actor, $tenant, $event->id);
-        $teams = $service->db()->table('clubora.sponsor_run_event_teams as et')->join('clubora.team_seasons as t', fn ($j) => $j->on('t.id', '=', 'et.team_season_id')->on('t.tenant_id', '=', 'et.tenant_id'))
+        $teams = $service->db()->table('clubunio.sponsor_run_event_teams as et')->join('clubunio.team_seasons as t', fn ($j) => $j->on('t.id', '=', 'et.team_season_id')->on('t.tenant_id', '=', 'et.tenant_id'))
             ->where('et.tenant_id', $tenant->id)->where('et.event_id', $event->id)->orderBy('t.label')->pluck('t.label', 't.id')->all();
         $selected = null;
         $pledges = null;

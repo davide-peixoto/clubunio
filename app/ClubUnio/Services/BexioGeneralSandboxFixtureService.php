@@ -21,7 +21,7 @@ class BexioGeneralSandboxFixtureService
     {
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
         $db = DB::connection('clubunio');
-        $binding = $db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = $db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         abort_unless($binding && hash_equals($binding->connection_hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
         $existing = Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('member_id', $binding->member_id)->where('notes', self::PARENT_NOTES)->first();
         if ($existing) {
@@ -39,7 +39,7 @@ class BexioGeneralSandboxFixtureService
             $parent = Member::where('tenant_id', $tenant->id)->whereNull('legacy_id')->whereNull('archived_at')->findOrFail($binding->parent_id);
             $member = Member::where('tenant_id', $tenant->id)->whereNull('legacy_id')->whereNull('archived_at')->findOrFail($binding->member_id);
             abort_unless(app(BexioSandboxDispatchService::class)->invoiceContactLabel($tenant, (int) $parent->bexio_contact_id) === 'Parent', 409);
-            $recipient = $db->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('active', true)->where('email_field', 'mother_email')->value('id');
+            $recipient = $db->table('clubunio.billing_recipients')->where('tenant_id', $tenant->id)->where('active', true)->where('email_field', 'mother_email')->value('id');
             abort_unless($recipient, 409, __('Aktiver Elternempfaenger-Lookup fehlt.'));
             $member->forceFill(['mother_name' => 'Clubora Sandbox Parent v1', 'mother_email' => 'parent@example.invalid', 'billing_recipient_id' => $recipient])->save();
             $member->refresh();
@@ -64,9 +64,9 @@ class BexioGeneralSandboxFixtureService
         $service = app(BexioSandboxDispatchService::class);
         $service->authorize($actor, $tenant);
         $db = DB::connection('clubunio');
-        $binding = $db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = $db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         abort_unless($binding && hash_equals($binding->connection_hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
-        $bases = $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNull('source_trial_id')->where('state', 'accepted')->get()->keyBy('kind');
+        $bases = $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->whereNull('source_trial_id')->where('state', 'accepted')->get()->keyBy('kind');
         abort_unless(isset($bases['invoice'], $bases['expense']), 409, __('Basis-Sandbox-Test zuerst abschliessen.'));
         $invoice = json_decode($bases['invoice']->payload, true, 512, JSON_THROW_ON_ERROR);
         $bill = json_decode($bases['expense']->payload, true, 512, JSON_THROW_ON_ERROR);
@@ -86,15 +86,15 @@ class BexioGeneralSandboxFixtureService
                     app(SettingsService::class)->update($actor, $tenant, $setting->id, (string) $value);
                 }
             }
-            $country = $db->table('clubora.countries')->where('tenant_id', $tenant->id)->where('active', true)->where('code', 'CH')->value('id');
-            $recipient = $db->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('active', true)->where('email_field', 'email')->value('id');
+            $country = $db->table('clubunio.countries')->where('tenant_id', $tenant->id)->where('active', true)->where('code', 'CH')->value('id');
+            $recipient = $db->table('clubunio.billing_recipients')->where('tenant_id', $tenant->id)->where('active', true)->where('email_field', 'email')->value('id');
             abort_unless($country && $recipient, 409, __('Aktive CH-/Mitglied-Empfaenger-Lookups erforderlich.'));
             foreach ([$binding->member_id, $binding->supplier_id] as $id) {
                 $member = Member::where('tenant_id', $tenant->id)->whereNull('legacy_id')->findOrFail($id);
                 $member->forceFill(['country_id' => $country, 'billing_recipient_id' => $recipient])->save();
             }
-            $type = $db->table('clubora.expense_types')->where('tenant_id', $tenant->id)->where('code', 'sandbox_web')->first();
-            $typeId = $type?->id ?? $db->table('clubora.expense_types')->insertGetId(['tenant_id' => $tenant->id, 'code' => 'sandbox_web', 'name' => 'Sandbox Testspesen', 'receipt_required' => false, 'bexio_account_id' => $bill['line_items'][0]['booking_account_id']]);
+            $type = $db->table('clubunio.expense_types')->where('tenant_id', $tenant->id)->where('code', 'sandbox_web')->first();
+            $typeId = $type?->id ?? $db->table('clubunio.expense_types')->insertGetId(['tenant_id' => $tenant->id, 'code' => 'sandbox_web', 'name' => 'Sandbox Testspesen', 'receipt_required' => false, 'bexio_account_id' => $bill['line_items'][0]['booking_account_id']]);
             $result = [];
             foreach (['invoice', 'expense'] as $kind) {
                 $class = $kind === 'invoice' ? Invoice::class : Expense::class;
@@ -106,7 +106,7 @@ class BexioGeneralSandboxFixtureService
                     if ($kind === 'invoice') {
                         $doc->workflow_status_id = app(InvoiceWorkflowService::class)->status($tenant, 'released');
                     } else {
-                        $doc->status_id = $db->table('clubora.expense_statuses')->where('tenant_id', $tenant->id)->where('active', true)->where('code', 'Z')->value('id');
+                        $doc->status_id = $db->table('clubunio.expense_statuses')->where('tenant_id', $tenant->id)->where('active', true)->where('code', 'Z')->value('id');
                         abort_unless($doc->status_id, 409);
                         $doc->payment_released_on = now()->toDateString();
                     }
@@ -119,7 +119,7 @@ class BexioGeneralSandboxFixtureService
                             : ['expense_type_id' => $typeId, 'amount' => $amount, 'notes' => 'Synthetische Testposition ohne Pflichtbeleg']);
                         $line->save();
                     }
-                    $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $kind === 'invoice' ? 'invoices' : 'expenses', 'object_id' => $doc->id, 'before_value' => '{}', 'after_value' => json_encode(['action' => 'sandbox_general_fixture'])]);
+                    $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $kind === 'invoice' ? 'invoices' : 'expenses', 'object_id' => $doc->id, 'before_value' => '{}', 'after_value' => json_encode(['action' => 'sandbox_general_fixture'])]);
                 }
                 $result[$kind] = $doc->id;
             }

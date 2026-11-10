@@ -53,7 +53,7 @@ class MobileSponsorBillingTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'mobile-billing-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic mobile billing']);
         $this->actor = new Account; $this->actor->forceFill(['username' => 'mobile-billing-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic billing admin',
             'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);
         $season = $this->insert('seasons', ['name' => 'Synthetic billing season', 'starts_on' => now()->subMonth()->toDateString(), 'ends_on' => now()->addMonth()->toDateString()]);
         $team = $this->insert('team_seasons', ['team_id' => $this->insert('teams', ['name' => 'Synthetic billing team']), 'season_id' => $season, 'label' => 'Synthetic team']);
         $this->member = $this->insert('members', ['first_name' => 'Synthetic', 'last_name' => 'Runner']);
@@ -78,7 +78,7 @@ class MobileSponsorBillingTest extends TestCase
         $this->withToken($this->token); $this->base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/sponsor-run/billing';
     }
     protected function tearDown(): void { if (isset($this->db)) $this->db->rollBack(); parent::tearDown(); }
-    private function insert(string $table, array $values): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values); }
+    private function insert(string $table, array $values): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values); }
     private function listing() { return $this->getJson($this->base.'/events/'.$this->event)->assertOk(); }
     private function prepare(): array {
         $row = $this->listing()->json('data.Candidates.0');
@@ -93,16 +93,16 @@ class MobileSponsorBillingTest extends TestCase
         config(['clubunio-mobile.native_sponsor_billing_enabled' => false]);
         $row = $this->listing()->assertJsonPath('data.Settings.ProviderActionsEnabled', false)->assertJsonPath('data.Candidates.0.TotalCents', 1800)
             ->assertJsonPath('data.Candidates.0.AvailableActions', [])->json('data.Candidates.0');
-        $this->assertSame(0, $this->db->table('clubora.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
         $input = ['PledgeID' => $this->pledge, 'SourceVersion' => $row['SourceVersion'], 'Confirm' => true];
         $this->postJson($this->base.'/events/'.$this->event.'/prepare', $input)->assertStatus(503);
         config(['clubunio-mobile.native_sponsor_billing_enabled' => true]);
-        $this->db->table('clubora.sponsor_run_pledges')->where('id', $this->pledge)->increment('revision');
+        $this->db->table('clubunio.sponsor_run_pledges')->where('id', $this->pledge)->increment('revision');
         $this->postJson($this->base.'/events/'.$this->event.'/prepare', $input)->assertConflict();
         $fresh = $this->listing()->json('data.Candidates.0'); $input['SourceVersion'] = $fresh['SourceVersion'];
         $invoice = $this->postJson($this->base.'/events/'.$this->event.'/prepare', $input)->assertOk()->assertJsonPath('data.Invoice.State', 'DRAFT')->json('data.Invoice');
         $this->postJson($this->base.'/events/'.$this->event.'/prepare', $input)->assertOk()->assertJsonPath('data.Invoice.InvoiceID', $invoice['InvoiceID']);
-        $this->assertSame(1, $this->db->table('clubora.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.sponsor_run_invoices')->where('tenant_id', $this->tenant->id)->count());
         $this->assertSame([], $this->provider->writes); $this->assertSame(0, $this->provider->reads); Http::assertNothingSent(); Mail::assertNothingSent();
     }
     public function test_original_provider_cycle_pdf_replays_and_paid_invoice_guard_use_real_billing_domain(): void {
@@ -132,7 +132,7 @@ class MobileSponsorBillingTest extends TestCase
         $this->action($invoice, 'create-draft')->assertConflict();
         $pending = $this->listing()->assertJsonPath('data.Candidates.0.State', 'CREATE_PENDING')->assertJsonPath('data.Candidates.0.RequiresReconciliation', true)->json('data.Candidates.0');
         $this->assertSame(['sync'], $pending['AvailableActions']);
-        $this->assertTrue($this->db->table('clubora.sync_work_items')->where('tenant_id', $this->tenant->id)->where('state', 'attention')->exists());
+        $this->assertTrue($this->db->table('clubunio.sync_work_items')->where('tenant_id', $this->tenant->id)->where('state', 'attention')->exists());
         $this->action($invoice, 'create-draft')->assertOk()->assertJsonPath('data.Invoice.State', 'BEXIO_DRAFT');
         $this->assertCount(2, $this->provider->writes);
         $this->action($invoice, 'create-draft')->assertOk()->assertJsonPath('data.Replayed', true);
@@ -143,14 +143,14 @@ class MobileSponsorBillingTest extends TestCase
         app(SponsorRunBillingService::class)->saveConfiguration($this->actor, $this->tenant, array_replace($this->configuration, ['due_days' => 31]));
         $changed = $this->listing()->json('data.Candidates.0'); $this->assertNotContains('create-contact', $changed['AvailableActions']);
         $this->action($invoice, 'create-contact')->assertConflict(); $this->assertSame([], $this->provider->writes);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
         $this->listing()->assertJsonPath('data.Candidates.0.AvailableActions', []);
         $this->action($invoice, 'create-contact')->assertForbidden();
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
             'member_id' => $this->member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'member']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'member']);
         $this->getJson($this->base.'/events/'.$this->event)->assertForbidden();
-        $this->db->table('clubora.mobile_sessions')->where('account_id', $this->actor->id)->update(['revoked_at' => now()]);
+        $this->db->table('clubunio.mobile_sessions')->where('account_id', $this->actor->id)->update(['revoked_at' => now()]);
         $this->getJson($this->base.'/events/'.$this->event)->assertUnauthorized();
         $this->assertSame([], $this->provider->writes); Http::assertNothingSent(); Mail::assertNothingSent();
     }

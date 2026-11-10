@@ -36,8 +36,8 @@ class SignageDesignTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'design-'.Str::random(10), 'name' => 'Synthetic club']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic admin', 'active' => true, 'password' => bcrypt('fixture')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $this->period = $this->db->table('clubora.training_options')->insertGetId(['tenant_id' => $this->tenant->id, 'category' => 'period', 'code' => 'S', 'name' => 'Synthetic summer']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->period = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id' => $this->tenant->id, 'category' => 'period', 'code' => 'S', 'name' => 'Synthetic summer']);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
@@ -65,7 +65,7 @@ class SignageDesignTest extends TestCase
         $this->assertSame('#16191e', $data['ink']);
         $this->assertSame('/images/svs-logo.png', $data['logo']);
         $this->assertSame(0, $data['period_id']);
-        $this->assertSame(3, $this->db->table('clubora.setting_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(3, $this->db->table('clubunio.setting_changes')->where('tenant_id', $this->tenant->id)->count());
         $other = Tenant::create(['slug' => 'other-'.Str::random(8), 'name' => 'Other club']);
         $this->assertSame('#164b8a', app(SignageBrandService::class)->read($other)['color']);
     }
@@ -80,7 +80,7 @@ class SignageDesignTest extends TestCase
                 $this->assertNotEmpty($e->errors());
             }
         }
-        $this->assertSame(0, $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.tenant_settings')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_stale_design_is_not_overwritten(): void
@@ -93,7 +93,7 @@ class SignageDesignTest extends TestCase
 
     public function test_office_cannot_change_design(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         Livewire::test(SignagePreview::class)->assertActionHidden('design');
         $this->expectException(HttpException::class);
         app(SignageBrandService::class)->save($this->actor, $this->tenant, $this->input());
@@ -107,6 +107,6 @@ class SignageDesignTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('period_id', $e->errors());
         }
-        $this->assertSame(0, $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.tenant_settings')->where('tenant_id', $this->tenant->id)->count());
     }
 }

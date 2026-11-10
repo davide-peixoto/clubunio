@@ -463,7 +463,7 @@ class AssistantActionTools
 
     private function table(Tenant $tenant, string $table): Builder
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id);
     }
 
     private function invalid(string $field, string $reason = 'invalid'): never

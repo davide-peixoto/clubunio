@@ -51,31 +51,31 @@ class MobileTrainingTest extends TestCase
         $this->db->table('pg_temp.training_fixture_tenants')->insert(['id' => $this->tenant->id]);
         foreach (['training_plans', 'team_seasons'] as $table) {
             $this->db->statement('CREATE TEMP TABLE training_fixture_'.$table.'(tenant_id bigint NOT NULL,id bigint NOT NULL,UNIQUE(tenant_id,id)) ON COMMIT DROP');
-            $this->db->statement('INSERT INTO pg_temp.training_fixture_'.$table.' SELECT tenant_id,id FROM clubora.'.$table.' WHERE tenant_id=?', [$this->tenant->id]);
+            $this->db->statement('INSERT INTO pg_temp.training_fixture_'.$table.' SELECT tenant_id,id FROM clubunio.'.$table.' WHERE tenant_id=?', [$this->tenant->id]);
         }
         $this->db->statement('CREATE TEMP TABLE training_fixture_tenant_accounts(tenant_id bigint NOT NULL,account_id bigint NOT NULL,UNIQUE(tenant_id,account_id)) ON COMMIT DROP');
-        $this->db->statement('INSERT INTO pg_temp.training_fixture_tenant_accounts SELECT tenant_id,account_id FROM clubora.tenant_accounts WHERE tenant_id=?', [$this->tenant->id]);
+        $this->db->statement('INSERT INTO pg_temp.training_fixture_tenant_accounts SELECT tenant_id,account_id FROM clubunio.tenant_accounts WHERE tenant_id=?', [$this->tenant->id]);
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000100_mobile_training_shares.php'))->up());
         $this->assertCount(1, $ddl);
-        $sql = str_replace('CREATE TABLE clubora.mobile_training_plan_shares', 'CREATE TEMP TABLE mobile_training_plan_shares', $ddl[0]['query']);
-        $sql = str_replace(['clubora.mobile_training_plan_shares', ");\nCREATE INDEX"], ['pg_temp.mobile_training_plan_shares', ") ON COMMIT DROP;\nCREATE INDEX"], $sql);
-        foreach (['tenants','training_plans','team_seasons','tenant_accounts'] as $table) { $sql = str_replace('REFERENCES clubora.'.$table.'(', 'REFERENCES pg_temp.training_fixture_'.$table.'(', $sql); }
-        $this->assertStringNotContainsString('REFERENCES clubora.', $sql);
-        $this->assertStringNotContainsString('ON clubora.', $sql);
+        $sql = str_replace('CREATE TABLE clubunio.mobile_training_plan_shares', 'CREATE TEMP TABLE mobile_training_plan_shares', $ddl[0]['query']);
+        $sql = str_replace(['clubunio.mobile_training_plan_shares', ");\nCREATE INDEX"], ['pg_temp.mobile_training_plan_shares', ") ON COMMIT DROP;\nCREATE INDEX"], $sql);
+        foreach (['tenants','training_plans','team_seasons','tenant_accounts'] as $table) { $sql = str_replace('REFERENCES clubunio.'.$table.'(', 'REFERENCES pg_temp.training_fixture_'.$table.'(', $sql); }
+        $this->assertStringNotContainsString('REFERENCES clubunio.', $sql);
+        $this->assertStringNotContainsString('ON clubunio.', $sql);
         $this->db->unprepared($sql);
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table, $prefix = null) {
-                if (is_string($table)) { $table = str_replace('clubora.mobile_training_plan_shares', 'pg_temp.mobile_training_plan_shares', $table); }
+                if (is_string($table)) { $table = str_replace('clubunio.mobile_training_plan_shares', 'pg_temp.mobile_training_plan_shares', $table); }
                 return parent::wrapTable($table, $prefix);
             }
         });
     }
     protected function tearDown(): void { if (isset($this->db) && $this->db->transactionLevel()) { $this->db->rollBack(); } parent::tearDown(); }
-    private function insert(string $table, array $row): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $row); }
+    private function insert(string $table, array $row): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $row); }
     private function account(string $role): Account {
         $actor = new Account; $actor->forceFill(['username' => 'qa-training-'.bin2hex(random_bytes(5)), 'display_name' => 'Synthetic '.$role,
             'password' => bcrypt('synthetic-password'), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => $role, 'portal_enabled' => true]); return $actor;
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => $role, 'portal_enabled' => true]); return $actor;
     }
     private function token(Account $actor): string { return $this->postJson('/api/mobile/v1/session', ['username' => $actor->username, 'password' => 'synthetic-password', 'device_name' => 'Synthetic training'])->assertOk()->json('data.token'); }
     private function base(): string { return '/api/mobile/v1/clubs/'.$this->tenant->id.'/training-plans'; }
@@ -127,7 +127,7 @@ class MobileTrainingTest extends TestCase
         $url = $this->base().'/'.$this->planId; $key = (string) Str::uuid();
         $input = ['revision' => 1,'request_key' => $key,'consent' => true] + $this->draft();
         $work = $this->postJson($url.'/review', $input)->assertStatus(202)->assertJsonPath('data.state', 'queued')->json('data.id');
-        $this->assertSame('Synthetic training', $this->db->table('clubora.training_plans')->where('id', $this->planId)->value('title'));
+        $this->assertSame('Synthetic training', $this->db->table('clubunio.training_plans')->where('id', $this->planId)->value('title'));
         app(MobileTrainingWork::class)->execute($work); app(MobileTrainingWork::class)->execute($work);
         $this->getJson($this->base().'/work/'.$work)->assertOk()->assertJsonPath('data.state', 'succeeded')->assertJsonPath('data.plan.playerCount', 16);
         $this->postJson($url.'/review', $input)->assertStatus(202)->assertJsonPath('data.id', $work);
@@ -136,10 +136,10 @@ class MobileTrainingTest extends TestCase
         Http::assertSentCount(1);
         Http::assertSent(function ($request) { $body = $request->data(); return $body['max_output_tokens'] === 8000 && $body['max_tool_calls'] === 1 && $body['store'] === false
             && str_contains($body['input'][1]['content'], 'Edited draft') && str_contains($body['input'][1]['content'], '"playerCount":16'); });
-        $this->assertSame(1, $this->db->table('clubora.training_plans')->where('id', $this->planId)->value('revision'));
+        $this->assertSame(1, $this->db->table('clubunio.training_plans')->where('id', $this->planId)->value('revision'));
         $this->postJson($url.'/review/apply', ['revision' => 1,'proposal' => $work])->assertOk()->assertJsonPath('data.revision', 2)->assertJsonPath('data.playerCount', 16);
         $this->postJson($url.'/review/apply', ['revision' => 1,'proposal' => $work])->assertConflict();
-        $this->assertSame(100000, $this->db->table('clubora.mobile_ai_work')->where('id', $work)->value('reserved_microusd'));
+        $this->assertSame(100000, $this->db->table('clubunio.mobile_ai_work')->where('id', $work)->value('reserved_microusd'));
     }
     public function test_revoked_session_closes_queued_work_and_missing_configuration_never_calls_provider(): void
     {
@@ -148,16 +148,16 @@ class MobileTrainingTest extends TestCase
         $this->postJson($this->base().'/generate', $payload)->assertStatus(503);
         $this->ai();
         $work = $this->postJson($this->base().'/generate', $payload)->assertStatus(202)->json('data.id');
-        $this->db->table('clubora.mobile_sessions')->where('account_id', $this->owner->id)->update(['revoked_at' => now()]);
+        $this->db->table('clubunio.mobile_sessions')->where('account_id', $this->owner->id)->update(['revoked_at' => now()]);
         app(MobileTrainingWork::class)->execute($work);
-        $this->assertSame('rejected', $this->db->table('clubora.mobile_ai_work')->where('id', $work)->value('state'));
+        $this->assertSame('rejected', $this->db->table('clubunio.mobile_ai_work')->where('id', $work)->value('state'));
         app(MobileTrainingWork::class)->execute($work); Http::assertNothingSent();
-        $this->assertSame(1, $this->db->table('clubora.training_plans')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.training_plans')->where('tenant_id', $this->tenant->id)->count());
         $profile = $this->insert('access_profiles', ['name' => 'View and approve only', 'active' => true, 'permissions' => json_encode(['training.view','training.approve'])]);
         // Same opt-in catalogue row as the existing profile regression suites;
         // uncommitted and rolled back, never visible to other connections.
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->owner->id)->update(['role' => 'profile','access_profile_id' => $profile,'portal_enabled' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->owner->id)->update(['role' => 'profile','access_profile_id' => $profile,'portal_enabled' => false]);
         $row = app(\App\ClubUnio\Mobile\MobileTrainingPlanService::class)->get($this->owner, $this->tenant, $this->planId);
         $capabilities = app(\App\ClubUnio\Mobile\MobileTrainingData::class)->plan($this->owner, $this->tenant, $row);
         $this->assertFalse($capabilities['canEdit']); $this->assertFalse($capabilities['canReview']);
@@ -175,7 +175,7 @@ class MobileTrainingTest extends TestCase
         $id = $this->getJson($this->base().'/work/'.$work)->assertOk()->assertJsonPath('data.state', 'succeeded')
             ->assertJsonPath('data.plan.revision', 1)->assertJsonPath('data.plan.sharedTeamSaisonId', null)->json('data.plan.id');
         $this->assertNotSame($this->planId, $id);
-        $row = $this->db->table('clubora.training_plans')->where('id', $id)->first();
+        $row = $this->db->table('clubunio.training_plans')->where('id', $id)->first();
         $this->assertSame($this->owner->id, $row->owner_id); $this->assertFalse($row->shared);
         $this->assertSame('Mittel', json_decode($row->input_json, true)['level']);
         $this->postJson($this->base().'/generate', $payload)->assertStatus(202)->assertJsonPath('data.plan.id', $id);
@@ -183,7 +183,7 @@ class MobileTrainingTest extends TestCase
         $new = $this->postJson($this->base().'/generate', array_replace($payload, ['request_key' => (string) Str::uuid(), 'previous_work' => $work]))
             ->assertStatus(202)->assertJsonPath('data.state', 'queued')->json('data.id');
         $this->assertNotSame($work, $new);
-        $this->db->table('clubora.mobile_ai_work')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $this->tenant->id, 'account_id' => $this->owner->id,
+        $this->db->table('clubunio.mobile_ai_work')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $this->tenant->id, 'account_id' => $this->owner->id,
             'request_key' => (string) Str::uuid(), 'fingerprint' => str_repeat('a', 64), 'provider' => 'azure_document_intelligence',
             'operation' => 'expense_ocr', 'state' => 'attention', 'reserved_microusd' => 900000]);
         $this->postJson($this->base().'/generate', array_replace($payload, ['request_key' => (string) Str::uuid(), 'goal' => 'Different exercise']))->assertStatus(429);
@@ -194,14 +194,14 @@ class MobileTrainingTest extends TestCase
     {
         $this->ai(); $this->withToken($this->token($this->owner));
         Http::fake(['https://api.openai.com/v1/responses' => function () {
-            $this->db->table('clubora.mobile_sessions')->where('account_id', $this->owner->id)->update(['revoked_at' => now()]);
+            $this->db->table('clubunio.mobile_sessions')->where('account_id', $this->owner->id)->update(['revoked_at' => now()]);
             return Http::response(['status' => 'completed', 'output' => [['type' => 'file_search_call','status' => 'completed'],
                 ['content' => [['type' => 'output_text','text' => json_encode($this->plan())]]]]]);
         }]);
         $work = $this->postJson($this->base().'/generate', ['request_key' => (string) Str::uuid(), 'consent' => true] + $this->input())->assertStatus(202)->json('data.id');
         app(MobileTrainingWork::class)->execute($work); app(MobileTrainingWork::class)->execute($work);
-        $this->assertSame('attention', $this->db->table('clubora.mobile_ai_work')->where('id', $work)->value('state'));
-        $this->assertSame(1, $this->db->table('clubora.training_plans')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame('attention', $this->db->table('clubunio.mobile_ai_work')->where('id', $work)->value('state'));
+        $this->assertSame(1, $this->db->table('clubunio.training_plans')->where('tenant_id', $this->tenant->id)->count());
         Http::assertSentCount(1);
     }
 }

@@ -73,7 +73,7 @@ class ImpersonationTest extends TestCase
         $this->start()->assertForbidden();
         $this->grant();
         $this->start(['password' => 'wrong'])->assertForbidden();
-        $this->assertSame(0, $this->db->table('clubora.support_sessions')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.support_sessions')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_start_read_and_stop_preserve_real_identity_and_audit(): void
@@ -84,12 +84,12 @@ class ImpersonationTest extends TestCase
         $this->get('/members')->assertOk()->assertSee('Simulation als')->assertSee('Simulated office')
             ->assertHeader('X-ClubUnio-Impersonation', 'read-only');
         $this->assertAuthenticatedAs($this->admin, 'clubunio');
-        $read = $this->db->table('clubora.support_events')->where('session_id', $id)->where('action', 'read')->first();
+        $read = $this->db->table('clubunio.support_events')->where('session_id', $id)->where('action', 'read')->first();
         $this->assertSame($this->admin->id, $read->actor_id);
         $this->assertSame($this->target->id, $read->target_id);
         $this->post('/support/impersonation/stop')->assertRedirect('/support/impersonation');
         $this->assertNull(session(ImpersonationService::KEY));
-        $this->assertNotNull($this->db->table('clubora.support_sessions')->where('id', $id)->value('ended_at'));
+        $this->assertNotNull($this->db->table('clubunio.support_sessions')->where('id', $id)->value('ended_at'));
         $this->assertAuthenticatedAs($this->admin, 'clubunio');
     }
 
@@ -103,7 +103,7 @@ class ImpersonationTest extends TestCase
         foreach (['/api-integrations', '/api-docs', '/members/create', '/support/impersonation'] as $path) {
             $this->get($path)->assertForbidden();
         }
-        $this->assertSame(1, $this->db->table('clubora.support_sessions')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.support_sessions')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_target_admin_inactive_technical_and_other_tenant_are_rejected(): void
@@ -122,10 +122,10 @@ class ImpersonationTest extends TestCase
     {
         $this->grant();
         $this->start()->assertRedirect('/');
-        $this->db->table('clubora.support_grants')->where('account_id', $this->admin->id)->update(['enabled' => false]);
+        $this->db->table('clubunio.support_grants')->where('account_id', $this->admin->id)->update(['enabled' => false]);
         $this->get('/members')->assertForbidden();
         $this->assertNull(session(ImpersonationService::KEY));
-        $this->db->table('clubora.support_grants')->where('account_id', $this->admin->id)->update(['enabled' => true]);
+        $this->db->table('clubunio.support_grants')->where('account_id', $this->admin->id)->update(['enabled' => true]);
         $this->start()->assertRedirect('/');
         $this->travel(16)->minutes();
         $this->get('/members')->assertForbidden();
@@ -143,9 +143,9 @@ class ImpersonationTest extends TestCase
     public function test_portal_target_does_not_gain_backoffice_access(): void
     {
         $this->grant();
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->target->id)->update(['role' => 'member']);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Support', 'last_name' => 'Fixture']);
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->target->id,
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->target->id)->update(['role' => 'member']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Support', 'last_name' => 'Fixture']);
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->target->id,
             'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'manual']);
         $this->start()->assertRedirect('/portal/'.$this->tenant->slug.'/members');
         $this->get('/members')->assertForbidden();
@@ -158,7 +158,7 @@ class ImpersonationTest extends TestCase
         $this->start()->assertRedirect('/');
         $other = Tenant::create(['slug' => 'other-'.Str::lower(Str::random(12)), 'name' => 'Other fixture']);
         $this->get('/portal/'.$other->slug.'/members')->assertForbidden();
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->admin->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->admin->id)->update(['role' => 'office']);
         $this->get('/members')->assertForbidden();
         $this->assertNull(session(ImpersonationService::KEY));
     }

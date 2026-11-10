@@ -51,10 +51,10 @@ final class MobileSponsorBillingData
     {
         $settings = $this->settings($actor, $tenant); app(SponsorRunService::class)->event($tenant, $event);
         $d = $request->validate(['start' => 'nullable|integer|min:0|max:100000', 'search' => 'nullable|string|max:100']);
-        $query = DB::connection('clubunio')->table('clubora.sponsor_run_pledges as g')
-            ->join('clubora.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
-            ->join('clubora.members as m', fn ($j) => $j->on('m.id', '=', 'p.member_id')->on('m.tenant_id', '=', 'p.tenant_id'))
-            ->leftJoin('clubora.sponsor_run_invoices as i', fn ($j) => $j->on('i.pledge_id', '=', 'g.id')->on('i.tenant_id', '=', 'g.tenant_id'))
+        $query = DB::connection('clubunio')->table('clubunio.sponsor_run_pledges as g')
+            ->join('clubunio.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
+            ->join('clubunio.members as m', fn ($j) => $j->on('m.id', '=', 'p.member_id')->on('m.tenant_id', '=', 'p.tenant_id'))
+            ->leftJoin('clubunio.sponsor_run_invoices as i', fn ($j) => $j->on('i.pledge_id', '=', 'g.id')->on('i.tenant_id', '=', 'g.tenant_id'))
             ->where('g.tenant_id', $tenant->id)->where('g.event_id', $event);
         if ($search = trim($d['search'] ?? '')) {
             $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search).'%';
@@ -124,7 +124,7 @@ final class MobileSponsorBillingData
             'ApprovedAt' => $source['approved_at'], 'ParticipationRequired' => true, 'Recipient' => $this->recipient($source['recipient']),
             'BexioInvoiceID' => $invoice->remote_id ? (int) $invoice->remote_id : null, 'BexioStatus' => $invoice->remote_status === null ? null : (int) $invoice->remote_status,
             'PaidCents' => $invoice->paid_cents === null ? null : (int) $invoice->paid_cents, 'CreditCents' => $invoice->credit_cents === null ? null : (int) $invoice->credit_cents,
-            'SentAt' => $invoice->sent_at, 'SyncedAt' => DB::connection('clubunio')->table('clubora.sponsor_run_billing_audit')->where('tenant_id', $tenant->id)
+            'SentAt' => $invoice->sent_at, 'SyncedAt' => DB::connection('clubunio')->table('clubunio.sponsor_run_billing_audit')->where('tenant_id', $tenant->id)
                 ->where('invoice_id', $invoice->id)->where('action', 'sync')->max('created_at'), 'LastAction' => $invoice->last_operation,
             'AvailableActions' => $actions, 'CanPdf' => $settings['ProviderActionsEnabled'] && $bound && (bool) $invoice->remote_id
                 && app(ModulePermissionService::class)->allows($actor, $tenant, 'sponsor_runs', 'download'),

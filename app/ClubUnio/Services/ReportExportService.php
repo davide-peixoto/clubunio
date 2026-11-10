@@ -51,7 +51,7 @@ class ReportExportService
                 'passive' => $reports->passive($actor, $tenant),
                 default => $reports->withoutTeam($reports->teamCandidates($actor, $tenant), $tenant, $season),
             };
-            $query->whereIn($query->getModel()->qualifyColumn('id'), $eligible->select('clubora.members.id'));
+            $query->whereIn($query->getModel()->qualifyColumn('id'), $eligible->select('clubunio.members.id'));
             $relations = ['status' => fn ($q) => $q->where('tenant_id', $tenant->id), 'type' => fn ($q) => $q->where('tenant_id', $tenant->id)];
             if ($kind === 'unassigned' && is_scalar($season) && ctype_digit((string) $season)) {
                 $seasonName = Season::where('tenant_id', $tenant->id)->whereKey($season)->value('name');
@@ -119,7 +119,7 @@ class ReportExportService
                     $row->bank?->street, $row->bank?->postal_address, $row->bank?->postal_code, $row->bank?->country_code, $row->bank?->clearing_number, $row->bank?->postal_account],
             };
         });
-        DB::connection('clubunio')->table('clubora.object_changes')->insert([
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert([
             'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'report_exports', 'object_id' => $tenant->id,
             'after_value' => json_encode(['action' => 'export_prepared', 'kind' => $kind, 'row_count' => $values->count()], JSON_THROW_ON_ERROR),
         ]);

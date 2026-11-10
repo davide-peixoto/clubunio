@@ -54,7 +54,7 @@ class ExpensePortalController
         $members = app(MemberAccessService::class)->represented($request->user('portal'), $tenant, true)->get();
         $member = $members->first();
         abort_unless($member, 403);
-        $teams = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereIn('id', DB::connection('clubunio')->table('clubora.team_staff')
+        $teams = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereIn('id', DB::connection('clubunio')->table('clubunio.team_staff')
             ->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $member->id)->select('team_season_id'))->orderByDesc('season_id')->get();
         $banks = MemberBankAccount::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('active', true)->with('bank')->get();
         $rounds = ExpenseRound::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->get();

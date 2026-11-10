@@ -15,7 +15,7 @@ final class MobileMemberDocuments
         'signed_by', 'signed_at', 'signed_kind', 'signer_name_encrypted', 'signature_fingerprint', 'signed_sha256', 'signed_byte_count', 'signed_page_count', 'created_at', 'updated_at'];
     private const STATES = ['pending' => 'OFFEN', 'signed' => 'UNTERSCHRIEBEN', 'filed' => 'ABGELEGT'];
 
-    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_member_receipts')->where('tenant_id', $tenant->id); }
+    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_member_receipts')->where('tenant_id', $tenant->id); }
     private function permissions() { return app(ModulePermissionService::class); }
     public function administration(Account $actor, Tenant $tenant): bool { return $this->permissions()->allows($actor, $tenant, 'documents', 'view'); }
     public function canUpload(Account $actor, Tenant $tenant): bool
@@ -27,7 +27,7 @@ final class MobileMemberDocuments
     {
         app(MobileAccess::class)->enter($actor, $tenant);
         $query = $this->table($tenant);
-        if ($mine || ! $this->administration($actor, $tenant)) { $query->whereIn('member_id', $this->represented($actor, $tenant)->select('clubora.members.id')); }
+        if ($mine || ! $this->administration($actor, $tenant)) { $query->whereIn('member_id', $this->represented($actor, $tenant)->select('clubunio.members.id')); }
         return $query;
     }
     private function files(Account $actor, Tenant $tenant, bool $mine = false)
@@ -35,7 +35,7 @@ final class MobileMemberDocuments
         app(MobileAccess::class)->enter($actor, $tenant);
         $query = MemberDocument::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)
             ->whereHas('member', fn ($q) => $q->where('tenant_id', $tenant->id)->whereNull('archived_at'));
-        if ($mine || ! $this->administration($actor, $tenant)) { $query->where('portal_visible', true)->whereIn('member_id', $this->represented($actor, $tenant)->select('clubora.members.id')); }
+        if ($mine || ! $this->administration($actor, $tenant)) { $query->where('portal_visible', true)->whereIn('member_id', $this->represented($actor, $tenant)->select('clubunio.members.id')); }
         return $query;
     }
     private function archives(Account $actor, Tenant $tenant, bool $mine = false)
@@ -54,9 +54,9 @@ final class MobileMemberDocuments
         $mine = (bool) ($d['mine'] ?? true);
         $receipts = $this->receipts($actor, $tenant, $mine)->whereNull('archive_receipt_id')->selectRaw("id, member_id, created_at, 'receipt' AS source_kind, CASE state WHEN 'pending' THEN 'OFFEN' WHEN 'signed' THEN 'UNTERSCHRIEBEN' ELSE 'ABGELEGT' END AS status");
         $archives = $this->archives($actor, $tenant, $mine)->leftJoinSub($this->table($tenant)->whereNotNull('archive_receipt_id')->select(['archive_receipt_id', 'state']), 'forward',
-            fn ($j) => $j->on('forward.archive_receipt_id', '=', 'clubora.legacy_material_receipts.id'))
+            fn ($j) => $j->on('forward.archive_receipt_id', '=', 'clubunio.legacy_material_receipts.id'))
             ->selectRaw("id, member_id, created_at, 'archive' AS source_kind, CASE forward.state WHEN 'signed' THEN 'UNTERSCHRIEBEN' WHEN 'pending' THEN 'OFFEN' ELSE source_state END AS status")->toBase();
-        $archiveRows = DB::connection('clubunio')->table('clubora.legacy_material_receipts')->where('tenant_id', $tenant->id);
+        $archiveRows = DB::connection('clubunio')->table('clubunio.legacy_material_receipts')->where('tenant_id', $tenant->id);
         $files = $this->files($actor, $tenant, $mine)->whereNotIn('id', (clone $archiveRows)->select('original_document_id'))
             ->whereNotIn('id', (clone $archiveRows)->whereNotNull('signed_document_id')->select('signed_document_id'))
             ->selectRaw("id, member_id, created_at, 'file' AS source_kind, 'ABGELEGT' AS status")->toBase();
@@ -82,7 +82,7 @@ final class MobileMemberDocuments
             'files' => $fileIds->isEmpty() ? collect() : $this->files($actor, $tenant)->with('documentType')->whereKey($fileIds)->get()->keyBy('id'),
             'archives' => $archiveIds->isEmpty() ? collect() : $this->archives($actor, $tenant)->whereKey($archiveIds)->get()->keyBy('id'),
             'names' => Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereIn('id', $page->pluck('member_id'))->get(['id','first_name','last_name'])->keyBy('id')->all(),
-            'own' => array_fill_keys($this->represented($actor, $tenant)->whereIn('id', $page->pluck('member_id'))->pluck('clubora.members.id')->all(), true),
+            'own' => array_fill_keys($this->represented($actor, $tenant)->whereIn('id', $page->pluck('member_id'))->pluck('clubunio.members.id')->all(), true),
             'upload' => $this->canUpload($actor, $tenant)];
         return $page->map(fn ($row) => $this->viewData($actor, $tenant, (int) $row->id, $row->source_kind, $read))->all();
     }
@@ -91,7 +91,7 @@ final class MobileMemberDocuments
     {
         app(MobileAccess::class)->enter($actor, $tenant);
         abort_unless($this->canUpload($actor, $tenant), 403);
-        return ['success' => true, 'DokumentTypen' => DB::connection('clubunio')->table('clubora.document_types')->where('tenant_id', $tenant->id)->where('active', true)
+        return ['success' => true, 'DokumentTypen' => DB::connection('clubunio')->table('clubunio.document_types')->where('tenant_id', $tenant->id)->where('active', true)
             ->orderBy('name')->orderBy('id')->get(['id', 'code', 'name'])->map(fn ($t) => ['DokumentTypID' => (int) $t->id, 'Code' => $t->code, 'Bezeichnung' => $t->name])->all()];
     }
 
@@ -160,7 +160,7 @@ final class MobileMemberDocuments
         $title = trim($d['Titel']); abort_unless($title !== '', 422);
         abort_if(str_starts_with($d['RequestKey'], 'archive-'), 422, 'Reservierter Anfrageschluessel.');
         Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')->findOrFail($d['MitgliederID']);
-        DB::connection('clubunio')->table('clubora.document_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $d['DokumentTypID'])->firstOrFail();
+        DB::connection('clubunio')->table('clubunio.document_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $d['DokumentTypID'])->firstOrFail();
         $raw = $file->get(); abort_unless(strlen($raw) > 0 && strlen($raw) <= MobileMemberDocumentPdf::MAX_ORIGINAL, 422);
         $verdict = app(MalwareScanner::class)->scan($raw);
         abort_unless(isset($verdict['clean'], $verdict['version']) && is_bool($verdict['clean']) && is_string($verdict['version']) && $verdict['version'] !== '', 503);
@@ -208,7 +208,7 @@ final class MobileMemberDocuments
             $source = $this->files($actor, $tenant)->where('member_id', $row->member_id)->findOrFail($row->original_document_id);
             abort_unless($source->sha256 && hash_equals($source->sha256, $row->original_sha256), 409);
         }
-        $own = $this->represented($actor, $tenant)->whereKey($member->id)->whereIn('id', app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubora.members.id'))->exists();
+        $own = $this->represented($actor, $tenant)->whereKey($member->id)->whereIn('id', app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubunio.members.id'))->exists();
         $kind = $own ? 'self' : 'parent'; $signedAt = now('UTC')->toImmutable();
         $signer = $actor->fresh(); abort_unless($signer?->active && ! $signer->api_only, 403);
         $signerName = trim($signer->display_name ?? '') ?: $signer->username;
@@ -314,7 +314,7 @@ final class MobileMemberDocuments
     }
     private function audit(Account $actor, Tenant $tenant, int $id, string $operation, int $revision): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'mobile_member_receipts', 'object_id' => $id, 'after_value' => json_encode(['operation' => $operation, 'revision' => $revision], JSON_THROW_ON_ERROR)]);
     }
 }

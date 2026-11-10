@@ -20,13 +20,13 @@ class MemberChangePortalController
         $version = MemberService::version($member);
         $lookups = [];
         foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-            $lookups[$field] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)
+            $lookups[$field] = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)
                 ->where(fn ($q) => $q->where('active', true)->orWhere('id', $values[$field] ?? -1))->orderBy('name')->localizedPluck('name', 'id');
         }
         $requests = MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('requested_by', $actor->id)->with('status')->latest()->limit(30)->get();
         $documents = MemberDocument::where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('active', true)->where('portal_visible', true)->with('documentType')->latest('id')->get();
         $comparisons = $requests->mapWithKeys(fn ($r) => [$r->id => $service->comparison($r, $tenant)]);
-        $statusColors = DB::connection('clubunio')->table('clubora.status_styles')->where('tenant_id', $tenant->id)->where('active', true)->pluck('color', 'value_key');
+        $statusColors = DB::connection('clubunio')->table('clubunio.status_styles')->where('tenant_id', $tenant->id)->where('active', true)->pluck('color', 'value_key');
 
         return response()->view('clubunio.portal.member-edit', compact('tenant', 'member', 'values', 'version', 'lookups', 'requests', 'documents', 'comparisons', 'statusColors') + ['tenants' => collect([$tenant])])
             ->header('Cache-Control', 'private, no-store');

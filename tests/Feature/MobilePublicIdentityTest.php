@@ -61,17 +61,17 @@ class MobilePublicIdentityTest extends TestCase
         $this->db->statement('CREATE TEMP TABLE identity_fixture_registrations(tenant_id bigint,id bigint,UNIQUE(tenant_id,id)) ON COMMIT DROP');
         $ddl=$this->db->pretend(fn ()=>(require database_path('clubunio/2026_11_03_000400_mobile_public_identity.php'))->up());
         $this->assertCount(1,$ddl); $sql=$ddl[0]['query'];
-        foreach (['tenants','accounts','tenant_accounts','registrations'] as $table) { $sql=str_replace('REFERENCES clubora.'.$table.'(','REFERENCES pg_temp.identity_fixture_'.$table.'(',$sql); }
+        foreach (['tenants','accounts','tenant_accounts','registrations'] as $table) { $sql=str_replace('REFERENCES clubunio.'.$table.'(','REFERENCES pg_temp.identity_fixture_'.$table.'(',$sql); }
         foreach (['mobile_identity_challenges','mobile_account_emails','mobile_public_intake_commands'] as $table) {
-            $sql=str_replace('CREATE TABLE clubora.'.$table,'CREATE TEMP TABLE '.$table,$sql);
-            $sql=str_replace('clubora.'.$table,'pg_temp.'.$table,$sql);
+            $sql=str_replace('CREATE TABLE clubunio.'.$table,'CREATE TEMP TABLE '.$table,$sql);
+            $sql=str_replace('clubunio.'.$table,'pg_temp.'.$table,$sql);
         }
         $sql=preg_replace('/\n\);/',"\n) ON COMMIT DROP;",$sql);
-        $this->assertStringNotContainsString('REFERENCES clubora.',$sql); $this->assertStringNotContainsString('ON clubora.',$sql);
+        $this->assertStringNotContainsString('REFERENCES clubunio.',$sql); $this->assertStringNotContainsString('ON clubunio.',$sql);
         $this->db->unprepared($sql); $this->grammar=$this->db->getQueryGrammar();
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table,$prefix=null) {
-                if (is_string($table)) { foreach (['mobile_identity_challenges','mobile_account_emails','mobile_public_intake_commands'] as $own) { $table=str_replace('clubora.'.$own,'pg_temp.'.$own,$table); } }
+                if (is_string($table)) { foreach (['mobile_identity_challenges','mobile_account_emails','mobile_public_intake_commands'] as $own) { $table=str_replace('clubunio.'.$own,'pg_temp.'.$own,$table); } }
                 return parent::wrapTable($table,$prefix);
             }
         });
@@ -80,13 +80,13 @@ class MobilePublicIdentityTest extends TestCase
     {
         $account=new Account; $account->forceFill(['username'=>$username,'display_name'=>'Synthetic identity owner','password'=>bcrypt('synthetic-password'),
             'active'=>true,'api_only'=>false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$account->id,'role'=>'admin','portal_enabled'=>true]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$account->id,'role'=>'admin','portal_enabled'=>true]);
         return $account;
     }
     private function base(): string { return $this->origin.'/api/mobile/v1/public/identity/clubs/'.$this->tenant->id; }
     private function personal(): string { return $this->origin.'/api/mobile/v1/clubs/'.$this->tenant->id.'/identity/email'; }
-    private function challenges() { return $this->db->table('clubora.mobile_identity_challenges'); }
-    private function insert(string $table,array $row): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$row); }
+    private function challenges() { return $this->db->table('clubunio.mobile_identity_challenges'); }
+    private function insert(string $table,array $row): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id'=>$this->tenant->id]+$row); }
     private function requestRegister(string $email): object
     {
         $this->postJson($this->base().'/register',['email'=>$email,'first_name'=>'Synthetic','last_name'=>'Applicant','password'=>'synthetic-password','request_key'=>(string)Str::uuid()])
@@ -113,15 +113,15 @@ class MobilePublicIdentityTest extends TestCase
         $this->get($this->base().'/activate?token=redacted')->assertBadRequest();
         $this->postJson($this->base().'/activate',['token'=>$delivery['token']])->assertOk()->assertJsonPath('data.access_pending',true);
         $new=Account::where('username',$email)->firstOrFail();
-        $membership=$this->db->table('clubora.tenant_accounts')->where('account_id',$new->id)->first();
+        $membership=$this->db->table('clubunio.tenant_accounts')->where('account_id',$new->id)->first();
         $this->assertSame('member',$membership->role); $this->assertTrue($membership->portal_enabled);
-        $this->assertSame(0,$this->db->table('clubora.account_member_links')->where('account_id',$new->id)->count());
-        $this->assertSame('self_registration',$this->db->table('clubora.mobile_account_emails')->where('account_id',$new->id)->value('source'));
+        $this->assertSame(0,$this->db->table('clubunio.account_member_links')->where('account_id',$new->id)->count());
+        $this->assertSame('self_registration',$this->db->table('clubunio.mobile_account_emails')->where('account_id',$new->id)->value('source'));
         $this->postJson($this->base().'/activate',['token'=>$delivery['token']])->assertNotFound();
         $this->postJson($this->origin.'/api/mobile/v1/session',['username'=>$email,'password'=>'wrong','device_name'=>'Synthetic'])->assertUnauthorized();
         $this->postJson($this->origin.'/api/mobile/v1/session',['username'=>$email,'password'=>'synthetic-password','device_name'=>'Synthetic'])
             ->assertForbidden()->assertJsonPath('error.code','access_pending');
-        $this->assertSame(0,$this->db->table('clubora.mobile_sessions')->where('account_id',$new->id)->count());
+        $this->assertSame(0,$this->db->table('clubunio.mobile_sessions')->where('account_id',$new->id)->count());
         $finished=$this->challenges()->where('id',$row->id)->first(); $this->assertNull($finished->payload_encrypted); $this->assertNull($finished->delivery_encrypted);
         $count=$this->challenges()->count(); $this->requestRegister($email); $this->assertSame($count,$this->challenges()->count());
         Mail::assertNothingSent(); Http::assertNothingSent();
@@ -147,7 +147,7 @@ class MobilePublicIdentityTest extends TestCase
         $payload=['token'=>$proof['token'],'password'=>'changed-synthetic-password','password_confirmation'=>'changed-synthetic-password'];
         $this->postJson($this->base().'/reset-password',$payload)->assertOk()->assertJsonPath('data.reauthentication_required',true);
         $this->assertTrue(Hash::check('changed-synthetic-password',$this->owner->fresh()->password));
-        $this->assertSame(0,$this->db->table('clubora.mobile_sessions')->where('account_id',$this->owner->id)->whereNull('revoked_at')->count());
+        $this->assertSame(0,$this->db->table('clubunio.mobile_sessions')->where('account_id',$this->owner->id)->whereNull('revoked_at')->count());
         $this->withToken($second)->getJson($this->personal())->assertUnauthorized();
         $this->postJson($this->base().'/reset-password',$payload)->assertNotFound();
         Mail::assertNothingSent(); Http::assertNothingSent();
@@ -204,12 +204,12 @@ class MobilePublicIdentityTest extends TestCase
         $this->postJson($this->base().'/membership',array_replace($input,['values'=>$input['values']+['AHV'=>'not-allowed']]))->assertUnprocessable();
         $this->postJson($this->base().'/membership',$input)->assertOk()->assertExactJson(['data'=>['Submitted'=>true,'PendingAttachments'=>0]]);
         $this->postJson($this->base().'/membership',$input)->assertOk();
-        $this->assertSame(1,$this->db->table('clubora.registrations')->where('tenant_id',$this->tenant->id)->count());
-        $this->assertSame(1,$this->db->table('clubora.mobile_public_intake_commands')->count());
+        $this->assertSame(1,$this->db->table('clubunio.registrations')->where('tenant_id',$this->tenant->id)->count());
+        $this->assertSame(1,$this->db->table('clubunio.mobile_public_intake_commands')->count());
         $changed=$input; $changed['values']['Vorname']='Changed'; $this->postJson($this->base().'/membership',$changed)->assertConflict();
         $fresh=json_decode(Crypt::decryptString($this->getJson($this->base().'/options')->json('data.intake.claim')),true); $fresh['at']=time()-4;
         $input['claim']=Crypt::encryptString(json_encode($fresh));
-        $this->db->table('clubora.genders')->where('id',$gender)->update(['name'=>'Changed lookup']);
+        $this->db->table('clubunio.genders')->where('id',$gender)->update(['name'=>'Changed lookup']);
         $this->postJson($this->base().'/membership',$input)->assertConflict();
         config(['clubunio-mobile.uploads_enabled'=>true,'clubunio-integrations.azure.tenant_slug'=>$this->tenant->slug,
             'clubunio-mobile.attachments.clamd_socket'=>'fixture-scanner']);
@@ -224,15 +224,15 @@ class MobilePublicIdentityTest extends TestCase
         $files=['portrait'=>\Illuminate\Http\UploadedFile::fake()->createWithContent('synthetic.png',$png),
             'identity'=>array_map(fn ($i)=>\Illuminate\Http\UploadedFile::fake()->createWithContent('synthetic-'.$i.'.pdf',"%PDF-1.4\n% synthetic fixture ".$i."\n%%EOF"),range(1,3))];
         $this->post($this->base().'/membership',$input+$files,['Accept'=>'application/json'])->assertUnprocessable();
-        $this->assertSame(1,$this->db->table('clubora.registrations')->where('tenant_id',$this->tenant->id)->count());
+        $this->assertSame(1,$this->db->table('clubunio.registrations')->where('tenant_id',$this->tenant->id)->count());
         $scanner->clean=true;
         $this->post($this->base().'/membership',$input+$files,['Accept'=>'application/json'])->assertOk()->assertJsonPath('data.PendingAttachments',4);
-        $this->assertSame(4,$this->db->table('clubora.document_uploads')->where('tenant_id',$this->tenant->id)->where('state','pending')->count());
-        $command=$this->db->table('clubora.mobile_public_intake_commands')->where('request_key',$fresh['key'])->first();
+        $this->assertSame(4,$this->db->table('clubunio.document_uploads')->where('tenant_id',$this->tenant->id)->where('state','pending')->count());
+        $command=$this->db->table('clubunio.mobile_public_intake_commands')->where('request_key',$fresh['key'])->first();
         $evidence=json_decode(Crypt::decryptString($command->scan_evidence_encrypted),true);
         $this->assertCount(4,$evidence);
         foreach ($evidence as $entry) {
-            $upload=$this->db->table('clubora.document_uploads')->where('tenant_id',$this->tenant->id)->where('sha256',$entry['sha256'])->first();
+            $upload=$this->db->table('clubunio.document_uploads')->where('tenant_id',$this->tenant->id)->where('sha256',$entry['sha256'])->first();
             $this->assertSame($entry['sha256'],hash('sha256',Crypt::decryptString($upload->encrypted_bytes)));
             $this->assertSame('synthetic-scanner',$entry['scanner']); $this->assertNull($upload->provider_started_at);
         }
@@ -240,7 +240,7 @@ class MobilePublicIdentityTest extends TestCase
         $this->post($this->base().'/membership',$input+$files,['Accept'=>'application/json'])->assertOk()->assertJsonPath('data.PendingAttachments',4);
         $this->assertSame($calls,$scanner->calls);
         $this->getJson($this->origin.'/api/mobile/v1/clubs/'.$this->tenant->id.'/registrations')->assertUnauthorized();
-        $this->assertSame(0,$this->db->table('clubora.account_member_links')->where('tenant_id',$this->tenant->id)->count());
+        $this->assertSame(0,$this->db->table('clubunio.account_member_links')->where('tenant_id',$this->tenant->id)->count());
         Mail::assertNothingSent(); Http::assertNothingSent();
     }
     private function verifyEmail(Account $account,string $email): void
@@ -273,9 +273,9 @@ class MobilePublicIdentityTest extends TestCase
         $email='qa-revoked-'.bin2hex(random_bytes(5)).'@example.test';
         $this->withToken($token)->postJson($this->personal(),['email'=>$email,'current_password'=>'synthetic-password','email_revision'=>0,'request_key'=>(string)Str::uuid()])->assertOk();
         $row=$this->challenges()->where('purpose','enroll')->first(); $delivery=$this->delivered($row);
-        $this->db->table('clubora.mobile_sessions')->where('account_id',$this->owner->id)->update(['revoked_at'=>now()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_sessions')->where('account_id',$this->owner->id)->update(['revoked_at'=>now()->toIso8601String()]);
         $this->postJson($this->base().'/confirm-email',['token'=>$delivery['token']])->assertConflict();
-        $this->assertSame(0,$this->db->table('clubora.mobile_account_emails')->count());
+        $this->assertSame(0,$this->db->table('clubunio.mobile_account_emails')->count());
         $register=$this->requestRegister('qa-new-'.bin2hex(random_bytes(5)).'@example.test'); $proof=$this->delivered($register);
         $this->challenges()->where('id',$register->id)->update(['expires_at'=>now()->subSecond()->toIso8601String()]);
         $this->postJson($this->base().'/activate',['token'=>$proof['token']])->assertNotFound();

@@ -20,7 +20,7 @@ final class ApiProviderController
         $data = Validator::make($request->query(), ['page' => 'sometimes|integer|min:1', 'per_page' => 'sometimes|integer|min:1|max:100',
             'from' => 'sometimes|date_format:Y-m-d', 'to' => 'sometimes|date_format:Y-m-d'.(isset($request->query()['from']) ? '|after_or_equal:from' : '')])->validate();
         $fields = ['id', 'match_id', 'season_id', 'team_a_id', 'team_b_id', 'host_name', 'guest_name', 'title', 'starts_at', 'location', 'state', 'match_type', 'home', 'revision', 'updated_at'];
-        $rows = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $c->tenant->id)
+        $rows = DB::connection('clubunio')->table('clubunio.sfv_schedule')->where('tenant_id', $c->tenant->id)
             ->when($data['from'] ?? null, fn ($q, $value) => $q->where('starts_at', '>=', CarbonImmutable::parse($value, 'Europe/Zurich')->startOfDay()->toIso8601String()))
             ->when($data['to'] ?? null, fn ($q, $value) => $q->where('starts_at', '<', CarbonImmutable::parse($value, 'Europe/Zurich')->addDay()->startOfDay()->toIso8601String()))
             ->orderBy('starts_at')->orderBy('id')->paginate($data['per_page'] ?? 30, $fields, 'page', $data['page'] ?? 1);

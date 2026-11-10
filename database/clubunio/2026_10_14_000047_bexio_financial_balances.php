@@ -14,9 +14,9 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->unprepared(<<<'SQL'
-ALTER TABLE clubora.bexio_checks ADD COLUMN financials jsonb;
-CREATE TABLE clubora.bexio_balances (
- id bigserial PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
+ALTER TABLE clubunio.bexio_checks ADD COLUMN financials jsonb;
+CREATE TABLE clubunio.bexio_balances (
+ id bigserial PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubunio.tenants(id),
  object_type text NOT NULL CHECK(object_type IN ('invoice','expense')), object_id bigint NOT NULL,
  remote_id text NOT NULL, remote_status text NOT NULL,
  total_cents bigint NOT NULL CHECK(total_cents >= 0),
@@ -27,9 +27,9 @@ CREATE TABLE clubora.bexio_balances (
  UNIQUE(tenant_id,object_type,object_id),
  CHECK(total_cents = paid_cents + credit_cents + remaining_cents)
 );
-CREATE TABLE clubora.bexio_financial_actions (
- id bigserial PRIMARY KEY, dispatch_id bigint NOT NULL REFERENCES clubora.bexio_sandbox_dispatches(id),
- actor_id bigint NOT NULL REFERENCES clubora.accounts(id),
+CREATE TABLE clubunio.bexio_financial_actions (
+ id bigserial PRIMARY KEY, dispatch_id bigint NOT NULL REFERENCES clubunio.bexio_sandbox_dispatches(id),
+ actor_id bigint NOT NULL REFERENCES clubunio.accounts(id),
  operation text NOT NULL CHECK(operation IN ('payment_partial','payment_full','bill_book','bill_pay')),
  state text NOT NULL CHECK(state IN ('running','uncertain','accepted','rejected')),
  reference uuid NOT NULL UNIQUE, connection_hash text NOT NULL,

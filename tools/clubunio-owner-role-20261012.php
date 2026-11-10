@@ -20,14 +20,14 @@ $db->transaction(function () use ($db) {
         throw new LogicException('Owner is not unique');
     }
     $actor = $actors->first();
-    $link = $db->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
+    $link = $db->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
     $role = (clone $link)->lockForUpdate()->value('role');
     if (! in_array($role, ['office', 'admin'], true)) {
         throw new LogicException('Unexpected previous owner role');
     }
     if ($role === 'office') {
         $link->update(['role' => 'admin']);
-        $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'tenant_accounts', 'object_id' => $actor->id,
             'before_value' => json_encode(['role' => 'office']),
             'after_value' => json_encode(['role' => 'admin', 'reason' => 'Explicit owner approval in chat 2026-10-12'])]);

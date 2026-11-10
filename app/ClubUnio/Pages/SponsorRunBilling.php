@@ -156,15 +156,15 @@ class SponsorRunBilling extends Page implements HasTable
             if (filled($search)) {
                 $query->where(function ($q) use ($search, $tenant) {
                     $term = '%'.mb_substr(trim($search), 0, 100).'%';
-                    $q->whereIn('pledge_id', DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('sponsor_name', 'ilike', $term)->select('id'))
-                        ->orWhereIn('event_id', DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', $tenant->id)->where('title', 'ilike', $term)->select('id'));
+                    $q->whereIn('pledge_id', DB::connection('clubunio')->table('clubunio.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('sponsor_name', 'ilike', $term)->select('id'))
+                        ->orWhereIn('event_id', DB::connection('clubunio')->table('clubunio.sponsor_run_events')->where('tenant_id', $tenant->id)->where('title', 'ilike', $term)->select('id'));
                 });
             }
             $column = in_array($sortColumn, ['id', 'total_cents', 'state', 'updated_at'], true) ? $sortColumn : 'id';
             $rows = $query->orderBy($column, $sortDirection === 'asc' ? 'asc' : 'desc')
                 ->paginate($recordsPerPage, ['id', 'event_id', 'pledge_id', 'state', 'revision', 'total_cents', 'remote_id', 'paid_cents', 'credit_cents', 'updated_at'], 'page', $page);
-            $events = DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('event_id'))->pluck('title', 'id');
-            $sponsors = DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('pledge_id'))->pluck('sponsor_name', 'id');
+            $events = DB::connection('clubunio')->table('clubunio.sponsor_run_events')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('event_id'))->pluck('title', 'id');
+            $sponsors = DB::connection('clubunio')->table('clubunio.sponsor_run_pledges')->where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('pledge_id'))->pluck('sponsor_name', 'id');
             $rows->setCollection($rows->getCollection()->map(fn ($row) => (array) $row + ['__key' => (string) $row->id,
                 'sponsor' => $sponsors[$row->pledge_id] ?? 'Zusage #'.$row->pledge_id, 'event_title' => $events[$row->event_id] ?? '']));
 
@@ -177,7 +177,7 @@ class SponsorRunBilling extends Page implements HasTable
             TextColumn::make('remote_id')->label('Bexio')->prefix('#')->placeholder('-'),
             TextColumn::make('paid_cents')->label('Bezahlt')->formatStateUsing(fn ($state) => SponsorRunMoney::format($state))->placeholder('-'),
         ])->filters([
-            SelectFilter::make('event_id')->label('Anlass')->default(fn () => $this->event)->options(fn () => DB::connection('clubunio')->table('clubora.sponsor_run_events')->where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->pluck('title', 'id')->all()),
+            SelectFilter::make('event_id')->label('Anlass')->default(fn () => $this->event)->options(fn () => DB::connection('clubunio')->table('clubunio.sponsor_run_events')->where('tenant_id', Filament::getTenant()->id)->orderByDesc('id')->pluck('title', 'id')->all()),
             SelectFilter::make('state')->label('Status')->options(array_map(fn ($name) => __($name), SponsorRunBillingService::STATES)),
         ])->deferFilters(false)->headerActions([
             $this->prepareAction(),

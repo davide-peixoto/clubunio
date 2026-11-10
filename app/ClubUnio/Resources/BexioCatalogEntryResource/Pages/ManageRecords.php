@@ -38,7 +38,7 @@ class ManageRecords extends \Filament\Resources\Pages\ManageRecords
         try {
             if ($invoice) {
                 $count = app(BexioCatalogFixtureService::class)->prepareInvoice(Filament::auth()->user(), Filament::getTenant());
-                $existing = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+                $existing = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                     ->where('tenant_id', Filament::getTenant()->id)->where('invoice_id', $count)->exists();
                 if (! $existing) {
                     $trial = app(BexioDispatchTrialService::class)->preview(Filament::auth()->user(), Filament::getTenant(), 'invoice', $count);

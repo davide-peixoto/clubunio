@@ -20,10 +20,10 @@ try {
         if (! $valid) { throw new LogicException($message); }
     };
     $state = static fn () => hash('sha256', json_encode([
-        $db->table('clubora.invoices')->where('tenant_id', $tenant->id)->whereIn('id', [8440, 8546, 9774])->orderBy('id')->get(),
-        $db->table('clubora.credit_notes')->where('tenant_id', $tenant->id)->whereIn('id', [18, 107])->orderBy('id')->get(),
-        $db->table('clubora.customer_credits')->where('tenant_id', $tenant->id)->where('id', 41)->get(),
-        $db->table('clubora.customer_credit_allocations')->where('tenant_id', $tenant->id)->where('customer_credit_id', 41)->orderBy('id')->get(),
+        $db->table('clubunio.invoices')->where('tenant_id', $tenant->id)->whereIn('id', [8440, 8546, 9774])->orderBy('id')->get(),
+        $db->table('clubunio.credit_notes')->where('tenant_id', $tenant->id)->whereIn('id', [18, 107])->orderBy('id')->get(),
+        $db->table('clubunio.customer_credits')->where('tenant_id', $tenant->id)->where('id', 41)->get(),
+        $db->table('clubunio.customer_credit_allocations')->where('tenant_id', $tenant->id)->where('customer_credit_id', 41)->orderBy('id')->get(),
     ], JSON_THROW_ON_ERROR));
     $before = $state();
     foreach ([['local' => 8546, 'remote' => '9', 'reference' => 'GS-00004', 'total' => 1005, 'credit' => 1005, 'remaining' => 0],

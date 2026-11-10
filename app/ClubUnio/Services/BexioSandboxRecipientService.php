@@ -13,7 +13,7 @@ class BexioSandboxRecipientService
 {
     private function table()
     {
-        return DB::connection('clubunio')->table('clubora.bexio_sandbox_recipients');
+        return DB::connection('clubunio')->table('clubunio.bexio_sandbox_recipients');
     }
 
     public function resolve(Tenant $tenant, Invoice $invoice, ?int $registryId = null, ?int $contactId = null): object
@@ -41,7 +41,7 @@ class BexioSandboxRecipientService
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
         $hash = app(BexioSandboxFixtureService::class)->connectionHash($tenant);
         $token = app(BexioConnectionService::class)->accessToken($tenant);
-        abort_unless(DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, __('Bestätigte Sandbox-Verbindung fehlt.'));
+        abort_unless(DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->where('connection_hash', $hash)->exists(), 409, __('Bestätigte Sandbox-Verbindung fehlt.'));
         $client = app(BexioSandboxClient::class);
         $client->verify($token);
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoice, $hash) {
@@ -94,7 +94,7 @@ class BexioSandboxRecipientService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant) && hash_equals($hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 403);
             $this->table()->where('id', $row->id)->update(['state' => 'accepted', 'remote_id' => $row->remote_id, 'updated_at' => now()->toIso8601String()]);
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'bexio_sandbox_recipients', 'object_id' => $row->id, 'after_value' => json_encode(['action' => 'confirmed', 'remote_id' => $row->remote_id], JSON_THROW_ON_ERROR)]);
         });
 

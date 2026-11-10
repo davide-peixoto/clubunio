@@ -46,12 +46,12 @@ class RegistrationDataService
 
         return DB::connection('clubunio')->transaction(function () use ($tenant, $input, $requestId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $existing = DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('request_id', $requestId)->where('tenant_id', $tenant->id)->first();
+            $existing = DB::connection('clubunio')->table('clubunio.public_registration_submissions')->where('request_id', $requestId)->where('tenant_id', $tenant->id)->first();
             if ($existing) {
                 return Registration::where('tenant_id', $tenant->id)->findOrFail($existing->registration_id);
             }
             $r = $this->persist(null, $tenant, null, $input);
-            DB::connection('clubunio')->table('clubora.public_registration_submissions')->insert(['request_id' => $requestId,
+            DB::connection('clubunio')->table('clubunio.public_registration_submissions')->insert(['request_id' => $requestId,
                 'tenant_id' => $tenant->id, 'registration_id' => $r->id]);
 
             return $r;
@@ -97,11 +97,11 @@ class RegistrationDataService
                 $rules[$field] = 'nullable|email:rfc|max:254';
             }
             foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-                $rules[$field] = ['required', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
+                $rules[$field] = ['required', 'integer', Rule::exists('clubunio.clubunio.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
                     ->where(fn ($q) => $q->where('active', true)->orWhere('id', $old[$field] ?? -1)))];
             }
             $valid = Validator::make($values, $rules)->validate();
-            $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $valid['billing_recipient_id'])->value('email_field');
+            $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $valid['billing_recipient_id'])->value('email_field');
             if (empty($valid[$emailField])) {
                 throw ValidationException::withMessages([$emailField => __('Für den Rechnungsempfänger fehlt eine E-Mail-Adresse.')]);
             }
@@ -111,7 +111,7 @@ class RegistrationDataService
             }
             $r->forceFill(array_intersect_key($valid, array_flip(self::CORE)));
             if (! $id) {
-                $status = DB::connection('clubunio')->table('clubora.registration_statuses')->where('tenant_id', $tenant->id)->where('active', true)->where('workflow_key', 'submitted')->value('id');
+                $status = DB::connection('clubunio')->table('clubunio.registration_statuses')->where('tenant_id', $tenant->id)->where('active', true)->where('workflow_key', 'submitted')->value('id');
                 if (! $status) {
                     throw ValidationException::withMessages(['first_name' => __('Der initiale Anmeldestatus ist nicht konfiguriert.')]);
                 }
@@ -120,7 +120,7 @@ class RegistrationDataService
             $r->forceFill(['applicant_encrypted' => Crypt::encryptString(json_encode($details, JSON_THROW_ON_ERROR)), 'details_complete' => true,
                 'revision' => $id ? $r->revision + 1 : 1])->save();
             if ($actor) {
-                DB::connection('clubunio')->table('clubora.object_changes')->insert([
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                     'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'registrations', 'object_id' => $r->id,
                     'before_value' => null, 'after_value' => json_encode(['revision' => $r->revision, 'operation' => $id ? 'applicant_updated' : 'created',
                         'fields' => array_keys($valid)], JSON_THROW_ON_ERROR),

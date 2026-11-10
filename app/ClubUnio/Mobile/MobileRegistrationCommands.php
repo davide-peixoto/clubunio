@@ -16,7 +16,7 @@ final class MobileRegistrationCommands
             $target = MobileRegistrationData::FIELDS[$field];
             if (in_array($field, ['Land', 'Nationalitaet'], true)) {
                 $code = Validator::make(['code' => $value], ['code' => 'required|string|max:3'])->validate()['code'];
-                $id = DB::connection('clubunio')->table('clubora.countries')->where('tenant_id', $tenant->id)
+                $id = DB::connection('clubunio')->table('clubunio.countries')->where('tenant_id', $tenant->id)
                     ->where(fn ($q) => $q->whereRaw('upper(code) = ?', [strtoupper($code)])->orWhereRaw('upper(iso3) = ?', [strtoupper($code)]))->value('id');
                 abort_unless($id, 422, 'Laenderauswahl ist nicht mehr gueltig.'); $value = (int) $id;
             }
@@ -37,13 +37,13 @@ final class MobileRegistrationCommands
             app(RegistrationDataService::class)->save($actor, $tenant, $id, $values + ['revision' => $d['Revision']]);
         } else {
             ksort($values); $hash = hash('sha256', json_encode($values, JSON_THROW_ON_ERROR));
-            $table = DB::connection('clubunio')->table('clubora.mobile_registration_requests')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
+            $table = DB::connection('clubunio')->table('clubunio.mobile_registration_requests')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
             if ($existing = (clone $table)->where('request_key', $d['RequestKey'])->first()) {
                 abort_unless(hash_equals($existing->payload_sha256, $hash), 409, 'Dieser Erfassungsschluessel gehoert zu anderen Eingaben.');
                 return $service->details($actor, $tenant, (int) $existing->registration_id);
             }
             $r = app(RegistrationDataService::class)->save($actor, $tenant, null, $values);
-            DB::connection('clubunio')->table('clubora.mobile_registration_requests')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.mobile_registration_requests')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id,
                 'request_key' => $d['RequestKey'], 'payload_sha256' => $hash, 'registration_id' => $r->id]);
             $id = (int) $r->id;
         }

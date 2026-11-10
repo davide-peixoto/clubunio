@@ -20,7 +20,7 @@ final class MobileController
         return DB::connection('clubunio')->transaction(function () use ($r, $operation, $sharedTenant) {
             $tenant = Tenant::whereKey($this->tenant($r)->id);
             ($sharedTenant ? $tenant->sharedLock() : $tenant->lockForUpdate())->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $r->attributes->set('mobile.actor', app(MobileSessions::class)->authenticate($r));
             if($r->isMethod('GET')) {
                 // Middleware facts precede lock waits. Never restore them after a locked GET.
@@ -55,7 +55,7 @@ final class MobileController
     {
         $actor = $this->actor($r);
         $current = $r->attributes->get('mobile.session')?->id;
-        return $this->data(DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $actor->id)
+        return $this->data(DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('account_id', $actor->id)
             ->whereNull('revoked_at')->where('expires_at', '>', now()->toIso8601String())->orderByDesc('created_at')->limit(30)
             ->get(['id', 'device_name', 'expires_at', 'created_at'])
             ->map(fn ($session) => (array) $session + ['current' => $session->id === $current]));
@@ -64,7 +64,7 @@ final class MobileController
     public function revoke(Request $r)
     {
         $id = $r->route('session') ?? $r->attributes->get('mobile.session')->id;
-        $count = DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $this->actor($r)->id)->where('id', $id)
+        $count = DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('account_id', $this->actor($r)->id)->where('id', $id)
             ->update(['revoked_at' => now()->toIso8601String()]);
         abort_unless($count, 404);
         return $this->data(['revoked' => true]);
@@ -170,7 +170,7 @@ final class MobileController
         $s = app(TeamPlanningService::class); $a = $this->actor($r); $t = $this->tenant($r);
         $event = $s->event($a, $t, (int) $r->route('event'));
         $own = app(MemberAccessService::class)->represented($a, $t)->pluck('id')->all();
-        $members = $s->roster($t, $event)->whereIn('clubora.members.id', $own)->get(['id', 'first_name', 'last_name']);
+        $members = $s->roster($t, $event)->whereIn('clubunio.members.id', $own)->get(['id', 'first_name', 'last_name']);
         return $this->data(['event' => array_intersect_key((array) $event, array_flip(['id', 'team_season_id', 'title', 'description', 'starts_at', 'ends_at', 'deadline_at', 'location', 'status', 'kind', 'mode', 'capacity', 'revision'])),
             'participations' => $members->map(function ($member) use ($s, $t, $event) {
                 $p = $s->table($t, 'team_participations')->where('event_id', $event->id)->where('member_id', $member->id)->first();
@@ -246,7 +246,7 @@ final class MobileController
     {
         $actor = app(MobileSessions::class)->authenticate($r);
         $language = app(MobileLanguages::class)->validateLanguage($r->input('language'));
-        DB::connection('clubunio')->table('clubora.mobile_preferences')->updateOrInsert(['account_id' => $actor->id],
+        DB::connection('clubunio')->table('clubunio.mobile_preferences')->updateOrInsert(['account_id' => $actor->id],
             ['language' => $language, 'updated_at' => now()->toIso8601String()]);
         return $this->data(app(MobileLanguages::class)->forAccount($actor));
     }
@@ -320,8 +320,8 @@ final class MobileController
     {
         $s = app(ChatService::class); $t = $this->tenant($r);
         $ids = $s->table($t, 'chat_blocks')->where('account_id', $this->actor($r)->id)->pluck('other_account_id');
-        return $this->data($t->accounts()->whereIn('clubora.accounts.id', $ids)->orderBy('clubora.accounts.id')->limit(100)
-            ->get(['clubora.accounts.id', 'clubora.accounts.display_name as name']));
+        return $this->data($t->accounts()->whereIn('clubunio.accounts.id', $ids)->orderBy('clubunio.accounts.id')->limit(100)
+            ->get(['clubunio.accounts.id', 'clubunio.accounts.display_name as name']));
     }
 
     public function block(Request $r)

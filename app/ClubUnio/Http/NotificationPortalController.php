@@ -14,7 +14,7 @@ class NotificationPortalController
         $actor = $request->user('portal');
         abort_unless(app(MemberAccessService::class)->canEnter($actor, $tenant), 403);
 
-        return DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
+        return DB::connection('clubunio')->table('clubunio.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
     }
 
     public function index(Request $request, Tenant $tenant)

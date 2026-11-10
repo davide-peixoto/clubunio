@@ -26,7 +26,7 @@ class SettingsService
                 throw ValidationException::withMessages(['enabled' => __('Instagram-Zugang fehlt.')]);
             }
             $setting->forceFill(['enabled' => $enabled])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $id, 'actor_id' => $actor->id]);
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $id, 'actor_id' => $actor->id]);
         });
     }
 
@@ -49,7 +49,7 @@ class SettingsService
             };
             Validator::make(['value' => $value], ['value' => ['required', $rule, 'max:65535']])->validate();
             $setting->forceFill(['encrypted_value' => Crypt::encryptString($value)])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert([
                 'tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id,
             ]);
         });

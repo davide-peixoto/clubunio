@@ -62,7 +62,7 @@ final class MobileAccountController
                 throw ValidationException::withMessages(['current_password' => 'Aktuelles Passwort ungueltig.']);
             }
             $fresh->forceFill(['password' => Hash::make($data['password'])])->save();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $actor->id)
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('account_id', $actor->id)
                 ->whereNull('revoked_at')->update(['revoked_at' => now()->toIso8601String()]);
         });
         return response()->json(['data' => ['reauthentication_required' => true]]);

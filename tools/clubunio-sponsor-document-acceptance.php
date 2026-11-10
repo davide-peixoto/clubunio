@@ -70,14 +70,14 @@ try {
         echo json_encode(['sample' => array_slice($rows, 0, 3), 'switzerland' => array_values(array_filter($rows, fn ($r) => str_contains(mb_strtolower(json_encode($r)), 'schweiz') || str_contains(mb_strtolower(json_encode($r)), 'switzerland')))], JSON_THROW_ON_ERROR).PHP_EOL;
     } elseif ($mode === 'fixture') {
         abort_if($state, 409, 'Existing acceptance journal: reuse, never recreate.');
-        abort_if($db->table('clubora.members')->where('tenant_id', $tenant->id)->where('last_name', 'QA-Sponsor-Dokumente-20261025')->exists(), 409, 'Fixture exists without journal; investigate.');
+        abort_if($db->table('clubunio.members')->where('tenant_id', $tenant->id)->where('last_name', 'QA-Sponsor-Dokumente-20261025')->exists(), 409, 'Fixture exists without journal; investigate.');
         $state = $db->transaction(function () use ($db, $tenant, $actor, $core, $series) {
             $s = ['run' => '20261025-sponsor-documents-v1', 'tenant' => (int) $tenant->id, 'baseline' => []];
             foreach (['members', 'seasons', 'teams', 'team_seasons', 'team_players', 'sponsor_run_events', 'document_series'] as $table) {
-                $rows = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->orderBy('id')->get();
+                $rows = $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->orderBy('id')->get();
                 $s['baseline'][$table] = ['ids' => $rows->pluck('id')->all(), 'sha256' => hash('sha256', $rows->toJson())];
             }
-            $insert = fn ($table, $values) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
+            $insert = fn ($table, $values) => $db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
             $s['season'] = $insert('seasons', ['name' => 'QA-Abnahme Dokumente/Sponsorenlauf 20261025']);
             $s['team'] = $insert('teams', ['name' => 'QA-Abnahme 20261025']);
             $s['team_season'] = $insert('team_seasons', ['season_id' => $s['season'], 'team_id' => $s['team'], 'label' => 'QA-Abnahme 20261025']);
@@ -166,7 +166,7 @@ try {
     } elseif ($mode === 'verify') {
         abort_unless($state, 409);
         foreach ($state['baseline'] as $table => $baseline) {
-            $actual = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->whereIn('id', $baseline['ids'])->orderBy('id')->get()->toJson();
+            $actual = $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->whereIn('id', $baseline['ids'])->orderBy('id')->get()->toJson();
             abort_unless(hash_equals($baseline['sha256'], hash('sha256', $actual)), 409, 'Baseline changed: '.$table);
         }
         echo "Pre-existing member/season/team/event/document rows unchanged.\n";
@@ -179,9 +179,9 @@ try {
                 foreach (['team_players' => 'team_player', 'team_seasons' => 'team_season', 'teams' => 'team', 'seasons' => 'season'] as $table => $key) {
                     $id = $state[$key];
                     abort_unless(! in_array($id, $state['baseline'][$table]['ids'], true), 409);
-                    $count = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('id', $id)->update(['active' => false]);
+                    $count = $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('id', $id)->update(['active' => false]);
                     abort_unless($count === 1, 409);
-                    $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $table, 'object_id' => $id, 'after_value' => json_encode(['operation' => 'qa_acceptance_deactivated', 'active' => false], JSON_THROW_ON_ERROR)]);
+                    $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $table, 'object_id' => $id, 'after_value' => json_encode(['operation' => 'qa_acceptance_deactivated', 'active' => false], JSON_THROW_ON_ERROR)]);
                 }
             });
             $state['reference_fixture_inactive'] = true;

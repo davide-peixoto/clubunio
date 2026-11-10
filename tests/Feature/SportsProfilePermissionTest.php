@@ -52,11 +52,11 @@ class SportsProfilePermissionTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
-        if (! Schema::connection('clubunio')->hasTable('clubora.access_profiles')) {
+        $this->db->statement('SET LOCAL search_path TO clubunio');
+        if (! Schema::connection('clubunio')->hasTable('clubunio.access_profiles')) {
             (require database_path('clubunio/2026_10_16_000069_access_profiles.php'))->up();
         }
-        if (! Schema::connection('clubunio')->hasColumn('clubora.tenant_accounts', 'access_profile_id')) {
+        if (! Schema::connection('clubunio')->hasColumn('clubunio.tenant_accounts', 'access_profile_id')) {
             (require database_path('clubunio/2026_10_16_000070_account_access_profiles.php'))->up();
         }
         $this->db->table('account_roles')->where('code', 'profile')->update(['active' => true]);

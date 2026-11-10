@@ -51,10 +51,10 @@ try {
         if (in_array('--prepare', $argv, true)) {
             $service->prepare($actor, $tenant, $kind);
         }
-        $row = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $kind)->first();
+        $row = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $kind)->first();
         if ($row && $kind === 'expense' && in_array('--resume-upload', $argv, true)) {
             $service->resumeRejectedUpload($actor, $tenant, $row->id);
-            $row = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->find($row->id);
+            $row = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->find($row->id);
         }
         if ($row && in_array('--send', $argv, true) && $row->state === 'ready') {
             $service->send($actor, $tenant, $row->id);
@@ -69,10 +69,10 @@ try {
             echo json_encode(['fields' => array_keys($bill), 'amount_fields' => array_filter($bill, fn ($key) => str_contains($key, 'amount') || str_contains($key, 'total'), ARRAY_FILTER_USE_KEY)], JSON_THROW_ON_ERROR).PHP_EOL;
             echo json_encode(array_intersect_key($bill, array_flip(['id', 'vendor_ref', 'supplier_id', 'gross', 'status', 'attachment_ids', 'amount', 'total'])), JSON_THROW_ON_ERROR).PHP_EOL;
         }
-        echo json_encode(DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $kind)
+        echo json_encode(DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $kind)
             ->first(['id', 'kind', 'invoice_id', 'expense_id', 'state', 'remote_id', 'attachment_id', 'http_status']), JSON_THROW_ON_ERROR).PHP_EOL;
         if ($row) {
-            echo json_encode(DB::connection('clubunio')->table('clubora.bexio_sandbox_steps')->where('dispatch_id', $row->id)
+            echo json_encode(DB::connection('clubunio')->table('clubunio.bexio_sandbox_steps')->where('dispatch_id', $row->id)
                 ->get(['operation', 'state', 'http_status']), JSON_THROW_ON_ERROR).PHP_EOL;
         }
     }

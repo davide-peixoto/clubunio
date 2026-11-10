@@ -55,7 +55,7 @@ final class MobileAiService
             // selection or reservation, not only after a paid provider call.
             [$lockedText, $lockedRevision] = $this->source($actor, $tenant, $data);
             abort_unless($lockedRevision === $revision && hash_equals($text, $lockedText), 409);
-            $query = $db->table('clubora.mobile_ai_work')->where('tenant_id', $tenant->id);
+            $query = $db->table('clubunio.mobile_ai_work')->where('tenant_id', $tenant->id);
             $old = (clone $query)->where('account_id', $actor->id)->where('request_key', $data['request_key'])->first();
             if ($old) {
                 abort_unless(hash_equals($old->fingerprint, $fingerprint), 409);
@@ -101,11 +101,11 @@ final class MobileAiService
             abort_unless($freshRevision === $revision && hash_equals($freshText, $text), 409);
             $actual = $work->provider === 'openai' && config('clubunio-mobile.ai.openai.model') === 'gpt-5.4-mini'
                 ? (int) ceil($result['input_tokens'] * 0.75 + $result['output_tokens'] * 4.5) : $work->reserved_microusd;
-            $db->table('clubora.mobile_ai_work')->where('id', $work->id)->update(['state' => 'succeeded', 'result_encrypted' => Crypt::encryptString($result['text']),
+            $db->table('clubunio.mobile_ai_work')->where('id', $work->id)->update(['state' => 'succeeded', 'result_encrypted' => Crypt::encryptString($result['text']),
                 'actual_microusd' => $actual, 'input_tokens' => $result['input_tokens'], 'output_tokens' => $result['output_tokens'], 'model' => $result['model']]);
             return ['text' => $result['text'], 'language' => $data['language'], 'cached' => false];
         } catch (\Throwable $e) {
-            $db->table('clubora.mobile_ai_work')->where('id', $work->id)->update(['state' => 'attention']);
+            $db->table('clubunio.mobile_ai_work')->where('id', $work->id)->update(['state' => 'attention']);
             throw $e;
         }
     }

@@ -28,8 +28,8 @@ try {
     $tenant = Tenant::create(['slug' => 'training-perf-'.Str::random(16), 'name' => 'Synthetic']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
-    $insert = fn ($table, $values) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
+    $insert = fn ($table, $values) => $db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
     $season = $insert('seasons', ['name' => 'Synthetic season']);
     $team = $insert('teams', ['name' => 'Synthetic team']);
     $ts = $insert('team_seasons', ['team_id' => $team, 'season_id' => $season, 'label' => 'Synthetic']);

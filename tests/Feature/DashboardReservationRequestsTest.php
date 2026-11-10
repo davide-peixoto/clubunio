@@ -21,24 +21,24 @@ class DashboardReservationRequestsTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->statement('CREATE TABLE clubora.accounts (id INTEGER PRIMARY KEY, username TEXT, display_name TEXT, active BOOLEAN, api_only BOOLEAN, created_at TEXT, updated_at TEXT)');
-        $db->statement('CREATE TABLE clubora.tenants (id INTEGER PRIMARY KEY, name TEXT, slug TEXT, active BOOLEAN, created_at TEXT, updated_at TEXT)');
-        $db->statement('CREATE TABLE clubora.tenant_accounts (tenant_id INTEGER, account_id INTEGER, role TEXT)');
-        $db->statement('CREATE TABLE clubora.bus_reservations (id INTEGER PRIMARY KEY, tenant_id INTEGER, starts_at TEXT, location TEXT, status TEXT, active BOOLEAN)');
-        $db->statement('CREATE TABLE clubora.pitch_requests (id INTEGER PRIMARY KEY, tenant_id INTEGER, date TEXT, starts_at TEXT, opponent TEXT, status TEXT)');
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->statement('CREATE TABLE clubunio.accounts (id INTEGER PRIMARY KEY, username TEXT, display_name TEXT, active BOOLEAN, api_only BOOLEAN, created_at TEXT, updated_at TEXT)');
+        $db->statement('CREATE TABLE clubunio.tenants (id INTEGER PRIMARY KEY, name TEXT, slug TEXT, active BOOLEAN, created_at TEXT, updated_at TEXT)');
+        $db->statement('CREATE TABLE clubunio.tenant_accounts (tenant_id INTEGER, account_id INTEGER, role TEXT)');
+        $db->statement('CREATE TABLE clubunio.bus_reservations (id INTEGER PRIMARY KEY, tenant_id INTEGER, starts_at TEXT, location TEXT, status TEXT, active BOOLEAN)');
+        $db->statement('CREATE TABLE clubunio.pitch_requests (id INTEGER PRIMARY KEY, tenant_id INTEGER, date TEXT, starts_at TEXT, opponent TEXT, status TEXT)');
         $this->actor = Account::forceCreate(['id' => 1, 'username' => 'synthetic', 'display_name' => 'Synthetic', 'active' => true]);
         $this->tenant = Tenant::forceCreate(['id' => 1, 'name' => 'Synthetic', 'slug' => 'synthetic', 'active' => true]);
-        $db->table('clubora.tenant_accounts')->insert(['tenant_id' => 1, 'account_id' => 1, 'role' => 'office']);
+        $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => 1, 'account_id' => 1, 'role' => 'office']);
         Http::preventStrayRequests();
     }
 
     private function seedRequests(): void
     {
         foreach (range(1, 8) as $id) {
-            DB::connection('clubunio')->table('clubora.bus_reservations')->insert(['id' => $id, 'tenant_id' => 1,
+            DB::connection('clubunio')->table('clubunio.bus_reservations')->insert(['id' => $id, 'tenant_id' => 1,
                 'starts_at' => '2026-01-01 10:00:00', 'location' => 'Destination', 'status' => 'ANGEFRAGT', 'active' => true]);
-            DB::connection('clubunio')->table('clubora.pitch_requests')->insert(['id' => $id, 'tenant_id' => 1,
+            DB::connection('clubunio')->table('clubunio.pitch_requests')->insert(['id' => $id, 'tenant_id' => 1,
                 'date' => '2026-01-01', 'starts_at' => '18:00:00', 'opponent' => 'Opponent', 'status' => 'pending']);
         }
     }
@@ -47,11 +47,11 @@ class DashboardReservationRequestsTest extends TestCase
     {
         $this->seedRequests();
         $db = DB::connection('clubunio');
-        $db->table('clubora.bus_reservations')->where('id', 1)->update(['tenant_id' => 2]);
-        $db->table('clubora.bus_reservations')->where('id', 2)->update(['active' => false]);
-        $db->table('clubora.bus_reservations')->where('id', 3)->update(['status' => 'GENEHMIGT']);
-        $db->table('clubora.pitch_requests')->where('id', 1)->update(['tenant_id' => 2]);
-        $db->table('clubora.pitch_requests')->where('id', 2)->update(['status' => 'approved']);
+        $db->table('clubunio.bus_reservations')->where('id', 1)->update(['tenant_id' => 2]);
+        $db->table('clubunio.bus_reservations')->where('id', 2)->update(['active' => false]);
+        $db->table('clubunio.bus_reservations')->where('id', 3)->update(['status' => 'GENEHMIGT']);
+        $db->table('clubunio.pitch_requests')->where('id', 1)->update(['tenant_id' => 2]);
+        $db->table('clubunio.pitch_requests')->where('id', 2)->update(['status' => 'approved']);
         $result = app(DashboardReservationRequests::class)->pending($this->actor, $this->tenant);
         $this->assertSame(5, $result['bus']['count']);
         $this->assertSame([4, 5, 6, 7, 8], $result['bus']['rows']->pluck('id')->all());
@@ -67,7 +67,7 @@ class DashboardReservationRequestsTest extends TestCase
     public function test_revoked_role_is_rechecked_before_any_request_data(): void
     {
         $this->seedRequests();
-        DB::connection('clubunio')->table('clubora.tenant_accounts')->update(['role' => 'trainer']);
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         app(DashboardReservationRequests::class)->pending($this->actor, $this->tenant);
     }
@@ -80,7 +80,7 @@ class DashboardReservationRequestsTest extends TestCase
 
     public function test_disabled_account_is_rechecked(): void
     {
-        DB::connection('clubunio')->table('clubora.accounts')->where('id', 1)->update(['active' => false]);
+        DB::connection('clubunio')->table('clubunio.accounts')->where('id', 1)->update(['active' => false]);
         $this->expectException(HttpException::class);
         app(DashboardReservationRequests::class)->pending($this->actor, $this->tenant);
     }

@@ -10,11 +10,11 @@
         <a href="{{ route('clubunio.portal.announcement',[$tenant->slug,$notification->object_id]) }}">{{ __('Ankündigung öffnen') }}</a>
     @endif
     @if($notification->object_type === 'member_document')
-        @php($memberDocument = \App\ClubUnio\Models\MemberDocument::where('tenant_id',$tenant->id)->where('active',true)->where('portal_visible',true)->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubora.members.id'))->find($notification->object_id))
+        @php($memberDocument = \App\ClubUnio\Models\MemberDocument::where('tenant_id',$tenant->id)->where('active',true)->where('portal_visible',true)->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubunio.members.id'))->find($notification->object_id))
         @if($memberDocument)<a href="{{ route('clubunio.portal.member.edit',[$tenant->slug,$memberDocument->member_id]) }}">{{ __('Dokumente öffnen') }}</a>@endif
     @endif
     @if($notification->object_type === 'member_change_request')
-        @php($memberChange = \App\ClubUnio\Models\MemberChangeRequest::where('tenant_id',$tenant->id)->where('requested_by',auth('portal')->id())->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubora.members.id'))->find($notification->object_id))
+        @php($memberChange = \App\ClubUnio\Models\MemberChangeRequest::where('tenant_id',$tenant->id)->where('requested_by',auth('portal')->id())->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubunio.members.id'))->find($notification->object_id))
         @if($memberChange)<a href="{{ route('clubunio.portal.member.edit',[$tenant->slug,$memberChange->member_id]) }}">{{ __('Antrag öffnen') }}</a>@endif
     @endif
     @if($notification->object_type === 'team_event')<a href="{{ route('clubunio.planning.show',[$tenant->slug,$notification->object_id]) }}">{{ __('Termin öffnen') }}</a>@endif

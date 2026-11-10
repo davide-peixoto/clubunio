@@ -71,7 +71,7 @@ class WorkspaceBusPlanningTablesTest extends TestCase
             $data += ['season_id' => 2027, 'home' => false];
         }
 
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function snapshot(string $url, string $component): string
@@ -140,17 +140,17 @@ class WorkspaceBusPlanningTablesTest extends TestCase
         foreach (['/bus' => 'club-unio.bus-reservations-table', '/planning/absences' => 'club-unio.planning-absences-table', '/planning/sfv' => 'club-unio.planning-sfv-table'] as $url => $component) {
             $snapshot = $this->snapshot($url, $component);
             $this->update($snapshot)->assertOk();
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['api_only' => true]);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['api_only' => true]);
             $this->update($snapshot)->assertForbidden();
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['api_only' => false]);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['api_only' => false]);
             $key = 'clubunio_context.'.$this->actor->id;
             $context = session($key);
             session()->put($key, ['tenant' => $this->foreign->id, 'revision' => 'changed']);
             $this->update($snapshot)->assertStatus(419);
             session()->put($key, $context);
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
             $this->update($snapshot)->assertForbidden();
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => true]);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => true]);
             $this->actor->tenants()->updateExistingPivot($this->tenant->id, ['role' => 'trainer']);
             $this->update($snapshot)->assertForbidden();
             $this->actor->tenants()->updateExistingPivot($this->tenant->id, ['role' => 'admin']);
@@ -189,7 +189,7 @@ class WorkspaceBusPlanningTablesTest extends TestCase
             'starts_at' => now('Europe/Zurich')->addDays(3)->setTime(18, 0)->format('Y-m-d\\TH:i'),
             'ends_at' => now('Europe/Zurich')->addDays(3)->setTime(20, 0)->format('Y-m-d\\TH:i'),
         ]);
-        $this->db->table('clubora.team_events')->where('id', $event)->update(['sfv_match_id' => 76543]);
+        $this->db->table('clubunio.team_events')->where('id', $event)->update(['sfv_match_id' => 76543]);
         $snapshot = $this->snapshot('/planning/sfv', 'club-unio.planning-sfv-table');
         $response = $this->update($snapshot, ['tableSearch' => 'VISIBLE'])->assertOk();
         $html = $response->json('components.0.effects.html');

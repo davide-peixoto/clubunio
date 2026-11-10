@@ -73,7 +73,7 @@ final class MobilePlanningController implements \Illuminate\Routing\Controllers\
         return DB::connection('clubunio')->transaction(function () use ($r, $operation) {
             $tenant = $r->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             app(MobileAccess::class)->enter($actor, $tenant);
             return response()->json(['data' => $operation($actor, $tenant, app(TeamPlanningService::class))]);

@@ -70,7 +70,7 @@ final class PlatformAdministrationController
     {
         $tenant = Tenant::findOrFail($id);
         $db = DB::connection('clubunio');
-        $accounts = $db->table('clubora.tenant_accounts as m')->join('clubora.accounts as a', 'a.id', '=', 'm.account_id')
+        $accounts = $db->table('clubunio.tenant_accounts as m')->join('clubunio.accounts as a', 'a.id', '=', 'm.account_id')
             ->where('m.tenant_id', $id)->where('a.api_only', false)->orderBy('a.display_name')->limit(201)
             ->get(['a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
 
@@ -80,8 +80,8 @@ final class PlatformAdministrationController
             'storageDestinations' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->destinations($tenant),
             'roles' => AccountRole::where('active', true)->orderBy('sort_order')->get(),
             'profiles' => AccessProfile::where('tenant_id', $id)->where('active', true)->orderBy('name')->get(['id', 'name']),
-            'domains' => $db->table('clubora.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
-            'changes' => $db->table('clubora.platform_changes as c')->join('clubora.accounts as a', 'a.id', '=', 'c.actor_id')
+            'domains' => $db->table('clubunio.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
+            'changes' => $db->table('clubunio.platform_changes as c')->join('clubunio.accounts as a', 'a.id', '=', 'c.actor_id')
                 ->where('c.tenant_id', $id)->orderByDesc('c.id')->limit(30)->get(['c.action', 'c.details', 'c.created_at', 'a.display_name'])]);
     }
 

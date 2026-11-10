@@ -57,10 +57,10 @@ class CustomerCreditTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'credit-pool-'.Str::random(10), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(15).'@example.invalid', 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
-        $released = $this->db->table('clubora.financial_adjustment_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
-        $this->db->table('clubora.financial_adjustment_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'confirmed', 'name' => 'Bestätigt']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
+        $released = $this->db->table('clubunio.financial_adjustment_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'released', 'name' => 'Freigegeben']);
+        $this->db->table('clubunio.financial_adjustment_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'confirmed', 'name' => 'Bestätigt']);
         $this->invoice = new Invoice;
         $this->invoice->forceFill(['tenant_id' => $this->tenant->id, 'member_id' => $member, 'bexio_invoice_id' => '21'])->save();
         $this->other = new Invoice;
@@ -110,7 +110,7 @@ class CustomerCreditTest extends TestCase
         Livewire::test(EmbeddedCustomerCredit::class, ['record' => $credit->id, 'dossierId' => -1])->assertForbidden();
         Livewire::test(EmbeddedCreditNote::class, ['record' => $this->note->id, 'dossierId' => $this->invoice->id])->assertSuccessful();
         Livewire::test(EmbeddedCreditNote::class, ['record' => $this->note->id, 'dossierId' => $this->other->id])->assertForbidden();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'trainer']);
         $dialog->call('$refresh')->assertForbidden();
     }
 
@@ -192,7 +192,7 @@ class CustomerCreditTest extends TestCase
     public function test_fresh_role_and_foreign_tenant_are_rejected(): void
     {
         $credit = $this->register();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         $this->expectException(HttpException::class);
         app(CustomerCreditService::class)->correctReference($this->actor, $this->tenant, $credit->id, $credit->revision, 'GS-00009');
     }

@@ -17,7 +17,7 @@ class MemberAccessService
                 return null;
             }
 
-            return DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+            return DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
         });
     }
 
@@ -39,9 +39,9 @@ class MemberAccessService
         $today = now('Europe/Zurich')->toDateString();
 
         return $query->whereExists(function ($q) use ($actor, $tenant, $ownOnly, $today) {
-            $q->selectRaw('1')->from('clubora.account_member_links as access_link')
+            $q->selectRaw('1')->from('clubunio.account_member_links as access_link')
                 ->where('access_link.tenant_id', $tenant->id)->where('access_link.account_id', $actor->id)
-                ->where('access_link.state', 'approved')->whereColumn('access_link.member_id', 'clubora.members.id')
+                ->where('access_link.state', 'approved')->whereColumn('access_link.member_id', 'clubunio.members.id')
                 ->where(function ($q) use ($ownOnly, $today) {
                     $q->where('access_link.kind', 'self');
                     if (! $ownOnly) {
@@ -76,14 +76,14 @@ class MemberAccessService
             }
             $table = $role === 'trainer' ? 'team_staff' : 'technical_leads';
 
-            return DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
-                ->join('clubora.team_seasons as season_team', function ($join) {
+            return DB::connection('clubunio')->table('clubunio.'.$table.' as assignment')
+                ->join('clubunio.team_seasons as season_team', function ($join) {
                     $join->on('season_team.id', '=', 'assignment.team_season_id')->on('season_team.tenant_id', '=', 'assignment.tenant_id');
-                })->join('clubora.teams as team', function ($join) {
+                })->join('clubunio.teams as team', function ($join) {
                     $join->on('team.id', '=', 'season_team.team_id')->on('team.tenant_id', '=', 'season_team.tenant_id');
                 })->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)
                 ->where('season_team.active', true)->where('team.active', true)
-                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'))
+                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubunio.members.id'))
                 ->distinct()->pluck('assignment.team_season_id')->all();
         });
     }
@@ -100,9 +100,9 @@ class MemberAccessService
         $tables = $this->membership($actor, $tenant)->role === 'technical_lead' ? ['team_players', 'team_staff'] : ['team_players'];
 
         return $this->activeMembers($tenant)->where(function ($q) use ($actor, $tenant, $teams, $tables) {
-            $q->whereIn('clubora.members.id', $this->represented($actor, $tenant)->select('clubora.members.id'));
+            $q->whereIn('clubunio.members.id', $this->represented($actor, $tenant)->select('clubunio.members.id'));
             foreach ($tables as $table) {
-                $q->orWhereIn('clubora.members.id', DB::connection('clubunio')->table('clubora.'.$table)
+                $q->orWhereIn('clubunio.members.id', DB::connection('clubunio')->table('clubunio.'.$table)
                     ->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
             }
         });

@@ -31,13 +31,13 @@ class MobilePitchControllerTest extends TestCase
             'cache.default' => 'array']);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->statement('CREATE TABLE clubora.tenants (id INTEGER PRIMARY KEY, name TEXT)');
-        $db->statement('CREATE TABLE clubora.mobile_sessions (id TEXT PRIMARY KEY)');
-        $db->statement('CREATE TABLE clubora.pitch_request_idempotency (tenant_id INTEGER, account_id INTEGER, key_hash TEXT, payload_hash TEXT, response_encrypted TEXT NOT NULL, PRIMARY KEY(tenant_id,account_id,key_hash))');
-        $db->statement('CREATE TABLE clubora.pitch_test_effects (id INTEGER PRIMARY KEY, kind TEXT)');
-        $db->table('clubora.tenants')->insert([['id' => 1, 'name' => 'Synthetic'], ['id' => 2, 'name' => 'Other']]);
-        $db->table('clubora.mobile_sessions')->insert(['id' => 'synthetic-session']);
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->statement('CREATE TABLE clubunio.tenants (id INTEGER PRIMARY KEY, name TEXT)');
+        $db->statement('CREATE TABLE clubunio.mobile_sessions (id TEXT PRIMARY KEY)');
+        $db->statement('CREATE TABLE clubunio.pitch_request_idempotency (tenant_id INTEGER, account_id INTEGER, key_hash TEXT, payload_hash TEXT, response_encrypted TEXT NOT NULL, PRIMARY KEY(tenant_id,account_id,key_hash))');
+        $db->statement('CREATE TABLE clubunio.pitch_test_effects (id INTEGER PRIMARY KEY, kind TEXT)');
+        $db->table('clubunio.tenants')->insert([['id' => 1, 'name' => 'Synthetic'], ['id' => 2, 'name' => 'Other']]);
+        $db->table('clubunio.mobile_sessions')->insert(['id' => 'synthetic-session']);
         Http::preventStrayRequests();
         Mail::fake();
         $this->app->instance(TenantDomainService::class, new class { public function resolve($request) { return null; } });
@@ -94,7 +94,7 @@ class MobilePitchControllerTest extends TestCase
             private function call($method, $args): array {
                 $this->calls[] = [$method, $args];
                 if ($method === 'requestFriendly' && $this->recordEffects) {
-                    DB::connection('clubunio')->table('clubora.pitch_test_effects')->insert([['kind' => 'request'], ['kind' => 'notification']]);
+                    DB::connection('clubunio')->table('clubunio.pitch_test_effects')->insert([['kind' => 'request'], ['kind' => 'notification']]);
                 }
                 if ($this->failure) abort($this->failure);
                 return $this->result;
@@ -275,8 +275,8 @@ class MobilePitchControllerTest extends TestCase
             ->assertOk()->assertExactJson($first)->assertHeader('Idempotency-Replayed', 'true');
         $this->assertCount(1, $this->domain->calls);
         $this->assertSame(1, $this->domain->replayChecks);
-        $this->assertSame(2, DB::connection('clubunio')->table('clubora.pitch_test_effects')->count());
-        $row = DB::connection('clubunio')->table('clubora.pitch_request_idempotency')->first();
+        $this->assertSame(2, DB::connection('clubunio')->table('clubunio.pitch_test_effects')->count());
+        $row = DB::connection('clubunio')->table('clubunio.pitch_request_idempotency')->first();
         $this->assertSame(hash('sha256', $body['request_id']), $row->key_hash);
         $this->assertStringNotContainsString($first['data']['key'], $row->response_encrypted);
         $this->postJson($this->base.'/pitch-planning/requests', array_replace($body, ['opponent' => 'Changed']))->assertConflict();
@@ -296,7 +296,7 @@ class MobilePitchControllerTest extends TestCase
         $this->access->tenants = [1, 2];
         $this->postJson('/api/mobile/v1/clubs/2/pitch-planning/requests', $body)->assertOk()->assertHeaderMissing('Idempotency-Replayed');
         $this->assertCount(3, $this->domain->calls);
-        $this->assertSame(3, DB::connection('clubunio')->table('clubora.pitch_request_idempotency')->count());
+        $this->assertSame(3, DB::connection('clubunio')->table('clubunio.pitch_request_idempotency')->count());
     }
 
     public function test_friendly_replay_rechecks_current_rights_and_session(): void
@@ -318,12 +318,12 @@ class MobilePitchControllerTest extends TestCase
         $this->domain->failure = 503;
         $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertStatus(503);
         $db = DB::connection('clubunio');
-        $this->assertSame(0, $db->table('clubora.pitch_test_effects')->count());
-        $this->assertSame(0, $db->table('clubora.pitch_request_idempotency')->count());
+        $this->assertSame(0, $db->table('clubunio.pitch_test_effects')->count());
+        $this->assertSame(0, $db->table('clubunio.pitch_request_idempotency')->count());
         $this->domain->failure = null;
         $this->postJson($this->base.'/pitch-planning/requests', $body)->assertOk();
-        $this->assertSame(2, $db->table('clubora.pitch_test_effects')->count());
-        $this->assertSame(1, $db->table('clubora.pitch_request_idempotency')->count());
+        $this->assertSame(2, $db->table('clubunio.pitch_test_effects')->count());
+        $this->assertSame(1, $db->table('clubunio.pitch_request_idempotency')->count());
     }
 
     public function test_friendly_requires_valid_key_and_ledger_before_mutation(): void
@@ -333,7 +333,7 @@ class MobilePitchControllerTest extends TestCase
             $this->personal()->postJson($this->base.'/pitch-planning/requests', $body + ['request_id' => $id])->assertUnprocessable();
         }
         $this->postJson($this->base.'/pitch-planning/requests', $body)->assertUnprocessable();
-        DB::connection('clubunio')->statement('DROP TABLE clubora.pitch_request_idempotency');
+        DB::connection('clubunio')->statement('DROP TABLE clubunio.pitch_request_idempotency');
         $this->postJson($this->base.'/pitch-planning/requests', $body + ['request_id' => 'valid-key-1'])->assertStatus(503);
         $this->assertSame([], $this->domain->calls);
     }
@@ -345,8 +345,8 @@ class MobilePitchControllerTest extends TestCase
         $this->domain->result['title'] = "\xB1\x31";
         $this->personal()->postJson($this->base.'/pitch-planning/requests', $body)->assertStatus(500);
         $db = DB::connection('clubunio');
-        $this->assertSame(0, $db->table('clubora.pitch_test_effects')->count());
-        $this->assertSame(0, $db->table('clubora.pitch_request_idempotency')->count());
+        $this->assertSame(0, $db->table('clubunio.pitch_test_effects')->count());
+        $this->assertSame(0, $db->table('clubunio.pitch_request_idempotency')->count());
         $this->assertSame(0, $db->transactionLevel());
     }
 
@@ -505,17 +505,17 @@ class MobilePitchControllerTest extends TestCase
     public function test_real_core_rejects_trainer_tl_and_profile_review_even_with_module_permission(): void
     {
         $db = DB::connection('clubunio');
-        $db->statement('CREATE TABLE clubora.accounts (id INTEGER PRIMARY KEY, active INTEGER)');
-        $db->statement('CREATE TABLE clubora.tenant_accounts (id INTEGER PRIMARY KEY, tenant_id INTEGER, account_id INTEGER, role TEXT)');
-        $db->table('clubora.accounts')->insert(['id' => 17, 'active' => 1]);
-        $db->table('clubora.tenant_accounts')->insert(['id' => 1, 'tenant_id' => 1, 'account_id' => 17, 'role' => 'trainer']);
+        $db->statement('CREATE TABLE clubunio.accounts (id INTEGER PRIMARY KEY, active INTEGER)');
+        $db->statement('CREATE TABLE clubunio.tenant_accounts (id INTEGER PRIMARY KEY, tenant_id INTEGER, account_id INTEGER, role TEXT)');
+        $db->table('clubunio.accounts')->insert(['id' => 17, 'active' => 1]);
+        $db->table('clubunio.tenant_accounts')->insert(['id' => 1, 'tenant_id' => 1, 'account_id' => 17, 'role' => 'trainer']);
         $projection = \Mockery::mock(PitchPlanningProjection::class)->makePartial();
         $projection->shouldReceive('ready')->andReturn(true);
         $this->app->instance(PitchPlanningProjection::class, $projection);
         $this->app->forgetInstance(PitchPlanningService::class);
         $this->permissions->view = true;
         foreach (['trainer', 'technical_lead', 'profile'] as $role) {
-            $db->table('clubora.tenant_accounts')->where('id', 1)->update(['role' => $role]);
+            $db->table('clubunio.tenant_accounts')->where('id', 1)->update(['role' => $role]);
             $this->personal()->postJson($this->base.'/pitch-planning/requests/7/review', ['revision' => '1', 'decision' => 'approved'])
                 ->assertForbidden()->assertJsonPath('error.code', 'forbidden');
             $this->postJson($this->base.'/pitch-planning/requests/7/review', ['revision' => '1', 'decision' => 'approved', 'override_field_status' => true])
@@ -529,7 +529,7 @@ class MobilePitchControllerTest extends TestCase
         });
         $this->permissions->view = false;
         foreach (['admin', 'office'] as $role) {
-            $db->table('clubora.tenant_accounts')->where('id', 1)->update(['role' => $role]);
+            $db->table('clubunio.tenant_accounts')->where('id', 1)->update(['role' => $role]);
             $this->postJson($this->base.'/pitch-planning/requests/7/review', ['revision' => '1', 'decision' => 'approved'])
                 ->assertForbidden();
             $this->postJson($this->base.'/pitch-planning/competitions/11/teams', ['revision' => '1', 'team_season_ids' => []])

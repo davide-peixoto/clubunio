@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+app=/home/runcloud/webapps/ClubUnioStage
+php=/RunCloud/Packages/php84rc/bin/php
+branch=codex/stage-clubunio-schema
+old=b4dc92b
+test "$#" -eq 2
+candidate=$1
+bundle=$2
+[[ "$candidate" =~ ^[0-9a-f]{40}$ ]]
+test -f "$bundle"
+test -x "$php"
+cd "$app"
+as_app() { runuser -u runcloud -- "$@"; }
+psql_stage() { runuser -u postgres -- psql -X -qAt -v ON_ERROR_STOP=1 -d clubunio_stage "$@"; }
+test "$(as_app git rev-parse --short=7 HEAD)" = "$old"
+test -z "$(as_app git status --porcelain --untracked-files=no)"
+test ! -e storage/framework/down
+test "$(psql_stage -c "SELECT current_database() || ':' || (to_regnamespace('clubora') IS NOT NULL)::text || ':' || (to_regnamespace('clubunio') IS NULL)::text")" = 'clubunio_stage:true:true'
+test "$(psql_stage -c "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='clubora' AND p.prosrc ~ '\mclubora\M'")" = 0
+as_app git fetch --no-tags "$bundle" "refs/heads/$branch"
+test "$(as_app git rev-parse FETCH_HEAD)" = "$candidate"
+
+backup=$(mktemp -d /root/clubunio-stage-schema-XXXXXXXX)
+openssl rand -base64 48 > "$backup/passphrase"
+runuser -u postgres -- pg_dump -Fc --schema=clubora --lock-wait-timeout=5s clubunio_stage |
+    gpg --quiet --batch --pinentry-mode loopback --passphrase-file "$backup/passphrase" --symmetric --cipher-algo AES256 --output "$backup/clubora.dump.gpg"
+gpg --quiet --batch --pinentry-mode loopback --passphrase-file "$backup/passphrase" --decrypt "$backup/clubora.dump.gpg" |
+    pg_restore --file=/dev/null
+sha256sum "$backup/clubora.dump.gpg" > "$backup/SHA256SUMS"
+echo "Verified encrypted Stage backup: $backup"
+
+fingerprint() {
+    psql_stage -v schema="$1" <<'SQL'
+BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+SELECT format('SELECT %L, count(*), md5(coalesce(string_agg(h, %L ORDER BY h), %L)) FROM (SELECT md5(to_jsonb(t)::text) AS h FROM %I.%I t) q',
+              c.oid::text || ':' || c.relname,'','',n.nspname,c.relname)
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname IN (:'schema','legacy_prod','migration_audit') AND c.relkind IN ('r','p') ORDER BY c.oid
+\gexec
+ROLLBACK;
+SQL
+}
+
+clear_app_caches() {
+    as_app "$php" artisan config:clear
+    as_app "$php" artisan route:clear
+    as_app "$php" artisan view:clear
+}
+
+renamed=0
+code_changed=0
+maintenance=0
+rollback() {
+    rc=$?
+    trap - EXIT
+    if (( rc == 0 )); then return; fi
+    set +e
+    if (( renamed || code_changed )); then
+        as_app "$php" artisan down --retry=60
+        maintenance=1
+    fi
+    if (( renamed )); then
+        psql_stage -c "BEGIN; SET LOCAL lock_timeout='5s'; SET LOCAL ROLE userunio; ALTER SCHEMA clubunio RENAME TO clubora; COMMIT;" || exit 2
+    fi
+    if (( code_changed )); then
+        as_app git switch --detach "$old" || exit 2
+        clear_app_caches || exit 2
+    fi
+    if (( maintenance )); then as_app "$php" artisan up || exit 2; fi
+    echo 'Stage cutover failed; prior code and schema restored.' >&2
+    exit "$rc"
+}
+trap rollback EXIT
+as_app "$php" artisan down --retry=60
+maintenance=1
+fingerprint clubora > "$backup/before.tsv"
+psql_stage <<'SQL'
+BEGIN;
+SET LOCAL lock_timeout='5s';
+SET LOCAL ROLE userunio;
+ALTER SCHEMA clubora RENAME TO clubunio;
+SELECT count(*) FROM clubunio.migrations;
+ROLLBACK;
+SQL
+test "$(psql_stage -c "SELECT (to_regnamespace('clubora') IS NOT NULL)::text || ':' || (to_regnamespace('clubunio') IS NULL)::text")" = 'true:true'
+
+psql_stage -c "BEGIN; SET LOCAL lock_timeout='5s'; SET LOCAL ROLE userunio; ALTER SCHEMA clubora RENAME TO clubunio; COMMIT;"
+renamed=1
+code_changed=1
+as_app git switch --detach "$candidate"
+clear_app_caches
+fingerprint clubunio > "$backup/after.tsv"
+cmp "$backup/before.tsv" "$backup/after.tsv"
+as_app "$php" deploy/check-stage-schema.php
+as_app "$php" artisan view:cache
+as_app "$php" artisan up
+maintenance=0
+base=https://stage.clubunio.com
+test "$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$base/up")" = 200
+test "$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$base/login")" = 200
+test "$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "$base/members")" = 302
+trap - EXIT
+echo "Stage schema renamed; verified $(wc -l < "$backup/after.tsv") table fingerprints, including untouched snapshot schemas."

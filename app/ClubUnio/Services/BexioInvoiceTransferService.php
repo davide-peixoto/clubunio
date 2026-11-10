@@ -23,7 +23,7 @@ class BexioInvoiceTransferService
         $dispatch = app(BexioSandboxDispatchService::class);
         $dispatch->authorize($actor, $tenant);
         $invoice = Invoice::where('tenant_id', $tenant->id)->where('active', true)->whereNull('legacy_id')->findOrFail($id);
-        $existing = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $id)->first();
+        $existing = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $id)->first();
         if ($existing) {
             if ($existing->state === 'accepted') {
                 $dispatch->statusDocument($actor, $tenant, 'invoice', $id);
@@ -42,6 +42,6 @@ class BexioInvoiceTransferService
             $dispatch->send($actor, $tenant, $dispatchId);
         }
 
-        return DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->find($dispatchId);
+        return DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->find($dispatchId);
     }
 }

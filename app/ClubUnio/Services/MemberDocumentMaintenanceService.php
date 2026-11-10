@@ -77,7 +77,7 @@ class MemberDocumentMaintenanceService
 
     private function audit(Account $actor, MemberDocument $document, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $document->tenant_id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $document->tenant_id, 'actor_id' => $actor->id,
             'object_type' => 'member_documents', 'object_id' => $document->id,
             'after_value' => json_encode(['operation' => $operation, 'member_id' => $document->member_id, 'revision' => $document->revision,
                 'active' => $document->active, 'portal_visible' => $document->portal_visible], JSON_THROW_ON_ERROR)]);
@@ -86,7 +86,7 @@ class MemberDocumentMaintenanceService
     private function notify(Tenant $tenant, MemberDocument $document): void
     {
         $db = DB::connection('clubunio');
-        $accounts = Account::where('active', true)->whereIn('id', $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $document->member_id)->where('state', 'approved')->select('account_id'))->get();
+        $accounts = Account::where('active', true)->whereIn('id', $db->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $document->member_id)->where('state', 'approved')->select('account_id'))->get();
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, 'member.document.available', 'push', ['verein' => $tenant->name], $accounts->modelKeys());
         foreach ($accounts as $account) {
             $message = $messages[$account->id];
@@ -94,7 +94,7 @@ class MemberDocumentMaintenanceService
                 continue;
             }
             if (app(MemberAccessService::class)->canEnter($account, $tenant) && app(MemberAccessService::class)->represented($account, $tenant)->whereKey($document->member_id)->exists()) {
-                $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->id,
+                $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account->id,
                     'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'member_document', 'object_id' => $document->id]);
             }
         }

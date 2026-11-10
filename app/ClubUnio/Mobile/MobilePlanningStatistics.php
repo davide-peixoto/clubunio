@@ -32,10 +32,10 @@ final class MobilePlanningStatistics
         $historical = $db->query()->fromSub($events, 'ev')->joinSub($p->table($tenant, 'team_participations'), 'pa', 'pa.event_id', '=', 'ev.id')
             ->select(['ev.team_season_id', 'pa.member_id']);
         $playerTeams = $p->table($tenant, 'team_players')->where('active', true)->select(['team_season_id', 'member_id'])->union($historical);
-        $own = app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id');
+        $own = app(MemberAccessService::class)->represented($actor, $tenant)->select('clubunio.members.id');
         $eligible = $db->query()->fromSub($playerTeams, 'pt')->whereIn('pt.team_season_id', (clone $events)->select('team_season_id'))
             ->where(fn ($q) => $q->whereIn('pt.team_season_id', $p->teams($actor, $tenant, true)->select('id'))->orWhereIn('pt.member_id', $own))
-            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.team_staff as staff')->where('staff.tenant_id', $tenant->id)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubunio.team_staff as staff')->where('staff.tenant_id', $tenant->id)
                 ->where('staff.active', true)->whereColumn('staff.team_season_id', 'pt.team_season_id')->whereColumn('staff.member_id', 'pt.member_id'));
         $members = $p->table($tenant, 'members')->whereIn('id', (clone $eligible)->select('pt.member_id'));
         $total = (clone $members)->count();

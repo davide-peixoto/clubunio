@@ -42,7 +42,7 @@ class SponsorDocumentsLiveAcceptanceTest extends TestCase
     {
         $response = $this->get(route('clubunio.document-series.original', [$this->tenant->slug, $this->fixture['series'], $this->fixture['recipient']]));
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $sha = DB::connection('clubunio')->table('clubora.document_series_recipients')->where('id', $this->fixture['recipient'])->value('original_sha256');
+        $sha = DB::connection('clubunio')->table('clubunio.document_series_recipients')->where('id', $this->fixture['recipient'])->value('original_sha256');
         $this->assertSame($sha, hash('sha256', $response->getContent()));
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
     }

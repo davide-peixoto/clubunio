@@ -20,7 +20,7 @@ foreach (['previous-full-options', 'bounded-options'] as $mode) {
     $db->flushQueryLog();
     $start = microtime(true);
     $options = $mode === 'previous-full-options'
-        ? Account::whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id))->where('active', true)->orderBy('display_name')->pluck('display_name', 'id')->all()
+        ? Account::whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id))->where('active', true)->orderBy('display_name')->pluck('display_name', 'id')->all()
         : app(AnnouncementChoices::class)->search($tenant, 'accounts', '');
     $queries = $db->getQueryLog();
     // Never emit names, IDs, bindings, or notification data.

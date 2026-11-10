@@ -37,7 +37,7 @@ if ($operation === 'prepare') {
     app(BexioCatalogService::class)->sync($actor, $tenant);
     $db->transaction(function () use ($actor, $tenant, $db, $marker, $single, $up, $exempt) {
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-        $binding = $db->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = $db->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         abort_unless($binding && hash_equals($binding->connection_hash, app(BexioSandboxFixtureService::class)->connectionHash($tenant)), 409);
         if (Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('notes', $marker)->exists()) {
             return;
@@ -57,7 +57,7 @@ if ($operation === 'prepare') {
     });
 }
 $invoice = Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('notes', $marker)->firstOrFail();
-$query = $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoice->id);
+$query = $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoice->id);
 $row = (clone $query)->first();
 if (! $row && $operation === 'prepare') {
     $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $invoice->id);

@@ -91,7 +91,7 @@ class LanguagePreferencesTest extends TestCase
             $input = ['locale'=>'en','expected'=>null,'reason'=>'Language acceptance fixture'];
             $service->setTenantDefault($actor,$tenant,$input);
             $this->assertSame('en',$tenant->fresh()->default_locale);
-            $this->assertSame(1,$db->table('clubora.object_changes')->where('tenant_id',$tenant->id)->count());
+            $this->assertSame(1,$db->table('clubunio.object_changes')->where('tenant_id',$tenant->id)->count());
             try { $service->setTenantDefault($actor,$tenant,$input); $this->fail('Stale value accepted'); }
             catch (\Illuminate\Validation\ValidationException $e) { $this->assertArrayHasKey('locale',$e->errors()); }
             $this->actingAs($actor,'clubunio')->get('/settings')->assertOk()->assertSee('Club language')->assertHeader('Content-Language','en');

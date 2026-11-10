@@ -19,7 +19,7 @@ final class MobileSeasonScope
         $key = 'mobile.current_season.'.$tenant->id.'.'.now('Europe/Zurich')->toDateString();
         $request = request();
         if (! $request->attributes->has($key)) {
-            $settings = DB::connection('clubunio')->table('clubora.tenant_settings')->where('tenant_id', $tenant->id)
+            $settings = DB::connection('clubunio')->table('clubunio.tenant_settings')->where('tenant_id', $tenant->id)
                 ->where('area', 'general')->where('key', 'SaisonID')->limit(2)->pluck('encrypted_value');
             $value = '';
             if ($settings->count() === 1 && is_string($settings->sole())) {
@@ -28,7 +28,7 @@ final class MobileSeasonScope
             }
             $season = null;
             if (preg_match('/^[1-9][0-9]{0,17}$/D', $value)) {
-                $rows = DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)
+                $rows = DB::connection('clubunio')->table('clubunio.seasons')->where('tenant_id', $tenant->id)
                     ->where(fn ($q) => $q->where('legacy_id', $value)->orWhere(fn ($q) => $q->whereNull('legacy_id')->where('id', $value)))
                     ->limit(2)->get(['id', 'legacy_id', 'name', 'active', 'starts_on', 'ends_on']);
                 // Imported iniParameter values refer to legacy IDs, not coincidental native IDs.
@@ -59,7 +59,7 @@ final class MobileSeasonScope
         if (! $this->enabled()) { return $query; }
         if ($table === 'team_seasons') { return $this->teams($query, $tenant); }
         if (in_array($table, ['team_events', 'team_players', 'team_staff', 'technical_leads', 'training_slots'], true)) {
-            $teams = DB::connection('clubunio')->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('active', true);
+            $teams = DB::connection('clubunio')->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)->where('active', true);
 
             return $query->whereIn('team_season_id', $this->teams($teams, $tenant)->select('id'));
         }

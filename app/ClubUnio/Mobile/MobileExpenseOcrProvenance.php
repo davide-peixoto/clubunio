@@ -14,7 +14,7 @@ final class MobileExpenseOcrProvenance
         return (int) $whole * 10000 + (int) str_pad($fraction, 4, '0');
     }
 
-    private function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_expense_ocr_provenance')->where('tenant_id', $tenant->id); }
+    private function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_expense_ocr_provenance')->where('tenant_id', $tenant->id); }
 
     private function sourceAttached(Tenant $tenant, ExpenseLine $line, array $proof): bool
     {
@@ -28,7 +28,7 @@ final class MobileExpenseOcrProvenance
         $draftIds = array_values(array_unique(array_map(fn ($pair) => $pair['proof']['draft_id'], $pairs)));
         $drafts = app(MobileExpenseReceipts::class)->table($tenant)->whereIn('id', $draftIds)
             ->get(['id','account_id','state','bound_line_id','sha256','bound_upload_id','revision'])->keyBy('id');
-        $uploads = DB::connection('clubunio')->table('clubora.document_uploads')->where('tenant_id', $tenant->id)->where('kind', 'expense')
+        $uploads = DB::connection('clubunio')->table('clubunio.document_uploads')->where('tenant_id', $tenant->id)->where('kind', 'expense')
             ->whereIn('id', $drafts->pluck('bound_upload_id')->filter()->unique())
             ->get(['id','object_id','state','sha256','folder','filename',new \Illuminate\Database\Query\Expression('encrypted_bytes IS NOT NULL AS has_bytes')])->keyBy('id');
         $result = [];
@@ -55,7 +55,7 @@ final class MobileExpenseOcrProvenance
         abort_unless($draft->state === 'clean' && (int) $draft->revision === (int) $input['receipt_revision']
             && (int) $draft->revision === (int) $input['ocr_source_revision'] && $draft->scanned_at && $draft->scanner_version !== ''
             && now()->isBefore($draft->expires_at), 409, 'OCR-Belegquelle ist nicht mehr aktuell.');
-        $work = DB::connection('clubunio')->table('clubora.mobile_ai_work')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+        $work = DB::connection('clubunio')->table('clubunio.mobile_ai_work')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
             ->where('id', $input['ocr_work_id'])->sharedLock()->first();
         abort_unless($work && $work->operation === 'expense_ocr' && $work->provider === 'azure_document_intelligence'
             && $work->model === AzureExpenseOcrProvider::MODEL.'@'.AzureExpenseOcrProvider::VERSION
@@ -110,10 +110,10 @@ final class MobileExpenseOcrProvenance
         $result = $lines->map(fn () => ['AiBetragUebernommen' => null])->all();
         if (!config('clubunio-expense-provenance.enabled', false) || $lines->isEmpty()) return $result;
         $latest = $this->table($tenant)->whereIn('line_id', $lines->keys())->whereNotExists(function ($q) {
-            $q->selectRaw('1')->from('clubora.mobile_expense_ocr_provenance as newer')
-                ->whereColumn('newer.tenant_id', 'clubora.mobile_expense_ocr_provenance.tenant_id')
-                ->whereColumn('newer.line_id', 'clubora.mobile_expense_ocr_provenance.line_id')
-                ->whereColumn('newer.line_revision', '>', 'clubora.mobile_expense_ocr_provenance.line_revision');
+            $q->selectRaw('1')->from('clubunio.mobile_expense_ocr_provenance as newer')
+                ->whereColumn('newer.tenant_id', 'clubunio.mobile_expense_ocr_provenance.tenant_id')
+                ->whereColumn('newer.line_id', 'clubunio.mobile_expense_ocr_provenance.line_id')
+                ->whereColumn('newer.line_revision', '>', 'clubunio.mobile_expense_ocr_provenance.line_revision');
         })->get();
         $pairs = [];
         foreach ($latest as $row) if (!$row->source_replaced) {

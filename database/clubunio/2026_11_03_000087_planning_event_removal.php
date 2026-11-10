@@ -10,7 +10,7 @@ return new class extends Migration {
         if ($db->getDriverName() !== 'pgsql' || !\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Reviewed ClubUnio PostgreSQL required');
         }
-        $db->statement('ALTER TABLE clubora.team_events ADD COLUMN deleted_at timestamptz');
+        $db->statement('ALTER TABLE clubunio.team_events ADD COLUMN deleted_at timestamptz');
     }
     public function down(): void { throw new LogicException('Retain removal history; reviewed restore required'); }
 };

@@ -33,7 +33,7 @@ class InvoiceWorkflowService
             }
             $invoice = new Invoice;
             $invoice->forceFill($data + ['tenant_id' => $tenant->id, 'cash_rounding' => true, 'workflow_status_id' => $this->status($tenant, 'draft')])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'invoices', 'object_id' => $invoice->id, 'after_value' => json_encode(['action' => 'create', 'data' => $data], JSON_THROW_ON_ERROR)]);
 
             return $invoice->refresh();
@@ -148,7 +148,7 @@ class InvoiceWorkflowService
             } elseif (in_array($operation, ['remove_line', 'restore_line'], true)) {
                 $data = Validator::make($input, ['line_id' => 'required|integer|min:1', 'reason' => 'required|string|min:3|max:1000'])->validate();
                 $line = $invoice->lines()->where('active', $operation === 'remove_line')->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($data['line_id']);
-                $linked = DB::connection('clubunio')->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('invoice_line_id', $line->id)->exists();
+                $linked = DB::connection('clubunio')->table('clubunio.team_players')->where('tenant_id', $tenant->id)->where('invoice_line_id', $line->id)->exists();
                 if ($line->contribution || $linked) {
                     throw ValidationException::withMessages(['line_id' => __('Beitragspositionen mit Zuordnungen bleiben erhalten. Bitte die Rechnung bei Bedarf stornieren.')]);
                 }
@@ -188,7 +188,7 @@ class InvoiceWorkflowService
             $invoice->rounding_cents = app(InvoiceTaxService::class)->summary($invoice)['rounding_cents'];
             $invoice->revision++;
             $invoice->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'invoices', 'object_id' => $id, 'before_value' => json_encode($before, JSON_THROW_ON_ERROR),
                 'after_value' => json_encode(['action' => $operation, 'invoice' => $invoice->only(array_keys($before))] + $detail, JSON_THROW_ON_ERROR)]);
 

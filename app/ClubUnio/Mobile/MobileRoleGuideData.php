@@ -14,7 +14,7 @@ final class MobileRoleGuideData {
         $absences=false;
         if($planningVisible) { try { $absences=$planning->absenceMembers($actor,$tenant,'create')->exists(); } catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { if($e->getStatusCode()!==403) throw $e; } }
         $membership=$access->membership($actor->fresh(),$tenant);
-        $label=$membership?DB::connection('clubunio')->table('clubora.account_roles')->where('code',$membership->role)->where('active',true)->value('name'):null;
+        $label=$membership?DB::connection('clubunio')->table('clubunio.account_roles')->where('code',$membership->role)->where('active',true)->value('name'):null;
         return ['tenant_id'=>(int)$tenant->id,'account_id'=>(int)$actor->id,'clubName'=>$tenant->name,'roleLabel'=>$label??'Dein Vereinszugang',
             'canManageTeams'=>$teams&&config('clubunio-mobile.native_my_teams_enabled',false)&&in_array('Teams',$visible,true),
             'canRespond'=>$planningVisible&&($teams||($access->represented($actor,$tenant)->exists()&&app(MobileAccess::class)->teams($actor,$tenant)->exists())),'canRecordAbsences'=>$absences,

@@ -26,7 +26,7 @@ class MobileRegistrationsTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'mobile-intake-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic intake']);
         $this->actor = new Account; $this->actor->forceFill(['username' => 'mobile-intake-'.bin2hex(random_bytes(8)),
             'display_name' => 'Synthetic reviewer', 'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);
         foreach (['submitted', 'review', 'trial', 'accepted', 'rejected', 'pool'] as $key) {
             $this->statuses[$key] = $this->insert('registration_statuses', ['code' => $key, 'name' => $key, 'workflow_key' => $key]);
         }
@@ -43,7 +43,7 @@ class MobileRegistrationsTest extends TestCase
         $this->withToken($token);
     }
     protected function tearDown(): void { if (isset($this->db)) { $this->db->rollBack(); } parent::tearDown(); }
-    private function insert(string $table, array $values): int { return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values); }
+    private function insert(string $table, array $values): int { return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values); }
     private function base(): string { return '/api/mobile/v1/clubs/'.$this->tenant->id.'/registrations'; }
     private function create(array $changes = []) {
         return $this->postJson($this->base(), array_replace(['RequestKey' => '9d00f34f-e433-438d-a124-a9dfbf1fd371', 'Values' => $this->values], $changes));
@@ -58,23 +58,23 @@ class MobileRegistrationsTest extends TestCase
         $this->db->table('pg_temp.intake_test_tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id]);
         $ddl = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_03_000300_mobile_registration_requests.php'))->up());
         $this->assertCount(1, $ddl);
-        $sql = str_replace(['CREATE TABLE clubora.mobile_registration_requests', ");\nREVOKE", 'ON clubora.mobile_registration_requests'],
+        $sql = str_replace(['CREATE TABLE clubunio.mobile_registration_requests', ");\nREVOKE", 'ON clubunio.mobile_registration_requests'],
             ['CREATE TEMP TABLE mobile_registration_requests', ") ON COMMIT DROP;\nREVOKE", 'ON pg_temp.mobile_registration_requests'], $ddl[0]['query']);
-        foreach (['tenants', 'tenant_accounts', 'registrations'] as $table) { $sql = str_replace('REFERENCES clubora.'.$table.'(', 'REFERENCES pg_temp.intake_test_'.$table.'(', $sql); }
-        $this->assertStringNotContainsString('REFERENCES clubora.', $sql);
+        foreach (['tenants', 'tenant_accounts', 'registrations'] as $table) { $sql = str_replace('REFERENCES clubunio.'.$table.'(', 'REFERENCES pg_temp.intake_test_'.$table.'(', $sql); }
+        $this->assertStringNotContainsString('REFERENCES clubunio.', $sql);
         $this->db->unprepared($sql);
         // Only mirror newly created synthetic source IDs into TEMP FK parents; no source DDL.
         $this->db->unprepared(<<<'SQL'
 CREATE FUNCTION pg_temp.intake_test_source() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
- INSERT INTO pg_temp.intake_test_registrations SELECT tenant_id,id FROM clubora.registrations
+ INSERT INTO pg_temp.intake_test_registrations SELECT tenant_id,id FROM clubunio.registrations
  WHERE tenant_id=NEW.tenant_id AND id=NEW.registration_id ON CONFLICT DO NOTHING;
  RETURN NEW;
 END $$;
 CREATE TRIGGER intake_test_source BEFORE INSERT ON pg_temp.mobile_registration_requests FOR EACH ROW EXECUTE FUNCTION pg_temp.intake_test_source();
 SQL);
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
-            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubora.mobile_registration_requests' ? 'pg_temp.mobile_registration_requests' : $table, $prefix); }
+            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubunio.mobile_registration_requests' ? 'pg_temp.mobile_registration_requests' : $table, $prefix); }
         });
     }
     public function test_personal_intake_is_persistent_idempotent_versioned_and_uses_real_services(): void
@@ -84,14 +84,14 @@ SQL);
         $id = $created->json('data.Registration.AnmeldungID');
         $this->create()->assertOk()->assertJsonPath('data.Registration.AnmeldungID', $id);
         $this->create(['Values' => array_replace($this->values, ['Ort' => 'Changed city'])])->assertConflict();
-        $this->assertSame(1, $this->db->table('clubora.registrations')->where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.mobile_registration_requests')->count());
+        $this->assertSame(1, $this->db->table('clubunio.registrations')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_registration_requests')->count());
         $this->getJson($this->base().'?q=Applicant')->assertOk()->assertJsonPath('data.totalRecordCount', 1)->assertJsonMissingPath('data.Registrations.0.Email');
         $this->getJson($this->base().'/options?registration='.$id)->assertOk()->assertJsonCount(6, 'data.Statuses');
         $this->postJson($this->base().'/'.$id.'/intake', ['Revision' => 1, 'Values' => ['Ort' => 'Updated synthetic city']])->assertOk()->assertJsonPath('data.Registration.Revision', 2);
         $this->postJson($this->base().'/'.$id.'/intake', ['Revision' => 1, 'Values' => ['Ort' => 'Stale city']])->assertUnprocessable();
         $this->postJson($this->base().'/'.$id.'/intake', ['Revision' => 2, 'Values' => ['AHVNummer' => 'not permitted']])->assertUnprocessable();
-        $this->assertSame('Updated synthetic city', $this->db->table('clubora.registrations')->where('id', $id)->value('city'));
+        $this->assertSame('Updated synthetic city', $this->db->table('clubunio.registrations')->where('id', $id)->value('city'));
         Mail::assertNothingSent(); Http::assertNothingSent();
     }
     public function test_review_acceptance_rejection_and_revocation_keep_existing_business_rules(): void
@@ -102,12 +102,12 @@ SQL);
         $this->postJson($this->base().'/'.$id.'/review', array_replace($decision, ['status_id' => $this->statuses['accepted'], 'member_type_id' => $this->memberType]))
             ->assertOk()->assertJsonPath('data.Registration.WorkflowKey', 'accepted')->assertJsonPath('data.Registration.Revision', 2)
             ->assertJsonPath('data.Registration.CanEdit', false)->assertJsonPath('data.Registration.CanReview', false);
-        $this->assertSame(1, $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->count());
         $this->postJson($this->base().'/'.$id.'/review', array_replace($decision, ['revision' => 2, 'status_id' => $this->statuses['rejected']]))->assertUnprocessable();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'member', 'portal_enabled' => false]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'member', 'portal_enabled' => false]);
         $this->getJson($this->base().'/'.$id)->assertForbidden();
         $this->postJson($this->base().'/'.$id.'/review', $decision)->assertForbidden();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'admin']);
         config(['clubunio-mobile.native_registrations_enabled' => false]);
         $this->getJson($this->base())->assertStatus(503);
         Mail::assertNothingSent(); Http::assertNothingSent();
@@ -130,7 +130,7 @@ SQL);
         $pending = $this->post($this->base().'/'.$id.'/files', ['Revision' => 1, 'Kind' => 'identity', 'file' => $file()], ['Accept' => 'application/json'])
             ->assertOk()->assertJsonPath('data.Registration.Revision', 1)->assertJsonPath('data.Registration.PendingAttachments', 1);
         $upload = $pending->json('data.Registration.PendingUploads.0.id');
-        $protected = $this->db->table('clubora.document_uploads')->where('id', $upload)->first();
+        $protected = $this->db->table('clubunio.document_uploads')->where('id', $upload)->first();
         $this->assertSame('pending', $protected->state); $this->assertNotEmpty($protected->encrypted_bytes);
         $ready = $this->postJson($this->base().'/'.$id.'/uploads/'.$upload.'/retry', ['Revision' => 1])
             ->assertOk()->assertJsonPath('data.Registration.Revision', 2)->assertJsonPath('data.Registration.PendingAttachments', 0);
@@ -142,7 +142,7 @@ SQL);
         $replaced = $this->post($this->base().'/'.$id.'/files', ['Revision' => 3, 'Kind' => 'identity', 'file' => $file()], ['Accept' => 'application/json'])
             ->assertOk()->assertJsonPath('data.Registration.Revision', 4);
         $this->assertNotSame($document, $replaced->json('data.Registration.AusweisUpload.0.id'));
-        $this->assertFalse($this->db->table('clubora.registration_documents')->where('id', $document)->value('active'));
+        $this->assertFalse($this->db->table('clubunio.registration_documents')->where('id', $document)->value('active'));
         Mail::assertNothingSent(); Http::assertNothingSent();
     }
     public function test_existing_member_selection_keeps_scope_and_requires_the_displayed_member_version(): void
@@ -154,23 +154,23 @@ SQL);
         $this->assertEqualsCanonicalizing(['id', 'label', 'city', 'version'], array_keys($candidate));
         $input = ['revision' => 1, 'status_id' => $this->statuses['accepted'], 'reason' => 'Synthetic existing member review',
             'member_type_id' => $this->memberType, 'member_id' => $member, 'member_version' => $candidate['version']];
-        $this->db->table('clubora.members')->where('id', $member)->update(['city' => 'Updated separately']);
+        $this->db->table('clubunio.members')->where('id', $member)->update(['city' => 'Updated separately']);
         $this->postJson($this->base().'/'.$id.'/review', $input)->assertUnprocessable();
-        $this->assertSame(1, $this->db->table('clubora.registrations')->where('id', $id)->value('revision'));
+        $this->assertSame(1, $this->db->table('clubunio.registrations')->where('id', $id)->value('revision'));
         $fresh = $this->getJson($this->base().'/'.$id.'/members?q=Applicant')->assertOk()->json('data.Members.0');
         $this->postJson($this->base().'/'.$id.'/review', array_replace($input, ['member_version' => $fresh['version']]))
             ->assertOk()->assertJsonPath('data.Registration.MitgliederID', $member)->assertJsonPath('data.Registration.WorkflowKey', 'accepted');
-        $this->assertSame(1, $this->db->table('clubora.members')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.members')->where('tenant_id', $this->tenant->id)->count());
     }
     public function test_technical_lead_reviews_only_assigned_registrations_without_applicant_or_attachment_privilege(): void
     {
         $id = $this->create()->assertOk()->json('data.Registration.AnmeldungID');
         $other = $this->create(['RequestKey' => '98f14211-0660-4029-8ea1-792050713c0b'])->assertOk()->json('data.Registration.AnmeldungID');
         $leader = $this->insert('members', ['first_name' => 'Synthetic', 'last_name' => 'Lead']);
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
             'member_id' => $leader, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
-        $this->db->table('clubora.registrations')->where('id', $id)->update(['technical_lead_member_id' => $leader]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'technical_lead']);
+        $this->db->table('clubunio.registrations')->where('id', $id)->update(['technical_lead_member_id' => $leader]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'technical_lead']);
         $this->getJson($this->base())->assertOk()->assertJsonPath('data.totalRecordCount', 1)->assertJsonPath('data.CanCreate', false);
         $this->getJson($this->base().'/'.$id)->assertOk()->assertJsonPath('data.Registration.CanEdit', false)
             ->assertJsonPath('data.Registration.CanReview', true)->assertJsonPath('data.Registration.CanAssignLeader', false);
@@ -179,7 +179,7 @@ SQL);
         $this->postJson($this->base().'/'.$id.'/intake', ['Revision' => 1, 'Values' => ['Ort' => 'Not allowed']])->assertForbidden();
         $this->postJson($this->base().'/'.$id.'/review', ['revision' => 1, 'status_id' => $this->statuses['rejected'], 'reason' => 'Synthetic lead decision'])
             ->assertOk()->assertJsonPath('data.Registration.WorkflowKey', 'rejected');
-        $this->db->table('clubora.account_member_links')->where('account_id', $this->actor->id)->update(['state' => 'pending']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $this->actor->id)->update(['state' => 'pending']);
         $this->getJson($this->base().'/'.$id)->assertForbidden();
     }
 }

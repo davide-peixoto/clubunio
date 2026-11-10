@@ -12,7 +12,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
+        $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
         if (! $tenant) {
             throw new LogicException('Missing tenant');
         }
@@ -22,7 +22,7 @@ return new class extends Migration
             'SIGNAGE_WEATHER_LON' => ['Wetter Längengrad', 'string', '7.80888'],
             'SIGNAGE_WEATHER_LABEL' => ['Wetter Ortsname', 'string', 'Sissach'],
         ] as $key => [$label, $type, $value]) {
-            $db->table('clubora.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant, 'area' => 'integrations', 'key' => $key, 'label' => $label, 'value_type' => $type, 'encrypted_value' => Crypt::encryptString($value), 'is_secret' => false, 'enabled' => true]);
+            $db->table('clubunio.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant, 'area' => 'integrations', 'key' => $key, 'label' => $label, 'value_type' => $type, 'encrypted_value' => Crypt::encryptString($value), 'is_secret' => false, 'enabled' => true]);
         }
     }
 

@@ -101,7 +101,7 @@ class MessageTemplateService
     public function restore(Account $actor, Tenant $tenant, int $id, int $revision, int $expectedRevision): MessageTemplate
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'templates', 'restore');
-        $old = DB::connection('clubunio')->table('clubora.message_template_revisions')->where('tenant_id', $tenant->id)->where('template_id', $id)->where('revision', $revision)->first();
+        $old = DB::connection('clubunio')->table('clubunio.message_template_revisions')->where('tenant_id', $tenant->id)->where('template_id', $id)->where('revision', $revision)->first();
         abort_unless($old, 404);
 
         return $this->persist($actor, $tenant, $id, ['revision' => $expectedRevision, 'title' => $old->title, 'body' => $old->body, 'active' => $old->active], 'restore');
@@ -181,6 +181,6 @@ class MessageTemplateService
 
     private function snapshot(MessageTemplate $template, ?int $actor): void
     {
-        DB::connection('clubunio')->table('clubora.message_template_revisions')->insert($template->only(['tenant_id', 'revision', 'title', 'body', 'active']) + ['template_id' => $template->id, 'actor_id' => $actor]);
+        DB::connection('clubunio')->table('clubunio.message_template_revisions')->insert($template->only(['tenant_id', 'revision', 'title', 'body', 'active']) + ['template_id' => $template->id, 'actor_id' => $actor]);
     }
 }

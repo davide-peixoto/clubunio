@@ -89,12 +89,12 @@ class MemberChangeService
             }
             $rules['birth_date'] = 'nullable|date_format:Y-m-d|before_or_equal:today';
             foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-                $rules[$field] = ['nullable', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
+                $rules[$field] = ['nullable', 'integer', Rule::exists('clubunio.clubunio.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
                     ->where(fn ($q) => $q->where('active', true)->orWhere('id', $member->$field ?? -1)))];
             }
             $data = Validator::make($data, $rules, [], self::FIELDS)->validate();
             if ($data['billing_recipient_id'] ?? null) {
-                $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
+                $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
                 if (empty($data[$emailField])) {
                     throw ValidationException::withMessages([$emailField => __('E-Mail-Adresse für den Rechnungsempfänger erforderlich.')]);
                 }
@@ -178,7 +178,7 @@ class MemberChangeService
             $label = fn ($v) => $v;
             $table = ['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'][$field] ?? null;
             if ($table) {
-                $label = fn ($v) => DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('id', $v)->value('name');
+                $label = fn ($v) => DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('id', $v)->value('name');
             }
             $rows[] = ['field' => self::FIELDS[$field], 'before' => $label($snapshot['before'][$field]), 'after' => $label($value)];
         }
@@ -195,12 +195,12 @@ class MemberChangeService
 
     private function status(Tenant $tenant, string $state): int
     {
-        return (int) DB::connection('clubunio')->table('clubora.member_change_statuses')->where('tenant_id', $tenant->id)->where('code', $state)->sole()->id;
+        return (int) DB::connection('clubunio')->table('clubunio.member_change_statuses')->where('tenant_id', $tenant->id)->where('code', $state)->sole()->id;
     }
 
     private function audit(Account $actor, MemberChangeRequest $r, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
             'object_type' => 'member_change_requests', 'object_id' => $r->id,
             'after_value' => json_encode(['operation' => $operation, 'revision' => $r->revision, 'member_id' => $r->member_id], JSON_THROW_ON_ERROR)]);
     }
@@ -208,12 +208,12 @@ class MemberChangeService
     private function notify(Tenant $tenant, MemberChangeRequest $r, string $event, bool $office): void
     {
         $db = DB::connection('clubunio');
-        $accounts = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
+        $accounts = $db->table('clubunio.tenant_accounts as ta')->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
         $office ? $accounts->whereIn('ta.role', ['admin', 'office']) : $accounts->where('a.id', $r->requested_by);
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $event, 'push', ['verein' => $tenant->name], $accounts->pluck('a.id')->all());
         foreach ($messages as $account => $message) {
             if ($message) {
-                $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
+                $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                     'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'member_change_request', 'object_id' => $r->id]);
             }
         }

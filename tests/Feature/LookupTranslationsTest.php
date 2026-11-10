@@ -48,10 +48,10 @@ class LookupTranslationsTest extends TestCase
         ]]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $schema = SchemaFacade::connection('clubunio');
         foreach (['member_statuses', 'teams', 'countries', 'seasons', 'families'] as $name) {
-            $schema->create('clubora.'.$name, function (Blueprint $table) {
+            $schema->create('clubunio.'.$name, function (Blueprint $table) {
                 $table->id();
                 $table->integer('tenant_id');
                 $table->string('name');
@@ -60,12 +60,12 @@ class LookupTranslationsTest extends TestCase
                 $table->boolean('active')->default(true);
             });
         }
-        $schema->create('clubora.account_roles', function (Blueprint $table) {
+        $schema->create('clubunio.account_roles', function (Blueprint $table) {
             $table->string('code')->primary();
             $table->string('name');
             $table->boolean('active')->default(true);
         });
-        $schema->create('clubora.lookup_translations', function (Blueprint $table) {
+        $schema->create('clubunio.lookup_translations', function (Blueprint $table) {
             $table->id();
             $table->integer('tenant_id');
             $table->string('source_table');
@@ -76,22 +76,22 @@ class LookupTranslationsTest extends TestCase
             $table->integer('revision');
             $table->unique(['tenant_id', 'source_table', 'source_id', 'locale']);
         });
-        $schema->create('clubora.tenants', function (Blueprint $table) {
+        $schema->create('clubunio.tenants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug');
         });
-        $schema->create('clubora.accounts', function (Blueprint $table) {
+        $schema->create('clubunio.accounts', function (Blueprint $table) {
             $table->id();
             $table->boolean('active');
             $table->boolean('api_only')->default(false);
         });
-        $schema->create('clubora.tenant_accounts', function (Blueprint $table) {
+        $schema->create('clubunio.tenant_accounts', function (Blueprint $table) {
             $table->integer('tenant_id');
             $table->integer('account_id');
             $table->string('role');
         });
-        $schema->create('clubora.object_changes', function (Blueprint $table) {
+        $schema->create('clubunio.object_changes', function (Blueprint $table) {
             $table->id();
             $table->integer('tenant_id');
             $table->integer('actor_id');
@@ -100,27 +100,27 @@ class LookupTranslationsTest extends TestCase
             $table->text('before_value')->nullable();
             $table->text('after_value');
         });
-        $db->table('clubora.tenants')->insert([
+        $db->table('clubunio.tenants')->insert([
             ['id' => 1, 'name' => 'Lookup test', 'slug' => 'lookup-test'],
             ['id' => 2, 'name' => 'Other test', 'slug' => 'other-test'],
         ]);
-        $db->table('clubora.accounts')->insert(['id' => 1, 'active' => true, 'api_only' => false]);
-        $db->table('clubora.tenant_accounts')->insert(['tenant_id' => 1, 'account_id' => 1, 'role' => 'admin']);
-        $db->table('clubora.member_statuses')->insert([
+        $db->table('clubunio.accounts')->insert(['id' => 1, 'active' => true, 'api_only' => false]);
+        $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => 1, 'account_id' => 1, 'role' => 'admin']);
+        $db->table('clubunio.member_statuses')->insert([
             ['id' => 1, 'tenant_id' => 1, 'name' => 'Offen', 'code' => 'open'],
             ['id' => 2, 'tenant_id' => 1, 'name' => 'Gesperrt', 'code' => 'blocked'],
             ['id' => 3, 'tenant_id' => 2, 'name' => 'Offen', 'code' => 'open'],
             ['id' => 4, 'tenant_id' => 1, 'name' => 'My custom label', 'code' => 'custom'],
         ]);
         foreach (['teams', 'seasons', 'families'] as $table) {
-            $db->table('clubora.'.$table)->insert(['id' => 1, 'tenant_id' => 1, 'name' => 'Offen', 'code' => 'raw']);
+            $db->table('clubunio.'.$table)->insert(['id' => 1, 'tenant_id' => 1, 'name' => 'Offen', 'code' => 'raw']);
         }
-        $db->table('clubora.countries')->insert([
+        $db->table('clubunio.countries')->insert([
             ['id' => 1, 'tenant_id' => 1, 'name' => 'Schweiz', 'code' => 'CH', 'iso3' => 'CHE'],
             ['id' => 2, 'tenant_id' => 1, 'name' => 'Unmapped country', 'code' => 'XX', 'iso3' => 'XXX'],
             ['id' => 3, 'tenant_id' => 1, 'name' => 'Schweiz alt', 'code' => 'XX', 'iso3' => 'CHE'],
         ]);
-        $db->table('clubora.account_roles')->insert(['code' => 'admin', 'name' => 'Administrator']);
+        $db->table('clubunio.account_roles')->insert(['code' => 'admin', 'name' => 'Administrator']);
         $this->actor = Account::findOrFail(1);
         $this->tenant = Tenant::findOrFail(1);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
@@ -143,9 +143,9 @@ class LookupTranslationsTest extends TestCase
         $this->assertSame($before, $builder->toSql());
         $this->assertSame([4 => 'My custom label', 2 => 'Gesperrt'], $builder->pluck('name', 'id')->all());
         $this->assertSame(['open' => 'Open', 'blocked' => 'Blocked', 'custom' => 'My custom label'],
-            DB::table('clubora.member_statuses')->where('tenant_id', 1)->orderBy('id')->localizedPluck('name', 'code')->all());
+            DB::table('clubunio.member_statuses')->where('tenant_id', 1)->orderBy('id')->localizedPluck('name', 'code')->all());
         $this->assertSame(['Open', 'Blocked', 'My custom label'], MemberStatus::where('tenant_id', 1)->orderBy('id')->localizedPluck('name')->all());
-        $this->assertSame([1 => 'Open'], MemberStatus::whereKey(1)->localizedPluck('clubora.member_statuses.name', 'member_statuses.id')->all());
+        $this->assertSame([1 => 'Open'], MemberStatus::whereKey(1)->localizedPluck('clubunio.member_statuses.name', 'member_statuses.id')->all());
         $scoped = MemberStatus::query()->withGlobalScope('test', fn ($q) => $q->where('tenant_id', 1));
         $this->assertCount(3, $scoped->localizedPluck('name'));
     }
@@ -153,14 +153,14 @@ class LookupTranslationsTest extends TestCase
     public function test_non_lookup_names_other_columns_and_complex_queries_use_native_pluck(): void
     {
         foreach (['teams', 'seasons', 'families'] as $table) {
-            $query = DB::table('clubora.'.$table)->where('tenant_id', 1);
+            $query = DB::table('clubunio.'.$table)->where('tenant_id', 1);
             $this->assertSame($query->pluck('name', 'id')->all(), $query->localizedPluck('name', 'id')->all());
         }
         $this->assertSame(['Offen'], Team::query()->localizedPluck('name')->all());
         $query = MemberStatus::where('tenant_id', 1);
         $this->assertSame($query->pluck('code')->all(), $query->localizedPluck('code')->all());
-        foreach ([DB::table('clubora.member_statuses as s'), DB::table('clubora.member_statuses')->distinct(),
-            DB::table('clubora.member_statuses')->groupBy('name')] as $query) {
+        foreach ([DB::table('clubunio.member_statuses as s'), DB::table('clubunio.member_statuses')->distinct(),
+            DB::table('clubunio.member_statuses')->groupBy('name')] as $query) {
             $this->assertSame($query->pluck('name')->all(), $query->localizedPluck('name')->all());
         }
     }
@@ -188,7 +188,7 @@ class LookupTranslationsTest extends TestCase
         app()->setLocale('de');
         $this->assertSame('Verfügbar', MemberStatus::whereKey(1)->localizedPluck('name')->first());
         $this->assertSame('Offen', MemberStatus::find(1)->name);
-        DB::table('clubora.member_statuses')->where('id', 1)->update(['name' => 'Changed source']);
+        DB::table('clubunio.member_statuses')->where('id', 1)->update(['name' => 'Changed source']);
         $this->assertSame('Changed source', MemberStatus::whereKey(1)->localizedPluck('name')->first());
         $this->assertSame('Offen', $service->label('member_statuses', ['id' => 1, 'tenant_id' => 1, 'name' => 'Offen'], tenant: 2));
     }
@@ -213,7 +213,7 @@ class LookupTranslationsTest extends TestCase
         $updated = $service->save($this->actor, $this->tenant, $created->id, $this->input(['revision' => 1, 'label' => 'Ready']));
         $this->assertSame(2, $updated->revision);
         $this->assertSame('Ready', MemberStatus::whereKey(1)->localizedPluck('name')->first());
-        $audit = DB::table('clubora.object_changes')->orderByDesc('id')->first();
+        $audit = DB::table('clubunio.object_changes')->orderByDesc('id')->first();
         $this->assertSame('Available', json_decode($audit->before_value, true)['label']);
         $this->assertSame('Ready', json_decode($audit->after_value, true)['label']);
         $this->assertSame('Test display-only override', json_decode($audit->after_value, true)['reason']);
@@ -233,7 +233,7 @@ class LookupTranslationsTest extends TestCase
             $this->assertArrayHasKey('revision', $e->errors());
         }
         $this->assertSame($source, MemberStatus::find(1)->getAttributes());
-        $this->assertSame(2, DB::table('clubora.object_changes')->count());
+        $this->assertSame(2, DB::table('clubunio.object_changes')->count());
         $this->assertSame(2, $created->fresh()->revision);
     }
 
@@ -242,7 +242,7 @@ class LookupTranslationsTest extends TestCase
         $service = app(LookupTranslations::class);
         $this->assertTrue($service->allowed($this->actor, $this->tenant));
         foreach (['office', 'profile', 'trainer'] as $role) {
-            DB::table('clubora.tenant_accounts')->update(['role' => $role]);
+            DB::table('clubunio.tenant_accounts')->update(['role' => $role]);
             try {
                 $service->save($this->actor, $this->tenant, null, $this->input());
                 $this->fail('Non-admin accepted');
@@ -250,10 +250,10 @@ class LookupTranslationsTest extends TestCase
                 $this->assertSame(403, $e->getStatusCode());
             }
         }
-        DB::table('clubora.tenant_accounts')->update(['role' => 'admin']);
-        DB::table('clubora.accounts')->update(['active' => false]);
+        DB::table('clubunio.tenant_accounts')->update(['role' => 'admin']);
+        DB::table('clubunio.accounts')->update(['active' => false]);
         $this->assertFalse($service->allowed($this->actor, $this->tenant));
-        DB::table('clubora.accounts')->update(['active' => true]);
+        DB::table('clubunio.accounts')->update(['active' => true]);
         $this->withSession([ImpersonationService::KEY => 'support-fixture']);
         request()->setLaravelSession(app('session.store'));
         $this->assertFalse($service->allowed($this->actor, $this->tenant));
@@ -286,7 +286,7 @@ class LookupTranslationsTest extends TestCase
         } catch (ModelNotFoundException $e) {
             $this->assertSame(LookupTranslation::class, $e->getModel());
         }
-        $this->assertSame(0, DB::table('clubora.object_changes')->count());
+        $this->assertSame(0, DB::table('clubunio.object_changes')->count());
     }
 
     public function test_column_and_entry_formatting_leave_raw_state_and_colour_unchanged(): void
@@ -326,7 +326,7 @@ class LookupTranslationsTest extends TestCase
         }
         $this->assertCount(0, $db->getQueryLog());
         $db->disableQueryLog();
-        SchemaFacade::connection('clubunio')->drop('clubora.lookup_translations');
+        SchemaFacade::connection('clubunio')->drop('clubunio.lookup_translations');
         app()->forgetInstance(LookupTranslations::class);
         $this->assertSame('Open', MemberStatus::whereKey(1)->localizedPluck('name')->first());
         $this->assertFalse(LookupTranslationResource::canViewAny());
@@ -343,14 +343,14 @@ class LookupTranslationsTest extends TestCase
         $this->assertSame([$record->id], LookupTranslationResource::getEloquentQuery()->pluck('id')->all());
         $record->tenant_id = 2;
         $this->assertFalse(LookupTranslationResource::canEdit($record));
-        DB::table('clubora.tenant_accounts')->update(['role' => 'office']);
+        DB::table('clubunio.tenant_accounts')->update(['role' => 'office']);
         $this->assertFalse(LookupTranslationResource::canViewAny());
         $this->assertFalse(LookupTranslationResource::canCreate());
     }
 
     public function test_audit_failure_rolls_back_the_override(): void
     {
-        SchemaFacade::connection('clubunio')->drop('clubora.object_changes');
+        SchemaFacade::connection('clubunio')->drop('clubunio.object_changes');
         try {
             app(LookupTranslations::class)->save($this->actor, $this->tenant, null, $this->input());
             $this->fail('Audit failure ignored');

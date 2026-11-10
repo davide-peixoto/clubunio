@@ -44,7 +44,7 @@ class SettingOptionsTest extends TestCase
 
     public function test_season_options_preserve_legacy_ids_and_audit_without_activation(): void
     {
-        $this->db->table('clubora.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'2026/2027','legacy_id'=>38,'active'=>true]);
+        $this->db->table('clubunio.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'2026/2027','legacy_id'=>38,'active'=>true]);
         $setting = $this->setting('SaisonID','38');
         $options = app(SettingOptions::class);
         $this->assertSame([38=>'2026/2027'],$options->options($setting));
@@ -53,27 +53,27 @@ class SettingOptionsTest extends TestCase
         app(SettingsService::class)->update($this->admin,$this->tenant,$setting->id,'38');
         $this->assertFalse($setting->fresh()->enabled);
         $this->assertSame('38',Crypt::decryptString($setting->fresh()->encrypted_value));
-        $this->assertSame(1,$this->db->table('clubora.setting_changes')->where('setting_id',$setting->id)->count());
+        $this->assertSame(1,$this->db->table('clubunio.setting_changes')->where('setting_id',$setting->id)->count());
     }
 
     public function test_foreign_inactive_and_unknown_choices_are_rejected(): void
     {
         $other = Tenant::create(['name'=>'Other','slug'=>'other-'.Str::random(12)]);
-        $this->db->table('clubora.seasons')->insert(['tenant_id'=>$other->id,'name'=>'Foreign','legacy_id'=>77,'active'=>true]);
-        $this->db->table('clubora.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'Inactive','legacy_id'=>78,'active'=>false]);
+        $this->db->table('clubunio.seasons')->insert(['tenant_id'=>$other->id,'name'=>'Foreign','legacy_id'=>77,'active'=>true]);
+        $this->db->table('clubunio.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'Inactive','legacy_id'=>78,'active'=>false]);
         $setting = $this->setting('SaisonID','77');
         $this->assertSame([],app(SettingOptions::class)->options($setting));
         foreach (['77','78','999'] as $value) {
             try { app(SettingsService::class)->update($this->admin,$this->tenant,$setting->id,$value); $this->fail('Invalid setting accepted'); }
             catch (ValidationException $e) { $this->assertArrayHasKey('value',$e->errors()); }
         }
-        $this->assertSame(0,$this->db->table('clubora.setting_changes')->where('setting_id',$setting->id)->count());
+        $this->assertSame(0,$this->db->table('clubunio.setting_changes')->where('setting_id',$setting->id)->count());
     }
 
     public function test_imported_status_and_period_are_labels_not_live_controls(): void
     {
-        $this->db->table('clubora.facility_statuses')->insert(['tenant_id'=>$this->tenant->id,'code'=>'O','name'=>'Offen','active'=>true]);
-        $this->db->table('clubora.training_options')->insert(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'S','name'=>'Sommer','active'=>true]);
+        $this->db->table('clubunio.facility_statuses')->insert(['tenant_id'=>$this->tenant->id,'code'=>'O','name'=>'Offen','active'=>true]);
+        $this->db->table('clubunio.training_options')->insert(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'S','name'=>'Sommer','active'=>true]);
         $options = app(SettingOptions::class);
         $status = $this->setting('StatusPlatz1','O');
         $this->assertSame('Offen (O)',$options->display($status));
@@ -94,16 +94,16 @@ class SettingOptionsTest extends TestCase
 
     public function test_active_training_plan_changes_are_scoped_audited_and_shared_by_signage(): void
     {
-        $summer = $this->db->table('clubora.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'S','name'=>'Sommer','active'=>true]);
-        $winter = $this->db->table('clubora.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'W','name'=>'Winter','active'=>true]);
+        $summer = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'S','name'=>'Sommer','active'=>true]);
+        $winter = $this->db->table('clubunio.training_options')->insertGetId(['tenant_id'=>$this->tenant->id,'category'=>'period','code'=>'W','name'=>'Winter','active'=>true]);
         $setting = $this->setting(\App\ClubUnio\Services\ActiveTrainingPlan::KEY, (string) $summer);
         $service = app(\App\ClubUnio\Services\ActiveTrainingPlan::class);
         $this->assertSame($summer, $service->period($this->tenant)->id);
         $this->assertSame('Sommer ('.$summer.')', app(SettingOptions::class)->display($setting));
         app(SettingsService::class)->update($this->admin, $this->tenant, $setting->id, (string) $winter);
         $this->assertSame($winter, app(\App\ClubUnio\Services\SignageBrandService::class)->read($this->tenant)['period_id']);
-        $this->assertSame(1, $this->db->table('clubora.setting_changes')->where('setting_id', $setting->id)->count());
-        $this->db->table('clubora.training_options')->where('id', $winter)->update(['active'=>false]);
+        $this->assertSame(1, $this->db->table('clubunio.setting_changes')->where('setting_id', $setting->id)->count());
+        $this->db->table('clubunio.training_options')->where('id', $winter)->update(['active'=>false]);
         $this->assertNull($service->period($this->tenant));
         foreach ([(string) $winter, '99999999'] as $invalid) {
             try { app(SettingsService::class)->update($this->admin,$this->tenant,$setting->id,$invalid); $this->fail('Invalid plan accepted'); }
@@ -117,7 +117,7 @@ class SettingOptionsTest extends TestCase
         \Livewire\Livewire::test(\App\ClubUnio\Resources\TrainingSlotResource\Pages\ManageSlots::class)
             ->assertSee('Aktiver Trainingsplan: Sommer');
         \Livewire\Livewire::test(\App\ClubUnio\Pages\SignagePreview::class)->assertSee('Aktiver Trainingsplan: Sommer');
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id',$this->tenant->id)->where('account_id',$this->admin->id)->update(['role'=>'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id',$this->tenant->id)->where('account_id',$this->admin->id)->update(['role'=>'office']);
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
         app(SettingsService::class)->update($this->admin->fresh(),$this->tenant,$setting->id,'0');
     }
@@ -143,7 +143,7 @@ class SettingOptionsTest extends TestCase
         \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
         $this->actingAs($this->admin, 'clubunio');
         \Filament\Facades\Filament::setTenant($this->tenant);
-        $this->db->table('clubora.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'Lookup season','legacy_id'=>38,'active'=>true]);
+        $this->db->table('clubunio.seasons')->insert(['tenant_id'=>$this->tenant->id,'name'=>'Lookup season','legacy_id'=>38,'active'=>true]);
         $setting = $this->setting('SaisonID','38');
         $old = $this->setting('StatusPlatz1','O');
         \Livewire\Livewire::test(\App\ClubUnio\Resources\SettingResource\Pages\ListSettings::class)

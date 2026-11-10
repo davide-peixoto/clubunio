@@ -42,9 +42,9 @@ class WorkflowApiModulesTest extends TestCase
         $tenant = Tenant::create(['slug' => 'workflow-api-'.Str::random(12), 'name' => 'Workflow API fixture']);
         $actor = new Account;
         $actor->forceFill(['username' => Str::random(24), 'display_name' => 'API fixture', 'password' => bcrypt(Str::random(32)), 'active' => true, 'api_only' => true])->save();
-        $this->profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Workflow fixture', 'active' => true,
+        $this->profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $tenant->id, 'name' => 'Workflow fixture', 'active' => true,
             'permissions' => json_encode(PermissionCatalog::keys(), JSON_THROW_ON_ERROR)]);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile]);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile]);
         $scopes = [];
         foreach ($this->api->definitions() as $d) {
             foreach (['read', 'create', 'update', 'copy', 'approve', 'cancel', 'send', 'deactivate', 'restore'] as $function) {
@@ -66,7 +66,7 @@ class WorkflowApiModulesTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->context->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->context->tenant->id] + $values);
     }
 
     protected function tearDown(): void
@@ -154,27 +154,27 @@ class WorkflowApiModulesTest extends TestCase
         foreach (['registrations:approve', 'members:create', 'teams:create', 'documents:create'] as $missing) {
             $this->tokenScopes(array_values(array_diff($all, [$missing])));
             $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input), HttpException::class);
-            $this->assertNull($this->db->table('clubora.registrations')->where('id', $id)->value('member_id'));
-            $this->assertSame(1, $this->db->table('clubora.members')->where('tenant_id', $this->context->tenant->id)->count());
+            $this->assertNull($this->db->table('clubunio.registrations')->where('id', $id)->value('member_id'));
+            $this->assertSame(1, $this->db->table('clubunio.members')->where('tenant_id', $this->context->tenant->id)->count());
         }
         $this->tokenScopes($all);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(array_values(array_diff(PermissionCatalog::keys(), ['documents.create'])))]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(array_values(array_diff(PermissionCatalog::keys(), ['documents.create'])))]);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input), HttpException::class);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(PermissionCatalog::keys())]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(PermissionCatalog::keys())]);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input + ['status_id' => 1]));
         $accepted = $this->api->action($this->context, 'registrations', $id, 'accept', $input);
         $this->assertSame(2, $accepted['revision']);
         $this->assertNotNull($accepted['member_id']);
         $this->assertArrayNotHasKey('applicant_encrypted', $accepted);
         $this->assertArrayNotHasKey('acceptance_summary', $accepted);
-        $copy = $this->db->table('clubora.member_documents')->where('tenant_id', $this->context->tenant->id)->where('registration_document_id', $document)->sole();
+        $copy = $this->db->table('clubunio.member_documents')->where('tenant_id', $this->context->tenant->id)->where('registration_document_id', $document)->sole();
         $this->assertSame('PRIVATE/', $copy->storage_path);
         $this->assertEquals($accepted['member_id'], $copy->member_id);
-        $this->assertTrue($this->db->table('clubora.team_players')->where('tenant_id', $this->context->tenant->id)->where('member_id', $accepted['member_id'])->where('team_season_id', $this->team)->where('active', true)->exists());
-        $link = $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->where('member_id', $accepted['member_id'])->sole();
+        $this->assertTrue($this->db->table('clubunio.team_players')->where('tenant_id', $this->context->tenant->id)->where('member_id', $accepted['member_id'])->where('team_season_id', $this->team)->where('active', true)->exists());
+        $link = $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->where('member_id', $accepted['member_id'])->sole();
         $this->assertSame('pending', $link->state);
-        $this->assertSame(0, $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->where('state', 'approved')->count());
-        $this->assertTrue($this->db->table('clubora.registration_events')->where('tenant_id', $this->context->tenant->id)->where('registration_id', $id)->where('event_key', 'registration.accepted')->exists());
+        $this->assertSame(0, $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->where('state', 'approved')->count());
+        $this->assertTrue($this->db->table('clubunio.registration_events')->where('tenant_id', $this->context->tenant->id)->where('registration_id', $id)->where('event_key', 'registration.accepted')->exists());
         $this->tokenScopes([...$all, 'members:update']);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input));
         $this->noDelivery();
@@ -186,31 +186,31 @@ class WorkflowApiModulesTest extends TestCase
         $f = $this->acceptanceFixture();
         $id = $f['registration']['id'];
         $left = $this->insert('member_statuses', ['code' => 'left', 'name' => 'Left', 'ends_membership' => true]);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['first_name' => 'New', 'last_name' => 'Applicant', 'status_id' => $left,
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['first_name' => 'New', 'last_name' => 'Applicant', 'status_id' => $left,
             'exit_date' => '2020-01-01', 'pass_number' => '12345', 'member_number' => 999, 'bexio_contact_id' => '987', 'type_id' => $f['type']]);
         $history = $this->insert('team_players', ['member_id' => $this->member, 'team_season_id' => $this->team, 'active' => false, 'legacy_invoice_position_id' => 123]);
         $input = ['revision' => 1, 'reason' => 'Synthetic returning member', 'member_type_id' => $f['type'], 'team_season_id' => $this->team];
         // A possible duplicate cannot silently become another new member.
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input));
-        $this->db->table('clubora.registrations')->where('id', $id)->update(['member_id' => $this->member]);
+        $this->db->table('clubunio.registrations')->where('id', $id)->update(['member_id' => $this->member]);
         $this->tokenScopes(['registrations:approve', 'members:create', 'teams:create']);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input), HttpException::class);
         $this->tokenScopes(['registrations:approve', 'members:update', 'teams:create']);
         foreach ([['exit_date' => null, 'status_id' => $left], ['exit_date' => '2020-01-01', 'status_id' => $f['restored']]] as $state) {
-            $this->db->table('clubora.members')->where('id', $this->member)->update($state);
+            $this->db->table('clubunio.members')->where('id', $this->member)->update($state);
             $candidate = Member::withoutGlobalScopes()->findOrFail($this->member);
             $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input + ['member_version' => MemberService::version($candidate)]), HttpException::class);
-            $this->assertNull($this->db->table('clubora.registrations')->where('id', $id)->value('accepted_at'));
-            $this->assertSame(1, $this->db->table('clubora.registrations')->where('id', $id)->value('revision'));
+            $this->assertNull($this->db->table('clubunio.registrations')->where('id', $id)->value('accepted_at'));
+            $this->assertSame(1, $this->db->table('clubunio.registrations')->where('id', $id)->value('revision'));
         }
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['exit_date' => '2020-01-01', 'status_id' => $left]);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['exit_date' => '2020-01-01', 'status_id' => $left]);
         $this->tokenScopes(['registrations:approve', 'members:update', 'members:restore', 'teams:create']);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(array_values(array_diff(PermissionCatalog::keys(), ['members.restore'])))]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(array_values(array_diff(PermissionCatalog::keys(), ['members.restore'])))]);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input), HttpException::class);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(PermissionCatalog::keys())]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(PermissionCatalog::keys())]);
         $member = Member::withoutGlobalScopes()->findOrFail($this->member);
         $version = MemberService::version($member);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['city' => 'Changed concurrently']);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['city' => 'Changed concurrently']);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input + ['member_version' => $version]));
         $member->refresh();
         $accepted = $this->api->action($this->context, 'registrations', $id, 'accept', $input + ['member_version' => MemberService::version($member)]);
@@ -221,10 +221,10 @@ class WorkflowApiModulesTest extends TestCase
         $this->assertSame('12345', $member->pass_number);
         $this->assertEquals('987', $member->bexio_contact_id);
         $this->assertEquals(999, $member->member_number);
-        $old = $this->db->table('clubora.team_players')->where('id', $history)->sole();
+        $old = $this->db->table('clubunio.team_players')->where('id', $history)->sole();
         $this->assertFalse($old->active);
         $this->assertEquals(123, $old->legacy_invoice_position_id);
-        $this->assertSame(1, $this->db->table('clubora.team_players')->where('tenant_id', $this->context->tenant->id)->where('member_id', $this->member)->where('active', true)->count());
+        $this->assertSame(1, $this->db->table('clubunio.team_players')->where('tenant_id', $this->context->tenant->id)->where('member_id', $this->member)->where('active', true)->count());
         $this->noDelivery();
     }
 
@@ -240,9 +240,9 @@ class WorkflowApiModulesTest extends TestCase
         // No effective team or document copies: neither unrelated creation scope is needed.
         $this->tokenScopes(['registrations:approve', 'members:create']);
         $this->rejects(fn () => $this->api->action($this->context, 'registrations', $id, 'accept', $input));
-        $this->assertNull($this->db->table('clubora.registrations')->where('id', $id)->value('accepted_at'));
-        $this->assertSame(0, $this->db->table('clubora.team_players')->where('tenant_id', $this->context->tenant->id)->count());
-        $this->db->table('clubora.document_uploads')->where('id', $upload)->update(['state' => 'cancelled']);
+        $this->assertNull($this->db->table('clubunio.registrations')->where('id', $id)->value('accepted_at'));
+        $this->assertSame(0, $this->db->table('clubunio.team_players')->where('tenant_id', $this->context->tenant->id)->count());
+        $this->db->table('clubunio.document_uploads')->where('id', $upload)->update(['state' => 'cancelled']);
         $accepted = $this->api->action($this->context, 'registrations', $id, 'accept', $input);
         $this->assertNotNull($accepted['member_id']);
         $this->assertNull($accepted['team_season_id']);
@@ -255,7 +255,7 @@ class WorkflowApiModulesTest extends TestCase
         $this->insert('team_players', ['team_season_id' => $this->team, 'member_id' => $this->member]);
         $event = $this->api->create($this->context, 'team_events', $this->eventInput());
         $part = $this->api->action($this->context, 'team_events', $event['id'], 'participate', ['member_id' => $this->member, 'revision' => 0, 'status' => 'OFFEN', 'attendance' => 'OFFEN']);
-        $this->assertSame(0, $this->db->table('clubora.account_member_links')->where('account_id', $this->context->actor->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.account_member_links')->where('account_id', $this->context->actor->id)->count());
         $updated = $this->api->update($this->context, 'team_participations', $part['id'], ['revision' => $part['revision'], 'status' => 'DABEI', 'attendance' => 'ANWESEND', 'comment' => 'PRIVATE']);
         $this->assertSame('DABEI', $updated['status']);
         $this->assertArrayNotHasKey('comment', $updated);
@@ -289,11 +289,11 @@ class WorkflowApiModulesTest extends TestCase
         $part = $this->api->action($this->context, 'team_events', $event['id'], 'participate', ['member_id' => $this->member, 'revision' => 0, 'status' => 'OFFEN', 'attendance' => 'OFFEN']);
         $this->api->update($this->context, 'team_participations', $part['id'], ['revision' => $part['revision'], 'status' => 'DABEI', 'attendance' => 'OFFEN']);
         $this->rejects(fn () => $this->api->create($this->context, 'team_guests', ['event_id' => $event['id'], 'first_name' => 'Over', 'last_name' => 'Capacity', 'status' => 'DABEI', 'attendance' => 'OFFEN']));
-        $this->db->table('clubora.team_events')->where('id', $event['id'])->update(['deadline_at' => now()->subDay()]);
+        $this->db->table('clubunio.team_events')->where('id', $event['id'])->update(['deadline_at' => now()->subDay()]);
         // Existing manager rights permit a late correction; no represented-member path is manufactured.
         $late = $this->api->update($this->context, 'team_participations', $part['id'], ['revision' => 2, 'status' => 'ABWESEND', 'attendance' => 'ENTSCHULDIGT']);
         $this->assertSame(3, $late['revision']);
-        $this->db->table('clubora.team_events')->where('id', $event['id'])->update(['status' => 'ABGESAGT']);
+        $this->db->table('clubunio.team_events')->where('id', $event['id'])->update(['status' => 'ABGESAGT']);
         $this->rejects(fn () => $this->api->update($this->context, 'team_participations', $part['id'], ['revision' => 3, 'status' => 'DABEI', 'attendance' => 'OFFEN']), HttpException::class);
         $this->noDelivery();
     }
@@ -304,13 +304,13 @@ class WorkflowApiModulesTest extends TestCase
         $event = $this->api->create($this->context, 'team_events', $this->eventInput(['repeat_count' => 3, 'description' => 'PRIVATE DESCRIPTION']));
         $rows = $this->api->list($this->context, 'team_events', ['filters' => ['series_key' => $event['series_key']]])['data'];
         $this->assertCount(3, $rows);
-        $this->db->table('clubora.team_events')->where('id', $rows[2]['id'])->update(['series_exception' => true]);
+        $this->db->table('clubunio.team_events')->where('id', $rows[2]['id'])->update(['series_exception' => true]);
         $input = ['revision' => 1, 'from' => '2090-11-01', 'shift_minutes' => 30, 'change_title' => true, 'title' => 'Shifted training'];
         $preview = $this->api->action($this->context, 'team_events', $event['id'], 'series_preview', $input);
         $this->assertCount(2, $preview['changes']);
         $this->assertSame(1, $preview['skipped']);
         $this->assertStringNotContainsString('PRIVATE DESCRIPTION', json_encode($preview));
-        $this->db->table('clubora.team_events')->where('id', $rows[1]['id'])->increment('revision');
+        $this->db->table('clubunio.team_events')->where('id', $rows[1]['id'])->increment('revision');
         $this->rejects(fn () => $this->api->action($this->context, 'team_events', $event['id'], 'series_apply', $input + ['fingerprint' => $preview['fingerprint']]));
         $this->assertSame('API training', $this->api->show($this->context, 'team_events', $event['id'])['title']);
         $fresh = $this->api->action($this->context, 'team_events', $event['id'], 'series_preview', $input);
@@ -361,7 +361,7 @@ class WorkflowApiModulesTest extends TestCase
         $restored = $this->api->action($this->context, 'training_plans', $id, 'restore', ['revision' => 4]);
         $this->assertNull($restored['archived_at']);
         $this->assertSame(5, $restored['revision']);
-        $this->assertSame(0, $this->db->table('clubora.training_plan_requests')->where('tenant_id', $this->context->tenant->id)->whereIn('kind', ['generate', 'review'])->count());
+        $this->assertSame(0, $this->db->table('clubunio.training_plan_requests')->where('tenant_id', $this->context->tenant->id)->whereIn('kind', ['generate', 'review'])->count());
         $this->rejects(fn () => $this->api->action($this->context, 'training_plans', $id, 'generate'), HttpException::class);
         $this->noDelivery();
     }
@@ -415,7 +415,7 @@ class WorkflowApiModulesTest extends TestCase
             'sponsor_run_statuses' => ['sponsor_run_statuses', 'sponsor_runs', ['code' => 'draft']]];
         foreach ($tables as $resource => [$table, $module, $values]) {
             $id = $this->insert($table, $values + ['name' => 'Fixture lookup', 'active' => true]);
-            $foreign = $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $other->id] + $values + ['name' => 'Foreign lookup', 'active' => true]);
+            $foreign = $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $other->id] + $values + ['name' => 'Foreign lookup', 'active' => true]);
             $this->tokenScopes([$module.':read']);
             $row = $this->api->show($this->context, $resource, $id);
             $this->assertSame($values['code'], $row['code']);
@@ -427,7 +427,7 @@ class WorkflowApiModulesTest extends TestCase
             $this->rejects(fn () => $this->api->update($this->context, $resource, $id, ['name' => 'Denied']), HttpException::class);
             $this->tokenScopes([$module === 'planning' ? 'bus:read' : 'planning:read']);
             $this->rejects(fn () => $this->api->list($this->context, $resource), HttpException::class);
-            $this->assertSame('Fixture lookup', $this->db->table('clubora.'.$table)->where('id', $id)->value('name'));
+            $this->assertSame('Fixture lookup', $this->db->table('clubunio.'.$table)->where('id', $id)->value('name'));
         }
         $this->noDelivery();
     }
@@ -443,7 +443,7 @@ class WorkflowApiModulesTest extends TestCase
         $link = $this->api->create($this->context, 'family_members', ['family_id' => $family['id'], 'member_id' => $this->member, 'discount' => '5.00', 'active' => true, 'notes' => 'PRIVATE']);
         $this->assertArrayNotHasKey('notes', $link);
         $other = Tenant::create(['slug' => 'workflow-other-'.Str::random(8), 'name' => 'Other']);
-        $foreign = $this->db->table('clubora.families')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign']);
+        $foreign = $this->db->table('clubunio.families')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign']);
         $this->rejects(fn () => $this->api->show($this->context, 'families', $foreign), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
         $this->rejects(fn () => $this->api->update($this->context, 'families', $foreign, $input), \Illuminate\Database\Eloquent\ModelNotFoundException::class);
         $this->assertSame($family['id'], $this->api->list($this->context, 'families')['data'][0]['id']);
@@ -506,8 +506,8 @@ class WorkflowApiModulesTest extends TestCase
         $bank = $this->insert('member_bank_accounts', ['member_id' => $this->member, 'iban_encrypted' => Crypt::encryptString('CH9300762011623852957')]);
         $round = $this->insert('expense_rounds', ['name' => 'Fixture', 'code' => 'fixture']);
         $type = $this->insert('expense_types', ['name' => 'Fixture', 'receipt_required' => false, 'amount_source' => 'team_laundry']);
-        $teamId = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('team_id');
-        $this->db->table('clubora.teams')->where('id', $teamId)->update(['laundry_allowance' => '20.00']);
+        $teamId = $this->db->table('clubunio.team_seasons')->where('id', $this->team)->value('team_id');
+        $this->db->table('clubunio.teams')->where('id', $teamId)->update(['laundry_allowance' => '20.00']);
         $expense = $this->api->create($this->context, 'expenses', ['member_id' => $this->member, 'team_season_id' => $this->team, 'bank_account_id' => $bank, 'round_id' => $round, 'notes' => 'PRIVATE']);
         $this->assertArrayNotHasKey('bank_account_id', $expense);
         $line = $this->api->create($this->context, 'expense_lines', ['expense_id' => $expense['id'], 'expense_revision' => 1, 'expense_type_id' => $type, 'amount' => '15.00', 'notes' => 'PRIVATE']);
@@ -528,7 +528,7 @@ class WorkflowApiModulesTest extends TestCase
         $submitted = $this->api->action($this->context, 'expenses', $expense['id'], 'submit', ['revision' => 2, 'reason' => 'Synthetic submit']);
         $approved = $this->api->action($this->context, 'expenses', $expense['id'], 'approve', ['revision' => $submitted['revision'], 'reason' => 'Synthetic approve']);
         $this->assertSame(4, $approved['revision']);
-        $this->assertNull($this->db->table('clubora.expenses')->where('id', $expense['id'])->value('paid_on'));
+        $this->assertNull($this->db->table('clubunio.expenses')->where('id', $expense['id'])->value('paid_on'));
         $this->rejects(fn () => $this->api->action($this->context, 'expenses', $expense['id'], 'paid', ['revision' => 4]), HttpException::class);
         $this->noDelivery();
     }
@@ -597,7 +597,7 @@ class WorkflowApiModulesTest extends TestCase
     {
         $this->fixture();
         $gender = $this->insert('genders', ['code' => 'N', 'name' => 'Neutral']);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['gender_id' => $gender]);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['gender_id' => $gender]);
         $this->insert('team_players', ['team_season_id' => $this->team, 'member_id' => $this->member]);
         $price = $this->insert('contribution_prices', ['name' => 'Fixture tariff', 'amount' => '50.0000']);
         $this->insert('contribution_rules', ['season_id' => $this->season, 'price_id' => $price, 'gender_id' => $gender, 'year_from' => 2012, 'year_to' => 2012]);
@@ -652,12 +652,12 @@ class WorkflowApiModulesTest extends TestCase
         $this->context->token->forceFill(['abilities' => ['families:read', 'families:update']])->save();
         $this->rejects(fn () => $this->api->update($this->context, 'families', $family['id'], ['name' => 'Fixture', 'active' => false, '_version' => $family['_version']]), HttpException::class);
         foreach (['admin', 'office', 'trainer', 'member', 'technical_lead'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => $role, 'access_profile_id' => null]);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => $role, 'access_profile_id' => null]);
             $this->rejects(fn () => $this->api->list($this->context, 'families'), HttpException::class);
         }
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => 'profile', 'access_profile_id' => $this->profile]);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->context->actor->id)->update(['role' => 'profile', 'access_profile_id' => $this->profile]);
         request()->attributes->set(BackofficeReadContext::class, ['account' => $this->context->actor->id, 'tenants' => collect([$this->context->tenant]), 'permissionCache' => []]);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => '[]']);
         $this->rejects(fn () => $this->api->list($this->context, 'families'), HttpException::class);
         $this->assertNotNull(request()->attributes->get(BackofficeReadContext::class));
     }

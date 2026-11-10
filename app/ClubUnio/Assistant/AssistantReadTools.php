@@ -77,7 +77,7 @@ class AssistantReadTools
             $fresh = Account::query()->select(['id', 'active', 'api_only'])->find($actor->getKey());
             abort_unless($fresh?->active && ! $fresh->api_only
                 && Tenant::query()->whereKey($tenant->getKey())->exists()
-                && DB::connection('clubunio')->table('clubora.tenant_accounts')
+                && DB::connection('clubunio')->table('clubunio.tenant_accounts')
                     ->where('account_id', $fresh->id)->where('tenant_id', $tenant->id)
                     ->whereIn('role', ['admin', 'office'])->exists(), 403);
             $args = $this->arguments($name, $arguments);
@@ -258,7 +258,7 @@ class AssistantReadTools
         }
         $total = (clone $query)->count();
         // Retain the domain's open-balance expression, but never hydrate invoice notes or remote payloads.
-        $columns = ['clubora.invoices.id', 'clubora.invoices.tenant_id', 'status_id', 'workflow_status_id', 'rounding_cents', 'revision'];
+        $columns = ['clubunio.invoices.id', 'clubunio.invoices.tenant_id', 'status_id', 'workflow_status_id', 'rounding_cents', 'revision'];
         if ($status === 'open') {
             $query->getQuery()->columns = array_merge($columns, array_slice($query->getQuery()->columns, 1));
         } else {
@@ -268,7 +268,7 @@ class AssistantReadTools
             'status' => fn ($q) => $q->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'code', 'name']),
             'workflowStatus' => fn ($q) => $q->where('tenant_id', $tenant->id)->select(['id', 'tenant_id', 'code', 'name']),
             'bexioBalance' => fn ($q) => $q->where('tenant_id', $tenant->id)->select(['object_id', 'tenant_id', 'observed_at']),
-        ])->orderBy('clubora.invoices.id')->limit($limit)->get()->map(fn ($row) => [
+        ])->orderBy('clubunio.invoices.id')->limit($limit)->get()->map(fn ($row) => [
             'id' => (int) $row->id, 'revision' => (int) $row->revision, 'label' => __('Rechnung').' #'.$row->id, 'url' => '/invoices/'.$row->id,
             'open_amount' => $status === 'open' ? (string) $row->open_amount : null, 'currency' => 'CHF',
             'workflow' => $row->workflowStatus?->code, 'workflow_label' => $row->workflowStatus
@@ -289,7 +289,7 @@ class AssistantReadTools
         foreach ($kind === 'all' ? ['bus', 'pitch'] : [$kind] as $type) {
             $pendingCode = $type === 'bus' ? 'ANGEFRAGT' : 'pending';
             $base = $type === 'bus' ? app(BusReservationService::class)->visible($actor, $tenant)
-                : DB::connection('clubunio')->table('clubora.pitch_requests')->where('tenant_id', $tenant->id);
+                : DB::connection('clubunio')->table('clubunio.pitch_requests')->where('tenant_id', $tenant->id);
             $pending = (clone $base)->where('status', $pendingCode);
             $counts[$type.'_pending_all_dates'] = (clone $pending)->count();
             $counts[$type.'_pending_before_date'] = (clone $pending)

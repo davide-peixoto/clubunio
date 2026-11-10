@@ -75,9 +75,9 @@ class ApiTenantBoundaryTest extends TestCase
         $this->withToken($this->token)->getJson('https://unknown.api.test/api/v1/context')->assertNotFound();
         $this->withToken($this->token)->getJson('http://localhost/api/v1/context')->assertOk()
             ->assertJsonPath('data.tenant.id', $this->one->id);
-        $this->assertTrue($this->db->table('clubora.api_audit')->where('tenant_id', $this->one->id)
+        $this->assertTrue($this->db->table('clubunio.api_audit')->where('tenant_id', $this->one->id)
             ->where('integration_id', $this->integration->id)->where('status', 404)->exists());
-        $this->assertFalse($this->db->table('clubora.api_audit')->where('tenant_id', $this->two->id)->exists());
+        $this->assertFalse($this->db->table('clubunio.api_audit')->where('tenant_id', $this->two->id)->exists());
     }
 
     public function test_every_versioned_api_route_has_authentication_then_domain_binding(): void
@@ -102,8 +102,8 @@ class ApiTenantBoundaryTest extends TestCase
     {
         $this->withToken($this->token)->postJson('https://two.api.test/api/v1/teams', ['name' => 'Never created', 'active' => true],
             ['Idempotency-Key' => 'boundary-domain-write'])->assertNotFound();
-        $this->assertSame(0, $this->db->table('clubora.api_idempotency')->where('integration_id', $this->integration->id)->count());
-        $this->assertSame(0, $this->db->table('clubora.teams')->whereIn('tenant_id', [$this->one->id, $this->two->id])->count());
+        $this->assertSame(0, $this->db->table('clubunio.api_idempotency')->where('integration_id', $this->integration->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.teams')->whereIn('tenant_id', [$this->one->id, $this->two->id])->count());
     }
 
     public function test_all_registered_resource_queries_are_bound_to_token_tenant(): void
@@ -119,7 +119,7 @@ class ApiTenantBoundaryTest extends TestCase
 
     public function test_foreign_ids_and_tenant_overrides_do_not_expose_or_change_records(): void
     {
-        $foreign = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->two->id, 'name' => 'Foreign confidential team']);
+        $foreign = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->two->id, 'name' => 'Foreign confidential team']);
         $this->withToken($this->token)->getJson('/api/v1/teams/'.$foreign)->assertNotFound();
         $this->withToken($this->token)->getJson('/api/v1/teams?search=Foreign')->assertOk()->assertJsonCount(0, 'data');
         $this->withToken($this->token)->getJson('/api/v1/teams?tenant_id='.$this->two->id)->assertUnprocessable();
@@ -127,14 +127,14 @@ class ApiTenantBoundaryTest extends TestCase
             ['Idempotency-Key' => 'boundary-foreign-update'])->assertNotFound();
         $this->withToken($this->token)->postJson('/api/v1/teams', ['name' => 'Wrong', 'tenant_id' => $this->two->id],
             ['Idempotency-Key' => 'boundary-tenant-injection'])->assertUnprocessable();
-        $this->assertSame('Foreign confidential team', $this->db->table('clubora.teams')->where('id', $foreign)->value('name'));
+        $this->assertSame('Foreign confidential team', $this->db->table('clubunio.teams')->where('id', $foreign)->value('name'));
     }
 
     public function test_foreign_file_id_is_rejected_before_provider_access(): void
     {
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'Foreign', 'last_name' => 'Fixture']);
-        $type = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->two->id, 'code' => 'BOUNDARY_ID', 'name' => 'Synthetic identity']);
-        $document = $this->db->table('clubora.member_documents')->insertGetId(['tenant_id' => $this->two->id, 'member_id' => $member,
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'Foreign', 'last_name' => 'Fixture']);
+        $type = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->two->id, 'code' => 'BOUNDARY_ID', 'name' => 'Synthetic identity']);
+        $document = $this->db->table('clubunio.member_documents')->insertGetId(['tenant_id' => $this->two->id, 'member_id' => $member,
             'document_type_id' => $type, 'filename' => 'foreign.pdf', 'original_filename' => 'foreign.pdf', 'content_type' => 'application/pdf', 'file_size' => 1]);
         $this->withToken($this->token)->getJson('/api/v1/files/member-document/'.$document)->assertNotFound();
         $this->withToken($this->token)->getJson('/api/v1/documents/'.$document)->assertNotFound();
@@ -154,7 +154,7 @@ class ApiTenantBoundaryTest extends TestCase
         $first = $this->withToken($this->token)->postJson('/api/v1/teams', ['name' => 'First', 'active' => true], $headers)->assertCreated();
         $other = $this->withToken($secondToken)->postJson('/api/v1/teams', ['name' => 'Second', 'active' => true], $headers)->assertCreated();
         $this->assertNotSame($first->json('data.id'), $other->json('data.id'));
-        $this->assertSame($this->two->id, $this->db->table('clubora.teams')->where('id', $other->json('data.id'))->value('tenant_id'));
+        $this->assertSame($this->two->id, $this->db->table('clubunio.teams')->where('id', $other->json('data.id'))->value('tenant_id'));
         $this->withToken($this->token)->getJson('/api/v1/teams/'.$other->json('data.id'))->assertNotFound();
         $this->withToken($this->token)->postJson('/api/v1/teams', ['name' => 'First', 'active' => true], $headers)
             ->assertCreated()->assertHeader('Idempotency-Replayed', 'true')->assertJsonPath('data.id', $first->json('data.id'));
@@ -177,14 +177,14 @@ class ApiTenantBoundaryTest extends TestCase
     public function test_upload_source_status_and_processing_do_not_cross_authority_boundaries(): void
     {
         config(['clubunio-integrations.azure.tenant_slug' => $this->one->slug]);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->one->id, 'first_name' => 'Upload', 'last_name' => 'Fixture']);
-        $foreign = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'Foreign', 'last_name' => 'Fixture']);
-        $type = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->one->id, 'code' => 'BOUNDARY_UPLOAD', 'name' => 'Synthetic upload']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->one->id, 'first_name' => 'Upload', 'last_name' => 'Fixture']);
+        $foreign = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'Foreign', 'last_name' => 'Fixture']);
+        $type = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->one->id, 'code' => 'BOUNDARY_UPLOAD', 'name' => 'Synthetic upload']);
         $file = fn () => UploadedFile::fake()->createWithContent('fixture.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3x8AAAAASUVORK5CYII='));
         $this->withToken($this->token)->post('/api/v1/uploads/member/'.$foreign,
             ['type' => $type, 'portal_visible' => '0', 'file' => $file()],
             ['Idempotency-Key' => 'boundary-upload-foreign', 'Accept' => 'application/json'])->assertNotFound();
-        $this->assertSame(0, $this->db->table('clubora.document_uploads')->where('tenant_id', $this->one->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.document_uploads')->where('tenant_id', $this->one->id)->count());
         $own = $this->withToken($this->token)->post('/api/v1/uploads/member/'.$member,
             ['type' => $type, 'portal_visible' => '0', 'file' => $file()],
             ['Idempotency-Key' => 'boundary-upload-own', 'Accept' => 'application/json'])->assertStatus(202)->json('data.id');
@@ -193,7 +193,7 @@ class ApiTenantBoundaryTest extends TestCase
         $token = app(ApiTokenService::class)->issueToken($this->admin, $this->one, $second->id, 'Separate upload token', $second->scopes, now()->addHour())['token'];
         $this->withToken($token)->getJson('/api/v1/uploads/'.$own)->assertNotFound();
         $this->withToken($token)->postJson('/api/v1/uploads/'.$own.'/process', [])->assertNotFound();
-        $this->assertSame('pending', $this->db->table('clubora.document_uploads')->where('id', $own)->value('state'));
+        $this->assertSame('pending', $this->db->table('clubunio.document_uploads')->where('id', $own)->value('state'));
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -201,13 +201,13 @@ class ApiTenantBoundaryTest extends TestCase
     public function test_database_rejects_foreign_integration_profile_even_without_service_validation(): void
     {
         // Exercise the pending additive migration inside the fixture rollback only.
-        if (! $this->db->selectOne("SELECT 1 FROM pg_constraint WHERE conrelid='clubora.api_integrations'::regclass AND conname='api_integration_tenant_profile_fk'")) {
+        if (! $this->db->selectOne("SELECT 1 FROM pg_constraint WHERE conrelid='clubunio.api_integrations'::regclass AND conname='api_integration_tenant_profile_fk'")) {
             (require base_path('database/clubunio/2026_10_26_000078_api_tenant_boundary.php'))->up();
         }
         $profile = new AccessProfile;
         $profile->forceFill(['tenant_id' => $this->two->id, 'name' => 'Foreign profile', 'active' => true, 'permissions' => ['teams.view']])->save();
         try {
-            $this->db->transaction(fn () => $this->db->table('clubora.api_integrations')->where('id', $this->integration->id)
+            $this->db->transaction(fn () => $this->db->table('clubunio.api_integrations')->where('id', $this->integration->id)
                 ->update(['access_profile_id' => $profile->id]));
             $this->fail('Foreign tenant profile accepted');
         } catch (QueryException $error) {

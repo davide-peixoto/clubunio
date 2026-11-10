@@ -22,18 +22,18 @@ final class MobileTrainingPlanService extends TrainingPlanService
     public function visible(Account $actor, Tenant $tenant)
     {
         $this->authorizeOperation($actor, $tenant, 'view');
-        $current = app(MobileSeasonScope::class)->teams(DB::connection('clubunio')->table('clubora.team_seasons')
+        $current = app(MobileSeasonScope::class)->teams(DB::connection('clubunio')->table('clubunio.team_seasons')
             ->where('tenant_id', $tenant->id)->where('active', true), $tenant)->select('id');
-        $query = DB::connection('clubunio')->table('clubora.training_plans')->where('tenant_id', $tenant->id)->whereIn('team_season_id', $current);
+        $query = DB::connection('clubunio')->table('clubunio.training_plans')->where('tenant_id', $tenant->id)->whereIn('team_season_id', $current);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) {
             $teams = $this->teams($actor, $tenant)->pluck('id');
             $query->where(function ($query) use ($actor, $tenant, $teams) {
                 $query->where(fn ($q) => $q->where('owner_id', $actor->id)->whereIn('team_season_id', $teams))
                     ->orWhere(fn ($q) => $q->where('shared', true)->where(function ($q) use ($tenant, $teams) {
-                        $q->whereExists(fn ($s) => $s->selectRaw('1')->from('clubora.mobile_training_plan_shares as share')
+                        $q->whereExists(fn ($s) => $s->selectRaw('1')->from('clubunio.mobile_training_plan_shares as share')
                             ->where('share.tenant_id', $tenant->id)->whereColumn('share.plan_id', 'training_plans.id')->whereIn('share.team_season_id', $teams))
                             ->orWhere(fn ($s) => $s->whereIn('team_season_id', $teams)->whereNotExists(fn ($x) => $x->selectRaw('1')
-                                ->from('clubora.mobile_training_plan_shares as share')->where('share.tenant_id', $tenant->id)->whereColumn('share.plan_id', 'training_plans.id')));
+                                ->from('clubunio.mobile_training_plan_shares as share')->where('share.tenant_id', $tenant->id)->whereColumn('share.plan_id', 'training_plans.id')));
                     }));
             });
         }
@@ -58,7 +58,7 @@ final class MobileTrainingPlanService extends TrainingPlanService
     public function sharedTeam(Tenant $tenant, object $row): ?int
     {
         if (! $row->shared) { return null; }
-        $id = DB::connection('clubunio')->table('clubora.mobile_training_plan_shares')->where('tenant_id', $tenant->id)->where('plan_id', $row->id)->value('team_season_id');
+        $id = DB::connection('clubunio')->table('clubunio.mobile_training_plan_shares')->where('tenant_id', $tenant->id)->where('plan_id', $row->id)->value('team_season_id');
         return (int) ($id ?? $row->team_season_id);
     }
 

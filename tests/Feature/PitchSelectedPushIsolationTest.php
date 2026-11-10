@@ -25,13 +25,13 @@ class PitchSelectedPushIsolationTest extends TestCase
                 'team_season_id' => $f['team'], 'opponent' => 'Synthetic selected push', 'field_id' => $f['field'],
                 'date' => '2026-11-06', 'starts_at' => '18:00', 'duration_minutes' => 120,
             ]);
-            $row = (array) $db->table('clubora.mobile_push_outbox')->sole();
+            $row = (array) $db->table('clubunio.mobile_push_outbox')->sole();
             $selected = $row['id'];
             $otherPending = (string) Str::uuid();
             $otherExpired = (string) Str::uuid();
             $selectedExpired = (string) Str::uuid();
             foreach ([$otherPending, $otherExpired, $selectedExpired] as $index => $id) {
-                $db->table('clubora.mobile_push_outbox')->insert(array_replace($row, [
+                $db->table('clubunio.mobile_push_outbox')->insert(array_replace($row, [
                     'id' => $id, 'event_key' => 'synthetic:selected:'.$index,
                     'state' => $index === 0 ? 'pending' : 'sending',
                     'created_at' => now()->subHour()->toIso8601String(),
@@ -39,12 +39,12 @@ class PitchSelectedPushIsolationTest extends TestCase
                 ]));
             }
             // No provider path is reachable, even if a future regression claims the wrong row.
-            $db->table('clubora.mobile_push_devices')->update(['revoked_at' => now()->toIso8601String()]);
+            $db->table('clubunio.mobile_push_devices')->update(['revoked_at' => now()->toIso8601String()]);
             $this->app->instance(MobilePushFcm::class, new class {
                 public function send(...$arguments): never { throw new \LogicException('Provider forbidden in isolation proof'); }
             });
             config(['clubunio-mobile-push.delivery_enabled' => true]);
-            $read = fn ($id) => (array) $db->table('clubora.mobile_push_outbox')->where('id', $id)->first();
+            $read = fn ($id) => (array) $db->table('clubunio.mobile_push_outbox')->where('id', $id)->first();
             $pendingBefore = $read($otherPending);
             $expiredBefore = $read($otherExpired);
             $worker = app(MobilePushOutbox::class);

@@ -56,7 +56,7 @@ Artisan::command('clubunio:bexio-preview {tenant} {actor} {--type=invoice} {--af
             break;
         }
         $check = $service->preview($actor, $tenant, $type, $row->id);
-        $state = DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $check)->value('state');
+        $state = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $check)->value('state');
         $cursor = $row->id;
         $failed += $state === 'failed' ? 1 : 0;
         $this->line('Check '.$check.': '.$state);

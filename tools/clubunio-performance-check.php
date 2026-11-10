@@ -36,7 +36,7 @@ $db->beginTransaction();
 try {
     $db->statement('SET TRANSACTION READ ONLY');
     $tenant = Tenant::where('slug', 'sv-sissach')->firstOrFail();
-    $actor = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)->where('tenant_accounts.role', 'admin'))->orderBy('id')->firstOrFail();
+    $actor = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id)->where('tenant_accounts.role', 'admin'))->orderBy('id')->firstOrFail();
     Auth::guard('clubunio')->setUser($actor);
     $app['session']->driver()->put('clubunio_context.'.$actor->id, ['tenant' => $tenant->id, 'revision' => (string) Str::uuid()]);
     $requestPath = $path;
@@ -46,23 +46,23 @@ try {
     if (str_starts_with($path, '/documents/')) {
         $kind = basename($path);
         $table = ['member' => 'member_documents', 'registration' => 'registration_documents', 'expense' => 'expense_lines'][$kind];
-        $query = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true);
+        $query = $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true);
         $query = $kind === 'expense' ? $query->whereNotNull('storage_reference')->where('storage_reference', '<>', '') : $query->where(fn ($q) => $q->whereNull('file_size')->orWhere('file_size', '<', 1048576));
         $id = $query->orderByDesc('id')->value('id');
         abort_unless($id, 409);
         $prefix = ['member' => '/documents/members/', 'registration' => '/documents/registrations/', 'expense' => '/documents/expenses/'][$kind];
         $requestPath = $prefix.$id;
     } elseif ($path === '/planning/detail' || $path === '/planning/calendar') {
-        $event = $db->table('clubora.team_events')->where('tenant_id', $tenant->id)->orderByDesc('starts_at')->first(['id', 'starts_at']);
+        $event = $db->table('clubunio.team_events')->where('tenant_id', $tenant->id)->orderByDesc('starts_at')->first(['id', 'starts_at']);
         abort_unless($event, 409);
         $requestPath = $path === '/planning/detail' ? '/planning/events/'.$event->id
             : '/planning/calendar?'.http_build_query(['date' => CarbonImmutable::parse($event->starts_at)->tz('Europe/Zurich')->toDateString(),
                 'view' => ($argv[2] ?? '') === 'calendar-week' ? 'week' : 'month']);
     } elseif (str_ends_with($path, '/detail') || $path === '/members/dossier') {
         $table = explode('/', $path)[1];
-        $id = $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->orderByDesc('id')->value('id');
+        $id = $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->orderByDesc('id')->value('id');
         if ($path === '/members/dossier') {
-            $id = $db->table('clubora.invoices as i')->join('clubora.members as m', fn ($j) => $j->on('m.id', '=', 'i.member_id')->on('m.tenant_id', '=', 'i.tenant_id'))
+            $id = $db->table('clubunio.invoices as i')->join('clubunio.members as m', fn ($j) => $j->on('m.id', '=', 'i.member_id')->on('m.tenant_id', '=', 'i.tenant_id'))
                 ->where('i.tenant_id', $tenant->id)->whereNull('m.archived_at')->groupBy('i.member_id')->orderByRaw('count(*) desc')->orderBy('i.member_id')->value('i.member_id');
         }
         abort_unless($id, 409);
@@ -72,7 +72,7 @@ try {
     $db->listen(function ($query) use (&$queries) {
         $hash = substr(hash('sha256', $query->sql), 0, 12);
         if (! isset($queries[$hash])) {
-            preg_match('/(?:from|join)\s+"?(?:clubora"?\.)?"?([a-z_]+)/i', $query->sql, $table);
+            preg_match('/(?:from|join)\s+"?(?:clubunio"?\.)?"?([a-z_]+)/i', $query->sql, $table);
             $queries[$hash] = ['fingerprint' => $hash, 'table' => $table[1] ?? 'other', 'count' => 0, 'ms' => 0];
         }
         $queries[$hash]['count']++;
@@ -143,7 +143,7 @@ try {
         $request->setMethod('POST');
         if ($mode === 'filter-search') {
             abort_unless($path === '/members', 422);
-            $status = $db->table('clubora.members')->where('tenant_id', $tenant->id)->whereNotNull('status_id')->value('status_id');
+            $status = $db->table('clubunio.members')->where('tenant_id', $tenant->id)->whereNotNull('status_id')->value('status_id');
             abort_unless($status, 409);
             [$snapshot] = app('livewire')->update($snapshot, ['tableFilters.status_id.value' => (string) $status], []);
         }

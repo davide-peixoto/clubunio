@@ -123,7 +123,7 @@ class LegacyTrainingPlanImporter
 
                     continue;
                 }
-                $owners = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id))
+                $owners = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id))
                     ->whereRaw('lower(username)=lower(?)', [$row->Username ?? ''])->get();
                 $team = isset($row->SharedTeamSaisonID) ? TeamSeason::where('tenant_id', $tenant->id)->where('legacy_id', $row->SharedTeamSaisonID)->value('id') : null;
                 $record = new LegacyTrainingPlan;
@@ -132,7 +132,7 @@ class LegacyTrainingPlanImporter
                     'suggested_owner_id' => $owners->count() === 1 ? $owners->first()->id : null, 'suggested_team_season_id' => $team])->save();
                 $counts['added']++;
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'legacy_training_plans', 'object_id' => 0,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'legacy_training_plans', 'object_id' => 0,
                 'after_value' => json_encode(['action' => 'stage', 'counts' => $counts], JSON_THROW_ON_ERROR)]);
 
             return $counts;
@@ -143,7 +143,7 @@ class LegacyTrainingPlanImporter
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'view');
 
-        return Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)->whereIn('role', ['admin', 'office', 'trainer', 'technical_lead']))->orderBy('display_name')->pluck('display_name', 'id')->all();
+        return Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id)->whereIn('role', ['admin', 'office', 'trainer', 'technical_lead']))->orderBy('display_name')->pluck('display_name', 'id')->all();
     }
 
     public function teams(Account $actor, Tenant $tenant, ?int $owner): array
@@ -182,12 +182,12 @@ class LegacyTrainingPlanImporter
             abort_unless(isset($teams[$data['team_season_id']]), 403);
             $plan = app(TrainingPlanContent::class)->validate($row->plan_json, $row->input_json['durationMinutes'], false);
             $values = $row->input_json + ['team_season_id' => (int) $data['team_season_id'], 'teamName' => $teams[$data['team_season_id']]];
-            $planId = DB::connection('clubunio')->table('clubora.training_plans')->insertGetId(['tenant_id' => $tenant->id, 'owner_id' => $data['owner_id'], 'team_season_id' => $data['team_season_id'],
+            $planId = DB::connection('clubunio')->table('clubunio.training_plans')->insertGetId(['tenant_id' => $tenant->id, 'owner_id' => $data['owner_id'], 'team_season_id' => $data['team_season_id'],
                 'title' => $plan['title'], 'input_json' => json_encode($values, JSON_THROW_ON_ERROR), 'plan_json' => json_encode($plan, JSON_THROW_ON_ERROR), 'shared' => false,
                 'archived_at' => now()->toIso8601String(), 'legacy_source_id' => $row->id, 'legacy_quality_pending' => $row->requires_quality_review]);
             $row->forceFill(['state' => 'imported', 'plan_id' => $planId, 'owner_id' => $data['owner_id'], 'team_season_id' => $data['team_season_id'], 'imported_by' => $actor->id,
                 'imported_at' => now(), 'decision_note' => $data['decision_note'], 'revision' => $row->revision + 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'training_plans', 'object_id' => $planId,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'training_plans', 'object_id' => $planId,
                 'after_value' => json_encode(['action' => 'legacy_import', 'source_id' => $row->source_id, 'owner_id' => $row->owner_id, 'team_season_id' => $row->team_season_id, 'private' => true, 'archived' => true], JSON_THROW_ON_ERROR)]);
 
             return $planId;

@@ -41,7 +41,7 @@ class ApiIntegrationsUiTest extends TestCase
         $this->actor = new Account;
         $this->actor->forceFill(['username' => 'api-ui-'.Str::random(16), 'display_name' => 'API UI fixture',
             'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $this->actor->id, 'role' => 'admin']);
         $this->profile = new AccessProfile;
         $this->profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'API profile fixture',
@@ -137,7 +137,7 @@ class ApiIntegrationsUiTest extends TestCase
     public function test_office_and_profile_roles_are_not_admin(): void
     {
         foreach (['office', 'profile'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update([
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update([
                 'role' => $role, 'access_profile_id' => $role === 'profile' ? $this->profile->id : null,
             ]);
             $this->assertFalse(ApiIntegrations::canAccess());
@@ -172,9 +172,9 @@ class ApiIntegrationsUiTest extends TestCase
                 'token_id' => 80, 'request_id' => (string) Str::uuid(), 'event' => 'ui.audit.'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                 'status' => 200, 'duration_ms' => 12, 'method' => 'POST', 'route' => 'private-route-not-displayed'];
         }
-        $this->db->table('clubora.api_audit')->insert($rows);
+        $this->db->table('clubunio.api_audit')->insert($rows);
         $other = Tenant::create(['slug' => 'audit-other-'.Str::random(12), 'name' => 'Other audit fixture']);
-        $this->db->table('clubora.api_audit')->insert(['tenant_id' => $other->id,
+        $this->db->table('clubunio.api_audit')->insert(['tenant_id' => $other->id,
             'request_id' => (string) Str::uuid(), 'event' => 'foreign-audit-never-display']);
         $page = new class extends ApiIntegrations
         {
@@ -260,9 +260,9 @@ class ApiIntegrationsUiTest extends TestCase
     public function test_admin_revocation_blocks_every_write_on_already_mounted_page(): void
     {
         foreach (['createIntegration' => [], 'issueToken' => [], 'revokeToken' => [80], 'disableIntegration' => [71]] as $method => $args) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'admin']);
             $component = Livewire::test(ApiIntegrations::class);
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'office']);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'office']);
             $component->call($method, ...$args)->assertForbidden();
         }
         $this->assertSame([], $this->service->writes);
@@ -282,7 +282,7 @@ class ApiIntegrationsUiTest extends TestCase
         $page = new ApiIntegrations;
         $page->mount();
         $other = Tenant::create(['slug' => 'api-switch-'.Str::random(12), 'name' => 'Switch fixture']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id,
             'account_id' => $this->actor->id, 'role' => 'admin']);
         Filament::setTenant($other);
         $this->expectException(HttpException::class);
@@ -335,7 +335,7 @@ class ApiIntegrationsUiTest extends TestCase
         $other = new Account;
         $other->forceFill(['username' => 'api-other-'.Str::random(16), 'display_name' => 'Other fixture',
             'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $other->id, 'role' => 'admin']);
         $this->actingAs($other, 'clubunio');
         $this->expectException(HttpException::class);

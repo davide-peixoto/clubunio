@@ -15,7 +15,7 @@ final class MobileKeyboxProvider
             && in_array($tenant->slug,config('clubunio-mobile.keybox.tenant_slugs',[]),true),503);
         $values=[];
         foreach (['IGLOOHOME_CLIENT_ID','IGLOOHOME_CLIENT_SECRET'] as $key) {
-            $cipher=DB::connection('clubunio')->table('clubora.tenant_settings')->where('tenant_id',$tenant->id)->where('area','keybox')->where('key',$key)
+            $cipher=DB::connection('clubunio')->table('clubunio.tenant_settings')->where('tenant_id',$tenant->id)->where('area','keybox')->where('key',$key)
                 ->where('enabled',true)->where('is_secret',true)->value('encrypted_value');
             try { $value=$cipher?Crypt::decryptString($cipher):''; } catch (\Throwable) { $value=''; }
             abort_unless(is_string($value)&&strlen($value)>0&&strlen($value)<=4096&&!preg_match('/[\r\n]/',$value),503);

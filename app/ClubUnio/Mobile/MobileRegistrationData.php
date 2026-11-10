@@ -16,7 +16,7 @@ final class MobileRegistrationData
         'RechnungAn' => 'billing_recipient_id', 'Bemerkungen' => 'notes', 'Geburtsort' => 'birth_place', 'BisherigerVerein' => 'previous_club',
         'BisherigerVereinLand' => 'previous_club_country_type', 'BisherigerVereinVorhanden' => 'has_previous_club'];
     private function review(): RegistrationReviewService { return app(RegistrationReviewService::class); }
-    private function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id); }
+    private function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id); }
     private function canUpload(Account $actor, Tenant $tenant): bool
     {
         return (bool) config('clubunio-mobile.uploads_enabled') && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
@@ -111,7 +111,7 @@ final class MobileRegistrationData
         $result['Leaders'] = app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'approve')
             ? $this->review()->leaders($tenant)->orderBy('last_name')->get(['id', 'first_name', 'last_name'])->toArray() : [];
         $result['MemberCandidates'] = isset($r) && app(ModulePermissionService::class)->allows($actor, $tenant, 'registrations', 'approve')
-            ? app(RegistrationAcceptanceService::class)->possibleDuplicates($tenant, $r)->whereIn('id', app(MobileMemberData::class)->scope($actor, $tenant)->select('clubora.members.id'))->limit(30)->get()->map(fn ($m) => ['id' => (int) $m->id,
+            ? app(RegistrationAcceptanceService::class)->possibleDuplicates($tenant, $r)->whereIn('id', app(MobileMemberData::class)->scope($actor, $tenant)->select('clubunio.members.id'))->limit(30)->get()->map(fn ($m) => ['id' => (int) $m->id,
                 'label' => trim($m->first_name.' '.$m->last_name), 'city' => $m->city, 'version' => MemberService::version($m)])->all() : [];
         if (isset($r) && $r->member_id && ! collect($result['MemberCandidates'])->contains('id', (int) $r->member_id)) {
             $linked = \App\ClubUnio\Models\Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')->find($r->member_id);

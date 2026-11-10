@@ -146,7 +146,7 @@ final class WorkflowApiModules
     {
         $actor = $context->actor->fresh();
         abort_unless($actor?->active && $actor->api_only, 403);
-        abort_unless(DB::connection('clubunio')->table('clubora.tenant_accounts')
+        abort_unless(DB::connection('clubunio')->table('clubunio.tenant_accounts')
             ->where('tenant_id', $context->tenant->id)->where('account_id', $actor->id)->where('role', 'profile')->exists(), 403);
         $context->authorize($module.':'.($function === 'view' ? 'read' : $function), $module, $function);
     }
@@ -162,7 +162,7 @@ final class WorkflowApiModules
     {
         $d = $this->definition($resource);
         $q = $resource === 'team_events' ? app(TeamPlanningService::class)->table($context->tenant, 'team_events')
-            : ($d['model'] ? $d['model']::withoutGlobalScopes() : DB::connection('clubunio')->table('clubora.'.(self::LOOKUP_TABLES[$resource] ?? $resource)));
+            : ($d['model'] ? $d['model']::withoutGlobalScopes() : DB::connection('clubunio')->table('clubunio.'.(self::LOOKUP_TABLES[$resource] ?? $resource)));
         $q->where('tenant_id', $context->tenant->id);
         if ($resource === 'contributions') {
             $q->whereNull('archived_at');
@@ -333,7 +333,7 @@ final class WorkflowApiModules
                 $code = match ($action) {
                     'submit' => 'F', 'approve' => 'Z', 'reject' => 'R', 'reopen' => 'O'
                 };
-                $status = DB::connection('clubunio')->table('clubora.expense_statuses')->where('tenant_id', $c->tenant->id)->where('active', true)->where('code', $code)->value('id');
+                $status = DB::connection('clubunio')->table('clubunio.expense_statuses')->where('tenant_id', $c->tenant->id)->where('active', true)->where('code', $code)->value('id');
                 abort_unless($status, 422, 'Expense status unavailable.');
                 $saved = app(ExpenseService::class)->transition($c->actor, $c->tenant, $id, $input + ['status_id' => $status]);
             } elseif ($r === 'registrations') {
@@ -343,7 +343,7 @@ final class WorkflowApiModules
                 $this->allow($input, ['revision', 'reason', 'status_id', 'team_season_id', 'technical_lead_member_id']);
                 // General review cannot bypass the dedicated action's compound token checks.
                 if (isset($input['status_id'])) {
-                    $status = DB::connection('clubunio')->table('clubora.registration_statuses')->where('tenant_id', $c->tenant->id)->where('id', $input['status_id'])->first();
+                    $status = DB::connection('clubunio')->table('clubunio.registration_statuses')->where('tenant_id', $c->tenant->id)->where('id', $input['status_id'])->first();
                     abort_if($status?->workflow_key === 'accepted', 422, 'Use the dedicated accept action.');
                 }
                 $saved = app(RegistrationReviewService::class)->review($c->actor, $c->tenant, $id, $input);
@@ -381,14 +381,14 @@ final class WorkflowApiModules
         return DB::connection('clubunio')->transaction(function () use ($c, $id, $data) {
             $db = DB::connection('clubunio');
             // Match the review/upload lock order so conditional effects cannot change after authorization.
-            $db->table('clubora.tenants')->where('id', $c->tenant->id)->lockForUpdate()->firstOrFail();
+            $db->table('clubunio.tenants')->where('id', $c->tenant->id)->lockForUpdate()->firstOrFail();
             $this->permission($c, 'registrations', 'approve');
             $registration = Registration::withoutGlobalScopes()->where('tenant_id', $c->tenant->id)->where('active', true)->lockForUpdate()->findOrFail($id);
             $member = $data['member_id'] ?? $registration->member_id;
             $this->permission($c, 'members', $member ? 'update' : 'create');
             if ($member) {
                 $existing = Member::withoutGlobalScopes()->where('tenant_id', $c->tenant->id)->whereNull('archived_at')->lockForUpdate()->findOrFail($member);
-                $status = $db->table('clubora.member_statuses')->where('tenant_id', $c->tenant->id)->where('id', $existing->status_id)->sharedLock()->first(['ends_membership']);
+                $status = $db->table('clubunio.member_statuses')->where('tenant_id', $c->tenant->id)->where('id', $existing->status_id)->sharedLock()->first(['ends_membership']);
                 if ($existing->exit_date !== null || ($status?->ends_membership ?? false)) {
                     $this->permission($c, 'members', 'restore');
                 }
@@ -397,11 +397,11 @@ final class WorkflowApiModules
             if ($team) {
                 $this->permission($c, 'teams', 'create');
             }
-            if ($db->table('clubora.registration_documents')->where('tenant_id', $c->tenant->id)->where('registration_id', $id)
+            if ($db->table('clubunio.registration_documents')->where('tenant_id', $c->tenant->id)->where('registration_id', $id)
                 ->where('active', true)->where('kind', '<>', 'portrait')->exists()) {
                 $this->permission($c, 'documents', 'create');
             }
-            $statuses = $db->table('clubora.registration_statuses')->where('tenant_id', $c->tenant->id)->where('active', true)->where('workflow_key', 'accepted')->get(['id']);
+            $statuses = $db->table('clubunio.registration_statuses')->where('tenant_id', $c->tenant->id)->where('active', true)->where('workflow_key', 'accepted')->get(['id']);
             if ($statuses->count() !== 1) {
                 throw ValidationException::withMessages(['status_id' => 'Exactly one active accepted status must be configured.']);
             }
@@ -417,7 +417,7 @@ final class WorkflowApiModules
         return DB::connection('clubunio')->transaction(function () use ($c, $event, $member, $input) {
             app(TeamPlanningService::class)->participate($c->actor, $c->tenant, $event, $member, $input);
 
-            return (int) DB::connection('clubunio')->table('clubora.team_participations')->where('tenant_id', $c->tenant->id)
+            return (int) DB::connection('clubunio')->table('clubunio.team_participations')->where('tenant_id', $c->tenant->id)
                 ->where('event_id', $event)->where('member_id', $member)->sole()->id;
         });
     }
@@ -431,7 +431,7 @@ final class WorkflowApiModules
             app(TeamPlanningService::class)->lock($c->tenant);
             app(PlanningGuestService::class)->save($c->actor, $c->tenant, $event, $old?->id, array_diff_key($input, ['event_id' => true]));
 
-            return $old?->id ?? (int) DB::connection('clubunio')->table('clubora.team_guests')->where('tenant_id', $c->tenant->id)
+            return $old?->id ?? (int) DB::connection('clubunio')->table('clubunio.team_guests')->where('tenant_id', $c->tenant->id)
                 ->where('event_id', $event)->orderByDesc('id')->value('id');
         });
     }
@@ -440,7 +440,7 @@ final class WorkflowApiModules
     {
         if ($action === 'invitations') {
             app(TeamPlanningService::class)->event($c->actor, $c->tenant, $id);
-            $members = DB::connection('clubunio')->table('clubora.team_invitations')->where('tenant_id', $c->tenant->id)->where('event_id', $id)->orderBy('member_id')->pluck('member_id')->all();
+            $members = DB::connection('clubunio')->table('clubunio.team_invitations')->where('tenant_id', $c->tenant->id)->where('event_id', $id)->orderBy('member_id')->pluck('member_id')->all();
 
             return ['event_id' => $id, 'member_ids' => $members];
         }

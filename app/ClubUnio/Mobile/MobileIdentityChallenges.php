@@ -10,8 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 final class MobileIdentityChallenges
 {
-    private function table() { return DB::connection('clubunio')->table('clubora.mobile_identity_challenges'); }
-    private function emails() { return DB::connection('clubunio')->table('clubora.mobile_account_emails'); }
+    private function table() { return DB::connection('clubunio')->table('clubunio.mobile_identity_challenges'); }
+    private function emails() { return DB::connection('clubunio')->table('clubunio.mobile_account_emails'); }
     public function emailHash(string $email): string { return hash_hmac('sha256', mb_strtolower(trim($email)), (string) config('app.key')); }
     private function rate(string $key, int $limit, int $seconds): void
     {
@@ -71,7 +71,7 @@ final class MobileIdentityChallenges
     }
     private function resetAllowed(Tenant $tenant, Account $account): bool
     {
-        return $account->active && !$account->api_only && DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)
+        return $account->active && !$account->api_only && DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)
             ->where('account_id', $account->id)->where('role', '<>', 'profile')->exists();
     }
     private function candidates(Tenant $tenant,string $emailHash): array
@@ -139,7 +139,7 @@ final class MobileIdentityChallenges
         return $account && $account->active && !$account->api_only && (int)$account->revision===$payload['account_revision']
             && hash_equals($payload['password_sha256'],hash('sha256',$account->password)) && (int)($email?->revision??0)===$payload['email_revision']
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($account,$tenant)
-            && DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$payload['session_id'])->where('account_id',$account->id)
+            && DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$payload['session_id'])->where('account_id',$account->id)
                 ->whereNull('revoked_at')->where('expires_at','>',now()->toIso8601String())->exists();
     }
     public function confirmEmail(Request $request): array
@@ -149,7 +149,7 @@ final class MobileIdentityChallenges
             $tenant=$request->attributes->get('mobile.public.tenant'); Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             [$row,$payload]=$this->proof($request,'enroll');
             $account=Account::whereKey($row->account_id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$payload['session_id'])->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$payload['session_id'])->sharedLock()->firstOrFail();
             $this->emails()->where('account_id',$account->id)->lockForUpdate()->first();
             abort_unless($this->enrollmentCurrent($tenant,$row,$payload),409);
             $this->bindEmail($account,$payload['email'],$row,'authenticated_enrollment'); $this->finish($row);
@@ -160,7 +160,7 @@ final class MobileIdentityChallenges
     {
         $fresh = $account->fresh();
         if (!config('clubunio-mobile.public_identity.enabled', false) || !$fresh?->active || $fresh->api_only) { return false; }
-        $ids = $this->table()->join('clubora.tenant_accounts as membership', fn ($join) => $join->on('membership.tenant_id','mobile_identity_challenges.tenant_id')->on('membership.account_id','mobile_identity_challenges.account_id'))
+        $ids = $this->table()->join('clubunio.tenant_accounts as membership', fn ($join) => $join->on('membership.tenant_id','mobile_identity_challenges.tenant_id')->on('membership.account_id','mobile_identity_challenges.account_id'))
             ->where('mobile_identity_challenges.account_id',$account->id)->where('purpose','register')->where('state','completed')
             ->where('membership.role','member')->where('membership.portal_enabled',true)
             ->when($bound, fn ($q) => $q->where('mobile_identity_challenges.tenant_id',$bound->id))->distinct()->limit(10)->pluck('mobile_identity_challenges.tenant_id');
@@ -234,10 +234,10 @@ final class MobileIdentityChallenges
             abort_if(Account::whereRaw('lower(username) = ?',[$payload['email']])->exists(),409);
             $account=new Account; $account->forceFill(['username'=>$payload['email'],'display_name'=>mb_substr(trim($payload['first_name'].' '.$payload['last_name']),0,255),
                 'password'=>$payload['password_hash'],'active'=>true,'api_only'=>false])->save();
-            DB::connection('clubunio')->table('clubora.tenant_accounts')->insert(['tenant_id'=>$tenant->id,'account_id'=>$account->id,'role'=>'member','portal_enabled'=>true]);
+            DB::connection('clubunio')->table('clubunio.tenant_accounts')->insert(['tenant_id'=>$tenant->id,'account_id'=>$account->id,'role'=>'member','portal_enabled'=>true]);
             // Email proof grants no member/parent/trainer links. Existing account-link administration reviews these explicitly.
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$account->id,'object_type'=>'tenant_accounts',
-                'object_id'=>DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id',$tenant->id)->where('account_id',$account->id)->value('id'),
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$account->id,'object_type'=>'tenant_accounts',
+                'object_id'=>DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id',$tenant->id)->where('account_id',$account->id)->value('id'),
                 'after_value'=>json_encode(['event'=>'self_registration_email_verified','role'=>'member','access'=>'pending_member_link_review'],JSON_THROW_ON_ERROR)]);
             $this->finish($row,(int)$account->id);
             $this->bindEmail($account,$payload['email'],$row,'self_registration');
@@ -257,7 +257,7 @@ final class MobileIdentityChallenges
             if (count($matches)!==1) { throw ValidationException::withMessages(['username'=>'Bitte den Benutzernamen aus deiner E-Mail eingeben.']); }
             $account=$this->candidate($tenant,$matches[0],$row->email_hash,true); abort_unless($account,409);
             $account->forceFill(['password'=>Hash::make($password),'revision'=>$account->revision+1])->save();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id',$account->id)->whereNull('revoked_at')->update(['revoked_at'=>now()]);
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('account_id',$account->id)->whereNull('revoked_at')->update(['revoked_at'=>now()]);
             $this->finish($row,(int)$account->id);
             return ['changed'=>true,'reauthentication_required'=>true];
         });

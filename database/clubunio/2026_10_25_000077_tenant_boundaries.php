@@ -40,7 +40,7 @@ return new class extends Migration
             ['training_plans', 'legacy_source_id', 'legacy_training_plans'],
         ];
         foreach ($links as [$source, $column, $target]) {
-            $bad = $db->table('clubora.'.$source.' as s')->join('clubora.'.$target.' as t', 't.id', '=', 's.'.$column)
+            $bad = $db->table('clubunio.'.$source.' as s')->join('clubunio.'.$target.' as t', 't.id', '=', 's.'.$column)
                 ->whereColumn('s.tenant_id', '<>', 't.tenant_id')->exists();
             if ($bad) {
                 throw new LogicException("Cross-tenant reference: {$source}.{$column}; manual review required, no data repair attempted.");
@@ -53,14 +53,14 @@ WHERE i.indrelid=CAST(? AS regclass) AND i.indisunique AND i.indisvalid
  AND i.indpred IS NULL AND i.indexprs IS NULL AND i.indnkeyatts=2
  AND (SELECT array_agg(a.attname::text ORDER BY a.attname) FROM pg_attribute a
       WHERE a.attrelid=i.indrelid AND a.attnum=ANY(i.indkey))=ARRAY['id','tenant_id']::text[]
-SQL, ['clubora.'.$table]);
+SQL, ['clubunio.'.$table]);
             if (! $existing->n) {
-                $db->statement("CREATE UNIQUE INDEX tenant_boundary_{$table}_uidx ON clubora.{$table}(tenant_id,id)");
+                $db->statement("CREATE UNIQUE INDEX tenant_boundary_{$table}_uidx ON clubunio.{$table}(tenant_id,id)");
             }
         }
         foreach ($links as [$source, $column, $target]) {
             $name = 'tb_'.substr(hash('sha256', $source.'.'.$column), 0, 24);
-            $db->statement("ALTER TABLE clubora.{$source} ADD CONSTRAINT {$name} FOREIGN KEY(tenant_id,{$column}) REFERENCES clubora.{$target}(tenant_id,id)");
+            $db->statement("ALTER TABLE clubunio.{$source} ADD CONSTRAINT {$name} FOREIGN KEY(tenant_id,{$column}) REFERENCES clubunio.{$target}(tenant_id,id)");
         }
     }
 

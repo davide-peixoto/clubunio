@@ -55,26 +55,26 @@ class PitchWeeklyAreasTest extends TestCase
         $this->insert('tenant_settings', ['area' => 'general', 'key' => ActiveTrainingPlan::KEY, 'label' => 'Period', 'value_type' => 'string', 'encrypted_value' => Crypt::encryptString((string) $this->period)]);
         $this->insert('tenant_settings', ['area' => 'general', 'key' => 'SaisonID', 'label' => 'Season', 'value_type' => 'string', 'encrypted_value' => Crypt::encryptString((string) $this->season)]);
         foreach (['tenants', 'accounts', 'training_options', 'training_slots', 'team_seasons', 'competitions'] as $table) {
-            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubora.$table INCLUDING ALL) ON COMMIT DROP");
+            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubunio.$table INCLUDING ALL) ON COMMIT DROP");
             $column = in_array($table, ['tenants', 'accounts']) ? 'id' : 'tenant_id';
-            $this->db->statement("INSERT INTO pg_temp.$table SELECT * FROM clubora.$table WHERE $column = ?", [$table === 'accounts' ? $this->actor->id : $this->tenant->id]);
+            $this->db->statement("INSERT INTO pg_temp.$table SELECT * FROM clubunio.$table WHERE $column = ?", [$table === 'accounts' ? $this->actor->id : $this->tenant->id]);
         }
         // Recreate the pre-001700 baseline even after a future authorized deployment.
         $this->db->statement('ALTER TABLE pg_temp.training_slots DROP COLUMN IF EXISTS area_id');
         foreach (['001500_pitch_planning', '001700_pitch_weekly_areas'] as $migration) {
             $queries = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_04_'.$migration.'.php'))->up());
             foreach ($queries as $query) {
-                $sql = str_replace(['clubora.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
+                $sql = str_replace(['clubunio.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
                 $this->db->statement($sql);
             }
         }
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table, $prefix = null) {
-                if (str_starts_with($table, 'clubora.training_slots') || str_starts_with($table, 'clubora.pitch_')) $table = str_replace('clubora.', 'pg_temp.', $table);
+                if (str_starts_with($table, 'clubunio.training_slots') || str_starts_with($table, 'clubunio.pitch_')) $table = str_replace('clubunio.', 'pg_temp.', $table);
                 return parent::wrapTable($table, $prefix);
             }
             public function wrap($value) {
-                if (is_string($value)) $value = str_replace('clubora.training_slots.', 'pg_temp.training_slots.', $value);
+                if (is_string($value)) $value = str_replace('clubunio.training_slots.', 'pg_temp.training_slots.', $value);
                 return parent::wrap($value);
             }
         });
@@ -99,7 +99,7 @@ class PitchWeeklyAreasTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function input(array $extra = []): array
@@ -149,7 +149,7 @@ class PitchWeeklyAreasTest extends TestCase
         $this->invalid(fn () => $this->save($input, $slot->id));
         $input['area_id'] = null;
         $this->assertNull($this->save($input, $slot->id)->area_id);
-        $audit = $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'training_slots')->orderByDesc('id')->first();
+        $audit = $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->where('object_type', 'training_slots')->orderByDesc('id')->first();
         $this->assertNull(json_decode($audit->after_value, true)['area_id']);
     }
 
@@ -199,13 +199,13 @@ class PitchWeeklyAreasTest extends TestCase
         $this->invalid(fn () => $this->save($this->input(['field_id' => $this->otherField])));
         $this->invalid(fn () => $this->save($this->input(['field_id' => null, 'hall' => 'Hall'])));
         $foreign = Tenant::create(['slug' => 'weekly-foreign-'.bin2hex(random_bytes(8)), 'name' => 'Foreign']);
-        $this->db->statement('INSERT INTO pg_temp.tenants SELECT * FROM clubora.tenants WHERE id = ?', [$foreign->id]);
+        $this->db->statement('INSERT INTO pg_temp.tenants SELECT * FROM clubunio.tenants WHERE id = ?', [$foreign->id]);
         $field = $this->insert('training_options', ['tenant_id' => $foreign->id, 'category' => 'field', 'code' => 'F', 'name' => 'Foreign']);
-        $this->db->statement('INSERT INTO pg_temp.training_options SELECT * FROM clubora.training_options WHERE id = ?', [$field]);
+        $this->db->statement('INSERT INTO pg_temp.training_options SELECT * FROM clubunio.training_options WHERE id = ?', [$field]);
         $area = $this->insert('pitch_areas', ['tenant_id' => $foreign->id, 'field_id' => $field, 'name_de' => 'Privat', 'name_en' => 'Private', 'x' => 0, 'y' => 0, 'width' => 1, 'height' => 1]);
         $this->invalid(fn () => $this->save($this->input(['area_id' => $area])));
         $this->assertNotContains('Private', app(PitchWeeklyAreas::class)->options($this->tenant, $field));
-        $this->db->table('clubora.training_options')->where('id', $this->field)->update(['active' => false]);
+        $this->db->table('clubunio.training_options')->where('id', $this->field)->update(['active' => false]);
         $this->invalid(fn () => $this->save($this->input()), 'field_id');
     }
 
@@ -285,7 +285,7 @@ class PitchWeeklyAreasTest extends TestCase
         $review = $service->review($this->actor, $this->tenant, $draft->id);
         $this->assertSame([], $review['errors']);
         $season = $service->complete($this->actor, $this->tenant, $draft->id, $draft->revision, $review['token'], true);
-        $newTeam = $this->db->table('clubora.team_seasons')->where('tenant_id', $this->tenant->id)->where('season_id', $season)->value('id');
+        $newTeam = $this->db->table('clubunio.team_seasons')->where('tenant_id', $this->tenant->id)->where('season_id', $season)->value('id');
         $this->assertNotNull($newTeam);
         $this->assertSame($this->area['id'], TrainingSlot::where('tenant_id', $this->tenant->id)->where('team_season_id', $newTeam)->firstOrFail()->area_id);
     }
@@ -305,7 +305,7 @@ class PitchWeeklyAreasTest extends TestCase
         $profile = $this->insert('access_profiles', ['name' => 'Weekly API', 'active' => true,
             'permissions' => json_encode(['training_slots.view', 'training_slots.create', 'training_slots.update'])]);
         $this->actor->forceFill(['api_only' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
         $scopes = ['training_slots:read', 'training_slots:create', 'training_slots:update'];
         $integration = new \App\ClubUnio\Models\ApiIntegration;
         $integration->forceFill(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'access_profile_id' => $profile,
@@ -329,7 +329,7 @@ class PitchWeeklyAreasTest extends TestCase
     public function test_weekly_area_write_does_not_expand_read_only_permissions(): void
     {
         $profile = $this->insert('access_profiles', ['name' => 'Weekly read only', 'active' => true, 'permissions' => json_encode(['training_slots.view'])]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'profile', 'access_profile_id' => $profile]);
         try { $this->save($this->input()); $this->fail('Read-only profile wrote weekly area'); }
         catch (HttpException $error) { $this->assertSame(403, $error->getStatusCode()); }
         $this->assertSame(0, $this->db->table('pg_temp.training_slots')->count());

@@ -39,11 +39,11 @@ class TenantDocumentStorageTest extends TestCase
             'clubunio-integrations.azure.tenant_slug' => 'legacy']);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->statement('CREATE TABLE clubora.tenant_storage_profiles (id TEXT PRIMARY KEY, tenant_id INTEGER, provider TEXT,
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->statement('CREATE TABLE clubunio.tenant_storage_profiles (id TEXT PRIMARY KEY, tenant_id INTEGER, provider TEXT,
             account TEXT, container TEXT, encrypted_key TEXT, active INTEGER, UNIQUE (tenant_id, provider, account, container))');
-        $db->statement("CREATE UNIQUE INDEX clubora.remote_target ON tenant_storage_profiles (provider, container) WHERE provider IN ('s3','google','graph')");
-        $db->statement('CREATE TABLE clubora.tenant_storage_objects (profile_id TEXT, object_key TEXT, remote_id TEXT,
+        $db->statement("CREATE UNIQUE INDEX clubunio.remote_target ON tenant_storage_profiles (provider, container) WHERE provider IN ('s3','google','graph')");
+        $db->statement('CREATE TABLE clubunio.tenant_storage_objects (profile_id TEXT, object_key TEXT, remote_id TEXT,
             PRIMARY KEY (profile_id, object_key), UNIQUE (profile_id, remote_id))');
         Storage::fake('local');
     }
@@ -97,7 +97,7 @@ class TenantDocumentStorageTest extends TestCase
         $this->assertSame(['HEAD', 'HEAD', 'PUT', 'HEAD', 'GET'], array_map(fn ($item) => $item['request']->getMethod(), $history));
         $this->assertSame('fixtureaccount.blob.core.windows.net', $history[4]['request']->getUri()->getHost());
         $this->assertSame('/fixture-private/'.$remote.self::FILE, $history[4]['request']->getUri()->getPath());
-        $encrypted = DB::connection('clubunio')->table('clubora.tenant_storage_profiles')->where('id', $azure['profile_id'])->value('encrypted_key');
+        $encrypted = DB::connection('clubunio')->table('clubunio.tenant_storage_profiles')->where('id', $azure['profile_id'])->value('encrypted_key');
         $this->assertNotSame(base64_encode(str_repeat('y', 64)), $encrypted);
     }
 
@@ -262,7 +262,7 @@ class TenantDocumentStorageTest extends TestCase
         $folder = $storage->folder($tenant, 'expenses', 17);
         $storage->put($tenant, $folder, self::FILE, '%PDF-1.4 original', 'application/pdf');
         $storage->put($tenant, $folder, self::FILE, '%PDF-1.4 original', 'application/pdf');
-        $this->assertSame('googleFileId', DB::connection('clubunio')->table('clubora.tenant_storage_objects')
+        $this->assertSame('googleFileId', DB::connection('clubunio')->table('clubunio.tenant_storage_objects')
             ->where('profile_id', $profile['profile_id'])->sole()->remote_id);
         $this->assertCount(1, Http::recorded(fn ($request) => str_contains($request->url(), 'generateIds')));
         Http::assertSent(fn ($request) => $request->method() === 'POST' && str_contains($request->url(), 'uploadType=resumable')

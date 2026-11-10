@@ -40,7 +40,7 @@ class TenantBoundaryTest extends TestCase
         config(['clubunio-domains.hosts' => ['one.clubunio.test' => $this->one->slug, 'my.custom.test' => $this->two->slug]]);
         foreach ([[$this->one, '#126634', '/brand/blue-v1/clubunio-symbol.svg'], [$this->two, '#992244', '/images/svs-logo.png']] as [$tenant, $color, $logo]) {
             foreach (['SIGNAGE_BRAND_COLOR' => $color, 'SIGNAGE_BRAND_LOGO' => $logo] as $key => $value) {
-                $this->db->table('clubora.tenant_settings')->insert(['tenant_id' => $tenant->id, 'area' => 'signage', 'key' => $key,
+                $this->db->table('clubunio.tenant_settings')->insert(['tenant_id' => $tenant->id, 'area' => 'signage', 'key' => $key,
                     'label' => 'Synthetic branding', 'value_type' => 'string', 'encrypted_value' => \Illuminate\Support\Facades\Crypt::encryptString($value), 'enabled' => true, 'is_secret' => false]);
             }
         }
@@ -145,15 +145,15 @@ class TenantBoundaryTest extends TestCase
         if (! $this->db->table('migrations')->where('migration', '2026_10_25_000077_tenant_boundaries')->exists()) {
             (require database_path('clubunio/2026_10_25_000077_tenant_boundaries.php'))->up();
         }
-        $bus = $this->db->table('clubora.buses')->insertGetId(['tenant_id' => $this->two->id, 'name' => 'Foreign bus']);
+        $bus = $this->db->table('clubunio.buses')->insertGetId(['tenant_id' => $this->two->id, 'name' => 'Foreign bus']);
         try {
-            $this->db->transaction(fn () => $this->db->table('clubora.bus_keyboxes')->insert(['tenant_id' => $this->one->id, 'bus_id' => $bus, 'name' => 'Invalid foreign box']));
+            $this->db->transaction(fn () => $this->db->table('clubunio.bus_keyboxes')->insert(['tenant_id' => $this->one->id, 'bus_id' => $bus, 'name' => 'Invalid foreign box']));
             $this->fail('Cross-tenant keybox inserted');
         } catch (QueryException $error) {
             $this->assertSame('23503', $error->errorInfo[0]);
         }
-        $this->assertSame(0, $this->db->table('clubora.bus_keyboxes')->where('tenant_id', $this->one->id)->count());
-        $this->db->table('clubora.bus_keyboxes')->insert(['tenant_id' => $this->two->id, 'bus_id' => $bus, 'name' => 'Own box']);
-        $this->assertSame(1, $this->db->table('clubora.bus_keyboxes')->where('tenant_id', $this->two->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.bus_keyboxes')->where('tenant_id', $this->one->id)->count());
+        $this->db->table('clubunio.bus_keyboxes')->insert(['tenant_id' => $this->two->id, 'bus_id' => $bus, 'name' => 'Own box']);
+        $this->assertSame(1, $this->db->table('clubunio.bus_keyboxes')->where('tenant_id', $this->two->id)->count());
     }
 }

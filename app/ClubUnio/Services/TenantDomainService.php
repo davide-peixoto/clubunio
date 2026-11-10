@@ -32,8 +32,8 @@ class TenantDomainService
         if (in_array($host, $central, true)) {
             return null;
         }
-        $tenant = Tenant::whereExists(fn ($q) => $q->selectRaw('1')->from('clubora.tenant_domains as domain')
-            ->whereColumn('domain.tenant_id', 'clubora.tenants.id')->where('domain.host', $host)
+        $tenant = Tenant::whereExists(fn ($q) => $q->selectRaw('1')->from('clubunio.tenant_domains as domain')
+            ->whereColumn('domain.tenant_id', 'clubunio.tenants.id')->where('domain.host', $host)
             ->where('domain.active', true)->where('domain.ownership_verified', true)
             ->where('domain.dns_verified', true)->where('domain.tls_verified', true))->first();
         abort_unless($tenant, 404);

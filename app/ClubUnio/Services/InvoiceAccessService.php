@@ -22,6 +22,6 @@ class InvoiceAccessService
 
         return $query->where(fn ($q) => $q->whereNull('workflow_status_id')->orWhereHas('workflowStatus', fn ($q) => $q->where('code', 'released')))
             ->whereIn('member_id', app(MemberAccessService::class)
-                ->visibleMembers($actor, $tenant)->select('clubora.members.id'));
+                ->visibleMembers($actor, $tenant)->select('clubunio.members.id'));
     }
 }

@@ -12,7 +12,7 @@ final class MobileNotificationService
 
     private function rows(Account $actor, Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.mobile_inbox')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
+        return DB::connection('clubunio')->table('clubunio.mobile_inbox')->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
     }
 
     /** References real, currently visible owned source rows, never copies private payloads. */
@@ -51,8 +51,8 @@ final class MobileNotificationService
     private function materialize(Account $actor, Tenant $tenant, array &$rights): void
     {
         app(MobileAccess::class)->enter($actor, $tenant);
-        DB::connection('clubunio')->table('clubora.notifications as source')->where('source.tenant_id', $tenant->id)->where('source.account_id', $actor->id)
-            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.mobile_inbox as indexed')
+        DB::connection('clubunio')->table('clubunio.notifications as source')->where('source.tenant_id', $tenant->id)->where('source.account_id', $actor->id)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubunio.mobile_inbox as indexed')
                 ->whereColumn('indexed.tenant_id', 'source.tenant_id')->whereColumn('indexed.account_id', 'source.account_id')
                 ->whereRaw("indexed.event_key = 'notification:' || source.id::text"))
             ->whereIn('object_type', array_keys(self::SOURCES))->select(['id', 'object_type', 'object_id', 'created_at', 'read_at'])
@@ -69,14 +69,14 @@ final class MobileNotificationService
                 if ($insert) $this->rows($actor, $tenant)->insertOrIgnore($insert);
             });
         // Preserve web/source read state without a separate update per old notification.
-        $source = DB::connection('clubunio')->table('clubora.notifications as source')
+        $source = DB::connection('clubunio')->table('clubunio.notifications as source')
             ->whereColumn('source.tenant_id', 'inbox.tenant_id')->whereColumn('source.account_id', 'inbox.account_id')
             ->whereColumn('source.object_id', 'inbox.object_id')->whereRaw("inbox.event_key = 'notification:' || source.id::text")
             ->whereRaw("inbox.kind = CASE source.object_type
                 WHEN 'expense' THEN 'expense' WHEN 'registration' THEN 'registration' WHEN 'bus_reservation' THEN 'bus'
                 WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' WHEN 'pitch_planning' THEN 'pitch_planning' END")
             ->whereNotNull('source.read_at');
-        DB::connection('clubunio')->table('clubora.mobile_inbox as inbox')->where('inbox.tenant_id', $tenant->id)->where('inbox.account_id', $actor->id)
+        DB::connection('clubunio')->table('clubunio.mobile_inbox as inbox')->where('inbox.tenant_id', $tenant->id)->where('inbox.account_id', $actor->id)
             ->whereNull('inbox.read_at')->whereExists((clone $source)->selectRaw('1'))
             ->update(['read_at' => (clone $source)->select('source.read_at')->limit(1)]);
     }
@@ -124,7 +124,7 @@ final class MobileNotificationService
         $page = array_slice($selected, $start, $limit);
         $sourceIds = [];
         foreach ($page as $row) if (preg_match('/^notification:([1-9][0-9]*)$/D', $row->event_key, $match)) $sourceIds[] = (int) $match[1];
-        $sources = $sourceIds ? DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+        $sources = $sourceIds ? DB::connection('clubunio')->table('clubunio.notifications')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
             ->whereIn('id', $sourceIds)->get(['id','object_type','object_id','title','body'])->keyBy('id')->all() : [];
         $rows = [];
         foreach ($page as $row) {
@@ -181,13 +181,13 @@ final class MobileNotificationService
             $stamp=now()->toIso8601String();
             foreach(array_chunk($projection['marked'],500) as $ids) {
                 $this->rows($actor,$tenant)->whereIn('id',$ids)->whereNull('read_at')->update(['read_at'=>$stamp]);
-                $indexed=DB::connection('clubunio')->table('clubora.mobile_inbox as indexed')->where('indexed.tenant_id',$tenant->id)
+                $indexed=DB::connection('clubunio')->table('clubunio.mobile_inbox as indexed')->where('indexed.tenant_id',$tenant->id)
                     ->where('indexed.account_id',$actor->id)->whereIn('indexed.id',$ids)
                     ->whereColumn('indexed.object_id','source.object_id')->whereRaw("indexed.event_key = 'notification:' || source.id::text")
                     ->whereRaw("indexed.kind = CASE source.object_type
                         WHEN 'expense' THEN 'expense' WHEN 'registration' THEN 'registration' WHEN 'bus_reservation' THEN 'bus'
                         WHEN 'member_change_request' THEN 'member_change' WHEN 'team_event' THEN 'planning' WHEN 'pitch_planning' THEN 'pitch_planning' END");
-                DB::connection('clubunio')->table('clubora.notifications as source')->where('source.tenant_id',$tenant->id)
+                DB::connection('clubunio')->table('clubunio.notifications as source')->where('source.tenant_id',$tenant->id)
                     ->where('source.account_id',$actor->id)->whereNull('source.read_at')->whereExists($indexed->selectRaw('1'))->update(['read_at'=>$stamp]);
             }
             return ['unreadCount'=>$projection['remaining'],'read'=>true,'through_id'=>$through,

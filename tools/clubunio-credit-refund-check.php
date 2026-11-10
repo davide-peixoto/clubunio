@@ -32,7 +32,7 @@ if ($operation === 'repair-fixture-times') {
     DB::connection('clubunio')->transaction(function () use ($tenant, $actor) {
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
         foreach (['credit_notes' => [17, 18], 'refunds' => [7]] as $table => $ids) {
-            $query = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('created_by', $actor->id)->whereIn('id', $ids)->where('reason', 'like', 'SANDBOX %');
+            $query = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('created_by', $actor->id)->whereIn('id', $ids)->where('reason', 'like', 'SANDBOX %');
             abort_unless((clone $query)->count() === count($ids), 409);
             $columns = $table === 'credit_notes' ? ['created_at', 'updated_at', 'released_at', 'confirmed_at'] : ['created_at', 'updated_at', 'confirmed_at'];
             foreach ((clone $query)->whereRaw('created_at>now()')->get() as $row) {
@@ -41,16 +41,16 @@ if ($operation === 'repair-fixture-times') {
                     $values[$column] = DB::connection('clubunio')->raw("($column AT TIME ZONE 'America/Los_Angeles') AT TIME ZONE 'UTC'");
                 }
                 (clone $query)->where('id', $row->id)->update($values);
-                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $table, 'object_id' => $row->id,
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $table, 'object_id' => $row->id,
                     'before_value' => json_encode(array_intersect_key((array) $row, array_flip($columns)), JSON_THROW_ON_ERROR),
                     'after_value' => json_encode(['action' => 'repair_synthetic_timezone', 'source_timezone' => 'America/Los_Angeles', 'interpretation' => 'UTC'], JSON_THROW_ON_ERROR)]);
             }
         }
-        $balance = DB::connection('clubunio')->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', 'invoice')->where('object_id', 8519)->where('remote_id', '7')
+        $balance = DB::connection('clubunio')->table('clubunio.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', 'invoice')->where('object_id', 8519)->where('remote_id', '7')
             ->where('cash_received_cents', 1500)->where('cash_excess_cents', 500)->whereRaw('observed_at>now()')->first();
         if ($balance) {
-            DB::connection('clubunio')->table('clubora.bexio_balances')->where('id', $balance->id)->update(['observed_at' => DB::connection('clubunio')->raw("(observed_at AT TIME ZONE 'America/Los_Angeles') AT TIME ZONE 'UTC'")]);
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'invoices', 'object_id' => 8519,
+            DB::connection('clubunio')->table('clubunio.bexio_balances')->where('id', $balance->id)->update(['observed_at' => DB::connection('clubunio')->raw("(observed_at AT TIME ZONE 'America/Los_Angeles') AT TIME ZONE 'UTC'")]);
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'invoices', 'object_id' => 8519,
                 'before_value' => json_encode(['observed_at' => $balance->observed_at], JSON_THROW_ON_ERROR),
                 'after_value' => json_encode(['action' => 'repair_synthetic_balance_timezone'], JSON_THROW_ON_ERROR)]);
         }
@@ -59,9 +59,9 @@ if ($operation === 'repair-fixture-times') {
 if ($operation === 'status') {
     echo json_encode(['db_timezone' => DB::connection('clubunio')->selectOne('SHOW timezone')->TimeZone,
         'app_utc' => now('UTC')->toIso8601String(), 'credit_times' => CreditNote::where('tenant_id', $tenant->id)->whereIn('id', [17, 18])->get(['id', 'created_at', 'released_at', 'confirmed_at'])], JSON_THROW_ON_ERROR).PHP_EOL;
-    $row = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', 8519)->first();
+    $row = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', 8519)->first();
     if ($row) {
-        echo json_encode(DB::connection('clubunio')->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']), JSON_THROW_ON_ERROR).PHP_EOL;
+        echo json_encode(DB::connection('clubunio')->table('clubunio.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']), JSON_THROW_ON_ERROR).PHP_EOL;
         $raw = app(BexioSandboxDispatchService::class)->readStatus($actor, $tenant, 'invoice', 8519);
         echo json_encode(array_intersect_key($raw, array_flip(['total', 'total_received_payments', 'total_credit_vouchers', 'total_remaining_payments', 'kb_item_status_id'])), JSON_THROW_ON_ERROR).PHP_EOL;
         $token = app(BexioConnectionService::class)->accessToken($tenant);
@@ -113,7 +113,7 @@ if (in_array($operation, ['overpay', 'refund'], true)) {
         }
     }
     echo json_encode($service->remote($actor, $tenant, $invoice->id), JSON_THROW_ON_ERROR).PHP_EOL;
-    echo json_encode(DB::connection('clubunio')->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']), JSON_THROW_ON_ERROR).PHP_EOL;
+    echo json_encode(DB::connection('clubunio')->table('clubunio.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']), JSON_THROW_ON_ERROR).PHP_EOL;
 }
 if ($operation === 'tax-credit') {
     $invoice = Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('bexio_invoice_id', '6')

@@ -14,7 +14,7 @@ class BusReservationService
 {
     public function table(Tenant $tenant, string $name)
     {
-        return DB::connection('clubunio')->table('clubora.'.$name)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$name)->where('tenant_id', $tenant->id);
     }
 
     public function enter(Account $actor, Tenant $tenant): void
@@ -53,7 +53,7 @@ class BusReservationService
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'bus_reservations')->where('active', true);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'view')) {
-            $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubora.members.id');
+            $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubunio.members.id');
             $q->where(fn ($q) => $q->whereIn('member_id', $ids)->orWhereIn('team_season_id', $this->teams($actor, $tenant)->select('id')));
         }
 
@@ -292,14 +292,14 @@ class BusReservationService
 
     private function audit(Account $actor, Tenant $tenant, int $id, ?array $before, array $after, string $type = 'bus_reservations'): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id, 'before_value' => $before ? json_encode($before) : null, 'after_value' => json_encode($after)]);
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id, 'before_value' => $before ? json_encode($before) : null, 'after_value' => json_encode($after)]);
     }
 
     private function notify(Tenant $tenant, int $id, string $status, ?string $event = null): void
     {
         $row = $this->table($tenant, 'bus_reservations')->where('id', $id)->first();
         $db = DB::connection('clubunio');
-        $recipients = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
+        $recipients = $db->table('clubunio.tenant_accounts as ta')->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
         if ($status === 'ANGEFRAGT') {
             $recipients->where('ta.role', 'office');
         } elseif ($status === 'STORNIERT') {
@@ -320,7 +320,7 @@ class BusReservationService
             if (! $message) {
                 continue;
             }
-            $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account, 'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'bus_reservation', 'object_id' => $id]);
+            $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account, 'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'bus_reservation', 'object_id' => $id]);
         }
     }
 }

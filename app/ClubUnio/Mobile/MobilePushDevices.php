@@ -15,11 +15,11 @@ final class MobilePushDevices
             'app_id' => 'required|string|max:180', 'platform' => 'required|in:android,ios']);
         app(MobilePushRegistry::class)->request($request, $data['app_id'], $data['platform']);
         $actor = app(MobileSessions::class)->authenticate($request);
-        $device = DB::connection('clubunio')->table('clubora.mobile_push_devices')->where('id', $data['installation_id'])->first();
+        $device = DB::connection('clubunio')->table('clubunio.mobile_push_devices')->where('id', $data['installation_id'])->first();
         if (! $device) return ['revision' => 0, 'bound' => false];
         abort_unless(hash_equals($device->proof_hash, hash('sha256', $data['installation_secret']))
             && $device->app_id === $data['app_id'] && $device->platform === $data['platform'] && $device->origin === $request->getSchemeAndHttpHost(), 403);
-        $binding = DB::connection('clubunio')->table('clubora.mobile_push_bindings')->where('device_id', $device->id)->where('account_id', $actor->id)->first();
+        $binding = DB::connection('clubunio')->table('clubunio.mobile_push_bindings')->where('device_id', $device->id)->where('account_id', $actor->id)->first();
         return ['revision' => (int) $device->revision, 'bound' => $binding && $binding->revoked_at === null
             && $binding->session_id === $request->attributes->get('mobile.session')->id];
     }
@@ -39,9 +39,9 @@ final class MobilePushDevices
         try { return DB::connection('clubunio')->transaction(function () use ($request, $data, $app, $actor) {
             // All physical-install updates take the same advisory lock, including the initial insert.
             DB::connection('clubunio')->select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', ['mobile-push:'.$data['installation_id']]);
-            $session = DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            $session = DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             app(MobileSessions::class)->authenticate($request);
-            $devices = DB::connection('clubunio')->table('clubora.mobile_push_devices');
+            $devices = DB::connection('clubunio')->table('clubunio.mobile_push_devices');
             $device = (clone $devices)->where('id', $data['installation_id'])->lockForUpdate()->first();
             $hash = hash('sha256', $data['token']);
             $now = now()->toIso8601String();
@@ -67,7 +67,7 @@ final class MobilePushDevices
                     'fixed_tenant_id' => $app['fixed_tenant_id'], 'token_cipher' => Crypt::encryptString($data['token']),
                     'token_hash' => $hash, 'revision' => $revision, 'created_at' => $now, 'updated_at' => $now]);
             }
-            $bindings = DB::connection('clubunio')->table('clubora.mobile_push_bindings');
+            $bindings = DB::connection('clubunio')->table('clubunio.mobile_push_bindings');
             $binding = (clone $bindings)->where('device_id', $data['installation_id'])->where('account_id', $actor->id)->lockForUpdate()->first();
             if ($binding) {
                 $bindingRevision = (int) $binding->revision + (($binding->session_id !== $session->id || $binding->revoked_at !== null) ? 1 : 0);
@@ -90,10 +90,10 @@ final class MobilePushDevices
         $data = $request->validate(['installation_id' => 'required|uuid', 'installation_secret' => 'required|regex:/^[0-9a-f]{64}$/D']);
         $actor = app(MobileSessions::class)->authenticate($request);
         return DB::connection('clubunio')->transaction(function () use ($data, $actor) {
-            $device = DB::connection('clubunio')->table('clubora.mobile_push_devices')->where('id', $data['installation_id'])->lockForUpdate()->first();
+            $device = DB::connection('clubunio')->table('clubunio.mobile_push_devices')->where('id', $data['installation_id'])->lockForUpdate()->first();
             abort_unless($device && hash_equals($device->proof_hash, hash('sha256', $data['installation_secret'])), 403);
             // Current account only. Other remembered accounts on the install retain their own binding.
-            DB::connection('clubunio')->table('clubora.mobile_push_bindings')->where('device_id', $device->id)->where('account_id', $actor->id)
+            DB::connection('clubunio')->table('clubunio.mobile_push_bindings')->where('device_id', $device->id)->where('account_id', $actor->id)
                 ->whereNull('revoked_at')->update(['revoked_at' => now()->toIso8601String(), 'revision' => DB::connection('clubunio')->raw('revision+1')]);
             return ['revoked' => true];
         });

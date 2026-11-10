@@ -36,8 +36,8 @@ class InvoicePdfPerformanceTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'pdf-perf-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic']);
         $this->invoice = new Invoice;
         $this->invoice->forceFill(['tenant_id' => $this->tenant->id, 'member_id' => $member, 'bexio_invoice_id' => '12345'])->save();
         Http::preventStrayRequests();
@@ -63,7 +63,7 @@ class InvoicePdfPerformanceTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
         $sql = implode("\n", array_column($this->db->getQueryLog(), 'query'));
         foreach (['members', 'seasons', 'invoice_lines', 'invoice_workflow_statuses'] as $table) {
-            $this->assertStringNotContainsString('from "clubora"."'.$table.'"', $sql);
+            $this->assertStringNotContainsString('from "clubunio"."'.$table.'"', $sql);
         }
         $this->assertLessThanOrEqual(2, count($this->db->getQueryLog()));
         $this->db->flushQueryLog();
@@ -79,7 +79,7 @@ class InvoicePdfPerformanceTest extends TestCase
     public function test_role_revocation_and_foreign_tenant_never_reach_provider(): void
     {
         Http::fake();
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         try {
             app(InvoicePdfService::class)->open($this->actor, $this->tenant, $this->invoice->id, true);
             $this->fail('Revoked role opened invoice');

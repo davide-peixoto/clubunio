@@ -18,8 +18,8 @@ final class PlatformAdministrationService
 {
     public function allowed(?Account $actor): bool
     {
-        return $actor && DB::connection('clubunio')->table('clubora.platform_admins as p')
-            ->join('clubora.accounts as a', 'a.id', '=', 'p.account_id')->where('a.id', $actor->id)
+        return $actor && DB::connection('clubunio')->table('clubunio.platform_admins as p')
+            ->join('clubunio.accounts as a', 'a.id', '=', 'p.account_id')->where('a.id', $actor->id)
             ->where('a.active', true)->where('a.api_only', false)->where('p.active', true)->exists();
     }
 
@@ -28,7 +28,7 @@ final class PlatformAdministrationService
         abort_unless($this->allowed($actor), 403);
         if ($lock) {
             abort_unless(Account::whereKey($actor->id)->where('active', true)->where('api_only', false)->sharedLock()->first(), 403);
-            $row = DB::connection('clubunio')->table('clubora.platform_admins')->where('account_id', $actor->id)
+            $row = DB::connection('clubunio')->table('clubunio.platform_admins')->where('account_id', $actor->id)
                 ->where('active', true)->sharedLock()->first();
             abort_unless($row && $this->allowed($actor), 403);
         }
@@ -38,15 +38,15 @@ final class PlatformAdministrationService
     {
         abort_unless(app()->runningInConsole(), 403);
         DB::connection('clubunio')->transaction(function () use ($username) {
-            DB::connection('clubunio')->statement('LOCK TABLE clubora.platform_admins IN EXCLUSIVE MODE');
+            DB::connection('clubunio')->statement('LOCK TABLE clubunio.platform_admins IN EXCLUSIVE MODE');
             $actor = $this->human($username);
-            $existing = DB::connection('clubunio')->table('clubora.platform_admins')->first();
+            $existing = DB::connection('clubunio')->table('clubunio.platform_admins')->first();
             if ($existing) {
                 abort_unless((int) $existing->account_id === (int) $actor->id && $this->allowed($actor), 409);
 
                 return;
             }
-            DB::connection('clubunio')->table('clubora.platform_admins')->insert(['account_id' => $actor->id]);
+            DB::connection('clubunio')->table('clubunio.platform_admins')->insert(['account_id' => $actor->id]);
             $this->audit($actor, null, 'platform.bootstrap', ['account_id' => $actor->id]);
         });
     }
@@ -64,7 +64,7 @@ final class PlatformAdministrationService
 
     private function audit(Account $actor, ?Tenant $tenant, string $action, array $details): void
     {
-        DB::connection('clubunio')->table('clubora.platform_changes')->insert(['actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.platform_changes')->insert(['actor_id' => $actor->id,
             'tenant_id' => $tenant?->id, 'action' => $action, 'details' => json_encode($details, JSON_THROW_ON_ERROR)]);
     }
 
@@ -97,7 +97,7 @@ final class PlatformAdministrationService
         $this->authorize($actor);
         abort_if(array_diff(array_keys($input), ['name', 'slug', 'username', 'reason']), 422);
         $data = Validator::make($input, ['name' => 'required|string|max:200',
-            'slug' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', Rule::unique('clubunio.clubora.tenants', 'slug')],
+            'slug' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', Rule::unique('clubunio.clubunio.tenants', 'slug')],
             'username' => 'required|string|max:255', 'reason' => 'required|string|min:10|max:500'])->validate();
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $data) {
@@ -107,7 +107,7 @@ final class PlatformAdministrationService
             if (FacilityPlanningMode::ready() && ! FacilityPlanningMode::protected($tenant)) {
                 $tenant->forceFill(['facility_planning_mode' => 'neutral'])->save();
             }
-            DB::connection('clubunio')->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id,
+            DB::connection('clubunio')->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id,
                 'account_id' => $admin->id, 'role' => 'admin', 'portal_enabled' => false]);
             $this->audit($actor, $tenant, 'tenant.create', ['name' => $tenant->name, 'slug' => $tenant->slug,
                 'admin_account_id' => $admin->id, 'reason' => $data['reason']]);
@@ -198,7 +198,7 @@ final class PlatformAdministrationService
         if ($data['active'] && (! $data['ownership_verified'] || ! $data['dns_verified'] || ! $data['tls_verified'])) {
             throw ValidationException::withMessages(['host' => __('Aktivierung benötigt bestätigten Domainbesitz, DNS und TLS.')]);
         }
-        $table = DB::connection('clubunio')->table('clubora.tenant_domains');
+        $table = DB::connection('clubunio')->table('clubunio.tenant_domains');
         DB::connection('clubunio')->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-domain:'.$data['host']]);
         $old = (clone $table)->where('host', $data['host'])->lockForUpdate()->first();
         if ($old && (int) $old->tenant_id !== (int) $tenant->id) {
@@ -227,16 +227,16 @@ final class PlatformAdministrationService
             abort_if($profile !== null, 422);
         }
         $db = DB::connection('clubunio');
-        $old = $db->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $account->id)->first();
+        $old = $db->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $account->id)->first();
         if ($old?->role === 'admin' && $data['role'] !== 'admin') {
-            $other = $db->table('clubora.tenant_accounts as m')->join('clubora.accounts as a', 'a.id', '=', 'm.account_id')
+            $other = $db->table('clubunio.tenant_accounts as m')->join('clubunio.accounts as a', 'a.id', '=', 'm.account_id')
                 ->where('m.tenant_id', $tenant->id)->where('m.role', 'admin')->where('a.active', true)
                 ->where('a.api_only', false)->where('a.id', '<>', $account->id)->exists();
             if (! $other) {
                 throw ValidationException::withMessages(['role' => __('Der letzte aktive Vereinsadmin muss erhalten bleiben.')]);
             }
         }
-        $db->table('clubora.tenant_accounts')->updateOrInsert(['tenant_id' => $tenant->id, 'account_id' => $account->id],
+        $db->table('clubunio.tenant_accounts')->updateOrInsert(['tenant_id' => $tenant->id, 'account_id' => $account->id],
             ['role' => $data['role'], 'access_profile_id' => $profile, 'portal_enabled' => (bool) $data['portal_enabled'],
                 'revision' => ($old?->revision ?? 0) + 1]);
 
@@ -249,7 +249,7 @@ final class PlatformAdministrationService
     {
         $username = Validator::make($input, ['username' => 'required|string|max:255'])->validate()['username'];
         $account = $this->human($username);
-        abort_unless(DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)
+        abort_unless(DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)
             ->where('account_id', $account->id)->exists(), 404);
 
         // Retain FK-bound audit and identity links; do not delete a shared account.

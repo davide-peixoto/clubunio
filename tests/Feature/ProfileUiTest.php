@@ -36,20 +36,20 @@ class ProfileUiTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        if (! Schema::connection('clubunio')->hasTable('clubora.access_profiles')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.access_profiles')) {
             (require database_path('clubunio/2026_10_16_000069_access_profiles.php'))->up();
         }
-        if (! Schema::connection('clubunio')->hasColumn('clubora.tenant_accounts', 'access_profile_id')) {
+        if (! Schema::connection('clubunio')->hasColumn('clubunio.tenant_accounts', 'access_profile_id')) {
             (require database_path('clubunio/2026_10_16_000070_account_access_profiles.php'))->up();
         }
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
         $this->tenant = Tenant::create(['slug' => 'ui-'.Str::random(12), 'name' => 'Profile UI fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'UI fixture', 'password' => bcrypt('fixture'), 'active' => true])->save();
         $this->profile = new AccessProfile;
         $this->profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'UI fixture', 'active' => true,
             'permissions' => ['members.view'], 'revision' => 1])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $this->actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile->id]);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
@@ -345,7 +345,7 @@ class ProfileUiTest extends TestCase
 
     public function test_training_portal_owner_guards_are_preserved(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'trainer', 'access_profile_id' => null]);
         $data = $this->trainingViewData();
         $this->view('clubunio.training.show', $data)->assertSee('Private Kopie')->assertSee(' PDF')
@@ -359,7 +359,7 @@ class ProfileUiTest extends TestCase
     {
         $ids = [];
         foreach (['ready', 'uncertain'] as $state) {
-            $ids[$state] = $this->db->table('clubora.bexio_dispatch_trials')->insertGetId([
+            $ids[$state] = $this->db->table('clubunio.bexio_dispatch_trials')->insertGetId([
                 'tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'expense',
                 'object_id' => 1, 'reference' => (string) Str::uuid(), 'fingerprint' => Str::random(32),
                 'state' => $state, 'total_cents' => 100, 'line_count' => 1,
@@ -376,7 +376,7 @@ class ProfileUiTest extends TestCase
         \Livewire\Livewire::test($page)->assertSuccessful()->assertSee('Simulierte Antwort')->assertDontSee('Simuliertes Abgleichsergebnis');
         $this->permissions(['bexio.view', 'expenses.view', 'expenses.sync']);
         \Livewire\Livewire::test($page)->assertSuccessful()->assertDontSee('Simulierte Antwort')->assertSee('Simuliertes Abgleichsergebnis');
-        $this->db->table('clubora.bexio_dispatch_trials')->whereIn('id', $ids)->update(['state' => 'simulated']);
+        $this->db->table('clubunio.bexio_dispatch_trials')->whereIn('id', $ids)->update(['state' => 'simulated']);
         \Livewire\Livewire::test($page)->assertDontSee('Simulierte Antwort')->assertDontSee('Simuliertes Abgleichsergebnis');
         \Livewire\Livewire::test(\App\ClubUnio\Pages\BexioReconciliation::class)->assertSuccessful()
             ->assertSet('type', 'expense')->assertSeeHtml('value="expense"')->assertDontSeeHtml('value="invoice"');

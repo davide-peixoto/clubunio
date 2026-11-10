@@ -31,12 +31,12 @@ final class ApiContext
     private function current(): array
     {
         $db = DB::connection('clubunio');
-        $row = $db->table('clubora.api_integrations as integration')
-            ->join('clubora.api_access_tokens as token', 'token.tokenable_id', '=', 'integration.id')
-            ->join('clubora.accounts as actor', 'actor.id', '=', 'integration.account_id')
-            ->join('clubora.access_profiles as profile', function ($join) {
+        $row = $db->table('clubunio.api_integrations as integration')
+            ->join('clubunio.api_access_tokens as token', 'token.tokenable_id', '=', 'integration.id')
+            ->join('clubunio.accounts as actor', 'actor.id', '=', 'integration.account_id')
+            ->join('clubunio.access_profiles as profile', function ($join) {
                 $join->on('profile.id', '=', 'integration.access_profile_id')->on('profile.tenant_id', '=', 'integration.tenant_id');
-            })->join('clubora.tenant_accounts as membership', function ($join) {
+            })->join('clubunio.tenant_accounts as membership', function ($join) {
                 $join->on('membership.account_id', '=', 'integration.account_id')->on('membership.tenant_id', '=', 'integration.tenant_id')
                     ->on('membership.access_profile_id', '=', 'profile.id');
             })->where('integration.id', $this->integration->id)->where('integration.tenant_id', $this->tenant->id)

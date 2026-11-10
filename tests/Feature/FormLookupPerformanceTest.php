@@ -38,7 +38,7 @@ class FormLookupPerformanceTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'form-perf-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
         $country = $this->insert('countries', ['code' => 'CH', 'name' => 'Synthetic']);
         $this->input = ['first_name' => 'Synthetic', 'last_name' => 'Member', 'company' => null, 'email' => 'fixture@example.invalid',
             'status_id' => $this->insert('member_statuses', ['code' => 'M', 'name' => 'Member', 'restores_membership' => true]),
@@ -64,7 +64,7 @@ class FormLookupPerformanceTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function invalid(callable $callback, string $field): void
@@ -83,20 +83,20 @@ class FormLookupPerformanceTest extends TestCase
         $member = app(MemberService::class)->create($this->actor, $this->tenant, $this->input);
         $queries = $this->db->getQueryLog();
         foreach (['countries', 'member_statuses', 'member_types', 'genders', 'billing_recipients'] as $table) {
-            $reads = array_filter($queries, fn ($q) => str_contains($q['query'], 'from "clubora"."'.$table.'"'));
+            $reads = array_filter($queries, fn ($q) => str_contains($q['query'], 'from "clubunio"."'.$table.'"'));
             $this->assertCount(1, $reads, $table);
         }
         $this->assertSame($this->input['country_id'], $member->country_id);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
         app(MemberService::class)->update($this->actor, $this->tenant, $member->id, $this->input + ['_version' => MemberService::version($member)]);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_inactive_country_is_only_retained_for_its_own_existing_field(): void
     {
         $member = app(MemberService::class)->create($this->actor, $this->tenant, $this->input);
         $inactive = $this->insert('countries', ['code' => 'X', 'name' => 'Old', 'active' => false]);
-        $this->db->table('clubora.members')->where('id', $member->id)->update(['country_id' => $inactive]);
+        $this->db->table('clubunio.members')->where('id', $member->id)->update(['country_id' => $inactive]);
         $member->refresh();
         $input = array_replace($this->input, ['country_id' => $inactive, '_version' => MemberService::version($member)]);
         app(MemberService::class)->update($this->actor, $this->tenant, $member->id, $input);
@@ -111,9 +111,9 @@ class FormLookupPerformanceTest extends TestCase
         $service = app(MemberService::class);
         $this->invalid(fn () => $service->create($this->actor, $this->tenant, array_replace($this->input, ['email' => null])), 'email');
         $service->create($this->actor, $this->tenant, $this->input);
-        $this->db->table('clubora.countries')->where('id', $this->input['country_id'])->update(['active' => false]);
+        $this->db->table('clubunio.countries')->where('id', $this->input['country_id'])->update(['active' => false]);
         $this->invalid(fn () => $service->create($this->actor, $this->tenant, $this->input), 'country_id');
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         try {
             $service->create($this->actor, $this->tenant, $this->input);
             $this->fail('Revoked role accepted');
@@ -143,7 +143,7 @@ class FormLookupPerformanceTest extends TestCase
     public function test_foreign_missing_and_malformed_lookup_values_are_rejected(): void
     {
         $other = Tenant::create(['slug' => 'other-'.Str::random(12), 'name' => 'Foreign']);
-        $foreign = $this->db->table('clubora.countries')->insertGetId(['tenant_id' => $other->id, 'code' => 'X', 'name' => 'Foreign']);
+        $foreign = $this->db->table('clubunio.countries')->insertGetId(['tenant_id' => $other->id, 'code' => 'X', 'name' => 'Foreign']);
         foreach ([$foreign, -1, 'invalid', ['id' => $this->input['country_id']], '1.5'] as $invalid) {
             $this->invalid(fn () => app(MemberService::class)->create($this->actor, $this->tenant,
                 array_replace($this->input, ['nationality_id' => $invalid])), 'nationality_id');
@@ -161,7 +161,7 @@ class FormLookupPerformanceTest extends TestCase
         $this->assertCount(0, $this->db->getQueryLog());
         $this->assertSame([$id => 'Synthetic bank •••• 1234'], ExpenseFields::bankOptions($member->id));
         $this->assertCount(2, $this->db->getQueryLog());
-        $this->db->table('clubora.member_bank_accounts')->where('id', $id)->update(['active' => false]);
+        $this->db->table('clubunio.member_bank_accounts')->where('id', $id)->update(['active' => false]);
         $this->assertSame([], ExpenseFields::bankOptions($member->id));
     }
 }

@@ -277,8 +277,8 @@ class ApiIntegrations extends Page implements HasTable
             'providerWorkRows' => app(ApiProviderWork::class)->adminRows($actor, $tenant),
             'providerWorkDetail' => $this->providerWorkId ? app(ApiProviderWork::class)->inspect($actor, $tenant, $this->providerWorkId) : null,
             'providerActionLabels' => array_map(fn ($definition) => $definition['title'], app(ProviderApiRegistry::class)->definitions()),
-            'auditRows' => DB::connection('clubunio')->table('clubora.api_audit as audit')
-                ->leftJoin('clubora.api_integrations as integration', function ($join) {
+            'auditRows' => DB::connection('clubunio')->table('clubunio.api_audit as audit')
+                ->leftJoin('clubunio.api_integrations as integration', function ($join) {
                     $join->on('integration.id', '=', 'audit.integration_id')
                         ->on('integration.tenant_id', '=', 'audit.tenant_id');
                 })

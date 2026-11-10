@@ -55,7 +55,7 @@ class BexioCatalogService
     {
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
         $hash = app(BexioSandboxFixtureService::class)->connectionHash($tenant);
-        $binding = DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
+        $binding = DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->first();
         abort_unless($binding && hash_equals($hash, $binding->connection_hash), 409, __('Sandbox-Verbindung zuerst bestätigen.'));
 
         return $hash;
@@ -197,7 +197,7 @@ class BexioCatalogService
 
     private function audit(Account $actor, Tenant $tenant, int $id, ?array $before, array $after): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'bexio_catalog_entries', 'object_id' => $id, 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
             'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);
     }

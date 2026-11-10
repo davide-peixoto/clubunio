@@ -11,7 +11,7 @@ class BexioInvoiceActionService
 {
     private function table()
     {
-        return DB::connection('clubunio')->table('clubora.bexio_invoice_actions');
+        return DB::connection('clubunio')->table('clubunio.bexio_invoice_actions');
     }
 
     private function remote(Account $actor, Tenant $tenant, int $invoiceId): array
@@ -68,7 +68,7 @@ class BexioInvoiceActionService
             $current = app(BexioSandboxDispatchService::class)->statusDocument($actor, $tenant, 'invoice', $invoiceId);
             abort_unless(hash_equals($row->connection_hash, $current->connection_hash), 409);
             abort_if($this->table()->where('dispatch_id', $row->id)->where(fn ($q) => $q->where('operation', $operation)->orWhere('state', '<>', 'accepted'))->exists(), 409);
-            abort_if(DB::connection('clubunio')->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->whereIn('state', ['running', 'uncertain'])->exists(), 409, __('Offene Finanzaktion zuerst abgleichen.'));
+            abort_if(DB::connection('clubunio')->table('clubunio.bexio_financial_actions')->where('dispatch_id', $row->id)->whereIn('state', ['running', 'uncertain'])->exists(), 409, __('Offene Finanzaktion zuerst abgleichen.'));
 
             return $this->table()->insertGetId(['dispatch_id' => $row->id, 'actor_id' => $actor->id, 'operation' => $operation,
                 'state' => 'running', 'connection_hash' => $row->connection_hash, 'before_status' => $status]);
@@ -100,7 +100,7 @@ class BexioInvoiceActionService
         });
         $service = app(BexioReconciliationService::class);
         $checkId = $service->preview($actor, $tenant, 'invoice', $invoiceId);
-        $check = DB::connection('clubunio')->table('clubora.bexio_checks')->find($checkId);
+        $check = DB::connection('clubunio')->table('clubunio.bexio_checks')->find($checkId);
         abort_unless(in_array($check->state, ['ready', 'unchanged'], true), 409, __('Lokaler Statusabgleich noch offen.'));
         if ($check->state === 'ready') {
             $service->apply($actor, $tenant, $checkId);

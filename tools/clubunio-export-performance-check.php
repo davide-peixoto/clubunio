@@ -34,12 +34,12 @@ abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
 $db->beginTransaction();
 try {
     $tenant = Tenant::where('slug', 'sv-sissach')->firstOrFail();
-    $actor = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)->where('tenant_accounts.role', 'admin'))->orderBy('id')->firstOrFail();
+    $actor = Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id)->where('tenant_accounts.role', 'admin'))->orderBy('id')->firstOrFail();
     Auth::guard('clubunio')->setUser($actor);
     Filament::setCurrentPanel(Filament::getPanel('clubunio'));
     Filament::setTenant($tenant);
     $resource = $resources[$kind];
-    $query = $resource::getEloquentQuery()->orderBy($resource::getModel() === Member::class ? 'clubora.members.id' : 'id');
+    $query = $resource::getEloquentQuery()->orderBy($resource::getModel() === Member::class ? 'clubunio.members.id' : 'id');
     if (in_array($kind, ['players', 'staff', 'families'], true)) {
         $query->where('active', true);
     }

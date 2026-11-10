@@ -21,7 +21,7 @@ class BexioReconciliationService
 {
     public function sandbox(Tenant $tenant): bool
     {
-        return DB::connection('clubunio')->table('clubora.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists();
+        return DB::connection('clubunio')->table('clubunio.bexio_sandbox_fixtures')->where('tenant_id', $tenant->id)->exists();
     }
 
     public function enabled(Tenant $tenant): bool
@@ -81,7 +81,7 @@ class BexioReconciliationService
         $row = ['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => $type, 'object_id' => $id,
             'reference' => $reference, 'remote_id' => $remote, 'fingerprint' => $this->fingerprint($document, $type)];
         if (! $this->enabled($tenant)) {
-            return DB::connection('clubunio')->table('clubora.bexio_checks')->insertGetId($row + ['state' => 'disabled', 'message' => 'Bexio kein Update - Deaktiviert']);
+            return DB::connection('clubunio')->table('clubunio.bexio_checks')->insertGetId($row + ['state' => 'disabled', 'message' => 'Bexio kein Update - Deaktiviert']);
         }
         try {
             $data = $this->sandbox($tenant)
@@ -107,7 +107,7 @@ class BexioReconciliationService
                 'type' => $type, 'object_id' => $id, 'status' => (int) $error->getCode()]);
         }
 
-        return DB::connection('clubunio')->table('clubora.bexio_checks')->insertGetId($row);
+        return DB::connection('clubunio')->table('clubunio.bexio_checks')->insertGetId($row);
     }
 
     private function financials(string $type, $document, array $data): array
@@ -127,7 +127,7 @@ class BexioReconciliationService
 
     private function proposal(Tenant $tenant, string $type, $document, string $status, array $data, ?array $financials = null): array
     {
-        $current = DB::connection('clubunio')->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', $type)->where('object_id', $document->id)->first();
+        $current = DB::connection('clubunio')->table('clubunio.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', $type)->where('object_id', $document->id)->first();
         $balanceChanged = $financials !== null && (! $current || collect($financials)->contains(fn ($value, $key) => (int) $current->$key !== $value));
         if ($type === 'invoice') {
             $mapping = InvoiceStatus::where('tenant_id', $tenant->id)->where('active', true)->where('code', $status)->first();
@@ -167,7 +167,7 @@ class BexioReconciliationService
         if (! $this->enabled($tenant)) {
             throw ValidationException::withMessages(['check' => __('Bexio kein Update - Deaktiviert')]);
         }
-        $saved = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->first();
+        $saved = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->first();
         abort_unless($saved && $saved->actor_id === $actor->id, 404);
         if ($saved->state === 'applied') {
             return;
@@ -190,7 +190,7 @@ class BexioReconciliationService
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $checkId, $financials, $provider) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $check = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->lockForUpdate()->first();
+            $check = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->lockForUpdate()->first();
             abort_unless($check && $check->actor_id === $actor->id, 404);
             if ($check->state === 'applied') {
                 return;
@@ -227,17 +227,17 @@ class BexioReconciliationService
                 }
             }
             $document->save();
-            DB::connection('clubunio')->table('clubora.bexio_balances')->updateOrInsert(['tenant_id' => $tenant->id, 'object_type' => $check->object_type, 'object_id' => $document->id],
+            DB::connection('clubunio')->table('clubunio.bexio_balances')->updateOrInsert(['tenant_id' => $tenant->id, 'object_type' => $check->object_type, 'object_id' => $document->id],
                 $financials + ['remote_id' => $check->remote_id, 'remote_status' => $check->remote_status, 'observed_at' => now()->toIso8601String()]);
             if ($check->object_type === 'expense' && $before['status_id'] != $document->status_id) {
                 app(ExpenseMessageService::class)->record($tenant, $document->fresh(['status', 'member', 'season', 'round', 'teamSeason.team']));
             } elseif ($check->object_type === 'invoice' && $before['status_id'] != $document->status_id && $proposal['position_code'] !== 'P') {
                 $this->invoiceNotification($tenant, $document, $proposal['label'], $proposal['position_code'] === 'O' && in_array($previousPosition, [null, 'P'], true));
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => $check->object_type === 'invoice' ? 'invoices' : 'expenses', 'object_id' => $document->id,
                 'before_value' => json_encode($before), 'after_value' => json_encode($document->only(array_keys($before)) + ['action' => 'bexio_reconcile', 'reference' => $check->reference, 'financials' => $financials])]);
-            DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $checkId)->update(['state' => 'applied', 'applied_at' => now()->toIso8601String()]);
+            DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $checkId)->update(['state' => 'applied', 'applied_at' => now()->toIso8601String()]);
             app(\App\ClubUnio\Mobile\InvoiceNotifications::class)->confirmed($tenant, $checkId);
         });
     }
@@ -257,15 +257,15 @@ class BexioReconciliationService
             'mitglied' => $invoice->member?->display_name ?? '', 'saison' => $invoice->season?->name ?? '',
             'betrag' => 'CHF '.number_format(app(InvoiceTaxService::class)->summary($invoice)['total_cents'] / 100, 2, '.', "'"),
             'status' => new MessageLookupValue('invoice_statuses', ['id' => $invoice->status_id, 'tenant_id' => $tenant->id, 'name' => $status])];
-        $accounts = $db->table('clubora.account_member_links as l')->join('clubora.tenant_accounts as ta', fn ($j) => $j->on('ta.account_id', '=', 'l.account_id')->on('ta.tenant_id', '=', 'l.tenant_id'))
-            ->join('clubora.accounts as a', 'a.id', '=', 'l.account_id')->where('l.tenant_id', $tenant->id)->where('l.member_id', $invoice->member_id)
+        $accounts = $db->table('clubunio.account_member_links as l')->join('clubunio.tenant_accounts as ta', fn ($j) => $j->on('ta.account_id', '=', 'l.account_id')->on('ta.tenant_id', '=', 'l.tenant_id'))
+            ->join('clubunio.accounts as a', 'a.id', '=', 'l.account_id')->where('l.tenant_id', $tenant->id)->where('l.member_id', $invoice->member_id)
             ->where('l.state', 'approved')->where('l.kind', 'self')->where('ta.portal_enabled', true)->where('a.active', true)->distinct()->pluck('l.account_id');
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $new ? 'invoice.open' : 'invoice.status', 'push', $values, $accounts->all());
         foreach ($messages as $account => $push) {
             if (! $push) {
                 continue;
             }
-            $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
+            $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                 'title' => $push['title'], 'body' => $push['body'], 'object_type' => 'invoice', 'object_id' => $invoice->id]);
         }
     }

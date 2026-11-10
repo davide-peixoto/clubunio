@@ -23,7 +23,7 @@ final class MobilePlanningFederationController implements \Illuminate\Routing\Co
         return DB::connection('clubunio')->transaction(function () use ($request) {
             $tenant = $request->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobileAccess::class)->enter($actor, $tenant);
             $p = app(TeamPlanningService::class);

@@ -65,7 +65,7 @@ class BexioOperationalTablesTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function invoice(array $data = []): int
@@ -127,7 +127,7 @@ class BexioOperationalTablesTest extends TestCase
         $status = $this->insert('expense_statuses', ['code' => 'Z', 'name' => 'Freigegeben']);
         $expense = $this->insert('expenses', ['member_id' => $this->member, 'status_id' => $status]);
         $this->insert('expenses', ['member_id' => $otherMember, 'status_id' => $status]);
-        $this->db->table('clubora.bexio_sandbox_fixtures')->insert([
+        $this->db->table('clubunio.bexio_sandbox_fixtures')->insert([
             'tenant_id' => $this->tenant->id,
             'member_id' => $this->member, 'parent_id' => $this->member, 'supplier_id' => $this->member,
             'invoice_id' => $invoice, 'remote_invoice_id' => 1, 'remote_contact_id' => 2,
@@ -193,7 +193,7 @@ class BexioOperationalTablesTest extends TestCase
     {
         $this->dispatch($this->invoice());
         $page = Livewire::test(BexioSandbox::class)->assertSuccessful();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
         $page->searchTable('changed')->assertForbidden();
         Http::assertNothingSent();
     }
@@ -204,7 +204,7 @@ class BexioOperationalTablesTest extends TestCase
         $profile = new AccessProfile;
         $profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic sender', 'active' => true,
             'permissions' => ['bexio.view', 'invoices.view', 'invoices.send'], 'revision' => 1])->save();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)
             ->update(['role' => 'profile', 'access_profile_id' => $profile->id]);
         $this->mock(BexioDispatchTrialService::class, function ($mock) use ($invoice) {
             $mock->shouldReceive('preview')->once()->withArgs(fn ($actor, $tenant, $type, $id) => $actor->id === $this->actor->id

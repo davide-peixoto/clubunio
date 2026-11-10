@@ -22,7 +22,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]]);
         DB::purge('clubunio');
         $this->db = DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id integer primary key, slug text, name text',
             'accounts' => 'id integer primary key, username text, display_name text, password text, active boolean default true, api_only boolean default false',
@@ -40,7 +40,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
             'member_statuses' => 'id integer primary key, tenant_id integer, ends_membership boolean',
             'team_staff' => 'id integer primary key, tenant_id integer, team_season_id integer, member_id integer, active boolean default true',
             'account_member_links' => 'id integer primary key, tenant_id integer, account_id integer, member_id integer, kind text, state text, source text',
-        ] as $table => $columns) $this->db->statement("CREATE TABLE clubora.$table ($columns)");
+        ] as $table => $columns) $this->db->statement("CREATE TABLE clubunio.$table ($columns)");
         $this->db->beginTransaction();
     }
 
@@ -81,7 +81,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
     private function row(string $table, array $data): void
     {
         if (! in_array($table, ['tenants', 'accounts'], true)) $data += ['tenant_id' => 1];
-        $this->db->table('clubora.'.$table)->insert($data);
+        $this->db->table('clubunio.'.$table)->insert($data);
     }
 
     private function competition(array $data = []): void
@@ -123,23 +123,23 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->assertSame([1], $report['entries'][0]['team_season_ids']);
         $this->assertSame(9000, $report['entries'][0]['source_season_id']);
         $this->assertSame($report, $this->preview());
-        $this->assertSame(0, $this->db->table('clubora.pitch_competition_teams')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_competition_teams')->count());
     }
 
     public function test_confirmed_apply_is_additive_audited_and_repeat_preview_is_idempotent(): void
     {
-        $before = $this->db->table('clubora.competitions')->get()->toJson();
-        $source = $this->db->table('clubora.sfv_schedule')->get()->toJson();
+        $before = $this->db->table('clubunio.competitions')->get()->toJson();
+        $source = $this->db->table('clubunio.sfv_schedule')->get()->toJson();
         $report = $this->preview();
         $this->assertSame(1, $this->apply($report)['applied']);
-        $this->assertSame($before, $this->db->table('clubora.competitions')->get()->toJson());
-        $this->assertSame($source, $this->db->table('clubora.sfv_schedule')->get()->toJson());
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->count());
-        $audit = json_decode($this->db->table('clubora.object_changes')->value('after_value'), true);
+        $this->assertSame($before, $this->db->table('clubunio.competitions')->get()->toJson());
+        $this->assertSame($source, $this->db->table('clubunio.sfv_schedule')->get()->toJson());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->count());
+        $audit = json_decode($this->db->table('clubunio.object_changes')->value('after_value'), true);
         $this->assertSame($report['fingerprint'], $audit['fingerprint']);
         $this->assertSame('historical_sfv_mapping', $audit['action']);
         $this->assertSame(0, $this->apply()['applied']);
-        $this->assertSame(1, $this->db->table('clubora.object_changes')->count());
+        $this->assertSame(1, $this->db->table('clubunio.object_changes')->count());
         $this->fails(409, fn () => $this->apply($report));
         Mail::assertNothingSent();
         Http::assertNothingSent();
@@ -152,8 +152,8 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->row('pitch_competition_settings', ['competition_id' => 2, 'duration_minutes' => 95, 'revision' => 7]);
         $this->assertSame(['existing_mapping', 'local_configuration'], array_column($this->preview()['entries'], 'reason'));
         $this->assertSame(0, $this->apply()['applied']);
-        $this->assertSame(95, (int) $this->db->table('clubora.pitch_competition_settings')->value('duration_minutes'));
-        $this->assertSame(7, (int) $this->db->table('clubora.pitch_competition_settings')->value('revision'));
+        $this->assertSame(95, (int) $this->db->table('clubunio.pitch_competition_settings')->value('duration_minutes'));
+        $this->assertSame(7, (int) $this->db->table('clubunio.pitch_competition_settings')->value('revision'));
     }
 
     public function test_ambiguous_assignment_blocks_the_entire_batch_without_partial_writes(): void
@@ -166,8 +166,8 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->assertSame(['ready' => 1, 'skipped' => 0, 'error' => 1], $report['summary']);
         $this->assertSame('ambiguous_team', $report['entries'][1]['reason']);
         $this->fails(422, fn () => $this->apply($report));
-        $this->assertSame(0, $this->db->table('clubora.pitch_competition_teams')->count());
-        $this->assertSame(0, $this->db->table('clubora.object_changes')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_competition_teams')->count());
+        $this->assertSame(0, $this->db->table('clubunio.object_changes')->count());
     }
 
     public function test_overlapping_seasons_and_duplicate_sfv_ids_are_ambiguous(): void
@@ -187,17 +187,17 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->row('team_seasons', ['id' => 2, 'team_id' => 2, 'season_id' => 1, 'label' => 'Opponent assignment']);
         $this->assertSame([1, 2], $this->preview()['entries'][0]['team_season_ids']);
         $this->assertSame(1, $this->apply()['applied']);
-        $this->assertSame(2, $this->db->table('clubora.pitch_competition_teams')->count());
+        $this->assertSame(2, $this->db->table('clubunio.pitch_competition_teams')->count());
     }
 
     public function test_no_names_fallback_no_cross_tenant_matches_and_no_source_fetch(): void
     {
-        $this->db->table('clubora.teams')->update(['sfv_team_id' => null, 'name' => 'Source label']);
+        $this->db->table('clubunio.teams')->update(['sfv_team_id' => null, 'name' => 'Source label']);
         $this->row('teams', ['id' => 2, 'tenant_id' => 2, 'name' => 'Source label', 'sfv_team_id' => 919]);
         $this->row('seasons', ['id' => 2, 'tenant_id' => 2, 'name' => 'Foreign', 'starts_on' => '2025-01-01', 'ends_on' => '2027-01-01']);
         $this->row('team_seasons', ['id' => 2, 'tenant_id' => 2, 'team_id' => 2, 'season_id' => 2, 'label' => 'Foreign']);
         $this->assertSame('no_local_team', $this->preview()['entries'][0]['reason']);
-        $this->db->table('clubora.sfv_schedule')->update(['tenant_id' => 2]);
+        $this->db->table('clubunio.sfv_schedule')->update(['tenant_id' => 2]);
         $this->assertSame('missing_source', $this->preview()['entries'][0]['reason']);
         $this->assertSame(0, $this->apply()['applied']);
     }
@@ -205,12 +205,12 @@ class PitchCompetitionTeamMappingTest extends TestCase
     public function test_invalid_source_date_or_team_ids_never_guess(): void
     {
         foreach ([['starts_at' => null], ['starts_at' => '2026-06-30 22:30:00+00']] as $change) {
-            $this->db->table('clubora.sfv_schedule')->update($change);
+            $this->db->table('clubunio.sfv_schedule')->update($change);
             $this->assertSame('source_date_mismatch', $this->preview()['entries'][0]['reason']);
         }
-        $this->db->table('clubora.sfv_schedule')->update(['starts_at' => '2026-06-30 12:00:00+00']);
+        $this->db->table('clubunio.sfv_schedule')->update(['starts_at' => '2026-06-30 12:00:00+00']);
         foreach ([null, 0, 919] as $id) {
-            $this->db->table('clubora.sfv_schedule')->update(['team_b_id' => $id]);
+            $this->db->table('clubunio.sfv_schedule')->update(['team_b_id' => $id]);
             $this->assertSame('invalid_source_teams', $this->preview()['entries'][0]['reason']);
         }
     }
@@ -218,11 +218,11 @@ class PitchCompetitionTeamMappingTest extends TestCase
     public function test_inactive_or_undated_seasons_and_inactive_teams_are_not_candidates(): void
     {
         foreach (['teams', 'team_seasons', 'seasons'] as $table) {
-            $this->db->table('clubora.'.$table)->update(['active' => false]);
+            $this->db->table('clubunio.'.$table)->update(['active' => false]);
             $this->assertSame('missing_team_season', $this->preview()['entries'][0]['reason']);
-            $this->db->table('clubora.'.$table)->update(['active' => true]);
+            $this->db->table('clubunio.'.$table)->update(['active' => true]);
         }
-        $this->db->table('clubora.seasons')->update(['ends_on' => null]);
+        $this->db->table('clubunio.seasons')->update(['ends_on' => null]);
         $this->assertSame('missing_team_season', $this->preview()['entries'][0]['reason']);
     }
 
@@ -237,31 +237,31 @@ class PitchCompetitionTeamMappingTest extends TestCase
     {
         $report = $this->preview();
         $this->fails(422, fn () => $this->apply($report, false));
-        $this->db->table('clubora.sfv_schedule')->update(['revision' => 2]);
+        $this->db->table('clubunio.sfv_schedule')->update(['revision' => 2]);
         $this->fails(409, fn () => $this->apply($report));
         $report = $this->preview();
-        $this->db->table('clubora.seasons')->update(['ends_on' => '2026-07-01']);
+        $this->db->table('clubunio.seasons')->update(['ends_on' => '2026-07-01']);
         $this->fails(409, fn () => $this->apply($report));
         $report = $this->preview();
         $this->row('pitch_competition_teams', ['competition_id' => 1, 'team_season_id' => 1]);
         $this->fails(409, fn () => $this->apply($report));
-        $this->assertSame(0, $this->db->table('clubora.object_changes')->count());
+        $this->assertSame(0, $this->db->table('clubunio.object_changes')->count());
     }
 
     public function test_authorization_rechecks_admin_active_account_tenant_and_simulation(): void
     {
         $report = $this->preview();
         foreach (['office', 'trainer', 'profile'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->update(['role' => $role, 'access_profile_id' => $role === 'profile' ? 1 : null]);
+            $this->db->table('clubunio.tenant_accounts')->update(['role' => $role, 'access_profile_id' => $role === 'profile' ? 1 : null]);
             $this->fails(403, fn () => $this->apply($report));
             $this->fails(403, fn () => $this->preview());
         }
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'admin', 'access_profile_id' => null]);
-        $this->db->table('clubora.accounts')->update(['active' => false]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'admin', 'access_profile_id' => null]);
+        $this->db->table('clubunio.accounts')->update(['active' => false]);
         $this->fails(403, fn () => $this->apply($report));
-        $this->db->table('clubora.accounts')->update(['active' => true, 'api_only' => true]);
+        $this->db->table('clubunio.accounts')->update(['active' => true, 'api_only' => true]);
         $this->fails(403, fn () => $this->apply($report));
-        $this->db->table('clubora.accounts')->update(['api_only' => false]);
+        $this->db->table('clubunio.accounts')->update(['api_only' => false]);
         $this->fails(403, fn () => $this->mapping->preview($this->actor, Tenant::findOrFail(2), $report['from'], $report['to']));
         request()->attributes->set('clubunio_impersonation', (object) ['tenant_id' => 1, 'target_id' => 1]);
         $this->fails(403, fn () => $this->apply($report));
@@ -271,10 +271,10 @@ class PitchCompetitionTeamMappingTest extends TestCase
     {
         $this->db->beginTransaction();
         $this->apply();
-        $this->assertSame(1, $this->db->table('clubora.pitch_competition_teams')->count());
+        $this->assertSame(1, $this->db->table('clubunio.pitch_competition_teams')->count());
         $this->db->rollBack();
         foreach (['pitch_competition_teams', 'pitch_competition_settings', 'object_changes'] as $table) {
-            $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+            $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
         }
         $this->db->beforeExecuting(function ($query) {
             if (str_starts_with($query, 'insert into') && str_contains($query, 'object_changes')) throw new \RuntimeException('Synthetic audit failure');
@@ -282,7 +282,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
         try { $this->apply(); $this->fail('Expected audit failure'); }
         catch (\RuntimeException $error) { $this->assertSame('Synthetic audit failure', $error->getMessage()); }
         foreach (['pitch_competition_teams', 'pitch_competition_settings', 'object_changes'] as $table) {
-            $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+            $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
         }
     }
 
@@ -296,13 +296,13 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->assertSame(0, $recipients->invoke($notification, $this->tenant, ['action' => 'moved', 'team_season_ids' => []])->count());
         $this->apply();
         $entry = app(PitchPlanningProjection::class)->competition(Competition::findOrFail(1),
-            $this->db->table('clubora.pitch_competition_settings')->first(),
-            $this->db->table('clubora.pitch_competition_teams')->pluck('team_season_id')->all());
+            $this->db->table('clubunio.pitch_competition_settings')->first(),
+            $this->db->table('clubunio.pitch_competition_teams')->pluck('team_season_id')->all());
         $this->assertSame([1], $entry['team_season_ids']);
         $this->assertSame('1:1', $entry['revision']);
         $this->assertSame([1], $recipients->invoke($notification, $this->tenant, ['action' => 'moved', 'team_season_ids' => $entry['team_season_ids']])
             ->pluck('a.id')->map(fn ($id) => (int) $id)->all());
-        $this->db->table('clubora.team_staff')->update(['active' => false]);
+        $this->db->table('clubunio.team_staff')->update(['active' => false]);
         $this->assertSame(0, $recipients->invoke($notification, $this->tenant, ['action' => 'moved', 'team_season_ids' => $entry['team_season_ids']])->count());
     }
 
@@ -311,7 +311,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $options = ['--tenant' => '1', '--actor' => '1', '--from' => '2026-06-01', '--to' => '2026-06-30', '--locale' => 'en'];
         $this->artisan('clubunio:pitch-team-mapping', $options + ['--json' => true])
             ->expectsOutputToContain('"ready": 1')->assertSuccessful();
-        $this->assertSame(0, $this->db->table('clubora.pitch_competition_teams')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_competition_teams')->count());
         $this->artisan('clubunio:pitch-team-mapping', $options + ['--apply' => true])->assertExitCode(2);
         $this->artisan('clubunio:pitch-team-mapping', $options + ['--confirm' => $this->preview()['fingerprint']])->assertExitCode(2);
         $this->artisan('clubunio:pitch-team-mapping', $options + ['--apply' => true, '--confirm' => str_repeat('0', 64)])->assertFailed();
@@ -321,7 +321,7 @@ class PitchCompetitionTeamMappingTest extends TestCase
 
     public function test_console_error_report_is_nonzero_and_catalogues_cover_all_enabled_languages(): void
     {
-        $this->db->table('clubora.sfv_schedule')->update(['team_b_id' => null]);
+        $this->db->table('clubunio.sfv_schedule')->update(['team_b_id' => null]);
         foreach (array_keys(config('clubunio-languages.enabled')) as $locale) {
             $this->artisan('clubunio:pitch-team-mapping', ['--tenant' => '1', '--actor' => '1', '--from' => '2026-06-01', '--to' => '2026-06-30', '--json' => true, '--locale' => $locale])
                 ->expectsOutputToContain('invalid_source_teams')->assertFailed();
@@ -333,11 +333,11 @@ class PitchCompetitionTeamMappingTest extends TestCase
 
     public function test_unlinked_and_inactive_competitions_are_skipped_without_creating_sources(): void
     {
-        $this->db->table('clubora.competitions')->update(['association_match_id' => null]);
+        $this->db->table('clubunio.competitions')->update(['association_match_id' => null]);
         $this->competition(['id' => 2, 'association_match_id' => 456, 'active' => false]);
         $this->assertSame(['no_match_id', 'inactive_competition'], array_column($this->preview()['entries'], 'reason'));
         $this->assertSame(0, $this->apply()['applied']);
-        $this->assertSame(1, $this->db->table('clubora.sfv_schedule')->count());
+        $this->assertSame(1, $this->db->table('clubunio.sfv_schedule')->count());
     }
 
     public function test_next_season_does_not_replace_the_historical_season_and_scope_is_fingerprinted(): void
@@ -356,6 +356,6 @@ class PitchCompetitionTeamMappingTest extends TestCase
         $this->fails(503, fn () => $mapping->preview($this->actor, $this->tenant, '2026-06-01', '2026-06-30'));
         $this->artisan('clubunio:pitch-team-mapping', ['--tenant' => '1', '--actor' => '1', '--from' => '2026-06-30', '--to' => '2026-06-01'])
             ->assertExitCode(2);
-        $this->assertSame(0, $this->db->table('clubora.pitch_competition_teams')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_competition_teams')->count());
     }
 }

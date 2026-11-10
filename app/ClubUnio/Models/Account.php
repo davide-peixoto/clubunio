@@ -32,7 +32,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
 
     public function tenants()
     {
-        return $this->belongsToMany(Tenant::class, 'clubora.tenant_accounts')->withPivot('role');
+        return $this->belongsToMany(Tenant::class, 'clubunio.tenant_accounts')->withPivot('role');
     }
 
     public function getFilamentName(): string

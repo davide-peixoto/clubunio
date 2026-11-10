@@ -20,7 +20,7 @@ class DocumentUploadService
 {
     public function table()
     {
-        return DB::connection('clubunio')->table('clubora.document_uploads');
+        return DB::connection('clubunio')->table('clubunio.document_uploads');
     }
 
     public function stage(?Account $actor, Tenant $tenant, string $kind, int $id, array $metadata, UploadedFile $file, ?string $publicRequest = null): int
@@ -89,13 +89,13 @@ class DocumentUploadService
             if ($actor) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
             } else {
-                abort_unless($publicRequest && DB::connection('clubunio')->table('clubora.public_registration_submissions')
+                abort_unless($publicRequest && DB::connection('clubunio')->table('clubunio.public_registration_submissions')
                     ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('request_id', $publicRequest)->exists(), 403);
             }
             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($id);
             abort_if($r->status?->workflow_key === 'accepted', 409, __('Anmeldung ist bereits abgeschlossen.'));
             abort_unless(in_array($metadata['kind'] ?? '', ['portrait', 'identity'], true), 422);
-            if ($metadata['kind'] === 'portrait' && DB::connection('clubunio')->table('clubora.registration_documents')
+            if ($metadata['kind'] === 'portrait' && DB::connection('clubunio')->table('clubunio.registration_documents')
                 ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true)->where('kind', 'portrait')->exists()) {
                 throw ValidationException::withMessages(['file' => __('Vor dem Ersetzen das bestehende Passfoto entfernen.')]);
             }
