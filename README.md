@@ -1,5 +1,7 @@
 # ClubUnio
 
+Installation und Releases: [Statische Livewire-Dateien veroeffentlichen und pruefen](deploy/CLUBUNIO-INSTALL-ASSETS.md).
+
 Kommunikationsmodul fuer die Flutter-App: [API und Entwicklungsstand](deploy/CLUBUNIO-COMMUNICATION-API.md),
 [KI-/Azure-Betrieb](deploy/CLUBUNIO-COMMUNICATION-AI.md). Noch deaktiviert; kein Serverrelease.
 

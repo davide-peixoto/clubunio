@@ -13,6 +13,7 @@ tar -xzf "$base/shared/clubunio-api-v1.tar.gz" -C "$release"
 cd "$release"
 composer install --no-dev --no-interaction --prefer-dist --no-scripts --optimize-autoloader
 php artisan package:discover --no-interaction
+php tools/publish-livewire-assets.php
 php artisan migrate --database=clubunio --path=database/clubunio/2026_10_25_000076_api_platform.php --force
 php artisan migrate --database=clubunio --path=database/clubunio/2026_10_26_000078_api_tenant_boundary.php --force
 php artisan config:cache

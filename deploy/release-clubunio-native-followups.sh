@@ -19,6 +19,7 @@ test ! -L .env
 cmp --silent .env "$previous/.env"
 /usr/bin/composer install --no-dev --prefer-dist --no-interaction --no-scripts --optimize-autoloader
 php artisan package:discover --ansi
+php tools/publish-livewire-assets.php
 test "$(readlink -f storage)" = "$(readlink -f "$previous/storage")"
 chmod 0640 .env
 php artisan config:clear

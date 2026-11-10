@@ -21,6 +21,7 @@ test "$(readlink -f storage)" = "$(readlink -f "$previous/storage")"
 # Exactly the committed lock; no update, plugins, scripts or dependency discovery.
 /usr/bin/composer install --no-dev --prefer-dist --no-interaction --no-plugins --no-scripts --optimize-autoloader
 php artisan package:discover --ansi
+php tools/publish-livewire-assets.php
 chmod 0640 .env
 php artisan config:clear
 php artisan route:clear

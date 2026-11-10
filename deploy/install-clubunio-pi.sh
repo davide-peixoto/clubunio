@@ -20,6 +20,7 @@ chmod -R g+rX "$release"
 chmod 770 bootstrap/cache
 php artisan package:discover
 php artisan filament:assets
+php tools/publish-livewire-assets.php
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

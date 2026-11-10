@@ -57,6 +57,7 @@ PY
     composer check-platform-reqs --no-dev
     php artisan config:clear >/dev/null
     php artisan route:clear >/dev/null
+    php tools/publish-livewire-assets.php
     sudo chgrp -R www-data bootstrap/cache
     sudo chmod -R g+rwX bootstrap/cache
     mkdir -p bootstrap/cache/training-half-views

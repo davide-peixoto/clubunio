@@ -6,6 +6,7 @@
 /public/hot
 /public/js/filament
 /public/storage
+/public/vendor/livewire/
 /storage/*.key
 /storage/pail
 /storage/framework/*.lock
