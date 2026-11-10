@@ -9,7 +9,7 @@ $t = fn ($key, $replace = []) => trans('marketing.'.$key, $replace);
 <meta name="theme-color" content="#164b8a"><meta property="og:title" content="{{ $t('page_title') }}"><meta property="og:description" content="{{ $t('description') }}"><meta property="og:type" content="website">
 <link rel="canonical" href="{{ route('clubunio.marketing', ['locale' => $locale]) }}">
 @foreach($languages as $code => $name)<link rel="alternate" hreflang="{{ $code }}" href="{{ route('clubunio.marketing', ['locale' => $code]) }}">@endforeach
-<link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-app-icon.svg?v=2"><link rel="stylesheet" href="/css/clubunio-marketing.css">
+<link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-symbol.svg?v=3"><link rel="stylesheet" href="/css/clubunio-marketing.css">
 <script src="/js/clubunio-marketing.js" defer></script>
 </head>
 <body>
