@@ -53,19 +53,27 @@ Quellschema und Snapshot-Schemas werden nicht umbenannt.
 
 ## Privater Zugang: aktueller Stand
 
-Der direkte Windows-Zugriff bestaetigte erneut PostgreSQL 16.15. Der Pi
-erreichte den VPS an Port 22. Der dedizierte Pi-Schluessel wurde erzeugt;
-die SSH-Verbindung brach beim Einrichten des VPS-Kontos jedoch ab. Vor
-dem Wiederanlauf den Zustand von `clubunio-dev-tunnel` und dessen
-`authorized_keys` auf dem VPS pruefen. Nur Forwarding zu
-`127.0.0.1:5432` erlauben, ohne Shell oder sonstige Ziele.
+Der direkte Windows-Zugriff bestaetigte PostgreSQL 16.15. Das dedizierte
+VPS-Konto `clubunio-dev-tunnel` akzeptiert den Pi-Schluessel nur zum
+Forwarding auf `127.0.0.1:5432`, ohne Shell.
 
-Die vorbereitete Unit `clubunio-dev-db-tunnel.service` bindet nur lokal
+Die installierte, aktive Unit `clubunio-dev-db-tunnel.service` bindet nur lokal
 am Pi auf `127.0.0.1:15432` und verlangt einen ueber den bestehenden
-VPS-Adminzugang verifizierten SSH-Hostschluessel. Sie ist noch nicht
-installiert. Erst nach verifiziertem Tunnel und erfolgreichem Login mit
-der separaten DEV-Datenbankrolle den finalen Restore beginnen.
+VPS-Adminzugang verifizierten SSH-Hostschluessel. Der separate, nicht
+privilegierte Login `clubunio_dev_app` wurde ueber den Tunnel gegen
+`clubunio_dev` mit TLS `verify-full` bestaetigt. Dazu verwendet libpq
+`clubunio.com` als Zertifikatsnamen und `127.0.0.1` als Zieladresse. Die
+private Kandidatenkonfiguration auf dem Pi ist nicht produktiv verlinkt.
 
-Status: Kompatibilitaetsprobe abgeschlossen. Kein finaler Restore, keine
-Schema-Umbenennung oder Umschaltung des Pi. Der erneute Windows-SSH-Zugriff
-endete nach dem Abbruch wieder mit einem Timeout an Port 22.
+Ein weiterer transaktionaler Test stellte den Dump wieder her, benannte
+`clubora` in `clubunio` um und las fuenf Mandanten. Keine Routinen im
+umbenannten Schema verwiesen als Text auf `clubora`. Der Test wurde
+vollstaendig zurueckgerollt.
+
+Der Stage-Patch passt auf die Git-Basis, aber nicht auf den aktiven
+Pi-Release `20261109-clubunio-sport-neutral-facilities`: `git apply --check`
+meldete Abweichungen unter anderem im Login-/Push-Code, in Migrationen
+und in Konsolenrouten. Den DEV-Kandidaten auf Basis des tatsaechlichen
+Pi-Releases vorbereiten und mit der neuen Verbindung pruefen. Die App und
+der aktive Push-Worker verwenden bis dahin die bisherige Datenbank.
+Kein finaler Restore und keine Umschaltung. Stage und PROD unveraendert.
