@@ -27,6 +27,7 @@ chmod -R g+rX "$release"
 chmod 2770 bootstrap/cache
 php artisan package:discover
 php artisan filament:assets
+php tools/publish-livewire-assets.php
 php artisan config:cache
 php artisan route:cache
 sudo -u www-data php artisan view:cache
