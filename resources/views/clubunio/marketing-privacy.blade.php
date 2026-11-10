@@ -8,7 +8,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $t('privacy_title') }} · ClubUnio</title>
-    <link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-app-icon.svg?v=2">
+    <link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-symbol.svg?v=3">
     <link rel="stylesheet" href="/css/clubunio-marketing.css">
     @foreach($languages as $code => $name)
         <link rel="alternate" hreflang="{{ $code }}" href="{{ route('clubunio.marketing.privacy', ['locale' => $code]) }}">
