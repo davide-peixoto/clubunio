@@ -112,8 +112,10 @@ Stage-Caches neu gebaut. Keine Datenbank- oder Kontenaenderung. Lesender
 Kontozugriff mit dem Anwendungsmodell erfolgreich; Livewire-JavaScript 200
 und synthetischer Login liefert regulaere Validierung statt 500.
 
-In RunCloud muss `ClubUnioStage` ausschliesslich vom Branch
-`codex/stage-clubunio-schema` deployen. Automatische Deployments von `main`
+In RunCloud muss `ClubUnioStage` ausschliesslich vom neuen Branch
+`stage` deployen (Nachfolger von `codex/stage-clubunio-schema`).
+Siehe [Branch-Zuordnung](CLUBUNIO-ENVIRONMENT-BRANCHES.md).
+Automatische Deployments von `main`
 fuer diese App deaktivieren oder auf diesen Branch umstellen. Die Einstellung
 in RunCloud wurde in diesem Lauf nicht geaendert. Vor Aktivierung mit der
 tatsaechlichen Stage-Verbindung einen lesenden Zugriff auf
