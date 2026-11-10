@@ -17,6 +17,7 @@ final class MobileSessions
         app(MobileBootstrapState::class)->authorizeLogin($request);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096', 'device_name' => 'required|string|max:100']);
         $username = mb_strtolower(trim($data['username']));
+        abort_unless(StageMobilePilot::allowsAccount($username), 401);
         $keys = ['mobile-login:'.hash('sha256', $request->ip().'|'.$username) => 5,
             'mobile-login-ip:'.hash('sha256', $request->ip()) => 30];
         foreach ($keys as $key => $limit) {
@@ -29,7 +30,7 @@ final class MobileSessions
         // Existing hashes/provider; no password copying, rehash or second account store.
         abort_unless($actor instanceof Account && $provider->validateCredentials($actor, $credentials), 401);
         $bound = app(TenantDomainService::class)->resolve($request);
-        $tenants = $actor->tenants()->get()->filter(fn ($tenant) => (! $bound || $bound->is($tenant))
+        $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $tenant->slug === StageMobilePilot::TENANT && (! $bound || $bound->is($tenant))
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant));
         if ($tenants->isEmpty() && config('clubunio-mobile.public_identity.enabled', false)
             && app(MobileIdentityChallenges::class)->accessPending($actor, $bound)) {
@@ -60,7 +61,7 @@ final class MobileSessions
             ->where('expires_at', '>', now()->toIso8601String())->first();
         abort_unless($session && hash_equals($session->token_hash, hash('sha256', $parts[2])), 401);
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();
-        abort_unless($actor, 401);
+        abort_unless($actor && StageMobilePilot::allowsAccount($actor->username), 401);
         $request->attributes->set('mobile.session', $session);
 
         return $actor;

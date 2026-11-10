@@ -32,6 +32,7 @@ final class MobileMiddleware
                 RateLimiter::hit($key, 60);
                 if ($request->route('tenant')) {
                     $tenant = Tenant::whereKey($request->route('tenant'))->firstOrFail();
+                    abort_unless($tenant->slug === StageMobilePilot::TENANT, 404);
                     abort_if($bound && ! $bound->is($tenant), 404);
                     app(MobileAccess::class)->enter($actor, $tenant);
                     app(MobileBootstrapState::class)->authorizeTenant($request, $tenant);
