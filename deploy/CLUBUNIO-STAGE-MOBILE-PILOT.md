@@ -35,17 +35,21 @@ Das gemeinsame Projekt ist keine technische Trennung der Empfaenger:
 Nur explizit verifizierte iOS-/Android-Stage-Testgeraete verwenden. Fuer iOS
 auch die APNs-Konfiguration des Testbuilds pruefen.
 
-Die Stage-JSON wurde am vereinbarten Windows-Pfad gefunden, hat aber
-dieselbe Dienstidentitaet und Schluessel-ID wie die DEV-Datei. Sie wurde
-nicht uebertragen. Im gemeinsamen Testprojekt einen neuen Serviceaccount
-anlegen und dessen JSON verwenden; ein neuer Schluessel fuer den bisherigen
-DEV-Serviceaccount reicht nicht. Keine Credentialwerte protokollieren.
-Auf Stage wurden null Push-Geraete und null Versandauftraege festgestellt.
-Nach gemeldetem Dateiaustausch erneut geprueft: Am vereinbarten Pfad
-weiterhin identische Dienstidentitaet und Schluessel-ID zu DEV; Stage
-weiterhin ohne Push-Geraete und Versandauftraege. Kein Transfer.
-Stage-App-Registry, Push-Versand und Worker bleiben bis zur isolierten
-Abnahme deaktiviert. Es wurde kein Push versendet.
+Die neue Stage-JSON hat eine von DEV getrennte Dienstidentitaet und
+Schluessel-ID im gemeinsamen Firebase-Testprojekt. Sie wurde mit Modus
+0600 auf den VPS uebertragen; der RunCloud-Benutzer erhielt erfolgreich
+ein OAuth-Token mit FCM-Scope. Das bestaetigt noch keine Zustellung.
+Bei der letzten DB-Pruefung gab es keine Geraete und keine Versandauftraege.
+
+Der Stage-Branch trennt die Registry-Eintraege nach Plattform, auch wenn
+beide Testbuilds dieselbe App-ID verwenden (`ios:com.my.clubunio.core`
+und `android:com.my.clubunio.core`). Registrierung und Status sind je
+Testkonto auf genau die zugeordnete Plattform begrenzt. Die Client-
+Capability fuer Registrierung ist separat von der Versandfreigabe.
+Deployment und Aktivierung der Registry konnten wegen SSH-Timeout nicht
+bestaetigt werden. Nach erfolgreicher Aktivierung mit Versandflag false
+`deploy/check-stage-mobile-pilot.php --push-registration` ausfuehren.
+Kein Worker gestartet und kein Push versendet.
 
 Private Uebergabe auf Windows:
 `C:\ClubUnio-Secrets\firebase\clubunio-stage-service-account.json`.
