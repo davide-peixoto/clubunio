@@ -31,11 +31,12 @@ final class MobileSessions
         $bound = app(TenantDomainService::class)->resolve($request);
         $tenants = $actor->tenants()->get()->filter(fn ($tenant) => (! $bound || $bound->is($tenant))
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant));
-        if ($tenants->isEmpty() && config('clubunio-mobile.public_identity.enabled', false)
+        $canTrack = $tenants->isEmpty() && app(MobileIdentityChallenges::class)->applications($actor, $bound) !== [];
+        if ($tenants->isEmpty() && !$canTrack && config('clubunio-mobile.public_identity.enabled', false)
             && app(MobileIdentityChallenges::class)->accessPending($actor, $bound)) {
             throw new MobileAccessPending;
         }
-        abort_if($tenants->isEmpty(), 401);
+        abort_if($tenants->isEmpty() && !$canTrack, 401);
         $id = (string) Str::uuid();
         $secret = bin2hex(random_bytes(32));
         $expiry = now()->addDays((int) config('clubunio-mobile.session_days', 30));

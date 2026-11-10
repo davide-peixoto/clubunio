@@ -1949,3 +1949,13 @@ Liste und Detail verfügbar. Die Mannschaftsliste zeigt übernommene Mitglieder.
 DEV-Release `20261109-clubunio-my-teams-trial`, Basis `20261107-clubunio-tenant-storage`.
 Zwei PostgreSQL-Tests mit 57 Assertions bestanden. DE/EN-Sprachprüfung grün.
 Health200/context401 und FPM/Pushdienst aktiv. Keine Migration und kein App-Build erforderlich.
+
+
+## 10.11.2026 – Mobile-Umgebungen und Status der Mitgliedsanmeldung
+
+Die App bietet Dev und Stage im Startscreen an. Prod wird per bestätigter
+Build-Origin ergänzt. Sitzung und lokaler Speicher sind je Origin getrennt.
+Mitgliedsanträge können über die bestehende E-Mail-Bestätigung ein neues
+Konto erhalten. Der eigene Status ist bereits vor der Vereinsfreigabe sichtbar.
+Die additive Migration ergänzt die Nachweisverknüpfung. Stage-Betrieb getrennt
+im Branch `stage`. Siehe [Umgebungswahl und Mitgliedsanmeldung](CLUBUNIO-MOBILE-MEMBERSHIP-TRACKING.md).

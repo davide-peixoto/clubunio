@@ -50,4 +50,10 @@ final class MobilePublicIdentityPolicy
             && app(MobileIdentityMailGuard::class)->configured();
     }
     public function authorize(Tenant $tenant, string $surface): void { abort_unless($this->enabled($tenant, $surface), 503, 'Dieser öffentliche Ablauf ist noch nicht freigeschaltet.'); }
+
+    public function membershipAccount(Tenant $tenant): bool
+    {
+        return config('clubunio-mobile.public_identity.membership_account_enabled', false)
+            && $this->enabled($tenant, 'membership') && $this->enabled($tenant, 'registration');
+    }
 }

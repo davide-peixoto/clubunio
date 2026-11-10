@@ -68,7 +68,11 @@ class MobilePublicIdentityTest extends TestCase
         }
         $sql=preg_replace('/\n\);/',"\n) ON COMMIT DROP;",$sql);
         $this->assertStringNotContainsString('REFERENCES clubora.',$sql); $this->assertStringNotContainsString('ON clubora.',$sql);
-        $this->db->unprepared($sql); $this->grammar=$this->db->getQueryGrammar();
+        $this->db->unprepared($sql);
+        $tracking=$this->db->pretend(fn ()=>(require database_path('clubunio/2026_11_10_000100_mobile_membership_tracking.php'))->up());
+        $this->db->unprepared(str_replace(['clubora.mobile_identity_challenges','clubora.registrations'],
+            ['pg_temp.mobile_identity_challenges','pg_temp.identity_fixture_registrations'],$tracking[0]['query']));
+        $this->grammar=$this->db->getQueryGrammar();
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table,$prefix=null) {
                 if (is_string($table)) { foreach (['mobile_identity_challenges','mobile_account_emails','mobile_public_intake_commands'] as $own) { $table=str_replace('clubora.'.$own,'pg_temp.'.$own,$table); } }
@@ -187,6 +191,43 @@ class MobilePublicIdentityTest extends TestCase
         $this->assertFalse($guard->handle($event(clone $message)));
         Mail::assertNothingSent(); Http::assertNothingSent();
     }
+    public function test_membership_submission_creates_verified_status_only_access(): void
+    {
+        config(['clubunio-mobile.public_identity.membership_enabled'=>true,
+            'clubunio-mobile.public_identity.membership_account_enabled'=>true]);
+        $this->insert('tenant_settings',['area'=>'public','key'=>'REGISTRATION_PUBLIC_ENABLED','label'=>'Synthetic intake','value_type'=>'boolean',
+            'encrypted_value'=>Crypt::encryptString('1'),'enabled'=>true,'is_secret'=>false]);
+        $this->insert('countries',['code'=>'CH','iso3'=>'CHE','name'=>'Synthetic country']);
+        $gender=$this->insert('genders',['code'=>'X','name'=>'Synthetic gender']);
+        $billing=$this->insert('billing_recipients',['code'=>'SELF','name'=>'Synthetic self','email_field'=>'email']);
+        $this->insert('registration_statuses',['name'=>'Submitted','code'=>'submitted','workflow_key'=>'submitted']);
+        $options=$this->getJson($this->base().'/options')->assertOk()->assertJsonPath('data.intake.CreateAccount',true)->json('data.intake');
+        $claim=json_decode(Crypt::decryptString($options['claim']),true); $claim['at']=time()-4;
+        $email='qa-new-'.bin2hex(random_bytes(6)).'@example.test';
+        $input=['claim'=>Crypt::encryptString(json_encode($claim)),'consent'=>true,'account_password'=>'synthetic-password','values'=>[
+            'Vorname'=>'Synthetic','Nachname'=>'Applicant','Email'=>$email,'Ort'=>'Teststadt','Geburtsdatum'=>'2010-01-02',
+            'Strasse'=>'Teststrasse','PLZ'=>'4450','Land'=>'CH','Nationalitaet'=>'CHE','Geschlecht'=>(string)$gender,'RechnungAn'=>(string)$billing]];
+        $this->post($this->base().'/membership',array_replace($input,['values'=>json_encode($input['values'],JSON_THROW_ON_ERROR)]),
+            ['Accept'=>'application/json'])->assertOk();
+        $this->postJson($this->base().'/membership',$input)->assertOk();
+        $this->assertFalse(Account::where('username',$email)->exists());
+        $challenge=$this->challenges()->sole();
+        $this->assertSame(1,$this->db->table('clubora.registrations')->where('id',$challenge->registration_id)->count());
+        $delivery=$this->delivered($challenge);
+        $this->postJson($this->base().'/activate',['token'=>$delivery['token']])->assertOk();
+        $account=Account::where('username',$email)->firstOrFail();
+        $token=$this->login($account);
+        $this->withToken($token)->getJson($this->origin.'/api/mobile/v1/context')->assertOk()->assertJsonCount(0,'data.tenants')
+            ->assertJsonPath('data.membership_applications.0.status','Submitted');
+        $review=$this->insert('registration_statuses',['name'=>'In review','code'=>'review','workflow_key'=>'review']);
+        $this->db->table('clubora.registrations')->where('id',$challenge->registration_id)->update(['status_id'=>$review]);
+        $this->getJson($this->origin.'/api/mobile/v1/context')->assertOk()->assertJsonPath('data.membership_applications.0.status','In review');
+        $this->getJson($this->origin.'/api/mobile/v1/clubs/'.$this->tenant->id.'/registrations')->assertForbidden();
+        $this->withToken($this->login($this->owner))->getJson($this->origin.'/api/mobile/v1/context')->assertOk()
+            ->assertJsonCount(0,'data.membership_applications');
+        Mail::assertNothingSent();
+    }
+
     public function test_public_membership_uses_real_intake_with_bounded_snapshot_and_replay_without_private_access(): void
     {
         config(['clubunio-mobile.public_identity.membership_enabled'=>true]);
