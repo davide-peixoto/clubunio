@@ -35,7 +35,12 @@ Das gemeinsame Projekt ist keine technische Trennung der Empfaenger:
 Nur explizit verifizierte iOS-/Android-Stage-Testgeraete verwenden. Fuer iOS
 auch die APNs-Konfiguration des Testbuilds pruefen.
 
-Die Stage-JSON war am vereinbarten Windows-Pfad noch nicht vorhanden.
+Die Stage-JSON wurde am vereinbarten Windows-Pfad gefunden, hat aber
+dieselbe Dienstidentitaet und Schluessel-ID wie die DEV-Datei. Sie wurde
+nicht uebertragen. Im gemeinsamen Testprojekt einen neuen Serviceaccount
+anlegen und dessen JSON verwenden; ein neuer Schluessel fuer den bisherigen
+DEV-Serviceaccount reicht nicht. Keine Credentialwerte protokollieren.
+Auf Stage wurden null Push-Geraete und null Versandauftraege festgestellt.
 Stage-App-Registry, Push-Versand und Worker bleiben bis zur isolierten
 Abnahme deaktiviert. Es wurde kein Push versendet.
 
