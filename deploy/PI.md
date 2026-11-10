@@ -1,5 +1,12 @@
 # Pi staging: dev.clubunio.ch
 
+## DEV-Datenbank auf dem VPS (10.11.2026)
+
+Die Anwendung bleibt auf dem Pi. Aktiver Release `20261110-clubunio-vps-db`,
+PostgreSQL 16 auf dem VPS ueber privaten Pi-Tunnel, Schema `clubunio`.
+Vor dem naechsten Pi-Release den [Migrations- und Abnahmeplan](CLUBUNIO-DEV-DB-MOVE.md)
+beachten, insbesondere Schema-Mapping und releasebezogene Verbindung.
+
 ## Sportneutrale Anlagen (09.11.2026)
 
 Aktiv `20261109-clubunio-sport-neutral-facilities` mit Fachcode `79293a0`;

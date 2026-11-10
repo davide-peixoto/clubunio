@@ -76,4 +76,33 @@ meldete Abweichungen unter anderem im Login-/Push-Code, in Migrationen
 und in Konsolenrouten. Den DEV-Kandidaten auf Basis des tatsaechlichen
 Pi-Releases vorbereiten und mit der neuen Verbindung pruefen. Die App und
 der aktive Push-Worker verwenden bis dahin die bisherige Datenbank.
-Kein finaler Restore und keine Umschaltung. Stage und PROD unveraendert.
+Dieser Absatz beschreibt den Stand vor der unten protokollierten Umschaltung.
+
+## Umschaltung und Abnahme
+
+- Aktiv: Pi-Release `20261110-clubunio-vps-db`, Kopie von
+  `20261109-clubunio-sport-neutral-facilities`. Die Code-Anpassung wurde
+  auf dieser Kopie mit `prepare-pi-dev-vps-schema.php` erzeugt und alle
+  358 geaenderten PHP-Dateien wurden lint-geprueft. Bestehende URL-Aliase,
+  Integrationsdateien, APP_KEY, Composer und Uploadspeicher blieben erhalten.
+- Web in Wartung versetzt, DEV-Push-Worker gestoppt, dann finaler DEV-Dump.
+  Verschluesseltes, vollstaendig gelesenes Backup:
+  `shared/backups/dev-vps-final-20261110`. Restore, Schemawechsel und Rechte
+  in einer Transaktion. Ziel: 205 Anwendungstabellen, 84 Snapshot-Tabellen
+  und drei Audit-Tabellen; App-Rolle ohne Zugriff auf die beiden Snapshots.
+- Laravel/PDO und der Worker verwenden den privaten Tunnel mit TLS-Pruefung.
+  `/login`, `/platform/login` und `/up` antworteten mit HTTP 200. Die
+  Laravel-Authentifizierung akzeptierte einen isolierten Testaccount; die
+  Transaktion wurde zurueckgerollt. Kein echter Benutzerlogin und kein
+  erzwungener Push-Versand. Worker aktiv und Polling im Journal bestaetigt.
+- Die private Verbindungsdatei ist nur im neuen Release verlinkt. Die alte
+  Verbindung am vorherigen Release bleibt als Rueckweg erhalten. Vor einem
+  Rueckwechsel nach neuen Schreibvorgaengen Daten sichern und abgleichen.
+- Naechste Pi-Releases muessen das Schema-Mapping auf der inaktiven Kopie
+  erhalten bzw. erneut anwenden und vor Aktivierung mit
+  `verify-pi-dev-vps-database.php` pruefen. Ein unveraendertes `main`-Archiv
+  enthaelt weiterhin alte SQL-Schemaqualifizierungen und ist kein direkt
+  lauffaehiger Pi-Release. Alte Import- und Migrationswerkzeuge mit
+  fest verdrahtetem Quellnamen nicht ungeprueft gegen das VPS-Ziel starten.
+
+Stage und PROD wurden nicht geaendert. Es wurde kein PROD-Abzug erstellt.
