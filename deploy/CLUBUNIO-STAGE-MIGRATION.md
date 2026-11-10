@@ -107,6 +107,22 @@ ohne neuen Zugriff, Browserpruefung der Antraege und Sportplatzbelegung
 mit explizit berechtigtem Stage-Konto. Noch keine Uebernahme oder
 Browserabnahme erfolgt.
 
+Freigabe vom 10.11.2026: Im neuen Mandanten ausschliesslich das explizit
+benannte bestehende Stage-Konto fuer die Browserabnahme berechtigen.
+Die 75 Quellkonten dienen nur der historischen Zuordnung; keine
+Anmeldedaten oder Berechtigungen aus dem Abzug aktivieren. Insbesondere
+kein aktives Bestandskonto mit einer kopierten Mitgliedschaft versehen,
+nur um eine Antragsteller- oder Entscheider-FK zu erfuellen. Ist eine
+Mandantenmitgliedschaft technisch erforderlich, eine nicht anmeldbare
+historische Identitaet verwenden. Bestehende Mandanten, Rollen und
+Sitzungen unveraendert lassen.
+
+Vor Commit der Datenbanktransaktion genau eine neue aktive Berechtigung
+pruefen und die bisherigen Berechtigungen vergleichen. Danach Antraege
+und Winterbelegung angemeldet pruefen, ohne einen Antrag zu entscheiden
+oder Benachrichtigungen auszuloesen. Der Integrationsversuch konnte
+wegen direktem Windows-SSH-Timeout nicht begonnen werden.
+
 ### Pflichtpunkte und bisherige Importversuche
 
 **Versuch 10.11.2026:** Der isolierte Aufbau in
