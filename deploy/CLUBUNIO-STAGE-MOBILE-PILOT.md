@@ -46,10 +46,17 @@ beide Testbuilds dieselbe App-ID verwenden (`ios:com.my.clubunio.core`
 und `android:com.my.clubunio.core`). Registrierung und Status sind je
 Testkonto auf genau die zugeordnete Plattform begrenzt. Die Client-
 Capability fuer Registrierung ist separat von der Versandfreigabe.
-Deployment und Aktivierung der Registry konnten wegen SSH-Timeout nicht
-bestaetigt werden. Nach erfolgreicher Aktivierung mit Versandflag false
-`deploy/check-stage-mobile-pilot.php --push-registration` ausfuehren.
-Kein Worker gestartet und kein Push versendet.
+Stage laeuft mit `5fb2b22`. Die Registrierung wurde in der privaten ENV
+aktiviert; das Versandflag bleibt explizit false. Der neu erzeugte
+Konfigurationscache lieferte per Stage-PHP-CLI zwei App-Eintraege; der
+iOS-Capability- und Registry-Test mit der Stage-Origin war erfolgreich.
+Der erste authentifizierte HTTPS-Test meldete die Capability jedoch noch
+nicht. Der Wiederholungstest brach mit einem SSH-Timeout ab. Die
+Web-Freigabe ist deshalb noch nicht abgenommen; bei Wiederanlauf
+`deploy/check-stage-mobile-pilot.php --push-registration` ausfuehren
+und bei einer Abweichung zuerst die effektive Stage-Webkonfiguration
+pruefen. Beim Start der Aktivierung waren keine aktiven Geraete vorhanden.
+Kein bestaetigtes Testgeraet, kein Worker und kein Push-Versand.
 
 Private Uebergabe auf Windows:
 `C:\ClubUnio-Secrets\firebase\clubunio-stage-service-account.json`.
