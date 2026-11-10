@@ -56,6 +56,15 @@ Web-Freigabe ist deshalb noch nicht abgenommen; bei Wiederanlauf
 `deploy/check-stage-mobile-pilot.php --push-registration` ausfuehren
 und bei einer Abweichung zuerst die effektive Stage-Webkonfiguration
 pruefen. Beim Start der Aktivierung waren keine aktiven Geraete vorhanden.
+Beim erneuten HTTPS-Test reproduziert: Der private FastCGI-Test auf dem
+Stage-Pool zeigte beide Registry-Eintraege, aber `open_basedir` sperrt den
+Zugriff auf die bisherige Schluesseldatei. CLI und FPM unterscheiden sich
+hier absichtlich. Die vorgesehene Loesung ist eine private Datei unter
+`storage/framework/stage-secrets/` (0700/0600, runcloud, Git-ignoriert)
+innerhalb der Stage-App, aber ausserhalb des Nginx-Webroots `public/`.
+Nur die zwei Stage-Registry-Pfade umstellen und den Stage-Konfigurationscache
+erneuern; PHP-Zugriffsgrenzen nicht erweitern. Die Aenderung konnte wegen
+erneutem SSH-Timeout noch nicht durchgefuehrt werden.
 Kein bestaetigtes Testgeraet, kein Worker und kein Push-Versand.
 
 Private Uebergabe auf Windows:
