@@ -17,19 +17,27 @@ DEV, PROD und PHPMaker unveraendert. Keine Benachrichtigungen versendet.
   Stage-Konfigurationscache aktiviert. Push und Uploads wurden nicht
   aktiviert. Vorherige Stage-ENV wurde privat gesichert.
 - Extern bestaetigt: Health HTTP 200, Mobile-Kontext ohne Sitzung HTTP 401.
-  Der angemeldete Testlauf konnte nach einem SSH-Timeout noch nicht
-  ausgefuehrt werden. Auf dem VPS als RunCloud-Anwendungsbenutzer im
-  Stage-Verzeichnis ausfuehren:
+  Erneute Abnahme per direktem Windows-SSH am 10.11.2026: Beide Testkonten
+  bestanden Login, Kontext, Modulliste, Teamplanung, Meine Teams und Spesen.
+  Nicht freigegebener Login (401) und fremder Mandant (404) wurden abgewiesen;
+  beide Sitzungen wurden durch Logout widerrufen. Wiederholung auf dem VPS
+  als RunCloud-Anwendungsbenutzer im Stage-Verzeichnis:
   `/RunCloud/Packages/php83rc/bin/php deploy/check-stage-mobile-pilot.php`.
   Der Test gibt keine Passwoerter oder Tokens aus und widerruft die
   Testsitzungen. Mitglieder fachlich mit synthetischem Datensatz abnehmen.
 
 ## Push: bewusst noch geschlossen
 
-Kein Stage-Firebase-Servicekonto, keine Stage-App-Registry und kein Worker.
-Separates Firebase-Projekt und darauf konfigurierte iOS-/Android-Testbuilds
-bereitstellen. Fuer iOS auch die APNs-Konfiguration des Testbuilds pruefen.
-Credential ausserhalb des Webroots hinterlegen, nicht nach Git uebertragen.
+Stage nutzt nach Freigabe dasselbe Firebase-Testprojekt wie DEV, aber eine
+eigene Dienstidentitaet mit eigenem Schluessel und nur den fuer FCM noetigen
+Rechten. Kein DEV-Schluessel auf Stage und keine PROD-Ressourcen verwenden.
+Das gemeinsame Projekt ist keine technische Trennung der Empfaenger:
+Nur explizit verifizierte iOS-/Android-Stage-Testgeraete verwenden. Fuer iOS
+auch die APNs-Konfiguration des Testbuilds pruefen.
+
+Die Stage-JSON war am vereinbarten Windows-Pfad noch nicht vorhanden.
+Stage-App-Registry, Push-Versand und Worker bleiben bis zur isolierten
+Abnahme deaktiviert. Es wurde kein Push versendet.
 
 Private Uebergabe auf Windows:
 `C:\ClubUnio-Secrets\firebase\clubunio-stage-service-account.json`.
@@ -46,7 +54,8 @@ Gerätebindung pruefen. Nur vorab gepruefte synthetische Outbox-IDs mit
 einem Stage-eigenen, begrenzten Worker verarbeiten. Keinen allgemeinen
 Queue-Worker starten, solange importierte Altbestände nicht isoliert sind.
 FCM-Annahme und Anzeige am jeweiligen physischen Testgeraet getrennt
-bestaetigen. DEV-/PROD-Firebase-Konfiguration nicht uebernehmen.
+bestaetigen. DEV-/PROD-Schluessel, Geraetebindungen oder Outbox-Eintraege
+nicht uebernehmen.
 
 Rueckweg: Mobile-Hauptflag ausschalten und nur den Stage-Konfigurationscache
 neu aufbauen. Synthetische Konten bei Bedarf separat sperren.
