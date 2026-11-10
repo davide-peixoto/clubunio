@@ -55,6 +55,7 @@ try {
     $phase = 'inventory';
     $allowed = explode(' ', 'access_profiles account_member_links accounts announcement_statuses banks billing_recipients bus_reservations bus_statuses buses club_events club_functions competitions contribution_prices contribution_rules countries document_types event_guests expense_lines expense_rounds expense_statuses expense_types expenses facility_statuses families family_members field_availabilities financial_adjustment_statuses football_clubs game_types genders invoice_categories invoice_line_statuses invoice_lines invoice_statuses invoice_workflow_statuses invoices material_receipt_statuses member_bank_accounts member_change_requests member_change_statuses member_documents member_functions member_keys member_notes member_statuses member_types members message_template_revisions message_templates mobile_module_options planning_options qualifications registration_documents registration_statuses registrations seasons signage_notices sponsor_run_statuses sponsorships staff_functions status_styles team_absences team_events team_invitations team_participations team_players team_seasons team_staff teams technical_leads tenant_accounts tenant_settings tenants training_options training_slots');
     $global = ['account_roles', 'imports', 'migrations'];
+    $withoutIdentity = ['mobile_module_options'];
     $identifier = static function (string $name): string {
         if (! preg_match('/^[a-z_][a-z0-9_]*$/D', $name)) {
             throw new LogicException('Unexpected SQL identifier.');
@@ -70,14 +71,16 @@ try {
             $phase = 'unreviewed populated table '.$name;
             throw new LogicException('Unexpected populated table.');
         }
+        $phase = 'validate ownership and primary key of '.$name;
         foreach ($rows as $row) {
-            if (! isset($row['id']) || (isset($row['tenant_id']) && $row['tenant_id'] !== $tenant['id'])
+            if ((! isset($row['id']) && ! in_array($name, $withoutIdentity, true)) || (isset($row['tenant_id']) && $row['tenant_id'] !== $tenant['id'])
                 || (! isset($row['tenant_id']) && ! in_array($name, ['accounts', 'tenants'], true))) {
                 throw new LogicException('Unexpected source row ownership.');
             }
         }
         $tables[$name] = $rows;
     }
+    $phase = 'validate reviewed snapshot counts';
     if (count($tables['accounts']) !== 75 || count($tables['tenant_accounts']) !== 75 || count($tables['member_change_requests']) !== 18) {
         throw new LogicException('Unexpected reviewed snapshot counts.');
     }
@@ -91,12 +94,14 @@ try {
         WHERE c.contype='f' AND c.connamespace='clubunio'::regnamespace
         ORDER BY child,parent,fk,child_key
         SQL;
+    $phase = 'compare source and rehearsal FK catalogs';
     $fks = $source->query($fkSql)->fetchAll(PDO::FETCH_ASSOC);
     if ($fks !== $target->query($fkSql)->fetchAll(PDO::FETCH_ASSOC)) {
         throw new LogicException('Source and target FK catalogs differ.');
     }
     $map = [];
     foreach ($tables as $name => $rows) {
+        if (in_array($name, $withoutIdentity, true)) continue;
         $phase = 'allocate IDs for '.$name;
         $ids = $target->query("SELECT nextval(pg_get_serial_sequence('clubunio.".$name."', 'id')) FROM generate_series(1,".count($rows).')')->fetchAll(PDO::FETCH_COLUMN);
         foreach ($rows as $i => $row) $map[$name][$row['id']] = $ids[$i];
@@ -110,7 +115,7 @@ try {
         $phase = 'map '.$name;
         foreach ($rows as &$row) {
             $old = $row;
-            $row['id'] = $resolve($name, $old['id']);
+            if (isset($old['id'])) $row['id'] = $resolve($name, $old['id']);
             foreach ($groups[$name] ?? [] as $group) {
                 foreach ($group as $fk) if ($old[$fk['child_key']] === null) continue 2;
                 $parent = $group[0]['parent'];

@@ -144,9 +144,13 @@ Fachzeilen zurueck. Sequenzen der Testkopie koennen dabei vorruecken.
 Offene Altantraege muessen vor einer Anwendung gegen den neuen
 Mitgliederstand geprueft werden. Kein Live-Modus vorhanden.
 
-PHP-Syntax geprueft. Das Erstellen der Stage-Kopie konnte wegen
-SSH-Timeout nicht bestaetigt werden. Den CLI-Entwurf erst gegen die
-separate Kopie pruefen; vor einem Live-Transfer bleiben der vollstaendige
+Die separate Stage-Kopie wurde per direktem Windows-SSH erstellt und
+enthaelt beide bisherigen Mandanten. Der erste Probelauf stoppte beim
+Inventar: `mobile_module_options` hat den zusammengesetzten Schluessel
+`(tenant_id,key)` und keine eigene `id`. Der Transfer beruecksichtigt
+diese Ausnahme jetzt. Die Wiederholung nach der Korrektur scheiterte
+bereits am SSH-Verbindungsaufbau. Keine Live-Integration.
+Vor einem Live-Transfer bleiben der vollstaendige
 Fachabgleich, die Pruefung nicht per FK modellierter Verweise und die
 Abnahme der Berechtigungen Pflicht.
 
