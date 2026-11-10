@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
         $db->statement('ALTER TABLE clubora.member_types ADD team_required boolean NOT NULL DEFAULT false, ADD passive_membership boolean NOT NULL DEFAULT false');

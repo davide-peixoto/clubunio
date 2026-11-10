@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db=DB::connection('clubunio');
-        if($db->getDriverName()!=='pgsql'||$db->getDatabaseName()!=='db_acdf8d_dclubora') throw new LogicException('Reviewed PostgreSQL required');
+        if($db->getDriverName()!=='pgsql'||!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) throw new LogicException('Reviewed PostgreSQL required');
         $db->unprepared(<<<'SQL'
 ALTER TABLE clubora.chat_messages ADD COLUMN reply_to_message_id bigint;
 ALTER TABLE clubora.chat_messages ADD CONSTRAINT chat_messages_reply_tenant_fk

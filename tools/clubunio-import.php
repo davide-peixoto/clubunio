@@ -50,12 +50,19 @@ function source(): PDO {
     if (str_contains(strtolower($v['DB_DBNAME']), 'dev')) throw new RuntimeException('DEV source forbidden');
     return new PDO('sqlsrv:Server='.$v['DB_HOST'].','.($v['DB_PORT'] ?? '1433').';Database='.$v['DB_DBNAME'].';Encrypt=yes;TrustServerCertificate=no', $v['DB_USER'], $v['DB_PASSWORD'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 }
-function target(): PDO {
-    $v = values(dirname(__DIR__).'/.env.postgresql.local');
-    if ($v['PGDATABASE'] !== 'db_acdf8d_dclubora' || $v['PGHOST'] !== 'pg6001.site4now.net') throw new RuntimeException('Unexpected target');
+function target(?string $stage = null): PDO {
+    $v = values(dirname(__DIR__).($stage === null ? '/.env.postgresql.local' : '/.env.stage-migration.local'));
+    if ($stage === null) {
+        if ($v['PGDATABASE'] !== 'db_acdf8d_dclubora' || $v['PGHOST'] !== 'pg6001.site4now.net') throw new RuntimeException('Unexpected target');
+    } else {
+        \App\ClubUnio\Services\StageMigrationTarget::assertName($stage);
+        if ($v['PGDATABASE'] !== $stage || empty($v['PGSSLROOTCERT'])) throw new RuntimeException('Unexpected Stage target');
+    }
     $dsn = 'pgsql:host='.$v['PGHOST'].';port='.$v['PGPORT'].';dbname='.$v['PGDATABASE'].';sslmode=verify-full';
     if (!empty($v['PGSSLROOTCERT'])) $dsn .= ';sslrootcert='.$v['PGSSLROOTCERT'];
-    return new PDO($dsn, $v['PGUSER'], $v['PGPASSWORD'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => true]);
+    $pdo = new PDO($dsn, $v['PGUSER'], $v['PGPASSWORD'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => true]);
+    if ($pdo->query('SELECT current_database()')->fetchColumn() !== $v['PGDATABASE']) throw new RuntimeException('Unexpected connected database');
+    return $pdo;
 }
 try {
     $mode = $argv[1] ?? 'inspect';
@@ -75,9 +82,12 @@ try {
         echo "Private target configuration prepared.\n";
         exit;
     }
-    $pg = target();
+    $stage = $argv[3] ?? null;
+    if ($stage !== null && (! in_array($mode, ['inspect', 'verify', 'copy-prod'], true) || count($argv) !== 4
+        || $argv[2] !== ($mode === 'copy-prod' ? '--new-empty-target' : '--stage'))) throw new RuntimeException('Unexpected Stage arguments');
+    $pg = target($stage);
     if ($mode === 'verify') {
-        $pg->exec('BEGIN READ ONLY');
+        $pg->exec('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
         $columns=json_decode($pg->query("SELECT metadata FROM migration_audit.catalog WHERE category='columns'")->fetchColumn(),true,512,JSON_THROW_ON_ERROR);
         $manifest=$pg->query('SELECT * FROM migration_audit.tables ORDER BY source_schema,source_table')->fetchAll(PDO::FETCH_ASSOC);
         $total=0;
@@ -91,6 +101,7 @@ try {
             $total+=$seen;
         }
         $run=$pg->query('SELECT * FROM migration_audit.run')->fetch(PDO::FETCH_ASSOC);
+        if (!$manifest || ($run['source_database'] ?? null) !== 'db_acdf8d_mysvs' || ($run['status'] ?? null) !== 'verified_snapshot') throw new RuntimeException('No verified PROD snapshot');
         $pg->exec('ROLLBACK');
         echo json_encode(['verified_tables'=>count($manifest),'verified_rows'=>$total,'run'=>$run],JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR),"\n";
         exit;
@@ -114,6 +125,9 @@ try {
         $src->exec('SET TRANSACTION ISOLATION LEVEL SNAPSHOT');
         $src->beginTransaction();
         $pg->beginTransaction();
+        $pg->query('SELECT pg_advisory_xact_lock(2026110901)');
+        if ($stage !== null && $pg->query("SELECT count(*) FROM pg_namespace WHERE nspname NOT IN ('public','information_schema') AND nspname NOT LIKE 'pg_%'")->fetchColumn() != 0) throw new RuntimeException('Stage has existing application schemas');
+        if ($pg->query("SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public'")->fetchColumn() != 0) throw new RuntimeException('Target has existing public objects');
         $pg->exec('CREATE SCHEMA legacy_prod');
         $pg->exec('CREATE SCHEMA migration_audit');
         $pg->exec('REVOKE ALL ON SCHEMA legacy_prod, migration_audit FROM PUBLIC');
@@ -198,7 +212,7 @@ try {
     if (isset($currentTable)) fwrite(STDERR, 'Import rolled back at table '.$currentTable."\n");
     if ($e instanceof RuntimeException && !$e instanceof PDOException) fwrite(STDERR, $e->getMessage()."\n");
     if (str_contains($e->getMessage(), '\\u0000')) fwrite(STDERR,"PostgreSQL rejected a zero byte.\n");
-    if (in_array($mode ?? '', ['inspect','configure'], true)) {
+    if (($stage ?? null) === null && in_array($mode ?? '', ['inspect','configure'], true)) {
         $message = $e->getMessage();
         foreach ([dirname(__DIR__).'/.env.postgresql.local', clubunioLegacyBackendPath('application/.env.prod.local')] as $path) {
             foreach (values($path) as $key=>$value) {

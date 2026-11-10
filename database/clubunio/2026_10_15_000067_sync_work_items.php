@@ -11,7 +11,7 @@ return new class extends Migration
 
     public function up(): void
     {
-        abort_unless(DB::connection('clubunio')->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
         Schema::connection('clubunio')->create('clubora.sync_work_items', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');

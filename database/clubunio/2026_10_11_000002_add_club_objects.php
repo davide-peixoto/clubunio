@@ -11,7 +11,7 @@ return new class extends Migration
     {
         $db = DB::connection('clubunio');
         $db->statement('SET LOCAL search_path TO clubora');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
         foreach (['member_statuses', 'member_types', 'registration_statuses'] as $table) {

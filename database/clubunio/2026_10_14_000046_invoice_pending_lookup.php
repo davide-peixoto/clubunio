@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
         $db->statement("INSERT INTO clubora.invoice_line_statuses (tenant_id,code,name) SELECT id,'P','Pendent' FROM clubora.tenants ON CONFLICT (tenant_id,code) DO NOTHING");

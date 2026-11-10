@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         foreach (Tenant::all() as $tenant) {
             $data = app(SignageBrandService::class)->read($tenant);
             $data['title'] = $tenant->slug === 'sv-sissach' ? 'Sportverein Sissach' : $tenant->name;

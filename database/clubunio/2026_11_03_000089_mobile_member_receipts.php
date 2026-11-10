@@ -7,7 +7,7 @@ return new class extends Migration {
     protected $connection = 'clubunio';
     public function up(): void {
         $db = DB::connection('clubunio');
-        if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== 'db_acdf8d_dclubora') { throw new LogicException('Reviewed ClubUnio PostgreSQL required'); }
+        if ($db->getDriverName() !== 'pgsql' || !\App\ClubUnio\Services\StageMigrationTarget::allows($db)) { throw new LogicException('Reviewed ClubUnio PostgreSQL required'); }
         $db->unprepared(<<<'SQL'
 CREATE UNIQUE INDEX IF NOT EXISTS mobile_member_receipt_archive_source_uq ON clubora.legacy_material_receipts(tenant_id,id);
 CREATE TABLE clubora.mobile_member_receipts (

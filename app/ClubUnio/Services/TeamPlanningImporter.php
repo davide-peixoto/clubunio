@@ -11,7 +11,7 @@ class TeamPlanningImporter
     public function run(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new \LogicException('Unexpected target');
         }
         $db->transaction(function () use ($db) {

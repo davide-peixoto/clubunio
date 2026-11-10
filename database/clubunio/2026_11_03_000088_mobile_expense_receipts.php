@@ -7,7 +7,7 @@ return new class extends Migration {
     protected $connection = 'clubunio';
     public function up(): void {
         $db = DB::connection('clubunio');
-        if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== 'db_acdf8d_dclubora') { throw new LogicException('Reviewed ClubUnio PostgreSQL required'); }
+        if ($db->getDriverName() !== 'pgsql' || !\App\ClubUnio\Services\StageMigrationTarget::allows($db)) { throw new LogicException('Reviewed ClubUnio PostgreSQL required'); }
         $db->unprepared(<<<'SQL'
 CREATE TABLE clubora.mobile_expense_receipts (
  id uuid PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),

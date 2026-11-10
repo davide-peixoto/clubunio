@@ -11,7 +11,7 @@ return new class extends Migration
 
     public function up(): void
     {
-        abort_unless(DB::connection('clubunio')->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
         $schema = Schema::connection('clubunio');
         $schema->create('clubora.customer_credits', function (Blueprint $t) {
             $t->id();

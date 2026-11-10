@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora' || $db->getDriverName() !== 'pgsql') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db) || $db->getDriverName() !== 'pgsql') {
             throw new LogicException('Reviewed ClubUnio PostgreSQL database required');
         }
         $db->unprepared(<<<'SQL'

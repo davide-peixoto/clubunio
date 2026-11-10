@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Reviewed ClubUnio database required');
         }
         $db->statement("SET LOCAL lock_timeout TO '5s'");

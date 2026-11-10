@@ -33,7 +33,7 @@ Artisan::command('clubunio:import-facilities', function () {
 })->purpose('Import facilities and competitions from immutable snapshot only');
 
 Artisan::command('clubunio:seed-status-styles', function () {
-    if (DB::connection('clubunio')->getDatabaseName() !== 'db_acdf8d_dclubora') {
+    if (!\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio'))) {
         throw new LogicException('Unexpected target');
     }
     foreach (Tenant::all() as $tenant) {
@@ -75,7 +75,7 @@ Artisan::command('clubunio:test-mail {--tenant=sv-sissach} {--account=} {--event
 })->purpose('Send one sample template to the fixed test mailbox only');
 
 Artisan::command('clubunio:seed-message-templates', function () {
-    if (DB::connection('clubunio')->getDatabaseName() !== 'db_acdf8d_dclubora') {
+    if (!\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio'))) {
         throw new LogicException('Unexpected target');
     }
     foreach (Tenant::all() as $tenant) {
@@ -150,7 +150,7 @@ Artisan::command('clubunio:status', function () {
 
 Artisan::command('clubunio:foundation', function () {
     $db = DB::connection('clubunio');
-    if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+    if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
         throw new LogicException('Unexpected database');
     }
     $db->statement('CREATE SCHEMA IF NOT EXISTS clubora');
@@ -161,7 +161,7 @@ Artisan::command('clubunio:foundation', function () {
 
 Artisan::command('clubunio:import-foundation', function () {
     $db = DB::connection('clubunio');
-    if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+    if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
         throw new LogicException('Unexpected database');
     }
     try {
@@ -189,10 +189,12 @@ Artisan::command('clubunio:import-foundation', function () {
                     }, 'legacy_user_level' => $level]);
             }
             $members = [];
+            $recordedAtAvailable = $db->getSchemaBuilder()->hasColumn('clubora.members', 'recorded_at');
             foreach ($db->table('legacy_prod.Mitglieder')->whereNull('sdeletedAt')->orderBy('MitgliederID')->get() as $m) {
                 $members[] = ['tenant_id' => $tenant, 'legacy_id' => $m->MitgliederID,
                     'first_name' => $m->Vorname, 'last_name' => $m->Nachname, 'company' => $m->Firma ?? null,
-                    'email' => $m->Email ?? null, 'city' => $m->Ort ?? null, 'recorded_at' => $m->ErfasstAm ?? null];
+                    'email' => $m->Email ?? null, 'city' => $m->Ort ?? null]
+                    + ($recordedAtAvailable ? ['recorded_at' => $m->ErfasstAm ?? null] : []);
             }
             foreach (array_chunk($members, 100) as $batch) {
                 $db->table('clubora.members')->insert($batch);

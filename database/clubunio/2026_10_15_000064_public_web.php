@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         $db->statement('SET LOCAL search_path TO clubora');
         $db->unprepared(<<<'SQL'
 CREATE TABLE public_registration_submissions (

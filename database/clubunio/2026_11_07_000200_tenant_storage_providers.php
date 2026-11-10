@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         $db->statement('ALTER TABLE clubora.tenant_storage_profiles
             DROP CONSTRAINT tenant_storage_profiles_provider_check, DROP CONSTRAINT tenant_storage_profiles_check,
             ALTER COLUMN account TYPE varchar(64), ALTER COLUMN container TYPE varchar(255)');

@@ -16,7 +16,7 @@ class MemberDossierImporter
     public function run(): void
     {
         $this->db = DB::connection('clubunio');
-        if ($this->db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($this->db)) {
             throw new \LogicException('Unexpected target');
         }
         $this->db->transaction(function () {

@@ -10,7 +10,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') { throw new LogicException('Unexpected target'); }
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) { throw new LogicException('Unexpected target'); }
         $db->transaction(function () use ($db) {
             $rows = $db->table('clubora.tenant_settings')->where(function ($q) {
                 foreach (RetiredIntegrationParameters::KEYS as $area => $keys) {

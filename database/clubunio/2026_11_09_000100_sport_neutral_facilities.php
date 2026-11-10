@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         $db->statement("ALTER TABLE clubora.tenants ADD COLUMN facility_planning_mode varchar(12) NOT NULL DEFAULT 'legacy'
             CHECK (facility_planning_mode IN ('legacy', 'neutral'))");
         $db->statement("ALTER TABLE clubora.training_options ADD COLUMN facility_kind varchar(12)

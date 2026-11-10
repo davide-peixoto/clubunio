@@ -8,7 +8,7 @@ return new class extends Migration {
     protected $connection = 'clubunio';
     public function up(): void {
         $db = DB::connection('clubunio');
-        if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== 'db_acdf8d_dclubora') throw new LogicException('Reviewed ClubUnio PostgreSQL required');
+        if ($db->getDriverName() !== 'pgsql' || !\App\ClubUnio\Services\StageMigrationTarget::allows($db)) throw new LogicException('Reviewed ClubUnio PostgreSQL required');
         $db->unprepared(<<<'SQL'
 ALTER TABLE clubora.mobile_ai_work ADD CONSTRAINT mobile_ai_work_tenant_actor_id_unique UNIQUE(tenant_id,account_id,id);
 CREATE TABLE clubora.mobile_expense_ocr_provenance (

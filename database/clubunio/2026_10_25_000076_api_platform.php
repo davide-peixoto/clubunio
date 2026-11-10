@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         $db->unprepared(<<<'SQL'
 ALTER TABLE clubora.accounts ADD COLUMN api_only boolean NOT NULL DEFAULT false;
 CREATE TABLE clubora.api_integrations (

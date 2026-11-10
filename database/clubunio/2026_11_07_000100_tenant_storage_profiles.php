@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        abort_unless($db->getDatabaseName() === 'db_acdf8d_dclubora', 409);
+        abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
         $db->statement("CREATE TABLE clubora.tenant_storage_profiles (
             id uuid PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
             provider varchar(12) NOT NULL CONSTRAINT tenant_storage_profiles_provider_check CHECK (provider IN ('azure', 'managed')),

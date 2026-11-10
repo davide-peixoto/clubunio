@@ -1,5 +1,19 @@
 # ClubUnio migration work packages
 
+## Stage-Erstimport SV Sissach (09.11.2026)
+
+Eigener leerer Zielbestand `clubunio_stage` auf dem VPS. Aktueller lesender
+PHPMaker-PROD-Snapshot, gepruefter Aufbau mit neuem Mandanten und bestehenden
+Fachimporten in Reihenfolge. Kein Refresh von ClubUnio DEV, kein Cutover und
+keine Aktivierung uebernommener Logins oder Provider. Vorgehen, Abnahme,
+Wiederanlauf und offene Voraussetzungen: [Stage-Erstimport](CLUBUNIO-STAGE-MIGRATION.md).
+
+10.11.2026: Mandant auf Stage aus demselben verifizierten Snapshot erfolgreich
+aufgebaut und nach Commit lesend geprueft. 117 Migrationen, elf Fachimporte,
+keine neuen PROD-Abzuege. 14 historische Spesen-/Teamsaison-Konflikte auf Stage
+nach Legacy-ID-Abgleich, Rollback-Test und separater Freigabe korrigiert.
+Belegsaison und 191 Positionen unveraendert, 0 Restkonflikte. DEV/PROD unveraendert.
+
 ## Sportneutrale Anlagen und Trainingszeiten (09.11.2026)
 
 Additive Migration000100 fuer Planungsmodus und Anlagentyp am 09.11.2026

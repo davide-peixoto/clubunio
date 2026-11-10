@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
         $db->unprepared('ALTER TABLE clubora.bexio_balances ADD COLUMN cash_received_cents bigint CHECK(cash_received_cents>=0), ADD COLUMN cash_excess_cents bigint CHECK(cash_excess_cents>=0);');

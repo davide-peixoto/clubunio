@@ -9,7 +9,7 @@ class FootballClubImporter
     public function run(): array
     {
         $db = DB::connection('clubunio');
-        if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
+        if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new \LogicException('Unexpected target');
         }
 

@@ -1,0 +1,115 @@
+# Stage-Erstimport: SV Sissach
+
+Ziel ist
+`clubunio_stage` auf `vps.clubunio.com`, SSH-Benutzer `root`, PostgreSQL-Rolle
+`userunio`.
+Quelle ist der aktuelle PHPMaker-PROD-Bestand (`db_acdf8d_mysvs`, SQL Server),
+nicht ClubUnio DEV und nicht dessen historischer Oktober-Snapshot.
+
+## Voraussetzungen
+
+1. SSH-Zugang und tatsaechlich leere PostgreSQL-Datenbank bestaetigen. Kein
+   `migrate:fresh`, kein Ueberschreiben und kein automatisches Loeschen.
+2. In der ignorierten Datei `C:\ClubUnio\.env.stage-migration.local` separat
+   `PGHOST`, `PGPORT`, `PGDATABASE=clubunio_stage`, `PGUSER`, `PGPASSWORD`,
+   `PGSSLROOTCERT`, `APP_ENV=staging` und einen Stage-eigenen, dauerhaft
+   gesicherten `APP_KEY` im Format
+   `base64:<32 Bytes>` hinterlegen. Keine DEV-/PROD-Schluessel wiederverwenden.
+   Der Importbenutzer braucht Schema-/DDL-Rechte nur im Stage-Ziel. Keine
+   Zugangsdaten im Chat, Git, Kommandoargument oder Protokoll.
+3. Auf dem Migrationsrechner muessen PHP `pdo_pgsql` und `pdo_sqlsrv` sowie
+   der bereits konfigurierte SQL-Server-PROD-Lesezugang verfuegbar sein.
+   PostgreSQL nur privat erreichen. Bei lokalem SSH-Tunnel optional
+   `PGHOSTADDR=127.0.0.1` setzen; `PGHOST` bleibt der Name aus dem
+   PostgreSQL-Zertifikat, `PGPORT` ist der lokale Tunnelport. TLS bleibt
+   `verify-full`; den PostgreSQL-Port nicht oeffentlich freigeben.
+4. Stage-Webanwendung und Scheduler bis zur separaten Freigabe nicht auf
+   diese DB schalten. Der Importnutzer ist nicht der spaetere Webnutzer.
+   Keine Laufzeitrechte auf `legacy_prod` und `migration_audit` erteilen.
+
+## Automatischer Lauf nach Freigabe
+
+```powershell
+php tools/clubunio-stage-migrate.php --plan
+php -d extension=pdo_pgsql tools/clubunio-stage-migrate.php --apply clubunio_stage
+```
+
+`--plan` oeffnet keine Verbindungen. `--apply` verlangt die explizite Stage-ID,
+prueft den echten verbundenen DB-Namen und lehnt vorhandene Anwendungsschemata
+ab. Der Snapshot-Importer verwendet eine lesende SQL-Server-Transaktion mit
+SNAPSHOT-Isolation, schreibt die Daten in `legacy_prod` und verifiziert
+Zeilenanzahl und SHA-256 pro Tabelle. Der Abzug bleibt vertraulich (u. a.
+Original-Konten und Parameter) und ist kein Laufzeitschema.
+
+Danach erstellt der Runner `clubora`, arbeitet die versionierten Migrationen
+ab und ruft die elf bestehenden Fachimporte an ihren Schema-Zwischenpunkten
+auf. Der Foundation-Import erstellt genau einen neuen Mandanten `sv-sissach`.
+Native IDs werden neu vergeben; Alt-IDs bleiben als `legacy_id` erhalten.
+Die Saison wird ueber `general/SaisonID` aufgeloest, nicht per festem Ziel-ID.
+Schema, Fachimporte, Lookup-/Vorlagenseeds und Abnahme bilden eine gemeinsame
+Zieltransaktion. Nach Fehlschlag bleibt nur der verifizierte Snapshot; mit
+`--resume-build clubunio_stage` laesst sich ausschliesslich die fehlende
+Fachschicht wiederholen. Erfolgreiche Ziele werden nicht nochmals importiert.
+
+## Abnahme und Grenzen
+
+- Verifizierter Snapshot, genau ein Mandant, vollstaendiges Migrationsjournal,
+  Fachimport-Marker, gueltige Saisonauflosung und keine fremden oder unerklaert
+  geaenderten Saisonreferenzen. Der Runner gibt nur technische Summen aus.
+- Historische Spesen-/Teamsaison-Konflikte aus der Quelle werden ausgewiesen.
+  Die bereits genehmigten 14 DEV-Korrekturen vor Freigabe gegen die aktuelle
+  Quelle neu zuordnen; niemals alte native IDs nach Stage kopieren. Ist die
+  Quelle bereits korrekt, nur bestaetigen. Die gepinnte DEV-Reparatur ist kein
+  Stage-Schritt.
+- Der native Fachumfang ist der bestehende Migrationsstand. Nicht gemappte
+  Legacy-Tabellen bleiben nur im Snapshot. Anhaenge werden nicht binaer
+  kopiert; Speicher-/Dateifreigabe und manuelle Altbestand-Uebernahmen separat
+  pruefen. Kein Kopieren von ClubUnio-DEV-Testdaten.
+- Importierte Logins sind gesperrt, native als geheim klassifizierte Parameter
+  geleert und deaktiviert. Vor Browserabnahme separat Stage-Testkonten und
+  Stage-Provider konfigurieren. Kein Mail-, Push-, Bexio- oder anderer
+  Providerversand und keine Schreiboperation auf der PROD-Quelle.
+- SSH direkt von Windows als `root` (ohne Pi) und anfangs leere Ziel-DB
+  bestaetigt. PostgreSQL 16.15,
+  UTF8/libc, `lc_collate` und `lc_ctype` jeweils `C.UTF-8`, anders als DEV (`C`).
+  TLS ist serverseitig aktiv, `userunio` hat CONNECT und CREATE auf Stage.
+  Anmeldung als `userunio` mit `verify-full` ueber den lokalen SSH-Tunnel
+  bestaetigt. Locale nicht automatisch aendern; Sortierung und Textsuche bei
+  der Stage-Abnahme pruefen.
+
+## Ausfuehrungsnachweis
+
+09.11.2026 23:58 bis 23:59 Uhr (Europe/Zurich): aktueller PROD-Snapshot
+mit 100 Tabellen und 53305 Zeilen ausschliesslich nach Stage kopiert. Eine
+unabhaengige Wiederholungspruefung bestaetigte alle Tabellen und Zeilen.
+Der erste Fachaufbau stoppte im Anlagenimport und wurde atomar zurueckgerollt:
+Der aktuelle Importer setzt den Wegfall von `facility_statuses.color` voraus.
+Der Import-Zwischenpunkt wurde deshalb hinter Migration 000019 verschoben.
+Ein erster Wiederanlauf scheiterte am direkten SSH-Tunnel (Port 22 Timeout).
+
+10.11.2026: `--resume-build clubunio_stage` direkt von Windows erfolgreich
+ausgefuehrt. Unveraenderter Snapshot erneut verifiziert, kein neuer PROD-Abzug.
+117 Migrationen und elf Fachimporte abgeschlossen. Separater lesender Check
+nach Commit: genau ein Mandant `sv-sissach`, 2439 Mitglieder, 75 deaktivierte
+Konten ohne Passwort, 6791 Rechnungen, 483 Spesenbelege und 34 Teamtermine.
+Keine aktiven geheimen Einstellungen. Saison 2026/2027: Legacy-ID 38, Ziel-ID 37.
+Die Referenzpruefung meldete keine fremden oder unerklaert veraenderten
+Saisonverknuepfungen. 14 bereits in der Quelle vorhandene Spesen-/Teamsaison-
+Konflikte wurden anschliessend separat korrigiert (siehe unten).
+Kein Webdeployment und keine Aenderung an DEV oder PROD.
+
+## Freigegebene Spesen-Korrektur auf Stage
+
+10.11.2026: 14 freigegebene Legacy-Belege auf die gleiche Mannschaft in der
+bereits korrekten Belegsaison umgehaengt. Beleg, Saison, Mannschaft sowie alte
+und neue Mannschaftssaison mit den Legacy-IDs im unveraenderten Snapshot
+abgeglichen. Pro Beleg genau eine aktive Zielzuordnung; keine DEV-Ziel-IDs
+uebernommen. Die exakte Zuordnung steht in
+[correct-stage-expense-season-teams.sql](correct-stage-expense-season-teams.sql).
+
+Rollback-Test und anschliessender Commit bestanden. Alle 191 betroffenen
+Positionen und alle anderen Belegfelder unveraendert; lediglich Zuordnung,
+Revision und Zeitstempel nachgefuehrt. 14 Audit-Eintraege enthalten vorherige
+Zuordnung, Revision und Zeitstempel fuer einen gezielten Rueckweg. Separater
+Lesecheck: 0 verbleibende Beleg-/Teamsaison-Konflikte, 14 verifizierte
+Audit-Eintraege. Kein neuer PROD-Abzug, DEV und PROD unveraendert.
