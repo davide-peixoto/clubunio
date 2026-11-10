@@ -42,7 +42,7 @@ Leserecht gegeben. Der Anwendungstest vor der Wartung muss bestehen;
 bei Abbruch wird auch der vorherige ACL wiederhergestellt.
 
 Bei Fehler: Stage in Wartung belassen, nur auf `clubunio_stage`
-`ALTER SCHEMA clubunio RENAME TO clubora` ausfuehren, Code auf `b4dc92b`
+`ALTER SCHEMA clubunio RENAME TO clubora` ausfuehren, Code auf `6621b86`
 zurueckstellen, Stage-Konfigurations-/Routen-/View-Caches entfernen, pruefen
 und Wartung beenden. Das Skript versucht diesen Rueckweg automatisch und
 bricht bei einer fehlgeschlagenen Ruecknahme ohne weitere Freigabe ab.

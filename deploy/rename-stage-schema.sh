@@ -4,7 +4,7 @@ umask 077
 app=/home/runcloud/webapps/ClubUnioStage
 php=/RunCloud/Packages/php84rc/bin/php
 branch=codex/stage-clubunio-schema
-old=b4dc92b
+old=6621b86
 test "$#" -eq 2
 candidate=$1
 bundle=$2
