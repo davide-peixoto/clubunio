@@ -191,11 +191,12 @@ final class MobileTeamsData
     private function trainingsForAuthorizedTeam(Tenant $tenant, int $id): array
     {
         $neutral = \App\ClubUnio\Services\FacilityPlanningMode::neutral($tenant);
-        $period = $neutral ? app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period($tenant) : null;
-        if ($neutral && ! $period) return [];
+        $period = app(\App\ClubUnio\Services\ActiveTrainingPlan::class)->period($tenant);
+        if (! $period) return [];
         $options = $this->table($tenant, 'training_options')->where('active', true)->pluck('name', 'id');
         $slots = $this->table($tenant, 'training_slots')->where('active', true)->where('team_season_id', $id)
-            ->when($neutral, fn ($query) => $query->where('period_id', $period->id)->whereIn('field_id',
+            ->where('period_id', $period->id)
+            ->when($neutral, fn ($query) => $query->whereIn('field_id',
                 $this->table($tenant, 'training_options')->where('category', 'field')->where('active', true)->select('id')),
                 fn ($query) => $query->where(app(SignageService::class)->trainingVariant($tenant), true))
             ->orderBy('weekday_id')->orderBy('starts_at')->orderBy('id')->get();

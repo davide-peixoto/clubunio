@@ -60,6 +60,29 @@ class MobileMyTeamsParityTest extends TestCase
     {
         return $this->db->table('clubora.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
     }
+
+    public function test_team_training_reads_follow_the_active_plan(): void
+    {
+        $summer = $this->insert('training_options', ['category' => 'period', 'code' => 'SUMMER', 'name' => 'Summer']);
+        $winter = $this->insert('training_options', ['category' => 'period', 'code' => 'WINTER', 'name' => 'Winter']);
+        $slots = [];
+        foreach ([$summer, $winter] as $period) {
+            $slots[$period] = $this->insert('training_slots', ['team_season_id' => $this->team, 'period_id' => $period,
+                'starts_at' => '20:15', 'ends_at' => '21:45', 'synthetic_only' => true]);
+        }
+        $setting = $this->insert('tenant_settings', ['area' => 'general', 'key' => \App\ClubUnio\Services\ActiveTrainingPlan::KEY,
+            'label' => 'Training period', 'value_type' => 'integer', 'encrypted_value' => Crypt::encryptString((string) $winter)]);
+        $url = $this->base.'/my-teams/'.$this->team;
+        $this->getJson($url)->assertOk()->assertJsonCount(1, 'data.Trainings')
+            ->assertJsonPath('data.Trainings.0.TrainingID', $slots[$winter]);
+        $this->db->table('clubora.tenant_settings')->where('id', $setting)
+            ->update(['encrypted_value' => Crypt::encryptString((string) $summer)]);
+        $this->getJson($url.'/trainings')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.TrainingID', $slots[$summer]);
+        $this->db->table('clubora.training_options')->where('id', $summer)->update(['active' => false]);
+        $this->getJson($url.'/trainings')->assertOk()->assertJsonCount(0, 'data');
+    }
+
     public function test_trainer_directory_is_personal_but_team_roster_is_still_visible_and_pending_children_are_not_granted(): void
     {
         $pending=$this->insert('members',['first_name'=>'PRIVATE','last_name'=>'Pending child','birth_date'=>now()->subYears(8)->toDateString()]);

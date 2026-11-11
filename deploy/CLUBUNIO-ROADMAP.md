@@ -1959,3 +1959,12 @@ Mitgliedsanträge können über die bestehende E-Mail-Bestätigung ein neues
 Konto erhalten. Der eigene Status ist bereits vor der Vereinsfreigabe sichtbar.
 Die additive Migration ergänzt die Nachweisverknüpfung. Stage-Betrieb getrennt
 im Branch `stage`. Siehe [Umgebungswahl und Mitgliedsanmeldung](CLUBUNIO-MOBILE-MEMBERSHIP-TRACKING.md).
+
+
+## 11.11.2026 – Gültiger Trainingsplan in My Teams
+
+Teamdetails und Trainingsliste verwenden die zentral eingestellte aktive
+Trainingsperiode. Sommer- und Winterzeiten werden anhand der Perioden-ID
+gefiltert. Fehlt eine gültige aktive Periode, bleibt die Liste leer. Die
+Platzverfügbarkeit wird weiterhin berücksichtigt. Drei PostgreSQL-Tests mit
+70 Assertions und die DE/EN-Sprachprüfung sind grün.
