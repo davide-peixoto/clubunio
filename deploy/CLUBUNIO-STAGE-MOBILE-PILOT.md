@@ -5,6 +5,15 @@ DEV, PROD und PHPMaker unveraendert. Keine Benachrichtigungen versendet.
 
 ## Mobile
 
+Auf Stage sind Anlagenstatus inklusive Platzplanung, Anmeldungen,
+Trainingsplaner, Bus, Dokumente und Sponsorenlauf fuer die native App
+aktiviert. Der serverseitige Modulkatalog meldet alle sechs fuer das
+freigegebene Konto in `sv-sissach-refresh` als nativ verfuegbar; der
+HTTPS-Pilottest fuer Anmeldung und Mandantentrennung ist gruen.
+Berechtigungen und Client-Feature-Pruefungen bleiben aktiv. Keine
+Endgeraeteabnahme; KI-Generierung, Uploads und Push-Versand bleiben aus.
+Die vorherige Stage-ENV wurde privat gesichert. DEV und PROD unveraendert.
+
 Das explizit freigegebene bestehende Stage-Konto darf jetzt auch Mobile
 fuer `sv-sissach-refresh` verwenden. Die Web-Mitgliedschaft allein
 hatte nicht gereicht, weil die separate Mobile-Pilotgrenze das Konto
