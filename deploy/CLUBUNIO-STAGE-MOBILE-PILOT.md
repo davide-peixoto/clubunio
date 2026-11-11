@@ -134,3 +134,12 @@ bis zur Stage-Mailkonfiguration und Testpostfachprüfung geschlossen. Die
 Pilotvereins-Lookups und die öffentliche Anmeldefreigabe sind bei der
 Aktivierung zu prüfen. Push und Uploads sind vom bestehenden Pilotbetrieb
 weiterhin getrennt.
+
+
+## 11.11.2026 – Gültiger Trainingsplan in My Teams
+
+Teamdetails und Trainingsliste verwenden die zentral eingestellte aktive
+Trainingsperiode. Sommer- und Winterzeiten werden anhand der Perioden-ID
+gefiltert. Fehlt eine gültige aktive Periode, bleibt die Liste leer. Die
+Platzverfügbarkeit wird weiterhin berücksichtigt. Drei PostgreSQL-Tests mit
+70 Assertions und die DE/EN-Sprachprüfung sind grün.
