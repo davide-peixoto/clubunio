@@ -49,7 +49,9 @@ class TestMailService
         }
         $status = 'failed';
         try {
-            $sent = Mail::mailer('clubunio_test')->raw(__('Testnachricht aus ClubUnio mit Beispieldaten.', [], $attempt['message']['locale'])."\n\n".$attempt['message']['body'], function ($mail) use ($attempt) {
+            $sent = Mail::mailer('clubunio_test')->send(['raw' => __('Testnachricht aus ClubUnio mit Beispieldaten.', [], $attempt['message']['locale'])."\n\n".$attempt['message']['body']], [
+                'clubunio_reply_to_tenant_id' => (int) $tenant->id,
+            ], function ($mail) use ($attempt) {
                 $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($attempt['message']['title']);
             });
             $status = $sent ? 'accepted' : 'failed';

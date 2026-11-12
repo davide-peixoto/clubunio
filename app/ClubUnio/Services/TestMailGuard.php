@@ -26,7 +26,11 @@ class TestMailGuard
         }
         $message = $event->message;
         // Laravel derives the SMTP envelope AFTER this event, so no original CC/BCC survives.
-        $message->to(self::RECIPIENT)->cc()->bcc()->replyTo(self::RECIPIENT);
+        $tenantId = ($event->data['mailer'] ?? null) === 'clubunio_test'
+            ? ($event->data['clubunio_reply_to_tenant_id'] ?? null) : null;
+        $replyTo = is_int($tenantId) && $tenantId > 0
+            ? app(TenantMailSettings::class)->replyTo($tenantId) : null;
+        $message->to(self::RECIPIENT)->cc()->bcc()->replyTo($replyTo ?? self::RECIPIENT);
         foreach (['Resent-To', 'Resent-Cc', 'Resent-Bcc', 'Resent-Sender', 'Resent-From', 'Return-Path'] as $header) {
             $message->getHeaders()->remove($header);
         }

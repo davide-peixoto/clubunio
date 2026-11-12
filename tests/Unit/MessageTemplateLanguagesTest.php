@@ -168,7 +168,8 @@ class MessageTemplateLanguagesTest extends TestCase
     public function test_test_outbox_keeps_guard_and_supports_old_and_localized_payloads(): void
     {
         $mailer = \Mockery::mock();
-        $mailer->shouldReceive('raw')->times(3)->andReturnUsing(function ($body, $callback) {
+        $mailer->shouldReceive('send')->times(3)->andReturnUsing(function ($view, $data, $callback) {
+            $body = $view['raw'];
             $mail = \Mockery::mock();
             $mail->shouldReceive('to')->once()->with(TestMailGuard::RECIPIENT)->andReturnSelf();
             $mail->shouldReceive('from')->once()->andReturnSelf();
@@ -231,8 +232,8 @@ class MessageTemplateLanguagesTest extends TestCase
     {
         config(['clubunio-integrations.test_mail_enabled' => true]);
         $mailer = \Mockery::mock();
-        $mailer->shouldReceive('raw')->once()->andReturn(new \stdClass);
-        $mailer->shouldReceive('raw')->once()->andThrow(new \RuntimeException('Ambiguous transport outcome'));
+        $mailer->shouldReceive('send')->once()->andReturn(new \stdClass);
+        $mailer->shouldReceive('send')->once()->andThrow(new \RuntimeException('Ambiguous transport outcome'));
         Mail::shouldReceive('mailer')->twice()->with('clubunio_test')->andReturn($mailer);
         $db = DB::connection('clubunio');
         foreach ([['deliveries' => [['title' => 'One', 'body' => 'One'], ['title' => 'Two', 'body' => 'Two']]], ['deliveries' => []]] as $payload) {

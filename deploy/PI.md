@@ -1,5 +1,17 @@
 # Pi staging: dev.clubunio.ch
 
+## Vereinsmail: Antwortadresse
+
+Die mandantenspezifische Antwortadresse unter Einstellungen > Mailversand
+benutzt bestehende Tabellen und braucht keine DB-Migration. Keine neuen
+SMTP-Zugangsdaten fuer DEV, kein Versand an echte Mitglieder.
+Siehe [Mailversand](CLUBUNIO-MAIL-DELIVERY.md).
+
+Aktiver Release: `20261112-clubunio-tenant-reply-to-v4`, Rueckweg
+`20261110-clubunio-vps-db`. Der DB-Pflichtcheck, die Verschluesselungs-
+und Vorlagenpruefung sowie die transaktionale Testanmeldung waren erfolgreich.
+PHP-FPM und Push-Worker sind aktiv. Versand bleibt deaktiviert.
+
 ## DEV-Datenbank auf dem VPS (10.11.2026)
 
 Die Anwendung bleibt auf dem Pi. Aktiver Release `20261110-clubunio-vps-db`,

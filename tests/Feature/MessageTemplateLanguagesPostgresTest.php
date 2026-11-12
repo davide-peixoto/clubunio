@@ -143,7 +143,8 @@ class MessageTemplateLanguagesPostgresTest extends TestCase
         config(['clubunio-integrations.test_mail_enabled' => true, 'clubunio-integrations.smtp.host' => 'fixture.invalid', 'clubunio-integrations.from' => 'fixture@example.invalid']);
         $bodies = [];
         $mailer = \Mockery::mock();
-        $mailer->shouldReceive('raw')->twice()->andReturnUsing(function ($body, $callback) use (&$bodies) {
+        $mailer->shouldReceive('send')->twice()->andReturnUsing(function ($view, $data, $callback) use (&$bodies) {
+            $body = $view['raw'];
             $bodies[] = $body;
             $mail = \Mockery::mock();
             $mail->shouldReceive('to')->once()->with(TestMailGuard::RECIPIENT)->andReturnSelf();

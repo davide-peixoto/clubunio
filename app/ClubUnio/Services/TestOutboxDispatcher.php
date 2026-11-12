@@ -53,7 +53,9 @@ class TestOutboxDispatcher
                 }
                 $status = 'accepted';
                 foreach ($deliveries as $delivery) {
-                    $sent = Mail::mailer('clubunio_test')->raw(str_replace('\\n', "\n", $delivery['body']), function ($mail) use ($delivery) {
+                    $sent = Mail::mailer('clubunio_test')->send(['raw' => str_replace('\\n', "\n", $delivery['body'])], [
+                        'clubunio_reply_to_tenant_id' => (int) $event->tenant_id,
+                    ], function ($mail) use ($delivery) {
                         $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($delivery['title']);
                     });
                     if (! $sent) {

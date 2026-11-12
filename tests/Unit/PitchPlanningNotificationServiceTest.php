@@ -44,6 +44,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
         foreach ([
             'tenants' => 'id integer primary key, name text, default_locale text',
+            'tenant_settings' => 'tenant_id integer, area text, key text, enabled boolean, encrypted_value text',
             'accounts' => 'id integer primary key, username text, preferred_locale text, active boolean, api_only boolean, display_name text',
             'tenant_accounts' => 'tenant_id integer, account_id integer, role text, portal_enabled boolean, unique(tenant_id,account_id)',
             'members' => 'id integer primary key, tenant_id integer, archived_at text, exit_date text, status_id integer',
@@ -465,6 +466,10 @@ class PitchPlanningNotificationServiceTest extends TestCase
 
     public function test_worker_sends_committed_localized_snapshots_only_to_guarded_test_recipient_once(): void
     {
+        $this->db->table('clubora.tenant_settings')->insert([
+            ['tenant_id' => 1, 'area' => 'mail', 'key' => 'MAIL_REPLY_TO', 'enabled' => true, 'encrypted_value' => Crypt::encryptString('club@example.invalid')],
+            ['tenant_id' => 2, 'area' => 'mail', 'key' => 'MAIL_REPLY_TO', 'enabled' => true, 'encrypted_value' => Crypt::encryptString('other@example.invalid')],
+        ]);
         $this->account(1, 'admin', 'de');
         $this->account(2, 'office');
         $this->record($this->event('requested'));
@@ -481,6 +486,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
             $message = $sent->getOriginalMessage();
             $this->assertSame([TestMailGuard::RECIPIENT], array_map(fn ($address) => $address->getAddress(), $sent->getEnvelope()->getRecipients()));
             $this->assertSame(TestMailGuard::RECIPIENT, $message->getTo()[0]->getAddress());
+            $this->assertSame('club@example.invalid', $message->getReplyTo()[0]->getAddress());
             $this->assertSame([], $message->getCc());
             $this->assertSame([], $message->getBcc());
             $this->assertStringStartsWith('[ClubUnio TEST] ', $message->getSubject());
@@ -577,8 +583,8 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->record($this->event('requested'));
         config(['clubunio-integrations.test_mail_enabled' => true, 'clubunio-integrations.pitch_planning_test_mail_enabled' => true]);
         $mailer = \Mockery::mock();
-        $mailer->shouldReceive('raw')->once()->ordered()->andReturn(new \stdClass);
-        $mailer->shouldReceive('raw')->once()->ordered()->andThrow(new \RuntimeException('Synthetic SMTP outcome unknown'));
+        $mailer->shouldReceive('send')->once()->ordered()->andReturn(new \stdClass);
+        $mailer->shouldReceive('send')->once()->ordered()->andThrow(new \RuntimeException('Synthetic SMTP outcome unknown'));
         Mail::shouldReceive('mailer')->twice()->with('clubunio_test')->andReturn($mailer);
         $this->artisan('clubunio:deliver-pitch-mail', ['--dispatch' => true, '--tenant' => 1])->assertExitCode(1);
         $this->assertSame('attention', $this->db->table('clubora.pitch_planning_events')->value('delivery_state'));
@@ -610,7 +616,7 @@ class PitchPlanningNotificationServiceTest extends TestCase
         $this->record($this->event('requested'));
         config(['clubunio-integrations.test_mail_enabled' => true, 'clubunio-integrations.pitch_planning_test_mail_enabled' => true]);
         $mailer = \Mockery::mock();
-        $mailer->shouldReceive('raw')->once()->andReturnNull();
+        $mailer->shouldReceive('send')->once()->andReturnNull();
         Mail::shouldReceive('mailer')->once()->with('clubunio_test')->andReturn($mailer);
         $service = app(PitchPlanningNotificationService::class);
         $this->assertSame(['accepted' => 0, 'failed' => 1], $service->dispatch(1));
