@@ -1187,3 +1187,9 @@ neue App löscht RAMdaten beim Konto-/Vereinswechsel und bei Zugriffsentzug.
 DEV20261104-clubunio-chat-delta-v1 aus7442f67; Rückweg direct-contacts-v1.
 Delta62 Prüfungen plus56/896 Regression und653 App-Tests grün.
 Abfrage-/History-/Cachegrenzen: MOBILE-CHAT-DELTA.md.
+
+## Vereinsmail: Antwortadresse
+
+Die optionale Reply-To-Adresse wird pro Mandant nach dem Import gepflegt.
+Keine Schemaaenderung und keine automatische Uebernahme aus Altdaten.
+Siehe [Mailversand](CLUBUNIO-MAIL-DELIVERY.md).

@@ -1,4 +1,9 @@
 {
+    "mail_delivery.title": "Mailversand",
+    "mail_delivery.reply_to": "Antwortadresse (Reply-To)",
+    "mail_delivery.help": "Antworten auf Vereinsmails gehen an diese Adresse. Leer lassen für den Standard. Sicherheitsmails sind ausgenommen.",
+    "mail_delivery.saved": "Mailversand-Einstellung gespeichert",
+    "mail_delivery.invalid_address": "Bitte eine gültige E-Mail-Adresse eingeben.",
     "Anhang ansehen": "Anhang ansehen",
     "Keine Reaktionen": "Keine Reaktionen",
     "Text übernehmen": "Text übernehmen",

@@ -1,4 +1,9 @@
 {
+    "mail_delivery.title": "Mail delivery",
+    "mail_delivery.reply_to": "Reply-to address",
+    "mail_delivery.help": "Replies to club emails go to this address. Leave blank to use the default. Security emails are excluded.",
+    "mail_delivery.saved": "Mail delivery setting saved",
+    "mail_delivery.invalid_address": "Enter a valid email address.",
     "Anhang ansehen": "Preview attachment",
     "Keine Reaktionen": "No reactions",
     "Text übernehmen": "Use text",

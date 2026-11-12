@@ -24,6 +24,20 @@ class ListSettings extends ListRecords
             Action::make('appProfiles')->label('App-Module nach Profil')->icon('heroicon-o-squares-2x2')
             ->visible(fn () => \App\ClubUnio\Resources\AccessProfileResource::canViewAny())
             ->url(fn () => \App\ClubUnio\Resources\AccessProfileResource::getUrl()),
+            Action::make('mailDelivery')->label(__('mail_delivery.title'))->icon('heroicon-o-envelope')
+                ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
+                ->fillForm(function () {
+                    $tenant = Filament::getTenant();
+                    abort_unless(BexioConnectionService::canManage(Filament::auth()->user(), $tenant), 403);
+
+                    return ['reply_to' => app(\App\ClubUnio\Services\TenantMailSettings::class)->replyTo($tenant->id)];
+                })
+                ->schema([\Filament\Forms\Components\TextInput::make('reply_to')
+                    ->label(__('mail_delivery.reply_to'))->helperText(__('mail_delivery.help'))->email()->maxLength(254)])
+                ->action(function (array $data) {
+                    app(\App\ClubUnio\Services\TenantMailSettings::class)->save(Filament::auth()->user(), Filament::getTenant(), $data['reply_to'] ?? null);
+                    \Filament\Notifications\Notification::make()->title(__('mail_delivery.saved'))->success()->send();
+                }),
             Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')
             ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
             ->url(fn () => route('clubunio.bexio.show'))];
