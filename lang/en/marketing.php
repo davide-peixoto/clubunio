@@ -149,6 +149,13 @@ return json_decode(<<<'JSON'
   "ai_nav": "AI",
   "ai_title": "AI for everyday club work.",
   "ai_text": "The ClubUnio assistant helps club administrators prepare a daily overview, answer questions about members, registrations and bookings, and prepare next steps. AI can also help create training plans.",
-  "ai_note": "External AI features are enabled after approval. Authorised users review and confirm proposed changes."
+  "ai_note": "External AI features are enabled after approval. Authorised users review and confirm proposed changes.",
+  "analytics_settings": "Analytics settings",
+  "analytics_text": "Google Analytics helps us understand how the website is used. You can change your choice here at any time.",
+  "analytics_allow": "Allow analytics",
+  "analytics_deny": "Decline",
+  "inquiry_captcha": "Spam verification failed. Please try again.",
+  "captcha_notice": "Google reCAPTCHA protects this form when you submit it. Google’s privacy policy and terms apply.",
+  "captcha_terms": "Terms"
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

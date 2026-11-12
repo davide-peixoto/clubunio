@@ -129,3 +129,14 @@ müssen dem PHP-Pool als Umgebungsvariablen bereitgestellt werden. Das PHP-Skrip
 enthält keine Zugangsdaten. Die Abnahme prüfte die öffentliche Startseite,
 beide Sprachfassungen, Datenschutzseiten, CSS und einen ungültigen Formular-POST.
 Der echte Mailversand benötigt die SMTP-Konfiguration und einen Zustelltest.
+
+## reCAPTCHA und Analytics
+
+Statischer Export mit CLUBUNIO_RECAPTCHA_SITE_KEY (reCAPTCHA v3) und
+CLUBUNIO_GA4_ID (GA4-Mess-ID). Beide sind öffentliche Werte. Bei aktiviertem
+reCAPTCHA braucht PHP-FPM den geheimen Schlüssel in CLUBUNIO_RECAPTCHA_SECRET.
+Den Schlüssel vor dem Export-Deployment im Pool konfigurieren. Die Prüfung
+erfolgt vor SMTP mit Aktion inquiry, den beiden öffentlichen Hostnamen und
+einem Mindestscore von 0.5. GA4 lädt erst nach Zustimmung und lässt sich über
+die Analyse-Einstellungen widerrufen. Beide Sprachfassungen und die
+Datenschutzseiten enthalten die entsprechenden Hinweise.

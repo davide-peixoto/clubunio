@@ -149,6 +149,13 @@ return json_decode(<<<'JSON'
   "ai_nav": "KI",
   "ai_title": "KI für den Vereinsalltag.",
   "ai_text": "Der ClubUnio-Assistent unterstützt die Geschäftsstelle dabei, den Tagesüberblick zu erstellen, Fragen zu Mitgliedern, Anmeldungen und Reservationen zu beantworten und nächste Schritte vorzubereiten. KI kann auch bei der Erstellung von Trainingsplänen helfen.",
-  "ai_note": "Externe KI-Funktionen werden nach Freigabe aktiviert. Vorgeschlagene Änderungen werden von berechtigten Personen geprüft und bestätigt."
+  "ai_note": "Externe KI-Funktionen werden nach Freigabe aktiviert. Vorgeschlagene Änderungen werden von berechtigten Personen geprüft und bestätigt.",
+  "analytics_settings": "Analyse-Einstellungen",
+  "analytics_text": "Google Analytics hilft uns zu verstehen, wie die Webseite genutzt wird. Du kannst deine Wahl hier jederzeit ändern.",
+  "analytics_allow": "Analyse erlauben",
+  "analytics_deny": "Ablehnen",
+  "inquiry_captcha": "Die Spamprüfung ist fehlgeschlagen. Bitte versuche es erneut.",
+  "captcha_notice": "Beim Absenden schützt Google reCAPTCHA dieses Formular vor Spam. Es gelten die Datenschutzerklärung und Nutzungsbedingungen von Google.",
+  "captcha_terms": "Nutzungsbedingungen"
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);
