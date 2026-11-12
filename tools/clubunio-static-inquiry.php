@@ -60,7 +60,7 @@ fwrite($rate, (string) ($count + 1));
 fclose($rate);
 
 $captchaSecret = getenv('CLUBUNIO_RECAPTCHA_SECRET');
-if (CAPTCHA_REQUIRED || ($captchaSecret !== false && $captchaSecret !== '')) {
+if (CAPTCHA_REQUIRED) {
     $token = $_POST['captcha_token'] ?? '';
     if (!$captchaSecret || !is_string($token) || $token === '' || strlen($token) > 4096 || !function_exists('curl_init')) {
         $finish('captcha');
@@ -75,7 +75,7 @@ if (CAPTCHA_REQUIRED || ($captchaSecret !== false && $captchaSecret !== '')) {
     ]);
     $response = curl_exec($verification);
     $proof = is_string($response) ? json_decode($response, true) : null;
-    if (($proof['success'] ?? false) !== true
+    if (($proof['success'] ?? false) !== true || !empty($proof['error-codes'])
         || ($proof['action'] ?? '') !== 'inquiry'
         || !in_array($proof['hostname'] ?? '', ['clubunio.com', 'www.clubunio.com'], true)
         || !is_numeric($proof['score'] ?? null) || $proof['score'] < 0.5) {
