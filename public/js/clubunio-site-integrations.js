@@ -3,6 +3,7 @@ const analyticsId = integrations?.dataset.analytics;
 if (analyticsId) {
     const panel = document.querySelector('#analytics-settings');
     const preference = 'clubunio-analytics-v1';
+    const isTagManager = analyticsId.startsWith('GTM-');
     const disableKey = 'ga-disable-' + analyticsId;
     let started = false;
     function startAnalytics() {
@@ -15,15 +16,20 @@ if (analyticsId) {
             analytics_storage: 'granted', ad_storage: 'denied',
             ad_user_data: 'denied', ad_personalization: 'denied'
         });
-        gtag('js', new Date());
-        gtag('config', analyticsId, {
-            allow_google_signals: false,
-            allow_ad_personalization_signals: false,
-            page_location: location.origin + location.pathname
-        });
+        if (isTagManager) {
+            window.dataLayer.push({'gtm.start': Date.now(), event: 'gtm.js'});
+        } else {
+            gtag('js', new Date());
+            gtag('config', analyticsId, {
+                allow_google_signals: false,
+                allow_ad_personalization_signals: false,
+                page_location: location.origin + location.pathname
+            });
+        }
         const script = document.createElement('script');
         script.async = true;
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(analyticsId);
+        const scriptPath = isTagManager ? 'gtm.js' : 'gtag/js';
+        script.src = 'https://www.googletagmanager.com/' + scriptPath + '?id=' + encodeURIComponent(analyticsId);
         document.head.append(script);
     }
     if (localStorage.getItem(preference) === 'allow') startAnalytics();
@@ -46,6 +52,7 @@ if (analyticsId) {
                 }
             }
             panel.open = false;
+            if (choice === 'deny' && isTagManager && started) location.reload();
         });
     });
 }

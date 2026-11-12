@@ -9,10 +9,10 @@ from urllib.request import urlopen
 
 root = Path(__file__).resolve().parents[1]
 output = Path(sys.argv[1])
-analytics_id = os.getenv('CLUBUNIO_GA4_ID', '')
+analytics_id = os.getenv('CLUBUNIO_GTM_ID') or os.getenv('CLUBUNIO_GA4_ID', '')
 captcha_key = os.getenv('CLUBUNIO_RECAPTCHA_SITE_KEY', '')
-if analytics_id and not re.fullmatch(r'G-[A-Z0-9]+', analytics_id):
-    raise SystemExit('Invalid GA4 measurement ID')
+if analytics_id and not re.fullmatch(r'(?:G|GTM)-[A-Z0-9]+', analytics_id):
+    raise SystemExit('Invalid Google measurement or container ID')
 if captcha_key and not re.fullmatch(r'[A-Za-z0-9_-]+', captcha_key):
     raise SystemExit('Invalid reCAPTCHA site key')
 output.mkdir(parents=True, exist_ok=False)
@@ -54,7 +54,7 @@ for locale in ('de', 'en'):
         if analytics_id or (captcha_key and not subpage):
             integration = (f'<script defer id="site-integrations" data-analytics="{analytics_id}" '
                            f'data-captcha="{captcha_key if not subpage else ""}" '
-                           'src="/js/clubunio-site-integrations.js?v=1"></script>')
+                           'src="/js/clubunio-site-integrations.js?v=2"></script>')
             html = html.replace('</body>', integration + '</body>')
         (target / 'index.html').write_text(html, encoding='utf-8')
 assets = ['favicon.ico', 'css/clubunio-marketing.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg', 'brand/blue-v1/clubunio-symbol.svg']
