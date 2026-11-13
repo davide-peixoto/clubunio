@@ -27,9 +27,6 @@ final class SocialJobService
             return $job;
         });
         $teams = $this->domain($tenant, 'teams')->where('active', true)->orderBy('name')->get(['id', 'name', 'sfv_team_id']);
-        $versions = $this->data->table($tenant->id, 'template_versions')->whereIn('template_id', $jobs->pluck('template_id'))
-            ->get(['template_id', 'revision'])->map(fn ($version) => $version->template_id.':'.$version->revision)->flip();
-
         return [
             'jobs' => $jobs, 'teams' => $teams,
             'templates' => $this->data->table($tenant->id, 'templates')->where('archived', false)->orderBy('name')->get(['id', 'name', 'revision']),
@@ -38,7 +35,8 @@ final class SocialJobService
             'auto_allowed' => $this->permissions->allows($actor, $tenant, 'social_media', 'send')
                 && $this->permissions->allows($actor, $tenant, 'social_media', 'approve'),
             'runner_enabled' => $this->ready(),
-            'saved_versions' => $jobs->mapWithKeys(fn ($job) => [$job->id => $versions->has($job->template_id.':'.$job->template_revision)]),
+            // The job's composite foreign key guarantees its pinned revision exists.
+            'saved_versions' => $jobs->mapWithKeys(fn ($job) => [$job->id => true]),
         ];
     }
 

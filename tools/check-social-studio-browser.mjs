@@ -30,17 +30,34 @@ try {
     const errors = [];
     const exports = [];
     const savedJobs = [];
+    const reads = [];
+    const scripts = [];
     let background;
     page.on('pageerror', error => errors.push(error.message));
     await page.route('http://clubunio.test/**', async route => {
-        const path = new URL(route.request().url()).pathname;
+        const url = new URL(route.request().url());
+        const path = url.pathname;
         if (path === '/') return route.fulfill({ contentType: 'text/html', body: '<link rel="stylesheet" href="/build/' + entry.css[0] + '">'
             + '<script type="module" src="/build/' + entry.file + '"></script>' + markup });
-        if (path.startsWith('/build/')) return route.fulfill({ path: 'public' + path,
-            contentType: path.endsWith('.css') ? 'text/css' : 'text/javascript' });
+        if (path.startsWith('/build/')) {
+            if (path.endsWith('.js')) scripts.push(path);
+            return route.fulfill({ path: 'public' + path, contentType: path.endsWith('.css') ? 'text/css' : 'text/javascript' });
+        }
         if (path.endsWith('/media')) return route.fulfill({ contentType: 'image/png', body: background });
-        if (path.endsWith('/jobs')) return route.fulfill({ json: { jobs: [], teams: [{ id: 42, name: 'Women United' }],
-            templates: data.templates, runs: [], languages: ['de', 'en'], saved_versions: {}, auto_allowed: true, runner_enabled: true } });
+        if (path.endsWith('/jobs')) throw new Error('Unexpected second jobs request');
+        if (path.endsWith('/state')) {
+            const section = url.searchParams.get('section');
+            reads.push(section);
+            const { date, club, permissions, more } = data;
+            const payload = { date, club, permissions, more };
+            if (section === 'today') payload.fixtures = data.fixtures;
+            if (section === 'posts') Object.assign(payload, { posts: data.posts, test_channels: data.test_channels });
+            if (['templates', 'editor'].includes(section)) payload.templates = data.templates;
+            if (['media', 'editor'].includes(section)) payload.media = data.media;
+            if (section === 'jobs') payload.job_data = { jobs: [], teams: [{ id: 42, name: 'Women United' }], templates: data.templates,
+                runs: [], languages: ['de', 'en'], saved_versions: {}, auto_allowed: true, runner_enabled: true };
+            return route.fulfill({ json: payload });
+        }
         if (path.endsWith('/job-save')) {
             savedJobs.push(route.request().postDataJSON());
             return route.fulfill({ json: { id: mediaId } });
@@ -68,9 +85,17 @@ try {
         return c.toDataURL().split(',')[1];
     }), 'base64');
     await page.goto('http://clubunio.test/');
+    await page.getByRole('checkbox', { name: /Test United/ }).waitFor();
+    assert.deepEqual(reads, ['today']);
     await page.getByRole('button', { name: 'Templates', exact: true }).click();
+    await page.getByRole('button', { name: 'New template: Matchday' }).waitFor();
+    assert.deepEqual(reads, ['today', 'templates']);
+    const canvasPath = '/build/' + manifest[entry.dynamicImports[0]].file;
+    assert.ok(!scripts.includes(canvasPath));
     await page.getByRole('button', { name: 'New template: Matchday' }).click();
     await page.locator('[data-tools] select').first().selectOption(mediaId);
+    assert.equal(reads.at(-1), 'editor');
+    assert.ok(scripts.includes(canvasPath));
     await page.getByRole('button', { name: 'Use as background' }).click();
     await page.locator('[data-properties]').getByRole('button', { name: 'Crop' }).click();
     const crop = page.locator('dialog[open]').last();
@@ -81,8 +106,10 @@ try {
     await page.getByRole('button', { name: 'Save template' }).click();
     await page.getByText('Saved.').waitFor();
     assert.equal(data.templates[0].design.layers[0].crop.x, .2);
+    const beforeJobs = reads.length;
     await page.getByRole('button', { name: 'Scheduled jobs' }).click();
     await page.getByRole('button', { name: 'New scheduled job' }).click();
+    assert.deepEqual(reads.slice(beforeJobs), ['jobs']);
     const job = page.getByRole('dialog', { name: 'New scheduled job' });
     await job.locator('input[type=text]').fill('Women Matchday');
     await job.getByLabel('Time', { exact: true }).fill('08:15');

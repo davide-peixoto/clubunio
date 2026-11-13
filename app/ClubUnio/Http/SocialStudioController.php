@@ -3,7 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\{Account, Tenant};
-use App\ClubUnio\Services\{ActiveTenant, ModulePermissionService, SocialMetaTestPublisher, SocialStudioData};
+use App\ClubUnio\Services\{ActiveTenant, ModulePermissionService, SocialJobService, SocialMetaTestPublisher, SocialStudioData};
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Storage};
@@ -36,7 +36,8 @@ final class SocialStudioController
             'context.revision' => 'required|uuid', 'context.host' => 'sometimes|required|string|max:253',
         ])['context'];
         $context['tenant'] = (int) $context['tenant'];
-        app(ActiveTenant::class)->assertSnapshot($request, $context);
+        // The GET middleware already resolved the tenant; writes keep the fresh resolution.
+        app(ActiveTenant::class)->assertSnapshot($request, $context, $request->isMethod('GET') ? $tenant : null);
         $permissions = app(ModulePermissionService::class);
         $permissions->authorize($actor, $tenant, 'social_media', 'view');
         if ($request->isMethod('GET')) {
@@ -44,8 +45,8 @@ final class SocialStudioController
                 'state' => $this->state($request, $tenant, $actor),
                 'template' => $this->template($request, $tenant),
                 'media', 'image' => $this->privateImage($request, $tenant, $operation),
-                'jobs' => app(\App\ClubUnio\Services\SocialJobService::class)->index($actor, $tenant),
-                'job-preview' => app(\App\ClubUnio\Services\SocialJobService::class)->preview($actor, $tenant, $request->all()),
+                'jobs' => app(SocialJobService::class)->index($actor, $tenant),
+                'job-preview' => app(SocialJobService::class)->preview($actor, $tenant, $request->all()),
             };
         } else {
             $function = in_array($operation, ['template-save', 'post-save'], true) && ! $request->filled('id')
@@ -61,7 +62,7 @@ final class SocialStudioController
                 'post-save' => $this->savePost($request, $tenant, $actor),
                 'post-approve', 'post-archive' => $this->updatePost($request, $tenant, $actor, $operation),
                 'publish' => $this->publish($request, $tenant, $actor),
-                'job-save' => app(\App\ClubUnio\Services\SocialJobService::class)->save($actor, $tenant, $request->all()),
+                'job-save' => app(SocialJobService::class)->save($actor, $tenant, $request->all()),
             };
         }
 
@@ -82,13 +83,47 @@ final class SocialStudioController
     private function state(Request $r, Tenant $tenant, Account $actor): array
     {
         $id = $tenant->id;
-        $date = $r->validate(['date' => 'nullable|date_format:Y-m-d'])['date'] ?? now('Europe/Zurich')->toDateString();
+        $input = $r->validate(['date' => 'nullable|date_format:Y-m-d', 'section' => 'nullable|in:today,posts,templates,media,jobs,editor']);
+        $section = $input['section'] ?? null;
+        $date = $input['date'] ?? now('Europe/Zurich')->toDateString();
         $permissions = app(ModulePermissionService::class);
         $archive = $r->boolean('archived');
+        $state = [
+            'date' => $date, 'club' => $tenant->name, 'more' => [],
+            'permissions' => collect(['create', 'update', 'upload', 'download', 'copy', 'approve', 'deactivate', 'restore', 'send', 'schedule'])
+                ->mapWithKeys(fn ($fn) => [$fn => $permissions->allows($actor, $tenant, 'social_media', $fn)]),
+        ];
+        if ($section === null || $section === 'today') {
+            $state['fixtures'] = $this->data->fixtures($tenant, $date);
+        }
+        if ($section === null || $section === 'posts') {
+            [$state['posts'], $state['more']['posts']] = $this->posts($id, $archive);
+            $state['test_channels'] = array_values(array_filter(SocialStudioData::CHANNELS, fn ($channel) => $this->meta->target($id, $channel)));
+        }
+        foreach ([
+            'templates' => ['updated_at', ['id', 'name', 'revision', 'archived']],
+            'media' => ['created_at', ['id', 'name', 'archived']],
+        ] as $key => [$order, $columns]) {
+            if ($section === null || $section === $key || $section === 'editor') {
+                $list = $this->data->table($id, $key)->where('archived', $section !== 'editor' && $archive)->orderByDesc($order)
+                    ->simplePaginate(30, $columns, $key.'_page', $section === 'editor' ? 1 : null);
+                $state[$key] = $list->items();
+                $state['more'][$key] = $list->hasMorePages();
+            }
+        }
+        if ($section === 'jobs') {
+            $state['job_data'] = app(SocialJobService::class)->index($actor, $tenant);
+        }
+
+        return $state;
+    }
+
+    private function posts(int $id, bool $archive): array
+    {
         $postList = $this->data->table($id, 'posts')->where('state', $archive ? '=' : '!=', 'archived')
             ->orderByDesc('updated_at')->simplePaginate(20, ['id', 'title', 'kind', 'caption', 'state', 'revision', 'targets', 'snapshot', 'updated_at'], 'posts_page');
-        $deliveries = $this->data->table($id, 'deliveries')->whereIn('post_id', collect($postList->items())->pluck('id'))
-            ->get(['post_id', 'channel', 'state', 'remote_id'])->groupBy('post_id');
+        $deliveries = $postList->isEmpty() ? collect() : $this->data->table($id, 'deliveries')
+            ->whereIn('post_id', collect($postList->items())->pluck('id'))->get(['post_id', 'channel', 'state', 'remote_id'])->groupBy('post_id');
         $posts = collect($postList->items())->map(function ($row) use ($deliveries) {
             $row->targets = $this->data->decode($row->targets);
             $row->snapshot = $this->data->decode($row->snapshot);
@@ -96,19 +131,7 @@ final class SocialStudioController
 
             return $row;
         });
-        $templates = $this->data->table($id, 'templates')->where('archived', $archive)->orderByDesc('updated_at')
-            ->simplePaginate(30, ['id', 'name', 'revision', 'archived'], 'templates_page');
-        $media = $this->data->table($id, 'media')->where('archived', $archive)->orderByDesc('created_at')
-            ->simplePaginate(30, ['id', 'name', 'archived'], 'media_page');
-
-        return [
-            'date' => $date, 'club' => $tenant->name, 'fixtures' => $this->data->fixtures($tenant, $date),
-            'posts' => $posts, 'templates' => $templates->items(), 'media' => $media->items(),
-            'more' => ['posts' => $postList->hasMorePages(), 'templates' => $templates->hasMorePages(), 'media' => $media->hasMorePages()],
-            'permissions' => collect(['create', 'update', 'upload', 'download', 'copy', 'approve', 'deactivate', 'restore', 'send', 'schedule'])
-                ->mapWithKeys(fn ($fn) => [$fn => $permissions->allows($actor, $tenant, 'social_media', $fn)]),
-            'test_channels' => array_values(array_filter(SocialStudioData::CHANNELS, fn ($channel) => $this->meta->target($id, $channel))),
-        ];
+        return [$posts, $postList->hasMorePages()];
     }
 
     private function template(Request $r, Tenant $tenant): array

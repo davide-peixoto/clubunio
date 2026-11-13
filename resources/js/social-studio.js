@@ -1,4 +1,3 @@
-import { Canvas, FabricImage, Rect, Textbox } from 'fabric';
 import './social-studio.css';
 
 const dimensions = { portrait: 1350, square: 1080 };
@@ -52,7 +51,7 @@ function mount(root) {
     const archive = $('[data-archived]');
     const pages = { posts: 1, templates: 1, media: 1 };
     const demo = { date: '2026-09-12', fixtures: [{ time: '15:00', home: t('sample_home'), away: t('sample_away'), place: 'Arena 1', score: [3, 1] }] };
-    let state, jobs, tab = 'today', selection = new Set(), editor, canvas, generation = 0, requestGeneration = 0, busy = false, hydrating = false;
+    let state, jobs, tab = 'today', selection = new Set(), editor, canvas, fabric, generation = 0, pending, busy = false, hydrating = false;
     const src = new Map();
 
     function url(op, params = {}) {
@@ -61,13 +60,13 @@ function mount(root) {
         Object.entries(params).forEach(([key, value]) => { if (value !== '') link.searchParams.set(key, value); });
         return link;
     }
-    async function request(op, params = {}, body = null) {
+    async function request(op, params = {}, body = null, signal) {
         const headers = { Accept: 'application/json', 'X-CSRF-TOKEN': config.csrf };
         if (body && !(body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
             body = JSON.stringify(body);
         }
-        const result = await fetch(url(op, params), { method: body ? 'POST' : 'GET', headers, body, cache: 'no-store' });
+        const result = await fetch(url(op, params), { method: body ? 'POST' : 'GET', headers, body, signal, cache: 'no-store' });
         if (!result.ok) {
             const data = await result.json().catch(() => ({}));
             const validation = data.errors?.social?.[0];
@@ -98,24 +97,35 @@ function mount(root) {
         } finally { busy = false; }
     }
     async function load() {
-        const serial = ++requestGeneration;
+        pending?.abort();
+        const current = pending = new AbortController();
+        const section = tab;
+        const params = { section, date: date.value };
+        if (Object.hasOwn(pages, section)) Object.assign(params, { archived: archive.checked ? 1 : 0, [section + '_page']: pages[section] });
+        root.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === section));
+        $('[data-archive]').hidden = section === 'today' || section === 'jobs';
+        $('[data-date-label]').hidden = section !== 'today';
         workspace.setAttribute('aria-busy', 'true');
+        workspace.inert = true;
+        alert(message, '');
         try {
-            const next = await request('state', {
-                date: date.value, archived: archive.checked ? 1 : 0,
-                posts_page: pages.posts, templates_page: pages.templates, media_page: pages.media,
-            });
-            if (serial !== requestGeneration) return;
-            const jobData = tab === 'jobs' ? await request('jobs') : null;
-            if (serial !== requestGeneration) return;
+            const next = await request('state', params, null, current.signal);
+            if (current !== pending) return;
             state = next;
-            jobs = jobData;
+            jobs = next.job_data;
             date.value = state.date;
             render();
         } catch (error) {
-            if (serial === requestGeneration) alert(message, error.message, true);
+            if (current === pending) {
+                workspace.replaceChildren();
+                alert(message, error.message, true);
+            }
         } finally {
-            if (serial === requestGeneration) workspace.setAttribute('aria-busy', 'false');
+            if (current === pending) {
+                pending = null;
+                workspace.inert = false;
+                workspace.setAttribute('aria-busy', 'false');
+            }
         }
     }
     const perm = key => Boolean(state?.permissions[key]);
@@ -139,10 +149,7 @@ function mount(root) {
         return a;
     }
     function render() {
-        root.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === tab));
         if ($('[data-tab="jobs"]')) $('[data-tab="jobs"]').hidden = !perm('schedule');
-        $('[data-archive]').hidden = tab === 'today' || tab === 'jobs';
-        $('[data-date-label]').hidden = tab !== 'today';
         const items = [];
         if (tab === 'today') {
             const primary = box();
@@ -357,8 +364,8 @@ function mount(root) {
 
     function openTemplate(kind, template = null) {
         perform(async () => {
-            const saved = template ? await request('template', { id: template.id }) : null;
-            start({
+            const [catalog, saved] = await Promise.all([editorCatalog(), template ? request('template', { id: template.id }) : null]);
+            start(catalog, {
                 mode: 'template', kind: kind ?? 'free', name: template?.name ?? t(kind), id: template?.id,
                 revision: template?.revision, snapshot: demo, readonly: template ? template.archived || !perm('update') : !perm('create'),
                 design: saved?.design ?? defaultDesign(kind, config.labels),
@@ -366,32 +373,42 @@ function mount(root) {
         });
     }
     function openPost(kind, selected) {
-        start({
-            mode: 'post', kind, name: t(kind), caption: '', targets: [...channels],
-            snapshot: snapshotFor(kind, state.date, selected), design: defaultDesign(kind, config.labels),
+        perform(async () => {
+            const snapshot = snapshotFor(kind, state.date, selected);
+            start(await editorCatalog(), {
+                mode: 'post', kind, name: t(kind), caption: '', targets: [...channels],
+                snapshot, design: defaultDesign(kind, config.labels),
+            });
         });
     }
     function editPost(post) {
         perform(async () => {
-            const saved = await request('template', { id: post.id, post: 1 });
-            const fresh = post.kind === 'free' ? [] : (await request('state', { date: post.snapshot.date })).fixtures;
+            const [catalog, saved, { fixtures: fresh }] = await Promise.all([
+                editorCatalog(), request('template', { id: post.id, post: 1 }),
+                post.kind === 'free' ? { fixtures: [] } : request('state', { section: 'today', date: post.snapshot.date }),
+            ]);
             const matched = (post.snapshot.fixtures ?? []).map(f => fresh.find(now => now.id === f.id)).filter(Boolean);
             if (post.kind !== 'free' && (matched.length !== post.snapshot.fixtures.length || (post.kind === 'result' && !matched[0]?.score))) {
                 throw new Error(t('stale'));
             }
-            start({
+            start(catalog, {
                 mode: 'post', kind: post.kind, name: post.title, caption: post.caption, targets: post.targets, id: post.id,
                 revision: post.revision, snapshot: snapshotFor(post.kind, post.snapshot.date, matched), design: saved.design,
             });
         });
     }
-    function start(options) {
-        editor = { ...options, date: state.date, media: archive.checked ? [] : [...state.media], templates: archive.checked ? [] : [...state.templates],
+    async function editorCatalog() {
+        const [catalog, library] = await Promise.all([request('state', { section: 'editor' }), fabric ?? import('./social-studio-canvas.js')]);
+        fabric = library;
+        return catalog;
+    }
+    function start({ media, templates }, options) {
+        editor = { ...options, date: state.date, media, templates,
             active: -1, history: [clone(options.design)], cursor: 0, dirty: false };
         alert(editorError, '');
         dialog.showModal();
         if (!canvas) {
-            canvas = new Canvas($('[data-canvas]'), { selection: false, preserveObjectStacking: true });
+            canvas = new fabric.Canvas($('[data-canvas]'), { selection: false, preserveObjectStacking: true });
             canvas.on('selection:created', selectionChanged);
             canvas.on('selection:updated', selectionChanged);
             canvas.on('selection:cleared', () => {
@@ -426,12 +443,13 @@ function mount(root) {
         canvas.setViewportTransform([ratio, 0, 0, ratio, 0, 0]);
     }
     async function imageSource(id) {
-        if (!src.has(id)) src.set(id, FabricImage.fromURL(url('media', { id }).href).then(img => img.getElement()).catch(error => {
+        if (!src.has(id)) src.set(id, fabric.FabricImage.fromURL(url('media', { id }).href).then(img => img.getElement()).catch(error => {
             src.delete(id); throw error;
         }));
         return src.get(id);
     }
     async function redraw() {
+        const { FabricImage, Rect, Textbox } = fabric;
         const serial = ++generation;
         const current = editor;
         if (!current) return false;
