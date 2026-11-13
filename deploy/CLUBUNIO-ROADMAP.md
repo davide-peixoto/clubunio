@@ -1,5 +1,9 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Veo-Aufnahmeplanung
+
+ClubUnio erstellt einen Wochenplan für fest montierte Kameras anhand von SFV-Spielen und bestätigten Platzzuteilungen. Kameras werden je Platz und Aufnahmen je Saisonmannschaft konfiguriert. [Bedienung und Abnahme](CLUBUNIO-VEO.md).
+
 ## Geplante Social-Media-Beiträge (13.11.2026)
 
 Tägliche Spieltagsposts und nächtliche SFV-Resultate nach Mannschaft,

@@ -1,5 +1,9 @@
 # ClubUnio migration work packages
 
+## Veo-Aufnahmeplanung
+
+Additive Migration `2026_11_13_002100_veo_recording_plan.php` für Kamera- und Mannschaftszuordnungen. Rückweg über den vorigen Web-Release mit Erhalt der Konfiguration. [Migration und Abnahme](CLUBUNIO-VEO.md).
+
 ## Sichere Anmeldung: Passkey und Authenticator
 
 Additive Migration `2026_11_13_001000_account_security`: drei Tabellen fuer
