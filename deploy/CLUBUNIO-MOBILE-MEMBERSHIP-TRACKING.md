@@ -65,3 +65,23 @@ DEV-Stand 13.11.2026. Der authentifizierte Endpunkt läuft im Release
 ist aktiv, der neue Endpunkt verlangt ohne Sitzung HTTP 401. Der App-Einstieg
 benötigt einen Build ab 78b4d83. Die separaten öffentlichen Startscreen-Abläufe
 sind auf DEV und Stage derzeit deaktiviert. Es wurde kein echter Antrag erstellt.
+
+## Aktivierungsstand am 13.11.2026
+
+- DEV: Öffentliche «Neue Mitgliedschaft» für SV Sissach aktiv. Live geprüft
+  über Bootstrap und Vereinsliste. Release 20261113-clubunio-public-intake.
+  Additive Tracking-Spalte mit Mandanten-Fremdschlüssel, Zweckprüfung und
+  Index auf PostgreSQL-Datenbank clubunio_dev im Schema clubunio angewendet.
+- DEV: Antrag für ein weiteres Kind mit einem bestehenden Elternkonto über
+  die authentifizierten Routen erfolgreich. Zuordnung und Wiederholung ohne
+  Duplikat geprüft. Separat Antrag, E-Mail-Bestätigung, Login und Statusabfrage
+  mit simuliertem Mailversand erfolgreich. Beide Tests zurückgerollt.
+- Stage: Authentifizierte Routen bereitgestellt (21ef35c), HTTP 401 ohne
+  Sitzung geprüft. In der geprüften Stage-Vereinskopie war kein aktives
+  Elternkonto mit genehmigter Elternverknüpfung verfügbar. Öffentliche
+  Freigabe noch ausstehend, da der Server per SSH zeitweise nicht erreichbar war.
+- DEV und Stage: Für öffentliche Kontoregistrierung und Kontoerstellung
+  mit Statusverfolgung fehlen die Zugangsdaten und die Absenderadresse des
+  dedizierten TLS-Identity-Mailers. Nach privater Einrichtung die Schalter
+  für Mail, Registrierung und Membership-Account aktivieren, Cache neu
+  bauen und eine Bestätigung mit einem Testpostfach prüfen.

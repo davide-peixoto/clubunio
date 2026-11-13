@@ -108,6 +108,42 @@ class MobilePublicIdentityTest extends TestCase
         return $this->postJson($this->origin.'/api/mobile/v1/session',['username'=>$account->username,'password'=>'synthetic-password','device_name'=>'Synthetic identity'])
             ->assertOk()->json('data.token');
     }
+
+    public function test_signed_in_parent_can_submit_a_second_child_without_creating_an_account(): void
+    {
+        $this->insert('tenant_settings', ['area'=>'public', 'key'=>'REGISTRATION_PUBLIC_ENABLED',
+            'label'=>'Synthetic family intake', 'value_type'=>'boolean', 'encrypted_value'=>Crypt::encryptString('1'),
+            'enabled'=>true, 'is_secret'=>false]);
+        $this->insert('countries', ['code'=>'CH', 'iso3'=>'CHE', 'name'=>'Schweiz']);
+        $gender = $this->insert('genders', ['code'=>'X', 'name'=>'Synthetic gender']);
+        $billing = $this->insert('billing_recipients', ['code'=>'SELF', 'name'=>'Synthetic self', 'email_field'=>'email']);
+        $this->insert('registration_statuses', ['name'=>'Submitted', 'code'=>'submitted', 'workflow_key'=>'submitted']);
+        $member = $this->insert('members', ['first_name'=>'First', 'last_name'=>'Child', 'birth_date'=>now()->subYears(8)->toDateString()]);
+        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->owner->id)->update(['role'=>'parent']);
+        $this->insert('account_member_links', ['account_id'=>$this->owner->id, 'member_id'=>$member, 'kind'=>'parent', 'state'=>'approved']);
+        $url = $this->origin.'/api/mobile/v1/clubs/'.$this->tenant->id.'/membership-intake';
+        $this->getJson($url)->assertUnauthorized();
+        $token = $this->login($this->owner);
+        $other = $this->account('qa-family-other-'.bin2hex(random_bytes(6)));
+        $otherToken = $this->login($other);
+        $options = $this->withToken($token)->getJson($url)->assertOk()->assertJsonPath('data.CreateAccount', false)->json('data');
+        $claim = json_decode(Crypt::decryptString($options['claim']), true, flags:JSON_THROW_ON_ERROR);
+        $claim['at'] = time() - 4;
+        $input = ['claim'=>Crypt::encryptString(json_encode($claim, JSON_THROW_ON_ERROR)), 'consent'=>true, 'values'=>[
+            'Vorname'=>'Second', 'Nachname'=>'Child', 'Email'=>'family@example.test', 'Ort'=>'Teststadt',
+            'Geburtsdatum'=>now()->subYears(6)->toDateString(), 'Strasse'=>'Teststrasse', 'PLZ'=>'4450',
+            'Land'=>'CH', 'Nationalitaet'=>'CHE', 'Geschlecht'=>$gender, 'RechnungAn'=>$billing,
+        ]];
+        $this->withToken($otherToken)->postJson($url, $input)->assertConflict();
+        $this->withToken($token)->postJson($url, $input)->assertOk()->assertJsonPath('data.Submitted', true);
+        $this->postJson($url, $input)->assertOk();
+        $this->assertSame(1, $this->db->table('clubora.mobile_registration_requests')->where('tenant_id', $this->tenant->id)
+            ->where('account_id', $this->owner->id)->where('request_key', $claim['key'])->count());
+        $this->assertSame(1, $this->db->table('clubora.registrations')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->challenges()->count());
+        Mail::assertNothingSent();
+    }
     public function test_new_email_proof_creates_pending_member_without_private_links_and_never_reuses_accounts(): void
     {
         $email='qa-new-'.bin2hex(random_bytes(6)).'@example.test'; $row=$this->requestRegister($email);
