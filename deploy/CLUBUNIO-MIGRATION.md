@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+## Kampagnen nach der Migration
+
+Der Stammdaten-Pilot uebernimmt keine Alt-Kampagnen und startet keinen
+Versand. Empfaenger werden in ClubUnio ausgewaehlt; Stammdatenantraege
+benoetigen die Freigabe der Geschaeftsstelle. Details: [Kampagnen](CLUBUNIO-CAMPAIGNS.md).
+
 ## Stage-Schema clubunio (10.11.2026)
 
 Stage-spezifischer Code und Migrationspfad auf `codex/stage-clubunio-schema`.

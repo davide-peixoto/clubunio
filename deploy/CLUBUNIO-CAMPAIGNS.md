@@ -23,5 +23,9 @@ Familienempfaenger sind Folgepakete.
 Nur Stage: `2026_11_13_000500_member_campaigns.php` nach
 `StageMigrationTarget::authorize` anwenden. Zwei neue Tabellen und ein
 nullable Antragsteller fuer Kampagnenantraege, keine Bestandsmigration.
+Mit `deploy/apply-stage-member-campaigns.php` migrieren, danach
+`artisan route:cache` und `artisan view:clear` im Stage-Release ausfuehren.
+`deploy/check-stage-member-campaigns.php` benutzt synthetische Fixtures
+in einer Rueckrolltransaktion und blockiert echten Mailversand.
 Vor Code-Rollback offene Kampagnenantraege entscheiden und Links sperren;
 Tabellen und Auditverknuepfungen erhalten. DEV und PROD unveraendert.
