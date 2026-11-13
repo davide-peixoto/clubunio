@@ -33,7 +33,8 @@ try {
     $actor = new Account;
     $actor->forceFill(['username' => "campaign-$suffix@example.invalid", 'display_name' => 'Synthetic Office',
         'active' => true, 'password' => bcrypt(bin2hex(random_bytes(24)))])->save();
-    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
+    $require(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'social_media', 'view'), 'admin social access');
     $member = new Member;
     $member->forceFill(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Campaign',
         'birth_date' => '1985-01-01', 'email' => "member-$suffix@example.invalid", 'city' => 'Original',

@@ -46,8 +46,9 @@ Nach SMTP-Annahme kann die Geschaeftsstelle einen spaeteren permanenten
 Ruecklaeufer manuell erfassen; die Adresse wird mandantenbezogen gesperrt.
 Keine automatische Ruecklaeuferabholung. Keine Produktionsfreigabe.
 
-Vereinsadmins sehen Kampagnen des eigenen Vereins lesend. Bearbeitung,
-Einladungen und Entscheide bleiben der Geschaeftsstelle vorbehalten.
+Vereinsadmins haben dieselben Kampagnenrechte wie die Geschaeftsstelle im
+eigenen Verein. Freigabe und Versand behalten die Stage-Pilotgrenzen.
+Keine weitere Migration fuer diese Rechteanpassung.
 
 Die Geschaeftsstelle erstellt Entwuerfe mit E-Mail, Post oder beidem und
 bearbeitet die Empfaenger vor der Freigabe. Aktive Erwachsene sind

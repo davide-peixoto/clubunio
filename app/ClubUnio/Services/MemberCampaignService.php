@@ -9,10 +9,7 @@ class MemberCampaignService
 {
     public function canView(?Account $actor, ?Tenant $tenant): bool
     {
-        if ($this->allowed($actor, $tenant)) return true;
-        if (! $actor || ! $tenant || request()->attributes->has('clubunio_impersonation')) return false;
-
-        return app(MemberAccessService::class)->membership($actor, $tenant)?->role === 'admin';
+        return $this->allowed($actor, $tenant);
     }
 
     public const FIELDS = ['email', 'street', 'house_number', 'postal_code', 'city', 'mobile'];
@@ -114,7 +111,7 @@ class MemberCampaignService
     {
         return $actor && $tenant
             && ! request()->attributes->has('clubunio_impersonation')
-            && app(MemberAccessService::class)->membership($actor->fresh() ?? $actor, $tenant)?->role === 'office'
+            && in_array(app(MemberAccessService::class)->membership($actor->fresh() ?? $actor, $tenant)?->role, ['admin', 'office'], true)
             && app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'approve');
     }
 
