@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/clubunio-campaigns.css') }}?v=1">
     @php
         $channels = ['email' => __('campaign.email'), 'post' => __('campaign.post'), 'both' => __('campaign.both')];
         $open = $campaign && $campaign->released_at && ! $campaign->revoked_at && \Illuminate\Support\Carbon::parse($campaign->expires_at)->isFuture();
@@ -17,7 +18,7 @@
     </form>
     </x-filament::section>
     @endif
-    <div class="cu-admin-journal">
+    <div class="cu-admin-journal cu-campaign-overview">
     <table><thead><tr><th scope="col">{{ __('campaign.name') }}</th><th scope="col">{{ __('campaign.channel') }}</th><th scope="col">{{ __('Status') }}</th></tr></thead><tbody>
         @foreach($campaigns as $entry)
             <tr wire:key="campaign-{{ $entry->id }}">
