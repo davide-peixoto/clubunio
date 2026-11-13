@@ -39,18 +39,23 @@ class RegistrationDataService
         return $this->persist($actor, $tenant, $id, $input);
     }
 
-    public function submitPublic(Tenant $tenant, array $input, string $requestId): Registration
+    public function submitPublic(Tenant $tenant, array $input, string $requestId, ?string $ahv = null): Registration
     {
         app(PublicWebService::class)->authorize($tenant, 'registration');
         abort_unless(Str::isUuid($requestId), 422);
 
-        return DB::connection('clubunio')->transaction(function () use ($tenant, $input, $requestId) {
+        return DB::connection('clubunio')->transaction(function () use ($tenant, $input, $requestId, $ahv) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $existing = DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('request_id', $requestId)->where('tenant_id', $tenant->id)->first();
             if ($existing) {
                 return Registration::where('tenant_id', $tenant->id)->findOrFail($existing->registration_id);
             }
             $r = $this->persist(null, $tenant, null, $input);
+            if ($ahv !== null) {
+                $r->forceFill(['applicant_encrypted' => Crypt::encryptString(json_encode(
+                    array_intersect_key($this->values($r), array_flip(self::DETAILS)) + ['ahv' => $ahv], JSON_THROW_ON_ERROR,
+                ))])->save();
+            }
             DB::connection('clubunio')->table('clubora.public_registration_submissions')->insert(['request_id' => $requestId,
                 'tenant_id' => $tenant->id, 'registration_id' => $r->id]);
 

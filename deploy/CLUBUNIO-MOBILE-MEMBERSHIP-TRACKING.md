@@ -110,3 +110,16 @@ Bootstrap meldet Registrierung und Mitgliedsanmeldung aktiv. Die
 Formularoptionen bestätigen Kontoerstellung für SV Sissach auf DEV und
 Mobile Stage Test auf Stage. Kein Mailversand an ein Testpostfach während
 dieser Prüfung. Zugangsdaten verbleiben in den privaten Serverdateien.
+
+### Vollständiges mobiles Formular nach PHPMaker
+
+complete-intake-v1 gilt für die öffentliche Mitgliedschaft und den Einstieg
+aus einem bestehenden Konto. Der Formulartoken bindet die Version.
+Zusätzlich erforderlich sind Hausnummer, Geburtsort, Mobilnummer, AHV-Nummer,
+Vorverein-Auswahl, Passfoto und mindestens eine Ausweisdatei. Bei Minderjährigen
+sind beide Elternkontakte nötig. Bei vorhandenem Vorverein sind Name und
+Inland/Ausland erforderlich. Die E-Mail des Rechnungsempfängers wird geprüft.
+Die AHV-Nummer landet im verschlüsselten Antrag und wird bei Annahme in das
+bestehende verschlüsselte Mitgliedsfeld übernommen. Technische Statusfelder
+bleiben im Vereinsworkflow. Kein Schemawechsel. Ältere App-Builds verwenden
+das bisherige Formular. Stage braucht den Scanner und ein privates Upload-Ziel.

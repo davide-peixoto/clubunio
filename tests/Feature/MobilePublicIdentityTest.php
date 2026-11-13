@@ -279,6 +279,13 @@ class MobilePublicIdentityTest extends TestCase
             'Vorname'=>'Synthetic','Nachname'=>'Public applicant','Email'=>'synthetic@example.test','Ort'=>'Teststadt','Geburtsdatum'=>'2010-01-02',
             'Strasse'=>'Teststrasse','PLZ'=>'4450','Land'=>'CH','Nationalitaet'=>'CHE','Geschlecht'=>(string)$gender,'RechnungAn'=>(string)$billing]];
         $this->postJson($this->base().'/membership',array_replace($input,['values'=>$input['values']+['AHV'=>'not-allowed']]))->assertUnprocessable();
+        $complete = $this->getJson($this->base().'/options', ['X-ClubUnio-Mobile-Features'=>'complete-intake-v1'])
+            ->assertOk()->assertJsonPath('data.intake.CompleteIntake', true)->json('data.intake.claim');
+        $complete = json_decode(Crypt::decryptString($complete), true, flags:JSON_THROW_ON_ERROR);
+        $complete['at'] = time()-4;
+        $this->postJson($this->base().'/membership', array_replace($input, [
+            'claim'=>Crypt::encryptString(json_encode($complete, JSON_THROW_ON_ERROR)),
+        ]))->assertUnprocessable();
         $this->postJson($this->base().'/membership',$input)->assertOk()->assertExactJson(['data'=>['Submitted'=>true,'PendingAttachments'=>0]]);
         $this->postJson($this->base().'/membership',$input)->assertOk();
         $this->assertSame(1,$this->db->table('clubora.registrations')->where('tenant_id',$this->tenant->id)->count());
