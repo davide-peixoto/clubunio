@@ -110,6 +110,7 @@ return json_decode(<<<'JSON'
   "screen_expenses": "Spesen nachvollziehbar bearbeiten",
   "screen_signage": "Signage im Clubhaus",
   "screenshot": "Screenshot: :feature",
+  "lightbox_close": "Bild schliessen",
   "enlarge": "Ansicht vergrössern",
   "closing_label": "GEMEINSAM MEHR BEWEGEN.",
   "origin": "Im Baselbiet entwickelt. Für Vereine, die etwas bewegen.",

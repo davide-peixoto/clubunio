@@ -776,3 +776,32 @@ footer>div:last-child {
     height: auto;
     border-radius: 8px;
 }
+
+.marketing-lightbox {
+    max-width: 94vw;
+    max-height: 94vh;
+    padding: 38px 12px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: #101c2b;
+    color: white;
+}
+.marketing-lightbox::backdrop { background: rgb(5 14 26 / 85%); }
+.marketing-lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(94vh - 50px);
+    object-fit: contain;
+}
+.marketing-lightbox button {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 25px;
+    cursor: pointer;
+}
+a[data-lightbox] { cursor: zoom-in; }
+

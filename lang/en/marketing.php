@@ -110,6 +110,7 @@ return json_decode(<<<'JSON'
   "screen_expenses": "Review expenses clearly",
   "screen_signage": "Clubhouse signage",
   "screenshot": "Screenshot: :feature",
+  "lightbox_close": "Close image",
   "enlarge": "Enlarge view",
   "closing_label": "LET’S PLAY TOGETHER.",
   "origin": "Built in Basel-Landschaft, Switzerland. For clubs that make things happen.",
