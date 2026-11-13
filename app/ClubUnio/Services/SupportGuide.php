@@ -6,13 +6,24 @@ use Illuminate\Support\Facades\Http;
 
 final class SupportGuide
 {
-    public function answer(string $question, string $locale): array
+    public function topic(string $text): ?string
     {
-        $topic = match (true) {
-            (bool) preg_match('/passkey|authenticator|login|anmeld(en|ung)|sign.in/i', $question) => 'login',
-            (bool) preg_match('/spesen|expense|receipt/i', $question) => 'expense',
+        return match (true) {
+            (bool) preg_match('/passkey|authenticator|login|anmeld(en|ung)|sign.in/i', $text) => 'login',
+            (bool) preg_match('/spesen|expense|receipt/i', $text) => 'expense',
             default => null,
         };
+    }
+
+    public function answer(string $question, string $locale, ?string $previousTopic = null): array
+    {
+        $locale = in_array($locale, ['de', 'en'], true) ? $locale : 'de';
+        $topic = $this->topic($question);
+        // Only use conversation context for short, generic follow-ups.
+        if ($topic === null && in_array($previousTopic, ['login', 'expense'], true)
+            && preg_match('/^(?:and then|what next|how exactly|und dann|wie weiter|wie genau)[?!. ]*$/iu', trim($question))) {
+            $topic = $previousTopic;
+        }
         if ($topic === null) return ['text' => trans('support.handoff', locale: $locale), 'source' => null, 'ai' => false];
         $article = trans('support.faq.'.$topic, locale: $locale);
         $fallback = ['text' => $article['body'], 'source' => $topic, 'ai' => false];
@@ -26,10 +37,11 @@ final class SupportGuide
                     'instructions' => 'Summarize the provided public support article in its own language. Do not invent steps or request personal data. You cannot take any action.',
                     'input' => $article['title']."\n".$article['body'],
                 ]);
-            if ($result->successful()) {
+            if ($result->successful() && $result->json('status', 'completed') === 'completed') {
                 foreach ((array) $result->json('output') as $item) {
                     foreach ($item['content'] ?? [] as $part) {
-                        if (($part['type'] ?? null) === 'output_text' && is_string($part['text'] ?? null)) {
+                        if (($part['type'] ?? null) === 'output_text' && is_string($part['text'] ?? null)
+                            && trim($part['text']) !== '' && mb_strlen($part['text']) <= 2500) {
                             return ['text' => $part['text'], 'source' => $topic, 'ai' => true];
                         }
                     }

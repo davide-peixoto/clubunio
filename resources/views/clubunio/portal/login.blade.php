@@ -14,6 +14,9 @@
     @if(config('clubunio-security.enabled'))
         <a href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}">{{ trans('account-security.strong_login') }}</a>
     @endif
+    @if(config('clubunio-support.enabled'))
+        <a href="{{ route('clubunio.support.login-help') }}">{{ trans('support-intake.title') }}</a>
+    @endif
     <a class="admin-link" href="{{ url('/login') }}">{{ __('Verwaltung') }}</a>
 </section>
 @endsection

@@ -38,3 +38,16 @@ UI, embeddable widget, anonymous login-help intake, attachments, assignment,
 notifications, private knowledge retrieval, article editing, video content,
 conversational chat and queued ticket triage are not part of this initial slice.
 Do not enable autonomous responses or actions.
+
+## Follow-up integration
+
+Public sign-in help stores encrypted, unverified requests without checking
+account existence. Central-host requests go to the platform intake inbox;
+verified club-host requests go to that club's staff inbox. No email or reset
+is triggered by submission. Review retention before enabling public intake.
+Embed `/js/clubunio-help-widget.js` from the ClubUnio origin to expose the
+public help panel. Private support is not embedded on external sites.
+
+DEV provider smoke test: existing SV Sissach training project key,
+synthetic text only, HTTP 200 and completed. No key copied to support
+configuration. See [agent policy and worker setup](CLUBUNIO-SUPPORT-AI.md).

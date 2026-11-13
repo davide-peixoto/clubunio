@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'share_attachment' => 'Share attachment with platform support: :name',
+    'assignee' => 'Assigned to',
+    'unassigned' => 'Unassigned',
+    'assign' => 'Assign',
+    'attachment' => 'Attachment',
+    'video' => 'Video',
+    'published' => 'Published',
+    'triage' => 'AI suggestion',
+    'notice_title' => 'New support reply',
+    'notice_body' => 'Open your support request to read the reply.',
     'audience' => 'Visibility',
     'title' => 'Help & Support',
     'search' => 'Search articles',
