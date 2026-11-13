@@ -25,6 +25,7 @@ final class SocialStudioController
 
     public function __invoke(Request $request, string $operation)
     {
+        abort_unless(config('clubunio-social.enabled'), 404);
         abort_unless(in_array($operation, $request->isMethod('GET')
             ? ['state', 'media', 'image', 'template', 'jobs', 'job-preview'] : array_keys(self::WRITES), true), 404);
         $tenant = Filament::getTenant();
@@ -71,6 +72,7 @@ final class SocialStudioController
 
     public function testImage(int $tenantId, string $id)
     {
+        abort_unless(config('clubunio-social.enabled'), 404);
         abort_unless($this->meta->target($tenantId, 'instagram'), 404);
         abort_unless($this->data->table($tenantId, 'deliveries')->where('post_id', $id)
             ->where('channel', 'instagram')->where('state', 'sending')->exists(), 404);

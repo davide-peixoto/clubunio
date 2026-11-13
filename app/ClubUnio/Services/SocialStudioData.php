@@ -20,7 +20,7 @@ final class SocialStudioData
 
     public function table(int $tenant, string $name): Builder
     {
-        return DB::connection('clubunio')->table('clubora.social_'.$name)->where('tenant_id', $tenant);
+        return DB::connection('clubunio')->table('clubunio.social_'.$name)->where('tenant_id', $tenant);
     }
 
     public function json(mixed $value): string
@@ -79,7 +79,7 @@ final class SocialStudioData
         }
         if ($kind === 'result' && ($snapshot['source'] ?? null) === 'sfv_final') {
             $fixture = $snapshot['fixtures'][0];
-            $source = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)
+            $source = DB::connection('clubunio')->table('clubunio.sfv_schedule')->where('tenant_id', $tenant->id)
                 ->where('match_id', $fixture['id'])->first();
             abort_unless($source?->starts_at && $source->host_name === $fixture['home'] && $source->guest_name === $fixture['away']
                 && $source->location === $fixture['place']

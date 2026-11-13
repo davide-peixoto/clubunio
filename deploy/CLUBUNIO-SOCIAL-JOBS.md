@@ -37,7 +37,7 @@ Liberation Sans; Umbrüche können vom Browsereditor abweichen.
 
 Zwei additive Tabellen: `social_jobs` und `social_job_runs`. DEV nach
 verschlüsseltem, lesbar geprüftem PostgreSQL-Backup migriert:
-`php deploy/emit-vps-dev-social-studio-migration.php clubunio_dev jobs`.
+`php deploy/emit-vps-dev-social-studio-migration.php clubunio_dev jobs` auf `main`.
 Kein Import, keine Änderung an alten Wettkämpfen und keine Jobvorgaben.
 Bestehende Profile werden nicht erweitert. Die Jobausführung verwendet den
 bestehenden minutengenauen Pi-Scheduler und bleibt ausserhalb DEV aus.

@@ -29,6 +29,14 @@ Sechs additive Tabellen fuer Medien, Vorlagenversionen, bestaetigte Resultate,
 Beitraege und getrennte Meta-Testzustellungen. Kein Import und keine Aenderung
 an Wettkaempfen oder Profilzuordnungen. [Migration und Rueckweg](CLUBUNIO-SOCIAL-STUDIO.md).
 
+Stage: Social Studio und Jobtabellen sind im Branch auf das Schema `clubunio`
+angepasst. Beim spaeteren Deployment zuerst Backup und
+`php deploy/apply-stage-social.php` auf der geprueften Stage-Datenbank,
+danach Webmodul mit `CLUBUNIO_SOCIAL_ENABLED=true` freigeben und Konfiguration
+neu laden. Scheduler und Meta-Versand bleiben deaktiviert. Beim Ruecksprung
+Tabellen und Medien erhalten; Webmodul wieder deaktivieren. Der Branch-Push
+allein fuehrt keine Migration aus.
+
 ## Stage-Erstimport SV Sissach (09.11.2026)
 
 Eigener leerer Zielbestand `clubunio_stage` auf dem VPS. Aktueller lesender

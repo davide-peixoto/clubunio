@@ -56,7 +56,7 @@ vor einer manuellen Klärung bei Meta nicht erneut senden.
   keine Änderungen an Wettkämpfen, Benutzern oder Bestandsdateien.
 - `npm ci --ignore-scripts` und `npm run build`; Vite-Build in das
   Releasepaket aufnehmen. Fabric.js ist lokal gebündelt, ohne externes CDN.
-- Nach verschlüsselter, verifizierter DEV-Sicherung erzeugt
+- Auf `main`: Nach verschlüsselter, verifizierter DEV-Sicherung erzeugt
   `php deploy/emit-vps-dev-social-studio-migration.php clubunio_dev` die
   gezielte VPS-Migration. Einmal als PostgreSQL-Eigentümer gegen
   `clubunio_dev` ausführen; Transaktion und Ledger sind enthalten. Die

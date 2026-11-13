@@ -16,8 +16,8 @@ final class SocialStudioTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->statement('CREATE TABLE clubora.social_media (id TEXT, tenant_id INTEGER)');
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->statement('CREATE TABLE clubunio.social_media (id TEXT, tenant_id INTEGER)');
         Http::preventStrayRequests();
         Storage::fake('local');
     }
@@ -37,7 +37,7 @@ final class SocialStudioTest extends TestCase
     public function test_design_accepts_only_normalized_tenant_owned_media_and_crops(): void
     {
         $id = 'a93b41c8-f8a5-46f4-8a9d-79f302d38026';
-        DB::connection('clubunio')->table('clubora.social_media')->insert(['id' => $id, 'tenant_id' => 7]);
+        DB::connection('clubunio')->table('clubunio.social_media')->insert(['id' => $id, 'tenant_id' => 7]);
         $design = ['format' => 'portrait', 'background' => '#ffffff', 'layers' => [[
             'type' => 'image', 'media' => $id, 'x' => 0, 'y' => 0, 'w' => 1080, 'h' => 1350, 'angle' => 0,
             'crop' => ['x' => .2, 'y' => .25, 'w' => .4, 'h' => .6],
@@ -92,5 +92,13 @@ final class SocialStudioTest extends TestCase
     public function test_social_translation_groups_match(): void
     {
         self::assertSame(array_keys(require base_path('lang/en/social.php')), array_keys(require base_path('lang/de/social.php')));
+    }
+
+    public function test_stage_module_defaults_to_disabled_and_rejects_direct_controller_access(): void
+    {
+        self::assertFalse(config('clubunio-social.enabled'));
+        self::assertFalse(\App\ClubUnio\Pages\SocialStudio::canAccess());
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        app(\App\ClubUnio\Http\SocialStudioController::class)(\Illuminate\Http\Request::create('/social-data/state'), 'state');
     }
 }

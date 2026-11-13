@@ -16,7 +16,7 @@ private Daten bleiben `no-store`.
 Siebener-Median nach einem Aufwaermaufruf, gleicher DEV-Datenbestand, ohne
 Browser und Netzweg zum Endgeraet. Studio-JS beim Start: rund 98 → 10 KB
 komprimiert; Canvas bleibt ein eigener, bedarfsgeladener Chunk. Der
-CLI-Read-only-Probe `check-pi-dev-social-performance.php` vergleicht die
+CLI-Read-only-Probe `check-pi-dev-social-performance.php` auf `main` vergleicht die
 Projektionen mit der alten Antwort und prueft veralteten Mandantenkontext,
 ungueltige Abschnitte, Cache-Schutz und ausbleibende Provideraufrufe.
 Desktop-/Mobil-Browsertest mit synthetischen Daten: Lazy Loading, ein GET

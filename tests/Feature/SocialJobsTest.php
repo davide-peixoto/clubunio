@@ -35,8 +35,8 @@ final class SocialJobsTest extends TestCase
     {
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:']]);
         DB::purge('clubunio');
-        DB::connection('clubunio')->statement("ATTACH DATABASE ':memory:' AS clubora");
-        DB::connection('clubunio')->statement('CREATE TABLE clubora.social_media (tenant_id INTEGER, id TEXT, path TEXT)');
+        DB::connection('clubunio')->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        DB::connection('clubunio')->statement('CREATE TABLE clubunio.social_media (tenant_id INTEGER, id TEXT, path TEXT)');
         Storage::fake('local');
         $path = app(SocialJobRenderer::class)->render(7, [
             'format' => 'square', 'background' => '#153559', 'layers' => [[

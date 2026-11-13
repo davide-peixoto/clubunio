@@ -98,7 +98,7 @@ final class SocialJobService
         $db = DB::connection('clubunio');
 
         return config('clubunio-social.jobs_enabled') && rtrim((string) config('app.url'), '/') === config('clubunio-social.dev_origin')
-            && $db->getSchemaBuilder()->hasTable('clubora.social_jobs');
+            && $db->getSchemaBuilder()->hasTable('clubunio.social_jobs');
     }
 
     public function preview(Account $actor, Tenant $tenant, array $input)
@@ -138,7 +138,7 @@ final class SocialJobService
         $now = ($now ?? Time::now())->tz('Europe/Zurich');
         $this->refreshed = [];
         $done = 0;
-        $jobs = DB::connection('clubunio')->table('clubora.social_jobs')->where('enabled', true)->orderBy('id')->get();
+        $jobs = DB::connection('clubunio')->table('clubunio.social_jobs')->where('enabled', true)->orderBy('id')->get();
         foreach ($jobs as $job) {
             if (! self::due($now, $job->local_time, $job->kind)) {
                 continue;
@@ -273,8 +273,8 @@ final class SocialJobService
     private function dayFixtures(Tenant $tenant, string $date, array $ids, array $sfvIds): array
     {
         // Qualify the alias because both sources carry tenant_id.
-        $local = DB::connection('clubunio')->table('clubora.pitch_competition_teams as links')->where('links.tenant_id', $tenant->id)
-            ->join('clubora.team_seasons as ts', fn ($join) => $join->on('ts.id', '=', 'links.team_season_id')->on('ts.tenant_id', '=', 'links.tenant_id'))
+        $local = DB::connection('clubunio')->table('clubunio.pitch_competition_teams as links')->where('links.tenant_id', $tenant->id)
+            ->join('clubunio.team_seasons as ts', fn ($join) => $join->on('ts.id', '=', 'links.team_season_id')->on('ts.tenant_id', '=', 'links.tenant_id'))
             ->where('ts.active', true)->whereIn('ts.team_id', $ids)->select('links.competition_id');
         $source = $this->domain($tenant, 'sfv_schedule')->where(fn ($q) => $q->whereIn('team_a_id', $sfvIds)->orWhereIn('team_b_id', $sfvIds))->select('match_id');
         $ids = $this->domain($tenant, 'competitions')->where('active', true)->where('plays_on', $date)
@@ -369,6 +369,6 @@ final class SocialJobService
 
     private function domain(Tenant $tenant, string $table)
     {
-        return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id);
     }
 }
