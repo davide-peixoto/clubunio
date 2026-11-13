@@ -50,7 +50,7 @@ class RegistrationDataService
             if ($existing) {
                 return Registration::where('tenant_id', $tenant->id)->findOrFail($existing->registration_id);
             }
-            $r = $this->persist(null, $tenant, null, $input);
+            $r = $this->persist(null, $tenant, null, $input, $ahv !== null);
             if ($ahv !== null) {
                 $r->forceFill(['applicant_encrypted' => Crypt::encryptString(json_encode(
                     array_intersect_key($this->values($r), array_flip(self::DETAILS)) + ['ahv' => $ahv], JSON_THROW_ON_ERROR,
@@ -63,13 +63,13 @@ class RegistrationDataService
         });
     }
 
-    private function persist(?Account $actor, Tenant $tenant, ?int $id, array $input): Registration
+    private function persist(?Account $actor, Tenant $tenant, ?int $id, array $input, bool $completeIntake = false): Registration
     {
         if (array_diff(array_keys($input), [...self::CORE, ...self::DETAILS, 'revision'])) {
             throw ValidationException::withMessages(['first_name' => __('Nicht erlaubte Eingabefelder.')]);
         }
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $completeIntake) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             if ($actor) {
                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', $id ? 'update' : 'create');
@@ -87,7 +87,8 @@ class RegistrationDataService
             $old = $id ? $this->values($r) : [];
             $values = array_replace($old, array_diff_key($input, ['revision' => true]));
             $rules = ['first_name' => 'required|string|max:255', 'last_name' => 'required|string|max:255',
-                'email' => 'required|email:rfc|max:254', 'birth_date' => 'required|date_format:Y-m-d|before_or_equal:today',
+                'email' => ($completeIntake ? 'nullable' : 'required').'|email:rfc|max:254',
+                'birth_date' => 'required|date_format:Y-m-d|before_or_equal:today',
                 'city' => 'required|string|max:255', 'street' => 'required|string|max:255', 'postal_code' => 'required|string|max:20',
                 'house_number' => 'nullable|string|max:20', 'notes' => 'nullable|string|max:10000',
                 'birth_place' => 'nullable|string|max:255', 'previous_club' => 'nullable|string|max:255',

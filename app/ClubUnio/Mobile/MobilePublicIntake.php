@@ -159,7 +159,13 @@ final class MobilePublicIntake
                 abort_unless(app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
                 $identity = $request->duplicate();
                 $identity->setJson(new \Symfony\Component\HttpFoundation\InputBag());
-                $identity->replace(['email' => $registration->email, 'first_name' => $registration->first_name,
+                $accountEmail = $registration->email;
+                if ($complete && ! $accountEmail) {
+                    $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')
+                        ->where('tenant_id', $tenant->id)->where('id', $values['billing_recipient_id'])->value('email_field');
+                    $accountEmail = $values[$emailField] ?? null;
+                }
+                $identity->replace(['email' => $accountEmail, 'first_name' => $registration->first_name,
                     'last_name' => $registration->last_name, 'password' => $password, 'request_key' => $claim['key']]);
                 $identity->files->replace([]);
                 app(MobileIdentityChallenges::class)->request($identity, 'register', (int) $registration->id);

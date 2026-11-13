@@ -127,3 +127,10 @@ das bisherige Formular. Stage braucht den Scanner und ein privates Upload-Ziel.
 DEV: Release 20261113-clubunio-complete-intake, Rückweg
 20261113-clubunio-social-performance. HTTPS bestätigt den vollständigen
 Formularvertrag und aktivierte Uploads. App-Quellstand 4e3282b.
+
+Beim vollständigen App-Formular bestimmt der Rechnungsempfänger das
+Pflichtfeld für die Rechnungs-E-Mail. Die Spieleradresse kann leer bleiben,
+wenn Mutter oder Vater gewählt ist. Bei Minderjährigen bleiben beide
+Elternkontakte erforderlich. Für die Kontoaktivierung dient bei fehlender
+Spieleradresse die Rechnungs-E-Mail. Die Spieleradresse wird dabei nicht
+mit der Elternadresse überschrieben.
