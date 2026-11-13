@@ -1,5 +1,11 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Social Media: Ladezeit (13.11.2026)
+
+Aktiv: `20261113-clubunio-social-performance`; Rueckweg:
+`20261113-clubunio-social-jobs-sfv`. Keine Datenbankmigration, kein Import,
+keine Aenderung an Scheduler oder Meta-Versand. [Messwerte und Abnahme](CLUBUNIO-SOCIAL-PERFORMANCE.md).
+
 ## Social Media: Frauen-Jobs mit echten SFV-Daten (13.11.2026)
 
 Aktiv: `20261113-clubunio-social-jobs-sfv`, Rueckweg

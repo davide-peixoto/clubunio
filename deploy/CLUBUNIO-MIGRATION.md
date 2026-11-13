@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+## Social Media Ladezeit (13.11.2026)
+
+Nur Code und gebuendelte Browserassets. Keine Schemamigration, kein Import,
+kein Backfill. [DEV-Abnahme und Rueckweg](CLUBUNIO-SOCIAL-PERFORMANCE.md).
+
 ## Social Media V1 (13.11.2026)
 
 Sechs additive Tabellen fuer Medien, Vorlagenversionen, bestaetigte Resultate,
