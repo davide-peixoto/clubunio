@@ -53,9 +53,13 @@
                         <x-filament::badge>{{ !$row->email ? __('campaign.no_email') : __(match($row->mail_state) {
                             'sending' => 'campaign.sending', 'accepted' => 'campaign.accepted', 'failed' => 'campaign.failed',
                             'attention' => 'campaign.attention', default => 'campaign.pending',
+                            'queued' => 'campaign.queued', 'bounced' => 'campaign.bounced',
                         }) }}</x-filament::badge>
-                        @if($canManage && $open && $tenant->slug === 'stage-mobile-pilot' && config('clubunio-integrations.test_mail_enabled') && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->request_id && in_array($row->mail_state, ['pending','failed'], true))
-                            <x-filament::button size="sm" wire:click="testMail({{ $row->id }})">{{ __('campaign.test_mail') }}</x-filament::button>
+                        @if($canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->request_id && $row->mail_state === 'pending')
+                            <x-filament::button size="sm" wire:click="testMail({{ $row->id }})">{{ __('campaign.enqueue_test') }}</x-filament::button>
+                        @endif
+                        @if($canManage && $pilot && $mailQueueEnabled && $row->mail_state === 'accepted' && $row->mail_address_hash)
+                            <x-filament::button size="sm" wire:click="markBounce({{ $row->id }})" wire:confirm="{{ __('campaign.mark_bounce') }}?">{{ __('campaign.mark_bounce') }}</x-filament::button>
                         @endif
                     @endif
                     @if(in_array($row->channel, ['post','both'], true))

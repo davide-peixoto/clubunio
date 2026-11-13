@@ -78,7 +78,13 @@ class MemberCampaigns extends Page
     public function testMail(int $recipient): void
     {
         abort_unless($this->selected && static::canManage(), 403);
-        app(MemberCampaignService::class)->testMail(Filament::getTenant(), $this->selected, $recipient);
+        app(\App\ClubUnio\Services\CampaignMailQueue::class)->enqueue(Filament::auth()->user(), Filament::getTenant(), $this->selected, $recipient);
+    }
+
+    public function markBounce(int $recipient): void
+    {
+        abort_unless($this->selected && static::canManage(), 403);
+        app(\App\ClubUnio\Services\CampaignMailQueue::class)->bounce(Filament::auth()->user(), Filament::getTenant(), $this->selected, $recipient);
     }
 
     public function revoke(): void
@@ -114,6 +120,7 @@ class MemberCampaigns extends Page
 
         return ['campaigns' => $service->campaigns($tenant)->latest('id')->limit(100)->get(), 'campaign' => $campaign,
             'recipients' => $recipients, 'matches' => $matches, 'tenant' => $tenant, 'pilot' => $service->isPilot($tenant), 'canManage' => $canManage,
+            'mailQueueEnabled' => app(\App\ClubUnio\Services\CampaignMailQueue::class)->enabled(),
             'count' => $campaign ? $service->recipients($tenant, $campaign->id)->count() : 0];
     }
 }

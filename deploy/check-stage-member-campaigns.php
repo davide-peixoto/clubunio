@@ -56,6 +56,23 @@ try {
     $campaigns->recipient($actor, $tenant, $id, $member->id, 'both');
     $campaigns->release($actor, $tenant, $id);
     $row = $campaigns->recipients($tenant, $id)->firstOrFail();
+    if (in_array('--queue', $argv, true)) {
+        config(['clubunio-campaign-mail.enabled' => true, 'clubunio-integrations.test_mail_enabled' => true]);
+        $queue = app(\App\ClubUnio\Services\CampaignMailQueue::class);
+        $queue->enqueue($actor, $tenant, $id, $row->id);
+        $require($campaigns->recipients($tenant, $id)->value('mail_state') === 'queued', 'queue persisted');
+        config(['mail.mailers.clubunio_test' => ['transport' => 'array'], 'clubunio-integrations.from' => 'sender@example.invalid']);
+        $manager = app(\Illuminate\Mail\MailManager::class);
+        $manager->purge('clubunio_test');
+        Mail::swap($manager);
+        $require($queue->runOne($row->id), 'worker claimed queued test');
+        $messages = $manager->mailer('clubunio_test')->getSymfonyTransport()->messages();
+        $require(count($messages) === 1 && $messages[0]->getEnvelope()->getRecipients()[0]->getAddress()
+            === \App\ClubUnio\Services\TestMailGuard::RECIPIENT, 'only fixed test recipient');
+        $require(!$queue->runOne($row->id), 'no duplicate dispatch');
+        $queue->bounce($actor, $tenant, $id, $row->id);
+        $require($campaigns->recipients($tenant, $id)->value('mail_state') === 'bounced', 'bounce persisted');
+    }
     $token = Crypt::decryptString($row->token_encrypted);
     $qr = (new chillerlan\QRCode\QRCode(new chillerlan\QRCode\QROptions([
         'outputInterface' => chillerlan\QRCode\Output\QRMarkupSVG::class, 'outputBase64' => true,

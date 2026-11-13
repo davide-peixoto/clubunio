@@ -29,6 +29,13 @@ Artisan::command('clubunio:planning-reminders', function () {
     }
 });
 Schedule::command('clubunio:planning-reminders')->everyFiveMinutes()->withoutOverlapping();
+Artisan::command('clubunio:campaign-test-mail', function () {
+    $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();
+    $this->line($processed ? 'One queue item processed.' : 'No queue item processed.');
+});
+if (config('clubunio-campaign-mail.enabled') && app()->environment('staging')) {
+    Schedule::command('clubunio:campaign-test-mail')->everyTenSeconds()->withoutOverlapping();
+}
 Schedule::command('clubunio:expire-mobile-expense-receipts')->hourly()->withoutOverlapping();
 Schedule::command('clubunio:expire-mobile-expense-ocr')->hourly()->withoutOverlapping();
 Schedule::command('clubunio:assistant:purge --apply')->dailyAt('03:35')->withoutOverlapping();

@@ -1,4 +1,8 @@
 {
+    "campaign.queued": "Queued",
+    "campaign.bounced": "Permanently undeliverable",
+    "campaign.enqueue_test": "Queue test email",
+    "campaign.mark_bounce": "Record permanent bounce",
     "profile_web.back": "Back to overview",
     "profile_web.menu": "Account menu",
     "profile_web.title": "My profile",

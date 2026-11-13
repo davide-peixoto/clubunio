@@ -144,29 +144,4 @@ class MemberCampaignService
             'tenant' => $tenant->slug, 'token' => Crypt::decryptString($row->token_encrypted),
         ], false);
     }
-
-    public function testMail(Tenant $tenant, int $campaign, int $recipient): void
-    {
-        abort_unless(app()->environment('staging') && $tenant->slug === 'stage-mobile-pilot'
-            && config('clubunio-integrations.test_mail_enabled'), 403);
-        $this->openCampaign($tenant, $campaign);
-        $query = $this->recipients($tenant, $campaign)->where('id', $recipient)->whereIn('channel', ['email','both']);
-        $row = (clone $query)->whereNotNull('token_encrypted')->firstOrFail();
-        $member = $this->eligible($tenant)->findOrFail($row->member_id);
-        abort_unless(str_ends_with(strtolower((string) $member->email), '@example.invalid'), 422);
-        $shared = app(MemberAccessService::class)->activeMembers($tenant)->whereRaw('lower(email) = ?', [strtolower($member->email)])->count() > 1;
-        abort_if($shared, 422);
-        abort_unless((clone $query)->whereIn('mail_state', ['pending','failed'])->update(['mail_state' => 'sending']) === 1, 409);
-        $state = 'attention';
-        try {
-            $sent = \Illuminate\Support\Facades\Mail::mailer('clubunio_test')->send(
-                ['raw' => __('Bitte aktualisiere deine Kontaktdaten für :club. Die Geschäftsstelle prüft deine Änderungen.', ['club' => $tenant->name])."\n\n".$this->url($tenant, $row)],
-                ['clubunio_reply_to_tenant_id' => (int) $tenant->id],
-                fn ($message) => $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject(__('campaign.update')),
-            );
-            $state = $sent ? 'accepted' : 'failed';
-        } finally {
-            (clone $query)->where('mail_state', 'sending')->update(['mail_state' => $state]);
-        }
-    }
 }

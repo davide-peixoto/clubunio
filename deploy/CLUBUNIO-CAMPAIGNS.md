@@ -1,5 +1,21 @@
 # Kampagnen: Stammdaten-Pilot
 
+## SMTP-Warteschlange
+
+Nur Stage, nur `stage-mobile-pilot` und eindeutige synthetische Adressen
+unter `example.invalid`. Der bestehende SMTP-Testkanal leitet an das feste
+Testpostfach um. Flag `CLUBUNIO_CAMPAIGN_TEST_QUEUE` ist standardmaessig aus.
+Die additive Migration `2026_11_13_000620_campaign_mail_queue.php` muss
+gezielt auf Stage angewendet werden. Der Scheduler ruft bei aktivem Flag
+`clubunio:campaign-test-mail` alle zehn Sekunden auf. Konfigurierbar:
+`CLUBUNIO_CAMPAIGN_MAIL_PER_MINUTE` (1–30, Standard 5; tatsächlicher Durchsatz
+durch Scheduler-Takt begrenzt) und `CLUBUNIO_CAMPAIGN_MAIL_ATTEMPTS` (1–5,
+Standard 3). 421 pausiert die Queue zehn Minuten. Explizite 4xx-Antworten
+werden begrenzt wiederholt, 5xx nicht. Unklare Ausgaenge erfordern Pruefung.
+Nach SMTP-Annahme kann die Geschaeftsstelle einen spaeteren permanenten
+Ruecklaeufer manuell erfassen; die Adresse wird mandantenbezogen gesperrt.
+Keine automatische Ruecklaeuferabholung. Keine Produktionsfreigabe.
+
 Vereinsadmins sehen Kampagnen des eigenen Vereins lesend. Bearbeitung,
 Einladungen und Entscheide bleiben der Geschaeftsstelle vorbehalten.
 

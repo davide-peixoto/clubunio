@@ -1,4 +1,8 @@
 {
+    "campaign.queued": "In Warteschlange",
+    "campaign.bounced": "Dauerhaft unzustellbar",
+    "campaign.enqueue_test": "Testmail einreihen",
+    "campaign.mark_bounce": "Dauerhaften Rückläufer erfassen",
     "profile_web.back": "Zur Übersicht",
     "profile_web.menu": "Kontomenü",
     "profile_web.title": "Mein Profil",
