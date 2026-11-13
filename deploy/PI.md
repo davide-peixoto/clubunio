@@ -3,8 +3,10 @@
 ## Vereinsadmin: Social Media und Kampagnen
 
 Vereinsadmins verwalten Social Media und Kampagnenentwuerfe im eigenen
-Mandanten. Die vier Kampagnenmigrationen 000500, 000610, 000620 und 000630
-werden gezielt auf `clubunio_dev` ausgefuehrt. Oeffentliche Einladungen,
+Mandanten. Vor dem Wechsel von `current` die vier Kampagnenmigrationen
+000500, 000610, 000620 und 000630 gezielt auf `clubunio_dev` ausfuehren.
+Der erste Kandidat wurde wegen fehlender VPS-Tunnelverbindung nicht aktiviert.
+Oeffentliche Einladungen,
 Kampagnenfreigabe und SMTP bleiben auf den bestehenden Stage-Piloten
 beschraenkt. Keine Aenderung an Konten oder Rollen ausserhalb des Mandanten.
 
