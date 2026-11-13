@@ -74,6 +74,16 @@ final class MobilePublicIntake
         if (is_string($raw)) { abort_if(strlen($raw)>65536,413); try { $raw=json_decode($raw,true,16,JSON_THROW_ON_ERROR); } catch (\Throwable) { abort(422); } }
         abort_unless(is_array($raw) && strlen(json_encode($raw,JSON_THROW_ON_ERROR))<=65536,422);
         $complete = ($claim['complete'] ?? false) === true;
+        if ($complete) {
+            foreach (['HatVorverein' => 'BisherigerVereinVorhanden', 'VorvereinLandTyp' => 'BisherigerVereinLand',
+                'VorvereinName' => 'BisherigerVerein'] as $alias => $field) {
+                if (array_key_exists($alias, $raw)) {
+                    abort_if(array_key_exists($field, $raw), 422);
+                    $raw[$field] = $raw[$alias];
+                    unset($raw[$alias]);
+                }
+            }
+        }
         abort_if(array_diff(array_keys($raw), array_keys(MobileRegistrationData::FIELDS + ($complete ? ['AHVNummer' => 'ahv'] : []))),422);
         foreach ($raw as $value) { abort_unless(is_null($value)||is_scalar($value),422); } ksort($raw);
         $request->validate(['portrait'=>'nullable|file|max:5120|mimetypes:image/jpeg,image/png,image/webp',
@@ -87,9 +97,9 @@ final class MobilePublicIntake
             }
             Validator::make($raw, $required + [
                 'AHVNummer'=>['required','string','regex:/^756(?:[. ]?\d){10}$/D'],
-                'HatVorverein'=>'required|in:J,N',
-                'VorvereinLandTyp'=>'required_if:HatVorverein,J|nullable|in:I,A',
-                'VorvereinName'=>'required_if:HatVorverein,J|nullable|string|max:255',
+                'BisherigerVereinVorhanden'=>'required|in:J,N',
+                'BisherigerVereinLand'=>'required_if:BisherigerVereinVorhanden,J|nullable|in:I,A',
+                'BisherigerVerein'=>'required_if:BisherigerVereinVorhanden,J|nullable|string|max:255',
             ])->validate();
             $request->validate(['portrait'=>'required', 'identity'=>'required|array|min:1']);
         }
@@ -133,8 +143,8 @@ final class MobilePublicIntake
             abort_if($files&&!$this->canUpload($tenant),422);
             $fields = $raw;
             unset($fields['AHVNummer']);
-            if (($fields['HatVorverein'] ?? null) === 'N') {
-                unset($fields['VorvereinLandTyp'], $fields['VorvereinName']);
+            if (($fields['BisherigerVereinVorhanden'] ?? null) === 'N') {
+                unset($fields['BisherigerVereinLand'], $fields['BisherigerVerein']);
             }
             $values=app(MobileRegistrationCommands::class)->values($tenant,$fields);
             $ahv = $complete ? preg_replace('/\D/', '', $raw['AHVNummer']) : null;
