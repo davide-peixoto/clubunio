@@ -81,7 +81,9 @@ alten Faktors und Neueinrichtung bestaetigt; Testdaten zurueckgerollt.
 Beim ersten Umschalten griff die Rueckrolle wegen absoluter View-Pfade im
 Konfigurationscache. Cache am endgueltigen Pfad aufgebaut und erneut geprueft.
 
-DEV: Login und Wizard HTTP 200, anonymer Reset HTTP 302. Die angemeldete
-Abnahme ist wegen des zeitweise nicht verfuegbaren privaten DB-Tunnels offen.
+DEV: Login und Wizard HTTP 200, anonymer Reset HTTP 302. Nach Wiederanlauf
+des privaten DB-Tunnels bestand derselbe synthetische PostgreSQL-Test.
+Auf beiden Umgebungen meldete der App-Bootstrap die sichere Anmeldung
+als verfuegbar. Ein echter iOS-/Android-Testbuild und Mailtest bleiben offen.
 Rollback: vorheriges DEV-Release `20261113-clubunio-administration-layout`;
 Stage: zuvor gesicherter Runtime-Ordner. Schema beim Rueckweg nicht loeschen.
