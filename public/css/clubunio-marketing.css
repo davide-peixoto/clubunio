@@ -766,3 +766,13 @@ footer>div:last-child {
     color: #d4e2f0;
     font-size: 12px;
 }
+
+.feature-preview {
+    margin: 18px 0 0;
+}
+.feature-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
