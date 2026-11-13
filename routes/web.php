@@ -33,6 +33,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
+Route::get('/help', \App\ClubUnio\Http\SupportCenterController::class)->name('clubunio.support.help');
+Route::post('/help', \App\ClubUnio\Http\SupportCenterController::class)->middleware('throttle:6,1');
+Route::match(['get','post'], '/support/club/{club}', \App\ClubUnio\Http\SupportCenterController::class)
+    ->whereNumber('club')->middleware('throttle:30,1')->name('clubunio.support.center');
+Route::match(['get','post'], '/platform/support', \App\ClubUnio\Http\SupportCenterController::class)
+    ->middleware([\App\ClubUnio\Http\RequirePlatformAdministrator::class, 'throttle:30,1'])->name('clubunio.platform.support');
 require __DIR__.'/clubunio-marketing.php';
 
 Route::get('/account/security', [\App\ClubUnio\Http\StrongLoginController::class, 'show'])->name('clubunio.security.show');

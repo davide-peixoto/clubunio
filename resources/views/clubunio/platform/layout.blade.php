@@ -3,7 +3,7 @@
 <title>{{ __('Plattformverwaltung · ClubUnio') }}</title><link rel="icon" href="{{ asset('brand/blue-v1/clubunio-symbol.svg') }}">
 <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}"><link rel="stylesheet" href="{{ asset('css/clubunio-platform.css') }}"></head>
 <body><header class="platform-header"><a href="{{ route('clubunio.platform.index') }}"><img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" alt="{{ __('ClubUnio') }}" width="180" height="40"></a>
-<nav aria-label="{{ __('Plattform') }}">@isset($actor)<a href="{{ route('clubunio.platform.index') }}">{{ __('Vereine') }}</a><a href="{{ url('/') }}">{{ __('Vereinsverwaltung') }}</a>@endisset</nav>
+<nav aria-label="{{ __('Plattform') }}">@isset($actor)<a href="{{ route('clubunio.platform.index') }}">{{ __('Vereine') }}</a><a href="{{ url('/') }}">{{ __('Vereinsverwaltung') }}</a>@if(config('clubunio-support.enabled'))<a href="{{ route('clubunio.platform.support') }}">{{ trans('support.title') }}</a>@endif @endisset</nav>
 @isset($actor)<span>{{ $actor->display_name }}</span><form method="post" action="{{ route('clubunio.platform.logout') }}">@csrf<button class="icon-button" title="{{ __('Abmelden') }}" aria-label="{{ __('Abmelden') }}">@svg('heroicon-o-arrow-right-on-rectangle')</button></form>@endisset</header>
 <main class="platform-main">
 @if(session('notice'))<div class="notice" role="status">{{ session('notice') }}</div>@endif

@@ -10,6 +10,9 @@
     <header class="portal-header">
         @include('clubunio.brand.logo')
         @isset($tenant)
+            @if(config('clubunio-support.enabled'))
+                <a href="{{ route('clubunio.support.center', ['club' => $tenant->id]) }}">{{ trans('support.title') }}</a>
+            @endif
             <nav aria-label="{{ __('Verein') }}">
                 @foreach($tenants as $availableTenant)
                     <a href="{{ route('clubunio.portal.members', ['tenant' => $availableTenant->slug]) }}" @if($availableTenant->id === $tenant->id) aria-current="page" @endif>{{ $availableTenant->name }}</a>
