@@ -90,6 +90,9 @@ Meta-Kontoverwaltung per OAuth-Oberfläche bleiben offen.
 
 ## DEV-Abnahme (13.11.2026)
 
+Die Stage-Uebersicht verwendet Abstaende und Trennlinien der
+Verwaltungslisten. Der Editor und seine Aktionen bleiben unveraendert.
+
 - Playwright mit synthetischen Fixtures auf Desktop- und Mobilbreite: Zuschnitt,
   gespeicherte Vorlage, Matchday und Resultat. Beide JPEGs sind nicht leer und
   exakt 1080 × 1350 Pixel gross.

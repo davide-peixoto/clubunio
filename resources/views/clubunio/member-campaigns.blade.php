@@ -5,13 +5,13 @@
         $draft = $campaign && ! $campaign->released_at && ! $campaign->revoked_at;
     @endphp
     @if($canManage)
-    <form wire:submit="create" class="flex flex-wrap items-end gap-3">
+    <form wire:submit="create" class="cu-admin-toolbar">
         <label>{{ __('campaign.name') }} <x-filament::input.wrapper><x-filament::input wire:model="campaignTitle" maxlength="160" required /></x-filament::input.wrapper></label>
         <label>{{ __('campaign.channel') }} <x-filament::input.wrapper><x-filament::input.select wire:model="channel">
             @foreach($channels as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach
         </x-filament::input.select></x-filament::input.wrapper></label>
-        <label><input type="checkbox" wire:model="populate"> {{ __('campaign.populate') }}</label>
-        <x-filament::button type="submit">{{ __('campaign.create') }}</x-filament::button>
+        <label><x-filament::input.checkbox wire:model="populate" /> {{ __('campaign.populate') }}</label>
+        <x-filament::button type="submit" icon="heroicon-o-plus">{{ __('campaign.create') }}</x-filament::button>
         @error('campaignTitle')<p role="alert">{{ $message }}</p>@enderror
     </form>
     @endif
@@ -37,18 +37,24 @@
                 </div>
             @endforeach
         @endif
-        <ul class="divide-y divide-gray-200 dark:divide-white/10">
+        <div class="cu-admin-journal">
+        <table>
+            <thead><tr><th scope="col">{{ __('Mitglied') }}</th><th scope="col">{{ __('campaign.channel') }}</th><th scope="col">{{ __('Status') }}</th></tr></thead>
+            <tbody>
             @foreach($recipients as $row)
-                <li class="flex flex-wrap items-center gap-3 py-2" wire:key="recipient-{{ $row->id }}">
-                    <strong>{{ $row->first_name }} {{ $row->last_name }}</strong>
+                <tr wire:key="recipient-{{ $row->id }}">
+                    <td><strong>{{ $row->first_name }} {{ $row->last_name }}</strong></td>
+                    <td><div class="flex flex-wrap items-center gap-2">
                     @if($canManage && $draft)
                         <x-filament::input.wrapper><x-filament::input.select :aria-label="__('campaign.channel')" wire:change="recipient({{ $row->member_id }}, $event.target.value)">
                             @foreach($channels as $key => $label)<option value="{{ $key }}" @selected($row->channel === $key)>{{ $label }}</option>@endforeach
                         </x-filament::input.select></x-filament::input.wrapper>
-                        <x-filament::button size="sm" color="gray" wire:click="recipient({{ $row->member_id }}, null)">{{ __('campaign.remove') }}</x-filament::button>
+                        <x-filament::icon-button icon="heroicon-o-trash" color="danger" wire:click="recipient({{ $row->member_id }}, null)" :label="__('campaign.remove')" :tooltip="__('campaign.remove')" />
                     @else
                         <span>{{ $channels[$row->channel] }}</span>
                     @endif
+                    </div></td>
+                    <td><div class="flex flex-wrap items-center gap-2">
                     @if(in_array($row->channel, ['email','both'], true))
                         <x-filament::badge>{{ !$row->email ? __('campaign.no_email') : __(match($row->mail_state) {
                             'sending' => 'campaign.sending', 'accepted' => 'campaign.accepted', 'failed' => 'campaign.failed',
@@ -75,9 +81,12 @@
                         'approved' => 'campaign.approved', 'rejected' => 'campaign.rejected',
                         'withdrawn' => 'campaign.withdrawn', default => 'campaign.pending',
                     }) }}</x-filament::badge>@endif
-                </li>
+                    </div></td>
+                </tr>
             @endforeach
-        </ul>
+            </tbody>
+        </table>
+        </div>
         @if($count > $limit && $limit < 5000)
             <x-filament::button wire:click="$set('limit', {{ min(5000, $limit + 50) }})">{{ __('campaign.more') }}</x-filament::button>
         @endif

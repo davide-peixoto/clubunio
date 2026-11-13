@@ -1,5 +1,8 @@
 # Kampagnen: Stammdaten-Pilot
 
+Die Empfaengerliste verwendet die gemeinsame Verwaltungs-Tabelle mit
+getrennten Spalten fuer Mitglied, Versandkanal und Status. Keine Migration.
+
 ## SMTP-Warteschlange
 
 Nur Stage, nur `stage-mobile-pilot` und eindeutige synthetische Adressen
