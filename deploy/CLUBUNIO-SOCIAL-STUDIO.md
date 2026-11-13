@@ -65,6 +65,25 @@ vor einer manuellen Klärung bei Meta nicht erneut senden.
 - Beim Code-Rollback Tabellen und private Medien erhalten. Die aktuelle
   Storage-Sicherung muss den neuen Ordner einschliessen.
 
+## Stage-Abnahme
+
+13.11.2026, Stage-Codebasis `8b9c71e`: Vite-Build installiert,
+`deploy/apply-stage-social.php` nach verschluesseltem Stage-Backup
+ausgefuehrt. Archiv vollstaendig gelesen und SHA-256 geprueft.
+Acht Tabellen im Schema `clubunio`, keine Bestandsuebernahme.
+
+`CLUBUNIO_SOCIAL_ENABLED=true`; `CLUBUNIO_SOCIAL_JOBS_ENABLED=false`
+und `CLUBUNIO_SOCIAL_META_TEST_ENABLED=false`. Route-, View- und
+Konfigurationscache aktualisiert. Login und Vite-Assets per HTTPS
+erreichbar; anonymer Datenabruf gesperrt. `deploy/check-stage-social.php`
+pruefte die angemeldete Seite, den Editor, Vorlagenversionen, Spieltags-
+und Resultatfreigabe sowie gesperrten Versand mit synthetischen Daten.
+Testdaten zurueckgerollt, Testdateien entfernt, keine externen Aufrufe.
+
+Rueckweg: Webflag auf false setzen und den Stage-Konfigurationscache neu
+bauen. Tabellen und private Medien erhalten; keine destruktive
+Rueckmigration. DEV und PROD nicht geaendert.
+
 Zeitgesteuerte Regeln und nächtliche SFV-Endresultate sind im Folgepaket
 [Geplante Jobs](CLUBUNIO-SOCIAL-JOBS.md) beschrieben. Redaktionskalender und
 Meta-Kontoverwaltung per OAuth-Oberfläche bleiben offen.
