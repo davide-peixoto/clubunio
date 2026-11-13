@@ -18,6 +18,34 @@ class MemberCampaignService
     public const FIELDS = ['email', 'street', 'house_number', 'postal_code', 'city', 'mobile'];
     public const CHANNELS = ['email', 'post', 'both'];
 
+    public function email(Member $member): ?string
+    {
+        $recipient = $member->billingRecipient;
+        if ($member->billing_recipient_id && (! $recipient?->active || (int) $recipient->tenant_id !== (int) $member->tenant_id)) return null;
+        $field = $recipient?->email_field ?? 'email';
+        if (! in_array($field, ['email', 'mother_email', 'father_email'], true)) return null;
+        $email = trim((string) $member->$field);
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+    }
+
+    public function defaultChannel(string $channel, Member $member): string
+    {
+        return $channel === 'both' ? ($this->email($member) ? 'email' : 'post') : $channel;
+    }
+
+    public function deleteDraft(Account $actor, Tenant $tenant, int $id): void
+    {
+        abort_unless($this->allowed($actor, $tenant), 403);
+        DB::connection('clubunio')->transaction(function () use ($tenant, $id) {
+            $query = $this->campaigns($tenant)->where('id', $id);
+            $row = (clone $query)->lockForUpdate()->firstOrFail();
+            abort_if($row->released_at || $row->revoked_at, 409);
+            $this->recipients($tenant, $id)->delete();
+            $query->delete();
+        });
+    }
+
     public function allowed(?Account $actor, ?Tenant $tenant): bool
     {
         return $actor && $tenant
@@ -51,9 +79,9 @@ class MemberCampaignService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $title, $channel, $populate) {
             $id = $this->campaigns($tenant)->insertGetId(['tenant_id' => $tenant->id, 'title' => trim($title), 'channel' => $channel, 'created_by' => $actor->id]);
             if ($populate) {
-                $this->eligible($tenant)->select('id')->chunkById(300, function ($members) use ($tenant, $id, $channel) {
+                $this->eligible($tenant)->with('billingRecipient')->select(['id','tenant_id','billing_recipient_id','email','mother_email','father_email'])->chunkById(300, function ($members) use ($tenant, $id, $channel) {
                     $this->recipients($tenant, $id)->insert($members->map(fn ($member) => [
-                        'tenant_id' => $tenant->id, 'campaign_id' => $id, 'member_id' => $member->id, 'channel' => $channel,
+                        'tenant_id' => $tenant->id, 'campaign_id' => $id, 'member_id' => $member->id, 'channel' => $this->defaultChannel($channel, $member),
                     ])->all());
                 });
             }

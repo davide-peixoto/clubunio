@@ -1,4 +1,7 @@
 {
+    "campaign.delete": "Entwurf löschen",
+    "campaign.confirm_delete": "Diesen Entwurf und seine Empfängerliste löschen?",
+    "campaign.delivery": "Versandstatus",
     "campaign.queued": "In Warteschlange",
     "campaign.bounced": "Dauerhaft unzustellbar",
     "campaign.enqueue_test": "Testmail einreihen",

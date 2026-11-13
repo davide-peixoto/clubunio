@@ -21,9 +21,13 @@ final class CampaignMailQueue
 
     private function address(Tenant $tenant, object $row): ?string
     {
-        $email = strtolower(trim((string) app(MemberCampaignService::class)->eligible($tenant)->find($row->member_id)?->email));
+        $service = app(MemberCampaignService::class);
+        $member = $service->eligible($tenant)->find($row->member_id);
+        $email = $member ? strtolower((string) $service->email($member)) : '';
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || ! str_ends_with($email, '@example.invalid')) return null;
-        if (app(MemberAccessService::class)->activeMembers($tenant)->whereRaw('lower(trim(email)) = ?', [$email])->count() !== 1) return null;
+        if (app(MemberAccessService::class)->activeMembers($tenant)->whereKeyNot($row->member_id)
+            ->where(fn ($q) => $q->whereRaw('lower(trim(email)) = ?', [$email])
+                ->orWhereRaw('lower(trim(mother_email)) = ?', [$email])->orWhereRaw('lower(trim(father_email)) = ?', [$email]))->exists()) return null;
 
         return hash_hmac('sha256', $email, config('app.key'));
     }

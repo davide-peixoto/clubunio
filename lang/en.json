@@ -1,4 +1,7 @@
 {
+    "campaign.delete": "Delete draft",
+    "campaign.confirm_delete": "Delete this draft and its recipient list?",
+    "campaign.delivery": "Delivery status",
     "campaign.queued": "Queued",
     "campaign.bounced": "Permanently undeliverable",
     "campaign.enqueue_test": "Queue test email",

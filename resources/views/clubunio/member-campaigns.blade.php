@@ -34,7 +34,8 @@
             <h2>{{ $campaign->title }}</h2>
             <x-filament::badge>{{ $draft ? __('campaign.draft') : ($open ? __('campaign.open') : __('campaign.closed')) }}</x-filament::badge>
             <span>{{ __(':count Empfänger', ['count' => $count]) }}</span>
-            @if($canManage && $draft && $count && $pilot)<x-filament::button wire:click="release" wire:confirm="{{ __('campaign.release') }}?">{{ __('campaign.release') }}</x-filament::button>@endif
+            @if($canManage && $draft && $total && $pilot)<x-filament::button wire:click="release" wire:confirm="{{ __('campaign.release') }}?">{{ __('campaign.release') }}</x-filament::button>@endif
+            @if($canManage && $draft)<x-filament::button color="danger" icon="heroicon-o-trash" wire:click="deleteDraft" wire:confirm="{{ __('campaign.confirm_delete') }}">{{ __('campaign.delete') }}</x-filament::button>@endif
             @if($canManage && $open)<x-filament::button color="danger" wire:click="revoke">{{ __('campaign.revoke') }}</x-filament::button>@endif
         </div>
         @if($canManage && $draft)
@@ -42,17 +43,42 @@
             @foreach($matches as $member)
                 <div class="flex flex-wrap items-center gap-2" wire:key="match-{{ $member->id }}">
                     <span>{{ $member->first_name }} {{ $member->last_name }}</span>
-                    <x-filament::button size="sm" wire:click="recipient({{ $member->id }}, '{{ $campaign->channel }}')">{{ __('campaign.add') }}</x-filament::button>
+                    <x-filament::button size="sm" wire:click="addRecipient({{ $member->id }})">{{ __('campaign.add') }}</x-filament::button>
                 </div>
             @endforeach
         @endif
         <div class="cu-admin-journal">
         <table>
-            <thead><tr><th scope="col">{{ __('Mitglied') }}</th><th scope="col">{{ __('campaign.channel') }}</th><th scope="col">{{ __('Status') }}</th></tr></thead>
+            <thead><tr>
+                @foreach(['name' => __('Mitglied'), 'status' => __('Mitgliederstatus'), 'team' => __('Mannschaft'), 'email' => __('E-Mail'), 'channel' => __('campaign.channel'), 'delivery' => __('campaign.delivery')] as $key => $label)
+                    <th scope="col" aria-sort="{{ $sort === $key ? ($descending ? 'descending' : 'ascending') : 'none' }}">
+                        <button type="button" wire:click="sortBy('{{ $key }}')">{{ $label }} @if($sort === $key){{ $descending ? '↓' : '↑' }}@endif</button>
+                        <x-filament::input.wrapper>
+                            @if($key === 'channel' || $key === 'delivery')
+                                <x-filament::input.select wire:model.live="filters.{{ $key }}" :aria-label="$label">
+                                    <option value="">{{ __('Alle') }}</option>
+                                    @foreach($key === 'channel' ? $channels : ['pending'=>__('campaign.pending'), 'queued'=>__('campaign.queued'), 'sending'=>__('campaign.sending'), 'accepted'=>__('campaign.accepted'), 'failed'=>__('campaign.failed'), 'attention'=>__('campaign.attention'), 'bounced'=>__('campaign.bounced')] as $value => $caption)
+                                        <option value="{{ $value }}">{{ $caption }}</option>
+                                    @endforeach
+                                </x-filament::input.select>
+                            @else
+                                <x-filament::input type="search" wire:model.live.debounce.350ms="filters.{{ $key }}" :aria-label="$label" maxlength="120" />
+                            @endif
+                        </x-filament::input.wrapper>
+                    </th>
+                @endforeach
+            </tr></thead>
             <tbody>
             @foreach($recipients as $row)
                 <tr wire:key="recipient-{{ $row->id }}">
-                    <td><strong>{{ $row->first_name }} {{ $row->last_name }}</strong></td>
+                    <td><strong>{{ $row->first_name }} {{ $row->last_name }}</strong>
+                        @if($canEditMembers)
+                            <x-filament::icon-button icon="heroicon-o-pencil-square" :label="__('Mitglied bearbeiten')" :tooltip="__('Mitglied bearbeiten')" wire:click="mountAction('editMember', {member: {{ $row->member_id }}})" />
+                        @endif
+                    </td>
+                    <td>{{ $row->member_status ?? '–' }}</td>
+                    <td>{{ $row->teams ?? '–' }}</td>
+                    <td>{{ $row->email ?? '–' }}</td>
                     <td><div class="flex flex-wrap items-center gap-2">
                     @if($canManage && $draft)
                         <x-filament::input.wrapper><x-filament::input.select :aria-label="__('campaign.channel')" wire:change="recipient({{ $row->member_id }}, $event.target.value)">

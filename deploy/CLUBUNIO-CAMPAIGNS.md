@@ -1,5 +1,15 @@
 # Kampagnen: Stammdaten-Pilot
 
+Bei neuen Entwuerfen mit Beides wird pro Mitglied E-Mail vorgeschlagen,
+wenn die Rechnungsadresse eine gueltige E-Mail liefert, sonst Post.
+Explizit gewaehlte Kanaele und bestehende Entwuerfe bleiben unveraendert.
+E-Mail-Versand prueft dieselbe Rechnungsadressquelle erneut. Bei fehlender
+Konfiguration gilt die eigene Adresse; eine ungueltige konfigurierte
+Elternadresse wird nicht durch eine andere Adresse ersetzt.
+Status und Mannschaft der konfigurierten Saison sind filter- und
+sortierbar. Mitgliederbearbeitung nutzt bestehende Rechte und Formulare.
+Nur nicht freigegebene Entwuerfe koennen geloescht werden. Keine Migration.
+
 Stage: Kampagnen sind unter Anlagen & Kommunikation eingeordnet. Die
 Uebersicht verwendet eine Verwaltungstabelle und ein getrenntes Formular.
 Empfaengerabfragen qualifizieren die Mandantenspalte und verknuepfen
