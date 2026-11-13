@@ -144,3 +144,14 @@ nicht in die Web-Sitzung übernommen.
 Abnahme: Stage 2c3781a und DEV 20261113-clubunio-join-rules liefern das
 aktualisierte SV-Sissach-Webformular. App-Quellstand 73fe3cf. Die
 PostgreSQL-Webtests sind ohne expliziten Testdatenbankmodus übersprungen.
+
+### Privates Upload-Ziel für Mobile Stage Test
+
+Der isolierte Stage-Verein verwendet ein eigenes aktives managed-Profil
+im privaten Laravel-Speicher. Die Installation von ClamAV wurde auf dem
+VPS gestartet. SSH-Zeitüberschreitungen unterbrachen die Abnahme. Vor
+Aktivierung der mobilen Uploads den laufenden Dienst, aktuelle Signaturen
+und den Unix-Socket unter dem Stage-App-Benutzer prüfen. Der Scanner muss
+saubere Testdaten akzeptieren und EICAR erkennen. Danach den vollständigen
+Antrag mit synthetischem Passfoto und Ausweis über den mobilen Vertrag
+prüfen und die Testdaten samt gespeicherten Dateien entfernen.
