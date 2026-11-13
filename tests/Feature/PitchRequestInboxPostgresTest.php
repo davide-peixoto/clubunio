@@ -160,7 +160,9 @@ class PitchRequestInboxPostgresTest extends TestCase
                 $this->assertSame('Unchanged free text', $entry['title']);
                 $this->assertFalse($entry['editable']);
             }
-            foreach (['pending', 'approved', 'rejected', 'cancelled'] as $status) $this->forbidden(fn () => $this->inbox(['status' => $status]));
+            $this->assertSame([$today], array_column($this->inbox(['status' => 'pending'])['entries'], 'source_id'));
+            $this->assertSame(1, $this->service->pendingRequestCount($this->actor, $this->tenant));
+            foreach (['approved', 'rejected', 'cancelled'] as $status) $this->forbidden(fn () => $this->inbox(['status' => $status]));
             $this->forbidden(fn () => $this->service->decide($this->actor, $this->tenant, $today, ['revision' => '1', 'decision' => 'approved']));
             $this->forbidden(fn () => $this->service->move($this->actor, $this->tenant, 'request:'.$today, []));
         }

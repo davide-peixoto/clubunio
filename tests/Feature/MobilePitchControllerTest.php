@@ -106,6 +106,7 @@ class MobilePitchControllerTest extends TestCase
         $this->permissions = new class { public bool $view = false; public function allows(...$args): bool { return $this->view; } };
         $this->app->instance(ModulePermissionService::class, $this->permissions);
         $this->app->instance(MemberAccessService::class, new class {
+            public function membership(...$args): ?object { return null; }
             public bool $allowed = false;
             public function canEnter($actor, $tenant): bool { return $this->allowed; }
         });

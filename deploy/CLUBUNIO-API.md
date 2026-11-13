@@ -211,3 +211,14 @@ Arbeitskacheln ausschliesslich im aktiven Mandanten. Die Modulendpunkte prüfen
 ihre bestehenden Rechte weiterhin separat. Ältere Antworten ohne `work`
 lassen den Bereich ausgeblendet. Das Dashboard benötigt keine zusätzlichen
 Abfragen pro Kachel.
+
+
+### Zähler für Arbeitskacheln
+
+Clients mit today-counts-v1 erhalten work_count auf verfügbaren und für das
+Konto freigegebenen Arbeitskacheln. Die Zähler folgen dem Sichtbereich der
+jeweiligen Listen. Gezählt werden offene Mitgliederänderungen, ausstehende
+Platzanfragen, freigegebene Spesen, bevorstehende angefragte Busreservationen
+sowie sichtbare Anmeldungen und eigene Dokumente. Die Abfragen liefern nur
+Summen und nutzen den bestehenden Modulabruf. Ein fehlender Zähler bleibt
+unbekannt. Keine Datenbankmigration erforderlich.

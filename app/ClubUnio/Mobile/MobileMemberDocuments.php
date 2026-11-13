@@ -47,11 +47,13 @@ final class MobileMemberDocuments
         return $this->receipts($actor, $tenant)->where('id', $id)->when($lock, fn ($q) => $q->lockForUpdate())->firstOrFail($bytes ? ['*'] : self::META);
     }
 
-    public function index(Request $r, Account $actor, Tenant $tenant): array
+    public function ownDocumentCount(Account $actor, Tenant $tenant): int
     {
-        $d = $r->validate(['start' => 'nullable|integer|min:0|max:100000', 'recperpage' => 'nullable|integer|min:1|max:50',
-            'mine' => 'nullable|boolean', 'MitgliederID' => 'nullable|integer|min:1', 'Status' => 'nullable|in:OFFEN,UNTERSCHRIEBEN,ABGELEGT']);
-        $mine = (bool) ($d['mine'] ?? true);
+        return $this->documentList($actor, $tenant, true)->count();
+    }
+
+    private function documentList(Account $actor, Tenant $tenant, bool $mine)
+    {
         $receipts = $this->receipts($actor, $tenant, $mine)->whereNull('archive_receipt_id')->selectRaw("id, member_id, created_at, 'receipt' AS source_kind, CASE state WHEN 'pending' THEN 'OFFEN' WHEN 'signed' THEN 'UNTERSCHRIEBEN' ELSE 'ABGELEGT' END AS status");
         $archives = $this->archives($actor, $tenant, $mine)->leftJoinSub($this->table($tenant)->whereNotNull('archive_receipt_id')->select(['archive_receipt_id', 'state']), 'forward',
             fn ($j) => $j->on('forward.archive_receipt_id', '=', 'clubunio.legacy_material_receipts.id'))
@@ -61,7 +63,14 @@ final class MobileMemberDocuments
             ->whereNotIn('id', (clone $archiveRows)->whereNotNull('signed_document_id')->select('signed_document_id'))
             ->selectRaw("id, member_id, created_at, 'file' AS source_kind, 'ABGELEGT' AS status")->toBase();
         $union = $receipts->unionAll($archives)->unionAll($files);
-        $query = DB::connection('clubunio')->query()->fromSub($union, 'documents');
+        return DB::connection('clubunio')->query()->fromSub($union, 'documents');
+    }
+
+    public function index(Request $r, Account $actor, Tenant $tenant): array
+    {
+        $d = $r->validate(['start' => 'nullable|integer|min:0|max:100000', 'recperpage' => 'nullable|integer|min:1|max:50',
+            'mine' => 'nullable|boolean', 'MitgliederID' => 'nullable|integer|min:1', 'Status' => 'nullable|in:OFFEN,UNTERSCHRIEBEN,ABGELEGT']);
+        $query = $this->documentList($actor, $tenant, (bool) ($d['mine'] ?? true));
         if (isset($d['MitgliederID'])) { $query->where('member_id', $d['MitgliederID']); }
         if (! empty($d['Status'])) { $query->where('status', $d['Status']); }
         $total = (clone $query)->count();
