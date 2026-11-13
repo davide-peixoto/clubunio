@@ -25,3 +25,7 @@ anwenden. `deploy/check-stage-member-campaigns.php` prueft den Ablauf
 mit synthetischen Daten und ohne Versand in einer Rueckrolltransaktion.
 Das Web-Profil und das berechtigte App-Mitgliederdossier zeigen nur
 freigegebene Fotos. Die visuelle Geraeteabnahme bleibt separat.
+
+Stage: beide Migrationen angewendet und Flag nach bestandenem
+synthetischem Freigabetest aktiviert. Nach Cacheaufbau Freigabetest
+erneut bestanden; Login HTTP 200. Kein Versand, DEV und PROD unveraendert.
