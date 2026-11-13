@@ -52,6 +52,8 @@ Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUn
     ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
 Route::get('/profile-photo', [\App\ClubUnio\Http\ProfilePhotoController::class, 'personal'])
     ->middleware('auth:clubunio')->name('clubunio.photo.personal');
+Route::get('/campaign-photo/{tenant:slug}/{change}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'campaign'])
+    ->whereNumber('change')->middleware('auth:clubunio')->name('clubunio.photo.campaign');
 Route::get('/member-photo/{tenant:slug}/{member}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'member'])
     ->whereNumber('member')->middleware('auth:clubunio')->name('clubunio.photo.member');
 Route::get('/join/{tenant:slug}', [PublicWebController::class, 'registration'])->middleware('throttle:60,1')->name('clubunio.public.registration');

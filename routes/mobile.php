@@ -23,6 +23,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         \App\ClubUnio\Mobile\MobileAdminNoticeRoutes::register();
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('members/{member}', [\App\ClubUnio\Mobile\MobileMemberController::class, 'show'])->whereNumber('member');
+        Route::get('members/{member}/photo', [\App\ClubUnio\Mobile\MobileMemberController::class, 'photo'])->whereNumber('member');
         Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
         Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');

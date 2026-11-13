@@ -59,6 +59,8 @@ final class MobileMemberData
             && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view'));
         $dto = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
             'Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city, 'CanEdit' => $editable,
+            'PhotoAvailable' => !$teamRestricted && ($own || $direct)
+                && app(\App\ClubUnio\Services\ProfilePhotoService::class)->memberAvailable($tenant, $id),
             'ChangeMode' => $editable ? ($direct ? 'direct' : 'request') : 'none', 'EditableFields' => $fields,
             'TeamSaisonID' => $teamId, 'ContactOnly' => !$full, 'CanRequestChanges' => $editable && !$direct,
             'CanReadChangeRequests' => !$teamRestricted && app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),

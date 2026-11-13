@@ -42,7 +42,11 @@ class MemberChangeRequestResource extends CatalogResource
 
     public static function table(Table $table): Table
     {
-        $comparison = fn (MemberChangeRequest $record) => view('clubunio.members.change-comparison', ['rows' => app(MemberChangeService::class)->comparison($record, Filament::getTenant()), 'note' => $record->decision_note]);
+        $comparison = fn (MemberChangeRequest $record) => view('clubunio.members.change-comparison', [
+            'rows' => app(MemberChangeService::class)->comparison($record, Filament::getTenant()), 'note' => $record->decision_note,
+            'portrait' => $record->portrait_encrypted && app(\App\ClubUnio\Services\MemberCampaignService::class)->allowed(Filament::auth()->user(), Filament::getTenant())
+                ? route('clubunio.photo.campaign', [Filament::getTenant()->slug, $record->id]) : null,
+        ]);
 
         return $table->columns([
             TextColumn::make('member.display_name')->label('Mitglied')->searchable(query: fn ($query, $search) => $query->whereHas('member', fn ($q) => $q->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%')->orWhere('company', 'ilike', '%'.$search.'%')))),

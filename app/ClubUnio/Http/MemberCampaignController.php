@@ -33,9 +33,10 @@ class MemberCampaignController
         $domain = app(TenantDomainService::class)->current();
         abort_if($domain && (int) $domain->id !== (int) $tenant->id, 404);
         if ($request->isMethod('post')) {
+            $request->validate(['portrait' => 'nullable|file|max:5120'], [], ['portrait' => __('photo.title')]);
             $changes->submitCampaign($tenant, $token, array_filter(
                 $request->only([...MemberCampaignService::FIELDS, '_version']), fn ($value) => $value !== null && $value !== '',
-            ));
+            ), $request->file('portrait'));
 
             return $this->page($tenant, ['complete' => true]);
         }

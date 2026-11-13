@@ -52,7 +52,19 @@ final class ProfilePhotoService
 
     public function upload(Account $actor, ?Tenant $bound, UploadedFile $file): string
     {
+        return $this->saveUpload($actor, $bound, $this->encode($file));
+    }
+
+    public function available(Account $actor, ?Tenant $bound): bool
+    {
+        return $this->enabled() && ($target = $this->target($actor, $bound))
+            && $this->table($target[0])->where($target[1])->whereNotNull('image_encrypted')->exists();
+    }
+
+    public function encode(UploadedFile $file): string
+    {
         abort_unless($this->enabled(), 404);
+        abort_unless($file->isValid() && $file->getSize() <= 5242880, 422);
         $bytes = $file->get();
         $info = @getimagesizefromstring($bytes);
         abort_unless($info && in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)
@@ -67,6 +79,19 @@ final class ProfilePhotoService
             ob_end_clean();
         }
 
+        return $image;
+    }
+
+    public function publishCampaign(Tenant $tenant, int $memberId, string $image): void
+    {
+        abort_unless($this->enabled(), 409);
+        $this->table('member_profile_photos')->upsert([
+            ['tenant_id' => $tenant->id, 'member_id' => $memberId, 'image_encrypted' => $image],
+        ], ['tenant_id', 'member_id'], ['image_encrypted']);
+    }
+
+    private function saveUpload(Account $actor, ?Tenant $bound, string $image): string
+    {
         return DB::connection('clubunio')->transaction(function () use ($actor, $bound, $image) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && ! $fresh->api_only && ($target = $this->target($fresh, $bound)), 403);
@@ -110,6 +135,13 @@ final class ProfilePhotoService
             'tenant_id' => $tenant->id, 'member_id' => $memberId,
         ])->whereExists(fn ($q) => $q->selectRaw('1')->from('clubunio.members as member')
             ->where('member.tenant_id', $tenant->id)->where('member.id', $memberId)->whereNull('member.archived_at'))->first() : null;
+    }
+
+    public function memberAvailable(Tenant $tenant, int $memberId): bool
+    {
+        return $this->enabled() && $this->table('member_profile_photos')->where([
+            'tenant_id' => $tenant->id, 'member_id' => $memberId,
+        ])->whereNotNull('image_encrypted')->exists();
     }
 
     public function response(string $image)

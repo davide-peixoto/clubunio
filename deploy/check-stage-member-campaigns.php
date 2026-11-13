@@ -2,6 +2,7 @@
 
 use App\ClubUnio\Models\{Account, Member, Tenant};
 use App\ClubUnio\Services\{MemberCampaignService, MemberChangeService, MemberService, StageMigrationTarget};
+use Illuminate\Http\UploadedFile;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\{Crypt, DB, Mail};
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -19,10 +20,13 @@ if (! $app->environment('staging') || config('app.url') !== 'https://stage.clubu
 $db = DB::connection('clubunio');
 StageMigrationTarget::authorize($db, 'clubunio_stage');
 Mail::fake();
+config(['clubunio-profile-photos.enabled' => true]);
 $require = static function (bool $condition, string $step): void {
     if (! $condition) throw new RuntimeException($step);
 };
 $db->beginTransaction();
+$file = null;
+$exit = 0;
 try {
     $tenant = Tenant::where('slug', 'stage-mobile-pilot')->sole();
     $suffix = bin2hex(random_bytes(8));
@@ -37,6 +41,14 @@ try {
         'member_number' => 1 + (int) $db->table('clubunio.members')->where('tenant_id', $tenant->id)->max('member_number')])->save();
     $campaigns = app(MemberCampaignService::class);
     $changes = app(MemberChangeService::class);
+    foreach (['pending', 'approved', 'rejected', 'withdrawn'] as $status) {
+        $db->table('clubunio.member_change_statuses')->insertOrIgnore([
+            'tenant_id' => $tenant->id, 'code' => $status, 'name' => $status, 'color' => 'gray',
+        ]);
+    }
+    $file = tempnam(sys_get_temp_dir(), 'campaign-photo-');
+    imagejpeg(imagecreatetruecolor(8, 8), $file);
+    $photos = app(\App\ClubUnio\Services\ProfilePhotoService::class);
     $id = $campaigns->create($actor, $tenant, 'Synthetic campaign', 'email', false);
     $campaigns->recipient($actor, $tenant, $id, $member->id, 'email');
     $campaigns->recipient($actor, $tenant, $id, $member->id, null);
@@ -51,13 +63,21 @@ try {
     $require(str_starts_with($qr, 'data:image/svg+xml;base64,'), 'QR output');
     $campaigns->invitation($tenant, $token);
     $campaigns->invitation($tenant, $token);
-    $request = $changes->submitCampaign($tenant, $token, ['city' => 'Reviewed', '_version' => MemberService::version($member->fresh())]);
+    $request = $changes->submitCampaign($tenant, $token, ['city' => 'Reviewed', '_version' => MemberService::version($member->fresh())],
+        new UploadedFile($file, 'fixture.jpg', 'image/jpeg', null, true));
+    $require((bool) $request->portrait_encrypted && !$photos->memberAvailable($tenant, $member->id), 'portrait pending');
     $require($request->state === 'pending' && $member->fresh()->city === 'Original', 'pending does not write');
     $require(! $campaigns->recipients($tenant, $id)->whereNotNull('token_hash')->exists(), 'one-time token');
     $changes->review($actor, $tenant, $request->id, 1, true, null);
     $require($member->fresh()->city === 'Reviewed', 'office approval applies changes');
+    $require($photos->memberAvailable($tenant, $member->id) && !$request->fresh()->portrait_encrypted, 'office publishes portrait');
     Mail::assertNothingSent();
-    echo "Synthetic campaign draft, QR, one-time token, pending and office approval passed. No email sent.\n";
+    echo "Synthetic campaign, private photo and office approval passed. No email sent.\n";
+} catch (Throwable $e) {
+    fwrite(STDERR, get_class($e).' at '.basename($e->getFile()).':'.$e->getLine()."\n");
+    $exit = 1;
 } finally {
+    if ($file) unlink($file);
     $db->rollBack();
 }
+exit($exit);

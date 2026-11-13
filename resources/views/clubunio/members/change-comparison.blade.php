@@ -2,3 +2,6 @@
 @foreach($rows as $row)<tr><td class="p-2">{{ $row['field'] }}</td><td class="p-2">{{ $row['before'] ?? '–' }}</td><td class="p-2">{{ $row['after'] ?? '–' }}</td></tr>@endforeach
 </tbody></table></div>
 @if($note)<p class="mt-4">{{ $note }}</p>@endif
+@if(!empty($portrait))
+    @include('clubunio.profile-photo-review', ['url' => $portrait])
+@endif

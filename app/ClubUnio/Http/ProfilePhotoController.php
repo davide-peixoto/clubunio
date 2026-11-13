@@ -30,4 +30,16 @@ final class ProfilePhotoController
 
         return $photos->response(Crypt::decryptString($image));
     }
+
+    public function campaign(Request $request, Tenant $tenant, int $change, ProfilePhotoService $photos)
+    {
+        $bound = app(TenantDomainService::class)->current();
+        abort_if($bound && ! $bound->is($tenant), 404);
+        abort_unless($photos->enabled() && app(MemberCampaignService::class)->allowed($request->user('clubunio'), $tenant), 403);
+        $image = \App\ClubUnio\Models\MemberChangeRequest::withoutGlobalScopes()
+            ->where('tenant_id', $tenant->id)->where('state', 'pending')->whereKey($change)->value('portrait_encrypted');
+        abort_unless($image, 404);
+
+        return $photos->response(Crypt::decryptString($image));
+    }
 }

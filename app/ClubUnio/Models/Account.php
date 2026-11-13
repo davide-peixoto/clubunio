@@ -13,9 +13,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
 
-class Account extends Authenticatable implements FilamentUser, HasName, HasTenants
+class Account extends Authenticatable implements FilamentUser, HasName, HasTenants, \Filament\Models\Contracts\HasAvatar
 {
     use UsesClubUnioSchema;
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        if (request()->attributes->has('clubunio_impersonation')) return null;
+        $domain = app(\App\ClubUnio\Services\TenantDomainService::class)->current();
+
+        return app(\App\ClubUnio\Services\ProfilePhotoService::class)->available($this, $domain)
+            ? route('clubunio.photo.personal', absolute: false) : null;
+    }
 
     protected $connection = 'clubunio';
 

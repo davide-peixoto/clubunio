@@ -18,5 +18,10 @@ gespeichert. Bestehende Ausweisbilder werden nicht uebernommen.
 Stage-DB lauffaehig. Nach Installation Routen- und Konfigurationscache
 aktualisieren. `CLUBUNIO_PROFILE_PHOTOS_ENABLED` bleibt standardmaessig aus.
 Rueckweg: Flag deaktivieren und Config-Cache neu bauen; Tabellen erhalten.
-Offen: Kampagnen-Upload, Fotoanzeige im App-Mitgliederdossier, Web-Profil-
-Avatar und visuelle Abnahme.
+Kampagnenfotos bleiben bis zur Entscheidung verschluesselt im Antrag und
+werden nur bei Freigabe publiziert. Migration
+`2026_11_13_000610_campaign_portraits.php` ebenfalls gezielt auf Stage
+anwenden. `deploy/check-stage-member-campaigns.php` prueft den Ablauf
+mit synthetischen Daten und ohne Versand in einer Rueckrolltransaktion.
+Das Web-Profil und das berechtigte App-Mitgliederdossier zeigen nur
+freigegebene Fotos. Die visuelle Geraeteabnahme bleibt separat.

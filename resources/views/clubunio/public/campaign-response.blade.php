@@ -9,7 +9,7 @@
     @if($errors->any())
         <ul class="errors" role="alert">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
     @endif
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="_version" value="{{ $version }}">
         <div class="form-grid">
@@ -21,6 +21,9 @@
                 </label>
             @endforeach
         </div>
+        @if(app(\App\ClubUnio\Services\ProfilePhotoService::class)->enabled())
+            <p><label>{{ __('photo.title') }} <input type="file" name="portrait" accept="image/jpeg,image/png,image/webp"></label></p>
+        @endif
         <p><button type="submit">{{ __('campaign.submit') }}</button></p>
     </form>
 @endif

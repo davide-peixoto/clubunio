@@ -60,20 +60,22 @@ class MemberChangeService
         });
     }
 
-    public function submitCampaign(Tenant $tenant, string $token, array $input): MemberChangeRequest
+    public function submitCampaign(Tenant $tenant, string $token, array $input, ?\Illuminate\Http\UploadedFile $photo = null): MemberChangeRequest
     {
-        return DB::connection('clubunio')->transaction(function () use ($tenant, $token, $input) {
+        app(MemberCampaignService::class)->invitation($tenant, $token);
+        $portrait = $photo ? app(ProfilePhotoService::class)->encode($photo) : null;
+        return DB::connection('clubunio')->transaction(function () use ($tenant, $token, $input, $portrait) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             [$recipient, $member] = app(MemberCampaignService::class)->invitation($tenant, $token, true);
             abort_if(array_diff(array_keys($input), [...MemberCampaignService::FIELDS, '_version']), 422);
-            $request = $this->createPending(null, $tenant, $member, $input, null);
+            $request = $this->createPending(null, $tenant, $member, $input, null, $portrait);
             app(MemberCampaignService::class)->consume($tenant, $recipient, $request);
 
             return $request;
         });
     }
 
-    private function createPending(?Account $actor, Tenant $tenant, Member $member, array $input, ?int $teamId): MemberChangeRequest
+    private function createPending(?Account $actor, Tenant $tenant, Member $member, array $input, ?int $teamId, ?string $portrait = null): MemberChangeRequest
     {
             $id = $member->id;
             if (array_diff(array_keys($input), [...array_diff(array_keys(self::FIELDS), $teamId !== null ? ['billing_recipient_id'] : []), '_version'])) {
@@ -125,8 +127,8 @@ class MemberChangeService
                     $changes[$field] = $value;
                 }
             }
-            if (! $changes || MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $id)->where('state', 'pending')->exists()) {
-                throw ValidationException::withMessages(['member' => $changes ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
+            if ((! $changes && ! $portrait) || MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $id)->where('state', 'pending')->exists()) {
+                throw ValidationException::withMessages(['member' => ($changes || $portrait) ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
             }
             $request = new MemberChangeRequest;
             $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor?->id,
@@ -135,6 +137,9 @@ class MemberChangeService
                 'snapshot_encrypted' => Crypt::encryptString(json_encode(['before' => array_intersect_key($before, $changes), 'changes' => $changes, 'team_id' => $teamId], JSON_THROW_ON_ERROR))])->save();
             if ($actor) {
                 $this->audit($actor, $request, 'submitted');
+            }
+            if ($portrait) {
+                $request->forceFill(['portrait_encrypted' => $portrait])->save();
             }
             $this->notify($tenant, $request, 'member.change.requested', true);
 
@@ -166,8 +171,15 @@ class MemberChangeService
                 if (! hash_equals($r->member_version, MemberService::version($member))) {
                     throw ValidationException::withMessages(['revision' => __('Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.')]);
                 }
-                app(MemberService::class)->update($actor, $tenant, $member->id, $this->snapshot($r)['changes'] + ['_version' => $r->member_version]);
+                $changes = $this->snapshot($r)['changes'];
+                if ($changes) {
+                    app(MemberService::class)->update($actor, $tenant, $member->id, $changes + ['_version' => $r->member_version]);
+                }
+                if ($r->portrait_encrypted) {
+                    app(ProfilePhotoService::class)->publishCampaign($tenant, $member->id, $r->portrait_encrypted);
+                }
             }
+            if ($r->portrait_encrypted) $r->forceFill(['portrait_encrypted' => null]);
             $state = $approve ? 'approved' : 'rejected';
             $r->forceFill(['state' => $state, 'status_id' => $this->status($tenant, $state), 'revision' => $revision + 1,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'decision_note' => $note])->save();
