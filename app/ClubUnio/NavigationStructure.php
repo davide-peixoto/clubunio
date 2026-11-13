@@ -14,7 +14,7 @@ class NavigationStructure
         'Mitglieder' => ['MemberResource', 'RegistrationResource', 'MemberChangeRequestResource', 'FamilyResource', 'MemberDocumentResource', 'DocumentSeries', 'FamilyMemberResource'],
         'Sport' => ['TeamPlanning', 'SponsorRuns', 'SeasonResource', 'SfvCompetitions', 'CompetitionResource'],
         'Finanzen' => ['InvoiceResource', 'ExpenseResource', 'BexioReconciliation'],
-        'Anlagen & Kommunikation' => ['Chats', 'SocialStudio', 'PitchPlanning', 'FieldAvailabilityResource', 'BusReservations', 'SignagePreview', 'SignageNoticeResource', 'AnnouncementResource', 'ClubEventResource', 'MaterialReceiptResource', 'LegacyMaterialReceiptResource'],
+        'Anlagen & Kommunikation' => ['Chats', 'SocialStudio', 'MemberCampaigns', 'PitchPlanning', 'FieldAvailabilityResource', 'BusReservations', 'SignagePreview', 'SignageNoticeResource', 'AnnouncementResource', 'ClubEventResource', 'MaterialReceiptResource', 'LegacyMaterialReceiptResource'],
         'Auswertungen' => ['MemberReportResource', 'UnassignedMemberResource', 'PassiveMemberResource', 'PlayerReportResource', 'StaffReportResource', 'FamilyReportResource', 'OpenInvoiceResource', 'PaymentReportResource', 'BankAccountReportResource', 'KeyReportResource', 'SpotsRecipientResource'],
     ];
 

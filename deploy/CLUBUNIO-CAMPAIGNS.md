@@ -1,5 +1,10 @@
 # Kampagnen: Stammdaten-Pilot
 
+Stage: Kampagnen sind unter Anlagen & Kommunikation eingeordnet. Die
+Uebersicht verwendet eine Verwaltungstabelle und ein getrenntes Formular.
+Empfaengerabfragen qualifizieren die Mandantenspalte und verknuepfen
+Mitglieder und Antraege jeweils auch ueber die Mandanten-ID. Keine Migration.
+
 Die Empfaengerliste verwendet die gemeinsame Verwaltungs-Tabelle mit
 getrennten Spalten fuer Mitglied, Versandkanal und Status. Keine Migration.
 

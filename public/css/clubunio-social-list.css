@@ -4,7 +4,11 @@
 }
 .cu-social .cu-social-navigation [data-tab] {
     min-height: 40px;
+    background: transparent;
+    border-color: transparent;
 }
+.cu-social .cu-social-navigation [data-tab][aria-pressed=true] { background: var(--cu-soft); color: var(--cu-accent); }
+.cu-social [data-workspace] > p { padding: 20px 16px; border: 1px solid var(--cu-border); border-radius: 6px; background: var(--cu-surface); margin-top: 12px; }
 .cu-social [data-workspace] .cu-social-list {
     border: 1px solid var(--svs-border, #e4e4e7);
     border-radius: 6px;

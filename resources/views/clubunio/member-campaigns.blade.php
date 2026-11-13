@@ -5,21 +5,29 @@
         $draft = $campaign && ! $campaign->released_at && ! $campaign->revoked_at;
     @endphp
     @if($canManage)
-    <form wire:submit="create" class="cu-admin-toolbar">
+    <x-filament::section>
+    <form wire:submit="create" class="cu-admin-toolbar cu-campaign-create">
         <label>{{ __('campaign.name') }} <x-filament::input.wrapper><x-filament::input wire:model="campaignTitle" maxlength="160" required /></x-filament::input.wrapper></label>
         <label>{{ __('campaign.channel') }} <x-filament::input.wrapper><x-filament::input.select wire:model="channel">
             @foreach($channels as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach
         </x-filament::input.select></x-filament::input.wrapper></label>
-        <label><x-filament::input.checkbox wire:model="populate" /> {{ __('campaign.populate') }}</label>
+        <label class="cu-campaign-check"><x-filament::input.checkbox wire:model="populate" /> {{ __('campaign.populate') }}</label>
         <x-filament::button type="submit" icon="heroicon-o-plus">{{ __('campaign.create') }}</x-filament::button>
         @error('campaignTitle')<p role="alert">{{ $message }}</p>@enderror
     </form>
+    </x-filament::section>
     @endif
-    <nav class="flex flex-wrap gap-2" aria-label="{{ __('campaign.title') }}">
+    <div class="cu-admin-journal">
+    <table><thead><tr><th scope="col">{{ __('campaign.name') }}</th><th scope="col">{{ __('campaign.channel') }}</th><th scope="col">{{ __('Status') }}</th></tr></thead><tbody>
         @foreach($campaigns as $entry)
-            <x-filament::button wire:click="select({{ $entry->id }})" :color="$selected === $entry->id ? 'primary' : 'gray'">{{ $entry->title }}</x-filament::button>
+            <tr wire:key="campaign-{{ $entry->id }}">
+                <td><x-filament::link tag="button" wire:click="select({{ $entry->id }})">{{ $entry->title }}</x-filament::link></td>
+                <td>{{ $channels[$entry->channel] }}</td>
+                <td><x-filament::badge>{{ !$entry->released_at && !$entry->revoked_at ? __('campaign.draft') : ($entry->revoked_at || !\Illuminate\Support\Carbon::parse($entry->expires_at)->isFuture() ? __('campaign.closed') : __('campaign.open')) }}</x-filament::badge></td>
+            </tr>
         @endforeach
-    </nav>
+    </tbody></table>
+    </div>
     @if($campaign)
         <div class="flex flex-wrap items-center gap-3">
             <h2>{{ $campaign->title }}</h2>

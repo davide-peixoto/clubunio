@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     @vite('resources/js/social-studio.js')
-    <link rel="stylesheet" href="{{ asset('css/clubunio-social-list.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-social-list.css') }}?v=2">
     <section class="cu-social" data-social-studio data-config="{{ json_encode($this->studioConfig(), JSON_THROW_ON_ERROR) }}" wire:ignore>
         <nav class="cu-social-toolbar cu-admin-toolbar cu-social-navigation" aria-label="{{ trans('social.title') }}">
             @foreach (['today', 'posts', 'templates', 'media'] as $tab)

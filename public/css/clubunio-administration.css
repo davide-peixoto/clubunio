@@ -22,3 +22,5 @@
 .dark .cu-admin-journal th, .dark .cu-admin-journal tbody tr:hover { background: #27272a; color: #e4e4e7; }
 .dark .cu-admin-journal a { color: #70baf0; }
 @media(max-width:640px) { .cu-admin-toolbar > label, .cu-admin-toolbar > .cu-admin-field { flex: 1 1 100%; } .cu-admin-journal table { min-width: 560px; } .cu-admin-native > header { align-items: start; } .cu-admin-form { grid-template-columns: minmax(0,1fr); } }
+.cu-admin-toolbar .cu-campaign-check { display: flex; align-items: center; flex-direction: row; gap: 8px; }
+.cu-campaign-create { align-items: end; }

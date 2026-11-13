@@ -23,6 +23,7 @@ class MemberCampaigns extends Page
     public int $limit = 50;
 
     public static function getNavigationLabel(): string { return __('campaign.title'); }
+    public static function getNavigationIcon(): string { return 'heroicon-o-megaphone'; }
     public function getTitle(): string { return __('campaign.title'); }
     public static function canAccess(): bool
     {
@@ -106,9 +107,10 @@ class MemberCampaigns extends Page
         $tenant = Filament::getTenant();
         $service = app(MemberCampaignService::class);
         $campaign = $this->selected ? $service->campaigns($tenant)->where('id', $this->selected)->firstOrFail() : null;
-        $recipients = $campaign ? $service->recipients($tenant, $campaign->id)
-            ->join('clubunio.members as member', 'member.id', '=', 'campaign_recipients.member_id')
-            ->leftJoin('clubunio.member_change_requests as request', 'request.id', '=', 'campaign_recipients.request_id')
+        $recipients = $campaign ? DB::connection('clubunio')->table('clubunio.campaign_recipients')
+            ->where('campaign_recipients.tenant_id', $tenant->id)->where('campaign_recipients.campaign_id', $campaign->id)
+            ->join('clubunio.members as member', fn ($join) => $join->on('member.id', '=', 'campaign_recipients.member_id')->on('member.tenant_id', '=', 'campaign_recipients.tenant_id'))
+            ->leftJoin('clubunio.member_change_requests as request', fn ($join) => $join->on('request.id', '=', 'campaign_recipients.request_id')->on('request.tenant_id', '=', 'campaign_recipients.tenant_id'))
             ->select('campaign_recipients.*', 'member.first_name', 'member.last_name', 'member.email', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state')
             ->orderBy('campaign_recipients.id')->limit(min(5000, max(50, $this->limit)))->get() : collect();
         $canManage = static::canManage();
