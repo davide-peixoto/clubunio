@@ -35,6 +35,13 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/clubunio-platform.php';
 require __DIR__.'/clubunio-marketing.php';
 
+Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
+    ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
+Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
+    ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
+Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
+    ->whereNumber('campaign')->middleware(['auth:clubunio', 'throttle:4,1'])->name('clubunio.campaign.letters');
+
 Route::match(['GET', 'POST'], '/social-data/{operation}', \App\ClubUnio\Http\SocialStudioController::class)
     ->where('operation', '[a-z-]+')
     ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])

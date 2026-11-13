@@ -56,6 +56,29 @@ class MemberChangeService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $teamId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $member = $this->requestable($actor, $tenant, $id, true, $teamId);
+            return $this->createPending($actor, $tenant, $member, $input, $teamId);
+        });
+    }
+
+    public function submitCampaign(Tenant $tenant, string $token, array $input, ?\Illuminate\Http\UploadedFile $photo = null): MemberChangeRequest
+    {
+        app(MemberCampaignService::class)->invitation($tenant, $token);
+        $portrait = $photo ? app(ProfilePhotoService::class)->encode($photo) : null;
+        return DB::connection('clubunio')->transaction(function () use ($tenant, $token, $input, $portrait) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            [$recipient, $member, $campaign] = app(MemberCampaignService::class)->invitation($tenant, $token, true);
+            abort_unless($campaign->kind === 'member_update', 404);
+            abort_if(array_diff(array_keys($input), [...MemberCampaignService::FIELDS, '_version']), 422);
+            $request = $this->createPending(null, $tenant, $member, $input, null, $portrait);
+            app(MemberCampaignService::class)->consume($tenant, $recipient, $request);
+
+            return $request;
+        });
+    }
+
+    private function createPending(?Account $actor, Tenant $tenant, Member $member, array $input, ?int $teamId, ?string $portrait = null): MemberChangeRequest
+    {
+            $id = $member->id;
             if (array_diff(array_keys($input), [...array_diff(array_keys(self::FIELDS), $teamId !== null ? ['billing_recipient_id'] : []), '_version'])) {
                 throw ValidationException::withMessages(['member' => __('Nicht erlaubtes Änderungsfeld.')]);
             }
@@ -89,12 +112,12 @@ class MemberChangeService
             }
             $rules['birth_date'] = 'nullable|date_format:Y-m-d|before_or_equal:today';
             foreach (['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'] as $field => $table) {
-                $rules[$field] = ['nullable', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
+                $rules[$field] = ['nullable', 'integer', Rule::exists('clubunio.clubunio.'.$table, 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)
                     ->where(fn ($q) => $q->where('active', true)->orWhere('id', $member->$field ?? -1)))];
             }
             $data = Validator::make($data, $rules, [], self::FIELDS)->validate();
             if ($data['billing_recipient_id'] ?? null) {
-                $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
+                $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $data['billing_recipient_id'])->value('email_field');
                 if (empty($data[$emailField])) {
                     throw ValidationException::withMessages([$emailField => __('E-Mail-Adresse für den Rechnungsempfänger erforderlich.')]);
                 }
@@ -105,19 +128,23 @@ class MemberChangeService
                     $changes[$field] = $value;
                 }
             }
-            if (! $changes || MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $id)->where('state', 'pending')->exists()) {
-                throw ValidationException::withMessages(['member' => $changes ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
+            if ((! $changes && ! $portrait) || MemberChangeRequest::where('tenant_id', $tenant->id)->where('member_id', $id)->where('state', 'pending')->exists()) {
+                throw ValidationException::withMessages(['member' => ($changes || $portrait) ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
             }
             $request = new MemberChangeRequest;
-            $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor->id,
+            $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor?->id,
                 'status_id' => $this->status($tenant, 'pending'), 'state' => 'pending', 'revision' => 1,
                 'member_version' => MemberService::version($member),
                 'snapshot_encrypted' => Crypt::encryptString(json_encode(['before' => array_intersect_key($before, $changes), 'changes' => $changes, 'team_id' => $teamId], JSON_THROW_ON_ERROR))])->save();
-            $this->audit($actor, $request, 'submitted');
+            if ($actor) {
+                $this->audit($actor, $request, 'submitted');
+            }
+            if ($portrait) {
+                $request->forceFill(['portrait_encrypted' => $portrait])->save();
+            }
             $this->notify($tenant, $request, 'member.change.requested', true);
 
             return $request;
-        });
     }
 
     public function review(Account $actor, Tenant $tenant, int $id, int $revision, bool $approve, ?string $note): MemberChangeRequest
@@ -130,23 +157,37 @@ class MemberChangeService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'member_changes', 'approve');
             $r = MemberChangeRequest::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->pending($r, $revision);
+            if ($r->requested_by === null) {
+                abort_unless(app(MemberCampaignService::class)->allowed($actor, $tenant), 403);
+            }
             // Revoked parent/self links and departed members cannot be approved retrospectively.
             if ($approve) {
                 try {
-                    $member = $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
+                    $member = $r->requested_by === null
+                        ? app(MemberCampaignService::class)->reviewMember($tenant, $r)
+                        : $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
                 } catch (ModelNotFoundException|\Illuminate\Database\RecordNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
                     throw ValidationException::withMessages(['revision' => __('Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.')]);
                 }
                 if (! hash_equals($r->member_version, MemberService::version($member))) {
                     throw ValidationException::withMessages(['revision' => __('Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.')]);
                 }
-                app(MemberService::class)->update($actor, $tenant, $member->id, $this->snapshot($r)['changes'] + ['_version' => $r->member_version]);
+                $changes = $this->snapshot($r)['changes'];
+                if ($changes) {
+                    app(MemberService::class)->update($actor, $tenant, $member->id, $changes + ['_version' => $r->member_version]);
+                }
+                if ($r->portrait_encrypted) {
+                    app(ProfilePhotoService::class)->publishCampaign($tenant, $member->id, $r->portrait_encrypted);
+                }
             }
+            if ($r->portrait_encrypted) $r->forceFill(['portrait_encrypted' => null]);
             $state = $approve ? 'approved' : 'rejected';
             $r->forceFill(['state' => $state, 'status_id' => $this->status($tenant, $state), 'revision' => $revision + 1,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'decision_note' => $note])->save();
             $this->audit($actor, $r, $state);
-            $this->notify($tenant, $r, 'member.change.'.$state, false);
+            if ($r->requested_by !== null) {
+                $this->notify($tenant, $r, 'member.change.'.$state, false);
+            }
 
             return $r;
         });
@@ -178,7 +219,7 @@ class MemberChangeService
             $label = fn ($v) => $v;
             $table = ['country_id' => 'countries', 'nationality_id' => 'countries', 'gender_id' => 'genders', 'billing_recipient_id' => 'billing_recipients'][$field] ?? null;
             if ($table) {
-                $label = fn ($v) => DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('id', $v)->value('name');
+                $label = fn ($v) => DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('id', $v)->value('name');
             }
             $rows[] = ['field' => self::FIELDS[$field], 'before' => $label($snapshot['before'][$field]), 'after' => $label($value)];
         }
@@ -195,12 +236,12 @@ class MemberChangeService
 
     private function status(Tenant $tenant, string $state): int
     {
-        return (int) DB::connection('clubunio')->table('clubora.member_change_statuses')->where('tenant_id', $tenant->id)->where('code', $state)->sole()->id;
+        return (int) DB::connection('clubunio')->table('clubunio.member_change_statuses')->where('tenant_id', $tenant->id)->where('code', $state)->sole()->id;
     }
 
     private function audit(Account $actor, MemberChangeRequest $r, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
             'object_type' => 'member_change_requests', 'object_id' => $r->id,
             'after_value' => json_encode(['operation' => $operation, 'revision' => $r->revision, 'member_id' => $r->member_id], JSON_THROW_ON_ERROR)]);
     }
@@ -208,12 +249,12 @@ class MemberChangeService
     private function notify(Tenant $tenant, MemberChangeRequest $r, string $event, bool $office): void
     {
         $db = DB::connection('clubunio');
-        $accounts = $db->table('clubora.tenant_accounts as ta')->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
+        $accounts = $db->table('clubunio.tenant_accounts as ta')->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')->where('ta.tenant_id', $tenant->id)->where('a.active', true);
         $office ? $accounts->whereIn('ta.role', ['admin', 'office']) : $accounts->where('a.id', $r->requested_by);
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $event, 'push', ['verein' => $tenant->name], $accounts->pluck('a.id')->all());
         foreach ($messages as $account => $message) {
             if ($message) {
-                $db->table('clubora.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
+                $db->table('clubunio.notifications')->insert(['tenant_id' => $tenant->id, 'account_id' => $account,
                     'title' => $message['title'], 'body' => $message['body'], 'object_type' => 'member_change_request', 'object_id' => $r->id]);
             }
         }

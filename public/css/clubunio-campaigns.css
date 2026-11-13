@@ -1,0 +1,8 @@
+.cu-admin-toolbar.cu-campaign-create { align-items: end; }
+.cu-admin-toolbar.cu-campaign-create .cu-campaign-check { display: flex; align-items: center; flex-direction: row; gap: 8px; }
+.cu-campaign-check input { flex-shrink: 0; }
+@media (max-width: 640px) {
+    .cu-campaign-overview table { min-width: 0; table-layout: fixed; }
+    .cu-campaign-overview :is(th, td) { padding: 10px 8px; }
+    .cu-campaign-overview th:first-child { width: 42%; }
+}

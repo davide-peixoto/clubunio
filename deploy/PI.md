@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Vereinsadmin: Social Media und Kampagnen
+
+Vereinsadmins verwalten Social Media und Kampagnenentwuerfe im eigenen
+Mandanten. Die vier Kampagnenmigrationen 000500, 000610, 000620 und 000630
+werden gezielt auf `clubunio_dev` ausgefuehrt. Oeffentliche Einladungen,
+Kampagnenfreigabe und SMTP bleiben auf den bestehenden Stage-Piloten
+beschraenkt. Keine Aenderung an Konten oder Rollen ausserhalb des Mandanten.
+
 ## Social Media: Ladezeit (13.11.2026)
 
 Aktiv: `20261113-clubunio-social-performance`; Rueckweg:
