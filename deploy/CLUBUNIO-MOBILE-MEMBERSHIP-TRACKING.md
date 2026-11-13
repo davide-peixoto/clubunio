@@ -59,3 +59,9 @@ den Antrag für die Bearbeitung durch den Verein. Der Formulartoken ist
 an Konto, Verein und Origin gebunden. Die Zuordnung wird mit dem Antrag
 gespeichert. Es entsteht weder ein neues Konto noch eine Mitgliedsverknüpfung.
 Die vorhandenen Antrags- und Idempotenz-Tabellen genügen.
+
+DEV-Stand 13.11.2026. Der authentifizierte Endpunkt läuft im Release
+20261113-clubunio-family-intake. Die Registrierungseinstellung für SV Sissach
+ist aktiv, der neue Endpunkt verlangt ohne Sitzung HTTP 401. Der App-Einstieg
+benötigt einen Build ab 78b4d83. Die separaten öffentlichen Startscreen-Abläufe
+sind auf DEV und Stage derzeit deaktiviert. Es wurde kein echter Antrag erstellt.
