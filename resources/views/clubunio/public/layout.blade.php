@@ -10,7 +10,7 @@
     @yield('head')
 </head>
 <body>
-    <header class="public-header"><img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" alt="{{ __('ClubUnio') }}" width="160" height="40"><strong>{{ $tenant->name }}</strong></header>
+    <header class="public-header">@include('clubunio.brand.logo')<strong>{{ $tenant->name }}</strong></header>
     <main>@yield('content')</main>
     <footer>{{ __('ClubUnio · Testumgebung') }}</footer>
     @yield('scripts')

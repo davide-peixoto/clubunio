@@ -7,6 +7,14 @@ DEV, Stage und PROD meinen immer die ClubUnio-Instanzen. Der Pi und
 PHPMaker und `my.svsissach.ch` sind kein Teil des ClubUnio-Deployments und
 werden nur bei ausdruecklicher Anforderung beruecksichtigt.
 
+## Vereinsbranding
+
+Vereinslogo und Vereinsfarben ersetzen den Plattformhinweis nicht.
+Die gemeinsame Blade-Teilansicht `clubunio.brand.attribution` zeigt
+«Powered by ClubUnio» im Vereinsportal, in der Verwaltung und beim Login,
+auf oeffentlichen Formularen und in der Signage-Kopfzeile samt Vorschau.
+Keine Datenmigration oder mandantenspezifische Einstellung erforderlich.
+
 ## Vereinsmail: Antwortadresse
 
 Die mandantenspezifische Antwortadresse unter Einstellungen > Mailversand

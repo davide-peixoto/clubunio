@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-signage.css') }}?v=66">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-signage.css') }}?v=67">
     <script src="{{ asset('js/clubunio-signage.js') }}?v=66" defer></script>
     <div class="sg-preview-controls">
         <label><input type="checkbox" wire:model.live="followToday"> {{ __('Heute') }}</label>

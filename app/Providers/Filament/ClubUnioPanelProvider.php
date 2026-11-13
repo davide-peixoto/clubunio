@@ -125,6 +125,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
+            ->renderHook('panels::footer', fn () => view('clubunio.brand.panel-attribution'))
             ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=language-header-v3" rel="stylesheet" data-navigate-track />')])

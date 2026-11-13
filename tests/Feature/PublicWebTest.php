@@ -81,8 +81,8 @@ class PublicWebTest extends TestCase
 
     public function test_public_pages_and_registered_signage_component_render_without_login(): void
     {
-        $this->get('/join/'.$this->tenant->slug)->assertOk()->assertSee('Synthetic country')->assertSee('Testanmeldung absenden')->assertDontSee('synthetic@example.invalid');
-        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Trainingsplan heute')->assertDontSee('sg-games')->assertSee('Wird geladen');
+        $this->get('/join/'.$this->tenant->slug)->assertOk()->assertSee('Synthetic country')->assertSee('Testanmeldung absenden')->assertSee('Powered by ClubUnio')->assertDontSee('synthetic@example.invalid');
+        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Trainingsplan heute')->assertDontSee('sg-games')->assertSee('Wird geladen')->assertSee('Powered by ClubUnio');
         Livewire::test('clubunio.signage-feeds', ['tenantId' => $this->tenant->id, 'publicDisplay' => true])->call('refreshFeeds')->assertSee('Instagram ist nicht aktiviert');
         Http::assertNothingSent();
     }
@@ -95,7 +95,7 @@ class PublicWebTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($actor, 'clubunio');
         Filament::setTenant($this->tenant);
-        Livewire::test(SignagePreview::class)->assertSee('Signage-Vorschau')->assertSee('Wird geladen')->assertSee('Öffentliche Signage');
+        Livewire::test(SignagePreview::class)->assertSee('Signage-Vorschau')->assertSee('Wird geladen')->assertSee('Öffentliche Signage')->assertSee('Powered by ClubUnio');
     }
 
     public function test_submission_persists_once_with_private_document_and_workflow_events(): void
