@@ -1,4 +1,6 @@
 {
+    "campaign.pdf": "Alle QR-Briefe als PDF",
+    "campaign.pdf_limit": "Für den PDF-Export sind 1 bis 1’000 offene Briefe erforderlich.",
     "campaign.delete": "Entwurf löschen",
     "campaign.confirm_delete": "Diesen Entwurf und seine Empfängerliste löschen?",
     "campaign.delivery": "Versandstatus",
@@ -28,7 +30,8 @@
     "campaign.email": "E-Mail",
     "campaign.post": "Post",
     "campaign.both": "Beides",
-    "campaign.populate": "Aktive volljährige Mitglieder übernehmen",
+    "campaign.populate": "Alle aktiven Mitglieder übernehmen",
+    "campaign.guardian_required": "Die Kampagne enthält Minderjährige oder Mitglieder ohne Geburtsdatum. Für diese Empfänger fehlt noch die geprüfte Elternfreigabe. Bitte vor der Freigabe aus diesem Entwurf entfernen.",
     "campaign.create": "Entwurf erstellen",
     "campaign.search": "Mitglied suchen",
     "campaign.add": "Hinzufügen",

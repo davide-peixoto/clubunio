@@ -59,6 +59,8 @@ Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\
     ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
 Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
     ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
+Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
+    ->whereNumber('campaign')->middleware(['auth:clubunio', 'throttle:4,1'])->name('clubunio.campaign.letters');
 Route::get('/profile-photo', [\App\ClubUnio\Http\ProfilePhotoController::class, 'personal'])
     ->middleware('auth:clubunio')->name('clubunio.photo.personal');
 foreach (['clubunio' => ['my-profile', 'clubunio.web-profile.'], 'portal' => ['portal/profile', 'clubunio.portal.profile.']] as $guard => [$path, $name]) {

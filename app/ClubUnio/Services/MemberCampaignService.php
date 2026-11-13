@@ -79,7 +79,7 @@ class MemberCampaignService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $title, $channel, $populate) {
             $id = $this->campaigns($tenant)->insertGetId(['tenant_id' => $tenant->id, 'title' => trim($title), 'channel' => $channel, 'created_by' => $actor->id]);
             if ($populate) {
-                $this->eligible($tenant)->with('billingRecipient')->select(['id','tenant_id','billing_recipient_id','email','mother_email','father_email'])->chunkById(300, function ($members) use ($tenant, $id, $channel) {
+                app(MemberAccessService::class)->activeMembers($tenant)->with('billingRecipient')->select(['id','tenant_id','billing_recipient_id','email','mother_email','father_email'])->chunkById(300, function ($members) use ($tenant, $id, $channel) {
                     $this->recipients($tenant, $id)->insert($members->map(fn ($member) => [
                         'tenant_id' => $tenant->id, 'campaign_id' => $id, 'member_id' => $member->id, 'channel' => $this->defaultChannel($channel, $member),
                     ])->all());
@@ -101,7 +101,7 @@ class MemberCampaignService
                 return;
             }
             abort_unless(in_array($channel, self::CHANNELS, true), 422);
-            $this->eligible($tenant)->findOrFail($memberId);
+            app(MemberAccessService::class)->activeMembers($tenant)->findOrFail($memberId);
             $this->recipients($tenant, $id)->updateOrInsert(
                 ['tenant_id' => $tenant->id, 'campaign_id' => $id, 'member_id' => $memberId], ['channel' => $channel]);
         });
@@ -115,6 +115,9 @@ class MemberCampaignService
             $campaign = $this->campaigns($tenant)->where('id', $id)->lockForUpdate()->firstOrFail();
             abort_if($campaign->released_at || $campaign->revoked_at, 409);
             abort_unless($this->recipients($tenant, $id)->exists(), 422);
+            if ($this->recipients($tenant, $id)->whereNotIn('member_id', $this->eligible($tenant)->select('id'))->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['release' => __('campaign.guardian_required')]);
+            }
             $this->recipients($tenant, $id)->chunkById(200, function ($rows) use ($tenant, $id) {
                 foreach ($rows as $row) {
                     $token = bin2hex(random_bytes(32));
@@ -124,6 +127,7 @@ class MemberCampaignService
                 }
             });
             $this->campaigns($tenant)->where('id', $id)->update(['released_at' => now(), 'expires_at' => now()->addDays(30)]);
+            app(CampaignMailQueue::class)->enqueueReleased($tenant, $id);
         });
     }
 

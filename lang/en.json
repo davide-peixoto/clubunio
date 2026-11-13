@@ -1,4 +1,6 @@
 {
+    "campaign.pdf": "Download all QR letters as PDF",
+    "campaign.pdf_limit": "The PDF export requires between 1 and 1,000 outstanding letters.",
     "campaign.delete": "Delete draft",
     "campaign.confirm_delete": "Delete this draft and its recipient list?",
     "campaign.delivery": "Delivery status",
@@ -28,7 +30,8 @@
     "campaign.email": "Email",
     "campaign.post": "Post",
     "campaign.both": "Both",
-    "campaign.populate": "Include active adult members",
+    "campaign.populate": "Include all active members",
+    "campaign.guardian_required": "This campaign includes minors or members without a date of birth. Verified guardian delivery is not yet available. Remove these recipients from this draft before release.",
     "campaign.create": "Create draft",
     "campaign.search": "Find a member",
     "campaign.add": "Add",

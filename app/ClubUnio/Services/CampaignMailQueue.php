@@ -45,6 +45,22 @@ final class CampaignMailQueue
         abort_unless($query->update(['mail_state' => 'queued', 'mail_due_at' => now(), 'mail_address_hash' => $hash]) === 1, 409);
     }
 
+    public function enqueueReleased(Tenant $tenant, int $campaign): void
+    {
+        $service = app(MemberCampaignService::class);
+        if (! $this->enabled() || ! $service->isPilot($tenant)) return;
+        $service->recipients($tenant, $campaign)->whereIn('channel', ['email','both'])
+            ->whereNotNull('token_encrypted')->where('mail_state', 'pending')->chunkById(100, function ($rows) use ($tenant) {
+                foreach ($rows as $row) {
+                    $hash = $this->address($tenant, $row);
+                    $this->table()->where('tenant_id', $tenant->id)->where('id', $row->id)->where('mail_state', 'pending')
+                        ->update($hash && ! $this->suppressed($tenant, $hash)
+                            ? ['mail_state' => 'queued', 'mail_due_at' => now(), 'mail_address_hash' => $hash]
+                            : ['mail_state' => 'failed']);
+                }
+            });
+    }
+
     private function suppressed(Tenant $tenant, string $hash): bool
     {
         return $this->table()->where('tenant_id', $tenant->id)->where('mail_address_hash', $hash)->where('mail_state', 'bounced')->exists();

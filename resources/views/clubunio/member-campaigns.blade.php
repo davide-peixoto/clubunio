@@ -34,9 +34,13 @@
             <h2>{{ $campaign->title }}</h2>
             <x-filament::badge>{{ $draft ? __('campaign.draft') : ($open ? __('campaign.open') : __('campaign.closed')) }}</x-filament::badge>
             <span>{{ __(':count Empfänger', ['count' => $count]) }}</span>
+            @error('release')<span role="alert">{{ $message }}</span>@enderror
             @if($canManage && $draft && $total && $pilot)<x-filament::button wire:click="release" wire:confirm="{{ __('campaign.release') }}?">{{ __('campaign.release') }}</x-filament::button>@endif
             @if($canManage && $draft)<x-filament::button color="danger" icon="heroicon-o-trash" wire:click="deleteDraft" wire:confirm="{{ __('campaign.confirm_delete') }}">{{ __('campaign.delete') }}</x-filament::button>@endif
             @if($canManage && $open)<x-filament::button color="danger" wire:click="revoke">{{ __('campaign.revoke') }}</x-filament::button>@endif
+            @if($canManage && $open && $hasLetters)
+                <x-filament::button tag="a" icon="heroicon-o-arrow-down-tray" :href="route('clubunio.campaign.letters', [$tenant->slug, $campaign->id])">{{ __('campaign.pdf') }}</x-filament::button>
+            @endif
         </div>
         @if($canManage && $draft)
             <x-filament::input.wrapper><x-filament::input wire:model.live.debounce.350ms="search" :placeholder="__('campaign.search')" :aria-label="__('campaign.search')" /></x-filament::input.wrapper>
@@ -50,11 +54,16 @@
         <div class="cu-admin-journal">
         <table>
             <thead><tr>
-                @foreach(['name' => __('Mitglied'), 'status' => __('Mitgliederstatus'), 'team' => __('Mannschaft'), 'email' => __('E-Mail'), 'channel' => __('campaign.channel'), 'delivery' => __('campaign.delivery')] as $key => $label)
+                @foreach(['name' => __('Mitglied'), 'status' => __('Mitgliederstatus'), 'type' => __('Mitgliederart'), 'team' => __('Mannschaft'), 'email' => __('E-Mail'), 'channel' => __('campaign.channel'), 'delivery' => __('campaign.delivery')] as $key => $label)
                     <th scope="col" aria-sort="{{ $sort === $key ? ($descending ? 'descending' : 'ascending') : 'none' }}">
                         <button type="button" wire:click="sortBy('{{ $key }}')">{{ $label }} @if($sort === $key){{ $descending ? '↓' : '↑' }}@endif</button>
                         <x-filament::input.wrapper>
-                            @if($key === 'channel' || $key === 'delivery')
+                            @if($key === 'team')
+                                <x-filament::input.select wire:model.live="filters.team" :aria-label="$label">
+                                    <option value="">{{ __('Alle') }}</option>
+                                    @foreach($teamOptions as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                                </x-filament::input.select>
+                            @elseif($key === 'channel' || $key === 'delivery')
                                 <x-filament::input.select wire:model.live="filters.{{ $key }}" :aria-label="$label">
                                     <option value="">{{ __('Alle') }}</option>
                                     @foreach($key === 'channel' ? $channels : ['pending'=>__('campaign.pending'), 'queued'=>__('campaign.queued'), 'sending'=>__('campaign.sending'), 'accepted'=>__('campaign.accepted'), 'failed'=>__('campaign.failed'), 'attention'=>__('campaign.attention'), 'bounced'=>__('campaign.bounced')] as $value => $caption)
@@ -77,6 +86,7 @@
                         @endif
                     </td>
                     <td>{{ $row->member_status ?? '–' }}</td>
+                    <td>{{ $row->member_type ?? '–' }}</td>
                     <td>{{ $row->teams ?? '–' }}</td>
                     <td>{{ $row->email ?? '–' }}</td>
                     <td><div class="flex flex-wrap items-center gap-2">

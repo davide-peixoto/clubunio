@@ -32,7 +32,7 @@ class MemberCampaigns extends Page
         $this->sort = $column;
     }
 
-    private const COLUMNS = ['name' => 'last_name', 'status' => 'member_status', 'team' => 'teams',
+    private const COLUMNS = ['name' => 'last_name', 'status' => 'member_status', 'type' => 'member_type', 'team' => 'teams',
         'email' => 'email', 'channel' => 'channel', 'delivery' => 'mail_state'];
 
     public function deleteDraft(): void
@@ -160,18 +160,21 @@ class MemberCampaigns extends Page
             ->join('clubunio.team_seasons as team', fn ($join) => $join->on('team.id', '=', 'player.team_season_id')->on('team.tenant_id', '=', 'player.tenant_id'))
             ->where('player.tenant_id', $tenant->id)->where('player.active', true)->where('team.active', true)
             ->where('team.season_id', $season?->id ?? -1)->groupBy('player.member_id')
-            ->selectRaw("player.member_id, string_agg(DISTINCT team.label, ', ' ORDER BY team.label) as teams");
+            ->selectRaw("player.member_id, string_agg(DISTINCT team.label, ', ' ORDER BY team.label) as teams, array_agg(DISTINCT team.id) as team_ids");
+        $teamOptions = $campaign && $season ? $db->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)
+            ->where('season_id', $season->id)->where('active', true)->orderBy('label')->pluck('label', 'id') : collect();
         $rows = $campaign ? $db->table('clubunio.campaign_recipients')
             ->where('campaign_recipients.tenant_id', $tenant->id)->where('campaign_recipients.campaign_id', $campaign->id)
             ->join('clubunio.members as member', fn ($join) => $join->on('member.id', '=', 'campaign_recipients.member_id')->on('member.tenant_id', '=', 'campaign_recipients.tenant_id'))
             ->leftJoin('clubunio.member_change_requests as request', fn ($join) => $join->on('request.id', '=', 'campaign_recipients.request_id')->on('request.tenant_id', '=', 'campaign_recipients.tenant_id'))
             ->leftJoin('clubunio.member_statuses as status', fn ($join) => $join->on('status.id', '=', 'member.status_id')->on('status.tenant_id', '=', 'member.tenant_id'))
+            ->leftJoin('clubunio.member_types as type', fn ($join) => $join->on('type.id', '=', 'member.type_id')->on('type.tenant_id', '=', 'member.tenant_id'))
             ->leftJoin('clubunio.billing_recipients as billing', fn ($join) => $join->on('billing.id', '=', 'member.billing_recipient_id')->on('billing.tenant_id', '=', 'member.tenant_id')->where('billing.active', true))
             ->leftJoinSub($teams, 'roster', 'roster.member_id', '=', 'member.id')
             ->select('campaign_recipients.id', 'campaign_recipients.member_id', 'campaign_recipients.channel', 'campaign_recipients.mail_state',
                 'campaign_recipients.request_id', 'campaign_recipients.posted_at', 'campaign_recipients.mail_address_hash',
                 'member.first_name', 'member.last_name', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state',
-                'status.name as member_status', 'roster.teams')
+                'status.name as member_status', 'type.name as member_type', 'roster.teams', 'roster.team_ids')
             ->selectRaw("CASE WHEN member.billing_recipient_id IS NULL OR billing.email_field = 'email' THEN trim(member.email)
                 WHEN billing.email_field = 'mother_email' THEN trim(member.mother_email) WHEN billing.email_field = 'father_email' THEN trim(member.father_email) END AS email") : null;
         $query = $rows ? $db->query()->fromSub($rows, 'recipients') : null;
@@ -181,6 +184,10 @@ class MemberCampaigns extends Page
             $value = '%'.mb_substr(trim($filter), 0, 120).'%';
             if ($key === 'name') {
                 $query->whereRaw("concat_ws(' ', first_name, last_name) ILIKE ?", [$value]);
+            } elseif ($key === 'team') {
+                if (ctype_digit($filter) && $teamOptions->has((int) $filter)) {
+                    $query->whereRaw('cast(? as bigint) = any(team_ids)', [$filter]);
+                }
             } else {
                 $query->where($column, in_array($key, ['channel','delivery'], true) ? '=' : 'ilike',
                     in_array($key, ['channel','delivery'], true) ? $filter : $value);
@@ -191,7 +198,7 @@ class MemberCampaigns extends Page
             ->orderBy('id')->limit(min(5000, max(50, $this->limit)))->get() : collect();
         $canManage = static::canManage();
         $matches = $canManage && $campaign && ! $campaign->released_at && ! $campaign->revoked_at && mb_strlen(trim($this->search)) >= 2
-            ? $service->eligible($tenant)->where(function ($q) {
+            ? app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->where(function ($q) {
                 $q->whereLike('first_name', '%'.mb_substr($this->search, 0, 80).'%')
                     ->orWhereLike('last_name', '%'.mb_substr($this->search, 0, 80).'%');
             })->orderBy('last_name')->limit(15)->get(['id', 'first_name', 'last_name']) : collect();
@@ -200,6 +207,7 @@ class MemberCampaigns extends Page
             'recipients' => $recipients, 'matches' => $matches, 'tenant' => $tenant, 'pilot' => $service->isPilot($tenant), 'canManage' => $canManage,
             'mailQueueEnabled' => app(\App\ClubUnio\Services\CampaignMailQueue::class)->enabled(),
             'canEditMembers' => app(\App\ClubUnio\Services\ModulePermissionService::class)->allows(Filament::auth()->user(), $tenant, 'members', 'update'),
-            'count' => $count, 'total' => $campaign ? $service->recipients($tenant, $campaign->id)->count() : 0];
+            'teamOptions' => $teamOptions, 'count' => $count, 'total' => $campaign ? $service->recipients($tenant, $campaign->id)->count() : 0,
+            'hasLetters' => $campaign && $service->recipients($tenant, $campaign->id)->whereIn('channel', ['post','both'])->whereNotNull('token_encrypted')->exists()];
     }
 }

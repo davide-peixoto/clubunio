@@ -1,5 +1,15 @@
 # Kampagnen: Stammdaten-Pilot
 
+Die Vorauswahl umfasst alle aktiven Mitglieder. Der Entwurf zeigt die
+Mitgliederart und bietet ein Mannschafts-Dropdown fuer die laufende Saison.
+Freigabe bleibt auf den Pilotverein beschraenkt und blockiert Empfaenger
+ohne freigegebenen Alters-/Elternprozess. Bei eingeschalteter Testqueue
+reiht die Freigabe E-Mail-Empfaenger automatisch ein; bei ausgeschalteter
+Queue gibt es keinen automatischen Versand. Nach Freigabe ist ein
+Sammel-PDF fuer offene Postempfaenger mit vollstaendiger Adresse verfuegbar.
+Es markiert die Briefe nicht als versendet. Kampagnentypen und editierbare
+Textvorlagen sind noch nicht verfuegbar; nur Stammdaten ist implementiert.
+
 Bei neuen Entwuerfen mit Beides wird pro Mitglied E-Mail vorgeschlagen,
 wenn die Rechnungsadresse eine gueltige E-Mail liefert, sonst Post.
 Explizit gewaehlte Kanaele und bestehende Entwuerfe bleiben unveraendert.
