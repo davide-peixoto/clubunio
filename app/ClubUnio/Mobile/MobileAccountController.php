@@ -4,6 +4,8 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Services\ModulePermissionService;
+use App\ClubUnio\Services\ProfilePhotoService;
+use App\ClubUnio\Services\TenantDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +18,7 @@ final class MobileAccountController
     {
         $actor = $request->attributes->get('mobile.actor');
         $language = app(MobileLanguages::class)->forAccount($actor);
+        $photoAllowed = app(ProfilePhotoService::class)->canUpload($actor, app(TenantDomainService::class)->resolve($request));
         return response()->json(['data' => ['id' => (int) $actor->id,
             'username' => $actor->username, 'name' => $actor->display_name,
             'language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback'],
@@ -23,7 +26,28 @@ final class MobileAccountController
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
             'password_change' => true, 'push' => app(MobilePushReady::class)->available($request, registration: true), 'registration' => false,
-            'password_reset' => false]]);
+            'password_reset' => false, 'photo_upload_allowed' => $photoAllowed]]);
+    }
+
+    public function photo(Request $request, ProfilePhotoService $photos)
+    {
+        return $photos->response($photos->personal(
+            $request->attributes->get('mobile.actor'), app(TenantDomainService::class)->resolve($request),
+        ));
+    }
+
+    public function uploadPhoto(Request $request, ProfilePhotoService $photos)
+    {
+        abort_unless($photos->enabled(), 404);
+        $actor = $request->attributes->get('mobile.actor');
+        $key = 'mobile-profile-photo:'.$actor->id;
+        abort_if(RateLimiter::tooManyAttempts($key, 8), 429);
+        RateLimiter::hit($key, 3600);
+        $request->validate(['file' => 'required|file|max:5120']);
+
+        return response()->json(['data' => ['state' => $photos->upload(
+            $actor, app(TenantDomainService::class)->resolve($request), $request->file('file'),
+        )]]);
     }
 
     private function recoveryTenants(Request $request, Account $actor): array

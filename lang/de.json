@@ -1,4 +1,7 @@
 {
+    "photo.title": "Profilfoto",
+    "photo.review": "Neues Profilfoto prüfen",
+    "photo.approve": "Foto freigeben (ausgeschaltet: ablehnen)",
     "campaign.title": "Kampagnen",
     "campaign.update": "Mitgliederdaten aktualisieren",
     "campaign.name": "Kampagnenname",

@@ -9,6 +9,8 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
     Route::get('profile', [\App\ClubUnio\Mobile\MobileAccountController::class, 'profile'])->name('profile');
+    Route::get('profile/photo', [\App\ClubUnio\Mobile\MobileAccountController::class, 'photo'])->name('profile.photo');
+    Route::post('profile/photo', [\App\ClubUnio\Mobile\MobileAccountController::class, 'uploadPhoto'])->name('profile.photo.upload');
     \App\ClubUnio\Mobile\MobilePushRoutes::registerAccount();
     Route::post('password', [\App\ClubUnio\Mobile\MobileAccountController::class, 'password'])->name('password');
     Route::get('sessions', [Mobile::class, 'sessions'])->name('sessions');

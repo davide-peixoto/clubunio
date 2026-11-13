@@ -1,4 +1,7 @@
 {
+    "photo.title": "Profile photo",
+    "photo.review": "Review new profile photo",
+    "photo.approve": "Approve photo (off: reject)",
     "campaign.title": "Campaigns",
     "campaign.update": "Update member details",
     "campaign.name": "Campaign name",

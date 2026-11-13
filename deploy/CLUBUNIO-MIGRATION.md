@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+## Profilfotos
+
+Neue private Fotoablage ohne automatische Uebernahme von Altfotos oder
+Ausweisbildern. Stage-Migration und Rueckweg: [Profilfotos](CLUBUNIO-PROFILE-PHOTOS.md).
+
 ## Kampagnen nach der Migration
 
 Der Stammdaten-Pilot uebernimmt keine Alt-Kampagnen und startet keinen
