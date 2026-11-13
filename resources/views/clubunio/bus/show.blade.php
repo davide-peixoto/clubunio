@@ -19,7 +19,7 @@
 @if(\Carbon\Carbon::parse($row->ends_at)->isFuture() && in_array($row->status,['ANGEFRAGT','GENEHMIGT','UNBEKANNT'],true))
 @if(($canApprove && $row->status !== 'GENEHMIGT') || $canCancelReservation)
 <form method="post" action="{{ route('clubunio.bus.decide',[$tenant->slug,$row->id]) }}" class="planning-form">@csrf @include('clubunio.workspace.context')<input type="hidden" name="revision" value="{{ $row->revision }}">
-<label class="wide">{{ __('Entscheidbemerkung') }}<textarea name="note" maxlength="1000" rows="3">{{ old('note') }}</textarea></label><div class="actions wide">
+<label class="wide">{{ __('Entscheidbemerkung') }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" name="note" maxlength="1000" rows="3">{{ old('note') }}</textarea></x-filament::input.wrapper>@else<textarea name="note" maxlength="1000" rows="3">{{ old('note') }}</textarea>@endif</label><div class="actions wide">
 @if($canApprove && $row->status!=='GENEHMIGT')
 
 @if($workspaceComponents)<x-filament::button name="status" value="GENEHMIGT" icon="heroicon-o-check" type="submit" color="primary">{{ __('Genehmigen') }}</x-filament::button>@else<button class="primary" name="status" value="GENEHMIGT">@svg('heroicon-o-check') {{ __('Genehmigen') }}</button>@endif

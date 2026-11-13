@@ -1,14 +1,15 @@
 <x-filament-panels::page>
     @vite('resources/js/social-studio.js')
     <section class="cu-social" data-social-studio data-config="{{ json_encode($this->studioConfig(), JSON_THROW_ON_ERROR) }}" wire:ignore>
-        <nav class="cu-social-toolbar" aria-label="{{ trans('social.title') }}">
+        <nav class="cu-social-toolbar cu-admin-toolbar" aria-label="{{ trans('social.title') }}">
+            <div class="cu-social-tabs">
             @foreach (['today', 'posts', 'templates', 'media'] as $tab)
-                <button type="button" data-tab="{{ $tab }}">{{ trans('social.'.$tab) }}</button>
+                <button type="button" data-tab="{{ $tab }}" class="fi-tabs-item"><span class="fi-tabs-item-label">{{ trans('social.'.$tab) }}</span></button>
             @endforeach
-            <button type="button" data-tab="jobs" hidden>{{ trans('social.jobs') }}</button>
-            <span class="cu-social-spacer"></span>
+            <button type="button" data-tab="jobs" class="fi-tabs-item" hidden><span class="fi-tabs-item-label">{{ trans('social.jobs') }}</span></button>
+            </div>
             <label data-archive hidden><input type="checkbox" data-archived> {{ trans('social.archived') }}</label>
-            <label data-date-label>{{ trans('social.date') }} <input type="date" data-date></label>
+            <label data-date-label>{{ trans('social.date') }} <x-filament::input.wrapper><x-filament::input type="date" data-date /></x-filament::input.wrapper></label>
         </nav>
         <p data-message role="status" aria-live="polite" hidden></p>
         <div data-workspace aria-busy="true">{{ trans('social.loading') }}</div>

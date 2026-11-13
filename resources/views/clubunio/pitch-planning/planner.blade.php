@@ -1,4 +1,4 @@
-    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=4">
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
@@ -10,15 +10,15 @@
                 <x-filament::icon-button wire:click="browse(-1)" wire:loading.attr="disabled" icon="heroicon-o-chevron-left" :label="__('Vorheriger Zeitraum')" :tooltip="__('Vorheriger Zeitraum')" />
                 <x-filament::button wire:click="today" wire:loading.attr="disabled" color="gray">{{ __('Heute') }}</x-filament::button>
                 <x-filament::icon-button wire:click="browse(1)" wire:loading.attr="disabled" icon="heroicon-o-chevron-right" :label="__('Nächster Zeitraum')" :tooltip="__('Nächster Zeitraum')" />
-                <label><span class="pitch-sr-only">{{ __('Datum') }}</span><input type="date" wire:model.live="date" required></label>
+                <label><span class="pitch-sr-only">{{ __('Datum') }}</span><x-filament::input.wrapper><x-filament::input type="date" wire:model.live="date" required /></x-filament::input.wrapper></label>
                 <x-filament::icon-button wire:click="refreshCalendar" wire:loading.attr="disabled" icon="heroicon-o-arrow-path" :label="__('Neu laden')" :tooltip="__('Neu laden')" />
             </div>
-            <div class="pitch-modes" role="group" aria-label="{{ __('Kalenderansicht') }}">
+            <x-filament::tabs class="pitch-modes" :label="__('Kalenderansicht')">
                 @foreach(['day' => __('Tag'), 'week' => __('Woche'), 'month' => __('Monat')] as $value => $label)
-                    <button type="button" wire:click="$set('mode', '{{ $value }}')" wire:loading.attr="disabled" aria-pressed="{{ $mode === $value ? 'true' : 'false' }}">{{ $label }}</button>
+                    <x-filament::tabs.item :active="$mode === $value" wire:click="$set('mode', '{{ $value }}')" wire:loading.attr="disabled" :aria-pressed="$mode === $value ? 'true' : 'false'">{{ $label }}</x-filament::tabs.item>
                 @endforeach
-            </div>
-            <label class="pitch-team"><span class="pitch-sr-only">{{ __('Mannschaft') }}</span><select wire:model.live="teamId"><option value="">{{ __('Alle Mannschaften') }}</option>@foreach($options['teams'] as $team)<option value="{{ $team['id'] }}">{{ $team['name'] }}</option>@endforeach</select></label>
+            </x-filament::tabs>
+            <label class="pitch-team"><span class="pitch-sr-only">{{ __('Mannschaft') }}</span><x-filament::input.wrapper><x-filament::input.select wire:model.live="teamId"><option value="">{{ __('Alle Mannschaften') }}</option>@foreach($options['teams'] as $team)<option value="{{ $team['id'] }}">{{ $team['name'] }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
             <div class="pitch-controls">
                 @if($this->capability('request'))<x-filament::button wire:click="createEntry('request')" wire:loading.attr="disabled" icon="heroicon-o-plus">{{ __('Trainingsspiel anfragen') }}</x-filament::button>@endif
                 @if($this->capability('manage'))

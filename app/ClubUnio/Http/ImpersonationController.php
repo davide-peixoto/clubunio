@@ -7,6 +7,7 @@ use App\ClubUnio\Models\TenantAccount;
 use App\ClubUnio\Services\AccountAdministrationService;
 use App\ClubUnio\Services\ActiveTenant;
 use App\ClubUnio\Services\ImpersonationService;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 
 class ImpersonationController
@@ -15,6 +16,8 @@ class ImpersonationController
     {
         $tenant = app(ActiveTenant::class)->resolve($request);
         abort_unless(app(AccountAdministrationService::class)->allowed($request->user('clubunio'), $tenant), 403);
+        Filament::setTenant($tenant, isQuiet: true);
+        Filament::setServingStatus(true);
         return response()->view('clubunio.support.index', ['tenant' => $tenant,
             'accounts' => TenantAccount::where('tenant_id', $tenant->id)->with('account')->get(),
             'grants' => $service->table('grants')->where('tenant_id', $tenant->id)->get()->keyBy('account_id'),

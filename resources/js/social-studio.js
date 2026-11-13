@@ -102,7 +102,11 @@ function mount(root) {
         const section = tab;
         const params = { section, date: date.value };
         if (Object.hasOwn(pages, section)) Object.assign(params, { archived: archive.checked ? 1 : 0, [section + '_page']: pages[section] });
-        root.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === section));
+        root.querySelectorAll('[data-tab]').forEach(button => {
+            const active = button.dataset.tab === section;
+            button.setAttribute('aria-pressed', active);
+            button.classList.toggle('fi-active', active);
+        });
         $('[data-archive]').hidden = section === 'today' || section === 'jobs';
         $('[data-date-label]').hidden = section !== 'today';
         workspace.setAttribute('aria-busy', 'true');
