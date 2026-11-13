@@ -28,7 +28,9 @@ if ($row->schema !== 'clubunio' || $db->table('clubunio.tenants')->count() === 0
     || ! $db->getSchemaBuilder()->hasTable('clubunio.mobile_push_outbox')) {
     exit(1);
 }
-echo "DEV clubunio schema, tenant and account reads, push outbox verified.\n";
+if (($argv[1] ?? '') !== 'backup-stream') {
+    echo "DEV clubunio schema, tenant and account reads, push outbox verified.\n";
+}
 
 if (($argv[1] ?? '') === 'auth') {
     $db->beginTransaction();

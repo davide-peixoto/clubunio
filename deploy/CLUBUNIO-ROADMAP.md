@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Social Media V1 (13.11.2026)
+
+Webredaktion mit Vorlageneditor, Medienbibliothek, Spieltags- und Resultatgrafiken
+sowie Freigabe. Meta ist auf ausdruecklich konfigurierte DEV-Testziele begrenzt.
+Naechste Ausbauschritte: Redaktionskalender, Terminierung und nachgewiesener
+SFV-Resultatrueckfluss. [Bedienung und Migration](CLUBUNIO-SOCIAL-STUDIO.md).
+
 ## Sportneutrale Anlagen (09.11.2026)
 
 Anlagen mit Typ, Anfangsstatus und optionalen Teilflaechen; Trainings binden

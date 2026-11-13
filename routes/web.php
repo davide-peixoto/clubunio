@@ -35,6 +35,15 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/clubunio-platform.php';
 require __DIR__.'/clubunio-marketing.php';
 
+Route::match(['GET', 'POST'], '/social-data/{operation}', \App\ClubUnio\Http\SocialStudioController::class)
+    ->where('operation', '[a-z-]+')
+    ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])
+    ->name('clubunio.social.data');
+
+Route::get('/social-test-image/{tenantId}/{id}', [\App\ClubUnio\Http\SocialStudioController::class, 'testImage'])
+    ->whereNumber('tenantId')->whereUuid('id')->middleware(['signed', 'throttle:120,1'])
+    ->name('clubunio.social.test-image');
+
 Route::match(['GET', 'POST'], '/chat-data/{operation}', \App\ClubUnio\Http\WebChatController::class)
     ->where('operation', '[a-z-]+')
     ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])
