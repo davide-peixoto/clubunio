@@ -3,7 +3,7 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Tenant;
-use App\ClubUnio\Services\{DocumentUploadService, RegistrationDataService, RegistrationDocumentService};
+use App\ClubUnio\Services\{DocumentUploadService, PublicWebService, RegistrationDataService, RegistrationDocumentService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Crypt, DB, RateLimiter, Validator};
 use Illuminate\Support\Str;
@@ -25,33 +25,45 @@ final class MobilePublicIntake
         }
         return $data;
     }
-    public function options(Request $request, Tenant $tenant): array
+    private function authorize(Tenant $tenant, bool $family): void
     {
-        app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
+        if ($family) {
+            abort_unless(app(PublicWebService::class)->enabled($tenant, 'registration'), 503);
+        } else {
+            app(MobilePublicIdentityPolicy::class)->authorize($tenant, 'membership');
+        }
+    }
+
+    public function options(Request $request, Tenant $tenant, bool $family = false): array
+    {
+        $this->authorize($tenant, $family);
         $choices=$this->choices($tenant); $upload=(bool)$this->canUpload($tenant);
-        $createAccount=app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant);
-        $claim=['v'=>1,'tenant'=>(int)$tenant->id,'origin'=>$request->attributes->get('mobile.public.origin'),'key'=>(string)Str::uuid(),
+        $createAccount=!$family && app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant);
+        $claim=['v'=>1,'tenant'=>(int)$tenant->id,'origin'=>$family ? $request->getSchemeAndHttpHost() : $request->attributes->get('mobile.public.origin'),'key'=>(string)Str::uuid(),
+            'actor'=>$family ? (int) $request->attributes->get('mobile.actor')->id : null,
             'at'=>time(),'expires'=>time()+3600,'choices'=>hash('sha256',json_encode($choices,JSON_THROW_ON_ERROR)),'upload'=>$upload,'account'=>$createAccount];
         return $choices+['claim'=>Crypt::encryptString(json_encode($claim,JSON_THROW_ON_ERROR)),'CanUpload'=>$upload,'CreateAccount'=>$createAccount,
             'Limits'=>['portrait_count'=>1,'portrait_bytes'=>5242880,'identity_count'=>3,'identity_bytes'=>10485760,'total_file_bytes'=>36700160]];
     }
-    private function claim(Request $request, Tenant $tenant): array
+    private function claim(Request $request, Tenant $tenant, bool $family): array
     {
         $d=$request->validate(['claim'=>'required|string|max:8192','consent'=>'required|accepted']);
         try { $claim=json_decode(Crypt::decryptString($d['claim']),true,16,JSON_THROW_ON_ERROR); }
         catch (\Throwable) { abort(409,'Formular bitte neu öffnen.'); }
-        abort_unless(($claim['v']??null)===1 && ($claim['tenant']??null)===(int)$tenant->id && ($claim['origin']??null)===$request->attributes->get('mobile.public.origin')
+        $origin = $family ? $request->getSchemeAndHttpHost() : $request->attributes->get('mobile.public.origin');
+        abort_unless(($claim['v']??null)===1 && ($claim['tenant']??null)===(int)$tenant->id && ($claim['origin']??null)===$origin
+            && ($claim['actor']??null) === ($family ? (int) $request->attributes->get('mobile.actor')->id : null)
             && is_string($claim['key']??null) && Str::isUuid($claim['key']) && ($claim['expires']??0)>=time() && ($claim['at']??PHP_INT_MAX)<=time()-3,409,'Formular bitte prüfen oder neu öffnen.');
         return $claim;
     }
-    public function submit(Request $request, Tenant $tenant): array
+    public function submit(Request $request, Tenant $tenant, bool $family = false): array
     {
-        app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
+        $this->authorize($tenant, $family);
         abort_if(array_diff(array_keys($request->all()),['claim','values','consent','portrait','identity','account_password']),422);
-        $claim=$this->claim($request,$tenant);
+        $claim=$this->claim($request,$tenant,$family);
         $password=$request->validate(['account_password'=>'sometimes|required|string|min:12|max:72'])['account_password'] ?? null;
         if ($password !== null) {
-            abort_unless(($claim['account'] ?? false) && app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
+            abort_unless(!$family && ($claim['account'] ?? false) && app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
             abort_if(strlen($password) > 72, 422);
         }
         $raw=$request->input('values');
@@ -84,15 +96,29 @@ final class MobilePublicIntake
             abort_unless(($scan['clean']??false)===true && is_string($scan['version']??null) && strlen($scan['version'])>=1 && strlen($scan['version'])<=160,422,'Anhang konnte nicht sicher geprüft werden.');
             $evidence[]=['kind'=>$entry['kind'],'sha256'=>$entry['sha256'],'scanner'=>$scan['version'],'scanned_at'=>now()->toIso8601String()];
         }
-        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash,$password) {
+        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash,$password,$family) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
+            $this->authorize($tenant, $family);
+            if ($family) {
+                DB::connection('clubunio')->table('clubora.mobile_sessions')
+                    ->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+                $actor = app(MobileSessions::class)->authenticate($request);
+                abort_unless((int) $actor->id === $claim['actor'], 403);
+                $request->attributes->remove(MobileReadContext::class);
+                app(MobileAccess::class)->enter($actor, $tenant);
+            }
             $old=$this->table()->where('tenant_id',$tenant->id)->where('request_key',$claim['key'])->first();
             if ($old) { abort_unless(hash_equals($old->payload_sha256,$hash),409); return ['Submitted'=>true,'PendingAttachments'=>(int)$old->pending_attachments]; }
             abort_unless(hash_equals($claim['choices'],hash('sha256',json_encode($this->choices($tenant),JSON_THROW_ON_ERROR))),409,'Auswahl wurde geändert. Formular bitte neu öffnen.');
             abort_if($files&&!$this->canUpload($tenant),422);
             $values=app(MobileRegistrationCommands::class)->values($tenant,$raw);
             $registration=app(RegistrationDataService::class)->submitPublic($tenant,$values,$claim['key']);
+            if ($family) {
+                DB::connection('clubunio')->table('clubora.mobile_registration_requests')->insert([
+                    'tenant_id'=>$tenant->id,'account_id'=>$claim['actor'],'request_key'=>$claim['key'],
+                    'payload_sha256'=>$hash,'registration_id'=>$registration->id,
+                ]);
+            }
             foreach ($files as $entry) {
                 app(RegistrationDocumentService::class)->addPublic($tenant,$registration,$claim['key'],$entry['kind'],$entry['file']);
                 // Tie the staged bytes to the actual scanned digest before committing anything.
@@ -115,16 +141,16 @@ final class MobilePublicIntake
             return ['Submitted'=>true,'PendingAttachments'=>$pending];
         });
         if ($files) {
-            DB::connection('clubunio')->afterCommit(function () use ($tenant,$claim) {
-                if (config('clubunio-mobile.public_identity.dispatch_after_response',true)) { app()->terminating(fn ()=>$this->publish((int)$tenant->id,$claim['key'])); }
+            DB::connection('clubunio')->afterCommit(function () use ($tenant,$claim,$family) {
+                if (config('clubunio-mobile.public_identity.dispatch_after_response',true)) { app()->terminating(fn ()=>$this->publish((int)$tenant->id,$claim['key'],$family)); }
             });
         }
         return $reply;
     }
-    public function publish(int $tenantId,string $key): void
+    public function publish(int $tenantId,string $key,bool $family = false): void
     {
         try {
-            $tenant=Tenant::findOrFail($tenantId); app(MobilePublicIdentityPolicy::class)->authorize($tenant,'membership');
+            $tenant=Tenant::findOrFail($tenantId); $this->authorize($tenant,$family);
             abort_unless($this->canUpload($tenant),503);
             $command=$this->table()->where('tenant_id',$tenantId)->where('request_key',$key)->firstOrFail();
             $uploads=app(DocumentUploadService::class);

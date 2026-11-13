@@ -146,6 +146,15 @@ final class MobileAccountController
                     + ($key === 'Platzverfugbarkeit' ? ['pitch_planning' => $pitchNative, 'facilities' => $facilitiesNative] : []);
             }
         }
+        if (in_array('family-intake-v1', $supported, true) && $role !== null && $role !== 'profile'
+            && app(\App\ClubUnio\Services\PublicWebService::class)->enabled($tenant, 'registration')) {
+            foreach ($modules as &$module) {
+                if ($module['key'] === 'Mitglieder' && $module['native']) {
+                    $module['membership_intake'] = true;
+                }
+            }
+            unset($module);
+        }
         $modules[] = ['key' => 'Profil', 'available' => true];
         return response()->json(['data' => ['modules' => $modules]]);
     }
