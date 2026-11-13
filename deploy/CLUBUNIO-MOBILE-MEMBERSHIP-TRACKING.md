@@ -100,3 +100,13 @@ Auf DEV und Stage fehlen weiterhin Host, Benutzername, Passwort und
 Absender des dedizierten Identity-SMTP-Kanals. Die vorhandene öffentliche
 Mitgliederanmeldung bleibt verfügbar. Kontoaktivierung und Statusverfolgung
 werden erst nach privater Bereitstellung des SMTP-Zugangs freigegeben.
+
+### Bestätigungsmails auf DEV und Stage aktiviert
+
+Die vorhandene SMTP-Anmeldung des ClubUnio-Absenders noreply@clubunio.com
+wurde dem separaten Identity-Mailer auf DEV und Stage zugeordnet. Auf beiden
+Hosts sind TLS und SMTP-Anmeldung erfolgreich geprüft. Der öffentliche
+Bootstrap meldet Registrierung und Mitgliedsanmeldung aktiv. Die
+Formularoptionen bestätigen Kontoerstellung für SV Sissach auf DEV und
+Mobile Stage Test auf Stage. Kein Mailversand an ein Testpostfach während
+dieser Prüfung. Zugangsdaten verbleiben in den privaten Serverdateien.
