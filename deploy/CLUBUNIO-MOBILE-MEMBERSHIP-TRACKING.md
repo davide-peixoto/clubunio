@@ -86,3 +86,17 @@ sind auf DEV und Stage derzeit deaktiviert. Es wurde kein echter Antrag erstellt
   dedizierten TLS-Identity-Mailers. Nach privater Einrichtung die Schalter
   für Mail, Registrierung und Membership-Account aktivieren, Cache neu
   bauen und eine Bestätigung mit einem Testpostfach prüfen.
+
+### Stage-Elternabnahme und SMTP-Bereitschaft
+
+Der Stage-Elternablauf wurde im isolierten Verein mit einem vorhandenen
+Pilotkonto und einer temporär genehmigten Elternverknüpfung geprüft. Der
+Antrag für das zweite Kind war eingereicht und dem bestehenden Konto
+zugeordnet. Wiederholtes Absenden lieferte denselben Antrag. Die Zahl
+der Elternverknüpfungen blieb gleich. Die gesamte Transaktion wurde
+zurückgerollt, der Test lief mit deaktiviertem externem Versand.
+
+Auf DEV und Stage fehlen weiterhin Host, Benutzername, Passwort und
+Absender des dedizierten Identity-SMTP-Kanals. Die vorhandene öffentliche
+Mitgliederanmeldung bleibt verfügbar. Kontoaktivierung und Statusverfolgung
+werden erst nach privater Bereitstellung des SMTP-Zugangs freigegeben.

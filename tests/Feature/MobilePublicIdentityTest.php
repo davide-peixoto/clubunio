@@ -118,9 +118,9 @@ class MobilePublicIdentityTest extends TestCase
         $gender = $this->insert('genders', ['code'=>'X', 'name'=>'Synthetic gender']);
         $billing = $this->insert('billing_recipients', ['code'=>'SELF', 'name'=>'Synthetic self', 'email_field'=>'email']);
         $this->insert('registration_statuses', ['name'=>'Submitted', 'code'=>'submitted', 'workflow_key'=>'submitted']);
-        $member = $this->insert('members', ['first_name'=>'First', 'last_name'=>'Child', 'birth_date'=>now()->subYears(8)->toDateString()]);
+        $member = $this->insert('members', ['legacy_id'=>-1, 'first_name'=>'First', 'last_name'=>'Child', 'birth_date'=>now()->subYears(8)->toDateString()]);
         $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->owner->id)->update(['role'=>'member']);
-        $this->insert('account_member_links', ['account_id'=>$this->owner->id, 'member_id'=>$member, 'kind'=>'parent', 'state'=>'approved']);
+        $this->insert('account_member_links', ['account_id'=>$this->owner->id, 'member_id'=>$member, 'kind'=>'parent', 'state'=>'approved', 'source'=>'synthetic-test']);
         $url = $this->origin.'/api/mobile/v1/clubs/'.$this->tenant->id.'/membership-intake';
         $this->getJson($url)->assertUnauthorized();
         $token = $this->login($this->owner);
