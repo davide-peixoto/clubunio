@@ -29,3 +29,9 @@ separater Freigabe nach `prod` uebernehmen und produktiv deployen.
 
 Das Anlegen der Branches stellt keine Hosting-App um. Keine Datenbank,
 Snapshot-Schemas, Zugangsdaten oder laufende Umgebung werden dabei geaendert.
+
+## Vereinsbranding auf Stage
+
+Der Hinweis «Powered by ClubUnio» bleibt bei eigenem Vereinslogo und eigenen
+Farben sichtbar. Nach dem Push auf `stage` den ausgelieferten Commit und
+den Hinweis auf Login, Anmeldeformular und Signage pruefen. Keine Migration.
