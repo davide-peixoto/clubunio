@@ -230,3 +230,8 @@ Platzanfragen, freigegebene Spesen, bevorstehende angefragte Busreservationen
 sowie sichtbare Anmeldungen und eigene Dokumente. Die Abfragen liefern nur
 Summen und nutzen den bestehenden Modulabruf. Ein fehlender Zähler bleibt
 unbekannt. Keine Datenbankmigration erforderlich.
+
+Bereitgestellt am 13.11.2026 auf DEV (20261113-clubunio-dashboard-counts,
+Rückweg 20261113-clubunio-mobile-work) und Stage (401e04c). DEV lieferte im
+lesenden Admin-Test alle sechs Zähler. Mobile und Push auf DEV aktiv.
+App-Quellstand 3dfa551; sichtbare Änderung erfordert einen neuen App-Build.
