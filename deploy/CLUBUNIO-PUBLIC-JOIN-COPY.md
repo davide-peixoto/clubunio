@@ -23,7 +23,11 @@ an der Antragslogik oder an der Datenbank.
   per HTTPS geprüft (200).
 - DEV: Textcommit `672526e`, Pi-Release `20261113-clubunio-join-notice`;
   Rückweg `20261113-clubunio-join-copy`. Dateien und View-Cache geprüft.
-  Öffentlicher Live-Check während einer Störung des bestehenden
-  PostgreSQL-Tunnels mit HTTP 500 blockiert.
+  Der erste Live-Check scheiterte mit HTTP 500, weil der bestehende SSH-Tunnel
+  zum DEV-PostgreSQL nicht verbunden war. Am 13.11.2026 um 16:52 Uhr (Zürich)
+  stellte systemd die Verbindung wieder her. Öffentlicher Live-Check mit
+  neuem Hinweis, DB-Authentifizierung mit zurückgerolltem Testkonto und
+  angemeldetes Dashboard (HTTP 200) danach erfolgreich. Kein Rollback,
+  keine Änderung an der Tunnelkonfiguration.
 - Rendering-Tests für beide Sprachen auf beiden Branches bestanden.
   Kein Antrag abgesendet. PROD unverändert.
