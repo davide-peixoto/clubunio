@@ -26,6 +26,11 @@ class MemberCampaigns extends Page
     public function getTitle(): string { return __('campaign.title'); }
     public static function canAccess(): bool
     {
+        return app(MemberCampaignService::class)->canView(Filament::auth()->user(), Filament::getTenant());
+    }
+
+    private static function canManage(): bool
+    {
         return app(MemberCampaignService::class)->allowed(Filament::auth()->user(), Filament::getTenant());
     }
 
@@ -62,7 +67,7 @@ class MemberCampaigns extends Page
 
     public function markPosted(int $recipient): void
     {
-        abort_unless($this->selected && static::canAccess(), 403);
+        abort_unless($this->selected && static::canManage(), 403);
         $tenant = Filament::getTenant();
         $service = app(MemberCampaignService::class);
         $service->openCampaign($tenant, $this->selected);
@@ -72,13 +77,13 @@ class MemberCampaigns extends Page
 
     public function testMail(int $recipient): void
     {
-        abort_unless($this->selected && static::canAccess(), 403);
+        abort_unless($this->selected && static::canManage(), 403);
         app(MemberCampaignService::class)->testMail(Filament::getTenant(), $this->selected, $recipient);
     }
 
     public function revoke(): void
     {
-        abort_unless($this->selected && static::canAccess(), 403);
+        abort_unless($this->selected && static::canManage(), 403);
         $tenant = Filament::getTenant();
         $id = $this->selected;
         DB::connection('clubunio')->transaction(function () use ($tenant, $id) {
@@ -100,14 +105,15 @@ class MemberCampaigns extends Page
             ->leftJoin('clubunio.member_change_requests as request', 'request.id', '=', 'campaign_recipients.request_id')
             ->select('campaign_recipients.*', 'member.first_name', 'member.last_name', 'member.email', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state')
             ->orderBy('campaign_recipients.id')->limit(min(5000, max(50, $this->limit)))->get() : collect();
-        $matches = $campaign && ! $campaign->released_at && ! $campaign->revoked_at && mb_strlen(trim($this->search)) >= 2
+        $canManage = static::canManage();
+        $matches = $canManage && $campaign && ! $campaign->released_at && ! $campaign->revoked_at && mb_strlen(trim($this->search)) >= 2
             ? $service->eligible($tenant)->where(function ($q) {
                 $q->whereLike('first_name', '%'.mb_substr($this->search, 0, 80).'%')
                     ->orWhereLike('last_name', '%'.mb_substr($this->search, 0, 80).'%');
             })->orderBy('last_name')->limit(15)->get(['id', 'first_name', 'last_name']) : collect();
 
         return ['campaigns' => $service->campaigns($tenant)->latest('id')->limit(100)->get(), 'campaign' => $campaign,
-            'recipients' => $recipients, 'matches' => $matches, 'tenant' => $tenant, 'pilot' => $service->isPilot($tenant),
+            'recipients' => $recipients, 'matches' => $matches, 'tenant' => $tenant, 'pilot' => $service->isPilot($tenant), 'canManage' => $canManage,
             'count' => $campaign ? $service->recipients($tenant, $campaign->id)->count() : 0];
     }
 }

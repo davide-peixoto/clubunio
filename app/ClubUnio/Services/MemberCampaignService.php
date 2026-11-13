@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\{Crypt, DB};
 
 class MemberCampaignService
 {
+    public function canView(?Account $actor, ?Tenant $tenant): bool
+    {
+        if ($this->allowed($actor, $tenant)) return true;
+        if (! $actor || ! $tenant || request()->attributes->has('clubunio_impersonation')) return false;
+
+        return app(MemberAccessService::class)->membership($actor, $tenant)?->role === 'admin';
+    }
+
     public const FIELDS = ['email', 'street', 'house_number', 'postal_code', 'city', 'mobile'];
     public const CHANNELS = ['email', 'post', 'both'];
 

@@ -1,5 +1,8 @@
 # Kampagnen: Stammdaten-Pilot
 
+Vereinsadmins sehen Kampagnen des eigenen Vereins lesend. Bearbeitung,
+Einladungen und Entscheide bleiben der Geschaeftsstelle vorbehalten.
+
 Die Geschaeftsstelle erstellt Entwuerfe mit E-Mail, Post oder beidem und
 bearbeitet die Empfaenger vor der Freigabe. Aktive Erwachsene sind
 vorauswaehlbar. Minderjaehrige und unbekanntes Alter bleiben bis zur
