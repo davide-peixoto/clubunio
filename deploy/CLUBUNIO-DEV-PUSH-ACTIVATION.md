@@ -54,3 +54,12 @@ bzw. auslaufen lassen; nur die beiden Pushflags wieder false setzen. Cache mit
 bisherigem Viewpfad neu bauen, zwei-Flag-Diff prüfen und FPM neu laden. Private
 Registry, übrige ENV-Werte, Geräte-/Outboxhistorie erhalten; kein Tabellen-Down
 oder blindes Zurückspielen einer inzwischen veralteten gesamten ENV-Datei.
+
+## Wiederaktivierung am 13.11.2026
+
+Beide Push-Schalter und die bisherige private Firebase-Registry wurden in
+der gemeinsamen DEV-Konfiguration wiederhergestellt. iOS-Core-Capability und
+Service-Account-Datei sind unter www-data geprüft. Der dauerhafte Worker läuft
+wieder, die alte Timer-Unit bleibt inaktiv. Die Release-Prüfung erkennt künftig
+verlorene aktive Push-Schalter und fehlende bisher registrierte Apps. Empfang
+auf einem iPhone wurde bei dieser Wiederaktivierung nicht geprüft.

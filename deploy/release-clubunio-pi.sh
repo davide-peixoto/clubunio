@@ -52,6 +52,18 @@ foreach ($old['clubunio-mobile'] ?? [] as $key => $enabled) {
         exit(1);
     }
 }
+$oldPush = $old['clubunio-mobile-push'] ?? [];
+$newPush = $new['clubunio-mobile-push'] ?? [];
+foreach (['enabled', 'delivery_enabled'] as $key) {
+    if (($oldPush[$key] ?? false) === true && ($newPush[$key] ?? false) !== true) {
+        fwrite(STDERR, "Candidate lost an active DEV push setting: $key\n");
+        exit(1);
+    }
+}
+if (($oldPush['enabled'] ?? false) && array_diff_key($oldPush['apps'] ?? [], $newPush['apps'] ?? [])) {
+    fwrite(STDERR, "Candidate lost a registered DEV push app\n");
+    exit(1);
+}
 PHP
 php artisan route:cache
 sudo -u www-data php artisan view:cache
