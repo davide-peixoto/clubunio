@@ -155,3 +155,18 @@ und den Unix-Socket unter dem Stage-App-Benutzer prüfen. Der Scanner muss
 saubere Testdaten akzeptieren und EICAR erkennen. Danach den vollständigen
 Antrag mit synthetischem Passfoto und Ausweis über den mobilen Vertrag
 prüfen und die Testdaten samt gespeicherten Dateien entfernen.
+
+### Vollständige Stage-Upload-Abnahme
+
+ClamAV und FreshClam sind aktiv. Der Stage-App-Benutzer erreichte den
+Unix-Socket. Der Scanner akzeptierte saubere Bytes und erkannte EICAR.
+Das öffentliche Formular meldet vollständige Antragsfelder und Uploads aktiv.
+Über die mobile API wurde ein synthetischer Antrag mit Passfoto und PDF-Ausweis
+eingereicht. Beide Dateien wurden aus dem privaten managed-Speicher gelesen und
+per SHA-256 verglichen. Wiederholung erzeugte kein Duplikat. Kontoaktivierung,
+Login und Statusabfrage wurden mit simulierter E-Mail-Zustellung geprüft.
+Die Transaktion wurde zurückgerollt und die Testdateien entfernt.
+
+Stage-Code 751731c. Vorverein-Aliasse werden für bestehende App-Builds
+normalisiert. Die Kontoaktivierung erhält einen separaten Request ohne
+Dateien. Kein Schemawechsel erforderlich.
