@@ -37,3 +37,6 @@ Die Verwaltung verlinkt `/my-profile` im Benutzermenue, das Vereinsportal
 der jeweiligen Sitzung. Das Web nutzt denselben Foto- und Freigabeablauf
 wie Mobile. Ein Passwortwechsel verlangt das aktuelle Passwort, widerruft
 Mobile-Sitzungen und beendet die aktuelle Web-Sitzung. Keine Migration.
+Die Profilseite bietet einen sichtbaren Rueckweg zur Vereins- bzw.
+Verwaltungsuebersicht und ein Kontomenue. Formulare sind auf schmalen
+Bildschirmen einspaltig; Upload- und Passwortlogik bleiben unveraendert.

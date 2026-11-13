@@ -1,0 +1,20 @@
+.profile-page { width: min(100%, 680px); margin-inline: auto; }
+.profile-page h1 { margin: 16px 0; font-size: 1.6rem; }
+.profile-back { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.profile-back svg, .profile-menu svg { width: 20px; height: 20px; }
+.profile-identity { display: flex; align-items: center; gap: 14px; overflow-wrap: anywhere; }
+.profile-identity img, .profile-avatar { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+.profile-avatar { display: grid; place-items: center; background: #e0eaf5; color: #164b8a; font-weight: 700; }
+.profile-section { margin-top: 24px; padding: 18px 0; border-top: 1px solid #dde1e6; }
+.profile-section h2 { margin: 0 0 16px; font-size: 1.15rem; }
+.profile-section form, .profile-section label { display: grid; gap: 8px; min-width: 0; }
+.profile-section form { gap: 14px; }
+.profile-section p { margin: 0; }
+.profile-section input { width: 100%; min-width: 0; min-height: 46px; font-size: 16px; }
+.profile-section input::file-selector-button { margin-inline-end: 8px; padding: 6px; }
+.profile-section button { justify-self: start; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 6px; background: var(--clubunio-club-color, #164b8a); color: var(--clubunio-club-ink, #fff); font-weight: 650; }
+.profile-menu { margin-inline-start: auto; position: relative; }
+.profile-menu summary { display: grid; place-items: center; list-style: none; cursor: pointer; min-width: 44px; min-height: 44px; }
+.profile-menu summary::-webkit-details-marker { display: none; }
+.profile-menu > div { position: absolute; z-index: 2; inset-inline-end: 0; width: max-content; max-width: 75vw; padding: 8px; border: 1px solid #dde1e6; border-radius: 6px; background: white; }
+.profile-menu a, .profile-menu button { display: flex; align-items: center; padding: 8px; min-height: 44px; }

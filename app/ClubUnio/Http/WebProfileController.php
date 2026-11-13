@@ -34,9 +34,14 @@ final class WebProfileController
         $actor = $this->actor($request);
         $tenant = app(TenantDomainService::class)->current();
         $prefix = $this->routePrefix($request);
+        $portal = $this->guard($request) === 'portal';
+        $club = $portal ? $actor->tenants()->get()->first(fn ($candidate) => (! $tenant || $tenant->is($candidate))
+            && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $candidate)) : null;
 
         return response()->view('clubunio.portal.profile', [
             'actor' => $actor, 'prefix' => $prefix,
+            'backUrl' => $portal ? ($club ? route('clubunio.portal.members', $club->slug) : route('clubunio.portal.login')) : url('/'),
+            'logoutUrl' => route($portal ? 'clubunio.portal.logout' : 'filament.clubunio.auth.logout'),
             'hasPhoto' => $photos->available($actor, $tenant),
             'canUpload' => $photos->canUpload($actor, $tenant),
         ])->header('Cache-Control', 'private, no-store');

@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('ClubUnio · Vereinsportal') }}</title>
     <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css').'?v=blue-v1' }}">
-@include('clubunio.brand.head')</head>
+@include('clubunio.brand.head')
+@stack('head')
+</head>
 <body>
     <header class="portal-header">
         @include('clubunio.brand.logo')
+        @yield('account-navigation')
         @auth('portal')
             <a href="{{ route('clubunio.portal.profile.show') }}">{{ __('profile_web.title') }}</a>
         @endauth

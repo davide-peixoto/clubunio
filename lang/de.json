@@ -1,4 +1,6 @@
 {
+    "profile_web.back": "Zur Übersicht",
+    "profile_web.menu": "Kontomenü",
     "profile_web.title": "Mein Profil",
     "profile_web.password": "Passwort ändern",
     "profile_web.current": "Aktuelles Passwort",
