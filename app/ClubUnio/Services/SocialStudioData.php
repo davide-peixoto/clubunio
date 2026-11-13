@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Services;
 
 use App\ClubUnio\Models\{Competition, Tenant};
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\{DB, Storage, Validator};
@@ -69,6 +70,24 @@ final class SocialStudioData
         }
 
         return ['date' => $date, 'fixtures' => $selected];
+    }
+
+    public function assertSnapshot(Tenant $tenant, string $kind, array $snapshot): void
+    {
+        if ($kind === 'free') {
+            return;
+        }
+        if ($kind === 'result' && ($snapshot['source'] ?? null) === 'sfv_final') {
+            $fixture = $snapshot['fixtures'][0];
+            $source = DB::connection('clubunio')->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)
+                ->where('match_id', $fixture['id'])->first();
+            abort_unless($source?->starts_at && $source->host_name === $fixture['home'] && $source->guest_name === $fixture['away']
+                && $source->location === $fixture['place']
+                && CarbonImmutable::parse($source->starts_at)->tz('Europe/Zurich')->format('Y-m-d H:i') === $fixture['date'].' '.$fixture['time'], 409);
+
+            return;
+        }
+        abort_unless($this->snapshot($tenant, $kind, $snapshot['date'], array_column($snapshot['fixtures'], 'id')) == $snapshot, 409);
     }
 
     public function design(int $tenant, array $design): array

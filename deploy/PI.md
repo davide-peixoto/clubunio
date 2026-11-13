@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Geplante Social-Media-Beitraege (13.11.2026)
+
+Aktiv: `20261113-clubunio-social-jobs`, Rueckweg
+`20261113-clubunio-social-studio-delta`. Zwei additive Tabellen in VPS-DEV
+nach verschluesselter, lesbar gepruefter Sicherung. Vorhandener Minutenscheduler
+fuehrt neue Jobregeln aus, keine Regeln produktiv vorkonfiguriert und kein
+Meta-Liveversand. PostgreSQL-Abnahme mit synthetischen Resultaten, Teamauswahl,
+Dublettenpruefung und Rollback; HTTPS, Zugriffsschutz und Assets geprueft.
+[Bedienung und Migration](CLUBUNIO-SOCIAL-JOBS.md).
+
 ## Social Media V1 (13.11.2026)
 
 Aktiv: `20261113-clubunio-social-studio-delta`, auf Basis von

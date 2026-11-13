@@ -18,6 +18,7 @@ final class SocialStudioController
         'template-archive' => 'deactivate', 'template-restore' => 'restore',
         'confirm-result' => 'approve', 'post-save' => 'update',
         'post-approve' => 'approve', 'post-archive' => 'deactivate', 'publish' => 'send',
+        'job-save' => 'schedule',
     ];
 
     public function __construct(private SocialStudioData $data, private SocialMetaTestPublisher $meta) {}
@@ -25,7 +26,7 @@ final class SocialStudioController
     public function __invoke(Request $request, string $operation)
     {
         abort_unless(in_array($operation, $request->isMethod('GET')
-            ? ['state', 'media', 'image', 'template'] : array_keys(self::WRITES), true), 404);
+            ? ['state', 'media', 'image', 'template', 'jobs', 'job-preview'] : array_keys(self::WRITES), true), 404);
         $tenant = Filament::getTenant();
         $actor = $request->user('clubunio')?->fresh();
         abort_unless($actor instanceof Account && $tenant instanceof Tenant && ! $actor->api_only
@@ -43,6 +44,8 @@ final class SocialStudioController
                 'state' => $this->state($request, $tenant, $actor),
                 'template' => $this->template($request, $tenant),
                 'media', 'image' => $this->privateImage($request, $tenant, $operation),
+                'jobs' => app(\App\ClubUnio\Services\SocialJobService::class)->index($actor, $tenant),
+                'job-preview' => app(\App\ClubUnio\Services\SocialJobService::class)->preview($actor, $tenant, $request->all()),
             };
         } else {
             $function = in_array($operation, ['template-save', 'post-save'], true) && ! $request->filled('id')
@@ -58,6 +61,7 @@ final class SocialStudioController
                 'post-save' => $this->savePost($request, $tenant, $actor),
                 'post-approve', 'post-archive' => $this->updatePost($request, $tenant, $actor, $operation),
                 'publish' => $this->publish($request, $tenant, $actor),
+                'job-save' => app(\App\ClubUnio\Services\SocialJobService::class)->save($actor, $tenant, $request->all()),
             };
         }
 
@@ -101,7 +105,7 @@ final class SocialStudioController
             'date' => $date, 'club' => $tenant->name, 'fixtures' => $this->data->fixtures($tenant, $date),
             'posts' => $posts, 'templates' => $templates->items(), 'media' => $media->items(),
             'more' => ['posts' => $postList->hasMorePages(), 'templates' => $templates->hasMorePages(), 'media' => $media->hasMorePages()],
-            'permissions' => collect(['create', 'update', 'upload', 'download', 'copy', 'approve', 'deactivate', 'restore', 'send'])
+            'permissions' => collect(['create', 'update', 'upload', 'download', 'copy', 'approve', 'deactivate', 'restore', 'send', 'schedule'])
                 ->mapWithKeys(fn ($fn) => [$fn => $permissions->allows($actor, $tenant, 'social_media', $fn)]),
             'test_channels' => array_values(array_filter(SocialStudioData::CHANNELS, fn ($channel) => $this->meta->target($id, $channel))),
         ];
@@ -319,39 +323,13 @@ final class SocialStudioController
     private function checkSnapshot(Tenant $tenant, object $post): void
     {
         $snapshot = $this->data->decode($post->snapshot);
-        if ($post->kind !== 'free') {
-            abort_unless($this->data->snapshot($tenant, $post->kind, $snapshot['date'], array_column($snapshot['fixtures'], 'id')) == $snapshot, 409);
-        }
+        $this->data->assertSnapshot($tenant, $post->kind, $snapshot);
     }
 
     private function publish(Request $r, Tenant $tenant, Account $actor): array
     {
         $input = $r->validate(['id' => 'required|uuid', 'revision' => 'required|integer|min:1', 'channel' => 'required|in:instagram,facebook']);
-        $channel = $input['channel'];
-        $target = $this->meta->target($tenant->id, $channel);
-        abort_unless($target, 403);
-        $delivery = $this->data->table($tenant->id, 'deliveries')->where('post_id', $input['id'])->where('channel', $channel);
-        $post = DB::connection('clubunio')->transaction(function () use ($input, $tenant, $actor, $channel, $target, $delivery) {
-            $post = $this->data->table($tenant->id, 'posts')->where('id', $input['id'])->lockForUpdate()->first();
-            abort_unless($post, 404);
-            abort_unless($post->state === 'approved' && (int) $post->revision === (int) $input['revision']
-                && in_array($channel, $this->data->decode($post->targets), true), 409);
-            $this->checkSnapshot($tenant, $post);
-            $previous = $delivery->first();
-            abort_unless(! $previous || ($previous->state === 'failed' && $previous->target === $target['id']), 409);
-            $delivery->updateOrInsert(['tenant_id' => $tenant->id, 'post_id' => $post->id, 'channel' => $channel],
-                ['state' => 'sending', 'target' => $target['id'], 'actor_id' => $actor->id, 'error_code' => null, 'updated_at' => now()]);
-
-            return $post;
-        });
-        try {
-            $result = $this->meta->deliver($tenant->id, $post, $channel, $target);
-        } catch (Throwable) {
-            // A timeout may mean Meta posted successfully. Never blindly repeat the call.
-            $result = ['state' => 'unknown', 'error_code' => 'check_meta'];
-        }
-        $delivery->update([...$result, 'updated_at' => now()]);
-
-        return ['state' => $result['state']];
+        return ['state' => $this->meta->publish($tenant, $actor, $input['id'], (int) $input['revision'], $input['channel'],
+            validate: fn ($post) => $this->checkSnapshot($tenant, $post))];
     }
 }

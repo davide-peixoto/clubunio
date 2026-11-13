@@ -65,8 +65,9 @@ vor einer manuellen Klärung bei Meta nicht erneut senden.
 - Beim Code-Rollback Tabellen und private Medien erhalten. Die aktuelle
   Storage-Sicherung muss den neuen Ordner einschliessen.
 
-Redaktionskalender, zeitgesteuerter Versand, automatische SFV-Endresultate und
-Meta-Kontoverwaltung per OAuth-Oberfläche sind nicht Teil dieser ersten Version.
+Zeitgesteuerte Regeln und nächtliche SFV-Endresultate sind im Folgepaket
+[Geplante Jobs](CLUBUNIO-SOCIAL-JOBS.md) beschrieben. Redaktionskalender und
+Meta-Kontoverwaltung per OAuth-Oberfläche bleiben offen.
 
 ## DEV-Abnahme (13.11.2026)
 

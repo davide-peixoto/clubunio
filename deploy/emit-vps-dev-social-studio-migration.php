@@ -6,7 +6,9 @@ if (PHP_SAPI !== 'cli' || ($argv[1] ?? '') !== 'clubunio_dev') {
 }
 
 require dirname(__DIR__).'/vendor/autoload.php';
-$migration = require dirname(__DIR__).'/database/clubunio/2026_11_13_000100_social_studio.php';
+$jobs = ($argv[2] ?? '') === 'jobs';
+$file = $jobs ? '2026_11_13_000200_social_jobs' : '2026_11_13_000100_social_studio';
+$migration = require dirname(__DIR__).'/database/clubunio/'.$file.'.php';
 $ddl = str_replace('clubora.', 'clubunio.', $migration->sql());
 echo <<<'SQL'
 BEGIN;
@@ -21,6 +23,16 @@ SELECT pg_advisory_xact_lock(hashtext('clubunio-dev-social-studio-migration'));
 
 SQL;
 echo $ddl."\n";
+if ($jobs) {
+    echo <<<'SQL'
+GRANT SELECT, INSERT, UPDATE ON clubunio.social_jobs, clubunio.social_job_runs TO clubunio_dev_app;
+INSERT INTO clubunio.migrations(migration,batch)
+SELECT '2026_11_13_000200_social_jobs', COALESCE(MAX(batch),0)+1 FROM clubunio.migrations;
+COMMIT;
+
+SQL;
+    exit;
+}
 echo <<<'SQL'
 GRANT SELECT, INSERT, UPDATE ON
     clubunio.social_media, clubunio.social_templates, clubunio.social_template_versions,

@@ -52,7 +52,7 @@ function mount(root) {
     const archive = $('[data-archived]');
     const pages = { posts: 1, templates: 1, media: 1 };
     const demo = { date: '2026-09-12', fixtures: [{ time: '15:00', home: t('sample_home'), away: t('sample_away'), place: 'Arena 1', score: [3, 1] }] };
-    let state, tab = 'today', selection = new Set(), editor, canvas, generation = 0, requestGeneration = 0, busy = false, hydrating = false;
+    let state, jobs, tab = 'today', selection = new Set(), editor, canvas, generation = 0, requestGeneration = 0, busy = false, hydrating = false;
     const src = new Map();
 
     function url(op, params = {}) {
@@ -106,7 +106,10 @@ function mount(root) {
                 posts_page: pages.posts, templates_page: pages.templates, media_page: pages.media,
             });
             if (serial !== requestGeneration) return;
+            const jobData = tab === 'jobs' ? await request('jobs') : null;
+            if (serial !== requestGeneration) return;
             state = next;
+            jobs = jobData;
             date.value = state.date;
             render();
         } catch (error) {
@@ -137,7 +140,8 @@ function mount(root) {
     }
     function render() {
         root.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === tab));
-        $('[data-archive]').hidden = tab === 'today';
+        if ($('[data-tab="jobs"]')) $('[data-tab="jobs"]').hidden = !perm('schedule');
+        $('[data-archive]').hidden = tab === 'today' || tab === 'jobs';
         $('[data-date-label]').hidden = tab !== 'today';
         const items = [];
         if (tab === 'today') {
@@ -180,7 +184,7 @@ function mount(root) {
                 const actions = [button('preview', () => previewPost(post))];
                 if (perm('download')) actions.push(download(post));
                 if (post.state !== 'archived') {
-                    if (perm('update') && !post.deliveries.length) actions.push(button('open', () => editPost(post)));
+                    if (perm('update') && !post.deliveries.length && post.snapshot?.source !== 'sfv_final') actions.push(button('open', () => editPost(post)));
                     if (perm('approve') && post.state === 'draft') actions.push(button('approve', () => action('post-approve', args)));
                     if (perm('deactivate') && !post.deliveries.some(d => ['sending', 'unknown'].includes(d.state))) actions.push(button('archive', () => action('post-archive', args)));
                     if (perm('send') && post.state === 'approved') {
@@ -224,7 +228,15 @@ function mount(root) {
                 return row(content, actions);
             })));
         }
-        if (tab !== 'today') items.push(box(button('previous', () => { pages[tab]--; load(); }, { disabled: pages[tab] === 1 }),
+        if (tab === 'jobs' && jobs) {
+            items.push(button('job_new', () => jobForm(), { primary: true, disabled: !jobs.templates.length || !jobs.teams.length }));
+            if (!jobs.runner_enabled) items.push(el('p', t('job_runner_disabled')));
+            items.push(list(jobs.jobs.map(job => row(title(job.name, [t(job.kind), job.local_time, t(job.enabled ? 'job_enabled' : 'job_disabled')].join(' · ')),
+                [button('open', () => jobForm(job))]))));
+            items.push(el('h2', t('job_runs')), list(jobs.runs.filter(run => !run.slot.startsWith('scan:')).map(run => row(title(
+                jobs.jobs.find(job => job.id === run.job_id)?.name ?? t('jobs'), run.run_date + ' · ' + t(run.state)), []))));
+        }
+        if (tab !== 'today' && tab !== 'jobs') items.push(box(button('previous', () => { pages[tab]--; load(); }, { disabled: pages[tab] === 1 }),
             button('next', () => { pages[tab]++; load(); }, { disabled: !state.more[tab] })));
         workspace.replaceChildren(...items);
     }
@@ -280,6 +292,64 @@ function mount(root) {
             try {
                 await request('confirm-result', {}, { date: state.date, fixture: fixture.id,
                     host_score: Number(fields[0].value), guest_score: Number(fields[1].value), seen: fixture });
+                modal.close(); await load(); alert(message, t('saved'));
+            } catch (failure) { error.textContent = failure.message; } finally { submit.disabled = false; }
+        };
+    }
+
+    function jobForm(job = null) {
+        const form = el('form');
+        const fields = el('div', '', { className: 'cu-social-grid' });
+        const name = el('input', '', { type: 'text', maxLength: 120, required: true, value: job?.name ?? '' });
+        const time = el('input', '', { type: 'time', required: true, value: job?.local_time ?? '08:00' });
+        const kind = select(['day', 'result'].map(key => [key, t(key)]), job?.kind ?? 'day', value => { if (!job) time.value = value === 'result' ? '02:00' : '08:00'; });
+        const templateOptions = jobs.templates.map(item => ({ ...item, key: item.id + ':' + item.revision }));
+        const pinned = job ? job.template_id + ':' + job.template_revision : null;
+        if (pinned && jobs.saved_versions[job.id] && !templateOptions.some(item => item.key === pinned)) {
+            templateOptions.unshift({ id: job.template_id, revision: job.template_revision, key: pinned,
+                name: jobs.templates.find(item => item.id === job.template_id)?.name ?? t('archived') });
+        }
+        const template = select(templateOptions.map(item => [item.key, item.name + ' · ' + t('version') + ' ' + item.revision]),
+            pinned ?? templateOptions[0]?.key, () => {});
+        const locale = select(jobs.languages.map(key => [key, t('job_language_' + key)]), job?.locale ?? document.documentElement.lang.split('-')[0], () => {});
+        if (!locale.value) locale.selectedIndex = 0;
+        const caption = el('textarea', '', { rows: 3, maxLength: 2000, value: job?.caption ?? '' });
+        const toggle = (key, checked, disabled = false) => {
+            const input = el('input', '', { type: 'checkbox', checked, disabled });
+            const label = el('label'); label.append(input, el('span', t(key))); return [input, label];
+        };
+        const [enabled, enabledLabel] = toggle('job_enabled', Boolean(job?.enabled));
+        const [automatic, automaticLabel] = toggle('job_auto', Boolean(job?.auto_publish) && jobs.auto_allowed, !jobs.auto_allowed);
+        const targets = channels.map(channel => [channel, ...toggle(channel, job ? job.targets.includes(channel) : true)]);
+        const teams = el('select', '', { multiple: true, size: 7, required: true });
+        jobs.teams.forEach(team => teams.add(new Option(team.name, team.id, false, job?.team_ids.includes(Number(team.id)) ?? false)));
+        fields.append(labeled(t('name'), name), labeled(t('job_kind'), kind), labeled(t('job_time'), time),
+            labeled(t('templates'), template), labeled(t('job_locale'), locale), labeled(t('job_teams'), teams),
+            labeled(t('caption'), caption), labeled(t('targets'), box(...targets.map(item => item[2]))), enabledLabel, automaticLabel);
+        const error = el('p'); error.setAttribute('role', 'alert');
+        const submit = el('button', t('job_save'), { type: 'submit' });
+        const preview = el('img', '', { hidden: true, alt: t('preview') });
+        preview.style.cssText = 'max-height:22rem;width:auto;margin:.5rem auto';
+        const showPreview = button('preview', () => {
+            const picked = templateOptions.find(item => item.key === template.value);
+            if (!picked) return;
+            preview.hidden = false;
+            preview.src = url('job-preview', { template_id: picked.id, template_revision: picked.revision }).href;
+        });
+        preview.onerror = () => { preview.hidden = true; error.textContent = t('image_error'); };
+        form.append(fields, box(showPreview, submit), preview, error);
+        const modal = auxiliary(job?.name ?? t('job_new'), form);
+        form.onsubmit = async event => {
+            event.preventDefault();
+            if (submit.disabled || (automatic.checked && !window.confirm(t('job_confirm_auto')))) return;
+            submit.disabled = true;
+            try {
+                const picked = templateOptions.find(item => item.key === template.value);
+                await request('job-save', {}, { id: job?.id, revision: job?.revision, name: name.value,
+                    kind: kind.value, local_time: time.value, template_id: picked?.id,
+                    template_revision: picked?.revision,
+                    locale: locale.value, caption: caption.value, enabled: enabled.checked, auto_publish: automatic.checked,
+                    team_ids: [...teams.selectedOptions].map(option => Number(option.value)), targets: targets.filter(item => item[1].checked).map(item => item[0]) });
                 modal.close(); await load(); alert(message, t('saved'));
             } catch (failure) { error.textContent = failure.message; } finally { submit.disabled = false; }
         };

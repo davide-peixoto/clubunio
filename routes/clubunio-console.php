@@ -60,6 +60,13 @@ Artisan::command('clubunio:send-expense-mail {--limit=20}', function () {
 });
 Schedule::command('clubunio:send-expense-mail')->everyMinute()->withoutOverlapping();
 
+Artisan::command('clubunio:social-jobs', function () {
+    $this->info((string) app(\App\ClubUnio\Services\SocialJobService::class)->tick());
+})->purpose('Prepare or send due Social Media jobs to DEV test destinations');
+
+Schedule::command('clubunio:social-jobs')->everyMinute()->withoutOverlapping(20)->runInBackground()
+    ->when(fn () => config('clubunio-social.jobs_enabled'));
+
 Artisan::command('clubunio:import-account-links', function () {
     $this->line(json_encode(app(AccountLinksImporter::class)->run(), JSON_THROW_ON_ERROR));
 })->purpose('Import account-member identities and pending parent proposals from the immutable snapshot');

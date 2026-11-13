@@ -5,6 +5,7 @@
             @foreach (['today', 'posts', 'templates', 'media'] as $tab)
                 <button type="button" data-tab="{{ $tab }}">{{ trans('social.'.$tab) }}</button>
             @endforeach
+            <button type="button" data-tab="jobs" hidden>{{ trans('social.jobs') }}</button>
             <span class="cu-social-spacer"></span>
             <label data-archive hidden><input type="checkbox" data-archived> {{ trans('social.archived') }}</label>
             <label data-date-label>{{ trans('social.date') }} <input type="date" data-date></label>

@@ -1,5 +1,11 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Geplante Social-Media-Beiträge (13.11.2026)
+
+Tägliche Spieltagsposts und nächtliche SFV-Resultate nach Mannschaft,
+Vorlagenversion und Kanälen. Auf DEV mit Entwurfsfallback, getrenntem
+Testversand und Ausführungsprotokoll. [Stand und Migration](CLUBUNIO-SOCIAL-JOBS.md).
+
 ## Social Media V1 (13.11.2026)
 
 Webredaktion mit Vorlageneditor, Medienbibliothek, Spieltags- und Resultatgrafiken
