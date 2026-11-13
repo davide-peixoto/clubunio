@@ -56,6 +56,26 @@ class MemberChangeService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $teamId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $member = $this->requestable($actor, $tenant, $id, true, $teamId);
+            return $this->createPending($actor, $tenant, $member, $input, $teamId);
+        });
+    }
+
+    public function submitCampaign(Tenant $tenant, string $token, array $input): MemberChangeRequest
+    {
+        return DB::connection('clubunio')->transaction(function () use ($tenant, $token, $input) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            [$recipient, $member] = app(MemberCampaignService::class)->invitation($tenant, $token, true);
+            abort_if(array_diff(array_keys($input), [...MemberCampaignService::FIELDS, '_version']), 422);
+            $request = $this->createPending(null, $tenant, $member, $input, null);
+            app(MemberCampaignService::class)->consume($tenant, $recipient, $request);
+
+            return $request;
+        });
+    }
+
+    private function createPending(?Account $actor, Tenant $tenant, Member $member, array $input, ?int $teamId): MemberChangeRequest
+    {
+            $id = $member->id;
             if (array_diff(array_keys($input), [...array_diff(array_keys(self::FIELDS), $teamId !== null ? ['billing_recipient_id'] : []), '_version'])) {
                 throw ValidationException::withMessages(['member' => __('Nicht erlaubtes Änderungsfeld.')]);
             }
@@ -109,15 +129,16 @@ class MemberChangeService
                 throw ValidationException::withMessages(['member' => $changes ? __('Für dieses Mitglied ist bereits ein Antrag in Prüfung.') : __('Keine Änderungen vorhanden.')]);
             }
             $request = new MemberChangeRequest;
-            $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor->id,
+            $request->forceFill(['tenant_id' => $tenant->id, 'member_id' => $id, 'requested_by' => $actor?->id,
                 'status_id' => $this->status($tenant, 'pending'), 'state' => 'pending', 'revision' => 1,
                 'member_version' => MemberService::version($member),
                 'snapshot_encrypted' => Crypt::encryptString(json_encode(['before' => array_intersect_key($before, $changes), 'changes' => $changes, 'team_id' => $teamId], JSON_THROW_ON_ERROR))])->save();
-            $this->audit($actor, $request, 'submitted');
+            if ($actor) {
+                $this->audit($actor, $request, 'submitted');
+            }
             $this->notify($tenant, $request, 'member.change.requested', true);
 
             return $request;
-        });
     }
 
     public function review(Account $actor, Tenant $tenant, int $id, int $revision, bool $approve, ?string $note): MemberChangeRequest
@@ -130,10 +151,15 @@ class MemberChangeService
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'member_changes', 'approve');
             $r = MemberChangeRequest::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
             $this->pending($r, $revision);
+            if ($r->requested_by === null) {
+                abort_unless(app(MemberCampaignService::class)->allowed($actor, $tenant), 403);
+            }
             // Revoked parent/self links and departed members cannot be approved retrospectively.
             if ($approve) {
                 try {
-                    $member = $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
+                    $member = $r->requested_by === null
+                        ? app(MemberCampaignService::class)->reviewMember($tenant, $r)
+                        : $this->requestable($r->requester, $tenant, $r->member_id, true, $this->snapshot($r)['team_id'] ?? null);
                 } catch (ModelNotFoundException|\Illuminate\Database\RecordNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
                     throw ValidationException::withMessages(['revision' => __('Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.')]);
                 }
@@ -146,7 +172,9 @@ class MemberChangeService
             $r->forceFill(['state' => $state, 'status_id' => $this->status($tenant, $state), 'revision' => $revision + 1,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'decision_note' => $note])->save();
             $this->audit($actor, $r, $state);
-            $this->notify($tenant, $r, 'member.change.'.$state, false);
+            if ($r->requested_by !== null) {
+                $this->notify($tenant, $r, 'member.change.'.$state, false);
+            }
 
             return $r;
         });
