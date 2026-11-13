@@ -5,7 +5,14 @@
 Vereinsadmins verwalten Social Media und Kampagnenentwuerfe im eigenen
 Mandanten. Vor dem Wechsel von `current` die vier Kampagnenmigrationen
 000500, 000610, 000620 und 000630 gezielt auf `clubunio_dev` ausfuehren.
-Der erste Kandidat wurde wegen fehlender VPS-Tunnelverbindung nicht aktiviert.
+Aktiv: `20261113-clubunio-admin-campaigns`, Rueckweg:
+`20261113-clubunio-season-layout`. Migration auf DEV nach Sicherung der
+betroffenen Tabellendefinition als Datenbank-Owner ausgefuehrt; der App-Rolle
+wurden nur die benoetigten Rechte an den neuen Objekten erteilt.
+Beim Paketbau `storage` ausschliessen und vor der Umschaltung sicherstellen,
+dass `storage` als Symlink auf den gemeinsamen Laufzeitordner zeigt.
+Admin-Berechtigungen fuer Social Media und transaktionaler Entwurfs-Test
+geprueft. Login HTTP 200, Kampagnen ohne Anmeldung HTTP 302.
 Oeffentliche Einladungen,
 Kampagnenfreigabe und SMTP bleiben auf den bestehenden Stage-Piloten
 beschraenkt. Keine Aenderung an Konten oder Rollen ausserhalb des Mandanten.
