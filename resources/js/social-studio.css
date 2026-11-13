@@ -8,6 +8,12 @@
 .cu-social button[aria-pressed=true],.cu-social button[data-primary]{background:#315d94;color:white;border-color:#315d94}
 .cu-social :focus-visible{outline:2px solid #4e85c6;outline-offset:2px}
 .cu-social-toolbar,.cu-social-actions{display:flex;gap:.45rem;align-items:center;flex-wrap:wrap;min-width:0}
+.cu-social > .cu-admin-toolbar{align-items:end;margin-bottom:0;gap:12px}
+.cu-social-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--cu-border);border-radius:8px;max-width:100%}
+.cu-social .cu-social-tabs button{border:0;min-height:36px}
+.cu-social .cu-social-tabs button[aria-pressed=true]{background:var(--cu-soft);color:var(--cu-accent)}
+.cu-social .cu-social-tabs button[aria-pressed=true] .fi-tabs-item-label{color:inherit}
+.cu-social > .cu-admin-toolbar input.fi-input{border:0;background:transparent}
 .cu-social-spacer{flex:1 1 1rem}
 .cu-social h2,.cu-social h3{font-weight:650;margin:0;overflow-wrap:anywhere}
 .cu-social h2{font-size:1.1rem}

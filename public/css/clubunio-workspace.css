@@ -1,8 +1,9 @@
 /* Module content only: the shared Filament navigation and theme stay untouched. */
 .club-workspace { min-width: 0; padding: 0 0 32px; }
-.club-workspace > .workspace-navigation { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--svs-border, #e4e4e7); margin-bottom: 24px; }
-.club-workspace > .workspace-navigation a { display: inline-flex; padding: 10px 12px; color: inherit; text-decoration: none; font-size: 14px; }
-.club-workspace > .workspace-navigation a[aria-current] { border-bottom: 3px solid #164b8a; font-weight: 600; }
+.club-workspace > .workspace-navigation, .club-workspace .workspace-calendar-views { width: fit-content; max-width: 100%; flex-wrap: wrap; gap: 4px; border-radius: 8px; margin: 0; }
+.club-workspace > .workspace-navigation { margin-bottom: 24px; }
+.club-workspace :is(.workspace-navigation, .workspace-calendar-views) .fi-tabs-item { max-width: 100%; min-height: 38px; }
+.club-workspace :is(.workspace-navigation, .workspace-calendar-views) .fi-tabs-item-label { white-space: normal; overflow-wrap: anywhere; }
 .club-workspace > .notice, .club-workspace > .errors { margin: 16px 0; padding: 12px; border-left: 4px solid #164b8a; }
 .club-workspace > .errors { border-color: #b91c1c; color: #b91c1c; }
 .club-workspace .workspace-content {
@@ -25,32 +26,36 @@
     & ul { list-style: disc; padding-left: 20px; }
     & nav, & .actions, & .toolbar, & .filters, & .page-heading { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     & nav a { text-decoration: none; }
-    & .workspace-navigation { border-bottom: 1px solid var(--ws-border); margin-bottom: 24px; gap: 4px; }
-    & .workspace-navigation a, & .planning-tabs a { padding: 10px 12px; }
+    & .planning-tabs a { padding: 10px 12px; }
     & nav a[aria-current] { border-bottom: 3px solid #164b8a; font-weight: 600; }
     & .toolbar, & .filters { align-items: end; margin: 20px 0; }
     & label { display: flex; flex-direction: column; gap: 6px; font-weight: 500; font-size: 14px; }
-    & input:not(.fi-input), & select:not(.fi-select-input), & textarea { font: inherit; color: inherit; border: 1px solid var(--ws-border); border-radius: 6px; padding: 8px 10px; background: var(--ws-surface); max-width: 100%; min-height: 36px; }
+    & input:not(.fi-input):not(.fi-checkbox-input):not([type=hidden]), & select:not(.fi-select-input), & textarea:not(.fi-input) { font: inherit; color: inherit; border: 1px solid var(--ws-border); border-radius: 6px; padding: 8px 10px; background: var(--ws-surface); max-width: 100%; min-height: 36px; }
     & textarea { resize: vertical; }
-    & input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: #164b8a; }
+    & input[type=checkbox]:not(.fi-checkbox-input) { width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: #164b8a; }
     & label:has(input[type=checkbox]) { flex-direction: row; align-items: center; }
     & :is(input,select,textarea,button,a):focus-visible { outline: 2px solid #48a9e8; outline-offset: 2px; }
-    & button:not(.fi-btn):not(.fi-icon-btn), & .primary, & .icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 14px; border: 1px solid var(--ws-border); border-radius: 5px; font: inherit; color: inherit; background: var(--ws-surface); cursor: pointer; text-decoration: none; }
+    & button:not(.fi-btn):not(.fi-icon-btn):not(.fi-tabs-item), & .primary, & .icon-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 8px 14px; border: 1px solid var(--ws-border); border-radius: 5px; font: inherit; color: inherit; background: var(--ws-surface); cursor: pointer; text-decoration: none; }
+    & .fi-icon-btn { margin: 0; }
+    & .page-heading > h1 { margin: 0; }
+    & .page-heading { margin-bottom: 20px; }
     & .primary { color: white; background: #164b8a; border-color: #164b8a; }
     & .icon-button { width: 36px; height: 36px; padding: 8px; flex-shrink: 0; }
     & button svg, & .primary svg, & .icon-button svg, & .action-icon { width: 20px; height: 20px; flex-shrink: 0; }
-    & .planning-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; max-width: 960px; padding: 20px 0; }
-    & .planning-form :is(input,select,textarea) { width: 100%; }
-    & .planning-form input[type=checkbox] { width: 18px; }
+    & .planning-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 20px; max-width: 960px; padding: 16px 0; }
+    & :is(.planning-form,.toolbar) > label { min-width: 0; }
+    & .planning-form :is(input:not([type=checkbox]),select,textarea) { width: 100%; }
     & .wide { grid-column: 1/-1; }
     & .table-scroll { overflow: auto; margin: 20px 0; border: 1px solid var(--ws-border); border-radius: 6px; }
+    & .table-scroll.cu-admin-journal table { min-width: min(100%, 40rem); }
+    & .table-scroll.cu-admin-journal .fi-input-wrp { min-width: 7rem; }
     & table { width: 100%; border-collapse: collapse; }
     & td, & th { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--ws-border); vertical-align: top; overflow-wrap: break-word; word-break: normal; }
     & th { white-space: nowrap; }
     & .reservation-link { display: inline-flex; align-items: center; min-height: 44px; min-width: 100px; padding: 4px 0; touch-action: manipulation; }
     & th { background: var(--ws-soft); color: var(--ws-muted); font-weight: 600; font-size: 13px; }
     & td small { display: block; color: var(--ws-muted); }
-    & .planning-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; padding: 18px 0; border-block: 1px solid var(--ws-border); }
+    & .planning-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px 20px; padding: 16px 0; border-block: 1px solid var(--ws-border); overflow-wrap: anywhere; }
     & dt { color: var(--ws-muted); font-size: 13px; }
     & dd { margin: 6px 0; }
     & .pre-line { white-space: pre-line; }
@@ -67,6 +72,9 @@
     & .planning-page[aria-current] { color: white; background: #164b8a; }
     & .disabled { opacity: .5; }
     & .calendar-navigation { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 20px 0; }
+    & .calendar-navigation h2 { margin: 0; }
+    & .workspace-calendar-views a.fi-tabs-item { color: inherit; }
+    & .workspace-calendar-views a[aria-current] { border: 0; }
     & .calendar-filters select { max-width: 300px; }
     & .calendar-scroll { overflow: auto; }
     & .calendar-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); min-width: 1000px; border-top: 1px solid var(--ws-border); border-left: 1px solid var(--ws-border); }
@@ -87,7 +95,7 @@
     @media(max-width:700px) {
         & .planning-form, & .planning-facts { grid-template-columns: minmax(0,1fr); }
         & .wide { grid-column: auto; }
-        & .toolbar>label, & .toolbar input, & .toolbar select { width: 100%; }
+        & .toolbar>label, & .toolbar input:not([type=checkbox]), & .toolbar select { width: 100%; }
         & .table-scroll table { min-width: 660px; }
         & .calendar-week { grid-template-columns: 1fr; min-width: 0; }
         & .calendar-filters select { max-width: 100%; }

@@ -18,5 +18,5 @@
 </style>
 @endif
 <link rel="stylesheet" href="{{ asset('css/clubunio-navigation.css') }}?v=7">
-<link rel="stylesheet" href="{{ asset('css/clubunio-administration.css') }}?v=3">
+<link rel="stylesheet" href="{{ asset('css/clubunio-administration.css') }}?v=4">
 <script src="{{ asset('js/clubunio-navigation.js') }}?v=6" defer></script>

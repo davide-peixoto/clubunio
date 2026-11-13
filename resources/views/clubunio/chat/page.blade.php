@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-chat.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-chat.css') }}?v=2">
     <script type="module" src="{{ asset('js/clubunio-chat.js') }}?v=1"></script>
     @php
         $labels = [];
@@ -10,7 +10,7 @@
         <div class="cu-chat-alert" data-error role="alert" hidden></div>
         <aside class="cu-chat-list">
             <div class="cu-chat-toolbar">
-                <input type="search" data-search placeholder="{{ __('Unterhaltungen suchen') }}" aria-label="{{ __('Unterhaltungen suchen') }}">
+                <x-filament::input.wrapper class="cu-chat-search" prefix-icon="heroicon-o-magnifying-glass"><x-filament::input type="search" data-search :placeholder="__('Unterhaltungen suchen')" :aria-label="__('Unterhaltungen suchen')" /></x-filament::input.wrapper>
                 <button type="button" data-action="contacts" title="{{ __('Neue Direktnachricht') }}" aria-label="{{ __('Neue Direktnachricht') }}"><x-filament::icon icon="heroicon-o-plus" /></button>
                 <button type="button" data-action="settings" title="{{ __('Einstellungen') }}" aria-label="{{ __('Einstellungen') }}"><x-filament::icon icon="heroicon-o-cog-6-tooth" /></button>
             </div>

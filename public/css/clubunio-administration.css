@@ -17,7 +17,17 @@
 .cu-admin-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; margin-top: 20px; }
 .cu-admin-form label { display: grid; gap: 6px; min-width: 0; font-size: 14px; }
 .cu-admin-form textarea { width: 100%; min-height: 100px; border: 1px solid var(--svs-border,#e4e4e7); padding: 8px 12px; border-radius: 5px; background: transparent; }
-.cu-admin-form .sm\:col-span-2 { grid-column: 1/-1; }
+.cu-admin-form :is(.sm\:col-span-2, .cu-admin-wide) { grid-column: 1/-1; }
+.cu-admin-form textarea.fi-input { padding: 8px 12px; border: 0; resize: vertical; }
+.cu-admin-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 12px 20px; padding: 16px 0; border-block: 1px solid var(--svs-border, #e4e4e7); }
+.cu-admin-facts > div { display: grid; align-content: start; gap: 6px; min-width: 0; }
+.cu-admin-facts dt { color: #52525b; font-size: 13px; }
+.cu-admin-facts dd { overflow-wrap: anywhere; }
+.cu-admin-disclosure { padding: 12px 0; border-bottom: 1px solid var(--svs-border, #e4e4e7); }
+.cu-admin-disclosure:last-child { border-bottom: 0; }
+.cu-admin-disclosure summary { cursor: pointer; overflow-wrap: anywhere; }
+.cu-admin-disclosure summary .fi-badge { display: inline-flex; margin-inline-start: 6px; }
+.dark .cu-admin-facts dt { color: #a1a1aa; }
 .dark .cu-admin-journal { background: #18181b; }
 .dark .cu-admin-journal th, .dark .cu-admin-journal tbody tr:hover { background: #27272a; color: #e4e4e7; }
 .dark .cu-admin-journal a { color: #70baf0; }
