@@ -10,9 +10,13 @@ Der Plan dient der Vorbereitung in der Veo Camera App. Automatisches Starten, St
 
 Die additive Migration `database/clubunio/2026_11_13_002100_veo_recording_plan.php` ergänzt die mandantenbezogenen Tabellen für Kamerazuteilungen und Mannschaftsfreigaben. Der Wochenplan wird aus vorhandenen Daten berechnet. Nach einer Rückkehr zum vorherigen Web-Release bleiben die Einstellungen in den Tabellen erhalten.
 
+ClubUnio DEV verwendet den Release `20261113-clubunio-veo-planning`. Die Migration wurde nach geprüfter Sicherung auf `clubunio_dev` als Batch 105 verbucht. Rückweg ist `20261113-clubunio-account-security`.
+
 ## Abnahme
 
 - Kamera A und B auf unterschiedlichen Plätzen konfigurieren und eine Testmannschaft aktivieren.
 - Für ein SFV-Spiel mit bestätigter Zuteilung Kamera A im Plan prüfen. Das Spiel auf Platz B umteilen und Kamera B prüfen.
 - SFV-Spielzeit verschieben und offene Platzzuteilung prüfen. Nach Bestätigung der neuen Zeit das aktualisierte Aufnahmefenster prüfen.
 - Absage, fehlende Kamera und überlappende Aufnahmefenster prüfen. Einen zweiten Mandanten auf getrennte Einstellungen und Daten prüfen.
+
+Auf DEV per HTTPS mit zwei separaten Passwort- und TOTP-Sitzungen geprüft. Livewire speicherte die Kameras und die Mannschaftsfreigabe. Der zweite Mandant sah das Testspiel nicht und ein Schreibversuch mit der fremden Platz-ID ergab HTTP 404. Nach bestätigtem Wechsel erschien Kamera B. Die geänderte SFV-Anspielzeit löste die veraltete Zuteilung ab und die Absage entfernte das Spiel aus dem Plan. Lokal bestanden vier Regressionstests mit 18 Assertions sowie die DE/EN-Sprachprüfung.
