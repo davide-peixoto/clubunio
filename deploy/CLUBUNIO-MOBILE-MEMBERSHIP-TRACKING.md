@@ -77,9 +77,10 @@ sind auf DEV und Stage derzeit deaktiviert. Es wurde kein echter Antrag erstellt
   Duplikat geprüft. Separat Antrag, E-Mail-Bestätigung, Login und Statusabfrage
   mit simuliertem Mailversand erfolgreich. Beide Tests zurückgerollt.
 - Stage: Authentifizierte Routen bereitgestellt (21ef35c), HTTP 401 ohne
-  Sitzung geprüft. In der geprüften Stage-Vereinskopie war kein aktives
-  Elternkonto mit genehmigter Elternverknüpfung verfügbar. Öffentliche
-  Freigabe noch ausstehend, da der Server per SSH zeitweise nicht erreichbar war.
+  Sitzung geprüft. Öffentliche «Neue Mitgliedschaft» im isolierten Verein
+  Mobile Stage Test aktiv. Länder, Geschlechter, Rechnungsempfänger und
+  Statuswerte wurden als Referenzdaten aus dem Stage-Verein übernommen.
+  Bootstrap und Formularoptionen über HTTPS geprüft.
 - DEV und Stage: Für öffentliche Kontoregistrierung und Kontoerstellung
   mit Statusverfolgung fehlen die Zugangsdaten und die Absenderadresse des
   dedizierten TLS-Identity-Mailers. Nach privater Einrichtung die Schalter
