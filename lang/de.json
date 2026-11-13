@@ -2917,5 +2917,9 @@
     "The upload destination changed. Check the upload first.": "Das Speicherziel wurde geändert. Prüfe zuerst den Upload.",
     "File stored securely; transfer pending. Check Synchronisation. Reference: Upload #:value1": "Datei geschützt gespeichert; Übertragung noch offen. Bitte unter Synchronisation prüfen. Referenz: Upload #:value1",
     "Attachments are pending transfer. Complete synchronisation first.": "Anhänge warten auf die Übertragung. Bitte zuerst Synchronisation abschliessen.",
-    "Receipts are pending transfer. Check Synchronisation first.": "Beleganhänge warten auf die Übertragung. Bitte zuerst Synchronisation prüfen."
+    "Receipts are pending transfer. Check Synchronisation first.": "Beleganhänge warten auf die Übertragung. Bitte zuerst Synchronisation prüfen.",
+    "AHV-Nummer": "AHV-Nummer",
+    "Land des Vorvereins": "Land des Vorvereins",
+    "Schweiz": "Schweiz",
+    "Ausland": "Ausland"
 }

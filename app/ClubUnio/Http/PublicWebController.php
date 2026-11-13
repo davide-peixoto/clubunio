@@ -47,7 +47,10 @@ class PublicWebController
             $choices[$field] = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->localizedPluck('name', 'id');
         }
 
-        return response()->view('clubunio.public.registration', compact('tenant', 'form', 'choices'))->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
+        $billingEmailFields = DB::connection('clubunio')->table('clubunio.billing_recipients')
+            ->where('tenant_id', $tenant->id)->where('active', true)->pluck('email_field', 'id');
+
+        return response()->view('clubunio.public.registration', compact('tenant', 'form', 'choices', 'billingEmailFields'))->header('Cache-Control', 'private, no-store')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function submit(Request $request, Tenant $tenant)
@@ -56,20 +59,26 @@ class PublicWebController
         $request->validate(['request_id' => 'required|uuid']);
         $form = $request->session()->get('public-registration.'.$tenant->id);
         abort_unless($form && hash_equals($form['id'], (string) $request->input('request_id')) && $form['at'] >= time() - 3600, 419);
-        $request->validate(['consent' => 'accepted', 'website' => 'prohibited', 'portrait' => 'nullable|file|max:5120|mimetypes:image/jpeg,image/png,image/webp',
-            'identity' => 'nullable|array|max:3', 'identity.*' => 'file|max:10240|mimetypes:application/pdf,image/jpeg,image/png,image/webp']);
+        $allowed = [...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS, 'ahv', '_token', 'request_id', 'consent', 'website', 'portrait', 'identity'];
+        abort_if(array_diff(array_keys($request->all()), $allowed), 422);
+        $submitted = DB::connection('clubunio')->table('clubunio.public_registration_submissions')
+            ->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists();
+        $request->validate(['consent' => 'accepted', 'website' => 'prohibited',
+            'ahv' => [$submitted ? 'nullable' : 'required', 'string', 'regex:/^756(?:[. ]?\d){10}$/D'],
+            'portrait' => ($submitted ? 'nullable' : 'required').'|file|max:5120|mimetypes:image/jpeg,image/png,image/webp',
+            'identity' => ($submitted ? 'nullable' : 'required').'|array|min:1|max:3', 'identity.*' => 'file|max:10240|mimetypes:application/pdf,image/jpeg,image/png,image/webp']);
         if ($form['at'] > time() - 3) {
             throw ValidationException::withMessages(['first_name' => __('Bitte Eingaben prüfen und erneut absenden.')]);
         }
-        $allowed = [...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS, '_token', 'request_id', 'consent', 'website', 'portrait', 'identity'];
-        abort_if(array_diff(array_keys($request->all()), $allowed), 422);
         try {
             DB::connection('clubunio')->transaction(function () use ($request, $tenant, $form) {
                 Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
                 if (DB::connection('clubunio')->table('clubunio.public_registration_submissions')->where('tenant_id', $tenant->id)->where('request_id', $form['id'])->exists()) {
                     return;
                 }
-                $r = app(RegistrationDataService::class)->submitPublic($tenant, $request->only([...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS]), $form['id']);
+                $r = app(RegistrationDataService::class)->submitPublic($tenant,
+                    $request->only([...RegistrationDataService::CORE, ...RegistrationDataService::DETAILS]),
+                    $form['id'], preg_replace('/\D/', '', $request->input('ahv')));
                 $documents = app(RegistrationDocumentService::class);
                 if ($request->hasFile('portrait')) {
                     $documents->addPublic($tenant, $r, $form['id'], 'portrait', $request->file('portrait'));

@@ -16,11 +16,12 @@ final class MobilePublicIntake
         return config('clubunio-mobile.uploads_enabled', false) && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
             && is_string(config('clubunio-mobile.attachments.clamd_socket')) && config('clubunio-mobile.attachments.clamd_socket') !== '';
     }
-    private function choices(Tenant $tenant): array
+    private function choices(Tenant $tenant, bool $complete = false): array
     {
         $data = [];
         foreach (['Countries'=>'countries','Genders'=>'genders','BillingRecipients'=>'billing_recipients'] as $field=>$table) {
             $columns=['id','code','name']; if ($table==='countries') { $columns[]='iso3'; }
+            if ($complete && $table==='billing_recipients') { $columns[]='email_field'; }
             $data[$field]=DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id',$tenant->id)->where('active',true)->orderBy('id')->get($columns)->map(fn ($row)=>(array)$row)->all();
         }
         return $data;
@@ -37,12 +38,15 @@ final class MobilePublicIntake
     public function options(Request $request, Tenant $tenant, bool $family = false): array
     {
         $this->authorize($tenant, $family);
-        $choices=$this->choices($tenant); $upload=(bool)$this->canUpload($tenant);
+        $upload=(bool)$this->canUpload($tenant);
         $createAccount=!$family && app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant);
+        $complete = in_array('complete-intake-v1', explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features'), 0, 512)), true);
+        $choices = $this->choices($tenant, $complete);
         $claim=['v'=>1,'tenant'=>(int)$tenant->id,'origin'=>$family ? $request->getSchemeAndHttpHost() : $request->attributes->get('mobile.public.origin'),'key'=>(string)Str::uuid(),
+            'complete'=>$complete,
             'actor'=>$family ? (int) $request->attributes->get('mobile.actor')->id : null,
             'at'=>time(),'expires'=>time()+3600,'choices'=>hash('sha256',json_encode($choices,JSON_THROW_ON_ERROR)),'upload'=>$upload,'account'=>$createAccount];
-        return $choices+['claim'=>Crypt::encryptString(json_encode($claim,JSON_THROW_ON_ERROR)),'CanUpload'=>$upload,'CreateAccount'=>$createAccount,
+        return $choices+['claim'=>Crypt::encryptString(json_encode($claim,JSON_THROW_ON_ERROR)),'CanUpload'=>$upload,'CreateAccount'=>$createAccount,'CompleteIntake'=>$complete,
             'Limits'=>['portrait_count'=>1,'portrait_bytes'=>5242880,'identity_count'=>3,'identity_bytes'=>10485760,'total_file_bytes'=>36700160]];
     }
     private function claim(Request $request, Tenant $tenant, bool $family): array
@@ -69,10 +73,26 @@ final class MobilePublicIntake
         $raw=$request->input('values');
         if (is_string($raw)) { abort_if(strlen($raw)>65536,413); try { $raw=json_decode($raw,true,16,JSON_THROW_ON_ERROR); } catch (\Throwable) { abort(422); } }
         abort_unless(is_array($raw) && strlen(json_encode($raw,JSON_THROW_ON_ERROR))<=65536,422);
-        abort_if(array_diff(array_keys($raw),array_keys(MobileRegistrationData::FIELDS)),422);
+        $complete = ($claim['complete'] ?? false) === true;
+        abort_if(array_diff(array_keys($raw), array_keys(MobileRegistrationData::FIELDS + ($complete ? ['AHVNummer' => 'ahv'] : []))),422);
         foreach ($raw as $value) { abort_unless(is_null($value)||is_scalar($value),422); } ksort($raw);
         $request->validate(['portrait'=>'nullable|file|max:5120|mimetypes:image/jpeg,image/png,image/webp',
             'identity'=>'nullable|array|list|max:3','identity.*'=>'file|max:10240|mimetypes:application/pdf,image/jpeg,image/png,image/webp']);
+        if ($complete) {
+            $birth = Validator::make($raw, ['Geburtsdatum' => 'required|date_format:Y-m-d|before_or_equal:today'])->validate()['Geburtsdatum'];
+            $minor = \Carbon\CarbonImmutable::parse($birth, 'Europe/Zurich')->addYearsNoOverflow(18)->gt(now('Europe/Zurich')->startOfDay());
+            $required = array_fill_keys(['HausNr','Geburtsort','Mobile'], 'required|string');
+            if ($minor) {
+                $required += array_fill_keys(['Vater','Mutter','MobileVater','MobileMutter','EmailVater','EmailMutter'], 'required|string');
+            }
+            Validator::make($raw, $required + [
+                'AHVNummer'=>['required','string','regex:/^756(?:[. ]?\d){10}$/D'],
+                'HatVorverein'=>'required|in:J,N',
+                'VorvereinLandTyp'=>'required_if:HatVorverein,J|nullable|in:I,A',
+                'VorvereinName'=>'required_if:HatVorverein,J|nullable|string|max:255',
+            ])->validate();
+            $request->validate(['portrait'=>'required', 'identity'=>'required|array|min:1']);
+        }
         $files=[];
         if ($request->hasFile('portrait')) { $files[]=['kind'=>'portrait','file'=>$request->file('portrait')]; }
         foreach ($request->file('identity',[]) as $file) { $files[]=['kind'=>'identity','file'=>$file]; }
@@ -96,7 +116,7 @@ final class MobilePublicIntake
             abort_unless(($scan['clean']??false)===true && is_string($scan['version']??null) && strlen($scan['version'])>=1 && strlen($scan['version'])<=160,422,'Anhang konnte nicht sicher geprüft werden.');
             $evidence[]=['kind'=>$entry['kind'],'sha256'=>$entry['sha256'],'scanner'=>$scan['version'],'scanned_at'=>now()->toIso8601String()];
         }
-        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash,$password,$family) {
+        $reply=DB::connection('clubunio')->transaction(function () use ($request,$tenant,$claim,$raw,$files,$evidence,$hash,$password,$family,$complete) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($tenant, $family);
             if ($family) {
@@ -109,10 +129,16 @@ final class MobilePublicIntake
             }
             $old=$this->table()->where('tenant_id',$tenant->id)->where('request_key',$claim['key'])->first();
             if ($old) { abort_unless(hash_equals($old->payload_sha256,$hash),409); return ['Submitted'=>true,'PendingAttachments'=>(int)$old->pending_attachments]; }
-            abort_unless(hash_equals($claim['choices'],hash('sha256',json_encode($this->choices($tenant),JSON_THROW_ON_ERROR))),409,'Auswahl wurde geändert. Formular bitte neu öffnen.');
+            abort_unless(hash_equals($claim['choices'],hash('sha256',json_encode($this->choices($tenant, $complete),JSON_THROW_ON_ERROR))),409,'Auswahl wurde geändert. Formular bitte neu öffnen.');
             abort_if($files&&!$this->canUpload($tenant),422);
-            $values=app(MobileRegistrationCommands::class)->values($tenant,$raw);
-            $registration=app(RegistrationDataService::class)->submitPublic($tenant,$values,$claim['key']);
+            $fields = $raw;
+            unset($fields['AHVNummer']);
+            if (($fields['HatVorverein'] ?? null) === 'N') {
+                unset($fields['VorvereinLandTyp'], $fields['VorvereinName']);
+            }
+            $values=app(MobileRegistrationCommands::class)->values($tenant,$fields);
+            $ahv = $complete ? preg_replace('/\D/', '', $raw['AHVNummer']) : null;
+            $registration=app(RegistrationDataService::class)->submitPublic($tenant,$values,$claim['key'],$ahv);
             if ($family) {
                 DB::connection('clubunio')->table('clubunio.mobile_registration_requests')->insert([
                     'tenant_id'=>$tenant->id,'account_id'=>$claim['actor'],'request_key'=>$claim['key'],
@@ -133,7 +159,13 @@ final class MobilePublicIntake
                 abort_unless(app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
                 $identity = $request->duplicate();
                 $identity->setJson(new \Symfony\Component\HttpFoundation\InputBag());
-                $identity->replace(['email' => $registration->email, 'first_name' => $registration->first_name,
+                $accountEmail = $registration->email;
+                if ($complete && ! $accountEmail) {
+                    $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')
+                        ->where('tenant_id', $tenant->id)->where('id', $values['billing_recipient_id'])->value('email_field');
+                    $accountEmail = $values[$emailField] ?? null;
+                }
+                $identity->replace(['email' => $accountEmail, 'first_name' => $registration->first_name,
                     'last_name' => $registration->last_name, 'password' => $password, 'request_key' => $claim['key']]);
                 $identity->files->replace([]);
                 app(MobileIdentityChallenges::class)->request($identity, 'register', (int) $registration->id);

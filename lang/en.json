@@ -2917,5 +2917,9 @@
     "The upload destination changed. Check the upload first.": "The upload destination changed. Check the upload first.",
     "File stored securely; transfer pending. Check Synchronisation. Reference: Upload #:value1": "File stored securely; transfer pending. Check Synchronisation. Reference: Upload #:value1",
     "Attachments are pending transfer. Complete synchronisation first.": "Attachments are pending transfer. Complete synchronisation first.",
-    "Receipts are pending transfer. Check Synchronisation first.": "Receipts are pending transfer. Check Synchronisation first."
+    "Receipts are pending transfer. Check Synchronisation first.": "Receipts are pending transfer. Check Synchronisation first.",
+    "AHV-Nummer": "Swiss social security number",
+    "Land des Vorvereins": "Previous club country",
+    "Schweiz": "Switzerland",
+    "Ausland": "Abroad"
 }
