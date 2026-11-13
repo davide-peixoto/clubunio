@@ -40,6 +40,19 @@ php artisan package:discover
 php artisan filament:assets
 php tools/publish-livewire-assets.php
 VIEW_COMPILED_PATH="$release/bootstrap/cache/dev-views" php artisan config:cache
+php -- "$previous" "$release" <<'PHP'
+<?php
+[$previous, $candidate] = array_slice($argv, 1);
+$old = require $previous.'/bootstrap/cache/config.php';
+$new = require $candidate.'/bootstrap/cache/config.php';
+foreach ($old['clubunio-mobile'] ?? [] as $key => $enabled) {
+    if (($key === 'enabled' || str_starts_with($key, 'native_') || $key === 'uploads_enabled')
+        && $enabled === true && ($new['clubunio-mobile'][$key] ?? false) !== true) {
+        fwrite(STDERR, "Candidate lost an active DEV mobile setting: $key\n");
+        exit(1);
+    }
+}
+PHP
 php artisan route:cache
 sudo -u www-data php artisan view:cache
 sudo -u www-data php deploy/verify-pi-dev-vps-database.php

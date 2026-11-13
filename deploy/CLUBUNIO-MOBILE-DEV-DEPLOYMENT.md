@@ -109,3 +109,13 @@ beim Ruecksprung. Neue Tabellen und Journale stets erhalten.
 
 HTTPS nach Umschaltung: context401, leeres POST session422, Weblogin200.
 FPM aktiv; Releaseziel bestaetigt. Restore-Testcontainer entfernt, privates Backup erhalten.
+
+### Wiederherstellung der DEV-Mobile-API (13.11.2026)
+
+Der Wechsel auf die gemeinsame DEV-Umgebungsdatei liess die Mobile-Schalter
+des zuvor aktiven VPS-DB-Releases wegfallen. In DEV sind Mobile-API, die zuvor
+aktiven nativen Module und gescannte Uploads wieder aktiv. Der persistente
+DEV-Konfigurationscache wurde neu gebaut. Der Release-Runner vergleicht die
+aktiven Mobile-Schalter von Vorgänger und Kandidat vor dem Umschalten.
+HTTPS-Health 200, anonymer Profilzugriff 401, DEV-DB-Pflichtcheck bestanden.
+Push-Versand separat deaktiviert wie im Vergleichsrelease vom 10.11.
