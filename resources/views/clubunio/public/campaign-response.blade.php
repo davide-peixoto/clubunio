@@ -1,10 +1,14 @@
 @extends('clubunio.public.layout')
-@section('title', __('campaign.update'))
+@section('title', $copy['subject'])
 @section('content')
-<h1>{{ __('campaign.update') }}</h1>
+<h1>{{ $copy['subject'] }}</h1>
 @if($complete)
-    <p role="status">{{ __('campaign.received') }}</p>
+    <p role="status">{{ __($acknowledge ? 'campaign.ack_received' : 'campaign.received') }}</p>
 @else
+    <p>{!! nl2br(e($copy['body'])) !!}</p>
+    @if($acknowledge)
+        <form method="post">@csrf <button type="submit">{{ __('campaign.ack_submit') }}</button></form>
+    @else
     <p>{{ __('campaign.instructions') }}</p>
     @if($errors->any())
         <ul class="errors" role="alert">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
@@ -26,5 +30,6 @@
         @endif
         <p><button type="submit">{{ __('campaign.submit') }}</button></p>
     </form>
+    @endif
 @endif
 @endsection

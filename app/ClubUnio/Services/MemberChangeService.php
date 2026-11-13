@@ -66,7 +66,8 @@ class MemberChangeService
         $portrait = $photo ? app(ProfilePhotoService::class)->encode($photo) : null;
         return DB::connection('clubunio')->transaction(function () use ($tenant, $token, $input, $portrait) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            [$recipient, $member] = app(MemberCampaignService::class)->invitation($tenant, $token, true);
+            [$recipient, $member, $campaign] = app(MemberCampaignService::class)->invitation($tenant, $token, true);
+            abort_unless($campaign->kind === 'member_update', 404);
             abort_if(array_diff(array_keys($input), [...MemberCampaignService::FIELDS, '_version']), 422);
             $request = $this->createPending(null, $tenant, $member, $input, null, $portrait);
             app(MemberCampaignService::class)->consume($tenant, $recipient, $request);

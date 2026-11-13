@@ -1,5 +1,20 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Kampagnentypen und Elternversand
+
+Unter **Kampagnen > Entwurf > Typ und Texte** waehlt die Geschaeftsstelle
+Stammdatenpflege oder eine ausdrueckliche Empfangsbestaetigung. Betreff und Text
+sind pro Kampagne auf Deutsch und Englisch pflegbar. Ein leeres Feld verwendet
+den Standardtext des Typs in der jeweiligen Ausgabesprache. Freigabe fixiert die
+Texte. Stammdaten bleiben bis zur Freigabe des Aenderungsantrags unveraendert.
+
+Bei Minderjaehrigen ist nur E-Mail erlaubt: Die Rechnungslogik muss eine
+Elternadresse ergeben, die genau einem aktiven, freigeschalteten Elternkonto
+mit genehmigter Verknuepfung und verifizierter E-Mail entspricht. Vor Versand,
+Antwort und Freigabe eines Antrags wird dies erneut geprueft. PDF-Briefe bleiben
+auf Erwachsene beschraenkt. Versand und Freigabe bleiben auf den Stage-Piloten
+begrenzt; die Mailwarteschlange nimmt nur synthetische Adressen an.
+
 ## Geplante Social-Media-Beiträge (13.11.2026)
 
 Tägliche Spieltagsposts und nächtliche SFV-Resultate nach Mannschaft,

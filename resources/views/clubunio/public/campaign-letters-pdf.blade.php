@@ -15,8 +15,8 @@
         <address>{{ $letter['member']->first_name }} {{ $letter['member']->last_name }}<br>
             {{ $letter['member']->street }} {{ $letter['member']->house_number }}<br>
             {{ $letter['member']->postal_code }} {{ $letter['member']->city }}</address>
-        <h1>{{ __('campaign.update') }}</h1>
-        <p>{{ __('Bitte aktualisiere deine Kontaktdaten für :club. Die Geschäftsstelle prüft deine Änderungen.', ['club' => $tenant->name]) }}</p>
+        <h1>{{ $copy['subject'] }}</h1>
+        <p>{!! nl2br(e($copy['body'])) !!}</p>
         <img src="{{ $letter['qr'] }}" width="150" height="150" alt="{{ __('campaign.qr') }}">
         <p class="url">{{ $letter['url'] }}</p>
         @include('clubunio.brand.attribution')

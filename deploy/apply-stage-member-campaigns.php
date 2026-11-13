@@ -17,7 +17,12 @@ if (! $app->environment('staging') || config('app.url') !== 'https://stage.clubu
 }
 StageMigrationTarget::authorize(DB::connection('clubunio'), 'clubunio_stage');
 $exit = $kernel->call('migrate', [
-    '--database' => 'clubunio', '--path' => 'database/clubunio/2026_11_13_000500_member_campaigns.php', '--force' => true,
+    '--database' => 'clubunio', '--path' => [
+        'database/clubunio/2026_11_13_000500_member_campaigns.php',
+        'database/clubunio/2026_11_13_000610_campaign_portraits.php',
+        'database/clubunio/2026_11_13_000620_campaign_mail_queue.php',
+        'database/clubunio/2026_11_13_000630_campaign_content.php',
+    ], '--force' => true,
 ]);
 echo $kernel->output();
 exit($exit);

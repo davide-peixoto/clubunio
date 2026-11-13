@@ -19,6 +19,8 @@ class MemberCampaigns extends Page
     public string $campaignTitle = '';
     public string $channel = 'email';
     public bool $populate = true;
+    public string $kind = 'member_update';
+    public array $content = [];
     public string $search = '';
     public int $limit = 50;
     public array $filters = [];
@@ -48,7 +50,7 @@ class MemberCampaigns extends Page
         $tenant = Filament::getTenant();
         $service = app(MemberCampaignService::class);
         $campaign = $service->campaigns($tenant)->where('id', $this->selected)->firstOrFail();
-        $member = $service->eligible($tenant)->findOrFail($memberId);
+        $member = app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->findOrFail($memberId);
         $this->recipient($memberId, $service->defaultChannel($campaign->channel, $member));
     }
 
@@ -91,12 +93,15 @@ class MemberCampaigns extends Page
             Filament::auth()->user(), Filament::getTenant(), $this->campaignTitle, $this->channel, $this->populate,
         );
         $this->campaignTitle = '';
+        $this->select($this->selected);
     }
 
     public function select(int $id): void
     {
         abort_unless(static::canAccess(), 403);
-        app(MemberCampaignService::class)->campaigns(Filament::getTenant())->where('id', $id)->firstOrFail();
+        $campaign = app(MemberCampaignService::class)->campaigns(Filament::getTenant())->where('id', $id)->firstOrFail();
+        $this->kind = $campaign->kind;
+        $this->content = json_decode($campaign->content ?? '{}', true);
         $this->selected = $id;
         $this->limit = 50;
     }
@@ -110,7 +115,14 @@ class MemberCampaigns extends Page
     public function release(): void
     {
         abort_unless($this->selected, 404);
+        $this->saveContent();
         app(MemberCampaignService::class)->release(Filament::auth()->user(), Filament::getTenant(), $this->selected);
+    }
+
+    public function saveContent(): void
+    {
+        abort_unless($this->selected && static::canManage(), 403);
+        app(MemberCampaignService::class)->saveContent(Filament::auth()->user(), Filament::getTenant(), $this->selected, $this->kind, $this->content);
     }
 
     public function markPosted(int $recipient): void
@@ -172,7 +184,7 @@ class MemberCampaigns extends Page
             ->leftJoin('clubunio.billing_recipients as billing', fn ($join) => $join->on('billing.id', '=', 'member.billing_recipient_id')->on('billing.tenant_id', '=', 'member.tenant_id')->where('billing.active', true))
             ->leftJoinSub($teams, 'roster', 'roster.member_id', '=', 'member.id')
             ->select('campaign_recipients.id', 'campaign_recipients.member_id', 'campaign_recipients.channel', 'campaign_recipients.mail_state',
-                'campaign_recipients.request_id', 'campaign_recipients.posted_at', 'campaign_recipients.mail_address_hash',
+                'campaign_recipients.request_id', 'campaign_recipients.acknowledged_at', 'campaign_recipients.posted_at', 'campaign_recipients.mail_address_hash',
                 'member.first_name', 'member.last_name', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state',
                 'status.name as member_status', 'type.name as member_type', 'roster.teams', 'roster.team_ids')
             ->selectRaw("CASE WHEN member.billing_recipient_id IS NULL OR billing.email_field = 'email' THEN trim(member.email)

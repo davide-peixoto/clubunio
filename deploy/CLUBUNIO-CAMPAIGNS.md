@@ -7,8 +7,10 @@ ohne freigegebenen Alters-/Elternprozess. Bei eingeschalteter Testqueue
 reiht die Freigabe E-Mail-Empfaenger automatisch ein; bei ausgeschalteter
 Queue gibt es keinen automatischen Versand. Nach Freigabe ist ein
 Sammel-PDF fuer offene Postempfaenger mit vollstaendiger Adresse verfuegbar.
-Es markiert die Briefe nicht als versendet. Kampagnentypen und editierbare
-Textvorlagen sind noch nicht verfuegbar; nur Stammdaten ist implementiert.
+Es markiert die Briefe nicht als versendet. Im Entwurf unter **Typ und Texte**
+sind Stammdatenpflege und Empfangsbestaetigung waehlbar. Betreff und Text
+pro Sprache gelten fuer Mail, Brief und Antwortseite und sind nach Freigabe
+gesperrt. Leere Felder verwenden die Standardtexte der Ausgabesprache.
 
 Bei neuen Entwuerfen mit Beides wird pro Mitglied E-Mail vorgeschlagen,
 wenn die Rechnungsadresse eine gueltige E-Mail liefert, sonst Post.
@@ -49,8 +51,11 @@ Einladungen und Entscheide bleiben der Geschaeftsstelle vorbehalten.
 
 Die Geschaeftsstelle erstellt Entwuerfe mit E-Mail, Post oder beidem und
 bearbeitet die Empfaenger vor der Freigabe. Aktive Erwachsene sind
-vorauswaehlbar. Minderjaehrige und unbekanntes Alter bleiben bis zur
-separaten Umsetzung des verifizierten Elternversands ausgeschlossen.
+vorauswaehlbar. Bei Minderjaehrigen ist ausschliesslich E-Mail an die durch
+den Rechnungsempfaenger bestimmte Elternadresse erlaubt. Ein eindeutiges,
+aktives Elternkonto mit genehmigter Zuordnung, Portalzugang und verifiziertem
+Postfach muss dazu passen. Die Bindung wird vor Versand, Antwort und
+Antragsfreigabe erneut geprueft. Unbekanntes Alter bleibt ausgeschlossen.
 
 Freigabe erzeugt einen 30 Tage gueltigen Token pro Empfaenger fuer beide
 Kanaele. Der Browser zeigt keine bestehenden Stammdaten an. Leere Felder
@@ -62,15 +67,17 @@ Postfachbestaetigung. Der QR-Brief ist als einzelne Druckansicht verfuegbar.
 Freigabe und Antworten sind auf `stage-mobile-pilot` begrenzt. SMTP ist
 auf die vorhandene Testumleitung und synthetische Adressen beschraenkt,
 kein echter Massenversand. Entwuerfe duerfen auch in anderen Stage-Vereinen
-vorbereitet werden. Events, Sponsorenzusagen, Sammeldruck und verifizierte
-Familienempfaenger sind Folgepakete.
+vorbereitet werden. Empfangsbestaetigung verbraucht den Link, ohne einen
+Aenderungsantrag zu erzeugen. Spezifische Event- und Sponsorenlaufprozesse
+sind Folgepakete.
 
 ## Migration und Rueckweg
 
 Nur Stage: `2026_11_13_000500_member_campaigns.php` nach
 `StageMigrationTarget::authorize` anwenden. Zwei neue Tabellen und ein
 nullable Antragsteller fuer Kampagnenantraege, keine Bestandsmigration.
-Mit `deploy/apply-stage-member-campaigns.php` migrieren, danach
+Mit `deploy/apply-stage-member-campaigns.php` migrieren (inkl. 000630 fuer
+Kampagnentexte und Elternbindung, vor Aktivierung des Releases), danach
 `artisan route:cache` und `artisan view:clear` im Stage-Release ausfuehren.
 `deploy/check-stage-member-campaigns.php` benutzt synthetische Fixtures
 in einer Rueckrolltransaktion und blockiert echten Mailversand.

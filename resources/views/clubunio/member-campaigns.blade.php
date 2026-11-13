@@ -32,6 +32,7 @@
     @if($campaign)
         <div class="flex flex-wrap items-center gap-3">
             <h2>{{ $campaign->title }}</h2>
+            <span>{{ \App\ClubUnio\Services\MemberCampaignService::kindLabel($campaign->kind) }}</span>
             <x-filament::badge>{{ $draft ? __('campaign.draft') : ($open ? __('campaign.open') : __('campaign.closed')) }}</x-filament::badge>
             <span>{{ __(':count Empfänger', ['count' => $count]) }}</span>
             @error('release')<span role="alert">{{ $message }}</span>@enderror
@@ -43,6 +44,28 @@
             @endif
         </div>
         @if($canManage && $draft)
+            <x-filament::section :heading="__('campaign.content')">
+                <form wire:submit="saveContent" class="space-y-4">
+                    <label>{{ __('campaign.kind') }}
+                        <x-filament::input.wrapper><x-filament::input.select wire:model="kind">
+                            @foreach(\App\ClubUnio\Services\MemberCampaignService::KINDS as $key)
+                                <option value="{{ $key }}">{{ \App\ClubUnio\Services\MemberCampaignService::kindLabel($key) }}</option>
+                            @endforeach
+                        </x-filament::input.select></x-filament::input.wrapper>
+                    </label>
+                    @foreach(['de', 'en'] as $language)
+                        <fieldset class="space-y-2">
+                            <legend>{{ $language === 'de' ? __('campaign.language_de') : __('campaign.language_en') }}</legend>
+                            <label>{{ __('campaign.subject') }} <x-filament::input.wrapper><x-filament::input wire:model="content.{{ $language }}.subject" maxlength="160" /></x-filament::input.wrapper></label>
+                            <label>{{ __('campaign.body') }} <x-filament::input.wrapper><textarea class="w-full p-2" wire:model="content.{{ $language }}.body" rows="4" maxlength="1500"></textarea></x-filament::input.wrapper></label>
+                        </fieldset>
+                    @endforeach
+                    @foreach($errors->getMessages() as $field => $messages)
+                        @if($field === 'kind' || str_starts_with($field, 'content'))<p role="alert">{{ $messages[0] }}</p>@endif
+                    @endforeach
+                    <x-filament::button type="submit">{{ __('campaign.save_content') }}</x-filament::button>
+                </form>
+            </x-filament::section>
             <x-filament::input.wrapper><x-filament::input wire:model.live.debounce.350ms="search" :placeholder="__('campaign.search')" :aria-label="__('campaign.search')" /></x-filament::input.wrapper>
             @foreach($matches as $member)
                 <div class="flex flex-wrap items-center gap-2" wire:key="match-{{ $member->id }}">
@@ -106,7 +129,7 @@
                             'attention' => 'campaign.attention', default => 'campaign.pending',
                             'queued' => 'campaign.queued', 'bounced' => 'campaign.bounced',
                         }) }}</x-filament::badge>
-                        @if($canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->request_id && $row->mail_state === 'pending')
+                        @if($canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->acknowledged_at && $row->mail_state === 'pending')
                             <x-filament::button size="sm" wire:click="testMail({{ $row->id }})">{{ __('campaign.enqueue_test') }}</x-filament::button>
                         @endif
                         @if($canManage && $pilot && $mailQueueEnabled && $row->mail_state === 'accepted' && $row->mail_address_hash)
@@ -116,7 +139,7 @@
                     @if(in_array($row->channel, ['post','both'], true))
                         @if(!$row->street || !$row->postal_code || !$row->city)
                             <x-filament::badge color="warning">{{ __('campaign.no_post') }}</x-filament::badge>
-                        @elseif($canManage && $open && !$row->request_id)
+                        @elseif($canManage && $open && !$row->acknowledged_at)
                             <x-filament::button size="sm" tag="a" :href="route('clubunio.campaign.letter', [$tenant->slug, $campaign->id, $row->id])">{{ __('campaign.letter') }}</x-filament::button>
                             @unless($row->posted_at)<x-filament::button size="sm" wire:click="markPosted({{ $row->id }})">{{ __('campaign.posted') }}</x-filament::button>@endunless
                         @endif
@@ -126,6 +149,7 @@
                         'approved' => 'campaign.approved', 'rejected' => 'campaign.rejected',
                         'withdrawn' => 'campaign.withdrawn', default => 'campaign.pending',
                     }) }}</x-filament::badge>@endif
+                    @if($row->acknowledged_at && !$row->request_id)<x-filament::badge>{{ __('campaign.ack_received') }}</x-filament::badge>@endif
                     </div></td>
                 </tr>
             @endforeach

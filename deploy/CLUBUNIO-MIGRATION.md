@@ -1,5 +1,18 @@
 # ClubUnio migration work packages
 
+## Kampagnen: Typ, Texte und Elternversand
+
+Auf Stage vor dem Webrelease `php deploy/apply-stage-member-campaigns.php`
+ausfuehren. Das Skript prueft die Ziel-DB und fuehrt nur die Kampagnenmigrationen
+aus. Migration 000630 ist additiv: Bestehende Kampagnen verwenden weiterhin
+ihren Typ und die Standardtexte; es gibt keinen Backfill fuer Elternkonten.
+Beim Rollback zuerst die Anwendung zurueckrollen, die neuen Spalten wegen
+bereits freigegebener Kampagnen behalten.
+
+Stage-Abnahme: `php deploy/check-stage-member-campaigns.php --queue`.
+Der Test arbeitet mit synthetischen Daten, rollt die Transaktion zurueck
+und verwendet einen In-Memory-Mailtransport. Keine echten Empfaenger.
+
 ## Profilfotos
 
 Neue private Fotoablage ohne automatische Uebernahme von Altfotos oder

@@ -13,7 +13,7 @@ class MemberCampaignController
         $domain = app(TenantDomainService::class)->current();
         abort_if($domain && ! $domain->is($tenant), 404);
         abort_unless($service->allowed($request->user('clubunio'), $tenant), 403);
-        $service->openCampaign($tenant, $campaign);
+        $copy = $service->copy($service->openCampaign($tenant, $campaign));
         $rows = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
             ->whereNotNull('token_encrypted')->orderBy('id')->limit(1001)->get();
         abort_if($rows->isEmpty() || $rows->count() > 1000, 422, __('campaign.pdf_limit'));
@@ -30,7 +30,7 @@ class MemberCampaignController
             return ['member' => $member, 'url' => $url, 'qr' => $qr->render($url)];
         });
         $pdf = new \Dompdf\Dompdf(new \Dompdf\Options(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']));
-        $pdf->loadHtml(view('clubunio.public.campaign-letters-pdf', compact('letters', 'tenant'))->render(), 'UTF-8');
+        $pdf->loadHtml(view('clubunio.public.campaign-letters-pdf', compact('letters', 'tenant', 'copy'))->render(), 'UTF-8');
         $pdf->setPaper('a4');
         $pdf->render();
 
@@ -43,7 +43,7 @@ class MemberCampaignController
         $domain = app(TenantDomainService::class)->current();
         abort_if($domain && (int) $domain->id !== (int) $tenant->id, 404);
         abort_unless($service->allowed($request->user('clubunio'), $tenant), 403);
-        $service->openCampaign($tenant, $campaign);
+        $copy = $service->copy($service->openCampaign($tenant, $campaign));
         $row = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
             ->whereNotNull('token_encrypted')->where('id', $recipient)->firstOrFail();
         $member = $service->eligible($tenant)->findOrFail($row->member_id);
@@ -54,7 +54,7 @@ class MemberCampaignController
             'outputBase64' => true,
         ])))->render($url);
 
-        return response()->view('clubunio.public.campaign-letter', compact('tenant', 'member', 'url', 'qr'))
+        return response()->view('clubunio.public.campaign-letter', compact('tenant', 'member', 'url', 'qr', 'copy'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
@@ -62,17 +62,24 @@ class MemberCampaignController
     {
         $domain = app(TenantDomainService::class)->current();
         abort_if($domain && (int) $domain->id !== (int) $tenant->id, 404);
+        [, $member, $campaign] = $campaigns->invitation($tenant, $token);
+        $acknowledge = $campaign->kind === 'acknowledgement';
+        $copy = $campaigns->copy($campaign);
         if ($request->isMethod('post')) {
+            if ($acknowledge) {
+                $campaigns->acknowledge($tenant, $token);
+
+                return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => true]);
+            }
             $request->validate(['portrait' => 'nullable|file|max:5120'], [], ['portrait' => __('photo.title')]);
             $changes->submitCampaign($tenant, $token, array_filter(
                 $request->only([...MemberCampaignService::FIELDS, '_version']), fn ($value) => $value !== null && $value !== '',
             ), $request->file('portrait'));
 
-            return $this->page($tenant, ['complete' => true]);
+            return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => true]);
         }
-        [, $member] = $campaigns->invitation($tenant, $token);
 
-        return $this->page($tenant, ['complete' => false, 'version' => MemberService::version($member)]);
+        return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => false, 'version' => MemberService::version($member)]);
     }
 
     private function page(Tenant $tenant, array $data)

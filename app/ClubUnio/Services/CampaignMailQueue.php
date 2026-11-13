@@ -22,10 +22,10 @@ final class CampaignMailQueue
     private function address(Tenant $tenant, object $row): ?string
     {
         $service = app(MemberCampaignService::class);
-        $member = $service->eligible($tenant)->find($row->member_id);
+        $member = $service->deliveryMember($tenant, $row);
         $email = $member ? strtolower((string) $service->email($member)) : '';
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || ! str_ends_with($email, '@example.invalid')) return null;
-        if (app(MemberAccessService::class)->activeMembers($tenant)->whereKeyNot($row->member_id)
+        if (! ($row->guardian_account_id ?? null) && app(MemberAccessService::class)->activeMembers($tenant)->whereKeyNot($row->member_id)
             ->where(fn ($q) => $q->whereRaw('lower(trim(email)) = ?', [$email])
                 ->orWhereRaw('lower(trim(mother_email)) = ?', [$email])->orWhereRaw('lower(trim(father_email)) = ?', [$email]))->exists()) return null;
 
@@ -114,14 +114,14 @@ final class CampaignMailQueue
         $attempt = $row->mail_attempts + 1;
         try {
             $service = app(MemberCampaignService::class);
-            $service->openCampaign($tenant, $row->campaign_id);
+            $copy = $service->copy($service->openCampaign($tenant, $row->campaign_id));
             if (! $row->token_encrypted || $this->address($tenant, $row) !== $row->mail_address_hash || $this->suppressed($tenant, $row->mail_address_hash)) {
                 $state = 'failed';
             } else {
                 $sent = Mail::mailer('clubunio_test')->send(
-                    ['raw' => __('Bitte aktualisiere deine Kontaktdaten für :club. Die Geschäftsstelle prüft deine Änderungen.', ['club' => $tenant->name])."\n\n".$service->url($tenant, $row)],
+                    ['raw' => $copy['body']."\n\n".$service->url($tenant, $row)],
                     ['clubunio_reply_to_tenant_id' => (int) $tenant->id],
-                    fn ($message) => $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject(__('campaign.update')),
+                    fn ($message) => $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject($copy['subject']),
                 );
                 $state = $sent ? 'accepted' : 'attention';
             }
