@@ -2,7 +2,7 @@
 @section('title', __('Mitgliederanmeldung'))
 @section('content')
 <h1>{{ __('Mitgliederanmeldung') }}</h1>
-<p class="notice">{{ __('Testumgebung: Diese Anmeldung wird nur in ClubUnio erfasst und ersetzt noch keine Anmeldung beim Verein.') }}</p>
+<p class="notice">{{ trans('public-registration.test_notice') }}</p>
 @if(session('submitted'))
     <section role="status"><h2>{{ trans('public-registration.received_title') }}</h2><p>{{ trans('public-registration.received_body') }}</p>
         @if(session('uploads_pending'))<p>{{ __('Die Anhänge sind geschützt gespeichert. Ihre Übertragung wird intern geprüft; bitte nicht erneut anmelden.') }}</p>@endif
