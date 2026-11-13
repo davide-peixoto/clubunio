@@ -46,7 +46,7 @@ class SfvPlanningService
         return app(SyncWorkService::class)->run($actor, $tenant, 'sfv_schedule', $tenant->id, $data);
     }
 
-    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null): int
+    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null, ?string $seasonDate = null): int
     {
         $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
@@ -74,7 +74,7 @@ class SfvPlanningService
             if (! is_string($token) || $token === '') {
                 throw new \RuntimeException('Invalid authentication response');
             }
-            $now = now('Europe/Zurich');
+            $now = $seasonDate ? Time::parse($seasonDate, 'Europe/Zurich') : now('Europe/Zurich');
             $season = $this->setting($tenant, 'SFV_SEASON_ID_AUTO', '1');
             $season = in_array(strtolower($season), ['0', 'false', 'nein', 'no'], true) ? (int) $this->setting($tenant, 'SFV_SEASON_ID') : $now->year + (int) ($now->month >= 7);
             $response = $client()->withHeaders(['X-User-Token' => $token, 'X-User-Language' => $this->setting($tenant, 'SFV_LANGUAGE', '1')])
@@ -135,6 +135,66 @@ class SfvPlanningService
             Log::warning('clubunio.sfv.refresh_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'provider_status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['sfv' => __('SFV-Abruf fehlgeschlagen. Bestehende Termine bleiben unverändert. Referenz: :value1', ['value1' => $reference])]);
         }
+    }
+
+    /**
+     * Read the SFV detail endpoint without collecting players, events, or staff data.
+     * The result is usable only when SFV explicitly confirms that play ended.
+     */
+    public function finalScores(Account $actor, Tenant $tenant, array $matches): array
+    {
+        $this->authorizeSync($actor, $tenant);
+        if ($matches === []) {
+            return [];
+        }
+        $base = rtrim($this->setting($tenant, 'SFV_API_BASE_URL', 'https://stg-club-api-services.football.ch'), '/');
+        $key = $this->setting($tenant, 'SFV_APPLICATION_KEY');
+        $pass = $this->setting($tenant, 'SFV_APPLICATION_PASS');
+        if (! in_array($base, ['https://stg-club-api-services.football.ch', 'https://club-api-services.football.ch'], true) || ! $key || ! $pass) {
+            throw new \RuntimeException('SFV configuration unavailable');
+        }
+        $client = fn () => Http::acceptJson()->connectTimeout(4)->timeout(8)->withoutRedirecting();
+        $body = $client()->post($base.'/api/token', ['applicationKey' => $key, 'applicationPass' => $pass])->throw()->json();
+        $token = is_string($body) ? $body : ($body['token'] ?? $body['userToken'] ?? $body['access_token'] ?? null);
+        if (! is_string($token) || $token === '') {
+            throw new \RuntimeException('Invalid SFV authentication response');
+        }
+        $scores = [];
+        foreach ($matches as $match) {
+            $response = $client()->withHeaders(['X-User-Token' => $token, 'X-User-Language' => $this->setting($tenant, 'SFV_LANGUAGE', '1')])
+                ->get($base.'/api/match/'.(int) $match->match_id);
+            if ($response->status() === 404) {
+                continue;
+            }
+            $detail = $response->throw()->json();
+            if ($score = self::finalScore($match, $detail)) {
+                $scores[(int) $match->match_id] = $score;
+            }
+        }
+
+        return $scores;
+    }
+
+    public static function finalScore(object $match, mixed $detail): ?array
+    {
+        if (! is_array($detail) || ($detail['hasMatchEnded'] ?? false) !== true
+            || ($detail['matchId'] ?? null) !== (int) $match->match_id
+            || ! is_string($detail['matchDate'] ?? null) || ! $match->starts_at) {
+            return null;
+        }
+        try {
+            if (! Time::parse($detail['matchDate'], 'Europe/Zurich')->equalTo(Time::parse($match->starts_at, 'Europe/Zurich'))) {
+                return null;
+            }
+        } catch (\Exception) {
+            return null;
+        }
+        foreach (['scoreTeamA', 'scoreTeamB'] as $field) {
+            if (! is_int($detail[$field] ?? null) || $detail[$field] < 0 || $detail[$field] > 999) {
+                return null;
+            }
+        }
+        return [$detail['scoreTeamA'], $detail['scoreTeamB']];
     }
 
     public function import(Account $actor, Tenant $tenant, int $id, array $input): int

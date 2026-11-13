@@ -2,10 +2,42 @@
 
 namespace App\ClubUnio\Services;
 
-use Illuminate\Support\Facades\{Http, Storage, URL};
+use App\ClubUnio\Models\{Account, Tenant};
+use Illuminate\Support\Facades\{DB, Http, Storage, URL};
+use Throwable;
 
 final class SocialMetaTestPublisher
 {
+    public function publish(Tenant $tenant, Account $actor, string $id, int $revision, string $channel, ?string $origin = null, ?callable $validate = null): string
+    {
+        $target = $this->target($tenant->id, $channel, $origin);
+        abort_unless($target, 403);
+        $data = app(SocialStudioData::class);
+        $delivery = $data->table($tenant->id, 'deliveries')->where('post_id', $id)->where('channel', $channel);
+        $post = DB::connection('clubunio')->transaction(function () use ($tenant, $actor, $id, $revision, $channel, $target, $data, $delivery, $validate) {
+            app(ModulePermissionService::class)->authorize($actor->fresh(), $tenant, 'social_media', 'send');
+            $post = $data->table($tenant->id, 'posts')->where('id', $id)->lockForUpdate()->first();
+            abort_unless($post, 404);
+            abort_unless($post->state === 'approved' && (int) $post->revision === $revision
+                && in_array($channel, $data->decode($post->targets), true), 409);
+            $validate?->__invoke($post);
+            $previous = $delivery->first();
+            abort_unless(! $previous || ($previous->state === 'failed' && $previous->target === $target['id']), 409);
+            $delivery->updateOrInsert(['tenant_id' => $tenant->id, 'post_id' => $id, 'channel' => $channel],
+                ['state' => 'sending', 'target' => $target['id'], 'actor_id' => $actor->id, 'error_code' => null, 'updated_at' => now()]);
+
+            return $post;
+        });
+        try {
+            $result = $this->deliver($tenant->id, $post, $channel, $target);
+        } catch (Throwable) {
+            $result = ['state' => 'unknown', 'error_code' => 'check_meta'];
+        }
+        $delivery->update([...$result, 'updated_at' => now()]);
+
+        return $result['state'];
+    }
+
     public function target(int $tenant, string $channel, ?string $origin = null): ?array
     {
         $origin ??= request()->getSchemeAndHttpHost();
