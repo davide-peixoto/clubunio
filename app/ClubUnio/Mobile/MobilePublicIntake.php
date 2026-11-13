@@ -157,17 +157,18 @@ final class MobilePublicIntake
                 'pending_attachments'=>$pending,'scan_evidence_encrypted'=>$evidence?Crypt::encryptString(json_encode($evidence,JSON_THROW_ON_ERROR)):null]);
             if ($password !== null) {
                 abort_unless(app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
-                $identity = $request->duplicate();
-                $identity->setJson(new \Symfony\Component\HttpFoundation\InputBag());
                 $accountEmail = $registration->email;
                 if ($complete && ! $accountEmail) {
                     $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')
                         ->where('tenant_id', $tenant->id)->where('id', $values['billing_recipient_id'])->value('email_field');
                     $accountEmail = $values[$emailField] ?? null;
                 }
-                $identity->replace(['email' => $accountEmail, 'first_name' => $registration->first_name,
-                    'last_name' => $registration->last_name, 'password' => $password, 'request_key' => $claim['key']]);
-                $identity->files->replace([]);
+                $identity = Request::create($request->url(), 'POST', [
+                    'email' => $accountEmail, 'first_name' => $registration->first_name,
+                    'last_name' => $registration->last_name, 'password' => $password, 'request_key' => $claim['key'],
+                ], server: ['REMOTE_ADDR' => $request->ip()]);
+                $identity->attributes->set('mobile.public.tenant', $tenant);
+                $identity->attributes->set('mobile.public.origin', $claim['origin']);
                 app(MobileIdentityChallenges::class)->request($identity, 'register', (int) $registration->id);
             }
             return ['Submitted'=>true,'PendingAttachments'=>$pending];
