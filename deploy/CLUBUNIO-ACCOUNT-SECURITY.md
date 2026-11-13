@@ -73,7 +73,8 @@ offen. Kein Store-Release.
 DEV und Stage: Web-Wizard und Reset ausgerollt und aktiviert, auf
 `https://dev.clubunio.ch` bzw. `https://stage.clubunio.com`. Stichtag UTC:
 DEV 19:28:52, Stage 19:29:31. Additives DDL in den jeweiligen PostgreSQL-
-Datenbanken, Schema vorher separat gesichert. Keine PROD-Aenderung.
+Datenbanken, Schema vorher separat gesichert. ClubUnio hat aktuell keine
+Produktivinstanz.
 
 Stage: Login und Wizard HTTP 200, anonymer Reset HTTP 302. Der synthetische
 PostgreSQL-Test hat Pflicht, Reset durch die Geschaeftsstelle, Sperre des
