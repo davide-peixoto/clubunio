@@ -15,7 +15,7 @@ $t = fn ($key, $replace = []) => trans('marketing.'.$key, $replace);
 <body>
 <a class="skip" href="#main">{{ $t('skip') }}</a>
 <header class="header"><a class="brand" href="{{ route('clubunio.marketing', ['locale' => $locale]) }}"><img src="/brand/blue-v1/clubunio-logo-horizontal.svg" alt="ClubUnio" width="164" height="46"></a>
-<nav aria-label="{{ $t('nav') }}"><a href="#features">{{ $t('features') }}</a><a href="#integrations">{{ $t('integrations') }}</a><a href="#ai">{{ $t('ai_nav') }}</a><a href="#about">{{ $t('about') }}</a><a href="#pricing">{{ $t('prices') }}</a><a href="#extras">{{ $t('extras') }}</a></nav>
+<nav aria-label="{{ $t('nav') }}"><a href="#features">{{ $t('features') }}</a><a href="#integrations">{{ $t('integrations') }}</a><a href="#ai">{{ $t('ai_nav') }}</a><a href="#about">{{ $t('about') }}</a><a href="#references">{{ $t('references') }}</a><a href="#pricing">{{ $t('prices') }}</a><a href="#extras">{{ $t('extras') }}</a></nav>
 <div class="header-actions"><div class="languages" aria-label="{{ $t('language') }}">@foreach($languages as $code => $name)<a lang="{{ $code }}" hreflang="{{ $code }}" href="{{ route('clubunio.marketing', ['locale' => $code]) }}" @if($code === $locale) aria-current="page" @endif>{{ strtoupper($code) }}</a>@endforeach</div><a class="login" href="/login">{{ $t('login') }} ↗</a></div></header>
 <main id="main">
 <section class="hero wrap"><div class="hero-copy"><p class="eyebrow"><span></span>{{ $t('eyebrow') }}</p><h1>{{ $t('hero_a') }}<br>{{ $t('hero_b') }}<br><em>{{ $t('hero_c') }}</em></h1><p class="lead">{{ $t('hero_text') }}</p><div class="buttons"><a class="button" href="#inquiry">{{ $t('demo') }} <span>↗</span></a><a class="text-link" href="#features">{{ $t('explore') }} ↓</a></div><p class="hero-note">{{ $t('hero_note') }}</p><p class="small-note">{{ $t('origin') }}</p></div>
@@ -39,6 +39,18 @@ $t = fn ($key, $replace = []) => trans('marketing.'.$key, $replace);
     </div>
 </section>
 @if(is_file(public_path('images/marketing/'.$locale.'/members.png')))
+<section class="wrap section" id="references" aria-labelledby="references-title">
+    <p class="eyebrow">{{ $t('references') }}</p>
+    <h2 id="references-title">{{ $t('references_title') }}</h2>
+    <div class="feature-grid">
+        @foreach(['sv_sissach'] as $reference)
+            <article class="feature">
+                <h3>{{ $t('reference_'.$reference.'_name') }}</h3>
+                <p>{{ $t('reference_'.$reference.'_text') }}</p>
+            </article>
+        @endforeach
+    </div>
+</section>
 <section class="wrap section" id="product"><p class="eyebrow">CLUBUNIO / FC HORIZON</p><h2>{{ $t('gallery_title') }}</h2><p class="section-intro">{{ $t('gallery_intro') }}</p><div class="gallery">@foreach(['members','expenses','signage'] as $screen)@if(is_file(public_path('images/marketing/'.$locale.'/'.($screen === 'signage' ? 'signage-display' : $screen).'.png')))<figure><a href="/images/marketing/{{ $locale }}/{{ $screen === 'signage' ? 'signage-display' : $screen }}.png" data-lightbox aria-label="{{ $t('enlarge') }}: {{ $t('screen_'.$screen) }}"><img loading="lazy" src="/images/marketing/{{ $locale }}/{{ $screen === 'signage' ? 'signage-display' : $screen }}.png" alt="{{ $t('screenshot', ['feature' => $t('screen_'.$screen)]) }}" width="1440" height="1000"></a><figcaption>{{ $t('screen_'.$screen) }}</figcaption></figure>@endif @endforeach</div></section>
 @endif
 <section class="wrap section" id="pricing"><p class="eyebrow">{{ $t('pricing_label') }}</p><h2>{{ $t('pricing_title') }}</h2><p class="section-intro">{{ $t('pricing_intro') }}</p>
