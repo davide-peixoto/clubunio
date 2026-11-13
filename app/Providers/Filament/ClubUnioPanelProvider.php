@@ -119,6 +119,10 @@ class ClubUnioPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
+            ->userMenuItems([
+                \Filament\Actions\Action::make('myProfile')->label(fn () => __('profile_web.title'))
+                    ->icon('heroicon-o-user-circle')->url(fn () => route('clubunio.web-profile.show')),
+            ])
             ->login(Login::class)->brandName('ClubUnio')
             ->brandLogo(asset('brand/blue-v1/clubunio-logo-horizontal.svg'))
             ->darkModeBrandLogo(asset('brand/blue-v1/clubunio-logo-horizontal-white.svg'))

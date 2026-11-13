@@ -9,6 +9,9 @@
 <body>
     <header class="portal-header">
         @include('clubunio.brand.logo')
+        @auth('portal')
+            <a href="{{ route('clubunio.portal.profile.show') }}">{{ __('profile_web.title') }}</a>
+        @endauth
         @isset($tenant)
             <nav aria-label="{{ __('Verein') }}">
                 @foreach($tenants as $availableTenant)

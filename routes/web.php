@@ -52,6 +52,15 @@ Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUn
     ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
 Route::get('/profile-photo', [\App\ClubUnio\Http\ProfilePhotoController::class, 'personal'])
     ->middleware('auth:clubunio')->name('clubunio.photo.personal');
+foreach (['clubunio' => ['my-profile', 'clubunio.web-profile.'], 'portal' => ['portal/profile', 'clubunio.portal.profile.']] as $guard => [$path, $name]) {
+    Route::prefix($path)->name($name)->middleware('auth:'.$guard)->group(function () {
+        $controller = \App\ClubUnio\Http\WebProfileController::class;
+        Route::get('/', [$controller, 'show'])->name('show');
+        Route::get('photo', [$controller, 'photo'])->name('photo');
+        Route::post('photo', [$controller, 'upload'])->name('upload');
+        Route::post('password', [$controller, 'password'])->name('password');
+    });
+}
 Route::get('/campaign-photo/{tenant:slug}/{change}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'campaign'])
     ->whereNumber('change')->middleware('auth:clubunio')->name('clubunio.photo.campaign');
 Route::get('/member-photo/{tenant:slug}/{member}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'member'])
