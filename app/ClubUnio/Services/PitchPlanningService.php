@@ -103,7 +103,7 @@ class PitchPlanningService
         return ['from' => $data['from'], 'to' => $data['to'], 'timezone' => 'Europe/Zurich', 'fields' => $fields, 'entries' => $entries, 'capabilities' => $capabilities];
     }
 
-    public function requests(Account $actor, Tenant $tenant, array $filters = []): array
+    private function canReadAllRequests(Account $actor, Tenant $tenant): bool
     {
         abort_unless($this->canView($actor, $tenant), 403);
         $all = $this->office($actor, $tenant, 'competitions', 'view');
@@ -111,17 +111,29 @@ class PitchPlanningService
         abort_unless($all || (in_array($access->membership($actor, $tenant)?->role, ['trainer', 'technical_lead'], true)
             && $access->canEnter($actor, $tenant)
             && in_array('Platzverfugbarkeit', app(MobileModuleSettings::class)->visibleKeys($actor, $tenant), true)), 403);
-        abort_if(! $all && array_key_exists('status', $filters), 403);
         $this->ready();
+
+        return $all;
+    }
+
+    private function visibleRequests(Account $actor, Tenant $tenant, bool $all)
+    {
+        return $this->projection->table('pitch_requests', $tenant)
+            ->when(! $all, fn ($query) => $query->where('requester_account_id', $actor->id)
+                ->where('date', '>=', now('Europe/Zurich')->toDateString()));
+    }
+
+    public function requests(Account $actor, Tenant $tenant, array $filters = []): array
+    {
+        $all = $this->canReadAllRequests($actor, $tenant);
+        abort_if(! $all && isset($filters['status']) && $filters['status'] !== 'pending', 403);
         $data = Validator::make($filters, [
             'page' => 'sometimes|integer|min:1|max:2147483647', 'per_page' => 'sometimes|integer|min:1|max:100',
             'status' => 'sometimes|required|in:pending,approved,rejected,cancelled',
         ])->validate();
         $page = (int) ($data['page'] ?? 1);
         $size = (int) ($data['per_page'] ?? 30);
-        $rows = $this->projection->table('pitch_requests', $tenant)
-            ->when(! $all, fn ($query) => $query->where('requester_account_id', $actor->id)
-                ->where('date', '>=', now('Europe/Zurich')->toDateString()))
+        $rows = $this->visibleRequests($actor, $tenant, $all)
             ->when(isset($data['status']), fn ($query) => $query->where('status', $data['status']))
             ->orderByDesc('id')->offset(($page - 1) * $size)->limit($size + 1)->get();
         $hasMore = $rows->count() > $size;
@@ -140,6 +152,14 @@ class PitchPlanningService
         }
         return ['timezone' => 'Europe/Zurich', 'fields' => $fields, 'teams' => $teams, 'entries' => $entries,
             'capabilities' => $capabilities, 'can_filter_status' => $all, 'page' => $page, 'has_more' => $hasMore];
+    }
+
+    public function pendingRequestCount(Account $actor, Tenant $tenant): int
+    {
+        $all = $this->canReadAllRequests($actor, $tenant);
+
+        return $this->visibleRequests($actor, $tenant, $all)->where('status', 'pending')
+            ->count();
     }
 
     private function write(Account $actor, Tenant $tenant, \Closure $action): mixed

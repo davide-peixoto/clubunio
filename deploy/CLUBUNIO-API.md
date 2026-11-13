@@ -220,3 +220,13 @@ DEV: Release 20261113-clubunio-mobile-work, Rueckweg
 Die Mobile-API und der Push-Versand sind auf DEV in beiden Releases
 deaktiviert. Die Pendenzen sind dort erst nach Freigabe der API testbar.
 App-Quellstand 902b20a. Keine Datenbankmigration erforderlich.
+
+### Zähler für Arbeitskacheln
+
+Clients mit today-counts-v1 erhalten work_count auf verfügbaren und für das
+Konto freigegebenen Arbeitskacheln. Die Zähler folgen dem Sichtbereich der
+jeweiligen Listen. Gezählt werden offene Mitgliederänderungen, ausstehende
+Platzanfragen, freigegebene Spesen, bevorstehende angefragte Busreservationen
+sowie sichtbare Anmeldungen und eigene Dokumente. Die Abfragen liefern nur
+Summen und nutzen den bestehenden Modulabruf. Ein fehlender Zähler bleibt
+unbekannt. Keine Datenbankmigration erforderlich.

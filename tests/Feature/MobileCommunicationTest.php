@@ -1652,15 +1652,28 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
 
     public function test_today_work_shortcuts_respect_roles_and_native_client_support(): void
     {
+        $this->financeSchema();
         config(['clubunio-mobile.native_expenses_enabled' => true]);
         $admin = $this->token($this->admin);
         $this->withToken($admin)->getJson($this->url('modules'))->assertOk()
             ->assertJsonFragment(['key' => 'Spesen', 'native' => false, 'work' => false]);
         $features = ['X-ClubUnio-Mobile-Features' => 'expenses-v1'];
         $this->withToken($admin)->getJson($this->url('modules'), $features)->assertOk()
-            ->assertJsonFragment(['key' => 'Spesen', 'native' => true, 'work' => true]);
-        $this->withToken($this->token($this->parent))->getJson($this->url('modules'), $features)->assertOk()
-            ->assertJsonMissing(['work' => true]);
+            ->assertJsonFragment(['key' => 'Spesen', 'native' => true, 'work' => true])
+            ->assertJsonMissing(['work_count' => 0]);
+        $features['X-ClubUnio-Mobile-Features'] .= ',today-counts-v1';
+        $this->withToken($admin)->getJson($this->url('modules'), $features)->assertOk()
+            ->assertJsonFragment(['key' => 'Spesen', 'work_count' => 0]);
+        $season = $this->db->table('clubora.team_seasons')->where('id', $this->team)->value('season_id');
+        foreach ([1 => 'F', 2 => 'O'] as $id => $code) {
+            $this->db->table('clubora.expense_statuses')->insert(['id' => $id, 'tenant_id' => $this->tenant->id, 'code' => $code]);
+            $this->db->table('clubora.expenses')->insert(['tenant_id' => $this->tenant->id, 'season_id' => $season, 'status_id' => $id]);
+        }
+        $this->withToken($admin)->getJson($this->url('modules'), $features)->assertOk()
+            ->assertJsonFragment(['key' => 'Spesen', 'work_count' => 1]);
+        $parent = $this->withToken($this->token($this->parent))->getJson($this->url('modules'), $features)->assertOk()
+            ->assertJsonMissing(['work' => true])->json('data.modules');
+        $this->assertEmpty(array_column($parent, 'work_count'));
     }
 
     public function test_unreleased_native_planning_is_closed_without_disabling_existing_personal_routes(): void

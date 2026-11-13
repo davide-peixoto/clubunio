@@ -128,11 +128,21 @@ final class MobileAccountController
                 $work = $showWork && $native && match ($key) {
                     'Mitglieder' => $permissions->allows($actor, $tenant, 'member_changes', 'approve'),
                     'MitgliederAnmeldungen', 'BusReservationen', 'Dokumente' => true,
-                    'Platzverfugbarkeit' => $pitchNative,
+                    'Platzverfugbarkeit' => $pitchNative && ($role !== 'technical_lead'
+                        || app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant)),
                     'Spesen' => $permissions->allows($actor, $tenant, 'expenses', 'approve') || $role === 'technical_lead',
                     default => false,
                 };
+                $count = null;
+                if ($work && in_array('today-counts-v1', $supported, true)) {
+                    try {
+                        $count = app(MobileWorkCounts::class)->count($key, $actor, $tenant);
+                    } catch (\Illuminate\Database\QueryException $error) {
+                        report($error);
+                    }
+                }
                 $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native, 'work' => $work]
+                    + ($count === null ? [] : ['work_count' => $count])
                     + ($key === 'Platzverfugbarkeit' ? ['pitch_planning' => $pitchNative, 'facilities' => $facilitiesNative] : []);
             }
         }
