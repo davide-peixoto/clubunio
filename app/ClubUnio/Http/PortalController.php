@@ -32,6 +32,11 @@ class PortalController
         $guard = Auth::guard('portal');
         if ($guard->attempt(['username' => $username, 'password' => $data['password'], 'active' => true, 'api_only' => false])) {
             $actor = $guard->user();
+            if (app(\App\ClubUnio\Services\AccountSecurity::class)->configured($actor)) {
+                $guard->logout();
+                $request->session()->regenerate();
+                return redirect()->route('clubunio.security.show', ['mode' => 'portal']);
+            }
             $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $access->canEnter($actor, $tenant));
             if ($tenants->isNotEmpty()) {
                 $request->session()->regenerate();

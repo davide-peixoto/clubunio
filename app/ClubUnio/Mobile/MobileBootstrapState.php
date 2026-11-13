@@ -59,6 +59,7 @@ final class MobileBootstrapState {
         $data['announcements']=$tenant?app(MobileAppAnnouncements::class)->active($tenant,false):[];
         $data['roleGuideAvailable']=false;
         $data['pushAdminAvailable']=false;
+        $data['strongLoginAvailable']=config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
         return $data;
     }
     public function personalState(Account $actor,Tenant $tenant): array {

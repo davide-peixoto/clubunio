@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Services\AccountSecurity;
 use App\ClubUnio\Services\TenantDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,15 @@ final class MobileSessions
         $actor = $provider->retrieveByCredentials($credentials);
         // Existing hashes/provider; no password copying, rehash or second account store.
         abort_unless($actor instanceof Account && $provider->validateCredentials($actor, $credentials), 401);
+        abort_if(app(AccountSecurity::class)->configured($actor), 428);
+        $result = $this->issue($request, $actor, $data['device_name']);
+        RateLimiter::clear(array_key_first($keys));
+        return $result;
+    }
+
+    public function issue(Request $request, Account $actor, string $deviceName, ?string $strongStamp = null): array
+    {
+        $security = app(AccountSecurity::class);
         $bound = app(TenantDomainService::class)->resolve($request);
         $tenants = $actor->tenants()->get()->filter(fn ($tenant) => (! $bound || $bound->is($tenant))
             && app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant));
@@ -40,13 +50,14 @@ final class MobileSessions
         $id = (string) Str::uuid();
         $secret = bin2hex(random_bytes(32));
         $expiry = now()->addDays((int) config('clubunio-mobile.session_days', 30));
-        DB::connection('clubunio')->transaction(function () use ($actor, $provider, $credentials, $id, $secret, $data, $expiry) {
+        DB::connection('clubunio')->transaction(function () use ($actor, $security, $strongStamp, $id, $secret, $deviceName, $expiry) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
-            abort_unless($fresh->active && ! $fresh->api_only && $provider->validateCredentials($fresh, $credentials), 401);
+            abort_unless($fresh->active && ! $fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
+            abort_if($security->configured($fresh) && (!$strongStamp || !hash_equals($security->stamp($fresh), $strongStamp)), 428);
             DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
-                'token_hash' => hash('sha256', $secret), 'device_name' => $data['device_name'], 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]);
+                'token_hash' => hash('sha256', $secret), 'device_name' => $deviceName, 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]
+                + ($strongStamp === null ? [] : ['security_stamp' => $strongStamp]));
         });
-        RateLimiter::clear(array_key_first($keys));
 
         return ['token' => $id.'.'.$secret, 'expires_at' => $expiry->toIso8601String(),
             'account' => ['id' => (int) $actor->id, 'name' => $actor->display_name],
@@ -62,6 +73,8 @@ final class MobileSessions
         abort_unless($session && hash_equals($session->token_hash, hash('sha256', $parts[2])), 401);
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();
         abort_unless($actor, 401);
+        $security = app(AccountSecurity::class);
+        abort_if($security->configured($actor) && (!isset($session->security_stamp) || !hash_equals($security->stamp($actor), $session->security_stamp)), 401);
         $request->attributes->set('mobile.session', $session);
 
         return $actor;

@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Sichere Anmeldung: Passkey und Authenticator
+
+Additive Migration `2026_11_13_001000_account_security`: drei Tabellen fuer
+Anmeldefaktoren und App-Kopplung, ein optionaler Sitzungsnachweis. Kein Backfill
+und kein Aendern bestehender Konten. Ablauf, Grenzen und Abnahme:
+[Sichere Anmeldung](CLUBUNIO-ACCOUNT-SECURITY.md).
+
 ## Social Media Ladezeit (13.11.2026)
 
 Nur Code und gebuendelte Browserassets. Keine Schemamigration, kein Import,

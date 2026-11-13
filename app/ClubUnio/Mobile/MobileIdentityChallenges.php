@@ -99,6 +99,8 @@ final class MobileIdentityChallenges
     }
     private function resetAllowed(Tenant $tenant, Account $account): bool
     {
+        $security = app(\App\ClubUnio\Services\AccountSecurity::class);
+        if ($security->configured($account) && !$security->emailRecoveryAllowed($account)) return false;
         return $account->active && !$account->api_only && DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)
             ->where('account_id', $account->id)->where('role', '<>', 'profile')->exists();
     }
@@ -287,7 +289,13 @@ final class MobileIdentityChallenges
             $account->forceFill(['password'=>Hash::make($password),'revision'=>$account->revision+1])->save();
             DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id',$account->id)->whereNull('revoked_at')->update(['revoked_at'=>now()]);
             $this->finish($row,(int)$account->id);
-            return ['changed'=>true,'reauthentication_required'=>true];
+            $security = app(\App\ClubUnio\Services\AccountSecurity::class);
+            $result = ['changed'=>true,'reauthentication_required'=>true];
+            if ($security->configured($account) && $security->emailRecoveryAllowed($account)
+                && config('clubunio-security.origin') === $payload['origin']) {
+                $result['security_setup_code'] = $security->invitation($account, recovery: true, email: true);
+            }
+            return $result;
         });
     }
 }

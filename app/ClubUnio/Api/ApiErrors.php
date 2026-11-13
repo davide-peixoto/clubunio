@@ -29,7 +29,7 @@ final class ApiErrors
         $code = $error instanceof ValidationException ? 'validation_failed' : match ($status) {
             400 => 'bad_request', 401 => 'unauthenticated', 403 => 'forbidden', 404 => 'not_found', 405 => 'method_not_allowed',
             409 => 'conflict', 413 => 'payload_too_large', 415 => 'unsupported_media_type',
-            422 => 'invalid_request', 429 => 'rate_limited', default => 'request_failed',
+            422 => 'invalid_request', 428 => 'second_factor_required', 429 => 'rate_limited', default => 'request_failed',
         };
         $accessPending = $error instanceof \App\ClubUnio\Mobile\MobileAccessPending;
         if ($accessPending) { $code = 'access_pending'; }
@@ -47,9 +47,12 @@ final class ApiErrors
             $message = __($message, [], $request->attributes->get('mobile.pitch.locale'));
         }
         if (! $accessPending && $request->is('chat-data/*')) $message = __($message);
+        if ($request->is('account/security/*')) {
+            $message = trans($status === 429 ? 'account-security.retry' : 'account-security.failed');
+        }
         $response = response()->json(['error' => array_filter(['code' => $code,
             'message' => $message, 'request_id' => $id,
-            'fields' => $error instanceof ValidationException ? $error->errors() : null], fn ($v) => $v !== null)], $status);
+            'fields' => $error instanceof ValidationException && !$request->is('account/security/*') ? $error->errors() : null], fn ($v) => $v !== null)], $status);
         $response->headers->set('X-Request-ID', $id);
         $response->headers->set('Cache-Control', 'no-store');
         $response->headers->set('X-Content-Type-Options', 'nosniff');

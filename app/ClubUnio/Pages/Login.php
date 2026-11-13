@@ -2,12 +2,38 @@
 
 namespace App\ClubUnio\Pages;
 
+use App\ClubUnio\Services\AccountSecurity;
+use Filament\Actions\Action;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 
 class Login extends \Filament\Auth\Pages\Login
 {
+    public function authenticate(): ?LoginResponse
+    {
+        $response = parent::authenticate();
+        if ($response && ($actor = Filament::auth()->user()) && app(AccountSecurity::class)->configured($actor)) {
+            Filament::auth()->logout();
+            session()->regenerate();
+            $this->redirect(route('clubunio.security.show'));
+            return null;
+        }
+        return $response;
+    }
+
+    protected function getFormActions(): array
+    {
+        $actions = parent::getFormActions();
+        if (app(AccountSecurity::class)->enabled()) {
+            $actions[] = Action::make('strongLogin')->label(trans('account-security.strong_login'))
+                ->url(route('clubunio.security.show'))->color('gray');
+        }
+        return $actions;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema->components([$this->getEmailFormComponent(), $this->getPasswordFormComponent()]);

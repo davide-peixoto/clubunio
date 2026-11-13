@@ -21,7 +21,7 @@ final class MobileMiddleware
                 && $request->routeIs('clubunio.mobile.logout', 'clubunio.mobile.revoke');
             abort_unless(config('clubunio-mobile.enabled') || $logout, 503);
             $bound = app(TenantDomainService::class)->resolve($request);
-            if ($request->routeIs('clubunio.mobile.login')) {
+            if ($request->routeIs('clubunio.mobile.login', 'clubunio.mobile.security-pair')) {
                 return $this->protect($next($request));
             }
             $actor = app(MobileSessions::class)->authenticate($request);

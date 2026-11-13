@@ -1,0 +1,12 @@
+.cu-security { max-width: 34rem; margin: 32px auto; padding: 0 16px; display: grid; gap: 16px; min-width: 0; }
+.cu-security [hidden] { display: none !important; }
+.cu-security :is(form, fieldset, label) { display: grid; gap: 8px; min-width: 0; }
+.cu-security fieldset { border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; }
+.cu-security form { gap: 12px; }
+.cu-security :is(input, button) { max-width: 100%; min-height: 42px; }
+.cu-security input { width: 100%; }
+.cu-security :is(p, output, li) { overflow-wrap: anywhere; }
+.cu-security output, .cu-security [data-codes] { font-family: monospace; }
+.cu-security-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cu-security [data-result] { padding: 10px; border-inline-start: 3px solid #164b8a; }
+.cu-security summary { cursor: pointer; margin-block-end: 12px; }

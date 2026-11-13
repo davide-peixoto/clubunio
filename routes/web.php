@@ -35,6 +35,10 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/clubunio-platform.php';
 require __DIR__.'/clubunio-marketing.php';
 
+Route::get('/account/security', [\App\ClubUnio\Http\StrongLoginController::class, 'show'])->name('clubunio.security.show');
+Route::post('/account/security/{operation}', [\App\ClubUnio\Http\StrongLoginController::class, 'action'])
+    ->middleware('throttle:30,1')->block(10, 10)->name('clubunio.security.action');
+
 Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
     ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
 Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])

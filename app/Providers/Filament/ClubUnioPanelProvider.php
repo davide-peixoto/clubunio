@@ -211,6 +211,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                \App\ClubUnio\Http\RequireStrongWebSession::class,
                 \App\ClubUnio\Http\UseLanguage::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
@@ -218,6 +219,13 @@ class ClubUnioPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])->authMiddleware([Authenticate::class]);
+            ])->authMiddleware([Authenticate::class])
+            ->userMenuItems([
+                'account-security' => \Filament\Actions\Action::make('account-security')
+                    ->label(fn () => trans('account-security.setup'))
+                    ->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('clubunio.security.show'))
+                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
+            ]);
     }
 }

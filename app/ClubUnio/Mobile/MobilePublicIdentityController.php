@@ -37,6 +37,13 @@ final class MobilePublicIdentityController implements \Illuminate\Routing\Contro
             return $this->proofForm($request,true,false,'Bitte Benutzernamen und Passwort prüfen. Das Passwort braucht mindestens 12 Zeichen und höchstens 72 UTF-8-Bytes. Beide Passwörter müssen übereinstimmen.');
         }
         catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) { if ($request->expectsJson()) { throw $error; } return $this->invalidProof($error->getStatusCode()); }
+        if (!$request->expectsJson() && isset($data['security_setup_code'])) {
+            app()->setLocale(app(\App\ClubUnio\Services\LanguagePreferences::class)
+                ->resolve($request->getPreferredLanguage(array_keys(config('clubunio-languages.enabled', [])))));
+            return response()->view('clubunio.security.email-recovery', ['code' => $data['security_setup_code']])
+                ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer')
+                ->header('Content-Security-Policy', "default-src 'none'; style-src 'self'; frame-ancestors 'none'; base-uri 'none'");
+        }
         return $request->expectsJson() ? response()->json(['data' => $data])
             : $this->page('Passwort geändert', 'Deine bisherigen mobilen Sitzungen wurden beendet. Öffne die App und melde dich mit deinem neuen Passwort an.');
     }

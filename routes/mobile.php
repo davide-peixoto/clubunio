@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.mobile.')->group(function () {
     Route::post('session', [Mobile::class, 'login'])->name('login');
+    Route::post('session/security/{operation}', [\App\ClubUnio\Http\StrongLoginController::class, 'pair'])
+        ->whereIn('operation', ['begin', 'redeem'])->middleware('throttle:40,1')->name('security-pair');
     Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
     Route::get('profile', [\App\ClubUnio\Mobile\MobileAccountController::class, 'profile'])->name('profile');

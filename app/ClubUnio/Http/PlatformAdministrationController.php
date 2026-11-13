@@ -6,6 +6,7 @@ use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\AccountRole;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\AccountSecurity;
 use App\ClubUnio\Services\PlatformAdministrationService;
 use App\ClubUnio\Services\SignageBrandService;
 use App\ClubUnio\Services\TenantDomainService;
@@ -34,6 +35,9 @@ final class PlatformAdministrationController
         $actor = Account::whereRaw('lower(username) = ?', [mb_strtolower(trim($data['username']))])->first();
         if (! $actor || ! Hash::check($data['password'], $actor->password) || ! $service->allowed($actor)) {
             throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich.')]);
+        }
+        if (app(AccountSecurity::class)->configured($actor)) {
+            return redirect()->route('clubunio.security.show', ['mode' => 'platform']);
         }
         Auth::guard('clubunio')->login($actor);
         $request->session()->regenerate();
