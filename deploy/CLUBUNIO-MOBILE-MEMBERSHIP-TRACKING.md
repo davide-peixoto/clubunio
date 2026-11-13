@@ -134,3 +134,9 @@ wenn Mutter oder Vater gewählt ist. Bei Minderjährigen bleiben beide
 Elternkontakte erforderlich. Für die Kontoaktivierung dient bei fehlender
 Spieleradresse die Rechnungs-E-Mail. Die Spieleradresse wird dabei nicht
 mit der Elternadresse überschrieben.
+
+Das öffentliche Webformular /join/{verein} verwendet dieselben Pflichtregeln.
+Das gewählte Rechnungsziel steuert die erforderliche E-Mail. Minderjährige
+brauchen beide Elternkontakte. AHV, vollständige Adresse, Passfoto und Ausweis
+werden vor der Speicherung geprüft. Die AHV wird nach einem Formularfehler
+nicht in die Web-Sitzung übernommen.

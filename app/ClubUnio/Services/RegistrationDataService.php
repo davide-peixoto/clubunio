@@ -90,11 +90,17 @@ class RegistrationDataService
                 'email' => ($completeIntake ? 'nullable' : 'required').'|email:rfc|max:254',
                 'birth_date' => 'required|date_format:Y-m-d|before_or_equal:today',
                 'city' => 'required|string|max:255', 'street' => 'required|string|max:255', 'postal_code' => 'required|string|max:20',
-                'house_number' => 'nullable|string|max:20', 'notes' => 'nullable|string|max:10000',
-                'birth_place' => 'nullable|string|max:255', 'previous_club' => 'nullable|string|max:255',
+                'house_number' => ($completeIntake ? 'required' : 'nullable').'|string|max:20', 'notes' => 'nullable|string|max:10000',
+                'birth_place' => ($completeIntake ? 'required' : 'nullable').'|string|max:255', 'previous_club' => 'nullable|string|max:255',
                 'previous_club_country_type' => 'nullable|string|max:40', 'has_previous_club' => 'nullable|string|max:20'];
             foreach (['mobile', 'phone_private', 'mother_mobile', 'father_mobile'] as $field) {
                 $rules[$field] = 'nullable|string|max:50';
+            }
+            if ($completeIntake) {
+                $rules['mobile'] = 'required|string|max:50';
+                $rules['has_previous_club'] = 'required|in:J,N';
+                $rules['previous_club_country_type'] = 'required_if:has_previous_club,J|nullable|in:I,A';
+                $rules['previous_club'] = 'required_if:has_previous_club,J|nullable|string|max:255';
             }
             foreach (['mother_name', 'father_name'] as $field) {
                 $rules[$field] = 'nullable|string|max:255';
@@ -107,6 +113,14 @@ class RegistrationDataService
                     ->where(fn ($q) => $q->where('active', true)->orWhere('id', $old[$field] ?? -1)))];
             }
             $valid = Validator::make($values, $rules)->validate();
+            if ($completeIntake && \Carbon\CarbonImmutable::parse($valid['birth_date'], 'Europe/Zurich')
+                ->addYearsNoOverflow(18)->gt(now('Europe/Zurich')->startOfDay())) {
+                Validator::make($valid, array_fill_keys(['mother_name', 'mother_email', 'mother_mobile',
+                    'father_name', 'father_email', 'father_mobile'], 'required'))->validate();
+            }
+            if ($completeIntake && $valid['has_previous_club'] === 'N') {
+                unset($valid['previous_club_country_type'], $valid['previous_club']);
+            }
             $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')->where('tenant_id', $tenant->id)->where('id', $valid['billing_recipient_id'])->value('email_field');
             if (empty($valid[$emailField])) {
                 throw ValidationException::withMessages([$emailField => __('Für den Rechnungsempfänger fehlt eine E-Mail-Adresse.')]);

@@ -51,7 +51,8 @@ class PublicWebTest extends TestCase
         $country = $this->insert('countries', ['code' => 'CH', 'name' => 'Synthetic country']);
         $gender = $this->insert('genders', ['code' => 'N', 'name' => 'Synthetic gender']);
         $billing = $this->insert('billing_recipients', ['code' => 'E', 'name' => 'Synthetic billing', 'email_field' => 'email']);
-        $this->input = ['first_name' => 'Synthetic', 'last_name' => 'Public', 'email' => 'synthetic@example.invalid', 'birth_date' => '2013-01-02',
+        $this->input = ['first_name' => 'Synthetic', 'last_name' => 'Public', 'email' => 'synthetic@example.invalid', 'birth_date' => '1990-01-02',
+            'birth_place' => 'Synthetic', 'mobile' => '0000000000', 'house_number' => '1', 'ahv' => '756.0000.0000.00', 'has_previous_club' => 'N',
             'city' => 'Synthetic', 'street' => 'Synthetic street', 'postal_code' => '4450', 'country_id' => $country, 'nationality_id' => $country,
             'gender_id' => $gender, 'billing_recipient_id' => $billing, 'consent' => '1', 'request_id' => (string) Str::uuid()];
         $this->form = ['id' => $this->input['request_id'], 'at' => time() - 10];
@@ -75,8 +76,12 @@ class PublicWebTest extends TestCase
 
     private function submit(array $extra = [])
     {
+        $files = [
+            'portrait' => UploadedFile::fake()->createWithContent('portrait.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXioAAAAASUVORK5CYII=')),
+            'identity' => [UploadedFile::fake()->createWithContent('ausweis.pdf', "%PDF-1.4\nSynthetic test only\n%%EOF")],
+        ];
         return $this->withSession(['public-registration.'.$this->tenant->id => $this->form])
-            ->post('/join/'.$this->tenant->slug, array_replace($this->input, $extra));
+            ->post('/join/'.$this->tenant->slug, array_replace($this->input + $files, $extra));
     }
 
     public function test_public_pages_and_registered_signage_component_render_without_login(): void
@@ -100,7 +105,7 @@ class PublicWebTest extends TestCase
 
     public function test_submission_persists_once_with_private_document_and_workflow_events(): void
     {
-        $this->mock(RegistrationBlobStore::class)->shouldReceive('put')->once()->withArgs(fn ($folder, $name, $bytes, $mime) => str_starts_with($folder, 'clubunio/registrations/'.$this->tenant->id.'/') && Str::isUuid(pathinfo($name, PATHINFO_FILENAME)) && $mime === 'application/pdf');
+        $this->mock(RegistrationBlobStore::class)->shouldReceive('put')->twice()->withArgs(fn ($folder, $name, $bytes, $mime) => str_starts_with($folder, 'clubunio/registrations/'.$this->tenant->id.'/') && Str::isUuid(pathinfo($name, PATHINFO_FILENAME)) && in_array($mime, ['application/pdf', 'image/png'], true));
         $file = UploadedFile::fake()->createWithContent('ausweis.pdf', "%PDF-1.4\nSynthetic test only\n%%EOF");
         $this->submit(['identity' => [$file]])->assertRedirect('/join/'.$this->tenant->slug)->assertSessionHas('submitted', true);
         $r = Registration::where('tenant_id', $this->tenant->id)->sole();
@@ -108,7 +113,7 @@ class PublicWebTest extends TestCase
         $this->assertNull($r->member_id);
         $this->assertSame('Synthetic street', app(RegistrationDataService::class)->values($r)['street']);
         $this->assertStringNotContainsString('Synthetic street', $r->applicant_encrypted);
-        $this->assertSame(1, $this->db->table('clubora.registration_documents')->where('registration_id', $r->id)->count());
+        $this->assertSame(2, $this->db->table('clubora.registration_documents')->where('registration_id', $r->id)->count());
         $this->submit()->assertRedirect();
         $this->assertSame(1, Registration::where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(2, $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->count());
@@ -120,6 +125,9 @@ class PublicWebTest extends TestCase
     {
         $this->submit(['nationality_id' => 999999999])->assertSessionHasErrors('nationality_id');
         $this->submit(['consent' => '0'])->assertSessionHasErrors('consent');
+        $this->submit(['portrait' => null, 'identity' => []])->assertSessionHasErrors(['portrait', 'identity']);
+        $mother = $this->insert('billing_recipients', ['code' => 'M', 'name' => 'Synthetic mother', 'email_field' => 'mother_email']);
+        $this->submit(['billing_recipient_id' => $mother, 'email' => null])->assertSessionHasErrors('mother_email');
         $this->assertSame(0, Registration::where('tenant_id', $this->tenant->id)->count());
     }
 
@@ -170,7 +178,9 @@ class PublicWebTest extends TestCase
         $this->submit(['identity' => [$file]])->assertSessionHasNoErrors()->assertSessionHas('uploads_pending', true);
         $this->assertSame(1, Registration::where('tenant_id', $this->tenant->id)->count());
         $this->assertSame(1, $this->db->table('clubora.public_registration_submissions')->where('tenant_id', $this->tenant->id)->count());
-        $upload = $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->sole();
+        $uploads = $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->get();
+        $this->assertCount(2, $uploads);
+        $upload = $uploads->first();
         $this->assertSame('pending', $upload->state);
         $this->assertNotNull($upload->encrypted_bytes);
         $this->assertNull($upload->created_by);
