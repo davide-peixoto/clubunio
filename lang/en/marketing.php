@@ -34,6 +34,8 @@ return json_decode(<<<'JSON'
   "expenses_text": "Submit and review expenses with receipts. Manage membership fees, invoices and processing statuses with a clear record.",
   "app_title": "Your club. On the go.",
   "app_text": "The shared ClubUnio app brings events, teams, personal documents and communication to members, parents and coaches.",
+  "app_screenshot_alt": "ClubUnio app showing expenses, members, team planning and pending tasks",
+  "app_screenshot_caption": "App preview with demo data (German interface)",
   "app_note": "The ClubUnio app is planned for the product launch.",
   "signage_title": "From your calendar to the screen.",
   "signage_text": "Display training sessions, bookings and club information on your clubhouse screen, in your club’s visual identity.",

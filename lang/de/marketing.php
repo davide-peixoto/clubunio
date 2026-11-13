@@ -34,6 +34,8 @@ return json_decode(<<<'JSON'
   "expenses_text": "Spesen mit Belegen erfassen und prüfen. Mitgliederbeiträge, Rechnungen und Bearbeitungsstände nachvollziehbar verwalten.",
   "app_title": "Euer Verein. Auch unterwegs.",
   "app_text": "Die gemeinsame ClubUnio-App bringt Termine, Teams, persönliche Unterlagen und Kommunikation zu Mitgliedern, Eltern und Trainern.",
+  "app_screenshot_alt": "ClubUnio-App mit Spesen, Mitgliedern, Teamplanung und offenen Aufgaben",
+  "app_screenshot_caption": "App-Ansicht mit Demodaten",
   "app_note": "Die ClubUnio-App ist für den Produktlaunch vorgesehen.",
   "signage_title": "Vom Kalender auf den Bildschirm.",
   "signage_text": "Trainings, Belegungen und Vereinsinformationen auf dem Bildschirm im Clubhaus anzeigen – im Auftritt eures Vereins.",

@@ -750,3 +750,19 @@ footer>div:last-child {
 .inquiry-form fieldset label { display: inline-block; margin: .25rem .8rem .25rem 0; }
 .inquiry-form p a, .privacy-page a { text-decoration: underline; }
 .privacy-page { max-width: 850px; }
+
+.app-preview {
+    margin: 24px 0 0;
+    text-align: center;
+}
+.app-preview img {
+    display: block;
+    width: min(100%, 240px);
+    height: auto;
+    margin: 0 auto 8px;
+    border-radius: 12px;
+}
+.app-preview figcaption {
+    color: #d4e2f0;
+    font-size: 12px;
+}
