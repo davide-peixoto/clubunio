@@ -49,3 +49,13 @@ bestätigte Mobile-API-Origin. Ein neuer App-Build ist für die Umgebungswahl un
 die Statusansicht erforderlich. 37 Flutter-Tests und 8 PostgreSQL-Tests mit
 202 Assertions bestanden. Der PostgreSQL-Test verwendet zurückgerollte
 synthetische Daten und einen gefälschten Mailer.
+
+## Anträge aus einem bestehenden App-Konto
+
+In «Mitglieder» kann ein angemeldetes Konto im aktiven Verein «Neue
+Mitgliedschaft» öffnen, sofern der Verein Mitgliedsanträge freigeschaltet
+hat. Das Formular verwendet die reguläre Mitgliedsanmeldung und speichert
+den Antrag für die Bearbeitung durch den Verein. Der Formulartoken ist
+an Konto, Verein und Origin gebunden. Die Zuordnung wird mit dem Antrag
+gespeichert. Es entsteht weder ein neues Konto noch eine Mitgliedsverknüpfung.
+Die vorhandenen Antrags- und Idempotenz-Tabellen genügen.

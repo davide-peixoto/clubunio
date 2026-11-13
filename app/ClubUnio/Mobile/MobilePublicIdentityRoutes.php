@@ -25,5 +25,7 @@ final class MobilePublicIdentityRoutes
     {
         Route::get('identity/email',[MobileIdentityEnrollmentController::class,'show']);
         Route::post('identity/email',[MobileIdentityEnrollmentController::class,'store']);
+        Route::get('membership-intake', [MobileFamilyIntakeController::class, 'options']);
+        Route::post('membership-intake', [MobileFamilyIntakeController::class, 'submit']);
     }
 }
