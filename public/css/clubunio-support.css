@@ -1,0 +1,9 @@
+.cu-support { max-width: 62rem; padding: 24px 16px; }
+.cu-support section { border-top: 1px solid #d9dfe5; padding: 16px 0; }
+.cu-support form { display: grid; gap: 10px; margin-block: 12px; }
+.cu-support :is(input:not([type=checkbox]), textarea, select) { display: block; width: 100%; max-width: 36rem; }
+.cu-support textarea { min-height: 6rem; }
+.cu-support button { justify-self: start; }
+.cu-support details { margin-block: 12px; }
+.cu-support summary { cursor: pointer; }
+.cu-support :is(p, output) { white-space: pre-wrap; overflow-wrap: anywhere; }
