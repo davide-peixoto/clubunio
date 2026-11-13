@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'reset_title' => 'Sichere Anmeldung zurücksetzen',
+    'reset_effect' => 'Die bisherigen Anmeldemethoden und Sitzungen werden sofort gesperrt. Das Passwort bleibt unverändert.',
+    'reset_handover' => 'Übergib diesen einmaligen Code persönlich oder über einen zuvor verifizierten sicheren Kanal. Er gilt 30 Minuten und wird nur jetzt angezeigt.',
+    'reset_reason' => 'Begründung ohne vertrauliche Angaben',
+    'reset_identity' => 'Ich habe die Identität unabhängig überprüft.',
+    'reset_reauth' => 'Melde dich erneut mit Passkey oder Authenticator an und bestätige danach dein Passwort.',
+    'reset_verify' => 'Erneut sicher anmelden',
+    'reset_back' => 'Zurück zur Benutzerverwaltung',
     'title' => 'Sichere Anmeldung', 'strong_login' => 'Passkey oder Authenticator',
     'pair_code' => 'Bestätigungscode aus der ClubUnio-App', 'passkey' => 'Mit Passkey anmelden',
     'pair_help' => 'Gib nur einen Code ein, den die ClubUnio-App auf deinem eigenen Gerät anzeigt. Verwende keinen Code, den dir jemand geschickt hat.',

@@ -114,4 +114,5 @@ $('[data-finish]').onclick = () => {
     $('[data-codes]').replaceChildren();
     $('[data-recovery]').hidden = true;
     login.hidden = $('[data-passkey]').hidden = false;
+    $('[data-password]').elements.username.focus();
 };

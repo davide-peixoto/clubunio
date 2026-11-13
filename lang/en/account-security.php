@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'reset_title' => 'Reset secure sign-in',
+    'reset_effect' => 'Existing sign-in methods and sessions will be blocked immediately. The password remains unchanged.',
+    'reset_handover' => 'Give this one-time code in person or through a previously verified secure channel. It expires in 30 minutes and is shown only now.',
+    'reset_reason' => 'Reason, without confidential details',
+    'reset_identity' => 'I have independently verified the identity.',
+    'reset_reauth' => 'Sign in again using a passkey or authenticator, then confirm your password.',
+    'reset_verify' => 'Sign in securely again',
+    'reset_back' => 'Back to user management',
     'title' => 'Secure sign-in', 'strong_login' => 'Passkey or authenticator',
     'pair_code' => 'Confirmation code from the ClubUnio app', 'passkey' => 'Sign in with a passkey',
     'pair_help' => 'Only enter a code displayed by the ClubUnio app on your own device. Never enter a code someone sent you.',

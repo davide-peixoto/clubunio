@@ -44,6 +44,24 @@ final class AccountSecurity
             || $this->keys()->where('account_id', $actor->id)->exists());
     }
 
+    public function mustEnroll(Account $actor): bool
+    {
+        $cutoff = config('clubunio-security.enroll_since');
+        return $this->enabled() && $actor->active && !$actor->api_only && is_string($cutoff)
+            && $actor->created_at && $actor->created_at->gte(\Illuminate\Support\Carbon::parse($cutoff))
+            && !$this->configured($actor);
+    }
+
+    public function requiresStrongLogin(Account $actor): bool
+    {
+        return $this->configured($actor) || $this->mustEnroll($actor);
+    }
+
+    public function resetPending(Account $actor): bool
+    {
+        return $this->settings()->where('account_id', $actor->id)->where('reset_pending', true)->exists();
+    }
+
     public function stamp(Account $actor): string
     {
         $row = $this->settings()->where('account_id', $actor->id)->first();
@@ -64,7 +82,7 @@ final class AccountSecurity
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && !$fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
             $row = $this->settings()->where('account_id', $actor->id)->lockForUpdate()->first();
-            abort_unless($row?->totp_encrypted, 401);
+            abort_unless($row?->totp_encrypted && !$row->reset_pending, 401);
             $step = $this->totp()->verifyKeyNewer(Crypt::decryptString($row->totp_encrypted), $code, (int) $row->totp_last_step, 1);
             abort_unless(is_int($step), 401);
             $this->settings()->where('account_id', $actor->id)->update(['totp_last_step' => $step]);
@@ -101,7 +119,8 @@ final class AccountSecurity
         return $this->db()->transaction(function () use ($actor, $recovery, $email, $existingStamp) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             $configured = $this->configured($fresh);
-            $addMethod = $configured && !$recovery && $existingStamp && hash_equals($this->stamp($fresh), $existingStamp);
+            $addMethod = $configured && !$recovery && !$this->resetPending($fresh)
+                && $existingStamp && hash_equals($this->stamp($fresh), $existingStamp);
             abort_if(!$fresh->active || $fresh->api_only || !hash_equals($fresh->password, $actor->password)
                 || ($configured && !$recovery && !$addMethod), 409);
             abort_if($email && (!$recovery || !$this->emailRecoveryAllowed($fresh)), 403);
@@ -154,7 +173,7 @@ final class AccountSecurity
             $this->settings()->where('account_id', $actor->id)->update($updates + [
                 'invitation_hash' => null, 'invitation_expires_at' => null, 'invitation_recovery' => false,
                 'invitation_email' => false, 'invitation_add_method' => false,
-                'session_version' => bin2hex(random_bytes(16)),
+                'session_version' => bin2hex(random_bytes(16)), 'reset_pending' => false,
                 'recovery_hashes' => json_encode(array_map($this->hash(...), $codes), JSON_THROW_ON_ERROR),
             ]);
             $this->db()->table('clubora.mobile_sessions')->where('account_id', $actor->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
@@ -196,7 +215,7 @@ final class AccountSecurity
             $owner = (clone $query)->value('account_id');
             abort_unless($owner, 401);
             $actor = Account::whereKey($owner)->where('active', true)->where('api_only', false)->lockForUpdate()->first();
-            abort_unless($actor, 401);
+            abort_unless($actor && !$this->resetPending($actor), 401);
             $key = (clone $query)->where('account_id', $owner)->lockForUpdate()->first();
             abort_unless($key, 401);
             $verifier = $this->webAuthn($origin);

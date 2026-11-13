@@ -20,7 +20,8 @@ CREATE TABLE clubora.account_security (
  recovery_hashes jsonb NOT NULL DEFAULT '[]',
  invitation_hash char(64), invitation_expires_at timestamptz,
  invitation_recovery boolean NOT NULL DEFAULT false, invitation_email boolean NOT NULL DEFAULT false,
- invitation_add_method boolean NOT NULL DEFAULT false
+ invitation_add_method boolean NOT NULL DEFAULT false,
+ reset_pending boolean NOT NULL DEFAULT false
 );
 CREATE TABLE clubora.account_passkeys (
  credential_hash char(64) PRIMARY KEY,

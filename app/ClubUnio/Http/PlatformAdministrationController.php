@@ -36,8 +36,9 @@ final class PlatformAdministrationController
         if (! $actor || ! Hash::check($data['password'], $actor->password) || ! $service->allowed($actor)) {
             throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich.')]);
         }
-        if (app(AccountSecurity::class)->configured($actor)) {
-            return redirect()->route('clubunio.security.show', ['mode' => 'platform']);
+        $security = app(AccountSecurity::class);
+        if ($security->requiresStrongLogin($actor)) {
+            return redirect()->route('clubunio.security.show', ['mode' => 'platform', 'setup' => $security->mustEnroll($actor) ? '1' : null]);
         }
         Auth::guard('clubunio')->login($actor);
         $request->session()->regenerate();

@@ -25,7 +25,8 @@ final class StrongLoginController
         if ($mode === 'mobile' && is_string($locale)) {
             app()->setLocale(app(LanguagePreferences::class)->resolve($locale, app()->getLocale()));
         }
-        return response()->view('clubunio.security.login', compact('mode', 'pair'))->header('Cache-Control', 'private, no-store')
+        $showSetup = $request->query('setup') === '1' || $mode === 'mobile';
+        return response()->view('clubunio.security.login', compact('mode', 'pair', 'showSetup'))->header('Cache-Control', 'private, no-store')
             ->header('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
             ->header('Referrer-Policy', 'no-referrer');
     }
@@ -35,7 +36,7 @@ final class StrongLoginController
         abort_unless($request->isJson(), 415);
         $origin = $this->security->origin($request);
         $mode = $request->validate(['mode' => 'required|in:clubunio,portal,mobile,platform'])['mode'];
-        if ($mode === 'mobile' && !in_array($operation, ['setup-totp', 'setup-totp-confirm', 'setup-passkey', 'setup-passkey-confirm'], true)) {
+        if ($mode === 'mobile') {
             $this->validPair($request);
         }
         abort_if($request->attributes->has('clubunio_impersonation'), 403);
@@ -82,8 +83,11 @@ final class StrongLoginController
 
     private function selfEnrollment(Request $request, string $mode): array
     {
-        abort_unless(in_array($mode, ['clubunio', 'platform', 'portal'], true), 403);
         [$actor] = $this->credentials($request);
+        if ($this->security->mustEnroll($actor)) {
+            return ['setup_code' => $this->security->invitation($actor)];
+        }
+        abort_if($mode === 'mobile', 403);
         $guard = $mode === 'platform' ? 'clubunio' : $mode;
         abort_unless(Auth::guard($guard)->id() === $actor->id, 403);
         $stamp = $request->session()->get('clubunio.security.'.$guard);
@@ -119,7 +123,8 @@ final class StrongLoginController
         [$actor] = $this->credentials($request, true);
         $totp = $this->security->totp();
         $secret = $totp->generateSecretKey();
-        $request->session()->put('clubunio.security.totp', ['actor' => (int)$actor->id, 'at' => time(), 'mode' => $mode, 'secret' => Crypt::encryptString($secret)]);
+        $request->session()->put('clubunio.security.totp', ['actor' => (int)$actor->id, 'at' => time(), 'mode' => $mode,
+            'pair' => $mode === 'mobile' ? $request->input('pair') : null, 'secret' => Crypt::encryptString($secret)]);
         return ['secret' => $secret];
     }
 
@@ -129,6 +134,7 @@ final class StrongLoginController
         $code = $request->validate(['code' => 'required|string|regex:/^\d{6}$/D'])['code'];
         $state = $request->session()->get('clubunio.security.totp');
         abort_unless($state && $state['actor'] === (int)$actor->id && $state['mode'] === $mode && $state['at'] > time() - 300, 422);
+        abort_unless($mode !== 'mobile' || $state['pair'] === $request->input('pair'), 422);
         $step = $this->security->totp()->verifyKeyNewer(Crypt::decryptString($state['secret']), $code, 0, 1);
         abort_unless(is_int($step), 422);
         $codes = $this->security->enroll($actor, $data['invitation'], ['totp_encrypted' => $state['secret'], 'totp_last_step' => $step]);
@@ -222,6 +228,7 @@ final class StrongLoginController
         Auth::guard($guard)->login($actor);
         $request->session()->regenerate();
         $request->session()->put('clubunio.security.'.$guard, $stamp);
+        $request->session()->put('clubunio.security.verified_at.'.$guard, time());
         return ['redirect' => $redirect];
     }
 }

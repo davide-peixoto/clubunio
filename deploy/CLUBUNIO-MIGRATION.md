@@ -6,6 +6,8 @@ Additive Migration `2026_11_13_001000_account_security`: drei Tabellen fuer
 Anmeldefaktoren und App-Kopplung, ein optionaler Sitzungsnachweis. Kein Backfill
 und kein Aendern bestehender Konten. Ablauf, Grenzen und Abnahme:
 [Sichere Anmeldung](CLUBUNIO-ACCOUNT-SECURITY.md).
+DEV und Stage: Erst-Einrichtung verpflichtend fuer ab dem jeweiligen
+Aktivierungszeitpunkt angelegte Konten; kein Reset und kein Import des Altbestands.
 
 ## Social Media Ladezeit (13.11.2026)
 

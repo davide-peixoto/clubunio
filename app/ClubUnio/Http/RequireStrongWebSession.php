@@ -17,7 +17,7 @@ final class RequireStrongWebSession
         }
         foreach (['clubunio', 'portal'] as $guard) {
             $actor = Auth::guard($guard)->user();
-            if (!$actor || !$security->configured($actor)) continue;
+            if (!$actor || !$security->requiresStrongLogin($actor)) continue;
             $stamp = $request->session()->get('clubunio.security.'.$guard);
             if (is_string($stamp) && hash_equals($security->stamp($actor), $stamp)) continue;
             Auth::guard($guard)->logout();
@@ -25,6 +25,7 @@ final class RequireStrongWebSession
             if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
             return redirect()->route('clubunio.security.show', [
                 'mode' => $guard === 'clubunio' && $request->routeIs('clubunio.platform.*') ? 'platform' : $guard,
+                'setup' => $security->mustEnroll($actor) ? '1' : null,
             ]);
         }
         return $next($request);

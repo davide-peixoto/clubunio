@@ -7,9 +7,11 @@
 - Alternativ Passwort plus sechsstelliger TOTP-Code einer Authenticator-App.
   Der Wizard zeigt den Einrichtungsschluessel fuer die manuelle Eingabe.
 - Der Wizard ist nach Passwort-Login ueber das Benutzermenu in der Verwaltung
-  bzw. das Schild im Portal erreichbar. Die Einrichtung ist freiwillig.
-  Fuer den App-Pilot ist der Wizard im Systembrowser mit Einrichtungscode
-  erreichbar. CLI-Ausstellung nach separat gepruefter Identitaet:
+  bzw. das Schild im Portal erreichbar. Bei Konten ab dem in UTC
+  konfigurierten Aktivierungsstichtag ist der Wizard vor der ersten
+  fachlichen Sitzung Pflicht. Bestehende Konten werden nicht pauschal
+  ausgesperrt. Die App oeffnet den Einstieg nach HTTP 428 im Systembrowser.
+  CLI-Ausstellung nach separat gepruefter Identitaet:
   `php artisan clubunio:security-invite <account-id>`.
 - Eine WebAuthn-Challenge ist kurzlebig und an Sitzung, Vorgang und App-Kopplung
   gebunden. Der RP ist der exakte konfigurierte HTTPS-Host. Die App zeigt einen
@@ -32,6 +34,14 @@
 - Support-Wiederherstellung: `clubunio:security-invite <account-id> --recovery`
   nur nach unabhaengiger Identitaetspruefung, ohne E-Mail-Alleinfreigabe.
   Keine Schluessel, Einmalcodes oder Sitzungsnachweise in Tickets oder Logs.
+- Unter Benutzer und Rollen koennen Vereinsadmin und Geschaeftsstelle
+  die sichere Anmeldung eines eigenen, vereinsgebundenen Kontos
+  zuruecksetzen. Eine hoechstens zehn Minuten alte starke Anmeldung,
+  Passwortbestaetigung, Identitaetspruefung und Begruendung sind Pflicht.
+  Alte Faktoren und Sitzungen sind sofort gesperrt; nur der einmal
+  angezeigte Setup-Code und das Passwort erlauben die Neueinrichtung.
+  Fremd-, Mehrvereins-, Plattform- und privilegierte Verwaltungskonten
+  sind nicht delegiert. Das Audit enthaelt keinen Setup-Code.
 
 ## Rollout
 
@@ -41,7 +51,8 @@
 2. Fuer die Abnahme `CLUBUNIO_SECURITY_ORIGIN` auf den exakten kanonischen
    HTTPS-Ursprung der Instanz ohne Pfad oder Schluss-Slash setzen. Proxy,
    Cookie, CSRF und Cache-Store mit atomaren Sperren pruefen.
-3. Erst danach `CLUBUNIO_STRONG_LOGIN=true` in einer freigegebenen
+3. Erst danach `CLUBUNIO_STRONG_LOGIN=true` und
+   `CLUBUNIO_SECURITY_ENROLL_SINCE` (ISO-8601 UTC) in einer freigegebenen
    Testumgebung. Mit separaten Konten Passkey (Web sowie iOS und Android),
    Authenticator, Wiederherstellung, Mailzustellung, Logout und verweigerte
    Alt-Sitzungen pruefen. App-Altbuilds kennen den Einstieg nach HTTP 428

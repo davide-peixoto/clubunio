@@ -30,13 +30,13 @@
         <button type="submit" class="primary">{{ trans('account-security.authenticator_login') }}</button>
     </form>
     @php($selfSetup = $mode !== 'mobile' && auth($mode === 'platform' ? 'clubunio' : $mode)->check())
-    <details data-setup @if($selfSetup) open @endif>
+    <details data-setup @if($selfSetup || $showSetup) open @endif>
         <summary>{{ trans('account-security.setup') }}</summary>
-        <p>{{ trans($selfSetup ? 'account-security.self_setup_help' : 'account-security.invitation_help') }}</p>
+        <p>{{ trans('account-security.self_setup_help') }}</p>
         <form method="post" data-enrollment>
             <label>{{ trans('account-security.username') }}<input name="username" autocomplete="username" required maxlength="255"></label>
             <label>{{ trans('account-security.password') }}<input name="password" type="password" autocomplete="current-password" required></label>
-            <label>{{ trans('account-security.invitation') }}<input name="invitation" autocomplete="off" minlength="40" maxlength="40" @unless($selfSetup) required @endunless></label>
+            <label>{{ trans('account-security.invitation') }}<input name="invitation" autocomplete="off" minlength="40" maxlength="40"></label>
             <div class="cu-security-actions">
                 <button type="submit" name="method" value="passkey" class="primary">{{ trans('account-security.setup_passkey') }}</button>
                 <button type="submit" name="method" value="totp">{{ trans('account-security.setup_totp') }}</button>

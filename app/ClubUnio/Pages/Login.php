@@ -15,10 +15,10 @@ class Login extends \Filament\Auth\Pages\Login
     public function authenticate(): ?LoginResponse
     {
         $response = parent::authenticate();
-        if ($response && ($actor = Filament::auth()->user()) && app(AccountSecurity::class)->configured($actor)) {
+        if ($response && ($actor = Filament::auth()->user()) && app(AccountSecurity::class)->requiresStrongLogin($actor)) {
             Filament::auth()->logout();
             session()->regenerate();
-            $this->redirect(route('clubunio.security.show'));
+            $this->redirect(route('clubunio.security.show', ['setup' => app(AccountSecurity::class)->mustEnroll($actor) ? '1' : null]));
             return null;
         }
         return $response;

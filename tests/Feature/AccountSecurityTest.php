@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\TenantSecurityRecovery;
 use App\ClubUnio\Http\StrongLoginController;
 use App\ClubUnio\Services\AccountSecurity;
 use Illuminate\Http\Request;
@@ -26,14 +28,17 @@ final class AccountSecurityTest extends TestCase
         $db = $this->security->db();
         $db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.accounts (id integer PRIMARY KEY, username text, password text, active boolean, api_only boolean);
+CREATE TABLE clubora.accounts (id integer PRIMARY KEY, username text, password text, active boolean, api_only boolean, created_at text);
 CREATE TABLE clubora.account_security (account_id integer PRIMARY KEY, totp_encrypted text, totp_last_step integer,
  session_version text, recovery_hashes text DEFAULT '[]', invitation_hash text, invitation_expires_at text,
- invitation_recovery boolean DEFAULT 0, invitation_email boolean DEFAULT 0, invitation_add_method boolean DEFAULT 0);
+ invitation_recovery boolean DEFAULT 0, invitation_email boolean DEFAULT 0, invitation_add_method boolean DEFAULT 0,
+ reset_pending boolean DEFAULT 0);
 CREATE TABLE clubora.account_passkeys (credential_hash text PRIMARY KEY, account_id integer, rp_id text, public_key text, signature_counter integer);
 CREATE TABLE clubora.mobile_sessions (id integer PRIMARY KEY, account_id integer, revoked_at text);
-CREATE TABLE clubora.tenant_accounts (account_id integer, role text);
+CREATE TABLE clubora.tenants (id integer PRIMARY KEY);
+CREATE TABLE clubora.tenant_accounts (id integer PRIMARY KEY, tenant_id integer, account_id integer, role text);
 CREATE TABLE clubora.platform_admins (account_id integer, active boolean);
+CREATE TABLE clubora.object_changes (tenant_id integer, actor_id integer, object_type text, object_id integer, after_value text);
 CREATE TABLE clubora.account_security_pairs (id text PRIMARY KEY, proof_hash text, confirmation_hash text,
  account_id integer, expires_at text, consumed_at text, session_stamp text);
 INSERT INTO clubora.mobile_sessions VALUES (1, 1, NULL), (2, 2, NULL);
@@ -155,6 +160,53 @@ SQL);
         $this->denied(404, fn () => $controller->pair($request('redeem', ['proof' => str_repeat('a', 64)] + $payload), 'redeem'));
         $this->security->db()->table('clubora.account_security_pairs')->where('id', $data['pair'])->update(['expires_at' => now()->subMinute()]);
         $this->denied(404, fn () => $controller->pair($request('redeem', $payload), 'redeem'));
+    }
+
+    public function test_new_accounts_can_enter_the_wizard_but_cannot_bypass_it(): void
+    {
+        config(['clubunio-security.enroll_since' => now()->subDay()->toIso8601String(), 'session.driver' => 'array',
+            'app.url' => 'https://security.test']);
+        $this->assertFalse($this->security->mustEnroll($this->actor));
+        $this->security->db()->table('clubora.accounts')->where('id', $this->actor->id)->update(['created_at' => now()]);
+        $this->assertTrue($this->security->mustEnroll($this->actor->fresh()));
+        $credentials = ['mode' => 'portal', 'username' => 'test', 'password' => 'synthetic-password'];
+        $this->postJson('https://security.test/account/security/password', $credentials)->assertUnauthorized();
+        $this->postJson('https://security.test/account/security/setup-start', $credentials)->assertOk()->assertJsonStructure(['setup_code']);
+        $this->assertGuest('portal');
+    }
+
+    public function test_office_reset_is_tenant_scoped_audited_and_revokes_the_old_factor(): void
+    {
+        $db = $this->security->db();
+        $db->table('clubora.tenants')->insert([['id' => 10], ['id' => 20]]);
+        $db->table('clubora.accounts')->insert(['id' => 2, 'username' => 'office', 'password' => Hash::make('synthetic-operator'),
+            'active' => true, 'api_only' => false]);
+        $db->table('clubora.tenant_accounts')->insert([
+            ['id' => 11, 'tenant_id' => 10, 'account_id' => 1, 'role' => 'member'],
+            ['id' => 12, 'tenant_id' => 10, 'account_id' => 2, 'role' => 'office'],
+            ['id' => 21, 'tenant_id' => 20, 'account_id' => 1, 'role' => 'member'],
+        ]);
+        $factor = $this->security->totp()->generateSecretKey();
+        $this->security->enroll($this->actor, $this->security->invitation($this->actor), ['totp_encrypted' => Crypt::encryptString($factor)]);
+        $operator = Account::findOrFail(2);
+        $this->security->enroll($operator, $this->security->invitation($operator),
+            ['totp_encrypted' => Crypt::encryptString($this->security->totp()->generateSecretKey())]);
+        $tenant = Tenant::findOrFail(10);
+        $req = Request::create('https://security.test/account/recovery/10/11', 'POST');
+        $req->setLaravelSession(app('session')->driver('array'));
+        $req->session()->put(['clubunio.security.clubunio' => $this->security->stamp($operator), 'clubunio.security.verified_at.clubunio' => time()]);
+        $input = ['operator_password' => 'synthetic-operator', 'reason' => 'Independent synthetic verification', 'identity_verified' => true];
+        $service = app(TenantSecurityRecovery::class);
+        $this->denied(403, fn () => $service->reset($req, $operator, $tenant, 11, $input));
+        $db->table('clubora.tenant_accounts')->where('id', 21)->delete();
+        $stamp = $this->security->stamp($this->actor);
+        $code = $service->reset($req, $operator, $tenant, 11, $input);
+        $this->assertNotSame($stamp, $this->security->stamp($this->actor));
+        $this->assertTrue($this->security->resetPending($this->actor));
+        $this->denied(401, fn () => $this->security->verifySecondFactor($this->actor, $this->security->totp()->getCurrentOtp($factor)));
+        $this->assertStringNotContainsString($code, $db->table('clubora.object_changes')->value('after_value'));
+        $this->security->enroll($this->actor, $code, ['totp_encrypted' => Crypt::encryptString($this->security->totp()->generateSecretKey())]);
+        $this->assertFalse($this->security->resetPending($this->actor));
     }
 
     private function denied(int $status, callable $action): void

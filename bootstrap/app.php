@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->trimStrings(except: ['account_password']);
+        $middleware->trimStrings(except: ['account_password', 'operator_password']);
         $middleware->web(append: [\App\ClubUnio\Http\UseLanguage::class, \App\ClubUnio\Http\ProtectApiAdminResponse::class, \App\ClubUnio\Http\RequireStrongWebSession::class, \App\ClubUnio\Http\ImpersonationMiddleware::class]);
         $middleware->prependToPriorityList(\Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class, \App\ClubUnio\Http\ImpersonationMiddleware::class);
         $middleware->prependToPriorityList(\App\ClubUnio\Http\ImpersonationMiddleware::class, \App\ClubUnio\Http\RequireStrongWebSession::class);
@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation']);
+        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'operator_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation']);
         $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*'));
         $exceptions->render(function (\Throwable $error, Request $request) {
             if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*')) {

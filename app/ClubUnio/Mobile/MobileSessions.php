@@ -29,7 +29,7 @@ final class MobileSessions
         $actor = $provider->retrieveByCredentials($credentials);
         // Existing hashes/provider; no password copying, rehash or second account store.
         abort_unless($actor instanceof Account && $provider->validateCredentials($actor, $credentials), 401);
-        abort_if(app(AccountSecurity::class)->configured($actor), 428);
+        abort_if(app(AccountSecurity::class)->requiresStrongLogin($actor), 428);
         $result = $this->issue($request, $actor, $data['device_name']);
         RateLimiter::clear(array_key_first($keys));
         return $result;
@@ -53,7 +53,7 @@ final class MobileSessions
         DB::connection('clubunio')->transaction(function () use ($actor, $security, $strongStamp, $id, $secret, $deviceName, $expiry) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && ! $fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
-            abort_if($security->configured($fresh) && (!$strongStamp || !hash_equals($security->stamp($fresh), $strongStamp)), 428);
+            abort_if($security->mustEnroll($fresh) || ($security->configured($fresh) && (!$strongStamp || !hash_equals($security->stamp($fresh), $strongStamp))), 428);
             DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
                 'token_hash' => hash('sha256', $secret), 'device_name' => $deviceName, 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]
                 + ($strongStamp === null ? [] : ['security_stamp' => $strongStamp]));
@@ -74,7 +74,7 @@ final class MobileSessions
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();
         abort_unless($actor, 401);
         $security = app(AccountSecurity::class);
-        abort_if($security->configured($actor) && (!isset($session->security_stamp) || !hash_equals($security->stamp($actor), $session->security_stamp)), 401);
+        abort_if($security->mustEnroll($actor) || ($security->configured($actor) && (!isset($session->security_stamp) || !hash_equals($security->stamp($actor), $session->security_stamp))), 401);
         $request->attributes->set('mobile.session', $session);
 
         return $actor;
