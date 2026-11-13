@@ -140,3 +140,11 @@ erfolgt vor SMTP mit Aktion inquiry, den beiden öffentlichen Hostnamen und
 einem Mindestscore von 0.5. GA4 lädt erst nach Zustimmung und lässt sich über
 die Analyse-Einstellungen widerrufen. Beide Sprachfassungen und die
 Datenschutzseiten enthalten die entsprechenden Hinweise.
+
+## Umstellung auf reCAPTCHA Enterprise
+
+Der neue Export nutzt enterprise.js und CreateAssessment. Beim Wechsel
+Frontend und inquiry.php zusammen bereitstellen. Vorher im PHP-FPM-Pool unio
+CLUBUNIO_RECAPTCHA_PROJECT_ID und CLUBUNIO_RECAPTCHA_API_KEY konfigurieren.
+Den API-Schlüssel auf die reCAPTCHA Enterprise API und die ausgehende
+VPS-IP beschränken. Der öffentliche Site-Key bleibt Exportparameter.

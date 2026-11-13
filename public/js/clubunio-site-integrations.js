@@ -77,14 +77,15 @@ if (captchaForm && captchaKey) {
         try {
             scriptPromise ??= new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(captchaKey);
+                script.src = 'https://www.google.com/recaptcha/enterprise.js?render=' + encodeURIComponent(captchaKey);
                 script.onload = resolve;
                 script.onerror = reject;
                 document.head.append(script);
             });
             const token = await Promise.race([
                 scriptPromise.then(() => new Promise((resolve, reject) => {
-                    grecaptcha.ready(() => grecaptcha.execute(captchaKey, {action: 'inquiry'}).then(resolve, reject));
+                    const captcha = window.grecaptcha.enterprise;
+                    captcha.ready(() => captcha.execute(captchaKey, {action: 'inquiry'}).then(resolve, reject));
                 })),
                 new Promise((_, reject) => setTimeout(reject, 12000))
             ]);

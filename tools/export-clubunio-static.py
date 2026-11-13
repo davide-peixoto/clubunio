@@ -62,7 +62,7 @@ for locale in ('de', 'en'):
         if analytics_id or (captcha_key and not subpage):
             integration = (f'<script defer id="site-integrations" data-analytics="{analytics_id}" '
                            f'data-captcha="{captcha_key if not subpage else ""}" '
-                           'src="/js/clubunio-site-integrations.js?v=3"></script>')
+                           'src="/js/clubunio-site-integrations.js?v=4"></script>')
             html = html.replace('</body>', integration + '</body>')
         (target / 'index.html').write_text(html, encoding='utf-8')
 assets = ['favicon.ico', 'css/clubunio-marketing.css', 'css/clubunio-cookie-banner.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg', 'brand/blue-v1/clubunio-symbol.svg']
@@ -85,7 +85,9 @@ shutil.copyfile(root / 'public/js/clubunio-site-integrations.js', output / 'js/c
 if captcha_key:
     endpoint = output / 'inquiry.php'
     source = endpoint.read_text(encoding='utf-8')
-    endpoint.write_text(source.replace('const CAPTCHA_REQUIRED = false;', 'const CAPTCHA_REQUIRED = true;'), encoding='utf-8')
+    source = source.replace('const CAPTCHA_REQUIRED = false;', 'const CAPTCHA_REQUIRED = true;')
+    source = source.replace("const CAPTCHA_SITE_KEY = '';", f"const CAPTCHA_SITE_KEY = '{captcha_key}';")
+    endpoint.write_text(source, encoding='utf-8')
 encoded = json.dumps(options, ensure_ascii=False)
 (output / 'inquiry-options.php').write_text("<?php\nreturn json_decode(<<<'JSON'\n" + encoded + "\nJSON, true, 512, JSON_THROW_ON_ERROR);\n", encoding='utf-8')
 (output / 'index.html').write_text((output / 'de/index.html').read_text(encoding='utf-8'), encoding='utf-8')

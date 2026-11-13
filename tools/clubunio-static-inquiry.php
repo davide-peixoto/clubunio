@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 const CAPTCHA_REQUIRED = false;
+const CAPTCHA_SITE_KEY = '';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
@@ -59,26 +60,36 @@ ftruncate($rate, 0);
 fwrite($rate, (string) ($count + 1));
 fclose($rate);
 
-$captchaSecret = getenv('CLUBUNIO_RECAPTCHA_SECRET');
 if (CAPTCHA_REQUIRED) {
+    $apiKey = getenv('CLUBUNIO_RECAPTCHA_API_KEY');
+    $project = getenv('CLUBUNIO_RECAPTCHA_PROJECT_ID');
     $token = $_POST['captcha_token'] ?? '';
-    if (!$captchaSecret || !is_string($token) || $token === '' || strlen($token) > 4096 || !function_exists('curl_init')) {
+    if (!$apiKey || !$project || !CAPTCHA_SITE_KEY || !is_string($token) || $token === ''
+        || strlen($token) > 4096 || !preg_match('/^[A-Za-z0-9_-]+$/D', $token) || !function_exists('curl_init')) {
         $finish('captcha');
     }
 
-    $verification = curl_init('https://www.google.com/recaptcha/api/siteverify');
+    $endpoint = 'https://recaptchaenterprise.googleapis.com/v1/projects/'.rawurlencode($project).'/assessments';
+    $verification = curl_init($endpoint.'?'.http_build_query(['key' => $apiKey]));
     curl_setopt_array($verification, [
-        CURLOPT_POSTFIELDS => http_build_query(['secret' => $captchaSecret, 'response' => $token]),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode(['event' => [
+            'token' => $token,
+            'siteKey' => CAPTCHA_SITE_KEY,
+            'expectedAction' => 'inquiry',
+        ]], JSON_THROW_ON_ERROR),
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 3,
         CURLOPT_TIMEOUT => 6,
     ]);
     $response = curl_exec($verification);
     $proof = is_string($response) ? json_decode($response, true) : null;
-    if (($proof['success'] ?? false) !== true || !empty($proof['error-codes'])
-        || ($proof['action'] ?? '') !== 'inquiry'
-        || !in_array($proof['hostname'] ?? '', ['clubunio.com', 'www.clubunio.com'], true)
-        || !is_numeric($proof['score'] ?? null) || $proof['score'] < 0.5) {
+    $properties = $proof['tokenProperties'] ?? [];
+    $score = $proof['riskAnalysis']['score'] ?? null;
+    if (curl_getinfo($verification, CURLINFO_RESPONSE_CODE) !== 200
+        || ($properties['valid'] ?? false) !== true || ($properties['action'] ?? '') !== 'inquiry'
+        || !in_array($properties['hostname'] ?? '', ['clubunio.com', 'www.clubunio.com'], true)
+        || !is_numeric($score) || $score < 0.5) {
         $finish('captcha');
     }
 }
