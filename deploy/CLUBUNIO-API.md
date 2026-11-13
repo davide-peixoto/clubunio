@@ -211,3 +211,12 @@ Arbeitskacheln ausschliesslich im aktiven Mandanten. Die Modulendpunkte prüfen
 ihre bestehenden Rechte weiterhin separat. Ältere Antworten ohne `work`
 lassen den Bereich ausgeblendet. Das Dashboard benötigt keine zusätzlichen
 Abfragen pro Kachel.
+
+### Bereitstellung der mobilen Arbeitskacheln (13.11.2026)
+
+Stage: Backend 2d56f46 aktiv, Health 200 und anonyme Profil-API 401.
+DEV: Release 20261113-clubunio-mobile-work, Rueckweg
+20261112-clubunio-tenant-reply-to-v4. Health 200, DB-Pflichtcheck bestanden.
+Die Mobile-API und der Push-Versand sind auf DEV in beiden Releases
+deaktiviert. Die Pendenzen sind dort erst nach Freigabe der API testbar.
+App-Quellstand 902b20a. Keine Datenbankmigration erforderlich.
