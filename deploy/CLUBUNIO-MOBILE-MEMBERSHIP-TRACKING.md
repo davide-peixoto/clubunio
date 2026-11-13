@@ -140,3 +140,7 @@ Das gewählte Rechnungsziel steuert die erforderliche E-Mail. Minderjährige
 brauchen beide Elternkontakte. AHV, vollständige Adresse, Passfoto und Ausweis
 werden vor der Speicherung geprüft. Die AHV wird nach einem Formularfehler
 nicht in die Web-Sitzung übernommen.
+
+Abnahme: Stage 2c3781a und DEV 20261113-clubunio-join-rules liefern das
+aktualisierte SV-Sissach-Webformular. App-Quellstand 73fe3cf. Die
+PostgreSQL-Webtests sind ohne expliziten Testdatenbankmodus übersprungen.
