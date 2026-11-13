@@ -67,3 +67,16 @@ vor einer manuellen Klärung bei Meta nicht erneut senden.
 
 Redaktionskalender, zeitgesteuerter Versand, automatische SFV-Endresultate und
 Meta-Kontoverwaltung per OAuth-Oberfläche sind nicht Teil dieser ersten Version.
+
+## DEV-Abnahme (13.11.2026)
+
+- Playwright mit synthetischen Fixtures auf Desktop- und Mobilbreite: Zuschnitt,
+  gespeicherte Vorlage, Matchday und Resultat. Beide JPEGs sind nicht leer und
+  exakt 1080 × 1350 Pixel gross.
+- DEV-Kernel mit angemeldeter synthetischer Sitzung: Seitenrendering, CSRF,
+  Mandantenwechsel, kein Export interner Notizen, Upload, Vorlagenrevision,
+  Ergebnisbestätigung, Freigabe und gesperrter Meta-Versand. Synthetische
+  Daten zurückgerollt und Testbilder entfernt.
+- HTTPS: Login, Health und Editor-Bundle erreichbar; Editor und Daten ohne
+  Anmeldung gesperrt. Meta-HTTP im automatisierten Test simuliert. Echte
+  Meta-Testkonten noch nicht eingerichtet; keine Publikation ausgelöst.
