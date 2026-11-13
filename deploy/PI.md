@@ -1,5 +1,14 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Social Media: Frauen-Jobs mit echten SFV-Daten (13.11.2026)
+
+Aktiv: `20261113-clubunio-social-jobs-sfv`, Rueckweg
+`20261113-clubunio-social-jobs`. Kein Schemawechsel. Zwei DEV-Regeln fuer
+Frauen 1te/2te mit eigenen Vorlagen, 08:00 und 02:00, ausschliesslich Entwuerfe.
+Echter SFV-Schedule, Matchdetails 403. Historischer Replay 07.11.2026:
+zwei Entwuerfe, Resultat 0:2, Wiederholung ohne Dublette, null Meta-Zustellungen.
+[Abnahme und Datenvertrag](CLUBUNIO-SOCIAL-JOBS.md).
+
 ## Geplante Social-Media-Beitraege (13.11.2026)
 
 Aktiv: `20261113-clubunio-social-jobs`, Rueckweg

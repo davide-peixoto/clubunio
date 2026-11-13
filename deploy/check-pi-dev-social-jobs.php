@@ -14,7 +14,7 @@ if (config('clubunio-social.test_enabled')) {
 Http::preventStrayRequests();
 config(['clubunio-social.jobs_enabled' => true, 'logging.default' => 'stderr']);
 $fake = new class(app(\App\ClubUnio\Services\TeamPlanningService::class)) extends SfvPlanningService {
-    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null, ?string $seasonDate = null): int
+    public function refreshObserved(Account $actor, Tenant $tenant, array $input, Closure $observeSchedule, ?string $seasonDate = null): int
     {
         return 1;
     }

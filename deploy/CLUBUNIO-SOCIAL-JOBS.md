@@ -15,8 +15,13 @@ Liberation Sans; Umbrüche können vom Browsereditor abweichen.
 - **Schlussresultat**: Start zwischen 00:00 und 05:59. Der Job prüft Spiele der
   letzten drei abgeschlossenen Kalendertage, damit verspätete Resultate
   nachkommen. Nur ausgewählte Mannschaften mit SFV-Team-ID. Der Schedule dient
-  zur Auswahl; erst die SFV-Matchdetails mit identischer Match-ID/Anspielzeit,
-  `hasMatchEnded=true` und beiden Torzahlen lösen einen Resultatpost aus.
+  zur Auswahl und kann ein Resultat bestätigen: frische deutsche SFV-Antwort
+  mit übereinstimmender Match-ID, Anspielzeit und beiden Team-IDs,
+  `matchState=2` **und** `matchStateName=ausgetragen` sowie beiden ganzzahligen
+  Torzahlen. Der Statuscode ist mit dem Live-Feed belegt, nicht im Swagger-Enum
+  dokumentiert. Alternativ bestätigen zugängliche Matchdetails mit gleicher
+  Match-ID/Anspielzeit, `hasMatchEnded=true` und beiden Torzahlen das Resultat.
+  Fehlen diese Nachweise, entsteht kein Resultatpost.
   Keine Spieler- oder Ereignis-Endpunkte. Pro Regel und SFV-Match-ID maximal
   ein Post. Korrekturen bereits publizierter Resultate bleiben redaktionell.
 - **Freigabe**: Ein Job ohne Versandfreigabe erzeugt Entwürfe. Für automatische
@@ -42,5 +47,21 @@ DEV-Release: `20261113-clubunio-social-jobs`; Rückweg:
 DEV-Abnahme mit synthetischem SFV-Adapter und echten PostgreSQL-Tabellen:
 Teamauswahl, Spieltags- und Resultatgrafik, kein Doppelpost, fehlende
 Meta-Testziele, Rückrollen der Daten und Entfernen der Testbilder geprüft.
-Keine Live-SFV- oder Meta-Anfrage in dieser Abnahme. Für einen echten
+Diese Erstabnahme hatte keine Live-SFV- oder Meta-Anfrage. Für einen echten
 automatischen Post sind weiterhin verifizierte separate Meta-Testziele nötig.
+
+## Live-Abnahme Frauen auf DEV (13.11.2026)
+
+- Aktiver Delta-Release `20261113-clubunio-social-jobs-sfv`; Rückweg
+  `20261113-clubunio-social-jobs`. Keine neue Schemamigration.
+- SV Sissach: «Frauen 1te» und «Frauen 2te», je mit bestätigter SFV-Team-ID.
+  Täglich 08:00 Uhr Spieltag, ab 02:00 Uhr Resultate, je eigene Vorlage V1.
+  Beide Regeln aktiv, automatische Publikation aus. Juniorinnen und
+  Seniorinnen sind nicht Teil dieser Auswahl.
+- SFV-Spielplan antwortete 200; Matchdetails für zwei Spiele antworteten 403.
+  Deshalb wird der live belegte Schedule-Abschlusszustand verwendet.
+- Im aktuellen Testfenster kein passendes Spiel. Historischer Replay mit
+  echter SFV-Antwort für den 07.11.2026: SV Sissach gegen US Terre Sainte I.
+  Ein Spieltagsentwurf und ein Schlussresultatentwurf (0:2), beide als
+  JPEG 1080 × 1350 geprüft; Wiederholung erzeugte keine weiteren Posts.
+  Meta-Versand deaktiviert, keine Zustellungen. Stage/PROD unverändert.

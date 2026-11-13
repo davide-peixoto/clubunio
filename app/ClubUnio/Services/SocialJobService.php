@@ -156,6 +156,16 @@ final class SocialJobService
         return $done;
     }
 
+    public function runDraftReplay(Tenant $tenant, string $id, Time $now): int
+    {
+        abort_unless(app()->runningInConsole() && $this->ready() && ! config('clubunio-social.test_enabled'), 403);
+        $job = $this->data->table($tenant->id, 'jobs')->where('id', $id)->where('enabled', true)->where('auto_publish', false)->first();
+        abort_unless($job && self::due($now, $job->local_time, $job->kind), 422);
+        $this->refreshed = [];
+
+        return $this->runJob($job, $now->tz('Europe/Zurich'));
+    }
+
     private function runJob(object $job, Time $now): int
     {
         $tenant = Tenant::findOrFail($job->tenant_id);
@@ -207,15 +217,22 @@ final class SocialJobService
             return 0;
         }
         if (! isset($this->refreshed[$tenant->id])) {
+            $observations = [];
+            $observe = static function (array $rows) use (&$observations): void {
+                foreach ($rows as $row) {
+                    $id = (int) $row['matchId'];
+                    $observations[$id] = array_key_exists($id, $observations) ? [] : $row;
+                }
+            };
             // At a season boundary, retain the previous season's last matchdays.
             $boundary = $now->month === 7 && $now->day <= 3 ? $now->startOfMonth()->toDateString() : null;
             if ($boundary && $from < $boundary) {
-                $this->sfv->refreshNow($actor, $tenant, ['from' => $from, 'to' => min($until, $now->startOfMonth()->subDay()->toDateString())], seasonDate: $from);
+                $this->sfv->refreshObserved($actor, $tenant, ['from' => $from, 'to' => min($until, $now->startOfMonth()->subDay()->toDateString())], $observe, $from);
             }
             if (! $boundary || $until >= $boundary) {
-                $this->sfv->refreshNow($actor, $tenant, ['from' => $boundary ? max($from, $boundary) : $from, 'to' => $until]);
+                $this->sfv->refreshObserved($actor, $tenant, ['from' => $boundary ? max($from, $boundary) : $from, 'to' => $until], $observe);
             }
-            $this->refreshed[$tenant->id] = true;
+            $this->refreshed[$tenant->id] = $observations;
         }
         $sfvIds = $teams->pluck('sfv_team_id')->filter()->all();
         $candidates = $this->domain($tenant, 'sfv_schedule')->where('starts_at', '>=', Time::parse($from, 'Europe/Zurich')->toIso8601String())
@@ -226,7 +243,20 @@ final class SocialJobService
         $pending = $candidates->reject(fn ($m) => $processed->has('sfv:'.$m->match_id))->values();
         $offset = ((int) $interval % max(1, (int) ceil($pending->count() / 12))) * 12;
         $matches = $pending->slice($offset, 12)->all();
-        $scores = $this->sfv->finalScores($actor, $tenant, $matches);
+        $scores = [];
+        $detailCandidates = [];
+        foreach ($matches as $match) {
+            $row = $this->refreshed[$tenant->id][$match->match_id] ?? null;
+            if ($row === []) {
+                continue;
+            }
+            if ($row && ($score = SfvPlanningService::scheduleScore($match, $row)) !== null) {
+                $scores[$match->match_id] = $score;
+            } else {
+                $detailCandidates[] = $match;
+            }
+        }
+        $scores += $this->sfv->finalScores($actor, $tenant, $detailCandidates);
         $count = 0;
         foreach ($matches as $match) {
             if (! isset($scores[$match->match_id])) {
