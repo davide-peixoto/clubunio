@@ -33,11 +33,15 @@ to the curated source.
 
 ## Pending acceptance and functionality
 
-Two-tenant DEV acceptance, actual OpenAI project check, authenticated mobile
-UI, embeddable widget, anonymous login-help intake, attachments, assignment,
-notifications, private knowledge retrieval, article editing, video content,
-conversational chat and queued ticket triage are not part of this initial slice.
-Do not enable autonomous responses or actions.
+Implemented in follow-up: public widget and login intake, Flutter support UI,
+ticket assignment, encrypted attachments, explicit attachment escalation,
+portal notifications, article editing and HTTPS video links, bounded FAQ
+follow-ups, and queued triage suggestions.
+
+Pending: integrated two-tenant DEV acceptance, dedicated provider and worker
+configuration, mobile push and attachment UI, private knowledge retrieval,
+free-form conversational support and automatic resolution. Do not enable
+autonomous responses or actions.
 
 ## Follow-up integration
 
