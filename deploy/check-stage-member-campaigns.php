@@ -62,8 +62,7 @@ try {
         $queue->enqueue($actor, $tenant, $id, $row->id);
         $require($campaigns->recipients($tenant, $id)->value('mail_state') === 'queued', 'queue persisted');
         config(['mail.mailers.clubunio_test' => ['transport' => 'array'], 'clubunio-integrations.from' => 'sender@example.invalid']);
-        $manager = app(\Illuminate\Mail\MailManager::class);
-        $manager->purge('clubunio_test');
+        $manager = new \Illuminate\Mail\MailManager($app);
         Mail::swap($manager);
         $require($queue->runOne($row->id), 'worker claimed queued test');
         $messages = $manager->mailer('clubunio_test')->getSymfonyTransport()->messages();
