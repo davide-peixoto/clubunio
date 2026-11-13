@@ -156,6 +156,8 @@ return json_decode(<<<'JSON'
   "analytics_deny": "Ablehnen",
   "inquiry_captcha": "Die Spamprüfung ist fehlgeschlagen. Bitte versuche es erneut.",
   "captcha_notice": "Beim Absenden schützt Google reCAPTCHA dieses Formular vor Spam. Es gelten die Datenschutzerklärung und Nutzungsbedingungen von Google.",
-  "captcha_terms": "Nutzungsbedingungen"
+  "captcha_terms": "Nutzungsbedingungen",
+  "cookie_title": "Diese Webseite verwendet Cookies",
+  "cookie_manage": "Einstellungen verwalten"
 }
 JSON, true, 512, JSON_THROW_ON_ERROR);

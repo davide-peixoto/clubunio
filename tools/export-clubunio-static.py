@@ -44,20 +44,28 @@ for locale in ('de', 'en'):
                          f'<a href="https://policies.google.com/terms?hl={locale}">{escape(copy['captcha_terms'])}</a></p>')
                 html = html.replace('</form>', field + '</form>', 1)
         if analytics_id:
-            settings = f"""<div class="wrap"><details id="analytics-settings">
+            settings = f"""<link rel="stylesheet" href="/css/clubunio-cookie-banner.css?v=1">
+<details id="analytics-settings" class="cookie-settings" hidden>
 <summary>{escape(copy['analytics_settings'])}</summary>
-<p>{escape(copy['analytics_text'])}</p>
+<div class="cookie-card">
+<h2>{escape(copy['cookie_title'])}</h2>
+<div class="cookie-actions">
 <button type="button" data-choice="allow">{escape(copy['analytics_allow'])}</button>
 <button type="button" data-choice="deny">{escape(copy['analytics_deny'])}</button>
-</details></div>"""
+<details class="cookie-options"><summary>{escape(copy['cookie_manage'])}</summary>
+<p>{escape(copy['analytics_text'])}</p></details>
+</div>
+<a class="cookie-privacy" href="/{locale}/privacy/">{escape(copy['privacy'])}</a>
+</div>
+</details>"""
             html = html.replace('</body>', settings + '</body>')
         if analytics_id or (captcha_key and not subpage):
             integration = (f'<script defer id="site-integrations" data-analytics="{analytics_id}" '
                            f'data-captcha="{captcha_key if not subpage else ""}" '
-                           'src="/js/clubunio-site-integrations.js?v=2"></script>')
+                           'src="/js/clubunio-site-integrations.js?v=3"></script>')
             html = html.replace('</body>', integration + '</body>')
         (target / 'index.html').write_text(html, encoding='utf-8')
-assets = ['favicon.ico', 'css/clubunio-marketing.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg', 'brand/blue-v1/clubunio-symbol.svg']
+assets = ['favicon.ico', 'css/clubunio-marketing.css', 'css/clubunio-cookie-banner.css', 'js/clubunio-marketing.js', 'brand/blue-v1/clubunio-logo-horizontal.svg', 'brand/blue-v1/clubunio-symbol.svg']
 for asset in assets:
     target = output / asset
     target.parent.mkdir(parents=True, exist_ok=True)

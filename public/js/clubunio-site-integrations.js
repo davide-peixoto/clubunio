@@ -32,12 +32,15 @@ if (analyticsId) {
         script.src = 'https://www.googletagmanager.com/' + scriptPath + '?id=' + encodeURIComponent(analyticsId);
         document.head.append(script);
     }
-    if (localStorage.getItem(preference) === 'allow') startAnalytics();
-    if (!localStorage.getItem(preference)) panel.open = true;
+    let savedChoice;
+    try { savedChoice = localStorage.getItem(preference); } catch {}
+    panel.hidden = false;
+    if (savedChoice === 'allow') startAnalytics();
+    panel.open = !savedChoice;
     panel.querySelectorAll('button[data-choice]').forEach(button => {
         button.addEventListener('click', () => {
             const choice = button.dataset.choice;
-            localStorage.setItem(preference, choice);
+            try { localStorage.setItem(preference, choice); } catch {}
             if (choice === 'allow') {
                 startAnalytics();
             } else {
@@ -52,6 +55,7 @@ if (analyticsId) {
                 }
             }
             panel.open = false;
+            panel.querySelector('summary').focus();
             if (choice === 'deny' && isTagManager && started) location.reload();
         });
     });
