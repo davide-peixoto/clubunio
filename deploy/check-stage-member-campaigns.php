@@ -69,7 +69,7 @@ try {
         $messages = $manager->mailer('clubunio_test')->getSymfonyTransport()->messages();
         $require(count($messages) === 1 && $messages[0]->getEnvelope()->getRecipients()[0]->getAddress()
             === \App\ClubUnio\Services\TestMailGuard::RECIPIENT, 'only fixed test recipient');
-        $require($messages[0]->getOriginalMessage()->getSubject() === 'Synthetic subject', 'configured subject');
+        $require($messages[0]->getOriginalMessage()->getSubject() === '[ClubUnio TEST] Synthetic subject', 'configured subject');
         $require(!$queue->runOne($row->id), 'no duplicate dispatch');
         $queue->bounce($actor, $tenant, $id, $row->id);
         $require($campaigns->recipients($tenant, $id)->value('mail_state') === 'bounced', 'bounce persisted');
@@ -137,6 +137,9 @@ try {
     echo "Synthetic release, guardian, campaign PDF and office approval passed. No external mail sent.\n";
 } catch (Throwable $e) {
     fwrite(STDERR, get_class($e).' at '.basename($e->getFile()).':'.$e->getLine()."\n");
+    if (get_class($e) === RuntimeException::class && $e->getFile() === __FILE__) {
+        fwrite(STDERR, $e->getMessage()."\n");
+    }
     $exit = 1;
 } finally {
     if ($file) unlink($file);

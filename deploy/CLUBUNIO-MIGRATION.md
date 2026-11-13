@@ -12,6 +12,8 @@ bereits freigegebener Kampagnen behalten.
 Stage-Abnahme: `php deploy/check-stage-member-campaigns.php --queue`.
 Der Test arbeitet mit synthetischen Daten, rollt die Transaktion zurueck
 und verwendet einen In-Memory-Mailtransport. Keine echten Empfaenger.
+Stage-Abnahme erfolgreich: Freigabe, verifizierte Elternbindung samt
+Sperrpruefung, Testwarteschlange, Sammel-PDF und Geschaeftsstellenfreigabe.
 
 ## Profilfotos
 
