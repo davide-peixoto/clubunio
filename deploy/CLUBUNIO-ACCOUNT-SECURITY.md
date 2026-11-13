@@ -67,3 +67,21 @@ Recovery-Codes und beendet alte Sitzungen. Einzelnes Anzeigen oder Entfernen
 registrierter Passkeys ist noch nicht vorhanden. Vor allgemeiner Freigabe sind
 echte Geraete-/Mailabnahme, Pflicht nach Rolle und SSO ueber Kunden-Domains
 offen. Kein Store-Release.
+
+## Stand 13.11.2026
+
+DEV und Stage: Web-Wizard und Reset ausgerollt und aktiviert, auf
+`https://dev.clubunio.ch` bzw. `https://stage.clubunio.com`. Stichtag UTC:
+DEV 19:28:52, Stage 19:29:31. Additives DDL in den jeweiligen PostgreSQL-
+Datenbanken, Schema vorher separat gesichert. Keine PROD-Aenderung.
+
+Stage: Login und Wizard HTTP 200, anonymer Reset HTTP 302. Der synthetische
+PostgreSQL-Test hat Pflicht, Reset durch die Geschaeftsstelle, Sperre des
+alten Faktors und Neueinrichtung bestaetigt; Testdaten zurueckgerollt.
+Beim ersten Umschalten griff die Rueckrolle wegen absoluter View-Pfade im
+Konfigurationscache. Cache am endgueltigen Pfad aufgebaut und erneut geprueft.
+
+DEV: Login und Wizard HTTP 200, anonymer Reset HTTP 302. Die angemeldete
+Abnahme ist wegen des zeitweise nicht verfuegbaren privaten DB-Tunnels offen.
+Rollback: vorheriges DEV-Release `20261113-clubunio-administration-layout`;
+Stage: zuvor gesicherter Runtime-Ordner. Schema beim Rueckweg nicht loeschen.
