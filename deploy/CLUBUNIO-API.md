@@ -202,3 +202,12 @@ responsive scope grid, visible scope extensions in Swagger and explicit private
 no-store/referrer protection for token administration including Livewire replies.
 No existing app/website client has been switched. Advanced provider/bulk adapters
 remain explicitly open in CLUBUNIO-API-COVERAGE.md.
+
+### Mobile Arbeitskacheln auf «Heute»
+
+`GET /api/mobile/v1/clubs/{club}/modules` liefert für native Module bei
+passender Vereinsrolle und Berechtigung `work: true`. Die App zeigt die
+Arbeitskacheln ausschliesslich im aktiven Mandanten. Die Modulendpunkte prüfen
+ihre bestehenden Rechte weiterhin separat. Ältere Antworten ohne `work`
+lassen den Bereich ausgeblendet. Das Dashboard benötigt keine zusätzlichen
+Abfragen pro Kachel.

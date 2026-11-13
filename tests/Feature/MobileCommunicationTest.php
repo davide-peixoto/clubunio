@@ -1650,6 +1650,19 @@ created_at text,finished_at text,UNIQUE(tenant_id,message_id));');
         $this->withToken($token)->getJson('/api/mobile/v1/clubs/'.$foreign->id.'/modules')->assertForbidden();
     }
 
+    public function test_today_work_shortcuts_respect_roles_and_native_client_support(): void
+    {
+        config(['clubunio-mobile.native_expenses_enabled' => true]);
+        $admin = $this->token($this->admin);
+        $this->withToken($admin)->getJson($this->url('modules'))->assertOk()
+            ->assertJsonFragment(['key' => 'Spesen', 'native' => false, 'work' => false]);
+        $features = ['X-ClubUnio-Mobile-Features' => 'expenses-v1'];
+        $this->withToken($admin)->getJson($this->url('modules'), $features)->assertOk()
+            ->assertJsonFragment(['key' => 'Spesen', 'native' => true, 'work' => true]);
+        $this->withToken($this->token($this->parent))->getJson($this->url('modules'), $features)->assertOk()
+            ->assertJsonMissing(['work' => true]);
+    }
+
     public function test_unreleased_native_planning_is_closed_without_disabling_existing_personal_routes(): void
     {
         config(['clubunio-mobile.native_planning_enabled' => false]);
