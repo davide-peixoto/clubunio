@@ -15,11 +15,12 @@ final class MarketingWebsiteTest extends TestCase
             $response->assertOk()->assertHeader('Content-Language', $locale)
                 ->assertSee('<html lang="'.$locale.'">', false)->assertSee($heading)
                 ->assertSee('mailto:info@clubunio.com', false)->assertSee('bexio')->assertSee('SFV / ASF')
+                ->assertDontSee('CHF')
+                ->assertDontSee('data-price=', false)
                 ->assertSee('/images/marketing/'.$locale.'/members.png', false)
                 ->assertSee('/images/marketing/'.$locale.'/planning.png', false);
             foreach (config('clubunio-marketing.plans') as $plan) {
-                $response->assertSee('data-limit="'.$plan['members'].'"', false)
-                    ->assertSee('data-price="'.$plan['price'].'"', false);
+                $response->assertSee('data-inquiry-plan="'.$plan['key'].'"', false);
             }
         }
     }

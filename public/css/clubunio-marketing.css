@@ -492,7 +492,7 @@ h3 {
     max-width:560px;
     margin:0;
     line-height:1.9}
-.extras-list strong {
+.extras-list .extra-request {
     font-size:12px;
     text-align:right;
     font-weight:600}
@@ -702,7 +702,7 @@ h2 {
 .extras-list article {
     grid-template-columns:20px 1fr;
     gap:13px}
-.extras-list strong {
+.extras-list .extra-request {
     grid-column:2;
     text-align:left;
     color:#164b8a}
