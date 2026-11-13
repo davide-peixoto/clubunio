@@ -1,5 +1,17 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Social Media V1 (13.11.2026)
+
+Aktiv: `20261113-clubunio-social-studio-delta`, auf Basis von
+`20261113-clubunio-public-intake` (auch Ruecksprungziel). Nur Social-Media-Dateien
+und gebuendelte Browserassets ergaenzt. Konfiguration der bestehenden Dienste
+und gemeinsame private Dateien erhalten. Sechs additive Tabellen ausschliesslich
+in der VPS-DEV-Datenbank nach verschluesselter und lesbar gepruefter Sicherung
+unter `shared/backups/social-studio-20261113-verified` angelegt.
+Angemeldete synthetische Kernelpruefung mit Rollback, Browserexport auf Desktop
+und Mobilbreite, HTTPS- und Assetschutz geprueft. Kein Meta-Liveversand.
+Siehe [Bedienung und Migration](CLUBUNIO-SOCIAL-STUDIO.md).
+
 ## Geltungsbereich der Umgebungen
 
 DEV, Stage und PROD meinen immer die ClubUnio-Instanzen. Der Pi und
