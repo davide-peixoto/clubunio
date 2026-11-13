@@ -4,7 +4,7 @@
 <h1>{{ __('Mitgliederanmeldung') }}</h1>
 <p class="notice">{{ __('Testumgebung: Diese Anmeldung wird nur in ClubUnio erfasst und ersetzt noch keine Anmeldung beim Verein.') }}</p>
 @if(session('submitted'))
-    <section role="status"><h2>{{ __('Anmeldung gespeichert') }}</h2><p>{{ __('Vielen Dank. Die Testanmeldung wurde zur Prüfung erfasst. Damit ist noch keine Mitgliedschaft bestätigt.') }}</p>
+    <section role="status"><h2>{{ trans('public-registration.received_title') }}</h2><p>{{ trans('public-registration.received_body') }}</p>
         @if(session('uploads_pending'))<p>{{ __('Die Anhänge sind geschützt gespeichert. Ihre Übertragung wird intern geprüft; bitte nicht erneut anmelden.') }}</p>@endif
         <a href="{{ route('clubunio.public.registration', ['tenant'=>$tenant->slug, 'new'=>1]) }}">{{ __('Weitere Anmeldung erfassen') }}</a></section>
 @else
@@ -44,8 +44,8 @@
         <label>{{ __('Ausweise (maximal 3 Dateien, je 10 MB)') }}<input type="file" name="identity[]" required multiple accept="application/pdf,image/jpeg,image/png,image/webp"></label>
     </div><p>{{ __('Die Dokumente werden privat gespeichert und sind nicht öffentlich abrufbar.') }}</p></fieldset>
     <label>{{ __('Bemerkungen') }}<textarea name="notes" maxlength="10000" rows="4">{{ old('notes') }}</textarea></label>
-    <label class="consent"><input type="checkbox" name="consent" value="1" required @checked(old('consent'))>{{ __('Ich bin mit der Speicherung meiner Angaben und Dokumente für diese Testanmeldung einverstanden.') }}</label>
-    <button type="submit">{{ __('Testanmeldung absenden') }}</button>
+    <label class="consent"><input type="checkbox" name="consent" value="1" required @checked(old('consent'))>{{ trans('public-registration.consent') }}</label>
+    <button type="submit">{{ trans('public-registration.submit') }}</button>
     </form>
     <script src="{{ asset('js/clubunio-registration.js') }}" defer></script>
 @endif
