@@ -41,5 +41,8 @@
         @endisset
     </header>
     <main>@yield('content')</main>
+    @if(config('clubunio-support.enabled'))
+        <script src="{{ asset('js/clubunio-help-widget.js') }}"></script>
+    @endif
 </body>
 </html>

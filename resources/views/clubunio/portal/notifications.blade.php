@@ -6,6 +6,10 @@
 @forelse($notifications as $notification)
 <article class="notification-row">
     <h2>{{ $notification->title }}</h2><p>{{ $notification->body }}</p><time>{{ $notification->created_at }}</time>
+    @if($notification->object_type === 'support' && config('clubunio-support.enabled'))
+        @php($ticket = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.support_posts as post')->join('clubora.support_tickets as ticket', 'ticket.id', '=', 'post.ticket_id')->where('post.id', $notification->object_id)->where('post.internal', false)->where('ticket.tenant_id', $tenant->id)->where('ticket.requester_id', auth('portal')->id())->where('ticket.audience', 'club')->value('ticket.id'))
+        @if($ticket)<a href="{{ route('clubunio.support.center', ['club' => $tenant->id, 'ticket' => $ticket]) }}">{{ trans('support.title') }}</a>@endif
+    @endif
     @if($notification->object_type === 'announcement' && app(\App\ClubUnio\Services\AnnouncementService::class)->portal(auth('portal')->user(),$tenant)->whereKey($notification->object_id)->exists())
         <a href="{{ route('clubunio.portal.announcement',[$tenant->slug,$notification->object_id]) }}">{{ __('Ankündigung öffnen') }}</a>
     @endif

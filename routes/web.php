@@ -35,6 +35,12 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/clubunio-platform.php';
 Route::get('/help', \App\ClubUnio\Http\SupportCenterController::class)->name('clubunio.support.help');
 Route::post('/help', \App\ClubUnio\Http\SupportCenterController::class)->middleware('throttle:6,1');
+Route::match(['get','post'], '/help/sign-in', \App\ClubUnio\Http\PublicSupportIntake::class)
+    ->middleware('throttle:5,1')->name('clubunio.support.login-help');
+Route::get('/support/club/{club}/sign-in', [\App\ClubUnio\Http\PublicSupportIntake::class, 'inbox'])
+    ->whereNumber('club')->middleware('auth:clubunio')->name('clubunio.support.club-intake');
+Route::get('/platform/support/sign-in', [\App\ClubUnio\Http\PublicSupportIntake::class, 'inbox'])
+    ->middleware(\App\ClubUnio\Http\RequirePlatformAdministrator::class)->name('clubunio.support.platform-intake');
 Route::match(['get','post'], '/support/club/{club}', \App\ClubUnio\Http\SupportCenterController::class)
     ->whereNumber('club')->middleware('throttle:30,1')->name('clubunio.support.center');
 Route::match(['get','post'], '/platform/support', \App\ClubUnio\Http\SupportCenterController::class)

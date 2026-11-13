@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'share_attachment' => 'Anhang für den Plattformsupport freigeben: :name',
+    'assignee' => 'Zuständig',
+    'unassigned' => 'Nicht zugewiesen',
+    'assign' => 'Zuweisen',
+    'attachment' => 'Anhang',
+    'video' => 'Video',
+    'published' => 'Veröffentlicht',
+    'triage' => 'KI-Vorschlag',
+    'notice_title' => 'Neue Support-Antwort',
+    'notice_body' => 'Öffne deine Supportanfrage, um die Antwort zu lesen.',
     'audience' => 'Sichtbarkeit',
     'title' => 'Hilfe & Support',
     'search' => 'Artikel suchen',
