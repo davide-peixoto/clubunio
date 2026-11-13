@@ -88,6 +88,7 @@ class WorkspaceLegacyFormComponentsTest extends TestCase
 
     public function test_native_buttons_keep_external_form_and_status_payload(): void
     {
+        app()->setLocale('de');
         preg_match('/<x-filament::icon-button\s+form-id="member-[\s\S]*?\/>/', $this->source('planning/show'), $match);
         $this->assertNotEmpty($match);
         $xpath = $this->xpath(Blade::render($match[0], ['member' => (object) ['id' => 42]]));
