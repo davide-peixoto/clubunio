@@ -47,6 +47,8 @@ return json_decode(<<<'JSON'
   "sfv_note": "Umfang abhängig von freigegebenen Datenquellen und Zuordnungen. Keine pauschale vollständige Clubcorner-Synchronisation.",
   "api_title": "Eigene API",
   "api_text": "Bestehende Vereinswebseiten und weitere Anwendungen über gezielt berechtigte Schnittstellen anbinden.",
+  "smtp_title": "E-Mails über euren eigenen SMTP-Server",
+  "smtp_text": "ClubUnio kann Vereinsmails über euren eigenen Mailanbieter (SMTP) versenden. Mitglieder erkennen die vertraute Vereinsadresse und können den Absender leichter einordnen. Eine korrekt eingerichtete Absenderdomain mit SPF, DKIM und DMARC hilft empfangenden Mailservern, echte Vereinsmails zu erkennen, und kann das Risiko einer Einstufung als Spam senken.",
   "integration_note": "Integrationen nach Einrichtung und Freigabe. Die Nennung von Bexio und SFV bezeichnet Schnittstellen, keine offizielle Partnerschaft.",
   "pricing_label": "FAIR FÜR KLEINE UND GROSSE VEREINE.",
   "pricing_title": "Das passende Paket für euren Verein.",

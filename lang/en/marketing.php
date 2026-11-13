@@ -47,6 +47,8 @@ return json_decode(<<<'JSON'
   "sfv_note": "Scope depends on approved data sources and mappings. Does not imply full Clubcorner synchronisation.",
   "api_title": "Dedicated API",
   "api_text": "Connect existing club websites and other applications through interfaces with explicit access permissions.",
+  "smtp_title": "Send email through your own SMTP server",
+  "smtp_text": "ClubUnio can send club emails through your own email provider (SMTP). Members see a familiar club address, making it easier to recognise the sender. A sending domain configured with SPF, DKIM and DMARC helps receiving mail servers identify genuine club emails and can reduce the risk of messages being marked as spam.",
   "integration_note": "Integrations require setup and approval. Bexio and SFV references describe interfaces, not official partnerships.",
   "pricing_label": "FAIR FOR CLUBS OF EVERY SIZE.",
   "pricing_title": "The right plan for your club.",
