@@ -123,3 +123,7 @@ Die AHV-Nummer landet im verschlüsselten Antrag und wird bei Annahme in das
 bestehende verschlüsselte Mitgliedsfeld übernommen. Technische Statusfelder
 bleiben im Vereinsworkflow. Kein Schemawechsel. Ältere App-Builds verwenden
 das bisherige Formular. Stage braucht den Scanner und ein privates Upload-Ziel.
+
+DEV: Release 20261113-clubunio-complete-intake, Rückweg
+20261113-clubunio-social-performance. HTTPS bestätigt den vollständigen
+Formularvertrag und aktivierte Uploads. App-Quellstand 4e3282b.
