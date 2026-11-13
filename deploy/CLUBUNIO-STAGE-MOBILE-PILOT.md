@@ -5,6 +5,11 @@ DEV, PROD und PHPMaker unveraendert. Keine Benachrichtigungen versendet.
 
 ## Mobile
 
+Ein bestehendes, ausdruecklich freigegebenes Trainerkonto darf Mobile nur im
+urspruenglichen Mandanten `sv-sissach` nutzen. Die Freigabe setzt ein aktives
+Konto mit Trainerrolle und Portalzugang voraus. Kein Push-Testgeraet, keine
+Aenderung an Konto, Passwort oder Rollen.
+
 Auf Stage sind Anlagenstatus inklusive Platzplanung, Anmeldungen,
 Trainingsplaner, Bus, Dokumente und Sponsorenlauf fuer die native App
 aktiviert. Der serverseitige Modulkatalog meldet alle sechs fuer das
