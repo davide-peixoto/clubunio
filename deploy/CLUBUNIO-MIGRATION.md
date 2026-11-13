@@ -18,6 +18,12 @@ Umbenennung statt Neuimport; Backup, Abnahme und Rueckweg:
 [Stage-Schema](CLUBUNIO-STAGE-SCHEMA.md). Snapshot-Schemas, DEV und PROD
 werden nicht umgestellt.
 
+## Social Media V1 (13.11.2026)
+
+Sechs additive Tabellen fuer Medien, Vorlagenversionen, bestaetigte Resultate,
+Beitraege und getrennte Meta-Testzustellungen. Kein Import und keine Aenderung
+an Wettkaempfen oder Profilzuordnungen. [Migration und Rueckweg](CLUBUNIO-SOCIAL-STUDIO.md).
+
 ## Stage-Erstimport SV Sissach (09.11.2026)
 
 Eigener leerer Zielbestand `clubunio_stage` auf dem VPS. Aktueller lesender

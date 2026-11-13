@@ -18,7 +18,7 @@ final class PermissionCatalog
         'announcements' => 'Ankündigungen', 'chat' => 'Chats', 'events' => 'Veranstaltungen',
         'sponsor_runs' => 'Sponsorenlauf',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
-        'templates' => 'Nachrichtenvorlagen',
+        'templates' => 'Nachrichtenvorlagen', 'social_media' => 'Social Media',
     ];
 
     public const FUNCTIONS = [
@@ -50,6 +50,7 @@ final class PermissionCatalog
             'competitions', 'bexio' => ['sync', 'download', 'export'],
             'reports' => ['export', 'download'],
             'announcements', 'templates', 'signage' => ['send'],
+            'social_media' => ['upload', 'download', 'approve', 'send'],
             'bus' => ['approve', 'cancel', 'export'],
             default => ['export'],
         };
