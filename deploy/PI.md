@@ -1,4 +1,11 @@
-# Pi staging: dev.clubunio.ch
+# ClubUnio DEV auf dem Pi: dev.clubunio.ch
+
+## Geltungsbereich der Umgebungen
+
+DEV, Stage und PROD meinen immer die ClubUnio-Instanzen. Der Pi und
+`dev.clubunio.ch` gehoeren zu ClubUnio DEV, nicht zu ClubUnio Stage.
+PHPMaker und `my.svsissach.ch` sind kein Teil des ClubUnio-Deployments und
+werden nur bei ausdruecklicher Anforderung beruecksichtigt.
 
 ## Vereinsmail: Antwortadresse
 
