@@ -46,7 +46,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
             return collect();
         }
         $legacy = app(BackofficeReadContext::class)->tenantsFor($this)
-            ?? $this->tenants()->wherePivotIn('role', ['admin', 'office'])->get();
+            ?? $this->tenants()->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->get();
         $profiles = $this->tenants()->wherePivot('role', 'profile')->get()
             ->filter(fn ($tenant) => app(ModulePermissionService::class)->canEnter($this, $tenant));
         return $legacy->merge($profiles)->unique('id');
@@ -65,7 +65,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
         $snapshot = app(BackofficeReadContext::class)->tenantsFor($this);
 
         return $snapshot !== null ? $snapshot->contains(fn ($item) => (int) $item->id === (int) $tenant->getKey())
-            : $this->tenants()->whereKey($tenant->getKey())->wherePivotIn('role', ['admin', 'office'])->exists();
+            : $this->tenants()->whereKey($tenant->getKey())->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->exists();
     }
 
     public function canAccessPanel(Panel $panel): bool
@@ -80,7 +80,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
         }
         $snapshot = app(BackofficeReadContext::class)->tenantsFor($this);
 
-        if ($snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ['admin', 'office'])->exists()) {
+        if ($snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->exists()) {
             return true;
         }
         return $this->tenants()->wherePivot('role', 'profile')->get()

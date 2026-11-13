@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Verbindliche Admin-Regel
+
+`admin` ist die oberste Rolle innerhalb eines Vereins. Aktive Vereinsadmins
+erhalten jede registrierte Modulaktion automatisch, ohne Berechtigungsprofil.
+Neue Fachfunktionen an die zentrale Modulberechtigung anbinden und bei
+zusaetzlichen Fachrollenpruefungen den Vereinsadmin nicht ausschliessen.
+Das gilt nicht fuer andere Mandanten, Plattformadministration, deaktivierte
+Konten, Simulationen oder technische Versand- und Integrationssperren.
+Keine Datenmigration erforderlich.
+
 ## Vereinsadmin: Social Media und Kampagnen
 
 Vereinsadmins verwalten Social Media und Kampagnenentwuerfe im eigenen

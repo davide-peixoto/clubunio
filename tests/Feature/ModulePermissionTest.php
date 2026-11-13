@@ -56,6 +56,20 @@ class ModulePermissionTest extends TestCase
         ]);
     }
 
+    public function test_active_admin_inherits_the_full_catalog_only_in_own_tenant(): void
+    {
+        $gate = app(ModulePermissionService::class);
+        $other = Tenant::create(['slug' => 'foreign-'.Str::random(12), 'name' => 'Foreign fixture']);
+        foreach (\App\ClubUnio\Services\PermissionCatalog::keys() as $key) {
+            [$module, $action] = explode('.', $key);
+            $this->assertTrue($gate->allows($this->admin, $this->tenant, $module, $action), $key);
+            $this->assertFalse($gate->allows($this->admin, $other, $module, $action), $key);
+        }
+        $this->assertFalse($gate->allows($this->admin, $this->tenant, 'social_media', 'unknown'));
+        $this->db->table('clubora.accounts')->where('id', $this->admin->id)->update(['active' => false]);
+        $this->assertFalse($gate->allows($this->admin, $this->tenant, 'social_media', 'view'));
+    }
+
     private function input(int $profile): array
     {
         return ['username' => Str::random(20), 'display_name' => 'Profile fixture', 'active' => true,

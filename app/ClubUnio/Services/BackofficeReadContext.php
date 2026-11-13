@@ -70,7 +70,7 @@ class BackofficeReadContext
         $previous = $request->attributes->get(self::class);
         $request->attributes->set(self::class, ['account' => $actor->id,
             'permissionCache' => [],
-            'tenants' => $actor->tenants()->wherePivotIn('role', ['admin', 'office'])->get()]);
+            'tenants' => $actor->tenants()->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->get()]);
         try {
             return $next($request);
         } finally {

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 /** Fresh authorization; mobile GET facts live only in their authenticated request. Ownership checks remain mandatory. */
 final class ModulePermissionService
 {
+    public const TENANT_ADMIN_ROLE = 'admin';
+    public const FULL_BACKOFFICE_ROLES = [self::TENANT_ADMIN_ROLE, 'office'];
+
     private const MODELS = [
         'members' => ['Member', 'MemberNote', 'MemberFunction', 'MemberKey', 'Sponsorship', 'MemberBankAccount'],
         'registrations' => ['Registration'], 'member_changes' => ['MemberChangeRequest'],
@@ -121,7 +124,8 @@ final class ModulePermissionService
         if (! $link) {
             return false;
         }
-        if (in_array($link->role, ['admin', 'office'], true)) {
+        // An active tenant administrator inherits every registered action without profile grants.
+        if (in_array($link->role, self::FULL_BACKOFFICE_ROLES, true)) {
             return true;
         }
         if ($link->role !== 'profile' || ! ($link->access_profile_id ?? null)) {
