@@ -46,7 +46,17 @@ class SfvPlanningService
         return app(SyncWorkService::class)->run($actor, $tenant, 'sfv_schedule', $tenant->id, $data);
     }
 
-    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null, ?string $seasonDate = null): int
+    public function refreshNow(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null): int
+    {
+        return $this->refreshSchedule($actor, $tenant, $input, $authorization);
+    }
+
+    public function refreshObserved(Account $actor, Tenant $tenant, array $input, Closure $observeSchedule, ?string $seasonDate = null): int
+    {
+        return $this->refreshSchedule($actor, $tenant, $input, seasonDate: $seasonDate, observeSchedule: $observeSchedule);
+    }
+
+    private function refreshSchedule(Account $actor, Tenant $tenant, array $input, ?Closure $authorization = null, ?string $seasonDate = null, ?Closure $observeSchedule = null): int
     {
         $this->authorizeSync($actor, $tenant);
         $data = Validator::make($input, ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
@@ -77,8 +87,9 @@ class SfvPlanningService
             $now = $seasonDate ? Time::parse($seasonDate, 'Europe/Zurich') : now('Europe/Zurich');
             $season = $this->setting($tenant, 'SFV_SEASON_ID_AUTO', '1');
             $season = in_array(strtolower($season), ['0', 'false', 'nein', 'no'], true) ? (int) $this->setting($tenant, 'SFV_SEASON_ID') : $now->year + (int) ($now->month >= 7);
-            $response = $client()->withHeaders(['X-User-Token' => $token, 'X-User-Language' => $this->setting($tenant, 'SFV_LANGUAGE', '1')])
-                ->get($base.'/api/club/schedule', ['SeasonId' => $season, 'ClubId' => $club, 'Language' => $this->setting($tenant, 'SFV_LANGUAGE', '1'), 'DateFrom' => $data['from'].'T00:00:00', 'DateUntil' => $data['to'].'T23:59:59']);
+            $language = $observeSchedule ? '1' : $this->setting($tenant, 'SFV_LANGUAGE', '1');
+            $response = $client()->withHeaders(['X-User-Token' => $token, 'X-User-Language' => $language])
+                ->get($base.'/api/club/schedule', ['SeasonId' => $season, 'ClubId' => $club, 'Language' => $language, 'DateFrom' => $data['from'].'T00:00:00', 'DateUntil' => $data['to'].'T23:59:59']);
             if (! $response->successful()) {
                 throw new \RuntimeException('Schedule failed', $response->status());
             }
@@ -107,7 +118,7 @@ class SfvPlanningService
                     'home' => in_array($a, $own, true) || (! in_array($b, $own, true) && stripos($location, 'Sissach') !== false)];
             }
 
-            return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $rows, $authorization) {
+            $count = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $rows, $authorization) {
                 $p = $this->planning;
                 $p->lock($tenant);
                 $authorization?->__invoke();
@@ -127,6 +138,9 @@ class SfvPlanningService
 
                 return count($rows);
             });
+            $observeSchedule?->__invoke($matches);
+
+            return $count;
         } catch (\Throwable $error) {
             if ($error instanceof HttpExceptionInterface) {
                 throw $error;
@@ -135,6 +149,16 @@ class SfvPlanningService
             Log::warning('clubunio.sfv.refresh_failed', ['reference' => $reference, 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'provider_status' => (int) $error->getCode()]);
             throw ValidationException::withMessages(['sfv' => __('SFV-Abruf fehlgeschlagen. Bestehende Termine bleiben unverändert. Referenz: :value1', ['value1' => $reference])]);
         }
+    }
+
+    public static function scheduleScore(object $match, array $row): ?array
+    {
+        // Require both observed SFV markers; the Swagger schema does not define the numeric enum.
+        if (($row['matchState'] ?? null) !== 2 || mb_strtolower(trim((string) ($row['matchStateName'] ?? ''))) !== 'ausgetragen'
+            || ($row['teamAId'] ?? null) !== (int) $match->team_a_id || ($row['teamBId'] ?? null) !== (int) $match->team_b_id) {
+            return null;
+        }
+        return self::finalScore($match, [...$row, 'hasMatchEnded' => true]);
     }
 
     /**
@@ -163,7 +187,7 @@ class SfvPlanningService
         foreach ($matches as $match) {
             $response = $client()->withHeaders(['X-User-Token' => $token, 'X-User-Language' => $this->setting($tenant, 'SFV_LANGUAGE', '1')])
                 ->get($base.'/api/match/'.(int) $match->match_id);
-            if ($response->status() === 404) {
+            if (in_array($response->status(), [403, 404, 406], true)) {
                 continue;
             }
             $detail = $response->throw()->json();

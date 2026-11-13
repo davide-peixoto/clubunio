@@ -57,4 +57,15 @@ final class SocialJobsTest extends TestCase
         }
         self::assertGreaterThan(15, count($colours));
     }
+
+    public function test_schedule_scores_require_the_observed_final_state_and_matching_teams(): void
+    {
+        $match = (object) ['match_id' => 123, 'team_a_id' => 11, 'team_b_id' => 12, 'starts_at' => '2026-11-13T19:00:00+01:00'];
+        $row = ['matchId' => 123, 'matchDate' => '2026-11-13T19:00:00', 'teamAId' => 11, 'teamBId' => 12,
+            'matchState' => 2, 'matchStateName' => 'ausgetragen', 'scoreTeamA' => 0, 'scoreTeamB' => 2];
+        self::assertSame([0, 2], SfvPlanningService::scheduleScore($match, $row));
+        foreach ([['matchState' => 1], ['matchStateName' => 'abgesagt'], ['teamAId' => 12], ['scoreTeamA' => null]] as $bad) {
+            self::assertNull(SfvPlanningService::scheduleScore($match, array_replace($row, $bad)));
+        }
+    }
 }
