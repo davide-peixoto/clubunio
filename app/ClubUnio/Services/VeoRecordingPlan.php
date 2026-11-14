@@ -67,9 +67,7 @@ final class VeoRecordingPlan
 
         $matches = $this->projection->table('sfv_schedule', $tenant)->whereBetween('starts_at', [
             $fromDate->subDays(2)->toIso8601String(), $toDate->addDays(3)->toIso8601String(),
-        ])->orderBy('starts_at')->orderBy('match_id')->get()
-            ->reject(fn ($match) => in_array(mb_strtolower(trim((string) $match->state)),
-                ['abgesagt', 'annulliert', 'abgebrochen', 'verschoben'], true));
+        ])->orderBy('starts_at')->orderBy('match_id')->get();
         $enabled = $this->enabledTeams($tenant);
         if ($matches->isEmpty() || $enabled->isEmpty()) {
             return [];
@@ -92,12 +90,20 @@ final class VeoRecordingPlan
             $startsAt = Time::parse($match->starts_at)->tz(self::TIMEZONE);
             $date = $startsAt->toDateString();
             $linked = $links->get($match->match_id, collect());
+            $competition = $linked->count() === 1 ? $linked->first() : null;
+            $override = $competition && SfvLocalOverride::recorded($tenant, $competition);
+            if (! $override && in_array(mb_strtolower(trim((string) $match->state)), ['abgesagt', 'annulliert', 'abgebrochen', 'verschoben'], true)) {
+                continue;
+            }
+            if ($override) {
+                $startsAt = Time::parse($competition->plays_on.' '.$competition->starts_at, self::TIMEZONE);
+                $date = $startsAt->toDateString();
+            }
             $eligible = $teams->filter(fn ($team) => $team->starts_on <= $date && $team->ends_on >= $date);
             if (! $this->isEligible($match, $linked, $explicitTeams, $eligible)) {
                 continue;
             }
 
-            $competition = $linked->count() === 1 ? $linked->first() : null;
             $setting = $settings->get($competition?->id);
             if ($competition && (! $competition->active || $setting?->withdrawn)) {
                 continue;
@@ -121,6 +127,7 @@ final class VeoRecordingPlan
             ];
         }
 
+        usort($entries, fn ($a, $b) => [$a['starts_at'], $a['match_id']] <=> [$b['starts_at'], $b['match_id']]);
         $conflicts = $this->conflicts($entries);
 
         return collect($entries)->filter(fn ($entry) => $entry['starts_at']->toDateString() >= $from

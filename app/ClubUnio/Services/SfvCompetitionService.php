@@ -40,6 +40,7 @@ class SfvCompetitionService
         if ($records->count() !== 1 || ! $record->active || $record->plays_on->toDateString() < now('Europe/Zurich')->toDateString()) {
             throw ValidationException::withMessages(['match' => __('Keine eindeutige aktive zukünftige Wettkampfverknüpfung für die Ausblendung.')]);
         }
+        $this->checkLocalOverride($tenant, $record);
         $state = mb_strtolower(trim((string) $match->state));
         $cancelled = in_array($state, ['abgesagt', 'annulliert', 'abgebrochen', 'verschoben'], true);
         $located = trim((string) $match->location) !== '';
@@ -143,6 +144,7 @@ class SfvCompetitionService
         if (! $record && ! $separate && (clone $base)->where('active', true)->whereNull('association_match_id')->whereDate('plays_on', $date->toDateString())->exists()) {
             throw ValidationException::withMessages(['target' => __('Es gibt manuelle Wettkämpfe an diesem Tag. Bitte den passenden Eintrag auswählen oder zuerst fachlich prüfen.')]);
         }
+        $this->checkLocalOverride($tenant, $record);
         $after = ['plays_on' => $date->toDateString(), 'starts_at' => $date->format('H:i:s'), 'host_name' => $match->host_name, 'guest_name' => $match->guest_name, 'field_id' => $field->id,
             'association_match_id' => $match->match_id, 'source' => 'SFV'];
         $before = $record?->only(array_keys($after));
@@ -154,6 +156,13 @@ class SfvCompetitionService
         $data['fingerprint'] = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
 
         return $data;
+    }
+
+    private function checkLocalOverride(Tenant $tenant, ?Competition $record): void
+    {
+        if ($record?->association_match_id && SfvLocalOverride::recorded($tenant, $record)) {
+            throw ValidationException::withMessages(['match' => trans('sfv_reschedule.override_active')]);
+        }
     }
 
     public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false, bool $requireSingleReview = false): int

@@ -80,6 +80,9 @@ class FacilityService
             }
             $data = Validator::make($input, $rules)->validate();
             if ($model === Competition::class) {
+                if ($record->association_match_id && (clone $record)->forceFill($data)->isDirty(['plays_on', 'starts_at', 'field_id', 'active', 'host_name', 'guest_name'])) {
+                    throw ValidationException::withMessages(['form' => trans('sfv_reschedule.override_pitch_only')]);
+                }
                 foreach (['host_club_number', 'guest_club_number'] as $field) {
                     // Historical unknown/inactive numbers may remain, but cannot be assigned anew.
                     if (! empty($data[$field]) && (! $id || (int) $data[$field] !== (int) $record->$field)
