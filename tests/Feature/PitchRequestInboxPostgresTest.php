@@ -150,7 +150,7 @@ class PitchRequestInboxPostgresTest extends TestCase
             $this->role($role);
             $data = $this->inbox();
             $this->assertSame([$cancelled, $rejected, $future, $today], array_column($data['entries'], 'source_id'));
-            $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'request' => true], $data['capabilities']);
+            $this->assertSame(['view' => true, 'manage' => false, 'approve' => false, 'override_field_status' => false, 'request' => true], $data['capabilities']);
             $this->assertFalse($data['can_filter_status']);
             $this->assertSame([$this->team], array_column($data['teams'], 'id'));
             $required = (new MobilePitchDocumentation)->specification()['components']['schemas']['RequestInboxEntry']['required'];
