@@ -31,6 +31,7 @@ class VeoRecordingPlanTest extends TestCase
             'training_options' => 'id integer primary key, tenant_id integer, category text, active boolean',
             'veo_cameras' => 'id integer primary key, tenant_id integer, field_id integer, name text, unique(tenant_id,field_id)',
             'veo_recording_teams' => 'tenant_id integer, team_season_id integer, primary key(tenant_id,team_season_id)',
+            'object_changes' => 'id integer primary key, tenant_id integer, object_type text, object_id integer, after_value text',
         ] as $table => $columns) {
             $db->statement("CREATE TABLE clubora.$table ($columns)");
         }
@@ -81,6 +82,25 @@ class VeoRecordingPlanTest extends TestCase
         $this->assertSame(['conflict', 'conflict', 'planned'], array_column($entries, 'status'));
     }
 
+    public function test_confirmed_last_minute_override_is_used_until_booking_ends(): void
+    {
+        $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-14T13:00:00+01:00'));
+        $this->match(21, '14:00:00');
+        $this->plan->setTeamEnabled($this->tenant, 5, true);
+        $this->plan->saveCamera($this->tenant, 11, 'Camera B');
+        $competition = $this->table('competitions')->where('association_match_id', 21);
+        $competition->update(['starts_at' => '14:15:00', 'field_id' => 11]);
+        $this->assertSame('unplaced', $this->entry()['status']);
+        $this->table('object_changes')->insert([
+            'tenant_id' => 1, 'object_type' => 'sfv_local_override', 'object_id' => $competition->value('id'),
+            'after_value' => json_encode(['placement' => ['2026-11-14', '14:15', 11], 'until' => '2026-11-14T16:15:00+01:00']),
+        ]);
+        $this->assertSame('Camera B', $this->entry()['camera']);
+        $this->assertSame('14:15', $this->entry()['starts_at']->format('H:i'));
+        $this->travelTo(\Carbon\CarbonImmutable::parse('2026-11-14T16:15:00+01:00'));
+        $this->assertSame('unplaced', $this->entry()['status']);
+    }
+
     public function test_missing_or_ambiguous_placement_is_visible_without_selecting_a_camera(): void
     {
         $this->match(21, '14:00:00');
@@ -94,6 +114,15 @@ class VeoRecordingPlanTest extends TestCase
         $this->table('competitions')->delete();
         $this->assertSame('unplaced', $this->entry()['status']);
         $this->assertNull($this->entry()['field_id']);
+    }
+
+    public function test_override_window_includes_exactly_one_hour_before_kickoff(): void
+    {
+        $kickoff = \Carbon\CarbonImmutable::parse('2026-11-14T14:00:00+01:00');
+        $this->assertFalse(\App\ClubUnio\Services\SfvLocalOverride::allowsAt($kickoff, $kickoff->subHour()->subSecond()));
+        $this->assertTrue(\App\ClubUnio\Services\SfvLocalOverride::allowsAt($kickoff, $kickoff->subHour()));
+        $this->assertTrue(\App\ClubUnio\Services\SfvLocalOverride::allowsAt($kickoff, $kickoff->subSecond()));
+        $this->assertFalse(\App\ClubUnio\Services\SfvLocalOverride::allowsAt($kickoff, $kickoff));
     }
 
     public function test_other_tenant_camera_cannot_be_configured_or_selected(): void

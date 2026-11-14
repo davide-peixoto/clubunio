@@ -10,7 +10,7 @@ final class SfvRescheduleImpact
 {
     public function __construct(private PitchPlanningProjection $pitch, private TeamPlanningService $planning) {}
 
-    public function preview(Account $actor, Tenant $tenant, array $preview): ?array
+    public function preview(Account $actor, Tenant $tenant, array $preview, bool $checkPitch = true): ?array
     {
         if (! self::requiresReview($preview)) {
             return null;
@@ -18,7 +18,7 @@ final class SfvRescheduleImpact
         $after = $preview['after'];
 
         $conflicts = [];
-        if ($this->pitch->ready()) {
+        if ($checkPitch && $this->pitch->ready()) {
             $maySeeConflicts = app(ModulePermissionService::class)->allows($actor, $tenant, 'competitions', 'sync');
             $record = Competition::where('tenant_id', $tenant->id)->findOrFail($preview['target_id']);
             $record->forceFill($after);

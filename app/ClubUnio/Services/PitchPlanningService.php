@@ -277,8 +277,40 @@ class PitchPlanningService
             if (array_intersect_key($before, $data) == $data) return $before;
             $after = array_replace($before, $data, $this->times($data));
             $this->ensureFree($tenant, $after);
+            $competition = $before['source'] === 'competition'
+                ? Competition::where('tenant_id', $tenant->id)->findOrFail($before['source_id']) : null;
+            $impact = null;
+            if ($competition?->association_match_id) {
+                $matches = $this->projection->table('sfv_schedule', $tenant)
+                    ->where('match_id', $competition->association_match_id)->limit(2)->get();
+                $match = $matches->count() === 1 ? $matches->first() : null;
+                $kickoff = $match?->starts_at && in_array(mb_strtolower(trim((string) $match->state)),
+                    ['angesetzt', 'neu angesetzt', 'noch nicht ausgetragen'], true) ? Time::parse($match->starts_at) : null;
+                abort_unless($kickoff && SfvLocalOverride::allowsAt($kickoff, Time::now())
+                    && $data['date'] === $kickoff->tz('Europe/Zurich')->toDateString(), 422, trans('sfv_reschedule.override_window'));
+                $impact = app(SfvRescheduleImpact::class)->preview($actor, $tenant, [
+                    'target_id' => $competition->id,
+                    'before' => ['plays_on' => $before['date'], 'starts_at' => $before['starts_at'], 'field_id' => $before['field_id']],
+                    'after' => ['plays_on' => $data['date'], 'starts_at' => $data['starts_at'], 'field_id' => $data['field_id'],
+                        'association_match_id' => $competition->association_match_id],
+                    'field' => collect($this->projection->fields($tenant))->firstWhere('id', $data['field_id'])['name'],
+                ], checkPitch: false);
+                abort_if(($impact['restricted'] ?? 0) > 0, 422, trans('sfv_reschedule.blocked'));
+            }
             $this->persistPlacement($tenant, $before, $data);
             $after = $this->resolve($tenant, $key);
+            if ($competition?->association_match_id) {
+                $this->projection->table('object_changes', $tenant)->insert([
+                    'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'sfv_local_override',
+                    'object_id' => $competition->id, 'after_value' => json_encode([
+                        'placement' => [$after['date'], substr($after['starts_at'], 0, 5), (int) $after['field_id']],
+                        'until' => Time::parse($after['ends_at_iso'])->max($kickoff->addMinutes($data['duration_minutes']))->toIso8601String(),
+                    ], JSON_THROW_ON_ERROR),
+                ]);
+                if ($impact !== null) {
+                    app(SfvRescheduleImpact::class)->apply($actor, $tenant, $impact);
+                }
+            }
             $this->audit($actor, $tenant, $before, $after, 'moved');
             return $after;
         });

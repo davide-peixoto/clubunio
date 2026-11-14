@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'override_window' => 'SFV-Spiele lassen sich am Spieltag in der letzten Stunde vor dem SFV-Anpfiff verschieben.',
+    'override_active' => 'Für dieses Spiel gilt bis zum Ende des Belegungsfensters die bestätigte kurzfristige Änderung.',
+    'override_pitch_only' => 'Kurzfristige Änderungen an SFV-Spielen in der Platzplanung bestätigen.',
     'heading' => 'Auswirkungen der Spielverschiebung',
     'no_conflicts' => 'Für die neue Platzzuteilung sind keine Überschneidungen bekannt.',
     'restricted' => 'Verknüpfte Teamtermine benötigen eine manuelle Prüfung. Anzahl: :count',

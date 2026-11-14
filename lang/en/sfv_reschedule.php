@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'override_window' => 'SFV matches can be moved on match day during the last hour before the SFV kickoff.',
+    'override_active' => 'The confirmed last-minute change applies until the end of the booking window.',
+    'override_pitch_only' => 'Confirm last-minute changes to SFV matches in pitch planning.',
     'heading' => 'Impact of rescheduling the match',
     'no_conflicts' => 'No known conflicts for the new pitch allocation.',
     'restricted' => 'Linked team events need manual review. Count: :count',
