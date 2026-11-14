@@ -5,6 +5,7 @@ return [
     'no_conflicts' => 'Für die neue Platzzuteilung sind keine Überschneidungen bekannt.',
     'restricted' => 'Verknüpfte Teamtermine benötigen eine manuelle Prüfung. Anzahl: :count',
     'blocked' => 'Bitte zuerst die Platzkonflikte oder betroffenen Teamtermine klären.',
+    'single_required' => 'Bitte dieses Spiel einzeln auswählen und die Auswirkungen der Verschiebung prüfen.',
     'confirm' => 'Neue Spielzuteilung und angezeigte Teamtermine übernehmen? Team- und Platzplanbenachrichtigungen werden ausgelöst. Andere Platzbelegungen müssen bei Konflikten separat umgeplant werden.',
     'apply' => 'Spielverschiebung übernehmen',
     'stale' => 'Die Auswirkungen der Spielverschiebung haben sich geändert. Bitte erneut prüfen.',

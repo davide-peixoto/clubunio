@@ -57,7 +57,7 @@ class SfvCompetitionService
         return $data;
     }
 
-    public function previewBatch(Account $actor, Tenant $tenant, string $from, string $to): array
+    public function previewBatch(Account $actor, Tenant $tenant, string $from, string $to, bool $requireSingleReview = false): array
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         Validator::make(compact('from', 'to'), ['from' => 'required|date_format:Y-m-d', 'to' => 'required|date_format:Y-m-d|after_or_equal:from'])->validate();
@@ -72,7 +72,9 @@ class SfvCompetitionService
         foreach ($matches as $match) {
             try {
                 $preview = $this->review($actor, $tenant, $match->id);
-                if ($preview['before'] == $preview['after']) {
+                if ($requireSingleReview && SfvRescheduleImpact::requiresReview($preview)) {
+                    $issues[] = ['title' => $match->title, 'message' => trans('sfv_reschedule.single_required')];
+                } elseif ($preview['before'] == $preview['after']) {
                     $unchanged++;
                 } else {
                     $entries[] = $preview;
@@ -85,15 +87,15 @@ class SfvCompetitionService
         return compact('entries', 'issues', 'unchanged');
     }
 
-    public function applyBatch(Account $actor, Tenant $tenant, array $entries): int
+    public function applyBatch(Account $actor, Tenant $tenant, array $entries, bool $requireSingleReview = false): int
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
         abort_if(count($entries) > 100, 422);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $entries) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $entries, $requireSingleReview) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             foreach ($entries as $entry) {
-                $this->apply($actor, $tenant, $entry);
+                $this->apply($actor, $tenant, $entry, requireSingleReview: $requireSingleReview);
             }
 
             return count($entries);
@@ -154,11 +156,11 @@ class SfvCompetitionService
         return $data;
     }
 
-    public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false): int
+    public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false, bool $requireSingleReview = false): int
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview, $reschedule) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview, $reschedule, $requireSingleReview) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
@@ -167,6 +169,9 @@ class SfvCompetitionService
                 : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false);
             if (! hash_equals($fresh['fingerprint'], (string) $preview['fingerprint'])) {
                 throw ValidationException::withMessages(['match' => __('SFV-Daten oder Wettkampf wurden geändert. Bitte eine neue Vorschau erstellen.')]);
+            }
+            if ($requireSingleReview && ! $reschedule && SfvRescheduleImpact::requiresReview($fresh)) {
+                throw ValidationException::withMessages(['match' => trans('sfv_reschedule.single_required')]);
             }
             $impactService = app(SfvRescheduleImpact::class);
             $impact = $reschedule ? $impactService->preview($actor, $tenant, $fresh) : null;

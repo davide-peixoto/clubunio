@@ -175,7 +175,7 @@ class SfvCompetitions extends Page implements HasTable
         $this->validateRange();
         $this->preview = null;
         $this->batchPreview = null;
-        $this->batchPreview = app(SfvCompetitionService::class)->previewBatch(Filament::auth()->user(), Filament::getTenant(), $this->from, $this->to);
+        $this->batchPreview = app(SfvCompetitionService::class)->previewBatch(Filament::auth()->user(), Filament::getTenant(), $this->from, $this->to, requireSingleReview: true);
     }
 
     public function applyBatch(): void
@@ -183,7 +183,7 @@ class SfvCompetitions extends Page implements HasTable
         abort_unless(ProfileUi::allows('competitions', 'sync'), 403);
         abort_unless(static::canAccess(), 403);
         abort_unless($this->batchPreview, 422);
-        $count = app(SfvCompetitionService::class)->applyBatch(Filament::auth()->user(), Filament::getTenant(), $this->batchPreview['entries']);
+        $count = app(SfvCompetitionService::class)->applyBatch(Filament::auth()->user(), Filament::getTenant(), $this->batchPreview['entries'], requireSingleReview: true);
         $this->batchPreview = null;
         Notification::make()->title(__(':count Wettkämpfe übernommen', ['count' => $count]))->success()->send();
     }
