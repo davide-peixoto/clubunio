@@ -499,10 +499,10 @@ class BexioSandboxDispatchTest extends TestCase
         $fixtures = $this->generalFixtures();
         config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         $this->mock(AzureDocumentReader::class, function ($mock) {
-            $mock->shouldReceive('blobPath')->andReturn('sandbox/fixture.pdf');
-            $mock->shouldReceive('read')->with('azure.blob://files/', 'sandbox/fixture.pdf')->andReturn("%PDF-1.4\nfixture\n%%EOF");
+            $mock->shouldReceive('blobPath')->andReturn('spesen/fixture.pdf');
+            $mock->shouldReceive('read')->with('azure.blob://files/', 'fixture.pdf')->andReturn("%PDF-1.4\nfixture\n%%EOF");
         });
-        Expense::find($fixtures['expense'])->activeLines()->update(['storage_reference' => 'sandbox/fixture.pdf']);
+        Expense::find($fixtures['expense'])->activeLines()->update(['storage_reference' => 'fixture.pdf']);
         $service = app(BexioSandboxDispatchService::class);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
