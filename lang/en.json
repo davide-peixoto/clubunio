@@ -1,4 +1,11 @@
 {
+    "work-inbox.open-expenses": "Open expense list",
+    "work-inbox.title": "Work inbox",
+    "work-inbox.expenses": "Expenses awaiting approval",
+    "work-inbox.empty-expenses": "No expenses awaiting approval.",
+    "work-inbox.bexio": "Bexio jobs requiring review",
+    "work-inbox.bexio-count :count": "Open cases requiring review: :count",
+    "work-inbox.open-sync": "Open synchronisation",
     "veo.title": "Veo recording plan",
     "veo.manual": "This plan uses SFV fixtures and confirmed pitch assignments. Prepare recordings in the Veo Camera app.",
     "veo.start_date": "Start date",

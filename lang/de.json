@@ -1,4 +1,11 @@
 {
+    "work-inbox.open-expenses": "Spesenliste öffnen",
+    "work-inbox.title": "Arbeitskorb",
+    "work-inbox.expenses": "Spesen zur Freigabe",
+    "work-inbox.empty-expenses": "Keine Spesen zur Freigabe.",
+    "work-inbox.bexio": "Bexio-Aufträge zur Prüfung",
+    "work-inbox.bexio-count :count": "Offene Prüffälle: :count",
+    "work-inbox.open-sync": "Synchronisation öffnen",
     "veo.title": "Veo-Aufnahmeplanung",
     "veo.manual": "Der Plan verwendet SFV-Spiele und bestätigte Platzzuteilungen. Bereite die Aufnahmen in der Veo Camera App vor.",
     "veo.start_date": "Startdatum",
