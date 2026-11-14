@@ -146,7 +146,10 @@ class SfvCompetitions extends Page implements HasTable
         $this->preview = null;
         $this->batchPreview = null;
         $this->validate(['match' => 'required|integer|min:1', 'target' => 'nullable|integer|min:1', 'separate' => 'boolean']);
-        $this->preview = app(SfvCompetitionService::class)->review(Filament::auth()->user(), Filament::getTenant(), (int) $this->match, $this->target ? (int) $this->target : null, $this->separate);
+        $preview = app(SfvCompetitionService::class)->review(Filament::auth()->user(), Filament::getTenant(), (int) $this->match, $this->target ? (int) $this->target : null, $this->separate);
+        $impact = app(\App\ClubUnio\Services\SfvRescheduleImpact::class)
+            ->preview(Filament::auth()->user(), Filament::getTenant(), $preview);
+        $this->preview = $impact === null ? $preview : $preview + ['impact' => $impact];
     }
 
     public function apply(): void
@@ -154,7 +157,12 @@ class SfvCompetitions extends Page implements HasTable
         abort_unless(ProfileUi::allows('competitions', 'sync'), 403);
         abort_unless(static::canAccess(), 403);
         abort_unless($this->preview, 422);
-        app(SfvCompetitionService::class)->apply(Filament::auth()->user(), Filament::getTenant(), $this->preview);
+        $service = app(SfvCompetitionService::class);
+        if (! empty($this->preview['impact'])) {
+            $service->apply(Filament::auth()->user(), Filament::getTenant(), $this->preview, reschedule: true);
+        } else {
+            $service->apply(Filament::auth()->user(), Filament::getTenant(), $this->preview);
+        }
         $this->preview = null;
         $this->target = '';
         $this->separate = false;

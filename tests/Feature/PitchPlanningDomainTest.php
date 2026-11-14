@@ -331,6 +331,16 @@ class PitchPlanningDomainTest extends TestCase
             'team_a_id' => 919, 'team_b_id' => 920, 'starts_at' => '2026-11-07 14:00:00+00', 'location' => 'Tannenbrunn - 2, Sissach', 'state' => 'Angesetzt']);
         $sfv = app(SfvCompetitionService::class);
         $preview = $sfv->preview($this->actor, $this->tenant, $match, $this->competition);
+        $impact = app(\App\ClubUnio\Services\SfvRescheduleImpact::class);
+        $preview['impact'] = $impact->preview($this->actor, $this->tenant, $preview);
+        $this->assertSame('block', $preview['impact']['conflicts'][0]['type']);
+        try {
+            $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
+            $this->fail('A conflicted reschedule was approved');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertSame(trans('sfv_reschedule.blocked'), $exception->errors()['match'][0]);
+        }
+        $this->assertSame($area['id'], $this->service->resolve($this->tenant, $key)['area_id']);
         $sfv->apply($this->actor, $this->tenant, $preview);
         $entry = $this->service->resolve($this->tenant, $key);
         $this->assertSame($this->field2, $entry['field_id']);
