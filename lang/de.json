@@ -2965,5 +2965,12 @@
     "veo.no_teams": "Keine aktiven Mannschaften in der aktuellen Saison.",
     "veo.enable": "Aufnahmen aktivieren",
     "veo.disable": "Aufnahmen deaktivieren",
-    "veo.saved": "Einstellungen gespeichert"
+    "veo.saved": "Einstellungen gespeichert",
+    "work-inbox.open-expenses": "Spesenliste öffnen",
+    "work-inbox.title": "Arbeitskorb",
+    "work-inbox.expenses": "Spesen zur Freigabe",
+    "work-inbox.empty-expenses": "Keine Spesen zur Freigabe.",
+    "work-inbox.bexio": "Bexio-Aufträge zur Prüfung",
+    "work-inbox.bexio-count :count": "Offene Prüffälle: :count",
+    "work-inbox.open-sync": "Synchronisation öffnen"
 }
