@@ -370,6 +370,43 @@ class PitchPlanningDomainTest extends TestCase
         $this->assertSame(0, $this->db->table('pg_temp.pitch_requests')->count());
     }
 
+    public function test_reviewed_sfv_move_updates_the_linked_team_event_and_records_both_notifications(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-04 12:00:00', 'Europe/Zurich'));
+        \App\ClubUnio\Services\TeamPlanningService::seedOptions($this->tenant->id);
+        $this->db->table('clubora.competitions')->where('id', $this->competition)
+            ->update(['association_match_id' => 818181]);
+        $match = $this->insert('sfv_schedule', ['match_id' => 818181, 'season_id' => 2026, 'home' => true,
+            'title' => 'A - B', 'host_name' => 'A', 'guest_name' => 'B',
+            'starts_at' => '2026-11-07 14:00:00+00', 'location' => 'Tannenbrunn - 2, Sissach', 'state' => 'Neu angesetzt']);
+        $event = $this->insert('team_events', ['team_season_id' => $this->team, 'sfv_match_id' => 818181,
+            'title' => 'A - B', 'kind' => 'MEISTERSCHAFT', 'mode' => 'ABMELDEN', 'description' => 'Fixture description',
+            'starts_at' => '2026-11-05 14:00:00+00', 'ends_at' => '2026-11-05 15:30:00+00',
+            'deadline_at' => '2026-11-04 14:00:00+00']);
+        $sfv = app(SfvCompetitionService::class);
+        $preview = $sfv->preview($this->actor, $this->tenant, $match);
+        $impact = app(\App\ClubUnio\Services\SfvRescheduleImpact::class);
+        $preview['impact'] = $impact->preview($this->actor, $this->tenant, $preview);
+        $this->assertSame([], $preview['impact']['conflicts']);
+        $this->assertSame('2026-11-07T15:00', $preview['impact']['events'][0]['input']['starts_at']);
+
+        $this->db->table('clubora.team_events')->where('id', $event)->update(['revision' => 2]);
+        try {
+            $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
+            $this->fail('Stale reschedule was approved');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertSame(trans('sfv_reschedule.stale'), $exception->errors()['match'][0]);
+        }
+        $preview['impact'] = $impact->preview($this->actor, $this->tenant, $preview);
+        $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
+        $updated = $this->db->table('clubora.team_events')->where('id', $event)->firstOrFail();
+        $this->assertSame('2026-11-07 16:30', \Carbon\CarbonImmutable::parse($updated->ends_at)->tz('Europe/Zurich')->format('Y-m-d H:i'));
+        $this->assertSame('Fixture description', $updated->description);
+        $this->assertSame('team.changed', $this->db->table('clubora.team_planning_messages')->where('event_id', $event)->value('event_key'));
+        $this->assertSame('sfv_moved', end($this->events)['action']);
+        $this->travelBack();
+    }
+
     public function test_noop_move_does_not_change_revision_or_notify(): void
     {
         $entry = $this->service->createManual($this->actor, $this->tenant, $this->input());
