@@ -335,6 +335,12 @@ class PitchPlanningDomainTest extends TestCase
         $preview['impact'] = $impact->preview($this->actor, $this->tenant, $preview);
         $this->assertSame('block', $preview['impact']['conflicts'][0]['type']);
         try {
+            $sfv->applyBatch($this->actor, $this->tenant, [$preview], requireSingleReview: true);
+            $this->fail('The web batch bypassed mandatory single review');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertSame(trans('sfv_reschedule.single_required'), $exception->errors()['match'][0]);
+        }
+        try {
             $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
             $this->fail('A conflicted reschedule was approved');
         } catch (\Illuminate\Validation\ValidationException $exception) {

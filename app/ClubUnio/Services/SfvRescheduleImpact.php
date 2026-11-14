@@ -12,13 +12,10 @@ final class SfvRescheduleImpact
 
     public function preview(Account $actor, Tenant $tenant, array $preview): ?array
     {
-        $before = $preview['before'] ?? null;
-        $after = $preview['after'] ?? null;
-        $placement = array_flip(['plays_on', 'starts_at', 'field_id']);
-        if (! $before || ! $after || ($preview['kind'] ?? '') === 'withdrawal'
-            || array_intersect_key($before, $placement) == array_intersect_key($after, $placement)) {
+        if (! self::requiresReview($preview)) {
             return null;
         }
+        $after = $preview['after'];
 
         $conflicts = [];
         if ($this->pitch->ready()) {
@@ -71,6 +68,16 @@ final class SfvRescheduleImpact
         }
 
         return ['conflicts' => $conflicts, 'events' => $events, 'restricted' => $restricted];
+    }
+
+    public static function requiresReview(array $preview): bool
+    {
+        $before = $preview['before'] ?? null;
+        $after = $preview['after'] ?? null;
+        $placement = array_flip(['plays_on', 'starts_at', 'field_id']);
+
+        return $before && $after && ($preview['kind'] ?? '') !== 'withdrawal'
+            && array_intersect_key($before, $placement) != array_intersect_key($after, $placement);
     }
 
     public function apply(Account $actor, Tenant $tenant, array $impact): void
