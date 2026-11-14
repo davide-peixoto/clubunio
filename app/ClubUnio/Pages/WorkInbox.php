@@ -62,7 +62,8 @@ class WorkInbox extends Page
         }
 
         $bexio = Synchronisation::canAccess()
-            ? SyncWorkItem::query()->where('tenant_id', $tenant->id)->where('provider', 'bexio')->where('state', 'attention')->count()
+            ? SyncWorkItem::query()->where('tenant_id', $tenant->id)->where('state', 'attention')
+                ->whereNotIn('operation', ['sfv_schedule', 'training_review', 'azure_upload'])->count()
             : null;
 
         return compact('expenses', 'expenseCount', 'bexio');
