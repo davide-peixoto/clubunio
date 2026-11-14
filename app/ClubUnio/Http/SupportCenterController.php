@@ -54,7 +54,10 @@ final class SupportCenterController
         }
         if ($request->isMethod('POST') && $request->input('operation') === 'ask') {
             $input = $request->validate(['body' => 'required|string|max:500', 'previous_topic' => 'nullable|in:login,expense']);
-            $answer = app(\App\ClubUnio\Services\SupportGuide::class)->answer($input['body'], $locale, $input['previous_topic'] ?? null);
+            $article = $this->access->findArticle($input['body'], $club, $staff, $platform, $locale);
+            $answer = $article
+                ? ['text' => $article->body, 'source' => null, 'article' => ['id' => $article->id, 'title' => $article->title], 'ai' => false]
+                : app(\App\ClubUnio\Services\SupportGuide::class)->answer($input['body'], $locale, $input['previous_topic'] ?? null);
             return response()->json(['data' => $answer])->header('Cache-Control', 'private, no-store');
         }
         if ($request->isMethod('POST')) {

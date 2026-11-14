@@ -19,6 +19,11 @@ document.querySelector('[data-support-guide]')?.addEventListener('submit', async
         output.append(turn);
         while (output.children.length > 8) output.firstElementChild.remove();
         form.elements.body.value = '';
+        if (data.article) {
+            const source = document.createElement('span');
+            source.textContent = ' (' + form.dataset.source + ': ' + data.article.title + ')';
+            turn.append(source);
+        }
         if (data.source && document.getElementById('faq-' + data.source)) {
             const link = document.createElement('a');
             link.href = '#faq-' + data.source;

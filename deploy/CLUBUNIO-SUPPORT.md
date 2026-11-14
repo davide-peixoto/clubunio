@@ -38,8 +38,13 @@ ticket assignment, encrypted attachments, explicit attachment escalation,
 portal notifications, article editing and HTTPS video links, bounded FAQ
 follow-ups, and queued triage suggestions.
 
+The assistant also resolves exact published article titles in the current
+language, using the same audience query as the knowledge base. It returns
+matching content directly from ClubUnio, without invoking OpenAI. This
+includes club-staff or platform documentation only in its authorized scope.
+
 Pending: integrated two-tenant DEV acceptance, dedicated provider and worker
-configuration, mobile push and attachment UI, private knowledge retrieval,
+configuration, mobile push and attachment UI, semantic private knowledge retrieval,
 free-form conversational support and automatic resolution. Do not enable
 autonomous responses or actions.
 

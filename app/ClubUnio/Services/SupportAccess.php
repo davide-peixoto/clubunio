@@ -58,4 +58,15 @@ final class SupportAccess
                 }
             });
     }
+
+    public function findArticle(string $question, ?int $tenant, bool $staff, bool $platform, string $locale): ?object
+    {
+        $title = trim($question);
+        if ($title === '' || mb_strlen($title) > 160) return null;
+
+        return $this->articles($tenant, $staff, $platform, $locale)
+            ->whereRaw('lower(title) = ?', [mb_strtolower($title)])
+            ->orderByRaw("CASE WHEN audience = 'public' THEN 1 ELSE 0 END")
+            ->orderBy('id')->first(['id', 'title', 'body']);
+    }
 }

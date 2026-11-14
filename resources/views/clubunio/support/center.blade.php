@@ -19,7 +19,7 @@
         <details id="faq-{{ $key }}"><summary>{{ $item['title'] }}</summary><p>{{ $item['body'] }}</p></details>
     @endforeach
     @foreach($articles as $item)
-        <details><summary>{{ $item->title }}</summary><p>{{ $item->body }}</p>
+        <details id="article-{{ $item->id }}"><summary>{{ $item->title }}</summary><p>{{ $item->body }}</p>
             @if($item->video_url)<a href="{{ $item->video_url }}" rel="noreferrer noopener">{{ trans('support.video') }}</a>@endif
         </details>
     @endforeach
