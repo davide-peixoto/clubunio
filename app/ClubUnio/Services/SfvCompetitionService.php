@@ -154,11 +154,11 @@ class SfvCompetitionService
         return $data;
     }
 
-    public function apply(Account $actor, Tenant $tenant, array $preview): int
+    public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false): int
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview, $reschedule) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
@@ -167,6 +167,14 @@ class SfvCompetitionService
                 : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false);
             if (! hash_equals($fresh['fingerprint'], (string) $preview['fingerprint'])) {
                 throw ValidationException::withMessages(['match' => __('SFV-Daten oder Wettkampf wurden geändert. Bitte eine neue Vorschau erstellen.')]);
+            }
+            $impactService = app(SfvRescheduleImpact::class);
+            $impact = $reschedule ? $impactService->preview($actor, $tenant, $fresh) : null;
+            if ($reschedule && ($impact === null || $impact !== ($preview['impact'] ?? null))) {
+                throw ValidationException::withMessages(['match' => trans('sfv_reschedule.stale')]);
+            }
+            if ($impact !== null && ($impact['conflicts'] !== [] || $impact['restricted'] > 0)) {
+                throw ValidationException::withMessages(['match' => trans('sfv_reschedule.blocked')]);
             }
             $record = $fresh['target_id'] ? Competition::where('tenant_id', $tenant->id)->findOrFail($fresh['target_id']) : new Competition;
             if ($fresh['before'] == $fresh['after']) {
@@ -183,6 +191,9 @@ class SfvCompetitionService
             $record->forceFill($data)->save();
             if ($pitchReady) {
                 app(PitchPlanningService::class)->sfvUpdated($actor, $tenant, $record, $pitchBefore, ($fresh['kind'] ?? '') === 'withdrawal');
+            }
+            if ($impact !== null) {
+                $impactService->apply($actor, $tenant, $impact);
             }
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'competitions', 'object_id' => $record->id,
                 'before_value' => $fresh['before'] ? json_encode($fresh['before']) : null, 'after_value' => json_encode($data + ['action' => ($fresh['kind'] ?? '') === 'withdrawal' ? 'sfv_withdrawal' : 'sfv_import', 'reason' => $fresh['reason'] ?? null])]);
