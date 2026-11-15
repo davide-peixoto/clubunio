@@ -181,3 +181,6 @@ DEV release: `20261115-clubunio-support-workspace`. Rollback:
 `20261115-clubunio-support-zammad`. Verified against DEV PostgreSQL with a
 synthetic ticket, filtered list, detail pane and both secondary tabs; the
 test transaction was rolled back. Stage was not changed.
+Authenticated Chrome visual acceptance is pending: the DEV session reached
+the secure sign-in screen and the user could not sign back in at the time.
+Resume the DEV login check separately, then verify the three tabs in Chrome.
