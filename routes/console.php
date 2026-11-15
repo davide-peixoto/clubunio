@@ -18,6 +18,34 @@ Artisan::command('clubunio:platform-bootstrap {username}', function () {
     $this->info('Initial platform administrator verified. No club permissions changed.');
 });
 
+Artisan::command('clubunio:platform-grant {username} {--actor=} {--reason=}', function () {
+    $service = app(\App\ClubUnio\Services\PlatformAdministrationService::class);
+    $data = \Illuminate\Support\Facades\Validator::make([
+        'username' => mb_strtolower(trim($this->argument('username'))),
+        'actor' => mb_strtolower(trim((string) $this->option('actor'))),
+        'reason' => $this->option('reason'),
+    ], [
+        'username' => 'required|email|max:255',
+        'actor' => 'required|string|max:255',
+        'reason' => 'required|string|min:10|max:500',
+    ])->validate();
+
+    $actor = Account::whereRaw('lower(username) = ?', [$data['actor']])->first();
+    $service->authorize($actor);
+    if (! Account::whereRaw('lower(username) = ?', [$data['username']])->exists()) {
+        $service->createAccount($actor, [
+            'username' => $data['username'],
+            'display_name' => $data['username'],
+            'password' => $this->secret('New account password'),
+            'password_confirmation' => $this->secret('Confirm new account password'),
+            'reason' => $data['reason'],
+        ]);
+    }
+
+    $service->grantAdministrator($actor, $data['username'], $data['reason']);
+    $this->info('Platform administrator verified.');
+});
+
 Artisan::command('clubunio:planning-import', function () {
     app(TeamPlanningImporter::class)->run();
     $this->info('Planning snapshot imported (idempotent).');

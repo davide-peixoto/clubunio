@@ -62,6 +62,27 @@ class PlatformAdministrationTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_only_platform_admin_can_assign_license_and_change_is_audited(): void
+    {
+        $url = route('clubunio.platform.change', $this->one->id);
+        $data = [
+            'operation' => 'license',
+            'revision' => $this->one->fresh()->platform_revision,
+            'reason' => 'Synthetic license assignment',
+            'license_plan' => 'club',
+        ];
+
+        $this->actingAs($this->admin, 'clubunio')->post($url, $data)->assertForbidden();
+        $this->actingAs($this->operator, 'clubunio')->post($url, $data)->assertRedirect();
+        $this->assertSame('club', $this->one->fresh()->license_plan);
+        $this->assertNull($this->two->fresh()->license_plan);
+
+        $event = $this->db->table('clubora.platform_changes')->where('tenant_id', $this->one->id)->latest('id')->first();
+        $this->assertSame('tenant.license', $event->action);
+        $this->assertSame('club', json_decode($event->details, true)['after']);
+        $this->post($url, $data)->assertStatus(409);
+    }
+
     private function account(string $name): Account
     {
         $account = new Account;
@@ -150,7 +171,7 @@ class PlatformAdministrationTest extends TestCase
     {
         $this->change('name', ['name' => 'Updated synthetic club'])->assertRedirect();
         $this->actingAs($this->operator, 'clubunio')->post(route('clubunio.platform.change', $this->one->id),
-            ['operation' => 'name', 'revision' => 1, 'name' => 'Stale', 'reason' => 'Stale platform submission'])->assertConflict();
+            ['operation' => 'name', 'revision' => 1, 'name' => 'Stale', 'reason' => 'Stale platform submission'])->assertStatus(409);
         $this->change('name', ['name' => 'Bad', 'slug' => 'changed-slug'])->assertUnprocessable();
         $this->assertSame('Updated synthetic club', $this->one->fresh()->name);
         $this->assertSame(2, $this->one->fresh()->platform_revision);

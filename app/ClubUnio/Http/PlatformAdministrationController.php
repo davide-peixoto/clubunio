@@ -54,7 +54,9 @@ final class PlatformAdministrationController
             $q->where(fn ($q) => $q->where('name', 'ilike', $term)->orWhere('slug', 'ilike', $term));
         })->withCount('tenantAccounts')->orderBy('name')->orderBy('id')->simplePaginate(30)->withQueryString();
 
-        return view('clubunio.platform.index', ['rows' => $rows, 'q' => $data['q'] ?? '', 'actor' => $request->user('clubunio')]);
+        $metrics = app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview($rows->getCollection()->modelKeys());
+
+        return view('clubunio.platform.index', ['rows' => $rows, 'metrics' => $metrics, 'q' => $data['q'] ?? '', 'actor' => $request->user('clubunio')]);
     }
 
     public function create(Request $request, PlatformAdministrationService $service)
@@ -80,6 +82,8 @@ final class PlatformAdministrationController
             ->get(['a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
 
         return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user('clubunio'),
+            'metrics' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview([$id])[$id],
+            'syncOperations' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->operations($id),
             'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts,
             'storageProfile' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->active($tenant),
             'storageDestinations' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->destinations($tenant),

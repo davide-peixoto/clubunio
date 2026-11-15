@@ -51,6 +51,24 @@ final class PlatformAdministrationService
         });
     }
 
+    public function grantAdministrator(Account $actor, string $username, string $reason): void
+    {
+        abort_unless(app()->runningInConsole(), 403);
+        $this->authorize($actor);
+
+        $db = DB::connection('clubunio');
+        $db->transaction(function () use ($db, $actor, $username, $reason) {
+            $this->authorize($actor, true);
+            $target = $this->human($username);
+            abort_unless(Account::whereKey($target->id)->where('active', true)->where('api_only', false)->sharedLock()->first(), 409);
+            $inserted = $db->table('clubora.platform_admins')->insertOrIgnore(['account_id' => $target->id]);
+            abort_unless($this->allowed($target), 409);
+            if ($inserted) {
+                $this->audit($actor, null, 'platform.grant', ['account_id' => $target->id, 'reason' => $reason]);
+            }
+        });
+    }
+
     private function human(string $username): Account
     {
         $actor = Account::whereRaw('lower(username) = ?', [mb_strtolower(trim($username))])
@@ -120,7 +138,7 @@ final class PlatformAdministrationService
     {
         $this->authorize($actor);
         $data = Validator::make($input, ['revision' => 'required|integer|min:1',
-            'operation' => ['required', Rule::in(['name', 'brand', 'storage', 'domain', 'membership', 'revoke', 'facility-mode'])],
+            'operation' => ['required', Rule::in(['name', 'brand', 'storage', 'domain', 'membership', 'revoke', 'facility-mode', 'license'])],
             'reason' => 'required|string|min:10|max:500'])->validate();
         $fields = match ($data['operation']) {
             'name' => ['name'], 'brand' => ['color', 'logo', 'title', 'logo_file'],
@@ -129,6 +147,7 @@ final class PlatformAdministrationService
             'membership' => ['username', 'role', 'portal_enabled', 'access_profile_id'],
             'revoke' => ['username'],
             'facility-mode' => [],
+            'license' => ['license_plan'],
         };
         abort_if(array_diff(array_keys($input), ['revision', 'reason', 'operation', ...$fields]), 422);
         if (isset($input['logo_file'])) {
@@ -147,10 +166,23 @@ final class PlatformAdministrationService
                 'membership' => $this->membership($tenant, $input),
                 'revoke' => $this->revokeMembership($tenant, $input),
                 'facility-mode' => FacilityPlanningMode::activate($tenant),
+                'license' => $this->assignLicense($tenant, $input),
             };
             $tenant->forceFill(['platform_revision' => $tenant->platform_revision + 1])->save();
             $this->audit($actor, $tenant, 'tenant.'.$data['operation'], $details + ['reason' => $data['reason']]);
         });
+    }
+
+    private function assignLicense(Tenant $tenant, array $input): array
+    {
+        $data = Validator::make($input, [
+            'license_plan' => ['present', 'nullable', Rule::in(array_keys(config('clubunio-licenses')))],
+        ])->validate();
+
+        $before = $tenant->license_plan;
+        $tenant->forceFill(['license_plan' => $data['license_plan']]);
+
+        return ['before' => $before, 'after' => $tenant->license_plan];
     }
 
     private function rename(Tenant $tenant, array $input): array

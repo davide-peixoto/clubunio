@@ -147,3 +147,43 @@ visuell geprueft: Symbol20x20, Link36px hoch am Desktop, keine mobile
 Seitenueberbreite. Viewport zurueckgesetzt. Diese gezielte Sichtpruefung ersetzt
 nicht die noch offene komplette Sichtabnahme der Plattform-Verwaltungsformulare.
 Bestehendes PHPMaker DEV/PROD und parallele Mobile-Arbeit unveraendert.
+
+## Mandantenlizenzen und Monitoring
+
+Lokaler Ausbau. Die Mandantenliste zeigt das zugewiesene Lizenzpaket, aktuelle
+Mitglieder, die Paketgrenze, Sync-Fehlversuche der letzten sieben Tage und den
+letzten protokollierten Sync-Erfolg. Das Mandantendetail zeigt die letzten sieben
+und 30 Tage je Auftragstyp. Gezählt werden protokollierte Sync-Auftragsereignisse
+mit Status attention. Die Anzeige enthält aggregierte Werte ohne Nutzdaten,
+Fehlertexte oder verschlüsselte Notizen. Die Mitgliederzahl verwendet dieselbe
+Aktivdefinition wie die bestehenden Vereinsprozesse.
+
+Lizenzpakete sind Start (100), Verein (300), Club (750), Grossverein (1500)
+und individuelle Vereinbarung. Die Paketgrenze ist ein Hinweis für den Support.
+Eine Zuweisung mit Begründung wird im Plattformjournal erfasst. Die additive
+Migration 2026_11_15_000100_tenant_license vor der Auslieferung gezielt auf der
+bestätigten Ziel-Datenbank anwenden. Altmandanten starten ohne Paket. Beim
+Rücksprung darf die zusätzliche Spalte bestehen bleiben.
+
+Das persönliche Konto info@clubunio.com in DEV und Stage über eine autorisierte
+Serverkonsole einrichten. Der CLI-Befehl fragt für ein neues Konto ein Passwort
+verdeckt ab. Ein bestehendes aktives persönliches Konto behält sein Passwort.
+Die Freischaltung wird protokolliert und vergibt die bestehende Plattformrolle.
+
+```text
+php artisan clubunio:platform-grant info@clubunio.com --actor=<bestehender-plattformadmin> --reason="Freigabe durch Plattformverantwortlichen"
+```
+
+Vor Stage-Rollout den dortigen Code- und Migrationsstand abgleichen und die
+angemeldete Abnahme mit zwei Mandanten durchführen.
+
+## DEV-Release vom 15.11.2026
+
+Aktiv auf DEV: 20261115-clubunio-platform-monitoring. Grundlage und Rückweg:
+20261114-clubunio-inbox-sfv-v2. Die einzelne additive Lizenzmigration ist
+im DEV-Migrationsledger erfasst. Elf gezielte PostgreSQL-Prüfungen bestanden,
+einschliesslich Lizenzjournal, veralteter Revision, Plattformfreischaltung,
+Mandantentrennung, Sync-Zeitfenster und Rendern beider Plattformansichten.
+Synthetische Testdatensätze zurückgerollt. Plattformlogin HTTP 200, anonyme
+Übersicht HTTP 302, FPM und Pushdienst aktiv. info@clubunio.com ist als
+Plattformadmin auf DEV eingerichtet. Stage-Abnahme steht noch aus.
