@@ -148,3 +148,11 @@ will not send a second POST. After one minute the operator can check an
 existing Zammad ticket ID against the reference, group and customer.
 Retain `support_zammad_exports` on rollback; disable the integration
 without discarding receipts. No remote ticket is deleted by a rollback.
+
+DEV rollout 15.11.2026: `20261115-clubunio-support-zammad`, rollback
+`20261115-clubunio-support-triage`. Only `clubunio_dev` received the
+additive table after a schema backup. Public help and sign-in responded;
+anonymous platform inbox redirected to sign-in and the triage worker
+remained active. A synthetic DEV PostgreSQL handoff with a mocked Zammad
+response was verified and rolled back. No live Zammad request was sent.
+Stage was not changed.
