@@ -1,5 +1,7 @@
 # Arbeitskorb und SFV-Spielverschiebung
 
+Nach Wiederherstellung des DEV-Datenbanktunnels bestanden beide Testkonten erneut den HTTPS-Login mit TOTP und den Dashboard-Aufruf. Die Fachabnahme lief mit denselben Konten über die Anwendungsdienste auf der DEV-Datenbank mit synthetischen Daten und kontrollierter Uhr. Bei SFV-Anpfiff 14:00 wurden die Änderung um 12:59:59 sowie eine neue Änderung ab 14:00 abgelehnt. Um 13:00 durfte die Spielleitung ändern. Das Konto des anderen Vereins erhielt HTTP 403. Kamera und Teamtermin folgten der bestätigten Änderung. Der SFV-Import schützte sie bis zum Belegungsende und bot danach wieder die SFV-Zuteilung an. Die Testtransaktion wurde vollständig zurückgerollt.
+
 Am 15.11.2026 wurden im aktiven DEV-Release `20261115-clubunio-support-zammad` die zuvor geprüften Einstellungen für starke Anmeldung wiederhergestellt. Beide isolierten Testkonten bestanden den HTTPS-Login mit Passwort und TOTP sowie den Dashboard-Aufruf. Anschliessend konnte der DEV-Datenbanktunnel den VPS auf SSH-Port 22 nicht erreichen. Der isolierte Spieltest brach vor der Anlage der Testdaten ab. Bis zur Wiederherstellung des Tunnels ist die vollständige angemeldete Abnahme offen.
 
 Die 60-Minuten-Regel ist auf DEV im Release `20261115-clubunio-sfv-hour` aktiv. Rückweg ist `20261115-clubunio-platform-monitoring`. Der Release benötigt keine Datenbankmigration. Der DEV-Datenbankcheck und der Zeitgrenzentest im aktiven Release bestanden. Der bisherige TOTP-Testclient fand das erwartete Formular nicht. Eine neue angemeldete Abnahme steht aus.
