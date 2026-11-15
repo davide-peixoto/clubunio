@@ -1,6 +1,7 @@
 (() => {
     const script = document.currentScript;
     const url = new URL('/help', script.src);
+    url.searchParams.set('embed', '1');
     if (url.protocol !== 'https:' && url.origin !== location.origin) return;
     const english = document.documentElement.lang.toLowerCase().startsWith('en');
     const label = english ? 'Help & Support' : 'Hilfe & Support';
@@ -15,7 +16,7 @@
     dialog.setAttribute('aria-label', label);
     frame.title = label;
     frame.referrerPolicy = 'no-referrer';
-    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    frame.setAttribute('sandbox', 'allow-forms allow-popups allow-popups-to-escape-sandbox');
     frame.style.cssText = 'width:100%;height:calc(100% - 42px);border:0';
     dialog.style.cssText = 'position:fixed;inset:0 0 0 auto;margin:0;width:min(100%,32rem);height:100dvh;max-width:100%;max-height:100%;padding:12px;border:0;box-sizing:border-box';
     button.onclick = () => {

@@ -19,3 +19,6 @@
   `CLUBUNIO_SUPPORT_TRIAGE_ENABLED`. Run a worker for `support-triage` on
   `CLUBUNIO_SUPPORT_TRIAGE_CONNECTION` (default: database; provision its
   jobs table). A real worker and provider are not required by automated tests.
+- DEV uses a separate PostgreSQL queue, `support_jobs`, and
+  `clubunio-dev-support-triage.service`. No provider key is needed for
+  local classification or reviewed FAQ suggestions.

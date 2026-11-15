@@ -1,0 +1,17 @@
+[Unit]
+Description=ClubUnio DEV support ticket triage
+After=clubunio-dev-db-tunnel.service
+Requires=clubunio-dev-db-tunnel.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/svs-laravel/current
+ExecStart=/usr/bin/php artisan clubunio:support-triage-work
+Restart=always
+RestartSec=8
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
