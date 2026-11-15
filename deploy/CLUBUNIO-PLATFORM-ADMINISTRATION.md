@@ -202,3 +202,16 @@ zugewiesen. Zuweisung, Protokoll, veraltete Revision, Entfernen des zweiten
 Pakets und voneinander getrennte Sync-Zeitfenster geprüft. Elf Prüfungen
 bestanden. Testdatensätze zurückgerollt. Die Abnahme betrifft den
 Plattform-Ausbau auf DEV.
+
+## Stage-Rollout vom 15.11.2026
+
+Nach bestandener DEV-Abnahme wurde der Plattform-Ausbau aus 9a3199a als
+abgeglichener 14-Dateien-Delta auf ClubUnio Stage ausgerollt. Die einzelne
+Lizenzmigration ist in clubunio_stage erfasst. Die vorherigen Stage-Dateien,
+Caches und das Tabellenschema sind serverseitig gesichert. Beim Rücksprung
+kann die additive Lizenzspalte bestehen bleiben.
+
+info@clubunio.com wurde als Plattformadmin eingerichtet und per
+Passwort plus TOTP über HTTPS angemeldet. Die Übersicht und alle drei
+Mandantendetails antworteten mit HTTP 200. Lizenzformular und
+Monitoring waren in allen drei Details sichtbar.
