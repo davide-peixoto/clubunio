@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 final class SupportAccess
 {
+    public const STAFF_ROLES = ['admin', 'office'];
+
     public function role(Request $request, Account $actor, Tenant $tenant): string
     {
         $this->realAccount($request, $actor);
@@ -36,7 +38,7 @@ final class SupportAccess
 
     public function staff(string $role): bool
     {
-        return in_array($role, ModulePermissionService::FULL_BACKOFFICE_ROLES, true);
+        return in_array($role, self::STAFF_ROLES, true);
     }
 
     public function tickets(int $tenant, int $actor, bool $staff)

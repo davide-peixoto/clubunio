@@ -36,7 +36,7 @@ final class SupportCenterController
             ->join('clubora.accounts as account', 'account.id', '=', 'access.account_id')
             ->where('account.active', true)->where('account.api_only', false)
             ->when($platform, fn ($q) => $q->where('access.active', true), fn ($q) => $q
-                ->where('access.tenant_id', $club)->whereIn('access.role', \App\ClubUnio\Services\ModulePermissionService::FULL_BACKOFFICE_ROLES));
+                ->where('access.tenant_id', $club)->whereIn('access.role', SupportAccess::STAFF_ROLES));
         $editableArticles = fn () => $db->table('clubora.support_articles')->where('tenant_id', $club)
             ->whereIn('audience', $platform ? ['public','platform'] : ['club','club_staff']);
         if ($request->isMethod('GET') && $request->filled('attachment')) {

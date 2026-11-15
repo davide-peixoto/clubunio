@@ -1,5 +1,12 @@
 # ClubUnio Support Center
 
+15.11.2026 DEV: the existing SSH tunnel recovered; PostgreSQL and the
+synthetic OpenAI project smoke test passed (HTTP 200). Support staff roles
+no longer depend on the runtime's permission-service constant. A rolled-back
+PostgreSQL check with two synthetic clubs verified web/mobile controller
+isolation, the approved escalation summary, and both synchronous triage
+handlers. This was not a browser/device or live queue-delivery test.
+
 Disabled by default in new environments. Apply the four additive support
 migrations (002000, 002010, 002090, 002200) and the dedicated queue migration
 `2026_11_15_002300_support_queue` before enabling the module with triage.
