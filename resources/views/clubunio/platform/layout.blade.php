@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="same-origin">
-<title>{{ __('Plattformverwaltung · ClubUnio') }}</title><link rel="icon" href="{{ asset('brand/blue-v1/clubunio-symbol.svg') }}">
-<link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}"><link rel="stylesheet" href="{{ asset('css/clubunio-platform.css') }}"></head>
+<title>@yield('title', __('Plattformverwaltung · ClubUnio'))</title><link rel="icon" href="{{ asset('brand/blue-v1/clubunio-symbol.svg') }}">
+<link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}"><link rel="stylesheet" href="{{ asset('css/clubunio-platform.css') }}">@stack('head')</head>
 <body><header class="platform-header"><a href="{{ route('clubunio.platform.index') }}"><img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" alt="{{ __('ClubUnio') }}" width="180" height="40"></a>
-<nav aria-label="{{ __('Plattform') }}">@isset($actor)<a href="{{ route('clubunio.platform.index') }}">{{ __('Vereine') }}</a><a href="{{ url('/') }}">{{ __('Vereinsverwaltung') }}</a>@if(config('clubunio-support.enabled'))<a href="{{ route('clubunio.platform.support') }}">{{ trans('support.title') }}</a>@endif @endisset</nav>
+<nav aria-label="{{ __('Plattform') }}">@isset($actor)<a href="{{ route('clubunio.platform.index') }}">{{ __('Vereine') }}</a><a href="{{ url('/') }}">{{ __('Vereinsverwaltung') }}</a>@if(config('clubunio-support.enabled'))<a href="{{ route('clubunio.platform.support') }}" @if(request()->routeIs('clubunio.platform.support*')) aria-current="page" @endif>{{ trans('support.title') }}</a>@endif @endisset</nav>
 @isset($actor)<span>{{ $actor->display_name }}</span><form method="post" action="{{ route('clubunio.platform.logout') }}">@csrf<button class="icon-button" title="{{ __('Abmelden') }}" aria-label="{{ __('Abmelden') }}">@svg('heroicon-o-arrow-right-on-rectangle')</button></form>@endisset</header>
 <main class="platform-main">
 @if(session('notice'))<div class="notice" role="status">{{ session('notice') }}</div>@endif
