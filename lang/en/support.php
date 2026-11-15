@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'zammad' => [
+        'title' => 'Zammad handoff',
+        'linked' => 'The Zammad ticket is linked.',
+        'attention' => 'Delivery is unconfirmed or the destination has changed. Check Zammad first; the ticket will not be sent again.',
+        'unconfigured' => 'The Zammad connection is not configured yet.',
+        'open' => 'Open ticket in Zammad',
+        'remote_id' => 'Internal Zammad ticket ID',
+        'reconcile' => 'Verify and link existing ticket',
+        'review' => 'Only this subject and summary are sent with the ClubUnio reference. Attachments and other messages stay in ClubUnio.',
+        'confirm' => 'The text is approved for Zammad and contains no confidential member data.',
+        'send' => 'Send to Zammad',
+    ],
     'share_attachment' => 'Share attachment with platform support: :name',
     'assignee' => 'Assigned to',
     'unassigned' => 'Unassigned',

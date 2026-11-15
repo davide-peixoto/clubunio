@@ -3,7 +3,8 @@
 Disabled by default in new environments. Apply the four additive support
 migrations (002000, 002010, 002090, 002200) and the dedicated queue migration
 `2026_11_15_002300_support_queue` before enabling the module with triage.
-No existing data is imported. This version is native ClubUnio, not Zammad.
+No existing data is imported. ClubUnio remains the system of record. The
+optional Zammad handoff uses migration `2026_11_15_002310_support_zammad`.
 
 | Surface | Access |
 | --- | --- |
@@ -116,3 +117,34 @@ suggestion inside a rolled-back transaction. The dedicated provider was
 not configured. Roll back by stopping the worker, restoring the prior
 DEV release `20261115-clubunio-support-center` and retaining the tables.
 Stage unchanged.
+
+## Zammad handoff on DEV
+
+After a club escalates a ticket, a platform operator may review and send
+its subject and initial escalation summary from the platform inbox.
+ClubUnio sends an internal note on behalf of a neutral Zammad customer.
+Original club posts, attachments, contact data and later replies are not
+synchronized. Zammad does not host the ClubUnio widget or knowledge base.
+
+Set the following in the same private DEV env file. Provide the HTTPS
+origin only (no `/api/v1`), a Zammad API token for a dedicated agent
+restricted to the test group, the numeric group ID, and the numeric ID
+of a neutral test customer. Do not use the token of a Zammad administrator.
+Keep the DEV group free of notification or auto-forward triggers.
+
+```dotenv
+CLUBUNIO_SUPPORT_ZAMMAD_ENABLED=true
+CLUBUNIO_SUPPORT_ZAMMAD_URL=
+CLUBUNIO_SUPPORT_ZAMMAD_API_TOKEN=
+CLUBUNIO_SUPPORT_ZAMMAD_GROUP_ID=
+CLUBUNIO_SUPPORT_ZAMMAD_CUSTOMER_ID=
+```
+
+Recache and reload PHP as above. The link is not usable until every
+required value is set. Send only a synthetic first ticket. ClubUnio
+keeps its own immutable ticket reference in the Zammad title; leave that
+prefix intact if reconciling. If the result of a write is unknown, ClubUnio
+will not send a second POST. After one minute the operator can check an
+existing Zammad ticket ID against the reference, group and customer.
+Retain `support_zammad_exports` on rollback; disable the integration
+without discarding receipts. No remote ticket is deleted by a rollback.
