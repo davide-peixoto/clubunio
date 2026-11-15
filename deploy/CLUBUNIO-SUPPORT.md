@@ -59,7 +59,7 @@ language, using the same audience query as the knowledge base. It returns
 matching content directly from ClubUnio, without invoking OpenAI. This
 includes club-staff or platform documentation only in its authorized scope.
 
-Pending: integrated two-tenant DEV acceptance, dedicated provider and worker
+Pending: integrated two-tenant authenticated DEV acceptance, dedicated provider
 configuration, mobile push and attachment UI, semantic private knowledge retrieval,
 free-form conversational support and automatic resolution. Do not enable
 autonomous responses or actions.
@@ -95,6 +95,24 @@ After changes, recache the live DEV configuration and restart the support
 worker. Preserve the DEV support configuration via the shared env file
 on the next release.
 
+```bash
+cd "$(readlink -f /var/www/svs-laravel/current)"
+umask 027
+VIEW_COMPILED_PATH="$PWD/bootstrap/cache/dev-views" php artisan config:cache
+sudo chgrp www-data bootstrap/cache/config.php
+sudo chmod 0640 bootstrap/cache/config.php
+sudo systemctl reload php8.3-fpm
+sudo systemctl restart clubunio-dev-support-triage.service
+```
+
 The embedded public widget shows FAQ and search. The support form opens
 on the ClubUnio domain, since third-party cookies are not reliable in iframes.
 Private tickets and articles are available only inside authenticated ClubUnio.
+
+DEV follow-up release `20261115-clubunio-support-triage`: schema-only backup
+before adding the queue, supervised worker active, and public help/widget
+HTTP checks passed. A synthetic PostgreSQL queue job produced a local
+suggestion inside a rolled-back transaction. The dedicated provider was
+not configured. Roll back by stopping the worker, restoring the prior
+DEV release `20261115-clubunio-support-center` and retaining the tables.
+Stage unchanged.
