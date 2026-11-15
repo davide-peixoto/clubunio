@@ -1,5 +1,13 @@
 # Sichere Anmeldung (ClubUnio)
 
+DEV, 15.11.2026: Release `20261115-clubunio-security-wizard`, Rueckweg
+`20261115-clubunio-campaign-test-v2`. Keine Schemamigration, Stage unveraendert.
+Playwright/Edge: Passkey mit virtuellem WebAuthn-Authenticator und TOTP
+jeweils bei 1440x900 und emulierten 390x844 erfolgreich eingerichtet.
+Acht Wiederherstellungscodes angezeigt und nach Bestaetigung entfernt;
+kein horizontaler Ueberlauf in der Abschlussansicht. Vier synthetische
+Konten samt Faktoren anschliessend entfernt. Kein Test auf physischem Handy.
+
 Der Einrichtungsdialog fuehrt getrennt durch Kontobestaetigung,
 Methodenauswahl, Authenticator-Bestaetigung bzw. den nativen Passkey-Dialog
 und Sicherung der Wiederherstellungscodes. Der Support-Code ist optional
