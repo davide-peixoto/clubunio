@@ -10,19 +10,24 @@
 <body>
 <main class="cu-support">
 <h1>{{ trans('support.title') }}</h1>
+@php($embedded = !$club && !$platform && request()->query('embed') === '1')
+@if(!$club && !$platform)
+    <p><a href="{{ route('clubunio.support.login-help') }}" @if($embedded) target="_blank" rel="noopener noreferrer" @endif>{{ trans('support-intake.title') }}</a></p>
+@endif
 @if($platform || $staff)
     <a href="{{ $platform ? route('clubunio.support.platform-intake') : route('clubunio.support.club-intake', $club) }}">{{ trans('support-intake.title') }}</a>
 @endif
 <section>
-    <form method="get"><label>{{ trans('support.search') }}<input name="q" maxlength="120" value="{{ request('q') }}"></label><button>{{ trans('support.search') }}</button></form>
+    <form method="get">@if($embedded)<input type="hidden" name="embed" value="1">@endif<label>{{ trans('support.search') }}<input name="q" maxlength="120" value="{{ request('q') }}"></label><button>{{ trans('support.search') }}</button></form>
     @foreach($faq as $key => $item)
         <details id="faq-{{ $key }}"><summary>{{ $item['title'] }}</summary><p>{{ $item['body'] }}</p></details>
     @endforeach
     @foreach($articles as $item)
         <details id="article-{{ $item->id }}"><summary>{{ $item->title }}</summary><p>{{ $item->body }}</p>
-            @if($item->video_url)<a href="{{ $item->video_url }}" rel="noreferrer noopener">{{ trans('support.video') }}</a>@endif
+            @if($item->video_url)<a href="{{ $item->video_url }}" target="_blank" rel="noreferrer noopener">{{ trans('support.video') }}</a>@endif
         </details>
     @endforeach
+    @if(!$embedded)
     <form method="post" data-support-guide data-error="{{ trans('support.failed') }}" data-ai="{{ trans('support.ai') }}" data-source="{{ trans('support.source') }}">
         @csrf
         <input type="hidden" name="operation" value="ask">
@@ -30,6 +35,7 @@
         <button>{{ trans('support.ask') }}</button>
         <output aria-live="polite"></output>
     </form>
+    @endif
 </section>
 @if($club || $platform)
 <section>

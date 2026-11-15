@@ -1,8 +1,9 @@
 # ClubUnio Support Center
 
-Disabled by default in configuration. Apply the additive
-`2026_11_13_002000_support_center` migration to a reviewed DEV target before
-setting `CLUBUNIO_SUPPORT_ENABLED=true`. No existing data is imported.
+Disabled by default in new environments. Apply the four additive support
+migrations (002000, 002010, 002090, 002200) and the dedicated queue migration
+`2026_11_15_002300_support_queue` before enabling the module with triage.
+No existing data is imported. This version is native ClubUnio, not Zammad.
 
 | Surface | Access |
 | --- | --- |
@@ -75,3 +76,25 @@ public help panel. Private support is not embedded on external sites.
 DEV provider smoke test: existing SV Sissach training project key,
 synthetic text only, HTTP 200 and completed. No key copied to support
 configuration. See [agent policy and worker setup](CLUBUNIO-SUPPORT-AI.md).
+
+## DEV credentials
+
+Edit the private DEV configuration on `svs-pi-server`:
+`/var/www/svs-laravel/shared/.env.clubora-support-center`.
+
+```dotenv
+CLUBUNIO_SUPPORT_OPENAI_KEY=
+CLUBUNIO_SUPPORT_OPENAI_PROJECT=
+CLUBUNIO_SUPPORT_OPENAI_MODEL=
+```
+
+Use the key and the `proj_` ID of a dedicated OpenAI project and a model
+available to that project. Leave these values out of Git, Flutter and
+the widget. Empty values keep local triage and the reviewed FAQ working.
+After changes, recache the live DEV configuration and restart the support
+worker. Preserve the DEV support configuration via the shared env file
+on the next release.
+
+The embedded public widget shows FAQ and search. The support form opens
+on the ClubUnio domain, since third-party cookies are not reliable in iframes.
+Private tickets and articles are available only inside authenticated ClubUnio.
