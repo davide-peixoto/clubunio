@@ -169,3 +169,8 @@ to the corresponding article in the knowledge tab.
 This is a web-only change, with no migration, data update or provider change.
 Club and public help, the embedded widget and the mobile API keep their
 existing behavior. UI text is maintained in German and English.
+
+DEV release: `20261115-clubunio-support-workspace`. Rollback:
+`20261115-clubunio-support-zammad`. Verified against DEV PostgreSQL with a
+synthetic ticket, filtered list, detail pane and both secondary tabs; the
+test transaction was rolled back. Stage was not changed.
