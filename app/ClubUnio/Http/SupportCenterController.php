@@ -28,6 +28,7 @@ final class SupportCenterController
             }
         }
         $db = DB::connection('clubunio');
+        $platformWeb = $platform && !$request->expectsJson();
         $tickets = fn () => $platform ? $db->table('clubora.support_tickets')->where('audience', 'platform')
             : $this->access->tickets($club, $actor->id, $staff);
         $locale = app(LanguagePreferences::class)->resolve($actor?->preferred_locale, app()->getLocale());
@@ -60,7 +61,7 @@ final class SupportCenterController
                 'confirmed' => $export ? 'accepted' : 'prohibited', 'remote_id' => $export ? 'prohibited' : 'required|integer|min:1']);
             $ok = $export ? $zammad->export($fields['ticket']) : $zammad->reconcile($fields['ticket'], (int) $fields['remote_id']);
             if ($request->expectsJson()) return response()->json(['data' => ['linked' => $ok]], $ok ? 200 : 502);
-            return redirect()->route('clubunio.platform.support', ['ticket' => $fields['ticket']])
+            return redirect()->route('clubunio.platform.support', $this->inboxFilters($request) + ['ticket' => $fields['ticket']])
                 ->with('zammad_result', $ok ? 'linked' : 'attention');
         }
         if ($request->isMethod('POST') && $request->input('operation') === 'ask') {
@@ -166,20 +167,34 @@ final class SupportCenterController
                 }
                 return $operation === 'escalate' ? $ticket->id : $id;
             });
+            if ($platformWeb) {
+                return redirect()->route('clubunio.platform.support', $id
+                    ? $this->inboxFilters($request) + ['ticket' => $id] : ['tab' => 'knowledge']);
+            }
             return $request->expectsJson() ? response()->json(['data' => ['id' => $id]], 201)
                 : redirect()->to($request->url().($id ? '?ticket='.$id : ''));
         }
-        $d = $request->validate(['ticket' => 'nullable|uuid', 'q' => 'nullable|string|max:120']);
-        $articles = $this->access->articles($club, $staff, $platform, $locale)
-            ->when(filled($d['q'] ?? null), fn ($q) => $q->whereLike('title', '%'.$d['q'].'%'))
-            ->orderBy('title')->limit(40)->get(['id','title','body','video_url']);
+        $d = $request->validate(['ticket' => 'nullable|uuid', 'q' => 'nullable|string|max:120']
+            + ($platformWeb ? ['tab' => 'nullable|in:tickets,knowledge,assistant'] : []));
+        $tab = $platformWeb ? ($d['tab'] ?? 'tickets') : null;
+        $filters = $tab === 'tickets' ? $this->inboxFilters($request) : [];
+        $articles = !$platformWeb || $tab === 'knowledge'
+            ? $this->access->articles($club, $staff, $platform, $locale)
+                ->when(filled($d['q'] ?? null), fn ($q) => $q->whereLike('title', '%'.$d['q'].'%'))
+                ->orderBy('title')->limit(40)->get(['id','title','body','video_url'])
+            : collect();
         $faq = trans('support.faq');
+        if ($tab === 'knowledge' && filled($d['q'] ?? null)) {
+            $faq = array_filter($faq, fn ($item) => mb_stripos($item['title'], $d['q']) !== false);
+        }
         $rows = collect();
         $posts = collect();
         $updates = collect();
         $selected = null;
-        if ($platform || $club !== null) {
-            $rows = $tickets()->latest()->limit(50)->get(['id','subject','status','created_at']);
+        if ($tab === 'tickets' || (!$platformWeb && ($platform || $club !== null))) {
+            $rows = $platformWeb
+                ? $this->platformTickets($tickets(), $filters)
+                : $tickets()->latest()->limit(50)->get(['id','subject','status','created_at']);
             if (isset($d['ticket'])) {
                 $selected = $tickets()->where('id', $d['ticket'])->first($staff || $platform ? ['id','subject','status','assignee_id'] : ['id','subject','status']);
                 abort_unless($selected, 404);
@@ -189,6 +204,11 @@ final class SupportCenterController
                 $files = $db->table('clubora.support_attachments')->whereIn('post_id', $posts->pluck('id'))
                     ->get(['id','post_id','filename','mime'])->groupBy('post_id');
                 foreach ($posts as $post) $post->attachments = $files->get($post->id, collect());
+                if ($platformWeb) {
+                    $selected->club_name = $db->table('clubora.support_tickets as ticket')
+                        ->join('clubora.tenants as tenant', 'tenant.id', '=', 'ticket.tenant_id')
+                        ->where('ticket.id', $selected->id)->value('tenant.name');
+                }
                 if ($staff && !$platform) {
                     $escalation = $db->table('clubora.support_tickets')->where('tenant_id', $club)->where('audience', 'platform')
                         ->where('source_id', $selected->id)->first(['id','status']);
@@ -201,13 +221,43 @@ final class SupportCenterController
         if ($staff || $platform) {
             $data['triage'] = $selected && config('clubunio-support.triage_enabled')
                 ? $db->table('clubora.support_triage')->where('ticket_id', $selected->id)->first(['topic','draft','provider_generated']) : null;
-            $data['assignees'] = $assignees()->orderBy('account.display_name')->get(['account.id','account.display_name']);
-            $data['editableArticles'] = $editableArticles()->orderBy('title')->limit(100)->get();
+            if (!$platformWeb || $tab === 'tickets') {
+                $data['assignees'] = $assignees()->orderBy('account.display_name')->get(['account.id','account.display_name']);
+            }
+            if (!$platformWeb || $tab === 'knowledge') {
+                $data['editableArticles'] = $editableArticles()->orderBy('title')->limit(100)->get();
+            }
         }
         if ($platform && $selected && !$request->expectsJson() && app(ZammadSupport::class)->enabled()) {
             $data['zammad'] = app(ZammadSupport::class)->detail($selected->id);
         }
-        return ($request->expectsJson() ? response()->json(['data' => $data]) : response()->view('clubunio.support.center', $data))
+        $view = $platformWeb ? 'clubunio.support.platform-center' : 'clubunio.support.center';
+        if ($platformWeb) $data += compact('actor', 'tab', 'filters');
+        return ($request->expectsJson() ? response()->json(['data' => $data]) : response()->view($view, $data))
             ->header('Cache-Control', 'private, no-store');
+    }
+
+    private function inboxFilters(Request $request): array
+    {
+        return array_filter(\Illuminate\Support\Facades\Validator::make($request->query(), [
+            'q' => 'nullable|string|max:120', 'status' => 'nullable|in:open,waiting,closed',
+            'assignee' => ['nullable', 'regex:/^(?:unassigned|[1-9][0-9]{0,17})$/D'], 'page' => 'nullable|integer|min:1|max:10000',
+        ])->validate(), fn ($value) => filled($value));
+    }
+
+    private function platformTickets(\Illuminate\Database\Query\Builder $tickets, array $filters)
+    {
+        return $tickets
+            ->join('clubora.tenants as tenant', 'tenant.id', '=', 'support_tickets.tenant_id')
+            ->leftJoin('clubora.accounts as assignee', 'assignee.id', '=', 'support_tickets.assignee_id')
+            ->when(isset($filters['q']), fn ($q) => $q->where(fn ($match) => $match
+                ->whereLike('support_tickets.subject', '%'.$filters['q'].'%')->orWhereLike('tenant.name', '%'.$filters['q'].'%')))
+            ->when(isset($filters['status']), fn ($q) => $q->where('support_tickets.status', $filters['status']))
+            ->when(isset($filters['assignee']), fn ($q) => $filters['assignee'] === 'unassigned'
+                ? $q->whereNull('support_tickets.assignee_id') : $q->where('support_tickets.assignee_id', $filters['assignee']))
+            ->orderByDesc('support_tickets.created_at')->orderByDesc('support_tickets.id')
+            ->simplePaginate(20, ['support_tickets.id', 'support_tickets.subject', 'support_tickets.status',
+                'support_tickets.created_at', 'tenant.name as club_name', 'assignee.display_name as assignee_name'])
+            ->appends(\Illuminate\Support\Arr::except($filters, ['page']));
     }
 }

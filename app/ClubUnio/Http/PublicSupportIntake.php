@@ -40,7 +40,8 @@ final class PublicSupportIntake
         }
         $rows = DB::connection('clubunio')->table('clubora.support_public_requests')
             ->where('tenant_id', $club)->latest()->limit(50)->get();
-        return response()->view('clubunio.support.intake-inbox', compact('rows'))
+        $view = $club === null ? 'clubunio.support.platform-intake' : 'clubunio.support.intake-inbox';
+        return response()->view($view, compact('rows', 'actor'))
             ->header('Cache-Control', 'private, no-store')->header('Content-Security-Policy', "frame-ancestors 'none'");
     }
 }

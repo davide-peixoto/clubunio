@@ -156,3 +156,16 @@ anonymous platform inbox redirected to sign-in and the triage worker
 remained active. A synthetic DEV PostgreSQL handoff with a mocked Zammad
 response was verified and rolled back. No live Zammad request was sent.
 Stage was not changed.
+
+## Platform inbox layout
+
+The platform UI uses the shared ClubUnio platform layout. Tickets open by
+default, with search by subject or club, status and assignee filters,
+pagination and a detail pane for the history, reply or internal note,
+assignment and Zammad handoff. Knowledge management and the assistant have
+separate URLs under the platform support workspace; assistant citations link
+to the corresponding article in the knowledge tab.
+
+This is a web-only change, with no migration, data update or provider change.
+Club and public help, the embedded widget and the mobile API keep their
+existing behavior. UI text is maintained in German and English.

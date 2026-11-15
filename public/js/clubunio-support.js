@@ -1,3 +1,8 @@
+if (/^#(?:faq-[a-z-]+|article-[0-9]+)$/.test(location.hash)) {
+    const source = document.getElementById(location.hash.slice(1));
+    if (source instanceof HTMLDetailsElement) source.open = true;
+}
+
 document.querySelector('[data-support-guide]')?.addEventListener('submit', async event => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -19,7 +24,14 @@ document.querySelector('[data-support-guide]')?.addEventListener('submit', async
         output.append(turn);
         while (output.children.length > 8) output.firstElementChild.remove();
         form.elements.body.value = '';
-        if (data.article) {
+        if (form.dataset.knowledge && (data.article || data.source)) {
+            const link = document.createElement('a');
+            const target = new URL(form.dataset.knowledge);
+            target.hash = data.article ? 'article-' + data.article.id : 'faq-' + data.source;
+            link.href = target.href;
+            link.textContent = form.dataset.source + (data.article ? ': ' + data.article.title : '');
+            turn.append(' ', link);
+        } else if (data.article) {
             const source = document.createElement('span');
             source.textContent = ' (' + form.dataset.source + ': ' + data.article.title + ')';
             turn.append(source);
