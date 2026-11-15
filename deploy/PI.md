@@ -6,6 +6,9 @@ Offene Bus- und Platzanfragen stehen als klickbare Kennzahlen oben im Dashboard.
 Die Einzelfaelle bleiben im Arbeitskorb, der doppelte Dashboard-Block entfaellt.
 Die Kennzahlen nutzen dieselben Mandanten-, Status- und Berechtigungsfilter
 wie die Detailansicht. Keine Migration.
+Aktiver DEV-Release: `20261115-clubunio-dashboard-requests`; Rueckweg:
+`20261115-clubunio-security-wizard`. Admin-Kennzahlen und Arbeitskorb-Links
+gegen DEV geprueft; Login HTTP 200.
 
 ## Verbindliche Admin-Regel
 
