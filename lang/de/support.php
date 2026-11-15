@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'zammad' => [
+        'title' => 'Zammad-Übergabe',
+        'linked' => 'Das Zammad-Ticket ist verknüpft.',
+        'attention' => 'Der Versandstatus ist unklar oder das Ziel hat sich geändert. Prüfe zuerst Zammad; es wird nicht erneut gesendet.',
+        'unconfigured' => 'Die Zammad-Verbindung ist noch nicht konfiguriert.',
+        'open' => 'Ticket in Zammad öffnen',
+        'remote_id' => 'Interne Ticket-ID aus Zammad',
+        'reconcile' => 'Vorhandenes Ticket prüfen und verknüpfen',
+        'review' => 'Nur dieser Betreff und diese Zusammenfassung werden mit der ClubUnio-Referenz übertragen. Anhänge und weitere Beiträge bleiben in ClubUnio.',
+        'confirm' => 'Der Text ist für Zammad freigegeben und enthält keine vertraulichen Mitgliederdaten.',
+        'send' => 'An Zammad übergeben',
+    ],
     'share_attachment' => 'Anhang für den Plattformsupport freigeben: :name',
     'assignee' => 'Zuständig',
     'unassigned' => 'Nicht zugewiesen',

@@ -4,7 +4,7 @@ namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Jobs\TriageSupportTicket;
-use App\ClubUnio\Services\{LanguagePreferences, SupportAccess};
+use App\ClubUnio\Services\{LanguagePreferences, SupportAccess, ZammadSupport};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Crypt, DB};
 use Illuminate\Support\Str;
@@ -51,6 +51,17 @@ final class SupportCenterController
             ]);
             $response->headers->set('Content-Disposition', $response->headers->makeDisposition('attachment', $file->filename, 'attachment'));
             return $response;
+        }
+        if ($request->isMethod('POST') && in_array($request->input('operation'), ['zammad_export', 'zammad_reconcile'], true)) {
+            $zammad = app(ZammadSupport::class);
+            abort_unless($platform && $zammad->enabled(), 403);
+            $export = $request->input('operation') === 'zammad_export';
+            $fields = $request->validate(['ticket' => 'required|uuid',
+                'confirmed' => $export ? 'accepted' : 'prohibited', 'remote_id' => $export ? 'prohibited' : 'required|integer|min:1']);
+            $ok = $export ? $zammad->export($fields['ticket']) : $zammad->reconcile($fields['ticket'], (int) $fields['remote_id']);
+            if ($request->expectsJson()) return response()->json(['data' => ['linked' => $ok]], $ok ? 200 : 502);
+            return redirect()->route('clubunio.platform.support', ['ticket' => $fields['ticket']])
+                ->with('zammad_result', $ok ? 'linked' : 'attention');
         }
         if ($request->isMethod('POST') && $request->input('operation') === 'ask') {
             $input = $request->validate(['body' => 'required|string|max:500', 'previous_topic' => 'nullable|in:login,expense']);
@@ -192,6 +203,9 @@ final class SupportCenterController
                 ? $db->table('clubora.support_triage')->where('ticket_id', $selected->id)->first(['topic','draft','provider_generated']) : null;
             $data['assignees'] = $assignees()->orderBy('account.display_name')->get(['account.id','account.display_name']);
             $data['editableArticles'] = $editableArticles()->orderBy('title')->limit(100)->get();
+        }
+        if ($platform && $selected && !$request->expectsJson() && app(ZammadSupport::class)->enabled()) {
+            $data['zammad'] = app(ZammadSupport::class)->detail($selected->id);
         }
         return ($request->expectsJson() ? response()->json(['data' => $data]) : response()->view('clubunio.support.center', $data))
             ->header('Cache-Control', 'private, no-store');
