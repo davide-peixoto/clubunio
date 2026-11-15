@@ -12,6 +12,7 @@ $db = DB::connection('clubunio');
 if (PHP_SAPI !== 'cli' || ! MemberCampaignService::devTestMode()
     || $db->selectOne('select current_database() as name')->name !== 'clubunio_dev') exit(1);
 $db->beginTransaction();
+$exit = 0;
 try {
     $db->selectOne('select pg_advisory_xact_lock(67162310)');
     $tenant = Tenant::where('slug', 'sv-sissach')->sole();
@@ -48,6 +49,10 @@ try {
         throw new RuntimeException('Test acknowledgement failed.');
     }
     echo "DEV release, blocking non-test addresses, memory transport and acknowledgement verified. No SMTP.\n";
+} catch (Throwable $error) {
+    fwrite(STDERR, get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()."\n");
+    $exit = 1;
 } finally {
     $db->rollBack();
 }
+exit($exit);

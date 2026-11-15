@@ -111,7 +111,7 @@ class MemberCampaignService
     {
         return $actor && $tenant
             && ! request()->attributes->has('clubunio_impersonation')
-            && in_array(app(MemberAccessService::class)->membership($actor->fresh() ?? $actor, $tenant)?->role, ModulePermissionService::FULL_BACKOFFICE_ROLES, true)
+            && $actor->fresh()?->hasUnrestrictedBackofficeAccess($tenant)
             && app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'approve');
     }
 
