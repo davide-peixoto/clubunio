@@ -56,6 +56,7 @@ class DashboardReservationRequestsTest extends TestCase
         $this->assertSame(5, $result['bus']['count']);
         $this->assertSame([4, 5, 6, 7, 8], $result['bus']['rows']->pluck('id')->all());
         $this->assertSame(6, $result['pitch']['count']);
+        $this->assertSame(['bus' => 5, 'pitch' => 6], app(DashboardReservationRequests::class)->counts($this->actor, $this->tenant));
         $this->assertCount(5, $result['pitch']['rows']);
         $this->assertTrue($result['pitch']['has_more']);
         $next = app(DashboardReservationRequests::class)->pending($this->actor, $this->tenant, pitchPage: 2);
@@ -89,6 +90,7 @@ class DashboardReservationRequestsTest extends TestCase
     {
         request()->attributes->set('clubunio_impersonation', (object) ['tenant_id' => 1, 'target_id' => 1]);
         $this->assertSame([], app(DashboardReservationRequests::class)->pending($this->actor, $this->tenant));
+        $this->assertSame([], app(DashboardReservationRequests::class)->counts($this->actor, $this->tenant));
     }
 
     public function test_empty_lists_and_invalid_pagination(): void
@@ -106,6 +108,7 @@ class DashboardReservationRequestsTest extends TestCase
         foreach (['de' => 'Offene Reservierungsanfragen', 'en' => 'Pending reservation requests'] as $locale => $heading) {
             app()->setLocale($locale);
             Livewire::test(ReservationRequestsWidgetHarness::class)->assertSee($heading)
+                ->assertSee('id="reservation-bus"', false)->assertSee('id="reservation-pitch"', false)
                 ->assertSee('/bus/7', false)->assertSee('booking=9', false)->assertSee('date=2026-11-05', false)
                 ->assertDontSee('<script>unsafe</script>', false)->assertSee('wire:click="$set(\'busPage\', 2)"', false);
         }

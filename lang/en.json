@@ -1,4 +1,6 @@
 {
+    "dashboard.pending_bus": "Pending bus requests",
+    "dashboard.pending_pitch": "Pending pitch requests",
     "campaign.dev_test_recipients": "DEV release is email-only for test members with their own address in the form campaign-test-…@example.invalid. No emails are delivered.",
     "work-inbox.open-expenses": "Open expense list",
     "work-inbox.title": "Work inbox",

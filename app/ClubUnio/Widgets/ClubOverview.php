@@ -6,6 +6,8 @@ use App\ClubUnio\Resources\CreditNoteResource;
 use App\ClubUnio\Resources\MemberChangeRequestResource;
 use App\ClubUnio\Resources\OpenInvoiceResource;
 use App\ClubUnio\Resources\RefundResource;
+use App\ClubUnio\Pages\WorkInbox;
+use App\ClubUnio\Services\DashboardReservationRequests;
 use App\ClubUnio\Services\DashboardService;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget;
@@ -28,8 +30,21 @@ class ClubOverview extends StatsOverviewWidget
         }
 
         $counts = app(DashboardService::class)->overview(Filament::auth()->user(), $tenant);
+        $requests = WorkInbox::canAccess()
+            ? app(DashboardReservationRequests::class)->counts(Filament::auth()->user(), $tenant)
+            : [];
+        $reservationStats = [];
+        foreach (['bus' => ['dashboard.pending_bus', 'heroicon-o-truck'],
+            'pitch' => ['dashboard.pending_pitch', 'heroicon-o-map-pin']] as $kind => [$label, $icon]) {
+            if (isset($requests[$kind])) {
+                $reservationStats[] = Stat::make(__($label), $requests[$kind])->icon($icon)
+                    ->color($requests[$kind] > 0 ? 'warning' : 'gray')
+                    ->url(WorkInbox::getUrl().'#reservation-'.$kind);
+            }
+        }
 
         return [
+            ...$reservationStats,
             Stat::make(__('Offene Rechnungen'), $counts['open_count'])->icon('heroicon-o-document-text')
                 ->url(OpenInvoiceResource::getUrl()),
             Stat::make(__('Offener Rechnungsbetrag'), 'CHF '.number_format((float) $counts['open_amount'], 2, '.', "'"))

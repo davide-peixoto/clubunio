@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Dashboard: offene Reservierungsanfragen
+
+Offene Bus- und Platzanfragen stehen als klickbare Kennzahlen oben im Dashboard.
+Die Einzelfaelle bleiben im Arbeitskorb, der doppelte Dashboard-Block entfaellt.
+Die Kennzahlen nutzen dieselben Mandanten-, Status- und Berechtigungsfilter
+wie die Detailansicht. Keine Migration.
+
 ## Verbindliche Admin-Regel
 
 `admin` ist die oberste Rolle innerhalb eines Vereins. Aktive Vereinsadmins
