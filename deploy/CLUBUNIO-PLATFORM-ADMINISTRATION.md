@@ -187,3 +187,18 @@ Mandantentrennung, Sync-Zeitfenster und Rendern beider Plattformansichten.
 Synthetische Testdatensätze zurückgerollt. Plattformlogin HTTP 200, anonyme
 Übersicht HTTP 302, FPM und Pushdienst aktiv. info@clubunio.com ist als
 Plattformadmin auf DEV eingerichtet. Stage-Abnahme steht noch aus.
+
+## DEV-Abnahme vom 15.11.2026
+
+Mit info@clubunio.com auf dem aktiven DEV-Release
+20261115-clubunio-support-triage angemeldet. Plattformübersicht und beide
+Vereinsdetails abgeglichen. FC Horizon DEMO: 12 aktuelle Mitglieder, keine
+Sync-Aufträge. SV Sissach: 988 aktuelle Mitglieder, 0 Fehlversuche in 7 und
+2 in 30 Tagen, beide beim Bexio-Sponsorenlauf. Anzeige und separate
+PostgreSQL-Abfragen stimmen überein.
+
+Mit demselben Plattformkonto zwei synthetischen Mandanten Club und Start
+zugewiesen. Zuweisung, Protokoll, veraltete Revision, Entfernen des zweiten
+Pakets und voneinander getrennte Sync-Zeitfenster geprüft. Elf Prüfungen
+bestanden. Testdatensätze zurückgerollt. Die Abnahme betrifft den
+Plattform-Ausbau auf DEV.
