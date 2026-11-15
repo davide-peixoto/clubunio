@@ -9,6 +9,9 @@ gemischte Kanaele blockieren die gesamte Freigabe. Der Scheduler verarbeitet
 die Testqueue ueber einen In-Memory-Transport ohne SMTP. Kampagnenantraege
 in diesem Modus erzeugen keine Benachrichtigungen an die Geschaeftsstelle.
 Keine Migration. Abnahme: `php deploy/check-dev-campaign-mail.php` mit Rollback.
+Aktiver DEV-Release: `20261115-clubunio-campaign-test-v2`; Rueckweg:
+`20261115-clubunio-support-workspace`. DEV-Abnahme bestaetigt die blockierte
+Freigabe fuer Nicht-Testadressen, In-Memory-Versand und einmalige Bestaetigung.
 
 Die Vorauswahl umfasst alle aktiven Mitglieder. Der Entwurf zeigt die
 Mitgliederart und bietet ein Mannschafts-Dropdown fuer die laufende Saison.
