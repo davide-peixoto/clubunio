@@ -1,6 +1,6 @@
 # ClubUnio Support Center
 
-Local implementation, disabled by default. Apply the additive
+Disabled by default in configuration. Apply the additive
 `2026_11_13_002000_support_center` migration to a reviewed DEV target before
 setting `CLUBUNIO_SUPPORT_ENABLED=true`. No existing data is imported.
 
@@ -23,6 +23,21 @@ Set `CLUBUNIO_SUPPORT_OPENAI_KEY`, `CLUBUNIO_SUPPORT_OPENAI_PROJECT`, and
 OpenAI project. Do not reuse the backoffice assistant key. Never send these
 values to the browser or put them in Git. Until configured, return the
 curated FAQ directly.
+
+## DEV deployment, 15.11.2026
+
+Active release: `20261115-clubunio-support-center`, based on
+`20261115-clubunio-sfv-hour` (rollback target). The four support migrations
+were applied together as reviewed PostgreSQL DDL to `clubunio_dev` after a
+schema-only backup. No data import. Stage unchanged. Keep the additive
+tables on application rollback.
+
+Public help, sign-in help, widget script and login returned HTTP 200.
+Anonymous platform inbox redirects to sign-in; anonymous club inbox
+returns HTTP 401. Authenticated acceptance with two clubs remains open.
+The dedicated OpenAI project and triage worker were not activated. Public
+FAQ fallback works without a provider. Flutter is available in source;
+no native test build was distributed by this deploy.
 
 The initial guide classifies only known topics locally. Only curated public
 FAQ text is sent to the Responses API, with `store: false`. Never send raw
