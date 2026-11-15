@@ -1,5 +1,15 @@
 # Kampagnen: Stammdaten-Pilot
 
+## DEV-Testmodus
+
+Nur auf `https://dev.clubunio.ch` im bestehenden DEV-Mandanten SV Sissach:
+Freigabe ausschliesslich per E-Mail an Testmitglieder mit eigener Adresse
+`campaign-test-<kennung>@example.invalid`. Normale Adressen, Post und
+gemischte Kanaele blockieren die gesamte Freigabe. Der Scheduler verarbeitet
+die Testqueue ueber einen In-Memory-Transport ohne SMTP. Kampagnenantraege
+in diesem Modus erzeugen keine Benachrichtigungen an die Geschaeftsstelle.
+Keine Migration. Abnahme: `php deploy/check-dev-campaign-mail.php` mit Rollback.
+
 Die Vorauswahl umfasst alle aktiven Mitglieder. Der Entwurf zeigt die
 Mitgliederart und bietet ein Mannschafts-Dropdown fuer die laufende Saison.
 Freigabe bleibt auf den Pilotverein beschraenkt und blockiert Empfaenger

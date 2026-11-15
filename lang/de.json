@@ -1,4 +1,5 @@
 {
+    "campaign.dev_test_recipients": "DEV-Freigabe nur per E-Mail an Testmitglieder mit einer eigenen Adresse im Format campaign-test-…@example.invalid. Es werden keine E-Mails zugestellt.",
     "work-inbox.open-expenses": "Spesenliste öffnen",
     "work-inbox.title": "Arbeitskorb",
     "work-inbox.expenses": "Spesen zur Freigabe",

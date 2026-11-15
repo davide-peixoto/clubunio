@@ -10,8 +10,8 @@ final class CampaignMailQueue
 {
     public function enabled(): bool
     {
-        return app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com'
-            && config('clubunio-campaign-mail.enabled') && config('clubunio-integrations.test_mail_enabled');
+        return MemberCampaignService::devTestMode() || (app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com'
+            && config('clubunio-campaign-mail.enabled') && config('clubunio-integrations.test_mail_enabled'));
     }
 
     private function table()
@@ -23,6 +23,7 @@ final class CampaignMailQueue
     {
         $service = app(MemberCampaignService::class);
         $member = $service->deliveryMember($tenant, $row);
+        if (MemberCampaignService::devTestMode() && ($row->channel !== 'email' || ! $member || ! $service->isDevTestRecipient($member))) return null;
         $email = $member ? strtolower((string) $service->email($member)) : '';
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || ! str_ends_with($email, '@example.invalid')) return null;
         if (! ($row->guardian_account_id ?? null) && app(MemberAccessService::class)->activeMembers($tenant)->whereKeyNot($row->member_id)
@@ -86,7 +87,8 @@ final class CampaignMailQueue
     public function runOne(?int $onlyRecipient = null): bool
     {
         if (! $this->enabled()) return false;
-        $tenant = Tenant::where('slug', 'stage-mobile-pilot')->first();
+        $dev = MemberCampaignService::devTestMode();
+        $tenant = Tenant::where('slug', $dev ? 'sv-sissach' : 'stage-mobile-pilot')->first();
         if (! $tenant) return false;
         $db = DB::connection('clubunio');
         $row = $db->transaction(function () use ($db, $tenant, $onlyRecipient) {
@@ -115,8 +117,14 @@ final class CampaignMailQueue
         try {
             $service = app(MemberCampaignService::class);
             $copy = $service->copy($service->openCampaign($tenant, $row->campaign_id));
-            if (! $row->token_encrypted || $this->address($tenant, $row) !== $row->mail_address_hash || $this->suppressed($tenant, $row->mail_address_hash)) {
+            $hash = $this->address($tenant, $row);
+            if (! $row->token_encrypted || ! $hash || $hash !== $row->mail_address_hash || $this->suppressed($tenant, $hash)) {
                 $state = 'failed';
+            } elseif ($dev) {
+                $message = (new \Symfony\Component\Mime\Email())->from('campaign-test@example.invalid')
+                    ->to('campaign-test-sink@example.invalid')->subject($copy['subject'])
+                    ->text($copy['body']."\n\n".$service->url($tenant, $row));
+                $state = (new \Illuminate\Mail\Transport\ArrayTransport())->send($message) ? 'accepted' : 'attention';
             } else {
                 $sent = Mail::mailer('clubunio_test')->send(
                     ['raw' => $copy['body']."\n\n".$service->url($tenant, $row)],

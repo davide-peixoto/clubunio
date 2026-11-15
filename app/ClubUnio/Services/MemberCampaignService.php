@@ -186,6 +186,9 @@ class MemberCampaignService
                 $adults = $this->eligible($tenant)->whereIn('id', $rows->pluck('member_id'))->pluck('id')->flip();
                 foreach ($rows as $row) {
                     $member = $members->get($row->member_id);
+                    if (self::devTestMode() && ($row->channel !== 'email' || ! $member || ! $this->isDevTestRecipient($member))) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['release' => __('campaign.dev_test_recipients')]);
+                    }
                     $guardian = $minors->has($row->member_id) && $member && $row->channel === 'email' ? $this->guardian($tenant, $member) : null;
                     if (! $member || (! $adults->has($row->member_id) && ! $guardian)) {
                         throw \Illuminate\Validation\ValidationException::withMessages(['release' => __('campaign.guardian_required')]);
@@ -212,6 +215,7 @@ class MemberCampaignService
         $campaign = $this->openCampaign($tenant, $row->campaign_id);
         $member = $this->deliveryMember($tenant, $row, $lock);
         abort_unless($member, 404);
+        abort_if(self::devTestMode() && ($row->channel !== 'email' || ! $this->isDevTestRecipient($member)), 404);
 
         return [$row, $member, $campaign];
     }
@@ -236,7 +240,20 @@ class MemberCampaignService
 
     public function isPilot(Tenant $tenant): bool
     {
-        return app()->environment('staging') && $tenant->slug === 'stage-mobile-pilot';
+        return self::devTestMode() ? $tenant->slug === 'sv-sissach'
+            : app()->environment('staging') && $tenant->slug === 'stage-mobile-pilot';
+    }
+
+    public static function devTestMode(): bool
+    {
+        return app()->environment('staging') && config('app.url') === 'https://dev.clubunio.ch';
+    }
+
+    public function isDevTestRecipient(Member $member): bool
+    {
+        $email = $this->email($member);
+        return $email !== null && preg_match('/\Acampaign-test-[a-z0-9-]+@example\.invalid\z/i', $email) === 1
+            && strcasecmp(trim((string) $member->email), $email) === 0;
     }
 
     public function consume(Tenant $tenant, object $row, MemberChangeRequest $request): void
