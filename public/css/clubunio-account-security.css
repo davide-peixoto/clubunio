@@ -10,3 +10,6 @@
 .cu-security-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .cu-security [data-result] { padding: 10px; border-inline-start: 3px solid #164b8a; }
 .cu-security summary { cursor: pointer; margin-block-end: 12px; }
+.cu-security legend { padding-inline: 6px; font-weight: 700; }
+.cu-security [data-secret] { padding: 12px; background: #ecf2f8; border-radius: 6px; user-select: all; }
+.cu-security button { white-space: normal; }

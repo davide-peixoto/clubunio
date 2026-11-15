@@ -12,7 +12,8 @@
 <main class="cu-security" data-security data-mode="{{ $mode }}" data-pair="{{ $pair }}"
     data-url="{{ url('/account/security') }}" data-token="{{ csrf_token() }}"
     data-error="{{ trans('account-security.failed') }}" data-retry="{{ trans('account-security.retry') }}"
-    data-paired="{{ trans('account-security.paired') }}">
+    data-paired="{{ trans('account-security.paired') }}"
+    data-cancelled="{{ trans('account-security.wizard_cancelled') }}">
     <img src="{{ asset('brand/blue-v1/clubunio-logo-horizontal.svg') }}" width="180" height="50" alt="ClubUnio">
     <h1>{{ trans('account-security.title') }}</h1>
     <p data-result role="status" aria-live="polite" hidden></p>
@@ -20,7 +21,8 @@
     <label @if($mode !== 'mobile') hidden @endif>{{ trans('account-security.pair_code') }}
         <input name="confirmation" autocomplete="off" inputmode="numeric" maxlength="8" pattern="[0-9]{8}">
     </label>
-    <div class="cu-security-actions">
+    <button type="button" data-sign-in hidden>{{ trans('account-security.wizard_sign_in') }}</button>
+    <div class="cu-security-actions" data-login-choice>
         <button type="button" data-passkey>{{ trans('account-security.passkey') }}</button>
     </div>
     <form method="post" data-password>
@@ -32,26 +34,39 @@
     @php($selfSetup = $mode !== 'mobile' && auth($mode === 'platform' ? 'clubunio' : $mode)->check())
     <details data-setup @if($selfSetup || $showSetup) open @endif>
         <summary>{{ trans('account-security.setup') }}</summary>
-        <p>{{ trans('account-security.self_setup_help') }}</p>
         <form method="post" data-enrollment>
+            <fieldset data-step="account">
+            <legend tabindex="-1">{{ trans('account-security.wizard_account') }}</legend>
             <label>{{ trans('account-security.username') }}<input name="username" autocomplete="username" required maxlength="255"></label>
             <label>{{ trans('account-security.password') }}<input name="password" type="password" autocomplete="current-password" required></label>
-            <label>{{ trans('account-security.invitation') }}<input name="invitation" autocomplete="off" minlength="40" maxlength="40"></label>
+            <details data-invitation><summary>{{ trans('account-security.wizard_has_code') }}</summary>
+                <label>{{ trans('account-security.invitation') }}<input name="invitation" autocomplete="off" minlength="40" maxlength="40"></label>
+            </details>
+            <button type="submit" value="continue" class="primary">{{ trans('account-security.wizard_continue') }}</button>
+            </fieldset>
+            <fieldset data-step="method" hidden disabled>
+            <legend tabindex="-1">{{ trans('account-security.wizard_method') }}</legend>
             <div class="cu-security-actions">
                 <button type="submit" name="method" value="passkey" class="primary">{{ trans('account-security.setup_passkey') }}</button>
                 <button type="submit" name="method" value="totp">{{ trans('account-security.setup_totp') }}</button>
             </div>
-            <fieldset data-totp hidden>
-                <legend>{{ trans('account-security.setup_totp') }}</legend>
+            <p>{{ trans('account-security.wizard_method_help') }}</p>
+            <button type="button" data-back="account">{{ trans('account-security.wizard_previous') }}</button>
+            </fieldset>
+            <fieldset data-totp data-step="totp" hidden disabled>
+                <legend tabindex="-1">{{ trans('account-security.wizard_verify') }}</legend>
                 <p>{{ trans('account-security.secret_help') }}</p>
                 <output data-secret></output>
-                <label>{{ trans('account-security.first_code') }}<input name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}"></label>
+                <button type="button" data-copy data-copied="{{ trans('account-security.wizard_copied') }}" hidden>{{ trans('account-security.wizard_copy') }}</button>
+                <span data-copy-status role="status"></span>
+                <label>{{ trans('account-security.first_code') }}<input name="code" autocomplete="one-time-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required></label>
                 <button type="submit" name="method" value="confirm">{{ trans('account-security.confirm') }}</button>
+                <button type="button" data-back="method">{{ trans('account-security.wizard_previous') }}</button>
             </fieldset>
         </form>
     </details>
     <section data-recovery hidden>
-        <h2>{{ trans('account-security.recovery') }}</h2>
+        <h2 tabindex="-1">{{ trans('account-security.wizard_recovery') }}</h2>
         <p>{{ trans('account-security.recovery_help') }}</p>
         <ul data-codes></ul>
         <button type="button" data-finish>{{ trans('account-security.done') }}</button>
@@ -60,6 +75,6 @@
         <a href="{{ match ($mode) { 'portal' => url('/portal/login'), 'platform' => route('clubunio.platform.login'), default => url('/login') } }}">{{ trans('account-security.back') }}</a>
     @endif
 </main>
-<script type="module" src="{{ asset('js/clubunio-account-security.js') }}?v=1"></script>
+<script type="module" src="{{ asset('js/clubunio-account-security.js') }}?v=2"></script>
 </body>
 </html>

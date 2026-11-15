@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'wizard_account' => '1. Konto bestätigen',
+    'wizard_has_code' => 'Ich habe einen Einrichtungscode vom Support',
+    'wizard_continue' => 'Weiter',
+    'wizard_method' => '2. Anmeldemethode wählen',
+    'wizard_method_help' => 'Ein Passkey nutzt die PIN oder Biometrie deines Geräts. Eine Authenticator-App erzeugt einen sechsstelligen Code, den du zusätzlich zum Passwort eingibst.',
+    'wizard_previous' => 'Zurück',
+    'wizard_verify' => '3. Authenticator verbinden',
+    'wizard_recovery' => '4. Wiederherstellungscodes sichern',
+    'wizard_cancelled' => 'Die Passkey-Abfrage wurde abgebrochen oder ist abgelaufen. Versuche es erneut oder wähle die Authenticator-App.',
+    'wizard_copy' => 'Schlüssel kopieren',
+    'wizard_copied' => 'Schlüssel kopiert',
+    'wizard_sign_in' => 'Bereits eingerichtet? Zur Anmeldung',
     'reset_title' => 'Sichere Anmeldung zurücksetzen',
     'reset_effect' => 'Die bisherigen Anmeldemethoden und Sitzungen werden sofort gesperrt. Das Passwort bleibt unverändert.',
     'reset_handover' => 'Übergib diesen einmaligen Code persönlich oder über einen zuvor verifizierten sicheren Kanal. Er gilt 30 Minuten und wird nur jetzt angezeigt.',

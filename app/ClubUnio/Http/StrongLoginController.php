@@ -50,6 +50,10 @@ final class StrongLoginController
                 ]))),
             'password' => $this->password($request, $mode),
             'setup-start' => $this->selfEnrollment($request, $mode),
+            'setup-check' => (function () use ($request) {
+                $this->credentials($request, true);
+                return ['verified' => true];
+            })(),
             'setup-totp' => $this->startTotp($request, $mode),
             'setup-totp-confirm' => $this->confirmTotp($request, $mode),
             'setup-passkey' => $this->options($request, $web, $mode, true),

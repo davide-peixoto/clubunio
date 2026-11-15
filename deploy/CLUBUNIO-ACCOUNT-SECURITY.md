@@ -1,5 +1,11 @@
 # Sichere Anmeldung (ClubUnio)
 
+Der Einrichtungsdialog fuehrt getrennt durch Kontobestaetigung,
+Methodenauswahl, Authenticator-Bestaetigung bzw. den nativen Passkey-Dialog
+und Sicherung der Wiederherstellungscodes. Der Support-Code ist optional
+und separat aufklappbar. Authenticator-Schluessel werden lokal angezeigt
+und koennen kopiert werden; kein externer QR-Dienst und keine Migration.
+
 ## Pilot
 
 - Passkey mit WebAuthn und verpflichtender Benutzerverifikation (PIN oder

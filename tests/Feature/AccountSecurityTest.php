@@ -171,7 +171,9 @@ SQL);
         $this->assertTrue($this->security->mustEnroll($this->actor->fresh()));
         $credentials = ['mode' => 'portal', 'username' => 'test', 'password' => 'synthetic-password'];
         $this->postJson('https://security.test/account/security/password', $credentials)->assertUnauthorized();
-        $this->postJson('https://security.test/account/security/setup-start', $credentials)->assertOk()->assertJsonStructure(['setup_code']);
+        $setup = $this->postJson('https://security.test/account/security/setup-start', $credentials)->assertOk()->json('setup_code');
+        $this->postJson('https://security.test/account/security/setup-check', $credentials + ['invitation' => str_repeat('x', 40)])->assertForbidden();
+        $this->postJson('https://security.test/account/security/setup-check', $credentials + ['invitation' => $setup])->assertOk()->assertJsonPath('verified', true);
         $this->assertGuest('portal');
     }
 
