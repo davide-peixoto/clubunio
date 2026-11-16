@@ -70,9 +70,22 @@ Geraeteabnahme stehen aus.
 - Vertraulicher Client `clubunio-verein-dev` im Realm `clubunio`, mit
   exaktem Callback `https://dev.clubunio.ch/vereinslogin/oidc/callback`.
   Secret ausschliesslich in privater DEV-Konfiguration. Legacy bleibt aktiv.
-- Noch keine Anmeldung mit synthetischem Konto in Web oder nativer App
-  abgenommen. Rollenentzug in laufender Sitzung sowie Passkey und
-  Wiederherstellung auf einem zweiten Geraet bleiben offen. Stage unveraendert.
+- DEV-Web-Abnahme mit `keycloak-qa-webapp@example.invalid` im isolierten
+  Testverein `keycloak-qa-webapp`: Einladung eingeloest, dauerhafte
+  Verknuepfung und Dashboard nach OIDC bestaetigt. Ein beim ersten Zugriff
+  beobachteter HTTP 500 wurde behoben: Der Link-Lookup nimmt Issuer und
+  Subject nun explizit entgegen. Delta im aktiven DEV-Release
+  `20261116-clubunio-support-polish`.
+- Vereinsadmin-Rolle im Testverein bei laufender Browsersitzung entzogen:
+  Neuladen des Dashboards ergibt HTTP 403, ohne erneuten Login. Die
+  Kombinationen Trainer/TL, Elternzugriff und App-Sitzung wurden damit
+  nicht abgenommen. Das Testkonto hat keinen Portalzugang.
+- Native App und Geraetewechsel sind offen: Kein Android-Testgeraet
+  verbunden, iOS nicht abgenommen. Neue DEV-Konten unterliegen der
+  lokalen MFA-Pflicht; der aktuelle mobile OIDC-Pilot lehnt diese Konten
+  ab. Fuer die Abnahme zuerst gleichwertige Keycloak-MFA verbindlich
+  pruefen und an die App-Sitzung binden. MFA-Regel unveraendert lassen.
+  Stage und produktive Konten unveraendert.
 
 ## Umsetzung und Sicherheitsgrenzen
 
