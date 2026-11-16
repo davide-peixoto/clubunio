@@ -1,6 +1,6 @@
 # Keycloak: DEV-Abnahme fuer Vereinskonten
 
-Status: Code auf DEV bereitgestellt; Einladungs- und App-Schalter aus. Der
+Status: Code auf DEV bereitgestellt; Einladungs- und App-Schalter aktiv. Der
 bestehende Vereinsadmin-Pilot verwendet jetzt lokal den gemeinsam
 nutzbaren Code-Austausch fuer vertrauliche und oeffentliche Clients.
 Der Zuordnungsdienst liefert nur Kandidaten; er erstellt weder Konten
@@ -63,14 +63,16 @@ Geraeteabnahme stehen aus.
   und registriert. Die Anwendungsrolle hat keine DDL-Rechte.
 - Flutter-Analyse der drei geaenderten Dart-Dateien: keine Befunde.
   Lokale Backend-Pruefung: 11 Tests, 53 Assertions.
-- DEV-Smoke: `/login` HTTP 200; Einladungs- und mobile OIDC-Routen
-  HTTP 404 bei deaktivierten Schaltern. Kein Testkonto veraendert.
-- Aktivierung offen: DEV hat noch keinen konfigurierten vertraulichen
-  Vereinsclient. Separaten Client `clubunio-verein-dev` mit PKCE S256 und
-  Callback `https://dev.clubunio.ch/vereinslogin/oidc/callback` einrichten,
-  Secret privat hinterlegen und den bisherigen Login aktiv lassen.
-  Danach native DEV-Testbuilds und synthetische Konten fuer Rollenentzug
-  sowie Passkey-/Wiederherstellung auf einem zweiten Geraet pruefen.
+- DEV-Smoke nach Aktivierung: bisherige Loginseite und Einladungsseite
+  HTTP 200, OIDC-Start HTTP 302 an den korrekten Client mit PKCE S256.
+  Der mobile Bootstrap meldet `loginAllowed`, `strongLoginAvailable`
+  und `keycloakLoginAvailable` als aktiv.
+- Vertraulicher Client `clubunio-verein-dev` im Realm `clubunio`, mit
+  exaktem Callback `https://dev.clubunio.ch/vereinslogin/oidc/callback`.
+  Secret ausschliesslich in privater DEV-Konfiguration. Legacy bleibt aktiv.
+- Noch keine Anmeldung mit synthetischem Konto in Web oder nativer App
+  abgenommen. Rollenentzug in laufender Sitzung sowie Passkey und
+  Wiederherstellung auf einem zweiten Geraet bleiben offen. Stage unveraendert.
 
 ## Umsetzung und Sicherheitsgrenzen
 
