@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(\Filament\Auth\Http\Responses\Contracts\LogoutResponse::class, \App\ClubUnio\Http\ClubLogoutResponse::class);
         config(['database.connections.clubunio' => config('clubunio.connection')]);
         $this->app->scoped(StatusStyleService::class);
         $this->app->scoped(\App\ClubUnio\Services\TeamPlanningService::class);

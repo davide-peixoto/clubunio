@@ -70,6 +70,13 @@ migriert werden. Stage unveraendert.
 Rollback: DEV-Schalter auf false setzen und Config-Cache erneuern;
 der zuvor definierte kontospezifische Cutover bleibt bestehen.
 
+DEV-Release `20261116-clubunio-keycloak-logout`: Abmeldung aus
+Vereinsverwaltung, Portal und Plattform beendet die lokale Sitzung und
+ruft Keycloak mit der konfigurierten App-Adresse als Ruecksprung auf.
+Bei beiden DEV-Clients ist exakt `https://dev.clubunio.ch/` als
+Post-Logout-URI eingetragen. Beide Keycloak-Endpunkte antworteten ohne
+aktive Testsitzung mit HTTP 302 an diese Adresse. Stage unveraendert.
+
 - Die Migration `2026_11_16_000091_keycloak_migrations.php` ist additiv
   und akzeptiert ausschliesslich `clubunio_dev`. Die DDL erfolgt ueber
   die DEV-DB-Verwaltung; Runtime-Rechte nur fuer die neue Tabelle vergeben.

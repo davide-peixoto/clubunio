@@ -77,6 +77,12 @@ class PortalController
     public function logout(Request $request)
     {
         Auth::guard('portal')->logout();
+        if (config('clubunio-verein-oidc.only')) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return KeycloakLogout::redirect('clubunio-verein-oidc');
+        }
         $request->session()->regenerate();
         $request->session()->regenerateToken();
 
