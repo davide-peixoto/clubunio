@@ -2972,5 +2972,11 @@
     "work-inbox.empty-expenses": "No expenses awaiting approval.",
     "work-inbox.bexio": "Bexio jobs requiring review",
     "work-inbox.bexio-count :count": "Open cases requiring review: :count",
-    "work-inbox.open-sync": "Open synchronisation"
+    "work-inbox.open-sync": "Open synchronisation",
+    "keycloak.invitation": "Club administration invitation",
+    "keycloak.code": "Invitation code",
+    "keycloak.continue": "Continue to sign-in",
+    "keycloak.mobile": "Sign in to the ClubUnio app",
+    "keycloak.confirmation": "Confirmation code from the app",
+    "keycloak.return_to_app": "Return to the ClubUnio app to finish signing in."
 }

@@ -8,6 +8,14 @@ Route::get('/vereinslogin/oidc/start', [\App\ClubUnio\Http\PlatformOidcControlle
     ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.start');
 Route::get('/vereinslogin/oidc/callback', [\App\ClubUnio\Http\PlatformOidcController::class, 'callback'])
     ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.callback');
+Route::get('/vereinslogin/oidc/invitation', [\App\ClubUnio\Http\PlatformOidcController::class, 'invitation'])
+    ->middleware('throttle:20,1')->name('clubunio.verein.oidc.invite');
+Route::post('/vereinslogin/oidc/invitation', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:10,1')->block(10,10)->name('clubunio.verein.oidc.invite.accept');
+Route::get('/vereinslogin/oidc/mobile', [\App\ClubUnio\Http\PlatformOidcController::class, 'mobile'])
+    ->middleware('throttle:20,1')->name('clubunio.verein.oidc.mobile');
+Route::post('/vereinslogin/oidc/mobile', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:10,1')->block(10,10)->name('clubunio.verein.oidc.mobile.start');
 
 Route::get('/club-logo/{id}/{version}.png', [PlatformAdministrationController::class, 'logo'])
     ->whereNumber('id')->where('version', '[a-f0-9]{64}')->middleware('throttle:120,1')->name('clubunio.tenant-logo');

@@ -2972,5 +2972,11 @@
     "work-inbox.empty-expenses": "Keine Spesen zur Freigabe.",
     "work-inbox.bexio": "Bexio-Aufträge zur Prüfung",
     "work-inbox.bexio-count :count": "Offene Prüffälle: :count",
-    "work-inbox.open-sync": "Synchronisation öffnen"
+    "work-inbox.open-sync": "Synchronisation öffnen",
+    "keycloak.invitation": "Einladung zur Vereinsverwaltung",
+    "keycloak.code": "Einladungscode",
+    "keycloak.continue": "Weiter zur Anmeldung",
+    "keycloak.mobile": "ClubUnio-App anmelden",
+    "keycloak.confirmation": "Bestätigungscode aus der App",
+    "keycloak.return_to_app": "Kehre zur ClubUnio-App zurück und schliesse die Anmeldung ab."
 }

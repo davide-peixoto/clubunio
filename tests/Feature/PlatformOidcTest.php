@@ -7,6 +7,39 @@ use Tests\TestCase;
 
 final class PlatformOidcTest extends TestCase
 {
+    public function test_mobile_pairing_form_is_opt_in_and_rejects_invalid_pair(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
+            'clubunio-domains.central_hosts' => ['club.test'],
+            'clubunio-verein-oidc.enabled' => true, 'clubunio-verein-oidc.origin' => 'https://club.test',
+            'clubunio-verein-oidc.client' => 'club-test', 'clubunio-verein-oidc.secret' => 'synthetic',
+            'clubunio-verein-oidc.subjects' => [], 'clubunio-verein-oidc.invites_enabled' => true,
+            'clubunio-verein-oidc.mobile_enabled' => false]);
+        $url = 'https://club.test/vereinslogin/oidc/mobile?pair=10000000-0000-4000-8000-000000000000';
+        $this->get($url)->assertNotFound();
+        config(['clubunio-verein-oidc.mobile_enabled' => true]);
+        $this->get($url)->assertOk()->assertHeader('Referrer-Policy', 'no-referrer');
+        $this->postJson('https://club.test/vereinslogin/oidc/mobile', ['pair' => 'invalid', 'confirmation' => '12345678'])
+            ->assertUnprocessable();
+    }
+
+    public function test_invite_pilot_is_opt_in_and_secrets_do_not_travel_to_keycloak(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
+            'clubunio-domains.central_hosts' => ['club.test'],
+            'clubunio-verein-oidc.enabled' => true, 'clubunio-verein-oidc.origin' => 'https://club.test',
+            'clubunio-verein-oidc.client' => 'club-test', 'clubunio-verein-oidc.secret' => 'synthetic',
+            'clubunio-verein-oidc.subjects' => ['dummy' => 1], 'clubunio-verein-oidc.invites_enabled' => false]);
+        $url = 'https://club.test/vereinslogin/oidc/invitation';
+        $this->get($url)->assertNotFound();
+        config(['clubunio-verein-oidc.invites_enabled' => true]);
+        $this->get($url)->assertOk()->assertHeader('Referrer-Policy', 'no-referrer');
+        $secret = bin2hex(random_bytes(32));
+        $response = $this->post($url, ['invitation' => $secret])->assertRedirect();
+        $this->assertStringNotContainsString($secret, $response->headers->get('Location'));
+        $response->assertSessionHas('clubunio.oidc.pending.invitation', hash('sha256', $secret));
+    }
+
     public function test_club_pilot_cannot_reuse_platform_state_and_only_cuts_over_mapped_accounts(): void
     {
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',

@@ -17,7 +17,9 @@ class MemberAccessService
                 return null;
             }
 
-            return DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+            $membership = DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+
+            return $membership ? app(KeycloakSportRole::class)->effective($actor, $tenant, $membership) : null;
         });
     }
 
