@@ -1,5 +1,5 @@
 @if($migrationRows->isNotEmpty())
-<details>
+<details open>
     <summary>{{ __('keycloak.migration') }}</summary>
     <form method="post" action="{{ route('clubunio.platform.keycloak-migration', $tenant->id) }}">
         @csrf
