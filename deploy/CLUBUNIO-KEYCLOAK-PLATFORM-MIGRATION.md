@@ -27,16 +27,21 @@ dieses Stands. Bestehender Login und Rollen bleiben unveraendert.
 ## DEV-Bereitstellung
 
 - Release `20261116-clubunio-platform-migration` aktiv; Ruecksprung
-  `20261116-clubunio-mobile-mfa`. Die UI-Funktion bleibt ausgeschaltet.
+  `20261116-clubunio-mobile-mfa`. Die UI-Funktion ist auf DEV freigeschaltet.
 - DDL auf `clubunio_dev` ausgefuehrt und in `clubunio.migrations`
   registriert. Legacy-Loginseite HTTP 200. Stage unveraendert.
 - `clubunio-migration-dev` im Realm `clubunio` als vertraulicher
-  Serviceclient ohne interaktiven Login angelegt. Benutzerverwaltung
-  noch nicht freigegeben, Zugangsdaten nicht in ClubUnio aktiviert.
+  Serviceclient ohne interaktiven Login eingerichtet. Realm-Rolle
+  `realm-management/manage-users` und Default-Clientscope
+  `kc-admin-api` zugewiesen. Der fehlende Clientscope verursachte unter
+  Keycloak 26.8.2 HTTP 401; die Benutzerabfrage liefert jetzt HTTP 200.
+  Client-Secret liegt ausschliesslich in privater DEV-Konfiguration.
 - `info@clubunio.com` gehoert bereits einem Keycloak-Admin und darf
   nicht als synthetisches Migrationskonto verwendet werden. Fuer echte
   DEV-Einzel-/Mehrfachmails und Wiederholung getrennte Testadressen oder
-  bestaetigte Aliasse verwenden. Noch keine Mail verschickt.
+  bestaetigte Aliasse verwenden. Eine separat freigegebene Einzelmigration
+  hat den Status Einladung versendet erreicht. Erste Anmeldung und
+  kontospezifischer Legacy-Cutover stehen aus; kein globaler Cutover.
 
 - Die Migration `2026_11_16_000091_keycloak_migrations.php` ist additiv
   und akzeptiert ausschliesslich `clubunio_dev`. Die DDL erfolgt ueber
