@@ -33,8 +33,11 @@ Nach Keycloak-E-Mail-Verifizierung, Passwort und TOTP meldet sich das
 Konto ueber `/vereinslogin/oidc/platform-migration` an. Die Zuordnung
 wird erst nach exakter Subject-, Adress-, MFA- und Rollenpruefung aktiv.
 Aktivierungsmail fuer ein separates, freigegebenes DEV-Testkonto wurde
-von Keycloak zum Versand angenommen. Browser-Abnahme mit diesem Konto
-steht bis zur Einrichtung durch den Empfaenger aus. Stage unveraendert.
+von Keycloak zum Versand angenommen. Browser-Abnahme am 16.11.2026
+erfolgreich: Der Empfaenger bestaetigte die geoeffnete Plattformuebersicht
+nach Anmeldung mit dem Testkonto. DEV speicherte die Aktivierung um
+17:57:10 Uhr (Europe/Zurich); der Plattformzugang des Testkontos ist aktiv.
+Bestehende Admin-Zugaenge und Stage blieben unveraendert.
 
 DEV-Release `20261116-clubunio-platform-users`: Uebersicht und separater
 MFA-Einstieg bereitgestellt. Der DEV-Datenbanktest verwendete ein
