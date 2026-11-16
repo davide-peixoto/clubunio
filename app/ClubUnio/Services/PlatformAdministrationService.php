@@ -128,17 +128,23 @@ final class PlatformAdministrationService
             $target = Account::whereKey($id)->where('api_only', false)->lockForUpdate()->firstOrFail();
             $grant = $db->table('clubora.platform_admins')->where('account_id', $id);
             $existing = (clone $grant)->lockForUpdate()->first();
-            abort_unless($existing && ($existing->active || $data['operation'] === 'remove'), 404);
-            if ($data['operation'] === 'remove') {
+            $operation = $data['operation'];
+            if ($operation === 'remove') {
                 abort_if((int) $actor->id === $id, 409);
+                if (! $existing) {
+                    return;
+                }
                 $grant->delete();
-            } elseif ($data['operation'] === 'revoke') {
-                abort_if((int) $actor->id === $id, 409);
-                $grant->update(['active' => false]);
             } else {
-                $target->forceFill(['display_name' => trim($data['display_name'])])->save();
+                abort_unless($existing && $existing->active, 404);
+                if ($operation === 'revoke') {
+                    abort_if((int) $actor->id === $id, 409);
+                    $grant->update(['active' => false]);
+                } else {
+                    $target->forceFill(['display_name' => trim($data['display_name'])])->save();
+                }
             }
-            $this->audit($actor, null, 'platform.'.$data['operation'], ['account_id' => $id, 'reason' => $data['reason']]);
+            $this->audit($actor, null, 'platform.'.$operation, ['account_id' => $id, 'reason' => $data['reason']]);
         });
     }
 

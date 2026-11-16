@@ -262,7 +262,8 @@ class PlatformAdministrationTest extends TestCase
         $this->post(route('clubunio.platform.users.change', $this->operator->id), $data)->assertStatus(409);
         $this->post($url, $data)->assertRedirect();
         $this->post(route('clubunio.platform.users.change', $this->admin->id), $data)->assertRedirect();
-        $this->post($url, $data)->assertNotFound();
+        $this->post($url, $data)->assertRedirect(route('clubunio.platform.users'));
+        $this->post($url, ['operation' => 'revoke', 'reason' => $data['reason']])->assertNotFound();
 
         $this->assertFalse((clone $grants)->whereIn('account_id', [$this->person->id, $this->admin->id])->exists());
         $this->assertTrue($this->person->fresh()->tenants()->whereKey($this->one->id)->exists());

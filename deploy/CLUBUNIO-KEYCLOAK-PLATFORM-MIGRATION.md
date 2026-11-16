@@ -22,6 +22,13 @@ Die Testtransaktion wurde zurueckgerollt. Stage und bestehende Zugaenge
 blieben unveraendert. Rueckweg fuer den Code: voriger DEV-Release, ohne
 Schemaaenderung. Bereits absichtlich entfernte Zugriffe bleiben entfernt.
 
+DEV-Nachtrag `20261116-clubunio-platform-removal-retry`: Ein abge-
+brochener HTTP-Aufruf hatte die Entfernung bereits gespeichert, die
+Wiederholung lieferte jedoch 404. Wiederholtes Entfernen desselben
+bestehenden Kontos ohne Plattformzugang kehrt jetzt erfolgreich zur Liste
+zurueck, ohne einen zweiten Audit-Eintrag zu schreiben. Auf DEV mit
+zurueckgerollten Testkonten geprueft; keine Schemamigration.
+
 Fuer manuell gepruefte Plattform-Identitaeten gibt es separaten Einstieg
 `/vereinslogin/oidc/platform-migration` mit DEV-MFA und privater
 Allowlist `CLUBUNIO_PLATFORM_OIDC_MIGRATED_SUBJECTS`. Vor der Zuordnung
