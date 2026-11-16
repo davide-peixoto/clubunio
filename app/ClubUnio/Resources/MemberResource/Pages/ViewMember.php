@@ -4,6 +4,7 @@ namespace App\ClubUnio\Resources\MemberResource\Pages;
 
 use App\ClubUnio\Models\Member;
 use App\ClubUnio\Resources\BexioBillingRecipientAction;
+use App\ClubUnio\Resources\ErpNextMemberAction;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\MemberResource;
 use App\ClubUnio\Services\MemberService;
@@ -55,7 +56,7 @@ class ViewMember extends ViewRecord
                 ->action(fn (array $data) => $photos->review($actor, $tenant, $member->id, (int) $data['revision'], (bool) $data['approve']));
         }
 
-        return [...$actions, BexioBillingRecipientAction::make(), EditAction::make()->label('Bearbeiten')->slideOver()
+        return [...$actions, BexioBillingRecipientAction::make(), ErpNextMemberAction::make(), EditAction::make()->label('Bearbeiten')->slideOver()
             ->mutateRecordDataUsing(fn (array $data, Member $record) => array_merge($data, ['_version' => MemberService::version($record)]))
             ->using(fn (Member $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberService::class)->update(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)))];
     }

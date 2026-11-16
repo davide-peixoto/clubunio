@@ -53,8 +53,8 @@ class AccountingProvider
     {
         $db = DB::connection('clubunio');
         if ($provider === self::ERPNEXT) {
-            return $db->table('clubora.erpnext_invoice_transfers')
-                ->where('tenant_id', $tenant->id)->where('state', 'pending')->exists();
+            return ErpNextInvoiceTransferService::query($tenant)->where('state', 'pending')->exists()
+                || ErpNextExpenseTransferService::query($tenant)->where('state', 'pending')->exists();
         }
         if ($provider !== self::BEXIO) {
             return false;

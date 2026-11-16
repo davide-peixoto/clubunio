@@ -32,20 +32,23 @@ class ErpNextConnection extends Page
     protected function getHeaderActions(): array
     {
         $fields = ['company', 'company_address', 'territory', 'customer_group', 'item_code', 'income_account'];
+        $expenseFields = ['supplier_group', 'expense_item_code', 'expense_account'];
 
         return [
             Action::make('configure')
                 ->label($this->text('configure'))
                 ->schema([
                     ...array_map(fn ($key) => TextInput::make($key)->label($this->text("fields.$key"))->required()->maxLength(140), $fields),
+                    ...array_map(fn ($key) => TextInput::make($key)->label($this->text("fields.$key"))->maxLength(140), $expenseFields),
                     TextInput::make('due_days')->label($this->text('fields.due_days'))->integer()->required()->minValue(0)->maxValue(365),
                     TextInput::make('api_key')->label($this->text('fields.api_key'))->required()->maxLength(128),
                     TextInput::make('api_secret')->label($this->text('fields.api_secret'))->password()->maxLength(128),
                 ])
-                ->fillForm(function () use ($fields) {
+                ->fillForm(function () use ($fields, $expenseFields) {
                     abort_unless(static::canAccess(), 403);
 
-                    return Arr::only(app(ErpNextConfiguration::class)->connection(Filament::getTenant()), [...$fields, 'due_days', 'api_key']) + ['due_days' => 30];
+                    return Arr::only(app(ErpNextConfiguration::class)->connection(Filament::getTenant()), [...$fields, ...$expenseFields, 'due_days', 'api_key'])
+                        + ['due_days' => 30];
                 })
                 ->action(function (array $data, Action $action) {
                     try {

@@ -1,0 +1,17 @@
+[Unit]
+Description=ClubUnio DEV ERPNext invoice status reconciliation
+After=network-online.target clubunio-dev-db-tunnel.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/svs-laravel/current
+ExecStart=/usr/bin/php8.3 artisan clubunio:erpnext-reconcile-status --limit=20 --no-interaction
+TimeoutStartSec=240
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full

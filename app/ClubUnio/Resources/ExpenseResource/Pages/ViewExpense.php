@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Resources\ExpenseResource\Pages;
 
 use App\ClubUnio\Resources\BexioRecordActions;
+use App\ClubUnio\Resources\ErpNextDocumentActions;
 use App\ClubUnio\Resources\ExpenseFields;
 use App\ClubUnio\Resources\ExpenseResource;
 use App\ClubUnio\Resources\FormMutation;
@@ -19,6 +20,7 @@ class ViewExpense extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [ExpenseFields::transition(), BexioRecordActions::status('expense'),
+            ...ErpNextDocumentActions::expense(fn () => $this->getRecord()),
             Action::make('editHeader')->label('Beleg bearbeiten')->icon('heroicon-o-pencil-square')->slideOver()
                 ->visible(fn () => app(ExpenseService::class)->editable(Filament::auth()->user(), Filament::getTenant(), $this->getRecord()))
                 ->fillForm(fn () => $this->getRecord()->only(['revision', 'member_id', 'team_season_id', 'bank_account_id', 'round_id', 'notes']))

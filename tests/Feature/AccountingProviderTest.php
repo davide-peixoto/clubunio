@@ -41,6 +41,7 @@ CREATE TABLE clubora.tenant_settings (
     created_at TEXT, updated_at TEXT
 );
 CREATE TABLE clubora.erpnext_invoice_transfers (tenant_id INTEGER, state TEXT);
+CREATE TABLE clubora.erpnext_expense_transfers (tenant_id INTEGER, state TEXT);
 CREATE TABLE clubora.bexio_sandbox_dispatches (tenant_id INTEGER, state TEXT);
 SQL);
         $db->table('clubora.accounts')->insert(['id' => 1, 'active' => 1]);

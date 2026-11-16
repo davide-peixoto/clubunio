@@ -5,12 +5,10 @@ namespace App\ClubUnio\Services;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Models\Tenant;
-use Brick\Math\BigDecimal;
-use Brick\Math\Exception\MathException;
-use Brick\Math\RoundingMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ErpNextInvoiceTransferService
 {
@@ -31,7 +29,7 @@ class ErpNextInvoiceTransferService
             if ($row) {
                 return;
             }
-            $config = $this->connection($tenant);
+            $config = $this->configuration->verifiedConnection($tenant);
             $bexio = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
                 ->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $id)->exists();
             abort_if($bexio || $invoice->bexio_invoice_id, 409, trans('erpnext.errors.already_linked'));
@@ -65,36 +63,83 @@ class ErpNextInvoiceTransferService
             $invoice = $this->invoice($tenant, $id);
             $row = self::query($tenant)->where('invoice_id', $id)->first();
             abort_unless($row, 404);
-            $config = $this->connection($tenant);
+            $result = $this->syncLocked($tenant, $row, $create ? $invoice : null);
+            abort_unless($result, 409, trans('erpnext.errors.pending'));
 
-            $remote = $row->remote_id
-                ? $this->client->get($config, 'Sales Invoice', $row->remote_id)
-                : $this->client->find($config, 'Sales Invoice', $row->reference);
-            if ($remote === null && $create) {
-                $payload = $this->payload($config, $tenant, $invoice, $row);
-                $remote = $this->client->create($config, 'Sales Invoice', $payload);
-                abort_unless((string) ($remote['docstatus'] ?? '') === '0'
-                    && ($remote['customer_address'] ?? null) === $payload['customer_address']
-                    && ($remote['company_address'] ?? null) === $payload['company_address'], 409, trans('erpnext.errors.identity'));
-            }
-            abort_unless($remote !== null, 409, trans('erpnext.errors.pending'));
-            $remoteId = $remote['name'] ?? '';
-            abort_unless(is_string($remoteId) && $remoteId !== '' && strlen($remoteId) <= 140
-                && ($row->remote_id === null || $row->remote_id === $remoteId)
-                && ($remote['company'] ?? null) === $config['company']
-                && ($remote['custom_clubunio_reference'] ?? null) === $row->reference
-                && ($remote['currency'] ?? null) === 'CHF', 409, trans('erpnext.errors.identity'));
-            $total = self::moneyCents(($remote['rounded_total'] ?? null) ?: ($remote['grand_total'] ?? null));
-            abort_unless(self::moneyCents($remote['total_taxes_and_charges'] ?? 0) === 0, 409, trans('erpnext.errors.tax'));
-            abort_unless($total === (int) $row->total_cents, 409, trans('erpnext.errors.amount'));
-            self::query($tenant)->where('invoice_id', $id)->update([
-                'remote_id' => $remoteId,
-                'state' => self::state($remote, $total),
-                'updated_at' => now(),
-            ]);
-
-            return self::query($tenant)->where('invoice_id', $id)->first();
+            return $result;
         });
+    }
+
+    public function reconcile(int $tenantId, int $id, CarbonImmutable $currentCutoff, CarbonImmutable $paidCutoff): string
+    {
+        return DB::connection('clubunio')->transaction(function () use ($tenantId, $id, $currentCutoff, $paidCutoff) {
+            $tenant = Tenant::whereKey($tenantId)->lockForUpdate()->first();
+            if (! $tenant || AccountingProvider::current($tenant) !== AccountingProvider::ERPNEXT) {
+                return 'skipped';
+            }
+            $query = self::query($tenant)->where('invoice_id', $id);
+            $row = $query->first();
+            if (! $row || $row->state === 'cancelled') {
+                return 'skipped';
+            }
+            $cutoff = $row->state === 'paid' && ! $row->status_sync_failed ? $paidCutoff : $currentCutoff;
+            if ($row->last_status_attempt_at && CarbonImmutable::parse($row->last_status_attempt_at)->greaterThan($cutoff)) {
+                return 'skipped';
+            }
+            try {
+                if ($this->syncLocked($tenant, $row) === null) {
+                    $query->update(['last_status_attempt_at' => now(), 'status_sync_failed' => false]);
+
+                    return 'unconfirmed';
+                }
+                return 'confirmed';
+            } catch (HttpExceptionInterface) {
+                $query->update(['last_status_attempt_at' => now(), 'status_sync_failed' => true]);
+
+                return 'failed';
+            }
+        });
+    }
+
+    private function syncLocked(Tenant $tenant, object $row, ?Invoice $invoice = null): ?object
+    {
+        $config = $this->configuration->verifiedConnection($tenant);
+        $remote = $row->remote_id
+            ? $this->client->get($config, 'Sales Invoice', $row->remote_id)
+            : $this->client->find($config, 'Sales Invoice', $row->reference);
+        if ($remote === null && $invoice !== null) {
+            $payload = $this->payload($config, $tenant, $invoice, $row);
+            $remote = $this->client->create($config, 'Sales Invoice', $payload);
+            abort_unless((string) ($remote['docstatus'] ?? '') === '0'
+                && ($remote['customer_address'] ?? null) === $payload['customer_address']
+                && ($remote['company_address'] ?? null) === $payload['company_address'], 409, trans('erpnext.errors.identity'));
+            if (isset($payload['custom_clubunio_qrr'])) {
+                abort_unless(($remote['custom_clubunio_qrr'] ?? null) === $payload['custom_clubunio_qrr']
+                    && ($remote['esr_reference'] ?? null) === $payload['custom_clubunio_qrr'], 409, trans('erpnext.errors.identity'));
+            }
+        }
+        if ($remote === null) {
+            return null;
+        }
+        $remoteId = $remote['name'] ?? '';
+        abort_unless(is_string($remoteId) && $remoteId !== '' && strlen($remoteId) <= 140
+            && ($row->remote_id === null || $row->remote_id === $remoteId)
+            && ($remote['company'] ?? null) === $config['company']
+            && ($remote['custom_clubunio_reference'] ?? null) === $row->reference
+            && ($remote['currency'] ?? null) === 'CHF', 409, trans('erpnext.errors.identity'));
+        $total = ErpNextClient::moneyCents(($remote['rounded_total'] ?? null) ?: ($remote['grand_total'] ?? null));
+        abort_unless(ErpNextClient::moneyCents($remote['total_taxes_and_charges'] ?? 0) === 0, 409, trans('erpnext.errors.tax'));
+        abort_unless($total === (int) $row->total_cents, 409, trans('erpnext.errors.amount'));
+        $query = self::query($tenant)->where('invoice_id', $row->invoice_id);
+        $query->update([
+            'remote_id' => $remoteId,
+            'state' => ErpNextClient::documentState($remote, $total),
+            'last_status_attempt_at' => now(),
+            'status_sync_failed' => false,
+            'updated_at' => now(),
+        ]);
+
+        return $query->first();
     }
 
     private function payload(array $config, Tenant $tenant, Invoice $invoice, object $row): array
@@ -144,6 +189,8 @@ class ErpNextInvoiceTransferService
         }
         $date = CarbonImmutable::parse($row->created_at)->setTimezone('Europe/Zurich')->startOfDay();
 
+        $qrReference = config('clubunio-erpnext.qrr_enabled') ? ErpNextQrReference::fromInvoiceReference($row->reference) : null;
+
         return [
             'docstatus' => 0,
             'custom_clubunio_reference' => $row->reference,
@@ -160,7 +207,7 @@ class ErpNextInvoiceTransferService
             'taxes_and_charges' => '',
             'taxes' => [],
             'items' => $items,
-        ];
+        ] + ($qrReference === null ? [] : ['esr_reference' => $qrReference, 'custom_clubunio_qrr' => $qrReference]);
     }
 
     private function billingAddress(Tenant $tenant, Invoice $invoice): array
@@ -191,35 +238,4 @@ class ErpNextInvoiceTransferService
         return Invoice::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
     }
 
-    private function connection(Tenant $tenant): array
-    {
-        $config = $this->configuration->connection($tenant);
-        abort_unless($config && ($config['origin'] ?? null) === $this->configuration->origin(), 409, trans('erpnext.errors.destination'));
-
-        return $config;
-    }
-
-    private static function moneyCents(mixed $amount): int
-    {
-        abort_unless(is_int($amount) || is_float($amount) || is_string($amount), 409, trans('erpnext.errors.amount'));
-        try {
-            return BigDecimal::of((string) $amount)->multipliedBy(100)->toScale(0, RoundingMode::HALF_UP)->toInt();
-        } catch (MathException) {
-            abort(409, trans('erpnext.errors.amount'));
-        }
-    }
-
-    private static function state(array $remote, int $total): string
-    {
-        return match ((string) ($remote['docstatus'] ?? '')) {
-            '0' => 'draft',
-            '1' => match (true) {
-                ($outstanding = self::moneyCents($remote['outstanding_amount'] ?? null)) <= 0 => 'paid',
-                $outstanding < $total => 'part_paid',
-                default => 'open',
-            },
-            '2' => 'cancelled',
-            default => abort(409, trans('erpnext.errors.identity')),
-        };
-    }
 }

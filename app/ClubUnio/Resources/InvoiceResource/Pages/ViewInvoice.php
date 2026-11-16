@@ -4,7 +4,7 @@ namespace App\ClubUnio\Resources\InvoiceResource\Pages;
 
 use App\ClubUnio\Models\InvoiceCategory;
 use App\ClubUnio\Resources\BexioRecordActions;
-use App\ClubUnio\Resources\ErpNextInvoiceActions;
+use App\ClubUnio\Resources\ErpNextDocumentActions;
 use App\ClubUnio\Resources\FinancialAdjustmentActions;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\InvoiceResource;
@@ -41,9 +41,7 @@ class ViewInvoice extends ViewRecord
         $revision = fn () => TextInput::make('revision')->label('Version')->readOnly()->required();
 
         return [
-            ErpNextInvoiceActions::transfer(fn () => $this->getRecord()),
-            ErpNextInvoiceActions::status(fn () => $this->getRecord()),
-            ErpNextInvoiceActions::remote(fn () => $this->getRecord()),
+            ...ErpNextDocumentActions::invoice(fn () => $this->getRecord()),
             BexioRecordActions::status('invoice'),
             BexioRecordActions::invoice('issue'),
             BexioRecordActions::invoice('cancel'),
