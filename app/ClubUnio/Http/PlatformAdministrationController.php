@@ -114,9 +114,9 @@ final class PlatformAdministrationController
     {
         if (PlatformOidcController::guard($request) === 'platform') {
             Auth::guard('platform')->logout();
-            $request->session()->forget(['platform.oidc.expires', 'platform.oidc.pending']);
-            $request->session()->regenerate();
-            return redirect()->away(config('clubunio-platform-oidc.issuer').'/protocol/openid-connect/logout');
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return KeycloakLogout::redirect('clubunio-platform-oidc');
         }
         Auth::guard(PlatformOidcController::guard($request))->logout();
         $request->session()->invalidate();
