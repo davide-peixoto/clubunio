@@ -29,9 +29,9 @@ final class RequireStrongWebSession
                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
                         || (config('clubunio-verein-oidc.invites_enabled')
                             && is_string($subject = $request->session()->get('clubunio.oidc.subject'))
-                            && app(KeycloakAccountLinks::class)->accountId((object) [
-                                'issuer' => config('clubunio-verein-oidc.issuer'), 'sub' => $subject,
-                            ]) === $id))) continue;
+                            && app(KeycloakAccountLinks::class)->accountId(
+                                config('clubunio-verein-oidc.issuer'), $subject,
+                            ) === $id))) continue;
                 if ($id !== null || PlatformOidcController::requiresClubOidc($actor)) {
                     Auth::guard($guard)->logout();
                     $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject']);

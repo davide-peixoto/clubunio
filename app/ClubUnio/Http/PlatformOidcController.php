@@ -109,13 +109,13 @@ final class PlatformOidcController
             if (is_string($pending['invitation'] ?? null)) {
                 $id = (int) $links->accept($pending['invitation'], $claims)->id;
             } elseif ($id === null) {
-                $id = $links->accountId($claims);
+                $id = $links->accountId($claims->iss, $claims->sub);
             }
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
         if ($club && is_array($pending['pair'] ?? null)) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
-                && ! $actor->api_only && $links->accountId($claims) === (int) $actor->id, 403);
+                && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
             app(StrongLoginController::class)->completeKeycloakPair($pending['pair'], $actor);
 

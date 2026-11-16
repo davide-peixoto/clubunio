@@ -92,9 +92,9 @@ final class KeycloakAccountLinks
         }
     }
 
-    public function accountId(\stdClass $claims): ?int
+    public function accountId(string $issuer, string $subject): ?int
     {
-        $id = $this->links()->where('issuer', $claims->iss)->where('subject', $claims->sub)->value('account_id');
+        $id = $this->links()->where('issuer', $issuer)->where('subject', $subject)->value('account_id');
 
         return $id === null ? null : (int) $id;
     }
