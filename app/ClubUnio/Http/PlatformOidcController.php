@@ -23,7 +23,8 @@ final class PlatformOidcController
 
     public static function required(): bool
     {
-        return config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed');
+        return config('clubunio-verein-oidc.only')
+            || (config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed'));
     }
 
     public static function guard(Request $request): string

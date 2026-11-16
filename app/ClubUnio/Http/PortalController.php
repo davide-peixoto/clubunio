@@ -14,6 +14,10 @@ class PortalController
 {
     public function loginForm()
     {
+        if (config('clubunio-verein-oidc.only')) {
+            return redirect()->route('clubunio.verein.oidc.start');
+        }
+
         return response()->view('clubunio.portal.login')->header('Cache-Control', 'private, no-store');
     }
 

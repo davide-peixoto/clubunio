@@ -12,6 +12,16 @@ use Filament\Schemas\Schema;
 
 class Login extends \Filament\Auth\Pages\Login
 {
+    public function mount(): void
+    {
+        if (config('clubunio-verein-oidc.only') && !Filament::auth()->check()) {
+            $this->redirect(route('clubunio.verein.oidc.start'));
+
+            return;
+        }
+        parent::mount();
+    }
+
     public function authenticate(): ?LoginResponse
     {
         $response = parent::authenticate();

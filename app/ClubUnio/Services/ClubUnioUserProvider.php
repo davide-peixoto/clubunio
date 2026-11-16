@@ -11,7 +11,8 @@ final class ClubUnioUserProvider extends EloquentUserProvider
     {
         $disabled = explode(',', (string) config('clubunio-keycloak-migration.legacy_disabled_accounts'));
 
-        return !in_array((string) $user->getAuthIdentifier(), $disabled, true)
+        return !config('clubunio-verein-oidc.only')
+            && !in_array((string) $user->getAuthIdentifier(), $disabled, true)
             && parent::validateCredentials($user, $credentials);
     }
 }

@@ -56,6 +56,20 @@ Rollback: ID aus der privaten DEV-Liste entfernen und Config-Cache
 erneuern. Auf DEV mit Ersatz-Hash nachgewiesen: ausgewaehltes Konto
 abgewiesen, Kontrollkonto zugelassen; Loginseite HTTP 200. Stage unveraendert.
 
+### DEV: nur Keycloak
+
+Release `20261116-clubunio-keycloak-only` mit
+`CLUBUNIO_KEYCLOAK_ONLY=true`. Neue lokale Passwortanmeldungen werden
+fuer alle DEV-Konten abgewiesen. Verwaltung, Portal und Plattform
+leiten zu ihrem jeweiligen OIDC-Einstieg um; die alte lokale
+Sicherheitsanmeldung ist gesperrt. App-Bootstrap: Keycloak aktiv,
+lokale Sicherheitsanmeldung aus. Bestehende Sitzungen wurden nicht
+pauschal widerrufen. Unverknuepfte Konten muessen vor erneuter Anmeldung
+migriert werden. Stage unveraendert.
+
+Rollback: DEV-Schalter auf false setzen und Config-Cache erneuern;
+der zuvor definierte kontospezifische Cutover bleibt bestehen.
+
 - Die Migration `2026_11_16_000091_keycloak_migrations.php` ist additiv
   und akzeptiert ausschliesslich `clubunio_dev`. Die DDL erfolgt ueber
   die DEV-DB-Verwaltung; Runtime-Rechte nur fuer die neue Tabelle vergeben.

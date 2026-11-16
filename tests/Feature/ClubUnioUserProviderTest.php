@@ -16,5 +16,8 @@ final class ClubUnioUserProviderTest extends TestCase
         $hash = Hash::make('synthetic-password');
         $this->assertFalse($provider->validateCredentials((new Account)->forceFill(['id' => 18, 'password' => $hash]), ['password' => 'synthetic-password']));
         $this->assertTrue($provider->validateCredentials((new Account)->forceFill(['id' => 19, 'password' => $hash]), ['password' => 'synthetic-password']));
+
+        config(['clubunio-verein-oidc.only' => true]);
+        $this->assertFalse($provider->validateCredentials((new Account)->forceFill(['id' => 19, 'password' => $hash]), ['password' => 'synthetic-password']));
     }
 }
