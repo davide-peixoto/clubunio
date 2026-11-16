@@ -18,10 +18,25 @@
         <thead><tr><th>{{ __('Name') }}</th><th>{{ __('Konto') }}</th><th>Keycloak</th><th>{{ __('platform_users.edit') }}</th></tr></thead>
         <tbody>
         @foreach($rows as $row)
+            @php($invitation = $invites->get($row->id))
+            @php($mapped = in_array((int) $row->id, $mappedIds, true) || $invitation?->activated_at)
             <tr>
                 <td><strong>{{ $row->display_name }}</strong><br>{{ $row->username }}</td>
                 <td>{{ $row->active && $row->platform_active ? __('Aktiv') : __('Inaktiv') }}</td>
-                <td>{{ __(in_array((int) $row->id, $mappedIds, true) ? 'platform_users.linked' : 'platform_users.unlinked') }}</td>
+                <td>
+                    {{ __($mapped ? 'platform_users.linked' : ($invitation?->invited_at ? 'keycloak.status.invited' : 'platform_users.unlinked')) }}
+                    @if($invitesEnabled && !$mapped && $row->active && $row->platform_active && (int) $row->id !== (int) $actor->id && filter_var($row->username, FILTER_VALIDATE_EMAIL))
+                        <details>
+                            <summary>{{ __($invitation?->invited_at ? 'keycloak.resend' : 'keycloak.migration') }}</summary>
+                            <form method="post" action="{{ route('clubunio.platform.users.invite', $row->id) }}">
+                                @csrf
+                                <input type="hidden" name="email" value="{{ mb_strtolower(trim($row->username)) }}">
+                                <label><input type="checkbox" name="confirmed" value="1" required> {{ __('platform_users.confirm_recipient') }}: {{ $row->username }}</label>
+                                <button>{{ __('keycloak.send_invitations') }}</button>
+                            </form>
+                        </details>
+                    @endif
+                </td>
                 <td>
                     @if($row->platform_active)
                         <details><summary>{{ __('platform_users.edit') }}</summary>

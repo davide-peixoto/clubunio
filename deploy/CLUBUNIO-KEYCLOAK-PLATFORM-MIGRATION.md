@@ -7,7 +7,8 @@ Selbstentzug ist gesperrt; Aenderungen sind begruendungspflichtig und
 werden protokolliert. Der Keycloak-Status zeigt die bestehende statische
 Plattform-Subject-Zuordnung. Neue Konten koennen sich in Keycloak-only
 erst nach eigener Plattform-Identitaetsfreigabe anmelden.
-Automatische Provisionierung privilegierter Konten ist nicht freigegeben.
+Automatische Einladungen fuer Plattformkonten sind auf DEV separat
+freigeschaltet.
 
 Fuer manuell gepruefte Plattform-Identitaeten gibt es separaten Einstieg
 `/vereinslogin/oidc/platform-migration` mit DEV-MFA und privater
@@ -15,8 +16,25 @@ Allowlist `CLUBUNIO_PLATFORM_OIDC_MIGRATED_SUBJECTS`. Vor der Zuordnung
 Keycloak-Konto und Subject unabhaengig pruefen. Der Login prueft Issuer,
 Subject, verifizierte Adresse, frischen MFA-ACR und die bereits bestehende
 aktive Plattformberechtigung. Vereinslinks verleihen keine Plattformrolle.
-Die bisherige Plattformzuordnung bleibt unangetastet. Keine automatische
-Erstellung oder Einladungsmail in diesem Schritt.
+Die bisherige Plattformzuordnung bleibt unangetastet.
+
+### Plattform-Einladungen auf DEV
+
+Release `20261116-clubunio-platform-invitations`, additive Migration
+`2026_11_16_000092_platform_keycloak_invitations`. In der
+Plattformbenutzerliste steht die Aktion nur fuer aktive, noch nicht
+verknuepfte Plattformkonten mit gueltiger Adresse bereit. Selbstversand
+und automatische Uebernahme bestehender Keycloak-Identitaeten sind
+gesperrt. Die konkrete Empfaengeradresse muss bestaetigt werden.
+Wiederholungen verwenden ausschliesslich den bereits gespeicherten
+Subject. Versand wird im Plattform-Audit protokolliert.
+
+Nach Keycloak-E-Mail-Verifizierung, Passwort und TOTP meldet sich das
+Konto ueber `/vereinslogin/oidc/platform-migration` an. Die Zuordnung
+wird erst nach exakter Subject-, Adress-, MFA- und Rollenpruefung aktiv.
+Aktivierungsmail fuer ein separates, freigegebenes DEV-Testkonto wurde
+von Keycloak zum Versand angenommen. Browser-Abnahme mit diesem Konto
+steht bis zur Einrichtung durch den Empfaenger aus. Stage unveraendert.
 
 DEV-Release `20261116-clubunio-platform-users`: Uebersicht und separater
 MFA-Einstieg bereitgestellt. Der DEV-Datenbanktest verwendete ein

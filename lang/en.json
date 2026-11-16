@@ -1,4 +1,5 @@
 {
+    "platform_users.confirm_recipient": "Confirm recipient address",
     "platform_users.title": "Platform users",
     "platform_users.revoke": "Revoke platform access",
     "platform_users.create": "Create platform user",

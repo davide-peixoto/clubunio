@@ -86,8 +86,29 @@ final class PlatformAdministrationController
             ->paginate(30, ['a.id', 'a.username', 'a.display_name', 'a.active', 'p.active as platform_active']);
         $mappedIds = array_merge(array_values((array) config('clubunio-platform-oidc.subjects')),
             array_values((array) config('clubunio-platform-oidc.migrated_subjects')));
+        $link = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class);
+        $invitesEnabled = $link::invitationsEnabled();
+        $invites = $invitesEnabled ? $link->invitations()->whereIn('account_id', $rows->pluck('id'))
+            ->get(['account_id', 'invited_at', 'activated_at'])->keyBy('account_id') : collect();
 
-        return response()->view('clubunio.platform.users', compact('actor', 'rows', 'mappedIds'))->header('Cache-Control', 'no-store');
+        return response()->view('clubunio.platform.users', compact('actor', 'rows', 'mappedIds', 'invitesEnabled', 'invites'))->header('Cache-Control', 'no-store');
+    }
+
+    public function invitePlatformUser(Request $request, int $account, \App\ClubUnio\Services\PlatformAdminKeycloakLink $link)
+    {
+        $data = $request->validate(['email' => 'required|email:rfc|max:254', 'confirmed' => 'accepted']);
+        $operator = $request->user(PlatformOidcController::guard($request));
+        try {
+            $status = $link->send($operator, $account, $data['email']);
+        } catch (\Illuminate\Http\Client\HttpClientException | \RuntimeException $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
+            $status = 'failed';
+        }
+        $key = 'keycloak.status.'.$status;
+
+        return redirect()->route('clubunio.platform.users')->with('notice', __($key));
     }
 
     public function createPlatformUser(Request $request, PlatformAdministrationService $service)

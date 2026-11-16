@@ -32,6 +32,8 @@ Route::prefix('platform')->middleware(RequirePlatformAdministrator::class)->grou
     Route::post('/users', [PlatformAdministrationController::class, 'createPlatformUser'])->middleware('throttle:10,1')->name('clubunio.platform.users.create');
     Route::post('/users/{account}', [PlatformAdministrationController::class, 'changePlatformUser'])
         ->whereNumber('account')->middleware('throttle:20,1')->name('clubunio.platform.users.change');
+    Route::post('/users/{account}/keycloak-invitation', [PlatformAdministrationController::class, 'invitePlatformUser'])
+        ->whereNumber('account')->middleware('throttle:4,1')->block(45, 5)->name('clubunio.platform.users.invite');
     Route::get('/', [PlatformAdministrationController::class, 'index'])->name('clubunio.platform.index');
     Route::post('/tenants', [PlatformAdministrationController::class, 'create'])->middleware('throttle:10,1')->name('clubunio.platform.create');
     Route::post('/accounts', [PlatformAdministrationController::class, 'createAccount'])->middleware('throttle:10,1')->name('clubunio.platform.account.create');
