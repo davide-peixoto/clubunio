@@ -158,6 +158,43 @@ kein natives Testgeraet verfuegbar. Alter Login aktiv, Stage unveraendert.
 Referenz: [Keycloak Step-up Authentication](https://www.keycloak.org/docs/latest/server_admin/#_step-up-flow).
 Ein ACR-Mapping oder ein Default-ACR ersetzt die Flow-Pruefung nicht.
 
+### Native DEV-Abnahme: Geraetewechsel
+
+- Flutter-Stand `18d29b0` oder neuer und DEV-Origin
+  `https://dev.clubunio.ch`. Bei bestehender Installation die gespeicherte
+  Umgebung pruefen: Sie kann den Build-Default ueberschreiben. Nur DEV
+  auswaehlen. Keine Store-Veroeffentlichung erforderlich.
+- Android: `flutter build apk --debug --dart-define=CLUBUNIO_ORIGIN=https://dev.clubunio.ch`.
+  Debug-APK nicht ueber eine anders signierte Installation installieren;
+  bevorzugt separates Testgeraet verwenden.
+- iOS: auf Mac mit Xcode und CocoaPods im App-Repo
+  `flutter pub get` und danach
+  `flutter run -d <geraete-id> --dart-define=CLUBUNIO_ORIGIN=https://dev.clubunio.ch`.
+  Entwicklungs-Signing und registriertes iPhone erforderlich.
+- Synthetisches Konto `keycloak-qa-webapp@example.invalid`, Testverein
+  `keycloak-qa-webapp`, Nur-Mitglied mit eigener synthetischer
+  Mitgliederzuordnung und Portalzugang. Vor dem Geraetetest das
+  Testkennwort privat setzen und ggf. die bisherige synthetische
+  OTP-Credential im Keycloak-Adminbereich ersetzen. Kein Passwort,
+  QR-Code, OTP oder Seed in Chat, Tickets oder Screenshots.
+- Auf dem ersten Geraet **Mit Keycloak anmelden**, die Kopplung im
+  Browser bestaetigen und Passwort plus TOTP eingeben. Zur App zurueck
+  und die Anmeldung abschliessen. Nur der synthetische Verein soll
+  verfuegbar sein. Ein Passwort allein darf keine Sitzung ausstellen.
+- Auf dem zweiten Geraet ohne Wiederherstellung der ClubUnio-App-Daten
+  neu anmelden und eine neue Kopplung bestaetigen. Fuer diesen Test
+  einen weiterhin verfuegbaren oder sicher uebertragenen Authenticator
+  verwenden. Die vorige App-Sitzung darf nicht auf das neue Geraet
+  kopiert werden. Optional die alte Sitzung gezielt widerrufen und
+  pruefen, dass die neue Sitzung weiter funktioniert.
+- Getrennt pruefen: ohne alten oder migrierten OTP-Faktor muss die
+  Neuanmeldung scheitern. Erst nach kontrolliertem Reset ausschliesslich
+  des synthetischen Faktors und erneuter TOTP-Einrichtung darf sie
+  wieder funktionieren. Diese Anleitung bestaetigt keine
+  Self-Service-Wiederherstellung oder Passkey-Synchronisation.
+- Dieselben Faelle auf iOS und Android protokollieren: OS, Build,
+  Quell-/Zielgeraet, Ergebnis und anonymisierte Fehlermeldung.
+
 ## Umsetzung und Sicherheitsgrenzen
 
 1. ClubUnio ermittelt moegliche Zuordnungen ausschliesslich im ausgewaehlten
