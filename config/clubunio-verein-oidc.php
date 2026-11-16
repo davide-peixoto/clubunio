@@ -7,6 +7,12 @@ return [
     'mobile_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_MOBILE_ENABLED', false),
     'mobile_mfa_acr' => env('CLUBUNIO_VEREIN_OIDC_MOBILE_MFA_ACR'),
     'legacy_allowed' => (bool) env('CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED', true),
+    'emergency' => [
+        'accounts' => env('CLUBUNIO_EMERGENCY_PASSWORD_ACCOUNTS', ''),
+        'from' => env('CLUBUNIO_EMERGENCY_PASSWORD_FROM'),
+        'until' => env('CLUBUNIO_EMERGENCY_PASSWORD_UNTIL'),
+        'incident' => env('CLUBUNIO_EMERGENCY_PASSWORD_INCIDENT'),
+    ],
     'issuer' => 'https://auth.clubunio.com/realms/clubunio',
     'origin' => env('CLUBUNIO_VEREIN_OIDC_ORIGIN'),
     'client' => env('CLUBUNIO_VEREIN_OIDC_CLIENT'),

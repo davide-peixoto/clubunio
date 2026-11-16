@@ -2,6 +2,7 @@
 
 return [
     'keycloak_sign_in' => 'Sign in with your ClubUnio account',
+    'emergency_password' => 'Emergency password sign-in',
     'wizard_account' => '1. Confirm your account',
     'wizard_has_code' => 'I have a setup code from support',
     'wizard_continue' => 'Continue',

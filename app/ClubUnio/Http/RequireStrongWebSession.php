@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Services\AccountSecurity;
+use App\ClubUnio\Services\EmergencyPasswordLogin;
 use App\ClubUnio\Services\KeycloakAccountLinks;
 use Closure;
 use Illuminate\Http\Request;
@@ -22,6 +23,16 @@ final class RequireStrongWebSession
         }
         foreach (['clubunio', 'portal'] as $guard) {
             $actor = Auth::guard($guard)->user();
+            if ($guard === 'portal' && $request->session()->has('clubunio.emergency.portal')) {
+                $stamp = $request->session()->get('clubunio.emergency.portal');
+                $active = $actor ? app(EmergencyPasswordLogin::class)->stamp($request, $actor) : null;
+                if (is_string($stamp) && $active !== null && hash_equals($active, $stamp)) continue;
+                Auth::guard($guard)->logout();
+                $request->session()->forget('clubunio.emergency.portal');
+                $request->session()->regenerate();
+                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+                return redirect()->route('clubunio.portal.login');
+            }
             if ($guard === 'clubunio' && $actor && config('clubunio-verein-oidc.enabled')) {
                 $id = $request->session()->get('clubunio.oidc.account');
                 if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()

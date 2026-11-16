@@ -125,6 +125,40 @@ abgewiesen, Kontrollkonto zugelassen; Loginseite HTTP 200. Stage unveraendert.
 
 ### DEV: nur Keycloak
 
+#### Bereinigung und Passwort-Notanmeldung
+
+Im Keycloak-only-Modus sind lokaler 2FA-Wizard und lokaler Reset im Web
+ausgeblendet und gesperrt; die aktuelle Flutter-App bietet nur Keycloak
+als Browser-Einstieg an. Pairing-Endpunkte und Sicherheitsstempel werden
+auch von Keycloak verwendet und bleiben erhalten. Keine Tabellen loeschen.
+Die bisherigen Backendpfade bleiben fuer andere Umgebungen erhalten.
+
+Notfall nur nach dokumentierter Freigabe im Incident-Log, ueber die
+private Laufzeitkonfiguration des exakten Keycloak-HTTPS-Hosts aktivieren:
+`CLUBUNIO_EMERGENCY_PASSWORD_ACCOUNTS` (kommagetrennte interne Konto-IDs),
+`CLUBUNIO_EMERGENCY_PASSWORD_FROM` und `CLUBUNIO_EMERGENCY_PASSWORD_UNTIL`
+(UTC im Format `YYYY-MM-DDTHH:MM:SSZ`, maximal 60 Minuten) sowie
+`CLUBUNIO_EMERGENCY_PASSWORD_INCIDENT` (eindeutige Ticket-ID). Account und
+lokales Kennwort vorab kontrollieren; keine Kennwoerter im Incident-Log.
+Konfigurationscache neu laden; danach laesst sich das Mitgliederportal
+gezielt ueber `/portal/login?emergency=1` und die App ueber ihr
+Passwortformular erreichen. Kein automatischer Wechsel, kein Passwortzugang
+fuer Plattformadmins oder in die Verwaltungsoberflaeche. Die Fachrechte
+innerhalb von App und Mitgliederportal werden wie sonst geprueft.
+Jede erfolgreiche Nutzung schreibt `clubunio.emergency_password.used`;
+nach Ende/Entzug der Freigabe sind auch laufende Notsitzungen ungueltig.
+Nach dem Vorfall die vier Einstellungen aus der privaten Konfiguration
+entfernen, Cache neu laden und Audit abgleichen. Kein Schemawechsel.
+
+DEV-Release `20261116-clubunio-keycloak-cleanup`: isolierte Pruefung auf
+DEV bestaetigt App- und Portal-Anmeldung fuer ein synthetisches Konto,
+Ausschluss von Plattformadmins und nicht freigegebenen Konten sowie
+Sitzungsentzug bei Deaktivierung. Testdaten zurueckgerollt. Im aktiven
+Release keine Notfreigabe eingerichtet; Bootstrap meldet nur Keycloak.
+Rueckweg: `20261116-clubunio-platform-removal-retry`, Stage unveraendert.
+
+#### Bisheriger Cutover
+
 Release `20261116-clubunio-keycloak-only` mit
 `CLUBUNIO_KEYCLOAK_ONLY=true`. Neue lokale Passwortanmeldungen werden
 fuer alle DEV-Konten abgewiesen. Verwaltung, Portal und Plattform

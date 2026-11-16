@@ -225,7 +225,7 @@ class ClubUnioPanelProvider extends PanelProvider
                     ->label(fn () => trans('account-security.setup'))
                     ->icon('heroicon-o-shield-check')
                     ->url(fn () => route('clubunio.security.show'))
-                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
+                    ->visible(fn () => !config('clubunio-verein-oidc.only') && app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
             ]);
     }
 }

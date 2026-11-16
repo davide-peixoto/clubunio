@@ -1,9 +1,10 @@
 @extends('clubunio.portal.layout')
 @section('content')
 <section class="portal-login">
-    <h1>{{ __('Mitgliederbereich') }}</h1>
+    <h1>{{ $emergency ? trans('account-security.emergency_password') : __('Mitgliederbereich') }}</h1>
     <form method="post" action="{{ route('clubunio.portal.login') }}">
         @csrf
+        @if($emergency)<input type="hidden" name="emergency" value="1">@endif
         <label for="username">{{ __('Benutzername') }}</label>
         <input id="username" name="username" value="{{ old('username') }}" autocomplete="username" required maxlength="255">
         <label for="password">{{ __('Passwort') }}</label>
@@ -11,7 +12,7 @@
         @if($errors->any())<p role="alert" class="error">{{ $errors->first() }}</p>@endif
         <button class="primary" type="submit">{{ __('Anmelden') }}</button>
     </form>
-    @if(config('clubunio-security.enabled'))
+    @if(!$emergency && config('clubunio-security.enabled'))
         <a href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}">{{ trans('account-security.strong_login') }}</a>
     @endif
     @if(config('clubunio-support.enabled'))

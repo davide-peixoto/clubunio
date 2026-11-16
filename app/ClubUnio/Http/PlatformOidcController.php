@@ -146,6 +146,7 @@ final class PlatformOidcController
             $tenant = $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
             abort_unless($tenant, 403);
             Auth::guard('portal')->login($actor);
+            $request->session()->forget('clubunio.emergency.portal');
             $request->session()->regenerate();
 
             return redirect()->route('clubunio.portal.members', ['tenant' => $tenant->slug])

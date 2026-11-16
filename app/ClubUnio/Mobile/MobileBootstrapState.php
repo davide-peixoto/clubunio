@@ -61,6 +61,8 @@ final class MobileBootstrapState {
         $data['pushAdminAvailable']=false;
         $pairingAvailable = $data['loginAllowed'] && config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
         $data['strongLoginAvailable'] = $pairingAvailable && !config('clubunio-verein-oidc.only');
+        $data['passwordLoginAvailable'] = $data['loginAllowed'] && (!config('clubunio-verein-oidc.only')
+            || app(\App\ClubUnio\Services\EmergencyPasswordLogin::class)->expires($request) !== null);
         $data['keycloakLoginAvailable'] = $pairingAvailable
             && config('clubunio-verein-oidc.enabled') && config('clubunio-verein-oidc.mobile_enabled')
             && config('clubunio-verein-oidc.invites_enabled') && config('clubunio-verein-oidc.origin') === $origin;

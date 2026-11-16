@@ -4,6 +4,7 @@ namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\MemberStatus;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\EmergencyPasswordLogin;
 use App\ClubUnio\Services\MemberAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,13 +13,15 @@ use Illuminate\Validation\ValidationException;
 
 class PortalController
 {
-    public function loginForm()
+    public function loginForm(Request $request)
     {
-        if (config('clubunio-verein-oidc.only')) {
+        $emergency = config('clubunio-verein-oidc.only');
+        if ($emergency && !$request->boolean('emergency')) {
             return redirect()->route('clubunio.verein.oidc.start');
         }
+        abort_if($emergency && !app(EmergencyPasswordLogin::class)->expires($request), 404);
 
-        return response()->view('clubunio.portal.login')->header('Cache-Control', 'private, no-store');
+        return response()->view('clubunio.portal.login', compact('emergency'))->header('Cache-Control', 'private, no-store');
     }
 
     public function login(Request $request, MemberAccessService $access)
@@ -34,6 +37,20 @@ class PortalController
             RateLimiter::hit($key, 60);
         }
         $guard = Auth::guard('portal');
+        if (config('clubunio-verein-oidc.only')) {
+            $emergency = app(EmergencyPasswordLogin::class);
+            abort_unless($request->boolean('emergency') && $emergency->expires($request), 404);
+            [$actor, $stamp] = $emergency->authenticate($request, $username, $data['password']);
+            $tenant = $actor->tenants()->get()->first(fn ($tenant) => $access->canEnter($actor, $tenant));
+            abort_unless($tenant, 401);
+            $emergency->record($actor, 'portal');
+            $guard->login($actor);
+            $request->session()->regenerate();
+            $request->session()->put('clubunio.emergency.portal', $stamp);
+            RateLimiter::clear(array_key_first($keys));
+
+            return redirect()->route('clubunio.portal.members', ['tenant' => $tenant->slug]);
+        }
         if ($guard->attempt(['username' => $username, 'password' => $data['password'], 'active' => true, 'api_only' => false])) {
             $actor = $guard->user();
             $security = app(\App\ClubUnio\Services\AccountSecurity::class);
@@ -77,6 +94,7 @@ class PortalController
     public function logout(Request $request)
     {
         Auth::guard('portal')->logout();
+        $request->session()->forget('clubunio.emergency.portal');
         if (config('clubunio-verein-oidc.only')) {
             $request->session()->invalidate();
             $request->session()->regenerateToken();
