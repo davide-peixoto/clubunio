@@ -21,7 +21,10 @@ final class PlatformAdministrationController
     public function loginForm(Request $request, PlatformAdministrationService $service)
     {
         abort_if(app(TenantDomainService::class)->resolve($request), 404);
-        if ($service->allowed($request->user('clubunio'))) {
+        if (config('clubunio-platform-oidc.enabled') && !$request->user('platform')) {
+            return redirect()->route('clubunio.platform.oidc.start');
+        }
+        if ($service->allowed($request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio'))) {
             return redirect()->route('clubunio.platform.index');
         }
 
@@ -30,6 +33,7 @@ final class PlatformAdministrationController
 
     public function login(Request $request, PlatformAdministrationService $service)
     {
+        abort_if(config('clubunio-platform-oidc.enabled'), 404);
         abort_if(app(TenantDomainService::class)->resolve($request), 404);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:255']);
         $actor = Account::whereRaw('lower(username) = ?', [mb_strtolower(trim($data['username']))])->first();
@@ -56,19 +60,19 @@ final class PlatformAdministrationController
 
         $metrics = app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview($rows->getCollection()->modelKeys());
 
-        return view('clubunio.platform.index', ['rows' => $rows, 'metrics' => $metrics, 'q' => $data['q'] ?? '', 'actor' => $request->user('clubunio')]);
+        return view('clubunio.platform.index', ['rows' => $rows, 'metrics' => $metrics, 'q' => $data['q'] ?? '', 'actor' => $request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio')]);
     }
 
     public function create(Request $request, PlatformAdministrationService $service)
     {
-        $tenant = $service->create($request->user('clubunio'), $request->except('_token'));
+        $tenant = $service->create($request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio'), $request->except('_token'));
 
         return redirect()->route('clubunio.platform.show', $tenant->id)->with('notice', __('Verein erstellt.'));
     }
 
     public function createAccount(Request $request, PlatformAdministrationService $service)
     {
-        $service->createAccount($request->user('clubunio'), $request->except('_token'));
+        $service->createAccount($request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio'), $request->except('_token'));
 
         return redirect()->route('clubunio.platform.index')->with('notice', __('Persönliches Konto erstellt.'));
     }
@@ -81,7 +85,7 @@ final class PlatformAdministrationController
             ->where('m.tenant_id', $id)->where('a.api_only', false)->orderBy('a.display_name')->limit(201)
             ->get(['a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
 
-        return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user('clubunio'),
+        return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio'),
             'metrics' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview([$id])[$id],
             'syncOperations' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->operations($id),
             'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts,
@@ -96,7 +100,7 @@ final class PlatformAdministrationController
 
     public function change(Request $request, int $id, PlatformAdministrationService $service)
     {
-        $service->change($request->user('clubunio'), $id, $request->except('_token'));
+        $service->change($request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio'), $id, $request->except('_token'));
 
         return redirect()->route('clubunio.platform.show', $id)->with('notice', __('Änderung gespeichert.'));
     }
@@ -108,7 +112,13 @@ final class PlatformAdministrationController
 
     public function logout(Request $request)
     {
-        Auth::guard('clubunio')->logout();
+        if (config('clubunio-platform-oidc.enabled')) {
+            Auth::guard('platform')->logout();
+            $request->session()->forget(['platform.oidc.expires', 'platform.oidc.pending']);
+            $request->session()->regenerate();
+            return redirect()->away(config('clubunio-platform-oidc.issuer').'/protocol/openid-connect/logout');
+        }
+        Auth::guard(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
