@@ -11,7 +11,7 @@ final class RequireStrongWebSession
 {
     public function handle(Request $request, Closure $next)
     {
-        if (config('clubunio-platform-oidc.enabled') && $request->routeIs('clubunio.platform.*', 'clubunio.support.platform-intake')) {
+        if (PlatformOidcController::guard($request) === 'platform' && $request->routeIs('clubunio.platform.*', 'clubunio.support.platform-intake')) {
             return $next($request);
         }
         $security = app(AccountSecurity::class);

@@ -20,7 +20,7 @@ final class StrongLoginController
         $this->security->origin($request);
         $mode = $request->query('mode', 'clubunio');
         abort_unless(in_array($mode, ['clubunio', 'portal', 'mobile', 'platform'], true), 404);
-        abort_if($mode === 'platform' && config('clubunio-platform-oidc.enabled'), 404);
+        abort_if($mode === 'platform' && PlatformOidcController::required(), 404);
         $pair = $mode === 'mobile' ? $request->validate(['pair' => 'required|uuid'])['pair'] : null;
         $locale = $request->query('locale');
         if ($mode === 'mobile' && is_string($locale)) {
@@ -37,7 +37,7 @@ final class StrongLoginController
         abort_unless($request->isJson(), 415);
         $origin = $this->security->origin($request);
         $mode = $request->validate(['mode' => 'required|in:clubunio,portal,mobile,platform'])['mode'];
-        abort_if($mode === 'platform' && config('clubunio-platform-oidc.enabled'), 404);
+        abort_if($mode === 'platform' && PlatformOidcController::required(), 404);
         if ($mode === 'mobile') {
             $this->validPair($request);
         }
