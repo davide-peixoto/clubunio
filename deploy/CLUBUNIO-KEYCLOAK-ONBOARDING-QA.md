@@ -115,7 +115,28 @@ OTP verlangt. Nach gueltigem OTP waren Callback, einmaliges
 Redeem und authentifizierter API-Kontext erfolgreich (HTTP 200).
 Wiederholung desselben Redeem: HTTP 404. Sitzung beendet, temporaere
 Admin-Rolle entfernt. Legacy-Loginseite HTTP 200. Stage unveraendert.
-Dies war ein Browser-/API-Test, kein nativer Test oder Trainer-/TL-Test.
+Dies war ein Browser-/API-Test, kein nativer Test.
+
+### DEV-Nachtest: Rollenentzug bei laufender App-Sitzung (16.11.2026)
+
+Im aktiven DEV-Backend mit einer isolierten PostgreSQL-Transaktion:
+synthetischer Verein, aktives Mitglied, Keycloak-Kontolink und eine
+MFA-gebundene App-Sitzung mit synthetischem Assurance-Claim. Der Test
+nutzte die echte Sitzungsausstellung und -authentifizierung des
+DEV-Backends. Jeder Zugriff wurde als neuer Request ausgewertet;
+das Sitzungstoken blieb dasselbe.
+
+- Trainer: wirksame Trainerrolle und Teamzugriff vorhanden. Nach
+  Deaktivierung der Zuteilung: Mitglied, keine verantworteten Teams.
+- Technischer Leiter: wirksame TL-Rolle und Teamzugriff vorhanden.
+  Nach Deaktivierung der Zuteilung: Mitglied, keine verantworteten Teams.
+- In beiden Faellen blieb der regulaere Vereinszugang bestehen.
+  Testdaten und Sitzung wurden zurueckgerollt.
+
+Dies bestaetigt die serverseitige Rollen- und Teamzugriffsentscheidung
+mit laufender Sitzung, nicht alle einzelnen Fachaktionen oder die native
+Anzeige. Der Geraetewechsel bleibt auf iOS und Android offen: Es war
+kein natives Testgeraet verfuegbar. Alter Login aktiv, Stage unveraendert.
 
 ### DEV-Aktivierungscheckliste
 
