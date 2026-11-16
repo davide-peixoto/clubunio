@@ -17,7 +17,8 @@ final class SupportCenterController
     {
         abort_unless(config('clubunio-support.enabled'), 404);
         $platform = $request->routeIs('clubunio.platform.support');
-        $actor = $request->attributes->get('mobile.actor') ?? $request->user('clubunio') ?? $request->user('portal');
+        $actor = $platform && config('clubunio-platform-oidc.enabled') ? $request->user('platform')
+            : ($request->attributes->get('mobile.actor') ?? $request->user('clubunio') ?? $request->user('portal'));
         $staff = false;
         if ($platform || $club !== null) {
             abort_unless($actor, 401);

@@ -40,6 +40,7 @@ return [
     'guards' => [
         'clubunio' => ['driver' => 'session', 'provider' => 'clubunio_users'],
         'portal' => ['driver' => 'session', 'provider' => 'clubunio_users'],
+        'platform' => ['driver' => 'session', 'provider' => 'clubunio_users'],
     ],
 
     /*

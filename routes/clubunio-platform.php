@@ -8,6 +8,10 @@ Route::get('/club-logo/{id}/{version}.png', [PlatformAdministrationController::c
     ->whereNumber('id')->where('version', '[a-f0-9]{64}')->middleware('throttle:120,1')->name('clubunio.tenant-logo');
 Route::get('/platform/login', [PlatformAdministrationController::class, 'loginForm'])->name('clubunio.platform.login');
 Route::post('/platform/login', [PlatformAdministrationController::class, 'login'])->middleware('throttle:5,1');
+Route::get('/platform/oidc/start', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:20,1')->block(10,10)->name('clubunio.platform.oidc.start');
+Route::get('/platform/oidc/callback', [\App\ClubUnio\Http\PlatformOidcController::class, 'callback'])
+    ->middleware('throttle:20,1')->block(10,10)->name('clubunio.platform.oidc.callback');
 Route::prefix('platform')->middleware(RequirePlatformAdministrator::class)->group(function () {
     Route::get('/', [PlatformAdministrationController::class, 'index'])->name('clubunio.platform.index');
     Route::post('/tenants', [PlatformAdministrationController::class, 'create'])->middleware('throttle:10,1')->name('clubunio.platform.create');

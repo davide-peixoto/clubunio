@@ -11,6 +11,9 @@ final class RequireStrongWebSession
 {
     public function handle(Request $request, Closure $next)
     {
+        if (config('clubunio-platform-oidc.enabled') && $request->routeIs('clubunio.platform.*', 'clubunio.support.platform-intake')) {
+            return $next($request);
+        }
         $security = app(AccountSecurity::class);
         if (!$security->enabled() || $request->routeIs('clubunio.security.*', 'filament.clubunio.auth.logout', 'clubunio.portal.logout', 'clubunio.platform.logout')) {
             return $next($request);
