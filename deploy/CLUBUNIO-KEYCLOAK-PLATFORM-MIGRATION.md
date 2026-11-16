@@ -22,7 +22,8 @@ Die erstmalige Verknuepfung erfolgt im Vereins-Web-Login anhand des
 vorgemerkten Issuer/Subject und der verifizierten E-Mail. Sie setzt
 bestehende Vereinsberechtigungen voraus und umgeht keine lokale MFA.
 App-Erstaktivierung und automatischer Legacy-Cutover sind nicht Teil
-dieses Stands. Bestehender Login und Rollen bleiben unveraendert.
+dieses Stands. Der Legacy-Login kann nach bestaetigter Web-Anmeldung
+gezielt pro Konto gesperrt werden; Rollen bleiben unveraendert.
 
 ## DEV-Bereitstellung
 
@@ -40,8 +41,20 @@ dieses Stands. Bestehender Login und Rollen bleiben unveraendert.
   nicht als synthetisches Migrationskonto verwendet werden. Fuer echte
   DEV-Einzel-/Mehrfachmails und Wiederholung getrennte Testadressen oder
   bestaetigte Aliasse verwenden. Eine separat freigegebene Einzelmigration
-  hat den Status Einladung versendet erreicht. Erste Anmeldung und
-  kontospezifischer Legacy-Cutover stehen aus; kein globaler Cutover.
+  ist nach der ersten Web-Anmeldung aktiviert und dauerhaft verknuepft.
+  Kein globaler Cutover.
+
+### Kontospezifischer Passwort-Cutover
+
+DEV-Release `20261116-clubunio-keycloak-account-cutover` aktiv.
+`CLUBUNIO_KEYCLOAK_LEGACY_DISABLED_ACCOUNTS` enthaelt interne
+Konto-IDs, die erst nach verifizierter Keycloak-Anmeldung eingetragen
+werden. Der zentrale ClubUnio-Provider lehnt fuer diese Konten neue
+lokale Passwortanmeldungen ab; OIDC und andere Konten sind nicht
+betroffen. Passwort-Hash und bestehende Sitzungen werden nicht geaendert.
+Rollback: ID aus der privaten DEV-Liste entfernen und Config-Cache
+erneuern. Auf DEV mit Ersatz-Hash nachgewiesen: ausgewaehltes Konto
+abgewiesen, Kontrollkonto zugelassen; Loginseite HTTP 200. Stage unveraendert.
 
 - Die Migration `2026_11_16_000091_keycloak_migrations.php` ist additiv
   und akzeptiert ausschliesslich `clubunio_dev`. Die DDL erfolgt ueber

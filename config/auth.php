@@ -61,7 +61,7 @@ return [
     */
 
     'providers' => [
-        'clubunio_users' => ['driver' => 'eloquent', 'model' => Account::class],
+        'clubunio_users' => ['driver' => 'clubunio-account', 'model' => Account::class],
         'users' => [
             'driver' => 'eloquent',
             'model' => Account::class,
