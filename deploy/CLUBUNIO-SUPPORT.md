@@ -189,6 +189,13 @@ DEV release: `20261115-clubunio-support-workspace`. Rollback:
 `20261115-clubunio-support-zammad`. Verified against DEV PostgreSQL with a
 synthetic ticket, filtered list, detail pane and both secondary tabs; the
 test transaction was rolled back. Stage was not changed.
-Authenticated Chrome visual acceptance is pending: the DEV session reached
-the secure sign-in screen and the user could not sign back in at the time.
-Resume the DEV login check separately, then verify the three tabs in Chrome.
+16.11.2026: authenticated Chrome acceptance completed on DEV via the
+dedicated Keycloak platform client. The earlier attempt stopped at the
+local secure sign-in screen; the current platform login completed and
+returned to the dashboard. Verified the default inbox, empty and filtered
+empty states, knowledge search, and a live assistant answer for a generic
+expense question. Its source link opened the correct FAQ entry. The
+populated detail pane was tested separately with a rolled-back fixture;
+no escalated ticket was present in Chrome. Follow-ups: the assignee
+placeholder can be clipped and the assistant displays Markdown markers
+as literal text. No authentication or Stage changes were made during QA.
