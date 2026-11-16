@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Services\AccountSecurity;
+use App\ClubUnio\Services\KeycloakAccountLinks;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,10 +26,15 @@ final class RequireStrongWebSession
                 $id = $request->session()->get('clubunio.oidc.account');
                 if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
                     && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
-                    && in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)) continue;
+                    && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
+                        || (config('clubunio-verein-oidc.invites_enabled')
+                            && is_string($subject = $request->session()->get('clubunio.oidc.subject'))
+                            && app(KeycloakAccountLinks::class)->accountId((object) [
+                                'issuer' => config('clubunio-verein-oidc.issuer'), 'sub' => $subject,
+                            ]) === $id))) continue;
                 if ($id !== null || PlatformOidcController::requiresClubOidc($actor)) {
                     Auth::guard($guard)->logout();
-                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account']);
+                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject']);
                     if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
                     return redirect()->route('clubunio.verein.oidc.start');
                 }

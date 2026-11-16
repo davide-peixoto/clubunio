@@ -1,4 +1,10 @@
 {
+    "keycloak.invitation": "Club administration invitation",
+    "keycloak.code": "Invitation code",
+    "keycloak.continue": "Continue to sign-in",
+    "keycloak.mobile": "Sign in to the ClubUnio app",
+    "keycloak.confirmation": "Confirmation code from the app",
+    "keycloak.return_to_app": "Return to the ClubUnio app to finish signing in.",
     "dashboard.pending_bus": "Pending bus requests",
     "dashboard.pending_pitch": "Pending pitch requests",
     "campaign.dev_test_recipients": "DEV release is email-only for test members with their own address in the form campaign-test-…@example.invalid. No emails are delivered.",

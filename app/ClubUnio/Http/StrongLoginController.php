@@ -199,12 +199,22 @@ final class StrongLoginController
         return hash_hmac('sha256', $id.'|'.$confirmation, (string) config('app.key'));
     }
 
-    private function validPair(Request $request): void
+    public function validPair(Request $request): void
     {
         $data = $request->validate(['pair' => 'required|uuid', 'confirmation' => 'required|regex:/^\d{8}$/D']);
         $this->security->rate('pair', $data['pair'], 12, 300);
         abort_unless($this->pairs()->where('id', $data['pair'])->where('confirmation_hash', $this->pairHash($data['pair'], $data['confirmation']))
             ->where('expires_at', '>', now())->whereNull('account_id')->whereNull('consumed_at')->exists(), 422);
+    }
+
+    public function completeKeycloakPair(array $pair, Account $actor): void
+    {
+        abort_if($this->security->requiresStrongLogin($actor), 403);
+        $changed = $this->pairs()->where('id', $pair['pair'])
+            ->where('confirmation_hash', $this->pairHash($pair['pair'], $pair['confirmation']))
+            ->where('expires_at', '>', now())->whereNull('account_id')->whereNull('consumed_at')
+            ->update(['account_id' => $actor->id]);
+        abort_unless($changed === 1, 403);
     }
 
     private function finish(Request $request, string $mode, Account $actor, string $stamp): array

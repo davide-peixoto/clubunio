@@ -2,6 +2,8 @@
 
 return [
     'enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_ENABLED', false),
+    'invites_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_INVITES_ENABLED', false),
+    'mobile_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_MOBILE_ENABLED', false),
     'legacy_allowed' => (bool) env('CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED', true),
     'issuer' => 'https://auth.clubunio.com/realms/clubunio',
     'origin' => env('CLUBUNIO_VEREIN_OIDC_ORIGIN'),

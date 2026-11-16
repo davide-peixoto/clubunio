@@ -13,6 +13,20 @@ use Illuminate\Support\Facades\Schedule;
 
 require __DIR__.'/clubunio-console.php';
 
+Artisan::command('clubunio:keycloak-test-invite {tenant} {account} {--first-name=} {--last-name=}', function () {
+    $db = DB::connection('clubunio');
+    abort_unless($db->selectOne('SELECT current_database() AS name')->name === 'clubunio_dev', 403);
+    $tenant = Tenant::where('slug', $this->argument('tenant'))->firstOrFail();
+    $account = Account::findOrFail($this->argument('account'));
+    $email = (string) $account->username;
+    abort_unless(preg_match('/\Akeycloak-qa-[a-z0-9-]+@example\.invalid\z/', $email), 403);
+    $code = app(\App\ClubUnio\Services\KeycloakAccountLinks::class)->invite(
+        $tenant, $account, $email, $this->option('first-name'), $this->option('last-name'),
+    );
+    $this->line(rtrim(config('clubunio-verein-oidc.origin'), '/').'/vereinslogin/oidc/invitation');
+    $this->line($code);
+});
+
 Artisan::command('clubunio:platform-bootstrap {username}', function () {
     app(\App\ClubUnio\Services\PlatformAdministrationService::class)->bootstrap($this->argument('username'));
     $this->info('Initial platform administrator verified. No club permissions changed.');

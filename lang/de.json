@@ -1,4 +1,10 @@
 {
+    "keycloak.invitation": "Einladung zur Vereinsverwaltung",
+    "keycloak.code": "Einladungscode",
+    "keycloak.continue": "Weiter zur Anmeldung",
+    "keycloak.mobile": "ClubUnio-App anmelden",
+    "keycloak.confirmation": "Bestätigungscode aus der App",
+    "keycloak.return_to_app": "Kehre zur ClubUnio-App zurück und schliesse die Anmeldung ab.",
     "dashboard.pending_bus": "Offene Busanfragen",
     "dashboard.pending_pitch": "Offene Platzanfragen",
     "campaign.dev_test_recipients": "DEV-Freigabe nur per E-Mail an Testmitglieder mit einer eigenen Adresse im Format campaign-test-…@example.invalid. Es werden keine E-Mails zugestellt.",
