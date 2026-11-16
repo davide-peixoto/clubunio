@@ -1,14 +1,26 @@
 # Keycloak-Migration aus der Plattformverwaltung
 
-Die separate Uebersicht `/platform/users` ist lokal vorbereitet:
-Plattformkonto erstellen, Anzeigename bearbeiten und Plattformzugang
-entziehen. Der Entzug erhaelt Konto, Vereinszuordnungen und Fachdaten.
-Selbstentzug ist gesperrt; Aenderungen sind begruendungspflichtig und
+In der separaten Uebersicht `/platform/users` lassen sich Plattformkonten
+erstellen und bearbeiten. Entziehen deaktiviert den Plattformzugang und
+behaelt den Listeneintrag. «Aus Plattform entfernen» loescht den Eintrag
+auch nach einem frueheren Entzug. Das gemeinsame Konto, Vereinszuordnungen,
+Fachdaten und die Keycloak-Identitaet bleiben bestehen; ohne aktiven
+Plattformzugang kann die Identitaet die Plattform nicht mehr aufrufen.
+Keine Datenbankmigration erforderlich. Entzug und Entfernen des eigenen
+Zugangs sind gesperrt. Aenderungen sind begruendungspflichtig und
 werden protokolliert. Der Keycloak-Status zeigt die bestehende statische
 Plattform-Subject-Zuordnung. Neue Konten koennen sich in Keycloak-only
 erst nach eigener Plattform-Identitaetsfreigabe anmelden.
 Automatische Einladungen fuer Plattformkonten sind auf DEV separat
 freigeschaltet.
+
+DEV-Release `20261116-clubunio-platform-removal`: Entfernung aktiver und
+entzogener Eintraege mit synthetischen Konten unter der DEV-Laufzeitrolle
+geprueft. Fehlende Berechtigung und Selbstentfernung werden abgewiesen;
+Konten und Vereinszuordnungen bleiben erhalten, Audit wird geschrieben.
+Die Testtransaktion wurde zurueckgerollt. Stage und bestehende Zugaenge
+blieben unveraendert. Rueckweg fuer den Code: voriger DEV-Release, ohne
+Schemaaenderung. Bereits absichtlich entfernte Zugriffe bleiben entfernt.
 
 Fuer manuell gepruefte Plattform-Identitaeten gibt es separaten Einstieg
 `/vereinslogin/oidc/platform-migration` mit DEV-MFA und privater

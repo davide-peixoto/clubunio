@@ -248,6 +248,29 @@ class PlatformAdministrationTest extends TestCase
         $this->assertStringNotContainsString($created->password, $audit);
     }
 
+    public function test_platform_removal_preserves_club_membership_and_is_audited(): void
+    {
+        $grants = $this->db->table('clubora.platform_admins');
+        $grants->insert(['account_id' => $this->person->id]);
+        $grants->insert(['account_id' => $this->admin->id, 'active' => false]);
+        $this->person->tenants()->attach($this->one, ['role' => 'member']);
+        $data = ['operation' => 'remove', 'reason' => 'Synthetic platform removal'];
+        $url = route('clubunio.platform.users.change', $this->person->id);
+
+        $this->actingAs($this->admin, 'clubunio')->post($url, $data)->assertForbidden();
+        $this->actingAs($this->operator, 'clubunio');
+        $this->post(route('clubunio.platform.users.change', $this->operator->id), $data)->assertStatus(409);
+        $this->post($url, $data)->assertRedirect();
+        $this->post(route('clubunio.platform.users.change', $this->admin->id), $data)->assertRedirect();
+        $this->post($url, $data)->assertNotFound();
+
+        $this->assertFalse((clone $grants)->whereIn('account_id', [$this->person->id, $this->admin->id])->exists());
+        $this->assertTrue($this->person->fresh()->tenants()->whereKey($this->one->id)->exists());
+        $audit = $this->db->table('clubora.platform_changes')->where('actor_id', $this->operator->id)
+            ->where('action', 'platform.remove')->orderBy('id')->pluck('details');
+        $this->assertSame([$this->person->id, $this->admin->id], $audit->map(fn ($details) => json_decode($details, true)['account_id'])->all());
+    }
+
     public function test_database_domains_bind_both_api_and_web_without_switching_token_tenant(): void
     {
         $profile = new AccessProfile;

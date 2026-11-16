@@ -57,6 +57,16 @@
                             @endif
                         </details>
                     @endif
+                    @if((int) $row->id !== (int) $actor->id)
+                        <details><summary>{{ __('platform_users.remove') }}</summary>
+                            <form method="post" action="{{ route('clubunio.platform.users.change', $row->id) }}" class="platform-form">
+                                @csrf
+                                <input type="hidden" name="operation" value="remove">
+                                <label>{{ __('Begründung') }}<input name="reason" required minlength="10" maxlength="500"></label>
+                                <div class="platform-actions"><button>@svg('heroicon-o-trash') {{ __('platform_users.remove') }}</button></div>
+                            </form>
+                        </details>
+                    @endif
                 </td>
             </tr>
         @endforeach

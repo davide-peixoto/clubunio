@@ -1,4 +1,5 @@
 {
+    "platform_users.remove": "Aus Plattform entfernen",
     "platform_users.confirm_recipient": "Empfängeradresse bestätigen",
     "platform_users.title": "Plattformbenutzer",
     "platform_users.revoke": "Plattformzugang entziehen",

@@ -117,8 +117,8 @@ final class PlatformAdministrationService
     public function updatePlatformAccount(Account $actor, int $id, array $input): void
     {
         $this->authorize($actor);
-        $data = Validator::make($input, ['operation' => 'required|in:rename,revoke',
-            'display_name' => 'required_if:operation,rename|prohibited_if:operation,revoke|string|max:255',
+        $data = Validator::make($input, ['operation' => 'required|in:rename,revoke,remove',
+            'display_name' => 'required_if:operation,rename|prohibited_if:operation,revoke,remove|string|max:255',
             'reason' => 'required|string|min:10|max:500'])->validate();
         $db = DB::connection('clubunio');
         $db->transaction(function () use ($db, $actor, $id, $data) {
@@ -126,9 +126,13 @@ final class PlatformAdministrationService
             $db->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-platform-access']);
             $this->authorize($actor, true);
             $target = Account::whereKey($id)->where('api_only', false)->lockForUpdate()->firstOrFail();
-            $grant = $db->table('clubora.platform_admins')->where('account_id', $id)->where('active', true);
-            abort_unless((clone $grant)->lockForUpdate()->first(), 404);
-            if ($data['operation'] === 'revoke') {
+            $grant = $db->table('clubora.platform_admins')->where('account_id', $id);
+            $existing = (clone $grant)->lockForUpdate()->first();
+            abort_unless($existing && ($existing->active || $data['operation'] === 'remove'), 404);
+            if ($data['operation'] === 'remove') {
+                abort_if((int) $actor->id === $id, 409);
+                $grant->delete();
+            } elseif ($data['operation'] === 'revoke') {
                 abort_if((int) $actor->id === $id, 409);
                 $grant->update(['active' => false]);
             } else {
