@@ -207,13 +207,15 @@ final class StrongLoginController
             ->where('expires_at', '>', now())->whereNull('account_id')->whereNull('consumed_at')->exists(), 422);
     }
 
-    public function completeKeycloakPair(array $pair, Account $actor): void
+    public function completeKeycloakPair(array $pair, Account $actor, \stdClass $claims): void
     {
-        abort_if($this->security->requiresStrongLogin($actor), 403);
+        $assurance = app(\App\ClubUnio\Services\KeycloakMobileAssurance::class);
+        $stamp = $assurance->stamp($actor, $claims);
+        abort_if(($assurance::level() !== null || $this->security->requiresStrongLogin($actor)) && $stamp === null, 403);
         $changed = $this->pairs()->where('id', $pair['pair'])
             ->where('confirmation_hash', $this->pairHash($pair['pair'], $pair['confirmation']))
             ->where('expires_at', '>', now())->whereNull('account_id')->whereNull('consumed_at')
-            ->update(['account_id' => $actor->id]);
+            ->update(['account_id' => $actor->id, 'session_stamp' => $stamp]);
         abort_unless($changed === 1, 403);
     }
 

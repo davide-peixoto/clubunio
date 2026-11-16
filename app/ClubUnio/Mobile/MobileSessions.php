@@ -53,7 +53,7 @@ final class MobileSessions
         DB::connection('clubunio')->transaction(function () use ($actor, $security, $strongStamp, $id, $secret, $deviceName, $expiry) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && ! $fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
-            abort_if($security->mustEnroll($fresh) || ($security->configured($fresh) && (!$strongStamp || !hash_equals($security->stamp($fresh), $strongStamp))), 428);
+            abort_unless($this->satisfiesSecurity($fresh, $security, $strongStamp), 428);
             DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
                 'token_hash' => hash('sha256', $secret), 'device_name' => $deviceName, 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]
                 + ($strongStamp === null ? [] : ['security_stamp' => $strongStamp]));
@@ -74,9 +74,22 @@ final class MobileSessions
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();
         abort_unless($actor, 401);
         $security = app(AccountSecurity::class);
-        abort_if($security->mustEnroll($actor) || ($security->configured($actor) && (!isset($session->security_stamp) || !hash_equals($security->stamp($actor), $session->security_stamp))), 401);
+        abort_unless($this->satisfiesSecurity($actor, $security, $session->security_stamp ?? null), 401);
         $request->attributes->set('mobile.session', $session);
 
         return $actor;
+    }
+
+    private function satisfiesSecurity(Account $actor, AccountSecurity $security, ?string $stamp): bool
+    {
+        if ($stamp === null) {
+            return !$security->requiresStrongLogin($actor);
+        }
+        if (!$security->mustEnroll($actor) && hash_equals($security->stamp($actor), $stamp)) {
+            return true;
+        }
+        $federated = app(\App\ClubUnio\Services\KeycloakMobileAssurance::class)->stamp($actor);
+
+        return $federated !== null && hash_equals($federated, $stamp);
     }
 }
