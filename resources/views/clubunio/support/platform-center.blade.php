@@ -1,7 +1,7 @@
 @extends('clubunio.platform.layout')
 @section('title', trans('support.title').' · ClubUnio')
 @push('head')
-<link rel="stylesheet" href="{{ asset('css/clubunio-support-platform.css') }}?v=1">
+<link rel="stylesheet" href="{{ asset('css/clubunio-support-platform.css') }}?v=2">
 @endpush
 @section('content')
 @php($inbox = route('clubunio.platform.support'))
@@ -81,5 +81,5 @@
         </form>
     </section>
 @endif
-<script src="{{ asset('js/clubunio-support.js') }}?v=2" defer></script>
+<script src="{{ asset('js/clubunio-support.js') }}?v=3" defer></script>
 @endsection

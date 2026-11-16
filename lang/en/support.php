@@ -11,7 +11,7 @@ return [
         'ticket_search' => 'Subject or club',
         'status' => 'Status',
         'all_statuses' => 'All statuses',
-        'all_assignees' => 'All assignees',
+        'all_assignees' => 'All',
         'apply_filters' => 'Apply filters',
         'clear_filters' => 'Clear filters',
         'no_matches' => 'No tickets match these filters.',

@@ -14,6 +14,7 @@
 .sp-inline { margin-bottom: 0; }
 .sp-filters label { flex: 1 1 108px; }
 .sp-filters label:first-child { flex: 2 1 150px; }
+.sp-filters label:has(select[name=assignee]) { flex-basis: 148px; }
 .sp-inline label { flex: 1 1 210px; }
 .sp-filters label, .sp-inline label, .sp-composer label { display: grid; gap: 5px; margin: 0; min-width: 0; }
 .sp-filters input, .sp-filters select, .sp-inline input, .sp-inline select, .sp-composer :is(input:not([type=checkbox],[type=radio]), textarea, select) { width: 100%; min-width: 0; }

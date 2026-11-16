@@ -11,7 +11,7 @@ return [
         'ticket_search' => 'Betreff oder Verein',
         'status' => 'Status',
         'all_statuses' => 'Alle Status',
-        'all_assignees' => 'Alle Zuständigkeiten',
+        'all_assignees' => 'Alle',
         'apply_filters' => 'Filter anwenden',
         'clear_filters' => 'Filter zurücksetzen',
         'no_matches' => 'Keine Tickets für diese Filter.',
