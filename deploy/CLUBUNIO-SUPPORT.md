@@ -196,6 +196,12 @@ returned to the dashboard. Verified the default inbox, empty and filtered
 empty states, knowledge search, and a live assistant answer for a generic
 expense question. Its source link opened the correct FAQ entry. The
 populated detail pane was tested separately with a rolled-back fixture;
-no escalated ticket was present in Chrome. Follow-ups: the assignee
-placeholder can be clipped and the assistant displays Markdown markers
-as literal text. No authentication or Stage changes were made during QA.
+no escalated ticket was present in Chrome. No authentication or Stage
+changes were made during QA.
+
+DEV polish release `20261116-clubunio-support-polish` (rollback:
+`20261116-clubunio-keycloak-pilot`): the assignee filter uses a shorter
+default and a wider field; AI answers render inline emphasis with text
+nodes and fixed markup only. Authenticated Chrome verification confirmed
+the visible default, filter selection and formatted live answer with its
+source link. No migration or Stage change.
