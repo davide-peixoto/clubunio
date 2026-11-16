@@ -6,6 +6,7 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Services\KeycloakAccountLinks;
 use App\ClubUnio\Services\PlatformAdministrationService;
 use App\ClubUnio\Services\KeycloakCodeExchange;
+use App\ClubUnio\Services\KeycloakMobileAssurance;
 use App\ClubUnio\Services\AccountSecurity;
 use App\ClubUnio\Services\MemberAccessService;
 use Illuminate\Http\Request;
@@ -71,6 +72,9 @@ final class PlatformOidcController
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
             'ui_locales' => app()->getLocale(),
             ...($invitation !== null || $pair !== null ? ['prompt' => 'login'] : []),
+            ...($pair !== null && ($level = KeycloakMobileAssurance::level()) !== null
+                ? ['claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0]
+                : []),
         ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
@@ -117,7 +121,7 @@ final class PlatformOidcController
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
-            app(StrongLoginController::class)->completeKeycloakPair($pending['pair'], $actor);
+            app(StrongLoginController::class)->completeKeycloakPair($pending['pair'], $actor, $claims);
 
             return response()->view('clubunio.keycloak-mobile', ['pair' => null])
                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');

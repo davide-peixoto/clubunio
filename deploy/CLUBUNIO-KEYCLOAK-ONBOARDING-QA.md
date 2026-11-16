@@ -1,6 +1,6 @@
 # Keycloak: DEV-Abnahme fuer Vereinskonten
 
-Status: Code auf DEV bereitgestellt; Einladungs- und App-Schalter aus. Der
+Status: Code auf DEV bereitgestellt; Einladungs- und App-Schalter aktiv. Der
 bestehende Vereinsadmin-Pilot verwendet jetzt lokal den gemeinsam
 nutzbaren Code-Austausch fuer vertrauliche und oeffentliche Clients.
 Der Zuordnungsdienst liefert nur Kandidaten; er erstellt weder Konten
@@ -63,14 +63,79 @@ Geraeteabnahme stehen aus.
   und registriert. Die Anwendungsrolle hat keine DDL-Rechte.
 - Flutter-Analyse der drei geaenderten Dart-Dateien: keine Befunde.
   Lokale Backend-Pruefung: 11 Tests, 53 Assertions.
-- DEV-Smoke: `/login` HTTP 200; Einladungs- und mobile OIDC-Routen
-  HTTP 404 bei deaktivierten Schaltern. Kein Testkonto veraendert.
-- Aktivierung offen: DEV hat noch keinen konfigurierten vertraulichen
-  Vereinsclient. Separaten Client `clubunio-verein-dev` mit PKCE S256 und
-  Callback `https://dev.clubunio.ch/vereinslogin/oidc/callback` einrichten,
-  Secret privat hinterlegen und den bisherigen Login aktiv lassen.
-  Danach native DEV-Testbuilds und synthetische Konten fuer Rollenentzug
-  sowie Passkey-/Wiederherstellung auf einem zweiten Geraet pruefen.
+- DEV-Smoke nach Aktivierung: bisherige Loginseite und Einladungsseite
+  HTTP 200, OIDC-Start HTTP 302 an den korrekten Client mit PKCE S256.
+  Der mobile Bootstrap meldet `loginAllowed`, `strongLoginAvailable`
+  und `keycloakLoginAvailable` als aktiv.
+- Vertraulicher Client `clubunio-verein-dev` im Realm `clubunio`, mit
+  exaktem Callback `https://dev.clubunio.ch/vereinslogin/oidc/callback`.
+  Secret ausschliesslich in privater DEV-Konfiguration. Legacy bleibt aktiv.
+- DEV-Web-Abnahme mit `keycloak-qa-webapp@example.invalid` im isolierten
+  Testverein `keycloak-qa-webapp`: Einladung eingeloest, dauerhafte
+  Verknuepfung und Dashboard nach OIDC bestaetigt. Ein beim ersten Zugriff
+  beobachteter HTTP 500 wurde behoben: Der Link-Lookup nimmt Issuer und
+  Subject nun explizit entgegen. Delta im aktiven DEV-Release
+  `20261116-clubunio-support-polish`.
+- Vereinsadmin-Rolle im Testverein bei laufender Browsersitzung entzogen:
+  Neuladen des Dashboards ergibt HTTP 403, ohne erneuten Login. Die
+  Kombinationen Trainer/TL, Elternzugriff und App-Sitzung wurden damit
+  nicht abgenommen. Das Testkonto hat keinen Portalzugang.
+- Native App und Geraetewechsel sind offen: Kein Android-Testgeraet
+  verbunden, iOS nicht abgenommen. Die serverseitige MFA-Kopplung
+  fuer ein neues DEV-Konto ist nachfolgend separat abgenommen.
+  Stage und produktive Konten unveraendert.
+
+### Gleichwertige MFA fuer die App
+
+- Auf DEV aktiv seit 16.11.2026: Der Browser-Flow
+  fordert den konfigurierten ACR als essenziellen ID-Token-Claim an.
+  ClubUnio prueft den exakten ACR und ein frisches `auth_time` erst nach
+  OIDC-Signatur-, Issuer-, Audience- und Nonce-Pruefung.
+- Die einmalige Kopplung bindet die bestaetigte Assurance an die
+  App-Sitzung. Der Server prueft die Bindung an Issuer, Subject, Client,
+  ACR und lokale Sicherheitsversion auch bei Folgeaufrufen. Aenderungen
+  daran oder das Entfernen der Kontoverknuepfung machen sie ungueltig.
+- `CLUBUNIO_VEREIN_OIDC_MOBILE_MFA_ACR` erst setzen, nachdem der
+  dedizierte DEV-Client eine getestete Keycloak-Policy fuer genau diesen
+  ACR hat. Passwort allein, bestehende Sitzung ohne zweiten Faktor und
+  fehlender/falscher ACR muessen abgewiesen werden. Eine ACR-Zeichenfolge
+  in der Konfiguration ist fuer sich genommen kein MFA-Nachweis.
+- Danach Trainer- und TL-Entzug mit einer bereits laufenden App-Sitzung
+  sowie Zweitgeraet und Wiederherstellung auf iOS und Android abnehmen.
+
+DEV-Release `20261116-clubunio-mobile-mfa`; Ruecksprung-Release
+`20261116-clubunio-support-polish`. Der Browser-Flow
+`clubunio-verein-dev-mfa` ist nur am DEV-Vereinsclient gebunden:
+Passwort verpflichtend, ACR `clubunio-mobile-mfa` auf LoA 2, dort
+OTP verpflichtend und Max Age 0. Realm-Standard nicht geaendert.
+
+Mit synthetischem Konto geprueft: Passwort allein fuehrte zur
+OTP-Einrichtung, und beim anschliessenden App-Ablauf wurde erneut
+OTP verlangt. Nach gueltigem OTP waren Callback, einmaliges
+Redeem und authentifizierter API-Kontext erfolgreich (HTTP 200).
+Wiederholung desselben Redeem: HTTP 404. Sitzung beendet, temporaere
+Admin-Rolle entfernt. Legacy-Loginseite HTTP 200. Stage unveraendert.
+Dies war ein Browser-/API-Test, kein nativer Test oder Trainer-/TL-Test.
+
+### DEV-Aktivierungscheckliste
+
+1. Im Realm `clubunio` einen separaten Browser-Flow fuer
+   `clubunio-verein-dev` erstellen und nur dort als Client-Override binden.
+   Realm-Standard und Plattformclient nicht bearbeiten.
+2. Fuer den Client `clubunio-mobile-mfa` auf LoA 2 abbilden. Im Flow
+   muss diese Stufe nach primaerer Anmeldung einen zweiten Faktor
+   zwingend verlangen; kein bedingtes Ueberspringen ohne eingerichteten
+   Faktor. LoA-Max-Age 0 fuer eine frische MFA bei App-Anmeldung.
+3. Mit dem synthetischen Konto den Browser-Flow bis zur MFA pruefen,
+   dann die exakte ACR- und Auth-Time-Pruefung im Callback und die
+   einmalige App-Kopplung testen. Erst dann den ACR in DEV dauerhaft
+   setzen. Den bisherigen ClubUnio-Login aktiv lassen.
+4. App-Sitzung fuer Trainer und TL jeweils offen lassen, Zuteilung
+   entfernen und gefilterte Fachaktion erneut aufrufen. Separat
+   Testbuild auf iOS und Android mit zweitem Geraet pruefen.
+
+Referenz: [Keycloak Step-up Authentication](https://www.keycloak.org/docs/latest/server_admin/#_step-up-flow).
+Ein ACR-Mapping oder ein Default-ACR ersetzt die Flow-Pruefung nicht.
 
 ## Umsetzung und Sicherheitsgrenzen
 
