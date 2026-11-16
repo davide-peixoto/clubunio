@@ -50,7 +50,7 @@ class InvoiceDirectSandboxTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->tenant = Tenant::create(['slug' => 'direct-'.Str::random(12), 'name' => 'Synthetic']);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'direct-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic admin', 'active' => true, 'password' => bcrypt('fixture')])->save();
         $this->insert('tenant_accounts', ['account_id' => $this->actor->id, 'role' => 'admin']);

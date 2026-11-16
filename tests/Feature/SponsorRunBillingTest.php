@@ -47,7 +47,7 @@ class SponsorRunBillingTest extends TestCase
         $this->db->beginTransaction();
         Http::preventStrayRequests();
         Mail::fake();
-        $this->tenant = Tenant::create(['name' => 'Synthetic billing', 'slug' => 'billing-'.Str::random(15)]);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'name' => 'Synthetic billing', 'slug' => 'billing-'.Str::random(15)]);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(25), 'display_name' => 'Synthetic billing admin', 'password' => bcrypt('fixture'), 'active' => true])->save();
         $this->insert('tenant_accounts', ['account_id' => $this->actor->id, 'role' => 'admin']);

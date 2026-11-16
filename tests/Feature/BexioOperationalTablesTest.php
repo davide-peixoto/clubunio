@@ -42,7 +42,7 @@ class BexioOperationalTablesTest extends TestCase
         Http::preventStrayRequests();
         Http::fake();
         Mail::fake();
-        $this->tenant = Tenant::create(['slug' => 'operational-'.Str::random(16), 'name' => 'Synthetic operational table']);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'operational-'.Str::random(16), 'name' => 'Synthetic operational table']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic admin', 'active' => true, 'password' => bcrypt('fixture')])->save();
         $this->insert('tenant_accounts', ['account_id' => $this->actor->id, 'role' => 'admin']);

@@ -49,6 +49,7 @@ class BexioConnectionService
         DB::connection('clubunio')->transaction(function () use ($tenant, $tokens, $fingerprint, $actorId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless(self::canManage(Account::find($actorId), $tenant), 403);
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             if (! hash_equals($this->configuration($tenant)['fingerprint'], $fingerprint)) {
                 throw new \RuntimeException('Configuration changed', 409);
             }
@@ -61,6 +62,7 @@ class BexioConnectionService
         // A PostgreSQL row lock serializes rotation across local and Pi processes.
         return DB::connection('clubunio')->transaction(function () use ($tenant, $rejectedToken) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $config = $this->configuration($tenant);
             $connection = $this->connection($tenant);
             if (empty($connection['refresh_token']) || empty($connection['fingerprint'])

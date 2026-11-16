@@ -38,6 +38,9 @@ class ListSettings extends ListRecords
                     app(\App\ClubUnio\Services\TenantMailSettings::class)->save(Filament::auth()->user(), Filament::getTenant(), $data['reply_to'] ?? null);
                     \Filament\Notifications\Notification::make()->title(__('mail_delivery.saved'))->success()->send();
                 }),
+            Action::make('accountingProvider')->label(trans('accounting_provider.title'))->icon('heroicon-o-calculator')
+            ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
+            ->url(fn () => route('clubunio.accounting-provider.show')),
             Action::make('bexio')->label('Bexio-Verbindung')->icon('heroicon-o-link')
             ->visible(fn () => BexioConnectionService::canManage(Filament::auth()->user(), Filament::getTenant()))
             ->url(fn () => route('clubunio.bexio.show'))];

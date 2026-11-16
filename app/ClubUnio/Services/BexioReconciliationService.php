@@ -26,6 +26,9 @@ class BexioReconciliationService
 
     public function enabled(Tenant $tenant): bool
     {
+        if (AccountingProvider::current($tenant) !== AccountingProvider::BEXIO) {
+            return false;
+        }
         if ($this->sandbox($tenant)) {
             return true; // Per-document admin/registry checks remain mandatory.
         }
@@ -190,6 +193,7 @@ class BexioReconciliationService
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $checkId, $financials, $provider) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $check = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', $tenant->id)->where('id', $checkId)->lockForUpdate()->first();
             abort_unless($check && $check->actor_id === $actor->id, 404);
             if ($check->state === 'applied') {

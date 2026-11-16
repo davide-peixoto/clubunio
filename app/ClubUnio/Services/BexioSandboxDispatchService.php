@@ -25,6 +25,7 @@ class BexioSandboxDispatchService
     {
         abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'bexio', 'view');
+        AccountingProvider::require($tenant, AccountingProvider::BEXIO);
     }
 
     private function binding(Tenant $tenant)
@@ -54,6 +55,9 @@ class BexioSandboxDispatchService
         $prepared = app(BexioDispatchTrialService::class)->validatedRequest($actor, $tenant, $trialId);
         $trial = $prepared['trial'];
         $kind = $trial->object_type;
+        if ($kind === 'invoice') {
+            abort_if(ErpNextInvoiceTransferService::query($tenant)->where('invoice_id', $trial->object_id)->exists(), 409, trans('erpnext.errors.already_linked'));
+        }
         $document = $this->document((object) ['kind' => $kind, 'tenant_id' => $tenant->id, $kind.'_id' => $trial->object_id]);
         $newRecipient = $kind === 'invoice' && ($trial->sandbox_recipient_id ?? null);
         if ($newRecipient) {
@@ -68,6 +72,9 @@ class BexioSandboxDispatchService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $trial, $kind, $document, $hash, $reference, $payload, $prepared) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $tenant);
+            if ($kind === 'invoice') {
+                abort_if(ErpNextInvoiceTransferService::query($tenant)->where('invoice_id', $document->id)->exists(), 409, trans('erpnext.errors.already_linked'));
+            }
             $binding = $this->binding($tenant);
             abort_unless(hash_equals($hash, $this->snapshot($document)), 409);
             $existing = $this->table()->where('tenant_id', $tenant->id)->where($kind.'_id', $document->id)->first();

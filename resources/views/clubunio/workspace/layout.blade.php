@@ -4,7 +4,10 @@
         <x-filament::tabs class="workspace-navigation" :label="match($module) { 'bus' => __('Busverwaltung'), 'bexio' => __('Integrationen'), default => __('Teamplanung') }">
             @if($module === 'bexio')
                 <x-filament::tabs.item tag="a" :href="url('/settings')">{{ __('Einstellungen') }}</x-filament::tabs.item>
-                @if(\App\ClubUnio\Services\BexioConnectionService::canManage(auth('clubunio')->user(), $tenant))<x-filament::tabs.item tag="a" :href="route('clubunio.bexio.show')" :active="true">{{ __('Bexio-Verbindung') }}</x-filament::tabs.item>@endif
+                @if(\App\ClubUnio\Services\BexioConnectionService::canManage(auth('clubunio')->user(), $tenant))
+                    <x-filament::tabs.item tag="a" :href="route('clubunio.accounting-provider.show')" :active="request()->routeIs('clubunio.accounting-provider.*')">{{ trans('accounting_provider.title') }}</x-filament::tabs.item>
+                    <x-filament::tabs.item tag="a" :href="route('clubunio.bexio.show')" :active="request()->routeIs('clubunio.bexio.*')">{{ __('Bexio-Verbindung') }}</x-filament::tabs.item>
+                @endif
             @elseif($module === 'bus')
                 <x-filament::tabs.item tag="a" :href="route('clubunio.bus.index', $tenant->slug)" :active="!request()->routeIs('clubunio.workspace.bus.options')">{{ __('Reservationen') }}</x-filament::tabs.item>
                 @if(\App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'bus', 'view'))<x-filament::tabs.item tag="a" :href="route('clubunio.bus.options', $tenant->slug)" :active="request()->routeIs('clubunio.workspace.bus.options')">{{ __('Busse und Status') }}</x-filament::tabs.item>@endif

@@ -55,7 +55,7 @@ class BexioApiActionsTest extends TestCase
         $this->db->beginTransaction();
         Http::preventStrayRequests();
         Mail::fake();
-        $this->tenant = Tenant::create(['name' => 'Bexio API fixture', 'slug' => 'bexio-api-'.Str::random(16)]);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'name' => 'Bexio API fixture', 'slug' => 'bexio-api-'.Str::random(16)]);
         $this->admin = new Account;
         $this->admin->forceFill(['username' => 'bexio-api-'.Str::random(20), 'display_name' => 'Synthetic admin',
             'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
