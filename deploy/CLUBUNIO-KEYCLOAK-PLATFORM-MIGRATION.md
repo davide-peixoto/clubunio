@@ -1,5 +1,32 @@
 # Keycloak-Migration aus der Plattformverwaltung
 
+Die separate Uebersicht `/platform/users` ist lokal vorbereitet:
+Plattformkonto erstellen, Anzeigename bearbeiten und Plattformzugang
+entziehen. Der Entzug erhaelt Konto, Vereinszuordnungen und Fachdaten.
+Selbstentzug ist gesperrt; Aenderungen sind begruendungspflichtig und
+werden protokolliert. Der Keycloak-Status zeigt die bestehende statische
+Plattform-Subject-Zuordnung. Neue Konten koennen sich in Keycloak-only
+erst nach eigener Plattform-Identitaetsfreigabe anmelden.
+Automatische Provisionierung privilegierter Konten ist nicht freigegeben.
+
+Fuer manuell gepruefte Plattform-Identitaeten gibt es separaten Einstieg
+`/vereinslogin/oidc/platform-migration` mit DEV-MFA und privater
+Allowlist `CLUBUNIO_PLATFORM_OIDC_MIGRATED_SUBJECTS`. Vor der Zuordnung
+Keycloak-Konto und Subject unabhaengig pruefen. Der Login prueft Issuer,
+Subject, verifizierte Adresse, frischen MFA-ACR und die bereits bestehende
+aktive Plattformberechtigung. Vereinslinks verleihen keine Plattformrolle.
+Die bisherige Plattformzuordnung bleibt unangetastet. Keine automatische
+Erstellung oder Einladungsmail in diesem Schritt.
+
+DEV-Release `20261116-clubunio-platform-users`: Uebersicht und separater
+MFA-Einstieg bereitgestellt. Der DEV-Datenbanktest verwendete ein
+synthetisches Konto und eine zurueckgerollte Transaktion: ohne Rolle
+abgewiesen, exakte Zuordnung mit frischem MFA-Claim akzeptiert,
+nur Passwort abgewiesen, nach Rollenentzug erneut abgewiesen.
+Beide Einstiege lieferten HTTP 302. Keine neue dauerhafte Zuordnung,
+kein echter Admin geaendert, kein vollstaendiger Browser-Login getestet.
+Stage unveraendert.
+
 Unter Plattformverwaltung > Mandant > Benutzerzuordnungen > Zu Keycloak
 migrieren kann ein aktiver Plattformadmin einzelne Konten oder bis zu zehn
 markierte Konten auswaehlen. Die Vorschau zeigt Versandadresse, alle Vereine

@@ -1,4 +1,10 @@
 {
+    "platform_users.title": "Plattformbenutzer",
+    "platform_users.revoke": "Plattformzugang entziehen",
+    "platform_users.create": "Plattformbenutzer erstellen",
+    "platform_users.edit": "Bearbeiten",
+    "platform_users.unlinked": "Nicht verknüpft",
+    "platform_users.linked": "Verknüpft",
     "keycloak.migration": "Zu Keycloak migrieren",
     "keycloak.migration_selected": "Ausgewählte zu Keycloak migrieren",
     "keycloak.recipient": "Empfängeradresse",

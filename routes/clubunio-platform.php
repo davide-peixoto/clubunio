@@ -25,7 +25,13 @@ Route::get('/platform/oidc/start', [\App\ClubUnio\Http\PlatformOidcController::c
     ->middleware('throttle:20,1')->block(10,10)->name('clubunio.platform.oidc.start');
 Route::get('/platform/oidc/callback', [\App\ClubUnio\Http\PlatformOidcController::class, 'callback'])
     ->middleware('throttle:20,1')->block(10,10)->name('clubunio.platform.oidc.callback');
+Route::get('/vereinslogin/oidc/platform-migration', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.platform-migration');
 Route::prefix('platform')->middleware(RequirePlatformAdministrator::class)->group(function () {
+    Route::get('/users', [PlatformAdministrationController::class, 'platformUsers'])->name('clubunio.platform.users');
+    Route::post('/users', [PlatformAdministrationController::class, 'createPlatformUser'])->middleware('throttle:10,1')->name('clubunio.platform.users.create');
+    Route::post('/users/{account}', [PlatformAdministrationController::class, 'changePlatformUser'])
+        ->whereNumber('account')->middleware('throttle:20,1')->name('clubunio.platform.users.change');
     Route::get('/', [PlatformAdministrationController::class, 'index'])->name('clubunio.platform.index');
     Route::post('/tenants', [PlatformAdministrationController::class, 'create'])->middleware('throttle:10,1')->name('clubunio.platform.create');
     Route::post('/accounts', [PlatformAdministrationController::class, 'createAccount'])->middleware('throttle:10,1')->name('clubunio.platform.account.create');

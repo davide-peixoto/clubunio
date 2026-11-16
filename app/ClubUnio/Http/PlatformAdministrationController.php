@@ -77,6 +77,33 @@ final class PlatformAdministrationController
         return redirect()->route('clubunio.platform.index')->with('notice', __('Persönliches Konto erstellt.'));
     }
 
+    public function platformUsers(Request $request)
+    {
+        $actor = $request->user(PlatformOidcController::guard($request));
+        $rows = DB::connection('clubunio')->table('clubora.platform_admins as p')
+            ->join('clubora.accounts as a', 'a.id', '=', 'p.account_id')->where('a.api_only', false)
+            ->orderBy('a.display_name')->orderBy('a.id')
+            ->paginate(30, ['a.id', 'a.username', 'a.display_name', 'a.active', 'p.active as platform_active']);
+        $mappedIds = array_merge(array_values((array) config('clubunio-platform-oidc.subjects')),
+            array_values((array) config('clubunio-platform-oidc.migrated_subjects')));
+
+        return response()->view('clubunio.platform.users', compact('actor', 'rows', 'mappedIds'))->header('Cache-Control', 'no-store');
+    }
+
+    public function createPlatformUser(Request $request, PlatformAdministrationService $service)
+    {
+        $service->createAccount($request->user(PlatformOidcController::guard($request)), $request->except('_token'), true);
+
+        return redirect()->route('clubunio.platform.users')->with('notice', __('Persönliches Konto erstellt.'));
+    }
+
+    public function changePlatformUser(Request $request, int $account, PlatformAdministrationService $service)
+    {
+        $service->updatePlatformAccount($request->user(PlatformOidcController::guard($request)), $account, $request->except('_token'));
+
+        return redirect()->route('clubunio.platform.users')->with('notice', __('Änderung gespeichert.'));
+    }
+
     public function show(Request $request, int $id)
     {
         $tenant = Tenant::findOrFail($id);

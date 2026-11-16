@@ -51,6 +51,8 @@ final class PlatformOidcController
         $config = $this->configuration($request);
         $invitation = null;
         $pair = null;
+        $platformMigration = $request->routeIs('clubunio.verein.oidc.platform-migration');
+        abort_if($platformMigration && !\App\ClubUnio\Services\PlatformAdminKeycloakLink::configured(), 404);
         if ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
             app(StrongLoginController::class)->validPair($request);
@@ -65,15 +67,15 @@ final class PlatformOidcController
         $state = bin2hex(random_bytes(32));
         $nonce = bin2hex(random_bytes(32));
         $verifier = bin2hex(random_bytes(32));
-        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair') + ['expires' => time() + 300]);
+        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair','platformMigration') + ['expires' => time() + 300]);
 
         return redirect()->away($config['issuer'].'/protocol/openid-connect/auth?'.http_build_query([
             'response_type' => 'code', 'scope' => 'openid', 'client_id' => $config['client'],
             'redirect_uri' => $config['callback'], 'state' => $state, 'nonce' => $nonce,
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
             'ui_locales' => app()->getLocale(),
-            ...($invitation !== null || $pair !== null ? ['prompt' => 'login'] : []),
-            ...($pair !== null && ($level = KeycloakMobileAssurance::level()) !== null
+            ...($invitation !== null || $pair !== null || $platformMigration ? ['prompt' => 'login'] : []),
+            ...(($pair !== null || $platformMigration) && ($level = KeycloakMobileAssurance::level()) !== null
                 ? ['claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0]
                 : []),
         ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
@@ -108,6 +110,15 @@ final class PlatformOidcController
         abort_if($request->query('iss') !== null && $request->query('iss') !== $config['issuer'], 403);
         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
         $club = $config['guard'] === 'clubunio';
+        if ($club && ($pending['platformMigration'] ?? false) === true) {
+            $actor = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class)->resolve($claims);
+            abort_unless($actor, 403);
+            Auth::guard('platform')->login($actor);
+            $request->session()->regenerate();
+            $request->session()->put('platform.oidc.expires', min($claims->exp + 1800, time() + 1800));
+
+            return redirect()->route('clubunio.platform.index')->header('Cache-Control', 'no-store');
+        }
         $links = app(KeycloakAccountLinks::class);
         $id = $config['subjects'][$claims->sub] ?? null;
         if ($club && $config['invites_enabled']) {

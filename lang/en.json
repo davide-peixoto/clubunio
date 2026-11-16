@@ -1,4 +1,10 @@
 {
+    "platform_users.title": "Platform users",
+    "platform_users.revoke": "Revoke platform access",
+    "platform_users.create": "Create platform user",
+    "platform_users.edit": "Edit",
+    "platform_users.unlinked": "Not linked",
+    "platform_users.linked": "Linked",
     "keycloak.migration": "Migrate to Keycloak",
     "keycloak.migration_selected": "Migrate selected accounts to Keycloak",
     "keycloak.recipient": "Recipient address",
