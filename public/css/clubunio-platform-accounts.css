@@ -1,0 +1,60 @@
+.platform-account-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.platform-main .platform-account-table td,
+.platform-main .platform-account-table th {
+    vertical-align: middle;
+    padding: 8px 12px;
+}
+
+.platform-main .platform-account-table .platform-account-select,
+.platform-main .platform-account-table .platform-account-action {
+    width: 52px;
+    min-width: 52px;
+    text-align: center;
+}
+
+.platform-account-select input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    vertical-align: middle;
+}
+
+.platform-account-username {
+    display: block;
+    margin-top: 2px;
+    color: #526171;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.platform-account-table .platform-status {
+    margin-left: 0;
+    background: #edf2f6;
+    color: #3e4b59;
+}
+
+.platform-account-table .platform-status.is-active {
+    background: #d9f4e3;
+    color: #155d36;
+}
+
+.platform-account-table .platform-status.is-pending {
+    background: #fff0c2;
+    color: #745200;
+}
+
+.platform-main .platform-account-action .icon-button {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+}
+
+#accounts > .table-scroll {
+    margin-bottom: 20px;
+}
