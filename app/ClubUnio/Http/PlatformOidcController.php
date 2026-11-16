@@ -55,7 +55,7 @@ final class PlatformOidcController
         abort_if($platformMigration && !\App\ClubUnio\Services\PlatformAdminKeycloakLink::configured(), 404);
         if ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
-            app(StrongLoginController::class)->validPair($request);
+            app(KeycloakMobilePairingController::class)->validPair($request);
             $pair = $request->only(['pair', 'confirmation']);
         }
         if ($request->routeIs('clubunio.verein.oidc.invite.accept')) {
@@ -69,13 +69,14 @@ final class PlatformOidcController
         $verifier = bin2hex(random_bytes(32));
         $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair','platformMigration') + ['expires' => time() + 300]);
 
+        $clubMfa = $config['guard'] === 'clubunio' && config('clubunio-verein-oidc.only');
         return redirect()->away($config['issuer'].'/protocol/openid-connect/auth?'.http_build_query([
             'response_type' => 'code', 'scope' => 'openid', 'client_id' => $config['client'],
             'redirect_uri' => $config['callback'], 'state' => $state, 'nonce' => $nonce,
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
             'ui_locales' => app()->getLocale(),
             ...($invitation !== null || $pair !== null || $platformMigration ? ['prompt' => 'login'] : []),
-            ...(($pair !== null || $platformMigration) && ($level = KeycloakMobileAssurance::level()) !== null
+            ...(($pair !== null || $platformMigration || $clubMfa) && ($level = KeycloakMobileAssurance::level()) !== null
                 ? ['claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0]
                 : []),
         ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
@@ -84,7 +85,7 @@ final class PlatformOidcController
     public function mobile(Request $request)
     {
         $config = $this->configuration($request);
-        abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
+        abort_unless(KeycloakMobilePairingController::available($config['origin']), 404);
         $pair = $request->validate(['pair' => 'required|uuid'])['pair'];
 
         return response()->view('clubunio.keycloak-mobile', compact('pair'))
@@ -110,6 +111,8 @@ final class PlatformOidcController
         abort_if($request->query('iss') !== null && $request->query('iss') !== $config['issuer'], 403);
         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
         $club = $config['guard'] === 'clubunio';
+        $clubMfa = $club && config('clubunio-verein-oidc.only') && ($level = KeycloakMobileAssurance::level()) !== null;
+        abort_if($clubMfa && !KeycloakMobileAssurance::accepts($claims, $level, time()), 403);
         if ($club && ($pending['platformMigration'] ?? false) === true) {
             $actor = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class)->resolve($claims);
             abort_unless($actor, 403);
@@ -123,11 +126,11 @@ final class PlatformOidcController
         $id = $config['subjects'][$claims->sub] ?? null;
         if ($club && $config['invites_enabled']) {
             if (is_string($pending['invitation'] ?? null)) {
-                $id = (int) $links->accept($pending['invitation'], $claims)->id;
+                $id = (int) $links->accept($pending['invitation'], $claims, $clubMfa)->id;
             } elseif ($id === null) {
                 $id = $links->accountId($claims->iss, $claims->sub);
                 if ($id === null && !is_array($pending['pair'] ?? null)) {
-                    $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims);
+                    $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims, $clubMfa);
                 }
             }
         }
@@ -136,18 +139,25 @@ final class PlatformOidcController
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
-            app(StrongLoginController::class)->completeKeycloakPair($pending['pair'], $actor, $claims);
+            app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
 
             return response()->view('clubunio.keycloak-mobile', ['pair' => null])
                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
         }
         if ($club && $config['invites_enabled'] && $actor?->active && ! $actor->api_only && ! $actor->hasBackofficeTenant()) {
-            abort_if(app(AccountSecurity::class)->requiresStrongLogin($actor), 403);
+            $local = app(AccountSecurity::class);
+            abort_if(!$clubMfa && $local->requiresStrongLogin($actor), 403);
             $tenant = $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
             abort_unless($tenant, 403);
             Auth::guard('portal')->login($actor);
-            $request->session()->forget('clubunio.emergency.portal');
+            $request->session()->forget(['clubunio.emergency.portal', 'clubunio.federated.portal']);
             $request->session()->regenerate();
+            if ($clubMfa) {
+                $request->session()->put('clubunio.federated.portal', [
+                    'id' => (int) $actor->id, 'subject' => $claims->sub, 'stamp' => $local->stamp($actor),
+                    'expires' => min($claims->exp + 1800, time() + 1800),
+                ]);
+            }
 
             return redirect()->route('clubunio.portal.members', ['tenant' => $tenant->slug])
                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');

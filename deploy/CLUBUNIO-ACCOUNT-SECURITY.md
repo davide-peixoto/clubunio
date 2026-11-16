@@ -1,5 +1,10 @@
 # Sichere Anmeldung (ClubUnio)
 
+**Historisch:** Der lokale Wizard, lokale Faktorpruefung und der Reset-Ablauf
+wurden aus dem aktuellen Anwendungscode entfernt. Diese Anleitung gilt
+nur fuer aeltere Releases. Aktueller Ablauf und Stage-Voraussetzungen:
+[Keycloak-Migration](CLUBUNIO-KEYCLOAK-PLATFORM-MIGRATION.md#entfernung-des-lokalen-2fa-codes).
+
 DEV, 15.11.2026: Release `20261115-clubunio-security-wizard`, Rueckweg
 `20261115-clubunio-campaign-test-v2`. Keine Schemamigration, Stage unveraendert.
 Playwright/Edge: Passkey mit virtuellem WebAuthn-Authenticator und TOTP

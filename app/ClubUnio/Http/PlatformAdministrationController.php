@@ -40,9 +40,9 @@ final class PlatformAdministrationController
         if (! $actor || ! Hash::check($data['password'], $actor->password) || ! $service->allowed($actor)) {
             throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich.')]);
         }
-        $security = app(AccountSecurity::class);
-        if ($security->requiresStrongLogin($actor)) {
-            return redirect()->route('clubunio.security.show', ['mode' => 'platform', 'setup' => $security->mustEnroll($actor) ? '1' : null]);
+        if (app(AccountSecurity::class)->requiresStrongLogin($actor)) {
+            abort_unless(config('clubunio-platform-oidc.enabled'), 403);
+            return redirect()->route('clubunio.platform.oidc.start');
         }
         Auth::guard('clubunio')->login($actor);
         $request->session()->regenerate();

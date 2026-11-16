@@ -34,7 +34,8 @@ class Login extends \Filament\Auth\Pages\Login
         if ($response && ($actor = Filament::auth()->user()) && app(AccountSecurity::class)->requiresStrongLogin($actor)) {
             Filament::auth()->logout();
             session()->regenerate();
-            $this->redirect(route('clubunio.security.show', ['setup' => app(AccountSecurity::class)->mustEnroll($actor) ? '1' : null]));
+            abort_unless(config('clubunio-verein-oidc.enabled'), 403);
+            $this->redirect(route('clubunio.verein.oidc.start'));
             return null;
         }
         return $response;
@@ -46,10 +47,6 @@ class Login extends \Filament\Auth\Pages\Login
         if (config('clubunio-verein-oidc.enabled')) {
             $actions[] = Action::make('keycloak')->label(trans('account-security.keycloak_sign_in'))
                 ->url(route('clubunio.verein.oidc.start'))->color('gray');
-        }
-        if (app(AccountSecurity::class)->enabled()) {
-            $actions[] = Action::make('strongLogin')->label(trans('account-security.strong_login'))
-                ->url(route('clubunio.security.show'))->color('gray');
         }
         return $actions;
     }

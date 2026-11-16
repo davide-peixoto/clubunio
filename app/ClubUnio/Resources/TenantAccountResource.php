@@ -6,7 +6,6 @@ use App\ClubUnio\Models\AccountRole;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\TenantAccount;
 use App\ClubUnio\Services\AccountAdministrationService;
-use App\ClubUnio\Services\TenantSecurityRecovery;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
@@ -46,10 +45,7 @@ class TenantAccountResource extends CatalogResource
 
     public static function canViewAny(): bool
     {
-        $actor = Filament::auth()->user();
-        $tenant = Filament::getTenant();
-
-        return $actor && $tenant && (static::canManageAccounts() || app(TenantSecurityRecovery::class)->operator($actor, $tenant));
+        return static::canManageAccounts();
     }
 
     public static function canManageAccounts(): bool
@@ -121,11 +117,6 @@ class TenantAccountResource extends CatalogResource
                 ->visible(static::canManageAccounts(...))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
             ->recordActions([
-                Action::make('securityRecovery')->label(fn () => trans('account-security.reset_title'))->icon('heroicon-o-key')->iconButton()
-                    ->tooltip(fn () => trans('account-security.reset_title'))
-                    ->visible(fn (TenantAccount $record) => !config('clubunio-verein-oidc.only')
-                        && app(TenantSecurityRecovery::class)->allowed(Filament::auth()->user(), Filament::getTenant(), $record))
-                    ->url(fn (TenantAccount $record) => route('clubunio.security.recovery', ['tenantId' => $record->tenant_id, 'linkId' => $record->id])),
                 Action::make('appProfile')->label('App-Modulprofil')->icon('heroicon-o-device-phone-mobile')->iconButton()->tooltip(__('App-Modulprofil zuordnen'))
                 ->visible(static::canManageAccounts(...))
                 ->schema([Select::make('mobile_profile_id')->label('App-Modulprofil')->searchable()->placeholder(__('Automatisch nach Berechtigung'))

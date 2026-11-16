@@ -14,13 +14,30 @@ final class PlatformOidcTest extends TestCase
             'clubunio-verein-oidc.enabled' => true, 'clubunio-verein-oidc.origin' => 'https://club.test',
             'clubunio-verein-oidc.client' => 'club-test', 'clubunio-verein-oidc.secret' => 'synthetic',
             'clubunio-verein-oidc.subjects' => [], 'clubunio-verein-oidc.invites_enabled' => true,
-            'clubunio-verein-oidc.mobile_enabled' => false]);
+            'clubunio-verein-oidc.mobile_enabled' => false, 'clubunio-verein-oidc.mobile_mfa_acr' => 'synthetic-mfa',
+            'clubunio-security.enabled' => true, 'clubunio-security.origin' => 'https://club.test']);
         $url = 'https://club.test/vereinslogin/oidc/mobile?pair=10000000-0000-4000-8000-000000000000';
         $this->get($url)->assertNotFound();
         config(['clubunio-verein-oidc.mobile_enabled' => true]);
         $this->get($url)->assertOk()->assertHeader('Referrer-Policy', 'no-referrer');
         $this->postJson('https://club.test/vereinslogin/oidc/mobile', ['pair' => 'invalid', 'confirmation' => '12345678'])
             ->assertUnprocessable();
+    }
+
+    public function test_keycloak_only_web_start_requests_fresh_mfa(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
+            'clubunio-domains.central_hosts' => ['club.test'],
+            'clubunio-verein-oidc.enabled' => true, 'clubunio-verein-oidc.only' => true,
+            'clubunio-verein-oidc.origin' => 'https://club.test',
+            'clubunio-verein-oidc.client' => 'club-test', 'clubunio-verein-oidc.secret' => 'synthetic',
+            'clubunio-verein-oidc.subjects' => [], 'clubunio-verein-oidc.invites_enabled' => true,
+            'clubunio-verein-oidc.mobile_enabled' => true, 'clubunio-verein-oidc.mobile_mfa_acr' => 'synthetic-mfa']);
+        $response = $this->get('https://club.test/vereinslogin/oidc/start')->assertRedirect();
+        parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('0', $query['max_age']);
+        $this->assertSame(['essential' => true, 'values' => ['synthetic-mfa']],
+            json_decode($query['claims'], true)['id_token']['acr']);
     }
 
     public function test_invite_pilot_is_opt_in_and_secrets_do_not_travel_to_keycloak(): void

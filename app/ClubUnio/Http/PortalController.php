@@ -57,7 +57,8 @@ class PortalController
             if ($security->requiresStrongLogin($actor)) {
                 $guard->logout();
                 $request->session()->regenerate();
-                return redirect()->route('clubunio.security.show', ['mode' => 'portal', 'setup' => $security->mustEnroll($actor) ? '1' : null]);
+                abort_unless(config('clubunio-verein-oidc.enabled'), 403);
+                return redirect()->route('clubunio.verein.oidc.start');
             }
             $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $access->canEnter($actor, $tenant));
             if ($tenants->isNotEmpty()) {
@@ -94,7 +95,7 @@ class PortalController
     public function logout(Request $request)
     {
         Auth::guard('portal')->logout();
-        $request->session()->forget('clubunio.emergency.portal');
+        $request->session()->forget(['clubunio.emergency.portal', 'clubunio.federated.portal']);
         if (config('clubunio-verein-oidc.only')) {
             $request->session()->invalidate();
             $request->session()->regenerateToken();

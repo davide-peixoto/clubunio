@@ -80,14 +80,14 @@ final class PlatformKeycloakMigration
         return 'invited';
     }
 
-    public function activate(\stdClass $claims): ?int
+    public function activate(\stdClass $claims, bool $freshMfa = false): ?int
     {
         if (!self::enabled() || ($claims->email_verified ?? false) !== true || !is_string($claims->email ?? null)) {
             return null;
         }
         $db = DB::connection('clubunio');
 
-        return $db->transaction(function () use ($db, $claims) {
+        return $db->transaction(function () use ($db, $claims, $freshMfa) {
             $rows = $db->table('clubora.keycloak_migrations')->where('issuer', $claims->iss)->where('subject', $claims->sub)
                 ->where('email', mb_strtolower(trim($claims->email)))->whereNotNull('invited_at');
             $row = (clone $rows)->lockForUpdate()->first();
@@ -99,7 +99,7 @@ final class PlatformKeycloakMigration
                 return null;
             }
             $access = app(MemberAccessService::class);
-            if (!$account->hasBackofficeTenant() && (app(AccountSecurity::class)->requiresStrongLogin($account)
+            if (!$account->hasBackofficeTenant() && ((!$freshMfa && app(AccountSecurity::class)->requiresStrongLogin($account))
                 || !$account->tenants()->get()->contains(fn ($tenant) => $access->canEnter($account, $tenant)))) {
                 return null;
             }

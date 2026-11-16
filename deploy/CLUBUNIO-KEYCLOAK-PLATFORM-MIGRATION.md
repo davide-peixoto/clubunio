@@ -157,6 +157,35 @@ Sitzungsentzug bei Deaktivierung. Testdaten zurueckgerollt. Im aktiven
 Release keine Notfreigabe eingerichtet; Bootstrap meldet nur Keycloak.
 Rueckweg: `20261116-clubunio-platform-removal-retry`, Stage unveraendert.
 
+#### Entfernung des lokalen 2FA-Codes
+
+Der lokale Wizard, Passkey-/TOTP-Pruefung, Reset fuer die Geschaeftsstelle,
+Setup-Code nach Recovery-Mail, Setup-CLI sowie zugehoerige Routen und
+Webassets sind aus dem Anwendungscode entfernt. Die bestehenden App-Pfade
+`session/security/begin` und `session/security/redeem` bleiben kompatibel
+und werden vom Keycloak-Pairing-Controller bedient. Ohne konfigurierten
+Keycloak-MFA-Level wird Pairing nicht freigegeben. Im Keycloak-only-Modus
+fordert der Web-Vereinslogin bei konfiguriertem Level frische MFA an;
+Alt-Konten, die bisher lokale MFA benoetigten, duerfen dadurch nicht
+auf eine schwache Anmeldung zurueckfallen.
+
+Die historischen Tabellen und bestehenden Sitzungsstempel bleiben
+erhalten und werden zur Kompatibilitaet und gegen MFA-Downgrade lesend
+verwendet. Keine DDL, keine Loeschung von Faktoren; der auditierte
+Passwort-Notlogin ist unveraendert. Stage bedient weiterhin den alten
+Wizard und wird nicht aktualisiert. Vor einem Stage-Rollout erst den
+Vereins-Keycloak-Client mit frischer MFA bereitstellen, betroffene Konten
+verknuepfen und Browser-/Android-/iOS-Abnahme durchfuehren. Erst nach
+Wegfall alter Releases und Stempel eine separate Datenmigration planen.
+
+Aktiver DEV-Release `20261116-clubunio-remove-local-mfa`, Rueckweg
+`20261116-clubunio-erpnext-workflows`. Die direkte WebAuthn-Abhaengigkeit
+wurde aus dem Composer-Lock und aus dem DEV-Release entfernt. 20 gezielte
+Tests bestanden. DEV-Kandidat: App-Kopplung mit synthetischem MFA-Claim,
+einmalige Einloesung und Portalablauf geprueft, Testdaten zurueckgerollt.
+Live: alte Routen/Assets HTTP 404, App-Bootstrap nur Keycloak, Vereinslogin
+fordert frischen MFA-Nachweis an. Kein nativer Geraetetest.
+
 #### Bisheriger Cutover
 
 Release `20261116-clubunio-keycloak-only` mit

@@ -219,13 +219,6 @@ class ClubUnioPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])->authMiddleware([Authenticate::class])
-            ->userMenuItems([
-                'account-security' => \Filament\Actions\Action::make('account-security')
-                    ->label(fn () => trans('account-security.setup'))
-                    ->icon('heroicon-o-shield-check')
-                    ->url(fn () => route('clubunio.security.show'))
-                    ->visible(fn () => !config('clubunio-verein-oidc.only') && app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
-            ]);
+            ])->authMiddleware([Authenticate::class]);
     }
 }
