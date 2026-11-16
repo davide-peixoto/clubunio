@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'keycloak_sign_in' => 'Mit ClubUnio-Konto anmelden',
     'wizard_account' => '1. Konto bestätigen',
     'wizard_has_code' => 'Ich habe einen Einrichtungscode vom Support',
     'wizard_continue' => 'Weiter',

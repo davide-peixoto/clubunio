@@ -209,6 +209,7 @@ final class StrongLoginController
 
     private function finish(Request $request, string $mode, Account $actor, string $stamp): array
     {
+        abort_if($mode === 'clubunio' && PlatformOidcController::requiresClubOidc($actor), 403);
         if ($mode === 'mobile') {
             $data = $request->validate(['pair' => 'required|uuid', 'confirmation' => 'required|regex:/^\d{8}$/D']);
             $changed = $this->pairs()->where('id', $data['pair'])->where('confirmation_hash', $this->pairHash($data['pair'], $data['confirmation']))
