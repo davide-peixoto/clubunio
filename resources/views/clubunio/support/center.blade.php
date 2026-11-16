@@ -128,6 +128,6 @@
 </section>
 @endif
 </main>
-<script src="{{ asset('js/clubunio-support.js') }}" defer></script>
+<script src="{{ asset('js/clubunio-support.js') }}?v=3" defer></script>
 </body>
 </html>
