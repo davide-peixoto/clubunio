@@ -87,13 +87,15 @@ configuration. See [agent policy and worker setup](CLUBUNIO-SUPPORT-AI.md).
 
 ## DEV credentials
 
-Edit the private DEV configuration on `svs-pi-server`:
-`/var/www/svs-laravel/shared/.env.clubora-support-center`.
+On `svs-pi-server`, edit the private file resolved by
+`readlink -f /var/www/svs-laravel/current/.env`. As of 16.11.2026 this is
+`/var/www/svs-laravel/shared/.env.clubora-platform-oidc`. The previous
+`.env.clubora-support-center` file is no longer the active configuration.
 
 ```dotenv
 CLUBUNIO_SUPPORT_OPENAI_KEY=
 CLUBUNIO_SUPPORT_OPENAI_PROJECT=
-CLUBUNIO_SUPPORT_OPENAI_MODEL=
+CLUBUNIO_SUPPORT_OPENAI_MODEL=gpt-5.4-mini
 ```
 
 Use the key and the `proj_` ID of a dedicated OpenAI project and a model
@@ -112,6 +114,12 @@ sudo chmod 0640 bootstrap/cache/config.php
 sudo systemctl reload php8.3-fpm
 sudo systemctl restart clubunio-dev-support-triage.service
 ```
+
+16.11.2026: after recaching DEV and restarting the worker, one synthetic
+expense ticket ran through the live triage queue. The worker persisted a
+nonempty draft with `provider_generated=true` (8.7 seconds including queue
+wait). Only the reviewed public FAQ went to the provider. The synthetic
+ticket and draft were removed; Stage was not changed.
 
 The embedded public widget shows FAQ and search. The support form opens
 on the ClubUnio domain, since third-party cookies are not reliable in iframes.
