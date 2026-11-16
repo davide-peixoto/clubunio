@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'saved' => 'Gespeichert',
+    'title' => 'Materialrückgabe',
+    'member' => 'Mitglied',
+    'all' => 'Alle Mitglieder',
+    'overdue' => 'Nur überfällige Positionen',
+    'completed' => 'Abgeschlossene Positionen anzeigen',
+    'receipt' => 'Quittung',
+    'item' => 'Position',
+    'issued' => 'Ausgegeben',
+    'open' => 'Offen',
+    'due' => 'Solltermin',
+    'details' => 'Rückgaben und Solltermin',
+    'history' => 'Rückgabeverlauf',
+    'quantity' => 'Menge',
+    'date' => 'Rückgabedatum',
+    'condition' => 'Rückgabezustand',
+    'account' => 'Erfasst durch',
+    'book' => 'Rückgabe buchen',
+    'save_due' => 'Solltermin speichern',
+    'empty' => 'Keine passenden Materialpositionen.',
+    'empty_history' => 'Noch keine Rückgabe gebucht.',
+    'excess' => 'Die Menge überschreitet die offene Menge.',
+    'before_handover' => 'Das Rückgabedatum liegt vor der Übergabe.',
+];

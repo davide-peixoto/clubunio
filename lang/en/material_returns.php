@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'saved' => 'Saved',
+    'title' => 'Material returns',
+    'member' => 'Member',
+    'all' => 'All members',
+    'overdue' => 'Only overdue items',
+    'completed' => 'Show completed items',
+    'receipt' => 'Receipt',
+    'item' => 'Item',
+    'issued' => 'Issued',
+    'open' => 'Outstanding',
+    'due' => 'Due date',
+    'details' => 'Returns and due date',
+    'history' => 'Return history',
+    'quantity' => 'Quantity',
+    'date' => 'Return date',
+    'condition' => 'Condition on return',
+    'account' => 'Recorded by',
+    'book' => 'Record return',
+    'save_due' => 'Save due date',
+    'empty' => 'No matching items.',
+    'empty_history' => 'No returns recorded.',
+    'excess' => 'The quantity exceeds the outstanding amount.',
+    'before_handover' => 'The return date is before the handover.',
+];
