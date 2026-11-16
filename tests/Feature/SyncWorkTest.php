@@ -39,7 +39,7 @@ class SyncWorkTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->tenant = Tenant::create(['slug' => 'sync-'.Str::random(12), 'name' => 'Synthetic']);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'sync-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(15).'@example.invalid', 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt('test')])->save();
         $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);

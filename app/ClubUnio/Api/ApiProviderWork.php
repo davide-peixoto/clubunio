@@ -27,17 +27,21 @@ class ApiProviderWork
     public function stage(ApiContext $c, string $operation, int $id, array $input): array
     {
         $registry = app(ProviderApiRegistry::class);
-        $input = $registry->validate($c, $operation, $id, $input);
-        $key = (string) Str::uuid();
-        $work = $this->table()->insertGetId([
-            'tenant_id' => $c->tenant->id, 'integration_id' => $c->integration->id,
-            'token_id' => $c->token->id, 'actor_id' => $c->actor->id,
-            'request_key' => $key, 'operation' => $operation, 'object_id' => $id,
-            'authorization_hash' => $c->authorizationFingerprint(),
-            'encrypted_input' => Crypt::encryptString(json_encode($input, JSON_THROW_ON_ERROR)),
-            'state' => $registry->definitions()[$operation]['approval'] === 'admin' ? 'awaiting_approval' : 'pending',
-        ]);
-        $this->event($work, $c->actor, 'staged');
+        $work = DB::connection('clubunio')->transaction(function () use ($c, $operation, $id, $input, $registry) {
+            Tenant::whereKey($c->tenant->id)->lockForUpdate()->firstOrFail();
+            $input = $registry->validate($c, $operation, $id, $input);
+            $work = $this->table()->insertGetId([
+                'tenant_id' => $c->tenant->id, 'integration_id' => $c->integration->id,
+                'token_id' => $c->token->id, 'actor_id' => $c->actor->id,
+                'request_key' => (string) Str::uuid(), 'operation' => $operation, 'object_id' => $id,
+                'authorization_hash' => $c->authorizationFingerprint(),
+                'encrypted_input' => Crypt::encryptString(json_encode($input, JSON_THROW_ON_ERROR)),
+                'state' => $registry->definitions()[$operation]['approval'] === 'admin' ? 'awaiting_approval' : 'pending',
+            ]);
+            $this->event($work, $c->actor, 'staged');
+
+            return $work;
+        });
 
         return $this->show($c, $work);
     }

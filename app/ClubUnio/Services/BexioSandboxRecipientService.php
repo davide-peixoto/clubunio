@@ -47,6 +47,7 @@ class BexioSandboxRecipientService
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $invoice, $hash) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $fresh = Invoice::where('tenant_id', $tenant->id)->where('active', true)->whereNull('legacy_id')->lockForUpdate()->findOrFail($invoice->id);
             abort_unless(! $fresh->bexio_invoice_id && $fresh->workflowStatus?->code === 'released' && ! $fresh->member->archived_at
                 && (int) $fresh->member->tenant_id === (int) $tenant->id, 409);

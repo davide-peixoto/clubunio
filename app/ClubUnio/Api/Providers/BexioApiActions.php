@@ -8,7 +8,9 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Expense;
 use App\ClubUnio\Models\Invoice;
 use App\ClubUnio\Services\BackofficeReadContext;
+use App\ClubUnio\Services\AccountingProvider;
 use App\ClubUnio\Services\BexioConnectionService;
+use App\ClubUnio\Services\ErpNextInvoiceTransferService;
 use App\ClubUnio\Services\SyncWorkService;
 use Closure;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +61,7 @@ final class BexioApiActions
             foreach ($definition['scopes'] as $scope => [$module, $function]) {
                 $c->authorize($scope, $module, $function);
             }
+            AccountingProvider::require($c->tenant, AccountingProvider::BEXIO);
             if (array_diff(array_keys($input), array_keys($definition['fields']))) {
                 throw ValidationException::withMessages(['input' => 'Unknown or protected fields.']);
             }
@@ -76,6 +79,7 @@ final class BexioApiActions
             // Local-only preflight: technical actors cannot call admin-only provider services.
             if ($action === 'bexio.invoice-transfer') {
                 abort_unless($document->legacy_id === null, 409);
+                abort_if(ErpNextInvoiceTransferService::query($c->tenant)->where('invoice_id', $objectId)->exists(), 409, trans('erpnext.errors.already_linked'));
                 $existing = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
                     ->where('tenant_id', $c->tenant->id)->where('kind', 'invoice')->where('invoice_id', $objectId)->exists();
                 if (! $existing) {

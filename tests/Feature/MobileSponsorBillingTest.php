@@ -50,7 +50,7 @@ class MobileSponsorBillingTest extends TestCase
         Http::preventStrayRequests(); Mail::fake(); $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction(); $this->db->statement("SET LOCAL application_name TO 'clubunio-mobile-sponsor-billing-test'");
-        $this->tenant = Tenant::create(['slug' => 'mobile-billing-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic mobile billing']);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'mobile-billing-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic mobile billing']);
         $this->actor = new Account; $this->actor->forceFill(['username' => 'mobile-billing-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic billing admin',
             'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
         $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin', 'portal_enabled' => true]);

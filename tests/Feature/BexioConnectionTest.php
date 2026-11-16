@@ -38,7 +38,7 @@ class BexioConnectionTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->tenant = Tenant::create(['slug' => 'oidc-'.bin2hex(random_bytes(6)), 'name' => 'OIDC fixture']);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'oidc-'.bin2hex(random_bytes(6)), 'name' => 'OIDC fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => bin2hex(random_bytes(8)), 'display_name' => 'OIDC admin', 'active' => true, 'password' => bcrypt('test')])->save();
         $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);

@@ -33,7 +33,7 @@ class SettingResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()->where('tenant_id', Filament::getTenant()?->id ?? 0)->where('area', '!=', 'mail');
+        return parent::getEloquentQuery()->where('tenant_id', Filament::getTenant()?->id ?? 0)->whereNotIn('area', ['mail', 'erpnext']);
     }
 
     public static function getNavigationIcon(): string

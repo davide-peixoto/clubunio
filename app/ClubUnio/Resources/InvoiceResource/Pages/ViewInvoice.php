@@ -4,11 +4,14 @@ namespace App\ClubUnio\Resources\InvoiceResource\Pages;
 
 use App\ClubUnio\Models\InvoiceCategory;
 use App\ClubUnio\Resources\BexioRecordActions;
+use App\ClubUnio\Resources\ErpNextInvoiceActions;
 use App\ClubUnio\Resources\FinancialAdjustmentActions;
 use App\ClubUnio\Resources\FormMutation;
 use App\ClubUnio\Resources\InvoiceResource;
+use App\ClubUnio\Services\AccountingProvider;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioInvoiceTransferService;
+use App\ClubUnio\Services\ErpNextInvoiceTransferService;
 use App\ClubUnio\Services\InvoiceWorkflowService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -38,12 +41,18 @@ class ViewInvoice extends ViewRecord
         $revision = fn () => TextInput::make('revision')->label('Version')->readOnly()->required();
 
         return [
+            ErpNextInvoiceActions::transfer(fn () => $this->getRecord()),
+            ErpNextInvoiceActions::status(fn () => $this->getRecord()),
+            ErpNextInvoiceActions::remote(fn () => $this->getRecord()),
             BexioRecordActions::status('invoice'),
             BexioRecordActions::invoice('issue'),
             BexioRecordActions::invoice('cancel'),
             Action::make('sendBexio')->label('An Bexio übertragen')->icon('heroicon-o-paper-airplane')
                 ->visible(fn () => $this->getRecord()->active && ! $this->getRecord()->legacy_id && ! $this->getRecord()->bexio_invoice_id
-                    && $this->getRecord()->workflowStatus?->code === 'released' && BexioConnectionService::canManage($actor(), $tenant()))
+                    && $this->getRecord()->workflowStatus?->code === 'released'
+                    && BexioConnectionService::canManage($actor(), $tenant())
+                    && AccountingProvider::current($tenant()) === AccountingProvider::BEXIO
+                    && ! ErpNextInvoiceTransferService::query($tenant())->where('invoice_id', $this->getRecord()->id)->exists())
                 ->modalHeading(__('An Bexio übertragen'))->modalSubmitActionLabel(__('An Bexio übertragen'))
                 ->modalDescription(__('Ziel: SVS Api Test. Rechnungstexte und Beträge werden übertragen. Anlage als Entwurf, ohne E-Mail oder Zahlung.'))
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])
@@ -100,7 +109,9 @@ class ViewInvoice extends ViewRecord
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])->schema([$revision()])
                 ->action(fn (array $data) => $mutate('release', $data)),
             Action::make('cancel')->label('Stornieren')->color('danger')->icon('heroicon-o-x-mark')
-                ->visible(fn () => $editable() || ($this->getRecord()->active && ! $this->getRecord()->legacy_id && ! $this->getRecord()->bexio_invoice_id && $this->getRecord()->workflowStatus?->code === 'released'))
+                ->visible(fn () => $editable() || ($this->getRecord()->active && ! $this->getRecord()->legacy_id && ! $this->getRecord()->bexio_invoice_id
+                    && $this->getRecord()->workflowStatus?->code === 'released'
+                    && ! ErpNextInvoiceTransferService::query($tenant())->where('invoice_id', $this->getRecord()->id)->exists()))
                 ->fillForm(fn () => ['revision' => $this->getRecord()->revision])
                 ->schema([$revision(), Textarea::make('reason')->label('Begründung')->required()->minLength(3)->maxLength(1000)])
                 ->action(fn (array $data) => $mutate('cancel', $data)),

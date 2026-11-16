@@ -13,6 +13,7 @@ class BexioInvoiceTransferService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'send');
         app(BexioSandboxDispatchService::class)->authorize($actor, $tenant);
+        abort_if(ErpNextInvoiceTransferService::query($tenant)->where('invoice_id', $id)->exists(), 409, trans('erpnext.errors.already_linked'));
 
         return app(SyncWorkService::class)->run($actor, $tenant, 'invoice_transfer', $id, compact('revision'));
     }
@@ -22,6 +23,7 @@ class BexioInvoiceTransferService
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'send');
         $dispatch = app(BexioSandboxDispatchService::class);
         $dispatch->authorize($actor, $tenant);
+        abort_if(ErpNextInvoiceTransferService::query($tenant)->where('invoice_id', $id)->exists(), 409, trans('erpnext.errors.already_linked'));
         $invoice = Invoice::where('tenant_id', $tenant->id)->where('active', true)->whereNull('legacy_id')->findOrFail($id);
         $existing = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $id)->first();
         if ($existing) {

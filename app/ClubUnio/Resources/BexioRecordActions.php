@@ -2,6 +2,7 @@
 
 namespace App\ClubUnio\Resources;
 
+use App\ClubUnio\Services\AccountingProvider;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioInvoiceActionService;
 use App\ClubUnio\Services\SyncWorkService;
@@ -15,6 +16,7 @@ class BexioRecordActions
     private static function eligible($page, string $kind): bool
     {
         return BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant())
+            && AccountingProvider::current(Filament::getTenant()) === AccountingProvider::BEXIO
             && DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', Filament::getTenant()->id)
                 ->where('kind', $kind)->where($kind.'_id', $page->getRecord()->id)->where('state', 'accepted')->exists();
     }

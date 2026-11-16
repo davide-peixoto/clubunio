@@ -149,6 +149,7 @@ class SponsorRunBillingService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $tenant, $this->function($action));
             abort_unless(BexioConnectionService::canManage($actor, $tenant), 403);
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $current = $this->table($tenant)->where('id', $id)->lockForUpdate()->first();
             abort_unless($current && (int) $current->revision === $revision, 409, __('Rechnung wurde geändert.'));
             abort_unless(! $current->operation_token || ($action === 'sync' && now()->greaterThan($current->lease_until)), 409, __('Laufende Aktion zuerst abwarten oder Ergebnis prüfen.'));

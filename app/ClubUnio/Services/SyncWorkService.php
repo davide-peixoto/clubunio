@@ -12,6 +12,12 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SyncWorkService
 {
+    public const BEXIO_OPERATIONS = [
+        'invoice_transfer', 'invoice_action', 'invoice_status', 'expense_status',
+        'invoice_sync', 'expense_sync', 'catalog', 'dispatch_result', 'invoice_result',
+        'finance_result', 'sponsor_run_billing',
+    ];
+
     public const LABELS = [
         'invoice_transfer' => 'Bexio · Rechnung übertragen',
         'invoice_action' => 'Bexio · Rechnung freigeben oder stornieren',
@@ -68,11 +74,15 @@ class SyncWorkService
         abort_unless($actor->fresh()?->active && $actor->fresh()?->tenants()->whereKey($tenant->id)->exists(), 403);
         abort_unless(isset(self::LABELS[$operation]), 422);
         $json = json_encode($payload, JSON_THROW_ON_ERROR);
-        $hash = in_array($operation, ['sfv_schedule', 'training_review', 'azure_upload'], true) ? null : app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant);
-        $key = hash('sha256', $operation.':'.$objectId.':'.$hash.':'.$json);
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $operation, $objectId, $json, $hash, $key) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $operation, $objectId, $json) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $hash = null;
+            if (in_array($operation, self::BEXIO_OPERATIONS, true)) {
+                AccountingProvider::require($tenant, AccountingProvider::BEXIO);
+                $hash = app(BexioSandboxFixtureService::class)->optionalConnectionHash($tenant);
+            }
+            $key = hash('sha256', $operation.':'.$objectId.':'.$hash.':'.$json);
             $row = $this->table()->where('tenant_id', $tenant->id)->where('deduplication_key', $key)->first();
             if ($row) {
                 return (int) $row->id;
@@ -128,8 +138,12 @@ class SyncWorkService
     {
         $token = (string) Str::uuid();
         $row = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $revision, $token) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $row = $this->table()->where('tenant_id', $tenant->id)->where('id', $id)->lockForUpdate()->first();
             abort_unless($row, 404);
+            if (in_array($row->operation, self::BEXIO_OPERATIONS, true)) {
+                AccountingProvider::require($tenant, AccountingProvider::BEXIO);
+            }
             abort_if($revision !== null && (int) $row->revision !== $revision, 409, __('Auftrag wurde geändert. Bitte neu laden.'));
             abort_if($row->state === 'running' && $row->lease_until && now()->isBefore($row->lease_until), 409, __('Auftrag wird bereits bearbeitet.'));
             abort_if($row->state === 'closed' && $revision !== null, 409, __('Abgeschlossener Auftrag bleibt im Protokoll.'));

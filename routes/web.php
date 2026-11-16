@@ -228,6 +228,12 @@ Route::middleware('auth:clubunio,portal')->prefix('/planning/{tenant:slug}')->na
     Route::post('/events/{event}/members/{member}', [$controller, 'participate'])->whereNumber('event')->whereNumber('member')->name('participate');
 });
 
+Route::middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, UseClubWorkspace::class])
+    ->prefix('/accounting-provider')->name('clubunio.accounting-provider.')->group(function () {
+        Route::get('/', [\App\ClubUnio\Http\AccountingProviderController::class, 'show'])->name('show');
+        Route::post('/', [\App\ClubUnio\Http\AccountingProviderController::class, 'update'])->name('update');
+    });
+
 Route::middleware('auth:clubunio')->prefix('/integrations/bexio')->name('clubunio.bexio.')->group(function () {
     $workspace = [SetUpPanel::class.':clubunio', UseActiveTenant::class, UseClubWorkspace::class];
     Route::get('/', [BexioConnectionController::class, 'centralShow'])->middleware($workspace)->name('show');

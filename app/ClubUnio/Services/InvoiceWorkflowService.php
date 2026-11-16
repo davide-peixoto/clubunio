@@ -89,7 +89,8 @@ class InvoiceWorkflowService
                 throw ValidationException::withMessages(['revision' => __('Rechnung wurde geändert. Bitte neu laden.')]);
             }
             $cancellable = $operation === 'cancel' && $invoice->workflowStatus?->code === 'released'
-                && $invoice->active && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id;
+                && $invoice->active && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id
+                && ! ErpNextInvoiceTransferService::query($tenant)->where('invoice_id', $invoice->id)->exists();
             $archivable = in_array($operation, ['archive', 'restore'], true)
                 && ! $invoice->legacy_id && ! $invoice->bexio_invoice_id
                 && $invoice->workflowStatus?->code === 'cancelled'

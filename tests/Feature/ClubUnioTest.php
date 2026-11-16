@@ -416,6 +416,8 @@ class ClubUnioTest extends TestCase
 
     public function test_invoice_bexio_pdf_ignores_activation_and_checks_access(): void
     {
+        $this->own->accounting_provider = 'bexio';
+        $this->own->save();
         $member = Member::where('tenant_id', $this->own->id)->firstOrFail();
         $invoice = new Invoice;
         $invoice->forceFill(['tenant_id' => $this->own->id, 'member_id' => $member->id, 'bexio_invoice_id' => '12345'])->save();
