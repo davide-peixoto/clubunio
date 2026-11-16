@@ -1,6 +1,19 @@
 <?php
 
 return [
+    'keycloak_sign_in' => 'Sign in with your ClubUnio account',
+    'wizard_account' => '1. Confirm your account',
+    'wizard_has_code' => 'I have a setup code from support',
+    'wizard_continue' => 'Continue',
+    'wizard_method' => '2. Choose a sign-in method',
+    'wizard_method_help' => 'A passkey uses your device PIN or biometrics. An authenticator app generates a six-digit code that you enter with your password.',
+    'wizard_previous' => 'Back',
+    'wizard_verify' => '3. Connect your authenticator',
+    'wizard_recovery' => '4. Save your recovery codes',
+    'wizard_cancelled' => 'The passkey prompt was cancelled or expired. Try again or choose the authenticator app.',
+    'wizard_copy' => 'Copy key',
+    'wizard_copied' => 'Key copied',
+    'wizard_sign_in' => 'Already set up? Sign in',
     'reset_title' => 'Reset secure sign-in',
     'reset_effect' => 'Existing sign-in methods and sessions will be blocked immediately. The password remains unchanged.',
     'reset_handover' => 'Give this one-time code in person or through a previously verified secure channel. It expires in 30 minutes and is shown only now.',

@@ -4,6 +4,11 @@ use App\ClubUnio\Http\PlatformAdministrationController;
 use App\ClubUnio\Http\RequirePlatformAdministrator;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/vereinslogin/oidc/start', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.start');
+Route::get('/vereinslogin/oidc/callback', [\App\ClubUnio\Http\PlatformOidcController::class, 'callback'])
+    ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.callback');
+
 Route::get('/club-logo/{id}/{version}.png', [PlatformAdministrationController::class, 'logo'])
     ->whereNumber('id')->where('version', '[a-f0-9]{64}')->middleware('throttle:120,1')->name('clubunio.tenant-logo');
 Route::get('/platform/login', [PlatformAdministrationController::class, 'loginForm'])->name('clubunio.platform.login');
