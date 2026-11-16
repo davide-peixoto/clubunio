@@ -31,5 +31,7 @@ Route::prefix('platform')->middleware(RequirePlatformAdministrator::class)->grou
     Route::post('/accounts', [PlatformAdministrationController::class, 'createAccount'])->middleware('throttle:10,1')->name('clubunio.platform.account.create');
     Route::get('/tenants/{id}', [PlatformAdministrationController::class, 'show'])->whereNumber('id')->name('clubunio.platform.show');
     Route::post('/tenants/{id}', [PlatformAdministrationController::class, 'change'])->whereNumber('id')->middleware('throttle:30,1')->name('clubunio.platform.change');
+    Route::post('/tenants/{id}/keycloak-migration', [PlatformAdministrationController::class, 'keycloakMigration'])
+        ->whereNumber('id')->middleware('throttle:6,1')->block(120, 5)->name('clubunio.platform.keycloak-migration');
     Route::post('/logout', [PlatformAdministrationController::class, 'logout'])->name('clubunio.platform.logout');
 });

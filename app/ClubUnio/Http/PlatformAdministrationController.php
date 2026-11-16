@@ -83,12 +83,17 @@ final class PlatformAdministrationController
         $db = DB::connection('clubunio');
         $accounts = $db->table('clubora.tenant_accounts as m')->join('clubora.accounts as a', 'a.id', '=', 'm.account_id')
             ->where('m.tenant_id', $id)->where('a.api_only', false)->orderBy('a.display_name')->limit(201)
-            ->get(['a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
+            ->get(['a.id', 'a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
+
+        $migration = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class);
+        $migrationRows = $migration::enabled() && $accounts->isNotEmpty()
+            ? collect($migration->preview($id, $accounts->take(200)->pluck('id')->map(fn ($key) => (int) $key)->all()))->keyBy('id')
+            : collect();
 
         return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user(PlatformOidcController::guard($request)),
             'metrics' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview([$id])[$id],
             'syncOperations' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->operations($id),
-            'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts,
+            'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts, 'migrationRows' => $migrationRows,
             'storageProfile' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->active($tenant),
             'storageDestinations' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->destinations($tenant),
             'roles' => AccountRole::where('active', true)->orderBy('sort_order')->get(),
@@ -96,6 +101,42 @@ final class PlatformAdministrationController
             'domains' => $db->table('clubora.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
             'changes' => $db->table('clubora.platform_changes as c')->join('clubora.accounts as a', 'a.id', '=', 'c.actor_id')
                 ->where('c.tenant_id', $id)->orderByDesc('c.id')->limit(30)->get(['c.action', 'c.details', 'c.created_at', 'a.display_name'])]);
+    }
+
+    public function keycloakMigration(Request $request, int $id, \App\ClubUnio\Services\PlatformKeycloakMigration $migration)
+    {
+        abort_unless($migration::enabled(), 404);
+        $actor = $request->user(PlatformOidcController::guard($request));
+        $admins = app(PlatformAdministrationService::class);
+        $admins->authorize($actor);
+        $tenant = Tenant::findOrFail($id);
+        if (!$request->boolean('confirm')) {
+            $data = $request->validate(['account_ids' => 'required_without:account_id|array|min:1|max:10',
+                'account_ids.*' => 'required|integer|min:1|distinct', 'account_id' => 'sometimes|integer|min:1']);
+            $ids = isset($data['account_id']) ? [(int) $data['account_id']] : array_map('intval', $data['account_ids']);
+            $rows = $migration->preview($id, $ids);
+            $previewToken = bin2hex(random_bytes(24));
+            $request->session()->put('platform.keycloak.preview', ['tenant' => $id, 'actor' => (int) $actor->id,
+                'rows' => $rows, 'expires' => time() + 600, 'token' => $previewToken]);
+
+            return response()->view('clubunio.platform.keycloak-migration', compact('tenant', 'actor', 'rows', 'previewToken'))
+                ->header('Cache-Control', 'no-store');
+        }
+        $preview = $request->session()->pull('platform.keycloak.preview');
+        abort_unless($preview && $preview['tenant'] === $id && $preview['actor'] === (int) $actor->id && $preview['expires'] >= time()
+            && is_string($request->input('preview_token')) && hash_equals($preview['token'], $request->input('preview_token')), 409);
+        $rows = [];
+        foreach ($preview['rows'] as $row) {
+            $admins->authorize($actor);
+            try {
+                $row['status'] = $migration->send($id, $row);
+            } catch (\Exception) {
+                $row['status'] = 'failed';
+            }
+            $rows[] = $row;
+        }
+        return response()->view('clubunio.platform.keycloak-migration', compact('tenant', 'actor', 'rows') + ['sent' => true])
+            ->header('Cache-Control', 'no-store');
     }
 
     public function change(Request $request, int $id, PlatformAdministrationService $service)

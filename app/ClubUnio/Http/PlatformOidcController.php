@@ -114,6 +114,9 @@ final class PlatformOidcController
                 $id = (int) $links->accept($pending['invitation'], $claims)->id;
             } elseif ($id === null) {
                 $id = $links->accountId($claims->iss, $claims->sub);
+                if ($id === null && !is_array($pending['pair'] ?? null)) {
+                    $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims);
+                }
             }
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
