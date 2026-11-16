@@ -5,9 +5,11 @@ namespace App\ClubUnio\Services;
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Setting;
 use App\ClubUnio\Models\Tenant;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use JsonException;
 
 class ErpNextConfiguration
 {
@@ -24,6 +26,18 @@ class ErpNextConfiguration
         $row = Setting::where('tenant_id', $tenant->id)->where('area', 'erpnext')->where('key', self::KEY)->first();
 
         return $row ? json_decode(Crypt::decryptString($row->encrypted_value), true, 512, JSON_THROW_ON_ERROR) : [];
+    }
+
+    public function verifiedConnection(Tenant $tenant): array
+    {
+        try {
+            $config = $this->connection($tenant);
+        } catch (DecryptException|JsonException) {
+            abort(409, trans('erpnext.errors.destination'));
+        }
+        abort_unless($config && ($config['origin'] ?? null) === $this->origin(), 409, trans('erpnext.errors.destination'));
+
+        return $config;
     }
 
     public function origin(): string
@@ -53,6 +67,9 @@ class ErpNextConfiguration
             'customer_group' => 'required|string|max:140',
             'item_code' => 'required|string|max:140',
             'income_account' => 'required|string|max:140',
+            'supplier_group' => 'nullable|required_with:expense_item_code,expense_account|string|max:140',
+            'expense_item_code' => 'nullable|required_with:expense_account|string|max:140',
+            'expense_account' => 'nullable|required_with:expense_item_code|string|max:140',
             'due_days' => 'required|integer|min:0|max:365',
             'api_key' => ['required', 'regex:/^[A-Za-z0-9_-]{8,128}$/D'],
             'api_secret' => ['nullable', 'regex:/^[A-Za-z0-9_-]{8,128}$/D'],
@@ -62,8 +79,9 @@ class ErpNextConfiguration
             abort_unless(self::canManage($actor, $tenant), 403);
             $old = $this->connection($tenant);
             $origin = $this->origin();
-            abort_if($old && ErpNextInvoiceTransferService::query($tenant)->exists()
-                && ($origin !== $old['origin'] || $data['company'] !== $old['company']), 409, trans('erpnext.errors.destination'));
+            abort_if($old && ($origin !== $old['origin'] || $data['company'] !== $old['company'])
+                && (ErpNextInvoiceTransferService::query($tenant)->exists() || ErpNextExpenseTransferService::query($tenant)->exists()),
+                409, trans('erpnext.errors.destination'));
             abort_if(empty($data['api_secret']) && $data['api_key'] !== ($old['api_key'] ?? ''), 422, trans('erpnext.errors.credentials'));
             $data['api_secret'] = ($data['api_secret'] ?? '') ?: ($old['api_secret'] ?? '');
             abort_if($data['api_secret'] === '', 422, trans('erpnext.errors.credentials'));

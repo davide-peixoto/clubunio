@@ -6,6 +6,7 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\ErpNextConfiguration;
 use App\ClubUnio\Services\ErpNextInvoiceTransferService;
+use App\ClubUnio\Services\ErpNextStatusReconciliation;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,8 @@ class ErpNextInvoiceTransferTest extends TestCase
     private array $remote = [];
 
     private bool $loseFirstInvoiceResponse = true;
+
+    private bool $remoteUnavailable = false;
 
     protected function setUp(): void
     {
@@ -47,7 +50,7 @@ class ErpNextInvoiceTransferTest extends TestCase
             'invoice_workflow_statuses' => 'id INTEGER PRIMARY KEY, tenant_id INTEGER, code TEXT',
             'invoices' => 'id INTEGER PRIMARY KEY, tenant_id INTEGER, member_id INTEGER, workflow_status_id INTEGER, created_at TEXT, revision INTEGER, active BOOLEAN, tax_mode TEXT, cash_rounding BOOLEAN, legacy_id INTEGER, bexio_invoice_id INTEGER',
             'invoice_lines' => 'id INTEGER PRIMARY KEY, tenant_id INTEGER, invoice_id INTEGER, description TEXT, net_amount NUMERIC, active BOOLEAN',
-            'erpnext_invoice_transfers' => 'tenant_id INTEGER, invoice_id INTEGER PRIMARY KEY, reference TEXT UNIQUE, origin TEXT, total_cents INTEGER, remote_id TEXT, state TEXT DEFAULT \'pending\', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT',
+            'erpnext_invoice_transfers' => 'tenant_id INTEGER, invoice_id INTEGER PRIMARY KEY, reference TEXT UNIQUE, origin TEXT, total_cents INTEGER, remote_id TEXT, state TEXT DEFAULT \'pending\', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT, last_status_attempt_at TEXT, status_sync_failed BOOLEAN DEFAULT FALSE',
             'bexio_sandbox_dispatches' => 'tenant_id INTEGER, invoice_id INTEGER, kind TEXT',
         ] as $table => $columns) {
             $db->statement('CREATE TABLE clubora.'.$table.' ('.$columns.')');
@@ -108,9 +111,43 @@ class ErpNextInvoiceTransferTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_status_reconciliation_only_reads_and_retries_failed_checks(): void
+    {
+        $service = app(ErpNextInvoiceTransferService::class);
+        $this->reject(fn () => $service->transfer($this->actor, $this->tenant, 1, 1), 503);
+        $this->insert('erpnext_invoice_transfers', ['tenant_id' => 1, 'invoice_id' => 2, 'reference' => 'missing', 'total_cents' => 8750]);
+        $priorRequests = Http::recorded()->count();
+        $reconciliation = app(ErpNextStatusReconciliation::class);
+        $this->assertSame(['confirmed' => 1, 'unconfirmed' => 1, 'failed' => 0, 'skipped' => 0], $reconciliation->run(20));
+        $row = $service::query($this->tenant)->where('invoice_id', 1);
+        $this->assertSame('draft', $row->value('state'));
+        $remoteId = $row->value('remote_id');
+        $this->remote['Sales Invoice'][$remoteId]['docstatus'] = 1;
+        $this->remote['Sales Invoice'][$remoteId]['outstanding_amount'] = 0;
+        $this->travel(5)->minutes();
+        $this->remoteUnavailable = true;
+        $this->assertSame(2, $reconciliation->run(20)['failed']);
+        $this->assertTrue((bool) $row->value('status_sync_failed'));
+        $this->assertSame('draft', $row->value('state'));
+        $this->travel(5)->minutes();
+        $this->remoteUnavailable = false;
+        $this->assertSame(1, $reconciliation->run(20)['confirmed']);
+        $this->assertFalse((bool) $row->value('status_sync_failed'));
+        $this->assertSame('paid', $row->value('state'));
+        $this->assertTrue(Http::recorded()->slice($priorRequests)->every(fn ($entry) => $entry[0]->method() === 'GET'));
+        $priorRequests = Http::recorded()->count();
+        $this->travel(5)->minutes();
+        DB::connection('clubunio')->table('clubora.tenants')->where('id', 1)->update(['accounting_provider' => 'bexio']);
+        $this->assertSame(['confirmed' => 0, 'unconfirmed' => 0, 'failed' => 0, 'skipped' => 0], $reconciliation->run(20));
+        Http::assertSentCount($priorRequests);
+    }
+
     private function handleRemote(Request $request)
     {
         $this->assertTrue($request->hasHeader('Authorization', 'token fixture-key:fixture-secret'));
+        if ($this->remoteUnavailable) {
+            return Http::response([], 503);
+        }
         $segments = explode('/', trim(parse_url($request->url(), PHP_URL_PATH), '/'));
         $type = rawurldecode($segments[2]);
         if (isset($segments[3])) {

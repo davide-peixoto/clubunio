@@ -6,6 +6,7 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\AccountLinksImporter;
 use App\ClubUnio\Services\ClubObjectsImporter;
 use App\ClubUnio\Services\ContributionTrainingImporter;
+use App\ClubUnio\Services\ErpNextStatusReconciliation;
 use App\ClubUnio\Services\FacilityImporter;
 use App\ClubUnio\Services\FootballClubImporter;
 use App\ClubUnio\Services\MemberDetailsImporter;
@@ -59,6 +60,13 @@ Artisan::command('clubunio:send-expense-mail {--limit=20}', function () {
     $this->info(json_encode(app(TestOutboxDispatcher::class)->dispatch('expense_events', (int) $this->option('limit')), JSON_THROW_ON_ERROR));
 });
 Schedule::command('clubunio:send-expense-mail')->everyMinute()->withoutOverlapping();
+
+Artisan::command('clubunio:erpnext-reconcile-status {--limit=20}', function () {
+    $summary = app(ErpNextStatusReconciliation::class)->run((int) $this->option('limit'));
+    $this->line(json_encode($summary, JSON_THROW_ON_ERROR));
+
+    return $summary['failed'] > 0 ? 1 : 0;
+})->purpose('Read linked ERPNext invoice statuses into ClubUnio');
 
 Artisan::command('clubunio:social-jobs', function () {
     $this->info((string) app(\App\ClubUnio\Services\SocialJobService::class)->tick());

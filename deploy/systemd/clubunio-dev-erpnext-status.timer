@@ -1,0 +1,10 @@
+[Unit]
+Description=Reconcile ClubUnio DEV ERPNext invoice status every five minutes
+
+[Timer]
+OnActiveSec=5s
+OnCalendar=*-*-* *:00/5:00
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target
