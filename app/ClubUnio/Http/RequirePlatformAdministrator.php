@@ -13,14 +13,14 @@ final class RequirePlatformAdministrator
     {
         // Do not depend on middleware sorting: reject custom hosts before redirects/auth.
         abort_if(app(TenantDomainService::class)->resolve($request), 404);
-        if (config('clubunio-platform-oidc.enabled')) {
+        if (PlatformOidcController::required()) {
             abort_unless($request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-platform-oidc.origin'), 404);
             if ((int) $request->session()->get('platform.oidc.expires') <= time()) {
                 \Illuminate\Support\Facades\Auth::guard('platform')->logout();
                 return redirect()->route('clubunio.platform.oidc.start');
             }
         }
-        $actor = $request->user(config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio');
+        $actor = $request->user(PlatformOidcController::guard($request));
         if (! $actor) {
             return redirect()->route('clubunio.platform.login');
         }

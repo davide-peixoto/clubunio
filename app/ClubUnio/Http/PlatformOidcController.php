@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\{Auth, Http};
 
 final class PlatformOidcController
 {
+    public static function required(): bool
+    {
+        return config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed');
+    }
+
+    public static function guard(Request $request): string
+    {
+        return self::required() || (config('clubunio-platform-oidc.enabled') && $request->isSecure()
+            && $request->getSchemeAndHttpHost() === config('clubunio-platform-oidc.origin')
+            && $request->hasSession() && (int) $request->session()->get('platform.oidc.expires') > time()
+            && $request->user('platform')) ? 'platform' : 'clubunio';
+    }
+
     private function configuration(Request $request): array
     {
         $config = config('clubunio-platform-oidc');

@@ -31,7 +31,7 @@ final class PublicSupportIntake
     public function inbox(Request $request, \App\ClubUnio\Services\SupportAccess $access, ?int $club = null)
     {
         abort_unless(config('clubunio-support.enabled'), 404);
-        $actor = $request->user($club === null && config('clubunio-platform-oidc.enabled') ? 'platform' : 'clubunio');
+        $actor = $request->user($club === null ? PlatformOidcController::guard($request) : 'clubunio');
         abort_unless($actor, 401);
         if ($club === null) {
             $access->platform($request, $actor);
