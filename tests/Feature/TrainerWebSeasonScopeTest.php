@@ -11,10 +11,12 @@ use App\ClubUnio\Services\ExpenseService;
 use App\ClubUnio\Services\InvoiceAccessService;
 use App\ClubUnio\Services\MemberAccessService;
 use App\ClubUnio\Services\PlanningCalendarService;
+use App\ClubUnio\Services\PortalReadContext;
 use App\ClubUnio\Services\TeamPlanningService;
 use App\ClubUnio\Services\TrainerWebSeasonScope;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
@@ -127,5 +129,29 @@ SQL);
         $this->routeContext('clubunio.planning.index');
         $this->actingAs($admin = Account::findOrFail(2), 'portal');
         $this->assertSame([11, 12, 13], $planning->teams($admin, $tenant)->orderBy('id')->pluck('id')->all());
+    }
+
+    public function test_access_reads_are_reused_only_for_the_same_authenticated_portal_get(): void
+    {
+        $this->actingAs($trainer = Account::findOrFail(1), 'portal');
+        $this->routeContext('clubunio.planning.index');
+        $reads = app(PortalReadContext::class);
+        $access = fn (Account $actor) => $reads->accessFact($actor, 'membership:1', fn () => new \stdClass);
+
+        $first = $access($trainer);
+        $this->assertSame($first, $access($trainer));
+        $other = Account::findOrFail(2);
+        $this->assertNotSame($access($other), $access($other));
+
+        $request = Request::create('/planning/demo-sport', 'GET');
+        $this->app->instance('request', $request);
+        $this->routeContext('clubunio.planning.index');
+        $this->assertNotSame($first, $access($trainer));
+        $this->assertSame($access($trainer), $access($trainer));
+        $request->attributes->set('clubunio_impersonation', true);
+        $this->assertNotSame($access($trainer), $access($trainer));
+        $request->attributes->remove('clubunio_impersonation');
+        $request->setMethod('POST');
+        $this->assertNotSame($access($trainer), $access($trainer));
     }
 }
