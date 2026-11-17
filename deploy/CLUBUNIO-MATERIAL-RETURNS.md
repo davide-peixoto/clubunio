@@ -28,3 +28,15 @@ Isolierte Abnahme mit dem Stage-Schema in PostgreSQL 16 und zwei
 synthetischen Vereinen: Migration und Journal, Solltermin, Überfälligkeit,
 Teilrückgaben 2 + 1 + 2, Wiederholungsschutz, Mengenlimit, Verlauf,
 unveränderter Quittungshash und Mandantentrennung bestanden.
+
+## Stage-Rollout (17.11.2026)
+
+RunCloud lieferte den Funktionscommit `29f6a2d` aus. Die gezielte
+Materialmigration wurde nach Schemasicherung als Batch 128 verbucht.
+Routen und Blade-Views wurden neu gecacht. Auf Stage bestanden die
+Materialprüfung mit zwei synthetischen Vereinen und die Trainerprüfung
+mit einem synthetischen Trainerkonto. Die Trainerprüfung im HTTP-Kernel
+bestätigte vier Seiten in DE/EN, die aktuelle Mannschaft, HTTP 404 für
+den historischen Direktlink und den Kalenderexport. Die Rückgabeprüfung
+bestätigte 2 + 1 + 2 Stück, Solltermin, Wiederholungsschutz, Verlauf und
+Mandantentrennung. Beide Transaktionen wurden zurückgerollt.
