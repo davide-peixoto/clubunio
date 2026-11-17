@@ -15,7 +15,7 @@
     "keycloak.resend": "Resend invitation",
     "keycloak.send_invitations": "Send invitations",
     "keycloak.status.pending": "Not migrated",
-    "keycloak.status.invited": "Invitation sent",
+    "keycloak.status.invited": "Invitation accepted for sending",
     "keycloak.status.active": "Active",
     "keycloak.status.ineligible": "Not eligible for migration",
     "keycloak.status.invalid_email": "No valid recipient address",

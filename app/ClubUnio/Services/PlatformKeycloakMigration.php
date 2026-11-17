@@ -2,6 +2,7 @@
 
 namespace App\ClubUnio\Services;
 
+use App\ClubUnio\Models\{Account, Tenant};
 use Illuminate\Support\Facades\DB;
 
 final class PlatformKeycloakMigration
@@ -53,28 +54,30 @@ final class PlatformKeycloakMigration
         }
         $db = DB::connection('clubunio');
         $gateway = app(KeycloakMigrationGateway::class);
-        $subject = $db->transaction(function () use ($db, $gateway, $tenant, $item) {
-            $db->table('clubora.accounts')->where('id', $item['id'])->lockForUpdate()->first();
+        $recipient = $db->transaction(function () use ($db, $gateway, $tenant, $item) {
+            $account = Account::whereKey($item['id'])->lockForUpdate()->firstOrFail();
             $db->table('clubora.tenant_accounts')->where('tenant_id', $tenant)->where('account_id', $item['id'])->lockForUpdate()->first();
             if ($this->preview($tenant, [$item['id']])[0] !== $item) {
                 return null;
             }
             $row = $db->table('clubora.keycloak_migrations')->where('account_id', $item['id'])->first();
+            $names = app(KeycloakMigrationNames::class)->forAccount($account, Tenant::findOrFail($tenant));
             if ($row) {
-                return $row->subject;
+                return [$row->subject, $names];
             }
-            $subject = $gateway->create($item['email']);
+            $subject = $gateway->create($item['email'], $names);
             if ($subject !== null) {
                 $db->table('clubora.keycloak_migrations')->insert(['account_id' => $item['id'],
                     'issuer' => config('clubunio-verein-oidc.issuer'), 'subject' => $subject, 'email' => $item['email']]);
             }
 
-            return $subject;
+            return $subject === null ? null : [$subject, $names];
         });
-        if ($subject === null) {
+        if ($recipient === null) {
             return 'conflict';
         }
-        $gateway->invite($subject, $item['email']);
+        [$subject, $names] = $recipient;
+        $gateway->invite($subject, $item['email'], $names);
         $db->table('clubora.keycloak_migrations')->where('account_id', $item['id'])->where('subject', $subject)->update(['invited_at' => now()]);
 
         return 'invited';

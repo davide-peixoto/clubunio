@@ -14,6 +14,22 @@ erst nach eigener Plattform-Identitaetsfreigabe anmelden.
 Automatische Einladungen fuer Plattformkonten sind auf DEV separat
 freigeschaltet.
 
+## Namen und Mailstatus (17.11.2026)
+
+DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten
+erhalten Vor- und Nachname aus der genehmigten eigenen Mitgliederzuordnung
+des Vereins, ansonsten aus dem persoenlichen Anzeigenamen. Keine Ableitung
+aus Mailadressen oder verknuepften Kindern. Wiederholungen ergaenzen nur
+fehlende Namen am bereits vorgemerkten Keycloak-Subject und behalten die
+vorhandenen Profilattribute. Ein bestehendes DEV-Konto wurde gezielt
+ergaenzt und lesend ueberprueft, ohne erneut eine Einladung auszusenden.
+
+`invited_at` bedeutet HTTP 204 von Keycloak, nicht Postfachzustellung.
+Bei Nichtzustellung zuerst Empfaenger-Quarantaene und Message Trace bzw.
+SMTP-Relay pruefen. Ein vom Gateway abgelehnter Versand protokolliert
+seinen HTTP-Status ohne E-Mail-Adresse, Token oder Antwortinhalt. Keine
+Datenbankmigration; Rueckweg `20261117-clubunio-trainer-web`. Stage unveraendert.
+
 DEV-Release `20261116-clubunio-platform-removal`: Entfernung aktiver und
 entzogener Eintraege mit synthetischen Konten unter der DEV-Laufzeitrolle
 geprueft. Fehlende Berechtigung und Selbstentfernung werden abgewiesen;

@@ -15,7 +15,7 @@
     "keycloak.resend": "Einladung erneut senden",
     "keycloak.send_invitations": "Einladungen senden",
     "keycloak.status.pending": "Nicht migriert",
-    "keycloak.status.invited": "Einladung versendet",
+    "keycloak.status.invited": "Einladung zum Versand angenommen",
     "keycloak.status.active": "Aktiv",
     "keycloak.status.ineligible": "Nicht für die Migration freigegeben",
     "keycloak.status.invalid_email": "Keine gültige Empfängeradresse",

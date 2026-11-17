@@ -59,7 +59,7 @@ final class PlatformAdminKeycloakLink
         $administration = app(PlatformAdministrationService::class);
         $gateway = app(KeycloakMigrationGateway::class);
         $db = DB::connection('clubunio');
-        $row = $db->transaction(function () use ($db, $administration, $gateway, $operator, $id, $confirmedEmail) {
+        $recipient = $db->transaction(function () use ($db, $administration, $gateway, $operator, $id, $confirmedEmail) {
             $administration->authorize($operator);
             $db->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-platform-access']);
             $administration->authorize($operator, true);
@@ -71,24 +71,26 @@ final class PlatformAdminKeycloakLink
                 abort_if(in_array($id, array_map('intval', (array) config($key)), true), 409);
             }
             $issuer = config('clubunio-verein-oidc.issuer');
+            $names = app(KeycloakMigrationNames::class)->forAccount($target);
             $existing = $this->invitations()->where('account_id', $id)->first();
             if ($existing) {
                 abort_unless($existing->issuer === $issuer && $existing->email === $email && $existing->activated_at === null, 409);
-                return $existing;
+                return [$existing, $names];
             }
-            $subject = $gateway->create($email);
+            $subject = $gateway->create($email, $names);
             if ($subject === null) {
                 return null;
             }
             $data = ['account_id' => $id, 'issuer' => $issuer, 'subject' => $subject, 'email' => $email];
             $this->invitations()->insert($data);
 
-            return (object) $data;
+            return [(object) $data, $names];
         });
-        if ($row === null) {
+        if ($recipient === null) {
             return 'conflict';
         }
-        $gateway->invite($row->subject, $row->email);
+        [$row, $names] = $recipient;
+        $gateway->invite($row->subject, $row->email, $names);
         $this->invitations()->where('account_id', $id)->where('subject', $row->subject)->update(['invited_at' => now()]);
         $db->table('clubora.platform_changes')->insert(['actor_id' => $operator->id, 'tenant_id' => null,
             'action' => 'platform.keycloak.invite', 'details' => json_encode(['account_id' => $id], JSON_THROW_ON_ERROR)]);

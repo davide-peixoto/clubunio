@@ -4,11 +4,12 @@ namespace App\ClubUnio\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 final class KeycloakMigrationGateway
 {
-    public function create(string $email): ?string
+    public function create(string $email, array $names = []): ?string
     {
         [$http, $users] = $this->users();
         $existing = $http->get($users, ['email' => $email, 'exact' => 'true'])->throw()->json();
@@ -16,7 +17,8 @@ final class KeycloakMigrationGateway
             return null;
         }
         $response = $http->post($users, ['username' => $email, 'email' => $email, 'enabled' => true,
-            'emailVerified' => false, 'requiredActions' => ['VERIFY_EMAIL', 'UPDATE_PASSWORD', 'CONFIGURE_TOTP']]);
+            'emailVerified' => false, 'requiredActions' => ['VERIFY_EMAIL', 'UPDATE_PASSWORD', 'CONFIGURE_TOTP']]
+            + array_intersect_key($names, array_flip(['firstName', 'lastName'])));
         if ($response->status() === 409) {
             return null;
         }
@@ -28,7 +30,28 @@ final class KeycloakMigrationGateway
         return $match[1];
     }
 
-    public function invite(string $subject, string $email): void
+    public function invite(string $subject, string $email, array $names = []): void
+    {
+        [$http, $url, $user] = $this->recipient($subject, $email);
+        $this->fillMissingNames($http, $url, $user, $names);
+        $actions = ['UPDATE_PASSWORD', 'CONFIGURE_TOTP'];
+        if (($user['emailVerified'] ?? false) !== true) {
+            array_unshift($actions, 'VERIFY_EMAIL');
+        }
+        $status = $http->put($url.'/execute-actions-email?lifespan=86400', $actions)->status();
+        if ($status !== 204) {
+            Log::warning('keycloak.migration.invite_rejected', ['http_status' => $status]);
+            throw new RuntimeException('Keycloak invitation failed.');
+        }
+    }
+
+    public function refreshNames(string $subject, string $email, array $names): void
+    {
+        [$http, $url, $user] = $this->recipient($subject, $email);
+        $this->fillMissingNames($http, $url, $user, $names);
+    }
+
+    private function recipient(string $subject, string $email): array
     {
         [$http, $users] = $this->users();
         $url = $users.'/'.rawurlencode($subject);
@@ -36,12 +59,22 @@ final class KeycloakMigrationGateway
         if (($user['id'] ?? null) !== $subject || ($user['email'] ?? null) !== $email) {
             throw new RuntimeException('Keycloak recipient changed.');
         }
-        $actions = ['UPDATE_PASSWORD', 'CONFIGURE_TOTP'];
-        if (($user['emailVerified'] ?? false) !== true) {
-            array_unshift($actions, 'VERIFY_EMAIL');
+        return [$http, $url, $user];
+    }
+
+    private function fillMissingNames(PendingRequest $http, string $url, array $user, array $names): void
+    {
+        $profile = array_intersect_key($user, array_flip(['username', 'email', 'firstName', 'lastName', 'attributes']));
+        $changed = false;
+        foreach (['firstName', 'lastName'] as $key) {
+            if (trim((string) ($profile[$key] ?? '')) === '' && trim((string) ($names[$key] ?? '')) !== '') {
+                $profile[$key] = $names[$key];
+                $changed = true;
+            }
         }
-        if ($http->put($url.'/execute-actions-email?lifespan=86400', $actions)->status() !== 204) {
-            throw new RuntimeException('Keycloak invitation failed.');
+        // Keycloak replaces profile attributes on PUT; preserve all existing attributes.
+        if ($changed && ($http->put($url, $profile)->status() !== 204)) {
+            throw new RuntimeException('Keycloak profile update failed.');
         }
     }
 
