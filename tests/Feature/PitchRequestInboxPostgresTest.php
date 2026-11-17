@@ -36,7 +36,7 @@ class PitchRequestInboxPostgresTest extends TestCase
         $this->travelTo(Carbon::parse('2026-11-04 23:30:00', 'UTC'));
         $this->db = DB::connection('clubunio');
         $this->assertSame('pgsql', $this->db->getDriverName());
-        $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
+        $this->assertSame('clubunio_stage_pitch_test', $this->db->getDatabaseName());
         $this->grammar = $this->db->getQueryGrammar();
         $this->db->beginTransaction();
         $suffix = bin2hex(random_bytes(8));

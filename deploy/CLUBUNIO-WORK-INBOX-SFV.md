@@ -53,3 +53,14 @@ Stage-Abnahme mit zwei Testvereinen und synthetischen Spielen:
 Die DEV-Bereinigung und der gezielte SFV-Datenbackfill gehören nicht zum
 Stage-Codepaket. Ein allfälliger Datenabgleich braucht einen eigenen
 Nachweis anhand der Stage-Daten.
+
+### Isolierte PostgreSQL-Abnahme (17.11.2026)
+
+Alle 26 Fachtests aus `PitchPlanningDomainTest` und
+`PitchRequestInboxPostgresTest` bestanden. Der Testcluster verwendete
+PostgreSQL 16, das Stage-Schema ohne Vereinsdaten und die Rollen aus den
+versionierten Migrationen. Die beiden Profiltests wurden nach Ergänzung
+der späteren Profilrollen-Aktivierung erfolgreich wiederholt. Die sechs
+Veo-Tests liefen ergänzend mit SQLite und bestanden ebenfalls. Der
+temporäre Cluster wurde nach den Läufen entfernt. Die angemeldete
+Stage-Abnahme bleibt ein eigener Schritt.

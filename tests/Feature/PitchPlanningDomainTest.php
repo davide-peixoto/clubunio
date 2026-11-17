@@ -33,7 +33,7 @@ class PitchPlanningDomainTest extends TestCase
         Mail::fake();
         $this->db = DB::connection('clubunio');
         $this->assertSame('pgsql', $this->db->getDriverName());
-        $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
+        $this->assertSame('clubunio_stage_pitch_test', $this->db->getDatabaseName());
         $this->grammar = $this->db->getQueryGrammar();
         $this->db->beginTransaction();
         $this->db->statement("SET LOCAL application_name TO 'clubunio-pitch-admin-override-test'");
