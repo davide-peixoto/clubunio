@@ -1,8 +1,13 @@
 @extends('clubunio.portal.layout')
 @section('content')
-<h1>{{ __('Benachrichtigungen') }} <small>({{ $unread }} {{ __('ungelesen)') }}</small></h1>
+<div class="page-heading">
+    <div><h1>{{ __('Benachrichtigungen') }}</h1><p>({{ $unread }} {{ __('ungelesen)') }}</p></div>
+    @if($unread)
+        <form method="post" action="{{ route('clubunio.portal.notifications.read-all', ['tenant'=>$tenant->slug]) }}">@csrf<button type="submit" class="primary">@svg('heroicon-o-check') {{ __('Alle als gelesen markieren') }}</button></form>
+    @endif
+</div>
+<div class="cu-portal-list">
 <form method="get" class="toolbar"><label><input type="checkbox" name="unreadOnly" value="1" @checked(request()->boolean('unreadOnly'))> {{ __('Nur ungelesene') }}</label><button type="submit" class="icon-button" title="{{ __('Filtern') }}" aria-label="{{ __('Filtern') }}">@svg('heroicon-o-funnel')</button></form>
-<form method="post" action="{{ route('clubunio.portal.notifications.read-all', ['tenant'=>$tenant->slug]) }}">@csrf<button type="submit" class="primary">{{ __('Alle als gelesen markieren') }}</button></form>
 @forelse($notifications as $notification)
 <article class="notification-row">
     <h2>{{ $notification->title }}</h2><p>{{ $notification->body }}</p><time>{{ $notification->created_at }}</time>
@@ -27,6 +32,9 @@
         <a href="{{ route('clubunio.portal.expense', ['tenant'=>$tenant->slug, 'expense'=>$notification->object_id]) }}">{{ __('Spesenbeleg öffnen') }}</a>
     @endif
 </article>
-@empty<p>{{ __('Keine Benachrichtigungen vorhanden.') }}</p>@endforelse
-<div class="pagination">{{ $notifications->links('pagination::simple-default') }}</div>
+@empty
+    @include('clubunio.portal.empty-state', ['icon' => 'heroicon-o-bell', 'message' => __('Keine Benachrichtigungen vorhanden.')])
+@endforelse
+{{ $notifications->links('pagination::simple-default') }}
+</div>
 @endsection

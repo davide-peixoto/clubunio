@@ -1,6 +1,7 @@
 @extends('clubunio.portal.layout')
 @section('content')
 <div class="page-heading"><h1>{{ __('Mitglieder') }}</h1><span>{{ $members->total() }} {{ __('Einträge') }}</span></div>
+<div class="cu-portal-list">
 <form method="get" class="toolbar" action="{{ route('clubunio.portal.members', ['tenant' => $tenant->slug]) }}">
     <div><label for="q">{{ __('Suche') }}</label><input type="search" id="q" name="q" value="{{ $q }}" maxlength="120"></div>
     <div><label for="status">{{ __('Status') }}</label><select id="status" name="status"><option value="">{{ __('Alle') }}</option>
@@ -16,8 +17,10 @@
         <td>{{ $member->city }}</td><td>{{ $member->email }}</td><td>{{ $member->mobile }}</td><td>@if(\App\ClubUnio\Resources\ProfileUi::profileAllows(auth('portal')->user(), $tenant, 'invoices', 'view'))<a class="icon-button" href="{{ route('clubunio.portal.invoices',['tenant'=>$tenant->slug,'member'=>$member->id]) }}" title="{{ __('Rechnungen') }}" aria-label="{{ __('Rechnungen') }}">@svg('heroicon-o-document-text')</a>@endif
         @if(in_array($member->id,$editableMemberIds))<a class="icon-button" href="{{ route('clubunio.portal.member.edit',['tenant'=>$tenant->slug,'member'=>$member->id]) }}" title="{{ __('Mitgliederdaten und Dokumente') }}" aria-label="{{ __('Mitgliederdaten und Dokumente') }}">@svg('heroicon-o-pencil-square')</a>@endif</td></tr>
 @empty
-    <tr><td colspan="6">{{ __('Keine Mitglieder gefunden.') }}</td></tr>
+    @include('clubunio.portal.empty-row', ['columns' => 6, 'icon' => 'heroicon-o-users', 'message' => __('Keine Mitglieder gefunden.')])
+
 @endforelse
 </tbody></table></div>
-<div class="pagination">{{ $members->links('pagination::simple-default') }}</div>
+{{ $members->links('clubunio.planning.pagination') }}
+</div>
 @endsection

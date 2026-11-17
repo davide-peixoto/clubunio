@@ -5,6 +5,7 @@
     $allows = fn (string $module) => \App\ClubUnio\Resources\ProfileUi::profileAllows($portalActor, $tenant, $module, 'view');
     $club = $tenant->slug;
     $links = [];
+    $moduleLinks = [];
     if ($portalSession) {
         $links[__('Verein')] = [
             ['clubunio.portal.members', 'heroicon-o-users', __('Mitglieder'), 'clubunio.portal.member.*'],
@@ -19,28 +20,28 @@
         }
     }
     if ($portalSession || (($portalModule ?? null) === 'planning' && $allows('planning'))) {
-        $links[__('Sport')][] = ['clubunio.planning.index', 'heroicon-o-clipboard-document-list', __('Teamplanung'), 'clubunio.planning.index|clubunio.planning.show|clubunio.planning.create|clubunio.planning.edit|clubunio.planning.series*'];
+        $links[__('Sport')][] = ['clubunio.planning.index', 'heroicon-o-clipboard-document-list', __('Teamplanung'), 'clubunio.planning.*|clubunio.training.*'];
     }
     if (($portalModule ?? null) === 'planning') {
         if ($allows('planning')) {
-            $links[__('Sport')][] = ['clubunio.planning.calendar', 'heroicon-o-calendar-days', __('Kalender')];
-            $links[__('Sport')][] = ['clubunio.planning.absences', 'heroicon-o-calendar', __('Absenzen')];
+            $moduleLinks[] = ['clubunio.planning.calendar', 'heroicon-o-calendar-days', __('Kalender')];
+            $moduleLinks[] = ['clubunio.planning.absences', 'heroicon-o-calendar', __('Absenzen')];
             if (count($managed)) {
-                $links[__('Sport')][] = ['clubunio.planning.sfv', 'heroicon-o-trophy', __('SFV-Spiele'), 'clubunio.planning.sfv.*'];
+                $moduleLinks[] = ['clubunio.planning.sfv', 'heroicon-o-trophy', __('SFV-Spiele'), 'clubunio.planning.sfv.*'];
             }
         }
         if ((count($managed) || app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($portalActor, $tenant, 'training', 'view')) && $allows('training')) {
-            $links[__('Sport')][] = ['clubunio.training.index', 'heroicon-o-academic-cap', __('Trainingspläne'), 'clubunio.training.*'];
+            $moduleLinks[] = ['clubunio.training.index', 'heroicon-o-academic-cap', __('Trainingspläne'), 'clubunio.training.*'];
         }
         if ($portalActor->canAccessTenant($tenant) && $allows('planning')) {
-            $links[__('Sport')][] = ['clubunio.planning.options', 'heroicon-o-adjustments-horizontal', __('Auswahlwerte')];
+            $moduleLinks[] = ['clubunio.planning.options', 'heroicon-o-adjustments-horizontal', __('Auswahlwerte')];
         }
     }
     if ($portalSession || ($portalModule ?? null) === 'bus') {
         $links[__('Sport')][] = ['clubunio.bus.index', 'heroicon-o-truck', __('Busreservierungen'), 'clubunio.bus.index|clubunio.bus.show|clubunio.bus.create|clubunio.bus.edit|clubunio.bus.assignment'];
     }
     if (($portalModule ?? null) === 'bus' && $portalActor->canAccessTenant($tenant) && $allows('bus')) {
-        $links[__('Sport')][] = ['clubunio.bus.options', 'heroicon-o-adjustments-horizontal', __('Busse und Status')];
+        $moduleLinks[] = ['clubunio.bus.options', 'heroicon-o-adjustments-horizontal', __('Busse und Status')];
     }
     if ($portalSession) {
         if ($allows('expenses')) {
@@ -61,6 +62,9 @@
         <div class="cu-portal-topbar-actions">
             @include('clubunio.language-switcher')
             @if($portalSession)
+                @unless(request()->attributes->has('clubunio_impersonation'))
+                    <a class="icon-button" href="{{ route('clubunio.portal.profile', ['club' => $club]) }}" title="{{ trans('account-security.profile_title') }}" aria-label="{{ trans('account-security.profile_title') }}" @if(request()->routeIs('clubunio.portal.profile')) aria-current="page" @endif>@svg('heroicon-o-user-circle')</a>
+                @endunless
                 <a class="icon-button" href="{{ route('clubunio.portal.notifications', $club) }}" title="{{ __('Benachrichtigungen') }}" aria-label="{{ __('Benachrichtigungen') }}" @if(request()->routeIs('clubunio.portal.notifications')) aria-current="page" @endif>@svg('heroicon-o-bell')</a>
                 <form method="post" action="{{ route('clubunio.portal.logout') }}">@csrf
                     <button class="icon-button" type="submit" title="{{ __('Abmelden') }}" aria-label="{{ __('Abmelden') }}">@svg('heroicon-o-arrow-right-on-rectangle')</button>
@@ -101,6 +105,14 @@
         </nav>
     </aside>
     <main class="cu-portal-content">
+        @if($moduleLinks !== [])
+            <nav class="cu-portal-module-nav" aria-label="{{ ($portalModule ?? null) === 'bus' ? __('Busreservierungen') : __('Teamplanung') }}">
+                @foreach($moduleLinks as $item)
+                    @php([$route, $icon, $label] = $item)
+                    <a href="{{ route($route, $club) }}" @if(request()->routeIs($route)) aria-current="page" @elseif(request()->routeIs($item[3] ?? $route)) aria-current="location" @endif>@svg($icon) {{ $label }}</a>
+                @endforeach
+            </nav>
+        @endif
         @isset($portalModule)
             @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
             @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
