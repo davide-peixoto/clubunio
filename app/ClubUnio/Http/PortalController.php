@@ -73,7 +73,7 @@ class PortalController
     public function logout(Request $request)
     {
         Auth::guard('portal')->logout();
-        if (config('clubunio-verein-oidc.only')) {
+        if ($request->session()->has('portal.oidc.account') || config('clubunio-verein-oidc.only')) {
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

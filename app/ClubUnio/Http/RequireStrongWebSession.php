@@ -39,6 +39,19 @@ final class RequireStrongWebSession
                     return redirect()->route('clubunio.verein.oidc.start');
                 }
             }
+            if ($guard === 'portal' && $actor && $request->session()->has('portal.oidc.account')) {
+                $subject = $request->session()->get('portal.oidc.subject');
+                if (config('clubunio-verein-oidc.enabled') && $request->isSecure()
+                    && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
+                    && $request->session()->get('portal.oidc.account') === (int) $actor->id
+                    && (int) $request->session()->get('portal.oidc.expires') > time()
+                    && is_string($subject) && (config('clubunio-verein-oidc.subjects')[$subject] ?? null) === (int) $actor->id
+                    && $actor->active && !$actor->api_only) continue;
+                Auth::guard('portal')->logout();
+                $request->session()->forget(['portal.oidc.account', 'portal.oidc.subject', 'portal.oidc.expires']);
+                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+                return redirect()->route('clubunio.portal.login');
+            }
             if (!$actor || !$security->requiresStrongLogin($actor)) continue;
             $stamp = $request->session()->get('clubunio.security.'.$guard);
             if (is_string($stamp) && hash_equals($security->stamp($actor), $stamp)) continue;

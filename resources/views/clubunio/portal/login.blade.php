@@ -19,4 +19,7 @@
     @endif
     <a class="admin-link" href="{{ url('/login') }}">{{ __('Verwaltung') }}</a>
 </section>
+@if(config('clubunio-verein-oidc.enabled'))
+    <a href="{{ route('clubunio.verein.oidc.start') }}">{{ trans('account-security.keycloak_sign_in') }}</a>
+@endif
 @endsection
