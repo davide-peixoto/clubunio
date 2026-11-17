@@ -83,7 +83,7 @@ class ExpenseService
         if (app(ModulePermissionService::class)->isProfile($actor, $tenant)) {
             return false;
         }
-        $fresh = app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor);
+        $fresh = app(PortalReadContext::class)->freshAccessActor($actor);
 
         return $fresh && $fresh->active && app(MemberAccessService::class)->canEnter($fresh, $tenant);
     }

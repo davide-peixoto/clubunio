@@ -29,7 +29,7 @@ class BusReservationService
             return;
         }
         abort_if(app(ModulePermissionService::class)->isProfile($actor, $tenant), 403);
-        $fresh = $actor->fresh();
+        $fresh = app(PortalReadContext::class)->freshActor($actor);
         $access = app(MemberAccessService::class);
         abort_unless($fresh?->active
             && in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true)

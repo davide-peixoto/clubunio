@@ -12,8 +12,8 @@ class MemberAccessService
 {
     public function membership(Account $actor, Tenant $tenant): ?object
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'membership:'.$tenant->id, function () use ($actor, $tenant) {
-            if (! app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor)?->active) {
+        return app(PortalReadContext::class)->accessFact($actor, 'membership:'.$tenant->id, function () use ($actor, $tenant) {
+            if (! app(PortalReadContext::class)->freshAccessActor($actor)?->active) {
                 return null;
             }
 
@@ -61,7 +61,7 @@ class MemberAccessService
 
     public function canEnter(Account $actor, Tenant $tenant): bool
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-enter:'.$tenant->id, function () use ($actor, $tenant) {
+        return app(PortalReadContext::class)->accessFact($actor, 'member-enter:'.$tenant->id, function () use ($actor, $tenant) {
             if (app(BackofficeReadContext::class)->tenantsFor($actor)?->contains(fn ($item) => (int) $item->id === (int) $tenant->id)) {
                 return true;
             }
@@ -76,7 +76,7 @@ class MemberAccessService
 
     public function responsibleTeams(Account $actor, Tenant $tenant): array
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-teams:'.$tenant->id, function () use ($actor, $tenant) {
+        return app(PortalReadContext::class)->accessFact($actor, 'member-teams:'.$tenant->id, function () use ($actor, $tenant) {
             $role = $this->membership($actor, $tenant)?->role;
             if (! in_array($role, ['trainer', 'technical_lead'], true) || ! $this->canEnter($actor, $tenant)) {
                 return [];

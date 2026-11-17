@@ -95,7 +95,7 @@ class TeamPlanningService
             return;
         }
         abort_if(app(ModulePermissionService::class)->isProfile($actor, $tenant), 403);
-        $fresh = $actor->fresh();
+        $fresh = app(PortalReadContext::class)->freshActor($actor);
         $access = app(MemberAccessService::class);
         abort_unless($fresh?->active
             && in_array($access->membership($fresh, $tenant)?->role, ['member', 'parent', 'trainer', 'technical_lead'], true)
@@ -110,7 +110,7 @@ class TeamPlanningService
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $manage ? $function : 'view')) {
             return $q;
         }
-        if (app(MemberAccessService::class)->membership($actor->fresh(), $tenant)?->role === 'profile') {
+        if (app(MemberAccessService::class)->membership($actor, $tenant)?->role === 'profile') {
             return $q->whereRaw('1=0');
         }
         $access = app(MemberAccessService::class);
@@ -140,7 +140,7 @@ class TeamPlanningService
     public function invitedEvents(Account $actor, Tenant $tenant)
     {
         $this->enter($actor, $tenant);
-        if (app(MemberAccessService::class)->membership($actor->fresh(), $tenant)?->role === 'profile') {
+        if (app(MemberAccessService::class)->membership($actor, $tenant)?->role === 'profile') {
             return $this->table($tenant, 'team_invitations')->whereRaw('1=0');
         }
 
@@ -337,10 +337,11 @@ class TeamPlanningService
     {
         $this->enter($actor, $tenant);
         $access = app(MemberAccessService::class);
-        if (in_array($access->membership($actor->fresh(), $tenant)?->role, ['admin', 'office'], true)) {
+        $role = $access->membership($actor, $tenant)?->role;
+        if (in_array($role, ['admin', 'office'], true)) {
             return $this->table($tenant, 'team_absences')->whereNull('deleted_at');
         }
-        $own = $access->membership($actor->fresh(), $tenant)?->role === 'profile' ? collect() : $access->represented($actor, $tenant)->pluck('id');
+        $own = $role === 'profile' ? collect() : $access->represented($actor, $tenant)->pluck('id');
         $teams = $this->teams($actor, $tenant, true, 'view')->pluck('id');
 
         $query = app(TrainerWebSeasonScope::class)->absences($this->table($tenant, 'team_absences'), $actor, $tenant);
