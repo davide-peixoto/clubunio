@@ -47,6 +47,15 @@ ab. Das Mitglied erhaelt den Link auch im App-Profilvertrag. Keine
 Berechtigungen oder Anmeldedaten geaendert. Die native Abnahme auf
 iOS/Android bleibt separat.
 
+Browser-Abnahme als normales DEV-Mitglied (17.11.2026): Nach frischer
+Keycloak-Anmeldung im Mitgliederportal fuehrt `Mein Profil` ueber
+`Keycloak-Konto oeffnen` zur eigenen Account Console in einem neuen Tab.
+Persoenliche Angaben sowie Anmeldung und Geraeteaktivitaet waren
+sichtbar. Der erste Versuch mit einer abgelaufenen OIDC-Anmeldung
+lieferte vor dem Profil HTTP 403; ein neuer Login behob dies ohne
+Konfigurationsaenderung. Keine Kontoeinstellungen veraendert, Stage
+unveraendert.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten
