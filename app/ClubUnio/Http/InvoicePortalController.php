@@ -6,7 +6,7 @@ use App\ClubUnio\Models\InvoiceStatus;
 use App\ClubUnio\Models\Season;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\InvoiceAccessService;
-use App\ClubUnio\Services\MemberAccessService;
+use App\ClubUnio\Services\TrainerWebSeasonScope;
 use Illuminate\Http\Request;
 
 class InvoicePortalController
@@ -29,7 +29,9 @@ class InvoicePortalController
                 }
             }))->orderByDesc('id')->paginate(25)->withQueryString();
         $statuses = InvoiceStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->orderBy('name')->get();
-        $seasons = Season::withoutGlobalScopes()->where('tenant_id', $tenant->id)->orderByDesc('name')->get();
+        $seasonQuery = Season::withoutGlobalScopes()->where('tenant_id', $tenant->id);
+        $seasons = app(TrainerWebSeasonScope::class)->seasonRecords($seasonQuery, $request->user('portal'), $tenant, 'id')
+            ->orderByDesc('name')->get();
 
         return response()->view('clubunio.portal.invoices', compact('tenant', 'invoices', 'statuses', 'seasons', 'q') + ['tenants' => collect([$tenant])])->header('Cache-Control', 'private, no-store');
     }

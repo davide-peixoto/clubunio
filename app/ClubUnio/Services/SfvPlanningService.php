@@ -230,7 +230,8 @@ class SfvPlanningService
             $p->lock($tenant);
             $p->authorizeOperation($actor, $tenant, 'sync');
             $p->enter($actor, $tenant);
-            $match = $p->table($tenant, 'sfv_schedule')->where('id', $id)->first();
+            $match = app(TrainerWebSeasonScope::class)->sfvMatches($p->table($tenant, 'sfv_schedule'), $actor, $tenant)
+                ->where('id', $id)->first();
             abort_unless($match, 404);
             $p->conflict($match, ['revision' => $input['sfv_revision'] ?? 0]);
             $team = $p->teams($actor, $tenant, true)->where('id', (int) ($input['team_season_id'] ?? 0))->first();

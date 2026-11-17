@@ -83,14 +83,16 @@ class MemberAccessService
             }
             $table = $role === 'trainer' ? 'team_staff' : 'technical_leads';
 
-            return DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
+            $query = DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
                 ->join('clubora.team_seasons as season_team', function ($join) {
                     $join->on('season_team.id', '=', 'assignment.team_season_id')->on('season_team.tenant_id', '=', 'assignment.tenant_id');
                 })->join('clubora.teams as team', function ($join) {
                     $join->on('team.id', '=', 'season_team.team_id')->on('team.tenant_id', '=', 'season_team.tenant_id');
                 })->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)
                 ->where('season_team.active', true)->where('team.active', true)
-                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'))
+                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'));
+
+            return app(TrainerWebSeasonScope::class)->seasonRecords($query, $actor, $tenant, 'season_team.season_id')
                 ->distinct()->pluck('assignment.team_season_id')->all();
         });
     }
