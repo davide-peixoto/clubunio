@@ -19,10 +19,10 @@ final class TrainerPortalShellTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => ''],
             'app.url' => 'http://localhost', 'clubunio-support.enabled' => false]);
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
-        $db->unprepared("CREATE TABLE clubora.tenants (id integer PRIMARY KEY); INSERT INTO clubora.tenants VALUES (2);
-            CREATE TABLE clubora.tenant_accounts (account_id integer, tenant_id integer, role text);
-            INSERT INTO clubora.tenant_accounts VALUES (1, 2, 'trainer')");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
+        $db->unprepared("CREATE TABLE clubunio.tenants (id integer PRIMARY KEY); INSERT INTO clubunio.tenants VALUES (2);
+            CREATE TABLE clubunio.tenant_accounts (account_id integer, tenant_id integer, role text);
+            INSERT INTO clubunio.tenant_accounts VALUES (1, 2, 'trainer')");
         $actor = new Account;
         $actor->forceFill(['id' => 1, 'display_name' => 'Demo Trainer', 'active' => true]);
         $tenant = new Tenant;

@@ -9,3 +9,22 @@ Die additive Migration `2026_11_16_003030_material_returns.php` legt zwei Tabell
 Geprüft mit einer synthetischen Quittung über fünf Stück in einer zurückgerollten PostgreSQL-Transaktion. Zwei intakte und eine beschädigte Rückgabe ergaben zwei offene Stück. Erneutes Senden derselben Buchung, Überbuchung, Mitgliedsfilter, Überfälligkeit und vollständige Rückgabe wurden geprüft. Quittungshash und die drei Rückgabebuchungen blieben nachvollziehbar.
 
 Auf DEV aktiv als `20261116-clubunio-material-returns`. Rückweg ist `20261116-clubunio-remove-local-mfa`. Vor der Migration wurde die DEV-Schemasicherung geprüft. Auf dem aktiven Release wurden die Livewire-Seite und ihre Buchungsaktionen im authentifizierten Anwendungskontext mit echten DEV-Tabellen geprüft. Die Testtransaktion wurde zurückgerollt. Die Anmeldung und Bedienung über einen Browser mit Keycloak stehen aus.
+
+## Stage-Vorbereitung
+
+Die einzige neue Migration ist `2026_11_16_003030_material_returns`.
+Sie ergänzt `clubunio.material_return_deadlines` und `clubunio.material_returns`.
+Stage besitzt die referenzierten Tabellen und Schlüssel. Die beiden
+Zieltabellen und der Journaleintrag fehlten bei der lesenden Vorprüfung.
+
+Vor dem freigegebenen Webrollout Schema sichern und
+`php deploy/apply-stage-material-returns.php` aus dem vorbereiteten
+Release ausführen. Der Runner prüft Stage-URL und Datenbank und führt
+nur diese Migration aus. Danach Journaleintrag und Tabellen prüfen.
+Beim Rückweg den vorherigen Webcode wiederherstellen und die
+Rückgabedaten erhalten.
+
+Isolierte Abnahme mit dem Stage-Schema in PostgreSQL 16 und zwei
+synthetischen Vereinen: Migration und Journal, Solltermin, Überfälligkeit,
+Teilrückgaben 2 + 1 + 2, Wiederholungsschutz, Mengenlimit, Verlauf,
+unveränderter Quittungshash und Mandantentrennung bestanden.

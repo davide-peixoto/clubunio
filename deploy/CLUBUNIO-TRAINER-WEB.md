@@ -70,3 +70,13 @@ Aktiv als `20261117-clubunio-trainer-polish`; Rueckweg:
 Konfigurationsaenderung. Stage unveraendert.
 Nach erneuter Keycloak-Anmeldung wurden die vier aktualisierten Ansichten im
 angemeldeten Trainer-Browser auf DEV geoeffnet und kontrolliert.
+
+## Stage-Vorbereitung
+
+Das Trainerportal benötigt keine Migration. Die gemeinsame Navigation
+verwendet auf Stage den bestehenden Zugang zur lokalen Kontosicherheit.
+Nach dem Webrollout Route- und Blade-Cache neu bauen und Portal,
+Teamplanung, Bus, Finanzen und Material mit einem Trainerkonto prüfen.
+Die sechs isolierten Tests für Saisonrechte und die DE/EN-Ansichten
+bestanden gemeinsam mit dem PostgreSQL-Test zur Materialrückgabe
+(7 Tests, 106 Assertions).
