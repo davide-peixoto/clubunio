@@ -64,3 +64,20 @@ der späteren Profilrollen-Aktivierung erfolgreich wiederholt. Die sechs
 Veo-Tests liefen ergänzend mit SQLite und bestanden ebenfalls. Der
 temporäre Cluster wurde nach den Läufen entfernt. Die angemeldete
 Stage-Abnahme bleibt ein eigener Schritt.
+
+### Stage-Rollout und Fachabnahme (17.11.2026)
+
+Veo-Migration `2026_11_13_002100_veo_recording_plan` nach Schema-Sicherung
+auf `clubunio_stage` angewendet und als Batch 127 bestätigt. Der
+RunCloud-Webhook lud `6128ba3`. Route- und Blade-Cache wurden neu gebaut.
+HTTPS-Login antwortete mit 200, die drei Fachseiten leiteten anonyme
+Aufrufe zur Anmeldung um.
+
+Die serverseitige Fachabnahme nutzte zwei synthetische Vereine mit
+eigenen Konten in einer zurückgerollten Transaktion. Geprüft wurden
+Arbeitskorb-Zahlen und Modulrechte, SFV-Einzelprüfung, verknüpfter
+Teamtermin, Grenzen der letzten Stunde, Kamera- und Uhrzeitwechsel,
+Absage sowie Lese- und Schreibgrenzen zwischen den Vereinen.
+Eine aktive lokale SFV-Ausnahme bleibt bis zum Belegungsende im
+Veo-Plan. Danach blendet Veo das abgesagte Spiel aus.
+Die anschliessende Abfrage fand keine verbliebenen Testvereine.
