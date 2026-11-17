@@ -135,8 +135,8 @@ Geprüft wurden Spaltentypen, Nullbarkeit, Vorgaben, Primär- und Fremdschlüsse
 die Prüfung des Signaturzählers und beide ergänzenden Indizes. Die Rolle
 `userunio` hat Lese- und Schreibrechte auf den drei Sicherheitstabellen.
 
-`2026_11_13_001000_account_security` fehlt im Migrationsjournal. Die DDL wurde
-bereits angewendet. Vor dem nächsten Migrationslauf den Eintrag nach erneuter
-Schema-Prüfung gezielt nachtragen. Die vorhandenen Tabellen enthalten den
-aktiven Sicherheitsbestand und dürfen dafür nicht neu erstellt werden.
-`2026_11_15_000100_tenant_license` ist bereits als Batch 125 verbucht.
+`2026_11_13_001000_account_security` wurde nach erneutem Schema-Abgleich
+im Stage-Migrationsjournal als Batch 126 nachgetragen (ID 127). Eine separate
+Abfrage nach dem Commit bestätigte genau einen Eintrag. Die Änderung betraf
+ausschliesslich das Journal. `2026_11_15_000100_tenant_license` ist als Batch 125
+verbucht.
