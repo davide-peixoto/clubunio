@@ -38,6 +38,11 @@ final class PlatformOidcController
     {
         $club = $request->routeIs('clubunio.verein.oidc.*');
         $config = config($club ? 'clubunio-verein-oidc' : 'clubunio-platform-oidc');
+        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback')
+            && $tenant = app(\App\ClubUnio\Services\VereinOidcDomain::class)->tenant($request)) {
+            $config['origin'] = $request->getSchemeAndHttpHost();
+            $config['tenant'] = $tenant;
+        }
         abort_unless($config['enabled'] && $request->isSecure() && $request->getSchemeAndHttpHost() === $config['origin'], 404);
         abort_unless($config['client'] && $config['secret'] && is_array($config['subjects'])
             && ($config['subjects'] || ($club && $config['invites_enabled'])), 503);
@@ -67,7 +72,7 @@ final class PlatformOidcController
         $state = bin2hex(random_bytes(32));
         $nonce = bin2hex(random_bytes(32));
         $verifier = bin2hex(random_bytes(32));
-        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair') + ['expires' => time() + 300]);
+        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair') + ['expires' => time() + 300, 'callback' => $config['callback']]);
 
         $level = $pair !== null ? KeycloakMobileAssurance::level() : ($config['web_mfa_acr'] ?? null);
 
@@ -107,7 +112,7 @@ final class PlatformOidcController
         $pending = $request->session()->pull($config['guard'].'.oidc.pending');
         $state = $request->query('state');
         $code = $request->query('code');
-        abort_unless(is_array($pending) && $pending['expires'] >= time() && is_string($state)
+        abort_unless(is_array($pending) && $pending['expires'] >= time() && ($pending['callback'] ?? null) === $config['callback'] && is_string($state)
             && hash_equals($pending['state'], $state) && is_string($code) && $code !== '' && strlen($code) <= 4096, 403);
         abort_if($request->query('iss') !== null && $request->query('iss') !== $config['issuer'], 403);
         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
@@ -125,6 +130,9 @@ final class PlatformOidcController
             }
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
+        if (isset($config['tenant'])) {
+            abort_unless($actor?->active && !$actor->api_only && $actor->canAccessTenant($config['tenant']), 403);
+        }
         if ($club && is_array($pending['pair'] ?? null)) {
             if (($pending['pair']['native'] ?? false) === true) {
                 abort_unless($actor?->active && !$actor->api_only && $actor->tenants()->get()
@@ -145,7 +153,7 @@ final class PlatformOidcController
         }
         if ($club && ($webMfa || $config['invites_enabled']) && $actor?->active && ! $actor->api_only && ! $actor->hasBackofficeTenant()) {
             abort_if(!$webMfa && app(AccountSecurity::class)->requiresStrongLogin($actor), 403);
-            $tenant = $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
+            $tenant = $config['tenant'] ?? $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
             abort_unless($tenant, 403);
             Auth::guard('portal')->login($actor);
             $request->session()->regenerate();
@@ -153,6 +161,7 @@ final class PlatformOidcController
                 $request->session()->put([
                     'portal.oidc.account' => (int) $actor->id,
                     'portal.oidc.subject' => $claims->sub,
+                    'portal.oidc.origin' => $config['origin'],
                     'portal.oidc.expires' => min($claims->exp + 1800, time() + 1800),
                 ]);
             }
@@ -167,6 +176,7 @@ final class PlatformOidcController
         if ($club) {
             $request->session()->put('clubunio.oidc.account', (int) $actor->id);
             $request->session()->put('clubunio.oidc.subject', $claims->sub);
+            $request->session()->put('clubunio.oidc.origin', $config['origin']);
         }
         return ($club ? redirect('/') : redirect()->route('clubunio.platform.index'))
             ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');

@@ -22,10 +22,14 @@ final class RequireStrongWebSession
         }
         foreach (['clubunio', 'portal'] as $guard) {
             $actor = Auth::guard($guard)->user();
+            $boundTenant = $actor ? app(\App\ClubUnio\Services\VereinOidcDomain::class)->tenant($request) : null;
+            $origin = $boundTenant ? $request->getSchemeAndHttpHost() : config('clubunio-verein-oidc.origin');
+            $hostAllowed = $request->isSecure() && $request->getSchemeAndHttpHost() === $origin
+                && (!$boundTenant || $actor->canAccessTenant($boundTenant));
             if ($guard === 'clubunio' && $actor && (config('clubunio-verein-oidc.enabled') || config('clubunio-verein-oidc.only'))) {
                 $id = $request->session()->get('clubunio.oidc.account');
                 if (config('clubunio-verein-oidc.enabled') && $actor->active && !$actor->api_only && $id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
-                    && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
+                    && $hostAllowed && $request->session()->get('clubunio.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
                         || (config('clubunio-verein-oidc.invites_enabled')
                             && is_string($subject = $request->session()->get('clubunio.oidc.subject'))
@@ -42,7 +46,7 @@ final class RequireStrongWebSession
             if ($guard === 'portal' && $actor && (config('clubunio-verein-oidc.only') || $request->session()->has('portal.oidc.account'))) {
                 $subject = $request->session()->get('portal.oidc.subject');
                 if (config('clubunio-verein-oidc.enabled') && $request->isSecure()
-                    && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
+                    && $hostAllowed && $request->session()->get('portal.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
                     && $request->session()->get('portal.oidc.account') === (int) $actor->id
                     && (int) $request->session()->get('portal.oidc.expires') > time()
                     && is_string($subject) && (config('clubunio-verein-oidc.subjects')[$subject] ?? null) === (int) $actor->id

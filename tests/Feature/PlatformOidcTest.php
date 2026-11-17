@@ -82,6 +82,29 @@ final class PlatformOidcTest extends TestCase
         $this->assertTrue(\App\ClubUnio\Http\PlatformOidcController::requiresClubOidc($unmapped));
     }
 
+    public function test_custom_club_login_binds_the_callback_to_the_configured_tenant_origin(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
+            'clubunio-verein-oidc.enabled' => true, 'clubunio-verein-oidc.origin' => 'https://stage.test',
+            'clubunio-verein-oidc.client' => 'stage-club', 'clubunio-verein-oidc.secret' => 'synthetic',
+            'clubunio-verein-oidc.subjects' => ['synthetic' => 1],
+            'clubunio-verein-oidc.web_domains' => ['https://team.test' => 'club-refresh']]);
+        $tenant = (new \App\ClubUnio\Models\Tenant)->forceFill(['id' => 3, 'slug' => 'club-refresh']);
+        $this->mock(\App\ClubUnio\Services\TenantDomainService::class, function ($mock) use ($tenant) {
+            $mock->shouldReceive('resolve')->with(\Mockery::on(fn ($request) => $request->getHost() === 'team.test'))
+                ->andReturn($tenant);
+            $mock->shouldReceive('resolve')->with(\Mockery::on(fn ($request) => $request->getHost() === 'stage.test'))
+                ->andReturnNull();
+        });
+        Http::fake();
+        $response = $this->get('https://team.test/vereinslogin/oidc/start')->assertRedirect();
+        parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $params);
+        $this->assertSame('https://team.test/vereinslogin/oidc/callback', $params['redirect_uri']);
+        $this->get('https://stage.test/vereinslogin/oidc/callback?state='.$params['state'].'&code=synthetic')
+            ->assertForbidden();
+        Http::assertNothingSent();
+    }
+
     public function test_platform_flow_requires_exact_origin_and_one_time_state(): void
     {
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
