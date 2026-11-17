@@ -37,6 +37,16 @@ DEV-Release `20261117-clubunio-personal-profile-host-scope`, Rueckweg
 Flutter-Tests erfolgreich; anonyme DEV-Einstiege abgeprueft. Stage
 unveraendert, kein Store-Rollout.
 
+DEV-Nachtest 17.11.2026: Der Plattformadmin hat in Chrome ueber
+`/platform/profile` die Account Console geoeffnet; Anmeldung und
+Geraeteaktivitaet waren sichtbar. Im DEV-Backend mit bestehenden
+Testkonten geprueft: Normales Mitglied und Plattformadmin erhalten
+jeweils nur ihr eigenes Profil und denselben Keycloak-Link. Fremde
+Konto-Parameter werden ignoriert und die Plattform lehnt das Mitglied
+ab. Das Mitglied erhaelt den Link auch im App-Profilvertrag. Keine
+Berechtigungen oder Anmeldedaten geaendert. Die native Abnahme auf
+iOS/Android bleibt separat.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten
