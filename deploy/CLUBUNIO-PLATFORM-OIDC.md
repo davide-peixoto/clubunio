@@ -30,3 +30,25 @@ revocation, support access and isolation from the regular login, then
 roll out independently. The flag disables the legacy platform password,
 Passkey and TOTP entry points on that instance. Turning the flag off
 restores the pre-existing login; local factors were not modified.
+
+## Stage-Pilot vom 17.11.2026
+
+RunCloud erhielt den Funktionsstand `535bfb5`. Die elf gezielten
+Migrationen für Support, Keycloak-Kontozuordnungen und ERPNext wurden im
+isolierten PostgreSQL-16-Stage-Schema und danach auf Stage nach einer
+Schemasicherung ausgeführt. 33 gezielte Tests mit 335 Assertions sowie
+DE/EN bestanden. Nach dem Neuaufbau der Caches antworteten Vereins-,
+Portal- und Plattformlogin mit HTTP 200.
+
+Die Keycloak-Clients für den Web-Pilot im Realm `clubunio` sind
+`clubunio-verein-stage` und `clubunio-platform-stage`. Vorgesehen sind
+Authorization Code mit PKCE S256, Client-Authentifizierung und exakt
+`https://stage.clubunio.com/vereinslogin/oidc/callback` beziehungsweise
+`https://stage.clubunio.com/platform/oidc/callback`. Keine Servicekonten
+oder Direct Access Grants. Nur verifizierte Subjects von vorhandenen
+berechtigten Stage-Konten unter davide.peixoto@* und info@clubunio.ch
+abbilden. Lokale Anmeldung mit MFA während des Pilots beibehalten.
+
+Die Aktivierung ist offen. Zammad, KI-Triage und ERPNext warten auf
+separate Stage-Testkonfigurationen. Native App-Anmeldung bleibt
+bis zur Übernahme und Abnahme des nativen Callbacks deaktiviert.
