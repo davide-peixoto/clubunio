@@ -406,9 +406,9 @@ class BexioSandboxDispatchTest extends TestCase
                 '/3.0/users/me' => Http::response(['id' => 1]),
                 '/3.0/files' => Http::response([]),
                 '/2.0/kb_invoice/1' => Http::response(['api_reference' => BexioSandboxFixtureService::REFERENCE, 'contact_id' => 2]),
-                '/2.0/contact/2' => Http::response(['name_1' => 'Clubora Sandbox Member v1', 'remarks' => 'clubora-sandbox-fixture:v1:member']),
-                '/2.0/contact/3' => Http::response(['name_1' => 'Clubora Sandbox Parent v1', 'remarks' => 'clubora-sandbox-fixture:v1:parent']),
-                '/2.0/contact/4' => Http::response(['name_1' => 'Clubora Sandbox Supplier v1', 'remarks' => 'clubora-sandbox-fixture:v1:supplier']),
+                '/2.0/contact/2' => Http::response(['name_1' => 'Clubora Sandbox Member v1', 'remarks' => 'clubunio-sandbox-fixture:v1:member']),
+                '/2.0/contact/3' => Http::response(['name_1' => 'Clubora Sandbox Parent v1', 'remarks' => 'clubunio-sandbox-fixture:v1:parent']),
+                '/2.0/contact/4' => Http::response(['name_1' => 'Clubora Sandbox Supplier v1', 'remarks' => 'clubunio-sandbox-fixture:v1:supplier']),
                 '/2.0/language' => Http::response([['id' => 1, 'name' => 'Deutsch']]),
                 '/3.0/currencies' => Http::response([['id' => 1, 'name' => 'CHF']]),
                 '/3.0/banking/accounts' => Http::response([['id' => 1, 'name' => 'Example Bank', 'type' => 'bank']]),
@@ -772,7 +772,7 @@ class BexioSandboxDispatchTest extends TestCase
         $this->assertSame('123', Invoice::find($this->row($id)->invoice_id)->bexio_invoice_id);
         $page->call('prepare', 'invoice')->call('send', $id)->assertHasNoErrors();
         $this->assertCount(1, Http::recorded(fn ($request) => $request->method() === 'POST'));
-        $this->assertStringStartsWith('clubora-sandbox:', $this->invoice['api_reference']);
+        $this->assertStringStartsWith('clubunio-sandbox:', $this->invoice['api_reference']);
     }
 
     public function test_expense_upload_is_attached_and_no_payment_is_created(): void

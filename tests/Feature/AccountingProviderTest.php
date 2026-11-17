@@ -27,24 +27,24 @@ class AccountingProviderTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->unprepared("ATTACH DATABASE ':memory:' AS clubora");
+        $db->unprepared("ATTACH DATABASE ':memory:' AS clubunio");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.tenants (
+CREATE TABLE clubunio.tenants (
     id INTEGER PRIMARY KEY, slug TEXT, name TEXT, accounting_provider TEXT DEFAULT 'none',
     created_at TEXT, updated_at TEXT
 );
-CREATE TABLE clubora.accounts (id INTEGER PRIMARY KEY, active INTEGER);
-CREATE TABLE clubora.tenant_accounts (account_id INTEGER, tenant_id INTEGER, role TEXT);
-CREATE TABLE clubora.tenant_settings (
+CREATE TABLE clubunio.accounts (id INTEGER PRIMARY KEY, active INTEGER);
+CREATE TABLE clubunio.tenant_accounts (account_id INTEGER, tenant_id INTEGER, role TEXT);
+CREATE TABLE clubunio.tenant_settings (
     id INTEGER PRIMARY KEY, tenant_id INTEGER, area TEXT, key TEXT, label TEXT,
     value_type TEXT, is_secret INTEGER, enabled INTEGER, encrypted_value TEXT,
     created_at TEXT, updated_at TEXT
 );
-CREATE TABLE clubora.erpnext_invoice_transfers (tenant_id INTEGER, state TEXT);
-CREATE TABLE clubora.erpnext_expense_transfers (tenant_id INTEGER, state TEXT);
-CREATE TABLE clubora.bexio_sandbox_dispatches (tenant_id INTEGER, state TEXT);
+CREATE TABLE clubunio.erpnext_invoice_transfers (tenant_id INTEGER, state TEXT);
+CREATE TABLE clubunio.erpnext_expense_transfers (tenant_id INTEGER, state TEXT);
+CREATE TABLE clubunio.bexio_sandbox_dispatches (tenant_id INTEGER, state TEXT);
 SQL);
-        $db->table('clubora.accounts')->insert(['id' => 1, 'active' => 1]);
+        $db->table('clubunio.accounts')->insert(['id' => 1, 'active' => 1]);
         $this->admin = Account::findOrFail(1);
     }
 
@@ -73,7 +73,7 @@ SQL);
         $tenant = $this->tenant('test');
         $service = app(AccountingProvider::class);
         $service->choose($this->admin, $tenant, 'erpnext', 'none');
-        $transfers = DB::connection('clubunio')->table('clubora.erpnext_invoice_transfers');
+        $transfers = DB::connection('clubunio')->table('clubunio.erpnext_invoice_transfers');
         $transfers->insert(['tenant_id' => $tenant->id, 'state' => 'pending']);
 
         try {
@@ -104,7 +104,7 @@ SQL);
         $inactive = $this->tenant('none');
         app(AccountingProvider::class)->choose($this->admin, $active, 'bexio', 'none');
         $connection = app(BexioConnectionService::class);
-        $settings = DB::connection('clubunio')->table('clubora.tenant_settings');
+        $settings = DB::connection('clubunio')->table('clubunio.tenant_settings');
         foreach ([$active, $inactive] as $tenant) {
             foreach (['BEXIO_CLIENT_ID' => 'fixture-client', 'BEXIO_CLIENT_SECRET' => 'fixture-secret'] as $key => $value) {
                 $settings->insert(['tenant_id' => $tenant->id, 'area' => 'bexio', 'key' => $key, 'encrypted_value' => Crypt::encryptString($value)]);
@@ -140,7 +140,7 @@ SQL);
         $tenant = $this->tenant('test');
         $service = app(AccountingProvider::class);
         $service->choose($this->admin, $tenant, 'bexio', 'none');
-        DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+        DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
             ->insert(['tenant_id' => $tenant->id, 'state' => 'uncertain']);
 
         $this->expectException(ValidationException::class);
@@ -150,7 +150,7 @@ SQL);
     private function tenant(string $slug): Tenant
     {
         $tenant = Tenant::create(['slug' => $slug, 'name' => 'Synthetic club']);
-        DB::connection('clubunio')->table('clubora.tenant_accounts')
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')
             ->insert(['tenant_id' => $tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
 
         return $tenant;

@@ -1,5 +1,6 @@
 <?php
 
+use App\ClubUnio\Services\StageMigrationTarget;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -10,19 +11,19 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->selectOne('SELECT current_database() AS name')->name !== 'clubunio_dev') {
-            throw new LogicException('DEV database required for the invitation pilot.');
+        if (! StageMigrationTarget::allows($db)) {
+            throw new LogicException('Reviewed Stage database required for the invitation pilot.');
         }
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.keycloak_account_links (
+CREATE TABLE clubunio.keycloak_account_links (
     issuer varchar(255) NOT NULL,
     subject varchar(255) NOT NULL,
-    account_id bigint NOT NULL REFERENCES clubora.accounts(id),
+    account_id bigint NOT NULL REFERENCES clubunio.accounts(id),
     linked_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (issuer, subject),
     UNIQUE (issuer, account_id)
 );
-CREATE TABLE clubora.keycloak_account_invitations (
+CREATE TABLE clubunio.keycloak_account_invitations (
     token_hash char(64) PRIMARY KEY,
     tenant_id bigint NOT NULL,
     account_id bigint NOT NULL,
@@ -33,9 +34,9 @@ CREATE TABLE clubora.keycloak_account_invitations (
     expires_at timestamptz NOT NULL,
     accepted_at timestamptz,
     FOREIGN KEY (tenant_id, account_id)
-        REFERENCES clubora.tenant_accounts(tenant_id, account_id) ON DELETE CASCADE
+        REFERENCES clubunio.tenant_accounts(tenant_id, account_id) ON DELETE CASCADE
 );
-CREATE INDEX keycloak_invitation_expiry ON clubora.keycloak_account_invitations (expires_at);
+CREATE INDEX keycloak_invitation_expiry ON clubunio.keycloak_account_invitations (expires_at);
 SQL);
     }
 

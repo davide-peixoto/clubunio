@@ -46,7 +46,7 @@ return [
         'support' => [
             'driver' => 'database',
             'connection' => 'clubunio',
-            'table' => 'clubora.support_jobs',
+            'table' => 'clubunio.support_jobs',
             'queue' => 'support-triage',
             'retry_after' => 90,
             'after_commit' => false,

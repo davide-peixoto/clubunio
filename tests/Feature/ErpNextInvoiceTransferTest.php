@@ -38,7 +38,7 @@ class ErpNextInvoiceTransferTest extends TestCase
         ]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id INTEGER PRIMARY KEY, active BOOLEAN, slug TEXT, accounting_provider TEXT',
             'accounts' => 'id INTEGER PRIMARY KEY, active BOOLEAN, api_only BOOLEAN, password TEXT',
@@ -53,7 +53,7 @@ class ErpNextInvoiceTransferTest extends TestCase
             'erpnext_invoice_transfers' => 'tenant_id INTEGER, invoice_id INTEGER PRIMARY KEY, reference TEXT UNIQUE, origin TEXT, total_cents INTEGER, remote_id TEXT, state TEXT DEFAULT \'pending\', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT, last_status_attempt_at TEXT, status_sync_failed BOOLEAN DEFAULT FALSE',
             'bexio_sandbox_dispatches' => 'tenant_id INTEGER, invoice_id INTEGER, kind TEXT',
         ] as $table => $columns) {
-            $db->statement('CREATE TABLE clubora.'.$table.' ('.$columns.')');
+            $db->statement('CREATE TABLE clubunio.'.$table.' ('.$columns.')');
         }
         $this->insert('tenants', ['id' => 1, 'active' => true, 'slug' => 'club-1', 'accounting_provider' => 'erpnext']);
         $this->insert('tenants', ['id' => 2, 'active' => true, 'slug' => 'club-2', 'accounting_provider' => 'erpnext']);
@@ -99,14 +99,14 @@ class ErpNextInvoiceTransferTest extends TestCase
             $this->remote['Sales Invoice'][$first->remote_id]['outstanding_amount'] = $outstanding / 100;
             $this->assertSame($state, $service->refresh($this->actor, $this->tenant, 1)->state);
         }
-        $this->assertStringNotContainsString('fixture-secret', DB::connection('clubunio')->table('clubora.tenant_settings')->value('encrypted_value'));
+        $this->assertStringNotContainsString('fixture-secret', DB::connection('clubunio')->table('clubunio.tenant_settings')->value('encrypted_value'));
     }
 
     public function test_other_tenant_and_disabled_provider_cannot_export(): void
     {
         $service = app(ErpNextInvoiceTransferService::class);
         $this->reject(fn () => $service->transfer($this->actor, Tenant::findOrFail(2), 1, 1), 404);
-        DB::connection('clubunio')->table('clubora.tenants')->where('id', 1)->update(['accounting_provider' => 'none']);
+        DB::connection('clubunio')->table('clubunio.tenants')->where('id', 1)->update(['accounting_provider' => 'none']);
         $this->reject(fn () => $service->transfer($this->actor, $this->tenant, 1, 1), 409);
         Http::assertNothingSent();
     }
@@ -137,7 +137,7 @@ class ErpNextInvoiceTransferTest extends TestCase
         $this->assertTrue(Http::recorded()->slice($priorRequests)->every(fn ($entry) => $entry[0]->method() === 'GET'));
         $priorRequests = Http::recorded()->count();
         $this->travel(5)->minutes();
-        DB::connection('clubunio')->table('clubora.tenants')->where('id', 1)->update(['accounting_provider' => 'bexio']);
+        DB::connection('clubunio')->table('clubunio.tenants')->where('id', 1)->update(['accounting_provider' => 'bexio']);
         $this->assertSame(['confirmed' => 0, 'unconfirmed' => 0, 'failed' => 0, 'skipped' => 0], $reconciliation->run(20));
         Http::assertSentCount($priorRequests);
     }
@@ -181,7 +181,7 @@ class ErpNextInvoiceTransferTest extends TestCase
 
     private function insert(string $table, array $row): void
     {
-        DB::connection('clubunio')->table('clubora.'.$table)->insert($row);
+        DB::connection('clubunio')->table('clubunio.'.$table)->insert($row);
     }
 
     private function reject(callable $operation, int $status): void

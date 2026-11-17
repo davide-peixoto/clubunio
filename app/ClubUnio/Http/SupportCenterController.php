@@ -30,21 +30,21 @@ final class SupportCenterController
         }
         $db = DB::connection('clubunio');
         $platformWeb = $platform && !$request->expectsJson();
-        $tickets = fn () => $platform ? $db->table('clubora.support_tickets')->where('audience', 'platform')
+        $tickets = fn () => $platform ? $db->table('clubunio.support_tickets')->where('audience', 'platform')
             : $this->access->tickets($club, $actor->id, $staff);
         $locale = app(LanguagePreferences::class)->resolve($actor?->preferred_locale, app()->getLocale());
-        $assignees = fn () => $db->table($platform ? 'clubora.platform_admins as access' : 'clubora.tenant_accounts as access')
-            ->join('clubora.accounts as account', 'account.id', '=', 'access.account_id')
+        $assignees = fn () => $db->table($platform ? 'clubunio.platform_admins as access' : 'clubunio.tenant_accounts as access')
+            ->join('clubunio.accounts as account', 'account.id', '=', 'access.account_id')
             ->where('account.active', true)->where('account.api_only', false)
             ->when($platform, fn ($q) => $q->where('access.active', true), fn ($q) => $q
                 ->where('access.tenant_id', $club)->whereIn('access.role', SupportAccess::STAFF_ROLES));
-        $editableArticles = fn () => $db->table('clubora.support_articles')->where('tenant_id', $club)
+        $editableArticles = fn () => $db->table('clubunio.support_articles')->where('tenant_id', $club)
             ->whereIn('audience', $platform ? ['public','platform'] : ['club','club_staff']);
         if ($request->isMethod('GET') && $request->filled('attachment')) {
             abort_unless($platform || $club !== null, 404);
             $download = $request->validate(['attachment' => 'required|uuid', 'ticket' => 'required|uuid']);
             abort_unless($tickets()->where('id', $download['ticket'])->exists(), 404);
-            $file = $db->table('clubora.support_attachments as file')->join('clubora.support_posts as post', 'post.id', '=', 'file.post_id')
+            $file = $db->table('clubunio.support_attachments as file')->join('clubunio.support_posts as post', 'post.id', '=', 'file.post_id')
                 ->where('file.id', $download['attachment'])->where('post.ticket_id', $download['ticket'])
                 ->when(!$staff && !$platform, fn ($q) => $q->where('post.internal', false))->first(['file.*']);
             abort_unless($file, 404);
@@ -98,14 +98,14 @@ final class SupportCenterController
                         abort_unless((clone $article)->lockForUpdate()->first(), 404);
                         $article->update($values);
                     } else {
-                        $db->table('clubora.support_articles')->insert($values);
+                        $db->table('clubunio.support_articles')->insert($values);
                     }
                     return null;
                 }
                 if ($operation === 'create') {
                     abort_unless(!$platform && $title !== '' && $body !== '', 422);
                     $id = (string) Str::uuid();
-                    $db->table('clubora.support_tickets')->insert(['id' => $id, 'tenant_id' => $club, 'requester_id' => $actor->id,
+                    $db->table('clubunio.support_tickets')->insert(['id' => $id, 'tenant_id' => $club, 'requester_id' => $actor->id,
                         'audience' => 'club', 'subject' => $title]);
                 } else {
                     $ticket = $tickets()->where('id', $d['ticket'] ?? null)->lockForUpdate()->first();
@@ -127,38 +127,38 @@ final class SupportCenterController
                     if ($operation === 'escalate') {
                         abort_unless($staff && !$platform, 403);
                         abort_unless($title !== '' && $body !== '', 422);
-                        abort_if($db->table('clubora.support_tickets')->where('source_id', $id)->exists(), 409);
+                        abort_if($db->table('clubunio.support_tickets')->where('source_id', $id)->exists(), 409);
                         $id = (string) Str::uuid();
-                        $db->table('clubora.support_tickets')->insert(['id' => $id, 'tenant_id' => $club, 'requester_id' => $actor->id,
+                        $db->table('clubunio.support_tickets')->insert(['id' => $id, 'tenant_id' => $club, 'requester_id' => $actor->id,
                             'audience' => 'platform', 'source_id' => $ticket->id, 'subject' => $title]);
                     }
                 }
                 abort_unless($body !== '', 422);
                 $internal = (bool) ($d['internal'] ?? false);
                 abort_if($internal && (!$staff && !$platform || $operation !== 'reply'), 403);
-                $post = $db->table('clubora.support_posts')->insertGetId(['ticket_id' => $id, 'author_id' => $actor->id, 'body' => $body, 'internal' => $internal]);
+                $post = $db->table('clubunio.support_posts')->insertGetId(['ticket_id' => $id, 'author_id' => $actor->id, 'body' => $body, 'internal' => $internal]);
                 if ($operation === 'escalate' && !empty($d['share'])) {
-                    $files = $db->table('clubora.support_attachments as file')
-                        ->join('clubora.support_posts as source', 'source.id', '=', 'file.post_id')
+                    $files = $db->table('clubunio.support_attachments as file')
+                        ->join('clubunio.support_posts as source', 'source.id', '=', 'file.post_id')
                         ->where('source.ticket_id', $ticket->id)->where('source.internal', false)
                         ->whereIn('file.id', $d['share'])->get(['file.filename','file.mime','file.contents']);
                     abort_unless($files->count() === count($d['share']), 422);
                     foreach ($files as $file) {
-                        $db->table('clubora.support_attachments')->insert((array) $file + ['id' => (string) Str::uuid(), 'post_id' => $post]);
+                        $db->table('clubunio.support_attachments')->insert((array) $file + ['id' => (string) Str::uuid(), 'post_id' => $post]);
                     }
                 }
                 if ($upload = $d['attachment'] ?? null) {
                     $filename = Str::limit(trim(preg_replace('~[\\\\/\x00-\x1f\x7f]~', '_', $upload->getClientOriginalName())), 180, '');
-                    $db->table('clubora.support_attachments')->insert(['id' => (string) Str::uuid(), 'post_id' => $post,
+                    $db->table('clubunio.support_attachments')->insert(['id' => (string) Str::uuid(), 'post_id' => $post,
                         'filename' => $filename ?: 'attachment', 'mime' => $upload->getMimeType(), 'contents' => Crypt::encryptString($upload->get())]);
                 }
                 if ($operation === 'reply' && !$internal && !$platform && (int) $ticket->requester_id !== (int) $actor->id) {
-                    $recipient = $db->table('clubora.tenant_accounts as membership')->join('clubora.accounts as account', 'account.id', '=', 'membership.account_id')
+                    $recipient = $db->table('clubunio.tenant_accounts as membership')->join('clubunio.accounts as account', 'account.id', '=', 'membership.account_id')
                         ->where('membership.tenant_id', $club)->where('account.id', $ticket->requester_id)
                         ->where('account.active', true)->where('account.api_only', false)->sharedLock()->first(['account.id','account.preferred_locale']);
                     if ($recipient) {
                         $language = app(LanguagePreferences::class)->resolve($recipient->preferred_locale, config('app.fallback_locale'));
-                        $db->table('clubora.notifications')->insert(['tenant_id' => $club, 'account_id' => $recipient->id,
+                        $db->table('clubunio.notifications')->insert(['tenant_id' => $club, 'account_id' => $recipient->id,
                             'title' => trans('support.notice_title', [], $language), 'body' => trans('support.notice_body', [], $language),
                             'object_type' => 'support', 'object_id' => $post]);
                     }
@@ -199,21 +199,21 @@ final class SupportCenterController
             if (isset($d['ticket'])) {
                 $selected = $tickets()->where('id', $d['ticket'])->first($staff || $platform ? ['id','subject','status','assignee_id'] : ['id','subject','status']);
                 abort_unless($selected, 404);
-                $posts = $db->table('clubora.support_posts')->where('ticket_id', $selected->id)
+                $posts = $db->table('clubunio.support_posts')->where('ticket_id', $selected->id)
                     ->when(!$staff && !$platform, fn ($q) => $q->where('internal', false))->orderBy('id')->limit(200)
                     ->get(['id','body','internal','created_at']);
-                $files = $db->table('clubora.support_attachments')->whereIn('post_id', $posts->pluck('id'))
+                $files = $db->table('clubunio.support_attachments')->whereIn('post_id', $posts->pluck('id'))
                     ->get(['id','post_id','filename','mime'])->groupBy('post_id');
                 foreach ($posts as $post) $post->attachments = $files->get($post->id, collect());
                 if ($platformWeb) {
-                    $selected->club_name = $db->table('clubora.support_tickets as ticket')
-                        ->join('clubora.tenants as tenant', 'tenant.id', '=', 'ticket.tenant_id')
+                    $selected->club_name = $db->table('clubunio.support_tickets as ticket')
+                        ->join('clubunio.tenants as tenant', 'tenant.id', '=', 'ticket.tenant_id')
                         ->where('ticket.id', $selected->id)->value('tenant.name');
                 }
                 if ($staff && !$platform) {
-                    $escalation = $db->table('clubora.support_tickets')->where('tenant_id', $club)->where('audience', 'platform')
+                    $escalation = $db->table('clubunio.support_tickets')->where('tenant_id', $club)->where('audience', 'platform')
                         ->where('source_id', $selected->id)->first(['id','status']);
-                    if ($escalation) $updates = $db->table('clubora.support_posts')->where('ticket_id', $escalation->id)
+                    if ($escalation) $updates = $db->table('clubunio.support_posts')->where('ticket_id', $escalation->id)
                         ->where('internal', false)->orderBy('id')->limit(200)->get(['body','created_at']);
                 }
             }
@@ -221,7 +221,7 @@ final class SupportCenterController
         $data = compact('articles','rows','posts','selected','staff','platform','club','updates','faq');
         if ($staff || $platform) {
             $data['triage'] = $selected && config('clubunio-support.triage_enabled')
-                ? $db->table('clubora.support_triage')->where('ticket_id', $selected->id)->first(['topic','draft','provider_generated']) : null;
+                ? $db->table('clubunio.support_triage')->where('ticket_id', $selected->id)->first(['topic','draft','provider_generated']) : null;
             if (!$platformWeb || $tab === 'tickets') {
                 $data['assignees'] = $assignees()->orderBy('account.display_name')->get(['account.id','account.display_name']);
             }
@@ -249,8 +249,8 @@ final class SupportCenterController
     private function platformTickets(\Illuminate\Database\Query\Builder $tickets, array $filters)
     {
         return $tickets
-            ->join('clubora.tenants as tenant', 'tenant.id', '=', 'support_tickets.tenant_id')
-            ->leftJoin('clubora.accounts as assignee', 'assignee.id', '=', 'support_tickets.assignee_id')
+            ->join('clubunio.tenants as tenant', 'tenant.id', '=', 'support_tickets.tenant_id')
+            ->leftJoin('clubunio.accounts as assignee', 'assignee.id', '=', 'support_tickets.assignee_id')
             ->when(isset($filters['q']), fn ($q) => $q->where(fn ($match) => $match
                 ->whereLike('support_tickets.subject', '%'.$filters['q'].'%')->orWhereLike('tenant.name', '%'.$filters['q'].'%')))
             ->when(isset($filters['status']), fn ($q) => $q->where('support_tickets.status', $filters['status']))

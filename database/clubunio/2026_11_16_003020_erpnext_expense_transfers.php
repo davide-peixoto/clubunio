@@ -16,8 +16,8 @@ return new class extends Migration
             && $db->selectOne('SELECT current_database() AS name')->name === 'clubunio_dev';
         abort_unless($dev || StageMigrationTarget::allows($db), 409);
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.erpnext_expense_transfers (
-    tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
+CREATE TABLE clubunio.erpnext_expense_transfers (
+    tenant_id bigint NOT NULL REFERENCES clubunio.tenants(id),
     expense_id bigint PRIMARY KEY,
     source_revision integer NOT NULL,
     reference varchar(100) NOT NULL UNIQUE,
@@ -28,9 +28,9 @@ CREATE TABLE clubora.erpnext_expense_transfers (
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK ((remote_id IS NULL) = (state = 'pending')),
-    FOREIGN KEY (tenant_id, expense_id) REFERENCES clubora.expenses(tenant_id, id)
+    FOREIGN KEY (tenant_id, expense_id) REFERENCES clubunio.expenses(tenant_id, id)
 );
-CREATE INDEX erpnext_expense_transfers_tenant_state ON clubora.erpnext_expense_transfers(tenant_id, state);
+CREATE INDEX erpnext_expense_transfers_tenant_state ON clubunio.erpnext_expense_transfers(tenant_id, state);
 SQL);
     }
 

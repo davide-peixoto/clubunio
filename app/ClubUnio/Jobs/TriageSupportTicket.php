@@ -38,12 +38,12 @@ final class TriageSupportTicket implements ShouldQueue
             || !in_array($this->audience, ['club', 'platform'], true)) return;
 
         $db = DB::connection('clubunio');
-        $ticket = $db->table('clubora.support_tickets')->where('id', $this->ticketId)
+        $ticket = $db->table('clubunio.support_tickets')->where('id', $this->ticketId)
             ->where('tenant_id', $this->tenantId)->where('audience', $this->audience)
             ->where('status', '!=', 'closed')->first(['subject']);
         if (!$ticket) return;
 
-        $results = $db->table('clubora.support_triage');
+        $results = $db->table('clubunio.support_triage');
         if ((clone $results)->where('ticket_id', $this->ticketId)->exists()) return;
 
         // Never follow source_id or read posts, notes or attachments.

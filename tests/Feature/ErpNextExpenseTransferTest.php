@@ -40,7 +40,7 @@ class ErpNextExpenseTransferTest extends TestCase
         ]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id INTEGER PRIMARY KEY, active BOOLEAN, slug TEXT, accounting_provider TEXT, updated_at TEXT',
             'accounts' => 'id INTEGER PRIMARY KEY, active BOOLEAN, api_only BOOLEAN',
@@ -56,7 +56,7 @@ class ErpNextExpenseTransferTest extends TestCase
             'erpnext_invoice_transfers' => 'tenant_id INTEGER, state TEXT',
             'bexio_sandbox_dispatches' => 'tenant_id INTEGER, expense_id INTEGER, kind TEXT',
         ] as $table => $columns) {
-            $db->statement('CREATE TABLE clubora.'.$table.' ('.$columns.')');
+            $db->statement('CREATE TABLE clubunio.'.$table.' ('.$columns.')');
         }
         foreach ([1, 2] as $id) {
             $this->table('tenants')->insert(['id' => $id, 'active' => true, 'slug' => 'club-'.$id, 'accounting_provider' => 'erpnext']);
@@ -171,7 +171,7 @@ class ErpNextExpenseTransferTest extends TestCase
 
     private function table(string $table)
     {
-        return DB::connection('clubunio')->table('clubora.'.$table);
+        return DB::connection('clubunio')->table('clubunio.'.$table);
     }
 
     private function reject(callable $operation, int $status): void

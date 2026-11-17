@@ -12,8 +12,8 @@ return new class extends Migration {
         $db = DB::connection($this->connection);
         if (!StageMigrationTarget::allows($db)) throw new LogicException('Unreviewed database');
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.support_triage (
- ticket_id uuid PRIMARY KEY REFERENCES clubora.support_tickets(id) ON DELETE CASCADE,
+CREATE TABLE clubunio.support_triage (
+ ticket_id uuid PRIMARY KEY REFERENCES clubunio.support_tickets(id) ON DELETE CASCADE,
  topic text NOT NULL CHECK (topic IN ('login','expense','manual_review')),
  draft text,
  provider_generated boolean NOT NULL DEFAULT false,

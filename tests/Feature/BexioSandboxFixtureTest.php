@@ -51,7 +51,7 @@ class BexioSandboxFixtureTest extends TestCase
             return match ($path) {
                 '/2.0/company_profile' => Http::response([['id' => 1, 'name' => $this->company]]),
                 '/2.0/contact' => Http::response(array_map(fn ($kind, $id) => ['id' => $id,
-                    'name_1' => 'Clubora Sandbox '.$kind.' v1', 'remarks' => 'clubora-sandbox-fixture:v1:'.strtolower($kind)],
+                    'name_1' => 'Clubora Sandbox '.$kind.' v1', 'remarks' => 'clubunio-sandbox-fixture:v1:'.strtolower($kind)],
                     ['Member', 'Parent', 'Supplier'], [2, 3, 4])),
                 '/2.0/kb_invoice' => Http::response([['id' => 1, 'api_reference' => BexioSandboxFixtureService::REFERENCE]]),
                 '/2.0/kb_invoice/1' => Http::response(['id' => 1, 'api_reference' => BexioSandboxFixtureService::REFERENCE,

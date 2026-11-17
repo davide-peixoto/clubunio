@@ -20,32 +20,32 @@ final class PlatformSupportWorkspaceTest extends TestCase
             'database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.accounts (id integer PRIMARY KEY, display_name text, active boolean, api_only boolean, preferred_locale text);
-CREATE TABLE clubora.tenants (id integer PRIMARY KEY, name text);
-CREATE TABLE clubora.platform_admins (account_id integer, active boolean);
-CREATE TABLE clubora.support_tickets (id text PRIMARY KEY, tenant_id integer, subject text, status text, audience text, assignee_id integer, created_at text);
-CREATE TABLE clubora.support_posts (id integer PRIMARY KEY, ticket_id text, body text, internal boolean, created_at text);
-CREATE TABLE clubora.support_attachments (id text, post_id integer, filename text, mime text);
-CREATE TABLE clubora.support_triage (ticket_id text, topic text, draft text, provider_generated boolean);
-CREATE TABLE clubora.support_zammad_exports (ticket_id text);
-CREATE TABLE clubora.support_articles (id integer PRIMARY KEY, tenant_id integer, audience text, published boolean, locale text, title text, body text, video_url text);
-CREATE TABLE clubora.support_public_requests (id text, tenant_id integer, payload text, created_at text);
-INSERT INTO clubora.accounts VALUES (1,'Synthetic operator',1,0,'de'),(2,'Synthetic other',1,0,'en');
-INSERT INTO clubora.tenants VALUES (1,'Synthetic club');
-INSERT INTO clubora.platform_admins VALUES (1,1);
-INSERT INTO clubora.support_articles VALUES
+CREATE TABLE clubunio.accounts (id integer PRIMARY KEY, display_name text, active boolean, api_only boolean, preferred_locale text);
+CREATE TABLE clubunio.tenants (id integer PRIMARY KEY, name text);
+CREATE TABLE clubunio.platform_admins (account_id integer, active boolean);
+CREATE TABLE clubunio.support_tickets (id text PRIMARY KEY, tenant_id integer, subject text, status text, audience text, assignee_id integer, created_at text);
+CREATE TABLE clubunio.support_posts (id integer PRIMARY KEY, ticket_id text, body text, internal boolean, created_at text);
+CREATE TABLE clubunio.support_attachments (id text, post_id integer, filename text, mime text);
+CREATE TABLE clubunio.support_triage (ticket_id text, topic text, draft text, provider_generated boolean);
+CREATE TABLE clubunio.support_zammad_exports (ticket_id text);
+CREATE TABLE clubunio.support_articles (id integer PRIMARY KEY, tenant_id integer, audience text, published boolean, locale text, title text, body text, video_url text);
+CREATE TABLE clubunio.support_public_requests (id text, tenant_id integer, payload text, created_at text);
+INSERT INTO clubunio.accounts VALUES (1,'Synthetic operator',1,0,'de'),(2,'Synthetic other',1,0,'en');
+INSERT INTO clubunio.tenants VALUES (1,'Synthetic club');
+INSERT INTO clubunio.platform_admins VALUES (1,1);
+INSERT INTO clubunio.support_articles VALUES
  (1,NULL,'platform',1,'de','Synthetic knowledge','Platform article',NULL),
  (2,1,'club_staff',1,'de','Synthetic club secret','Internal club article',NULL);
 SQL);
-        $db->table('clubora.support_tickets')->insert([
+        $db->table('clubunio.support_tickets')->insert([
             ['id' => self::PLATFORM, 'tenant_id' => 1, 'subject' => 'Synthetic escalation', 'status' => 'waiting',
                 'audience' => 'platform', 'assignee_id' => 1, 'created_at' => now()],
             ['id' => self::CLUB, 'tenant_id' => 1, 'subject' => 'Synthetic club-only ticket', 'status' => 'open',
                 'audience' => 'club', 'assignee_id' => null, 'created_at' => now()],
         ]);
-        $db->table('clubora.support_posts')->insert(['ticket_id' => self::PLATFORM, 'body' => 'Synthetic technical details',
+        $db->table('clubunio.support_posts')->insert(['ticket_id' => self::PLATFORM, 'body' => 'Synthetic technical details',
             'internal' => true, 'created_at' => now()]);
     }
 

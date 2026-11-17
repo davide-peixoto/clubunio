@@ -22,18 +22,18 @@ final class ZammadSupportTest extends TestCase
                 'group_id' => 4, 'customer_id' => 7]]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.support_tickets (id text PRIMARY KEY, audience text, source_id text, subject text, status text);
-CREATE TABLE clubora.support_posts (id integer PRIMARY KEY, ticket_id text, body text, internal boolean);
-CREATE TABLE clubora.support_zammad_exports (ticket_id text PRIMARY KEY, origin text, group_id integer, customer_id integer,
+CREATE TABLE clubunio.support_tickets (id text PRIMARY KEY, audience text, source_id text, subject text, status text);
+CREATE TABLE clubunio.support_posts (id integer PRIMARY KEY, ticket_id text, body text, internal boolean);
+CREATE TABLE clubunio.support_zammad_exports (ticket_id text PRIMARY KEY, origin text, group_id integer, customer_id integer,
  status text, remote_id integer, created_at text DEFAULT CURRENT_TIMESTAMP, UNIQUE (origin, remote_id));
 SQL);
-        $db->table('clubora.support_tickets')->insert([
+        $db->table('clubunio.support_tickets')->insert([
             ['id' => self::CLUB, 'audience' => 'club', 'source_id' => null, 'subject' => 'Club original', 'status' => 'open'],
             ['id' => self::PLATFORM, 'audience' => 'platform', 'source_id' => self::CLUB, 'subject' => 'Approved subject', 'status' => 'open'],
         ]);
-        $db->table('clubora.support_posts')->insert([
+        $db->table('clubunio.support_posts')->insert([
             ['ticket_id' => self::CLUB, 'body' => 'Original club content', 'internal' => false],
             ['ticket_id' => self::PLATFORM, 'body' => 'Internal note', 'internal' => true],
             ['ticket_id' => self::PLATFORM, 'body' => 'Approved <summary>', 'internal' => false],
@@ -73,7 +73,7 @@ SQL);
         $this->assertSame('attention', $service->detail(self::PLATFORM)['status']);
         $this->denies(409, fn () => $service->export(self::PLATFORM));
         $this->denies(409, fn () => $service->reconcile(self::PLATFORM, 23));
-        DB::connection('clubunio')->table('clubora.support_zammad_exports')->update(['created_at' => now()->subMinutes(2)]);
+        DB::connection('clubunio')->table('clubunio.support_zammad_exports')->update(['created_at' => now()->subMinutes(2)]);
         $this->assertFalse($service->reconcile(self::PLATFORM, 88));
         $this->assertTrue($service->reconcile(self::PLATFORM, 23));
         Http::assertSentCount(3);

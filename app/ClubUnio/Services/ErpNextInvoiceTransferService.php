@@ -16,7 +16,7 @@ class ErpNextInvoiceTransferService
 
     public static function query(Tenant $tenant): Builder
     {
-        return DB::connection('clubunio')->table('clubora.erpnext_invoice_transfers')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.erpnext_invoice_transfers')->where('tenant_id', $tenant->id);
     }
 
     public function transfer(Account $actor, Tenant $tenant, int $id, int $revision): object
@@ -30,7 +30,7 @@ class ErpNextInvoiceTransferService
                 return;
             }
             $config = $this->configuration->verifiedConnection($tenant);
-            $bexio = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+            $bexio = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                 ->where('tenant_id', $tenant->id)->where('kind', 'invoice')->where('invoice_id', $id)->exists();
             abort_if($bexio || $invoice->bexio_invoice_id, 409, trans('erpnext.errors.already_linked'));
             abort_unless((int) $invoice->revision === $revision && $invoice->workflowStatus?->code === 'released'

@@ -33,10 +33,10 @@ final class SupportAiTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
         DB::connection('clubunio')->unprepared(<<<'SQL'
-ATTACH DATABASE ':memory:' AS clubora;
-CREATE TABLE clubora.support_tickets (id text, tenant_id integer, audience text, status text, subject text);
-CREATE TABLE clubora.support_triage (ticket_id text PRIMARY KEY, topic text, draft text, provider_generated boolean);
-INSERT INTO clubora.support_tickets VALUES
+ATTACH DATABASE ':memory:' AS clubunio;
+CREATE TABLE clubunio.support_tickets (id text, tenant_id integer, audience text, status text, subject text);
+CREATE TABLE clubunio.support_triage (ticket_id text PRIMARY KEY, topic text, draft text, provider_generated boolean);
+INSERT INTO clubunio.support_tickets VALUES
 ('a',1,'club','open','Passkey private-marker-club'),
 ('b',1,'platform','open','Expense private-marker-platform'),
 ('c',1,'club','open','private-marker-unmatched');
@@ -50,7 +50,7 @@ SQL);
             (new TriageSupportTicket($id, $tenant, $audience, 'en'))->handle($guide);
         }
         $this->assertSame(['login', 'expense', 'manual_review'], DB::connection('clubunio')
-            ->table('clubora.support_triage')->orderBy('ticket_id')->pluck('topic')->all());
+            ->table('clubunio.support_triage')->orderBy('ticket_id')->pluck('topic')->all());
         Http::assertSentCount(2);
         foreach (Http::recorded() as [$request]) {
             $this->assertStringNotContainsString('private-marker', $request->body());

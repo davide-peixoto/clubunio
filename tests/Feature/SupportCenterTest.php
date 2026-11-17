@@ -13,13 +13,13 @@ final class SupportCenterTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
         DB::connection('clubunio')->unprepared(<<<'SQL'
-ATTACH DATABASE ':memory:' AS clubora;
-CREATE TABLE clubora.support_articles (title text, tenant_id integer, audience text, published integer, locale text, id integer DEFAULT 1, body text DEFAULT 'Guide');
-INSERT INTO clubora.support_articles (title,tenant_id,audience,published,locale) VALUES
+ATTACH DATABASE ':memory:' AS clubunio;
+CREATE TABLE clubunio.support_articles (title text, tenant_id integer, audience text, published integer, locale text, id integer DEFAULT 1, body text DEFAULT 'Guide');
+INSERT INTO clubunio.support_articles (title,tenant_id,audience,published,locale) VALUES
 ('public',null,'public',1,'en'),('club',1,'club',1,'en'),('staff',1,'club_staff',1,'en'),
 ('foreign',2,'club',1,'en'),('platform',null,'platform',1,'en'),('draft',1,'club',0,'en');
-CREATE TABLE clubora.support_tickets (id integer, tenant_id integer, requester_id integer, audience text);
-INSERT INTO clubora.support_tickets VALUES (1,1,1,'club'),(2,1,2,'club'),(3,2,1,'club'),(4,1,1,'platform');
+CREATE TABLE clubunio.support_tickets (id integer, tenant_id integer, requester_id integer, audience text);
+INSERT INTO clubunio.support_tickets VALUES (1,1,1,'club'),(2,1,2,'club'),(3,2,1,'club'),(4,1,1,'platform');
 SQL);
         $access = app(SupportAccess::class);
         $this->assertNull($access->findArticle('staff', 1, false, false, 'en'));

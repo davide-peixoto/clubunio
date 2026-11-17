@@ -285,7 +285,7 @@ class ClubUnioTest extends TestCase
         $this->get('/invoices/'.$invoice->id)->assertOk()->assertSee('PDF-Vorschau');
         Livewire::test(InvoiceLinesRelationManager::class, ['ownerRecord' => $invoice->fresh(), 'pageClass' => ViewInvoice::class])
             ->assertSee('Adjusted contribution');
-        $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/local')
+        $this->get('/clubunio-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/local')
             ->assertRedirect('/documents/invoices/'.$invoice->id.'/local/pdf');
         $response = $this->get('/documents/invoices/'.$invoice->id.'/local/pdf');
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
@@ -430,10 +430,10 @@ class ClubUnioTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['api.bexio.com/*' => Http::response(['content' => base64_encode('%PDF-1.7 fixture')])]);
         $url = route('clubunio.workspace.invoices.pdf', ['invoice' => $invoice->id, 'source' => 'bexio']);
-        $this->get('/clubora-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/bexio')->assertRedirect($url);
+        $this->get('/clubunio-invoice-pdf/'.$this->own->slug.'/'.$invoice->id.'/bexio')->assertRedirect($url);
         $this->get($url)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
         Http::assertSent(fn ($request) => $request->method() === 'GET' && $request->hasHeader('Accept', 'application/json') && $request->hasHeader('Authorization', 'Bearer fixture-token'));
-        $this->get('/clubora-invoice-pdf/'.$this->other->slug.'/'.$invoice->id.'/bexio')->assertForbidden();
+        $this->get('/clubunio-invoice-pdf/'.$this->other->slug.'/'.$invoice->id.'/bexio')->assertForbidden();
         [$trainer] = $this->portalActor('trainer');
         $this->actingAs($trainer, 'clubunio')->get($url)->assertForbidden();
         Http::assertSentCount(1);
@@ -2755,14 +2755,14 @@ class ClubUnioTest extends TestCase
         $reader = \Mockery::mock(AzureDocumentReader::class);
         $reader->shouldReceive('read')->once()->with('var/member-documents/', 'fixture.pdf')->andReturn("%PDF-1.4\nfixture");
         $this->app->instance(AzureDocumentReader::class, $reader);
-        $this->get('/clubora-documents/'.$this->other->slug.'/'.$id)->assertForbidden();
-        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/documents/members/'.$id);
+        $this->get('/clubunio-documents/'.$this->other->slug.'/'.$id)->assertForbidden();
+        $this->get('/clubunio-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/documents/members/'.$id);
         $this->get('/documents/members/'.$id)->assertOk()->assertHeader('Content-Type', 'application/pdf')
             ->assertHeader('X-Content-Type-Options', 'nosniff')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $this->db->table('clubunio.member_documents')->where('id', $id)->update(['active' => false]);
         $this->get('/documents/members/'.$id)->assertNotFound();
         auth('clubunio')->logout();
-        $this->get('/clubora-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/login');
+        $this->get('/clubunio-documents/'.$this->own->slug.'/'.$id)->assertRedirect('/login');
     }
 
     public function test_message_templates_seed_edit_restore_and_locale_fallback(): void

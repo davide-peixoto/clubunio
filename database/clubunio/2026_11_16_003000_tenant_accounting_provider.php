@@ -18,14 +18,14 @@ return new class extends Migration
             && $db->selectOne('SELECT current_database() AS name')->name === 'clubunio_dev';
         abort_unless($dev || StageMigrationTarget::allows($db), 409);
         $db->unprepared(<<<'SQL'
-ALTER TABLE clubora.tenants
+ALTER TABLE clubunio.tenants
     ADD COLUMN accounting_provider varchar(10) NOT NULL DEFAULT 'none'
     CHECK (accounting_provider IN ('none', 'bexio', 'erpnext'));
-UPDATE clubora.tenants AS tenant
+UPDATE clubunio.tenants AS tenant
     SET accounting_provider = 'bexio'
-    WHERE EXISTS (SELECT 1 FROM clubora.bexio_sandbox_fixtures WHERE tenant_id = tenant.id)
+    WHERE EXISTS (SELECT 1 FROM clubunio.bexio_sandbox_fixtures WHERE tenant_id = tenant.id)
        OR EXISTS (
-           SELECT 1 FROM clubora.tenant_settings
+           SELECT 1 FROM clubunio.tenant_settings
            WHERE tenant_id = tenant.id AND area = 'bexio'
              AND key = 'BEXIO_OIDC_CONNECTION' AND enabled AND encrypted_value IS NOT NULL
        );
@@ -38,7 +38,7 @@ SQL);
             $flag = $rows->get($legacyKeys[0]) ?? $rows->get($legacyKeys[1]) ?? $rows->get($legacyKeys[2]);
             $active = $flag->encrypted_value ? mb_strtolower(trim(Crypt::decryptString($flag->encrypted_value))) : '';
             if (in_array($active, ['1', 'ja', 'yes', 'true', 'on', 'aktiv'], true)) {
-                $db->table('clubora.tenants')->where('id', $tenantId)->update(['accounting_provider' => 'bexio']);
+                $db->table('clubunio.tenants')->where('id', $tenantId)->update(['accounting_provider' => 'bexio']);
             }
         }
     }

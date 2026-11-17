@@ -63,7 +63,7 @@ class BexioConnectionTest extends TestCase
 
     private function base(): string
     {
-        return '/clubora-bexio/'.$this->tenant->slug;
+        return '/clubunio-bexio/'.$this->tenant->slug;
     }
 
     private function begin(): array

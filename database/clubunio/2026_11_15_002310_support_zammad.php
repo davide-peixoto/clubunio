@@ -12,8 +12,8 @@ return new class extends Migration {
         $db = DB::connection($this->connection);
         if (!StageMigrationTarget::allows($db)) throw new LogicException('Unreviewed database');
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.support_zammad_exports (
- ticket_id uuid PRIMARY KEY REFERENCES clubora.support_tickets(id),
+CREATE TABLE clubunio.support_zammad_exports (
+ ticket_id uuid PRIMARY KEY REFERENCES clubunio.support_tickets(id),
  origin text NOT NULL,
  group_id bigint NOT NULL,
  customer_id bigint NOT NULL,
