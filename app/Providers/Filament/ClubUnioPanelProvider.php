@@ -219,6 +219,14 @@ class ClubUnioPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])->authMiddleware([Authenticate::class]);
+            ])->authMiddleware([Authenticate::class])
+            ->pages([\App\ClubUnio\Pages\PersonalProfile::class])
+            ->userMenuItems([
+                'personal-profile' => \Filament\Actions\Action::make('personal-profile')
+                    ->label(fn () => trans('account-security.profile_title'))
+                    ->icon('heroicon-o-user-circle')
+                    ->url(fn () => \App\ClubUnio\Pages\PersonalProfile::getUrl())
+                    ->visible(fn () => \App\ClubUnio\Pages\PersonalProfile::canAccess()),
+            ]);
     }
 }

@@ -84,6 +84,8 @@ Route::post('/sponsor-run/confirm', [SponsorRunPublicController::class, 'confirm
 
 Route::get('/portal/login', [PortalController::class, 'loginForm'])->name('clubunio.portal.login');
 Route::post('/portal/login', [PortalController::class, 'login']);
+Route::get('/portal/profile', [\App\ClubUnio\Http\PersonalProfileController::class, 'portal'])
+    ->middleware('auth:portal')->name('clubunio.portal.profile');
 Route::get('/portal/{tenant:slug}/members', [PortalController::class, 'members'])
     ->middleware('auth:portal')->name('clubunio.portal.members');
 Route::post('/portal/logout', [PortalController::class, 'logout'])

@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
+use App\ClubUnio\Services\KeycloakAccountConsole;
 use App\ClubUnio\Services\ModulePermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,8 @@ final class MobileAccountController
             'recovery_tenants' => $this->recoveryTenants($request, $actor),
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
-            'password_change' => true, 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
+            'keycloak_account_url' => KeycloakAccountConsole::url(),
+            'password_change' => !config('clubunio-verein-oidc.only'), 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
             'password_reset' => false]]);
     }
 
@@ -45,6 +47,7 @@ final class MobileAccountController
 
     public function password(Request $request)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $data = $request->validate(['current_password' => 'required|string|max:4096',
             'password' => 'required|string|min:12|max:72|confirmed',
             'password_confirmation' => 'required|string|max:72']);

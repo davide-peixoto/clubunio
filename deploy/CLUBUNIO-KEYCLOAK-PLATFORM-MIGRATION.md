@@ -14,6 +14,29 @@ erst nach eigener Plattform-Identitaetsfreigabe anmelden.
 Automatische Einladungen fuer Plattformkonten sind auf DEV separat
 freigeschaltet.
 
+## Persoenliches Profil und Kontosicherheit (17.11.2026)
+
+Der Benutzerbereich der Vereinsverwaltung (`/my-profile`), des
+Mitgliederportals (`/portal/profile`) und der Plattform
+(`/platform/profile`) zeigt nur das Konto der jeweiligen angemeldeten
+Sitzung. Keine Freischaltung ueber Vereinsrollen und kein Zugriff in der
+Benutzersimulation. Weitere Plattformberechtigungen entstehen dadurch nicht.
+Bei aktivem OIDC oeffnet der Link die persoenliche Keycloak Account Console
+ohne Tokens, Konto-ID oder Fremdparameter. Passwort, MFA, Passkeys und
+Keycloak-Geraetesitzungen werden dort nach der Realm-Policy verwaltet.
+Das Beenden einer Keycloak-Sitzung ist nicht gleich dem Widerruf eines
+separat ausgestellten ClubUnio-App-Tokens.
+
+`GET /api/mobile/v1/profile` liefert optional `keycloak_account_url`.
+Flutter oeffnet nur die exakte freigegebene HTTPS-URL im Systembrowser.
+Auf Keycloak-only ist der alte lokale Passwortwechsel per API gesperrt;
+der serverseitige Passwort-Notlogin bleibt unveraendert. Kein Schemawechsel,
+kein neuer Keycloak-Client und keine Aenderung der Rollen oder Realm-Policy.
+DEV-Release `20261117-clubunio-personal-profile-host-scope`, Rueckweg
+`20261117-clubunio-trainer-polish`. Sechs gezielte Backend- und 23
+Flutter-Tests erfolgreich; anonyme DEV-Einstiege abgeprueft. Stage
+unveraendert, kein Store-Rollout.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten

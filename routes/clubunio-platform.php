@@ -28,6 +28,7 @@ Route::get('/platform/oidc/callback', [\App\ClubUnio\Http\PlatformOidcController
 Route::get('/vereinslogin/oidc/platform-migration', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
     ->middleware('throttle:20,1')->block(10,10)->name('clubunio.verein.oidc.platform-migration');
 Route::prefix('platform')->middleware(RequirePlatformAdministrator::class)->group(function () {
+    Route::get('/profile', [\App\ClubUnio\Http\PersonalProfileController::class, 'platform'])->name('clubunio.platform.profile');
     Route::get('/users', [PlatformAdministrationController::class, 'platformUsers'])->name('clubunio.platform.users');
     Route::post('/users', [PlatformAdministrationController::class, 'createPlatformUser'])->middleware('throttle:10,1')->name('clubunio.platform.users.create');
     Route::post('/users/{account}', [PlatformAdministrationController::class, 'changePlatformUser'])
