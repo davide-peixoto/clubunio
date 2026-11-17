@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'only' => (bool) env('CLUBUNIO_KEYCLOAK_ONLY', false),
     'enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_ENABLED', false),
     'invites_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_INVITES_ENABLED', false),
     'mobile_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_MOBILE_ENABLED', false),

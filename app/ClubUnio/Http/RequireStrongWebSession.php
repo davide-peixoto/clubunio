@@ -22,9 +22,9 @@ final class RequireStrongWebSession
         }
         foreach (['clubunio', 'portal'] as $guard) {
             $actor = Auth::guard($guard)->user();
-            if ($guard === 'clubunio' && $actor && config('clubunio-verein-oidc.enabled')) {
+            if ($guard === 'clubunio' && $actor && (config('clubunio-verein-oidc.enabled') || config('clubunio-verein-oidc.only'))) {
                 $id = $request->session()->get('clubunio.oidc.account');
-                if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
+                if (config('clubunio-verein-oidc.enabled') && $actor->active && !$actor->api_only && $id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
                     && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
                         || (config('clubunio-verein-oidc.invites_enabled')
@@ -39,7 +39,7 @@ final class RequireStrongWebSession
                     return redirect()->route('clubunio.verein.oidc.start');
                 }
             }
-            if ($guard === 'portal' && $actor && $request->session()->has('portal.oidc.account')) {
+            if ($guard === 'portal' && $actor && (config('clubunio-verein-oidc.only') || $request->session()->has('portal.oidc.account'))) {
                 $subject = $request->session()->get('portal.oidc.subject');
                 if (config('clubunio-verein-oidc.enabled') && $request->isSecure()
                     && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')

@@ -38,6 +38,9 @@
 </section>
 @endif
 <section class="profile-section">
+    @if(config('clubunio-verein-oidc.only'))
+        <a href="{{ config('clubunio-verein-oidc.issuer').'/account/' }}">{{ trans('account-security.setup') }}</a>
+    @else
     <h2>{{ __('profile_web.password') }}</h2>
     <form method="post" action="{{ route($prefix.'password', absolute: false) }}">
         @csrf
@@ -46,6 +49,7 @@
         <p><label>{{ __('profile_web.confirm') }} <input type="password" name="password_confirmation" autocomplete="new-password" minlength="12" required></label></p>
         <button type="submit">{{ __('profile_web.password') }}</button>
     </form>
+    @endif
 </section>
 </div>
 @endsection

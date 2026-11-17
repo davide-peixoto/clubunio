@@ -17,13 +17,13 @@ final class PlatformOidcController
     public static function requiresClubOidc(Account $account): bool
     {
         $config = config('clubunio-verein-oidc');
-        return $config['enabled'] && !$config['legacy_allowed']
-            && is_array($config['subjects']) && in_array((int) $account->id, $config['subjects'], true);
+        return config('clubunio-verein-oidc.only') || ($config['enabled'] && !$config['legacy_allowed']
+            && is_array($config['subjects']) && in_array((int) $account->id, $config['subjects'], true));
     }
 
     public static function required(): bool
     {
-        return config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed');
+        return config('clubunio-verein-oidc.only') || (config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed'));
     }
 
     public static function guard(Request $request): string

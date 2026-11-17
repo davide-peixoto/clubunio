@@ -21,13 +21,14 @@ final class PlatformAdministrationController
     public function loginForm(Request $request, PlatformAdministrationService $service)
     {
         abort_if(app(TenantDomainService::class)->resolve($request), 404);
-        if (PlatformOidcController::required() && !$request->user('platform')) {
+        if (PlatformOidcController::required() && (!$request->user('platform') || (int) $request->session()->get('platform.oidc.expires') <= time())) {
             return redirect()->route('clubunio.platform.oidc.start');
         }
         if ($service->allowed($request->user(PlatformOidcController::guard($request)))) {
             return redirect()->route('clubunio.platform.index');
         }
 
+        abort_if(PlatformOidcController::required(), 403);
         return response()->view('clubunio.platform.login')->header('Cache-Control', 'private, no-store');
     }
 

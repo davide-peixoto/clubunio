@@ -46,7 +46,7 @@ final class MobilePublicIdentityPolicy
         if ($surface === 'membership') {
             return config('clubunio-mobile.public_identity.membership_enabled', false) && app(PublicWebService::class)->enabled($tenant, 'registration');
         }
-        return in_array($surface, ['registration','password_reset','email_enrollment'], true) && config('clubunio-mobile.public_identity.'.$surface.'_enabled', false)
+        return !config('clubunio-verein-oidc.only') && in_array($surface, ['registration','password_reset','email_enrollment'], true) && config('clubunio-mobile.public_identity.'.$surface.'_enabled', false)
             && app(MobileIdentityMailGuard::class)->configured();
     }
     public function authorize(Tenant $tenant, string $surface): void { abort_unless($this->enabled($tenant, $surface), 503, 'Dieser öffentliche Ablauf ist noch nicht freigeschaltet.'); }

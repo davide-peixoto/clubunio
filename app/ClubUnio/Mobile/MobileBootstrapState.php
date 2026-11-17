@@ -59,6 +59,7 @@ final class MobileBootstrapState {
         $data['announcements']=$tenant?app(MobileAppAnnouncements::class)->active($tenant,false):[];
         $data['roleGuideAvailable']=false;
         $data['pushAdminAvailable']=false;
+        $data['passwordLoginAvailable'] = $data['loginAllowed'] && !config('clubunio-verein-oidc.only');
         $data['strongLoginAvailable']=$data['loginAllowed'] && config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
         $data['keycloakLoginAvailable'] = $data['strongLoginAvailable']
             && \App\ClubUnio\Http\KeycloakMobilePairingController::available($origin);

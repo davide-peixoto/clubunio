@@ -12,8 +12,18 @@ use Filament\Schemas\Schema;
 
 class Login extends \Filament\Auth\Pages\Login
 {
+    public function mount(): void
+    {
+        if (config('clubunio-verein-oidc.only')) {
+            $this->redirect(route('clubunio.verein.oidc.start'));
+            return;
+        }
+        parent::mount();
+    }
+
     public function authenticate(): ?LoginResponse
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $response = parent::authenticate();
         if ($response && ($actor = Filament::auth()->user()) && \App\ClubUnio\Http\PlatformOidcController::requiresClubOidc($actor)) {
             Filament::auth()->logout();
@@ -32,6 +42,9 @@ class Login extends \Filament\Auth\Pages\Login
 
     protected function getFormActions(): array
     {
+        if (config('clubunio-verein-oidc.only')) {
+            return [Action::make('keycloak')->label(trans('account-security.keycloak_sign_in'))->url(route('clubunio.verein.oidc.start'))];
+        }
         $actions = parent::getFormActions();
         if (config('clubunio-verein-oidc.enabled')) {
             $actions[] = Action::make('keycloak')->label(trans('account-security.keycloak_sign_in'))
@@ -46,7 +59,7 @@ class Login extends \Filament\Auth\Pages\Login
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([$this->getEmailFormComponent(), $this->getPasswordFormComponent()]);
+        return $schema->components(config('clubunio-verein-oidc.only') ? [] : [$this->getEmailFormComponent(), $this->getPasswordFormComponent()]);
     }
 
     protected function getEmailFormComponent(): Component

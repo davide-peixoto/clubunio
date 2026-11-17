@@ -15,6 +15,7 @@ final class MobileSessions
 {
     public function login(Request $request): array
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         app(MobileBootstrapState::class)->authorizeLogin($request);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096', 'device_name' => 'required|string|max:100']);
         $username = mb_strtolower(trim($data['username']));
@@ -82,6 +83,11 @@ final class MobileSessions
 
     private function satisfiesSecurity(Account $actor, AccountSecurity $security, ?string $stamp): bool
     {
+        if (config('clubunio-verein-oidc.only')) {
+            $federated = app(\App\ClubUnio\Services\KeycloakMobileAssurance::class)->stamp($actor);
+
+            return $stamp !== null && $federated !== null && hash_equals($federated, $stamp);
+        }
         if ($stamp === null) {
             return !$security->requiresStrongLogin($actor);
         }

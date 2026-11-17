@@ -17,6 +17,7 @@ final class StrongLoginController
 
     public function show(Request $request)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $this->security->origin($request);
         $mode = $request->query('mode', 'clubunio');
         abort_unless(in_array($mode, ['clubunio', 'portal', 'mobile', 'platform'], true), 404);
@@ -34,6 +35,7 @@ final class StrongLoginController
 
     public function action(Request $request, string $operation)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         abort_unless($request->isJson(), 415);
         $origin = $this->security->origin($request);
         $mode = $request->validate(['mode' => 'required|in:clubunio,portal,mobile,platform'])['mode'];
@@ -170,6 +172,7 @@ final class StrongLoginController
             || ($operation === 'redeem' && $request->has('return_secret'))) {
             return app(KeycloakMobilePairingController::class)->pair($request, $operation);
         }
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         if ($operation === 'begin') {
             $data = $request->validate(['proof_hash' => 'required|regex:/^[a-f0-9]{64}$/D']);
             $id = (string) Str::uuid();

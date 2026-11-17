@@ -14,11 +14,15 @@ class PortalController
 {
     public function loginForm()
     {
+        if (config('clubunio-verein-oidc.only')) {
+            return redirect()->route('clubunio.verein.oidc.start');
+        }
         return response()->view('clubunio.portal.login')->header('Cache-Control', 'private, no-store');
     }
 
     public function login(Request $request, MemberAccessService $access)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096']);
         $username = mb_strtolower(trim($data['username']));
         $keys = ['portal-login:'.hash('sha256', $request->ip().'|'.$username) => 5,

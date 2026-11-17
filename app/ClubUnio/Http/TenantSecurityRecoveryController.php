@@ -10,6 +10,7 @@ final class TenantSecurityRecoveryController
 {
     public function __invoke(Request $request, int $tenantId, int $linkId, AccountSecurity $security, TenantSecurityRecovery $recovery)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $security->origin($request);
         $tenant = Tenant::findOrFail($tenantId);
         $bound = app(TenantDomainService::class)->resolve($request);

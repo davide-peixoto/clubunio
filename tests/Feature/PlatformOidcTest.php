@@ -65,6 +65,23 @@ final class PlatformOidcTest extends TestCase
         $this->assertFalse(\App\ClubUnio\Http\PlatformOidcController::requiresClubOidc($unmapped));
     }
 
+    public function test_keycloak_only_rejects_local_sign_in_for_mapped_and_unmapped_accounts(): void
+    {
+        config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',
+            'clubunio-domains.central_hosts' => ['platform.test'],
+            'clubunio-verein-oidc.only' => true, 'clubunio-mobile.enabled' => true]);
+        $base = 'https://platform.test';
+        $this->get($base.'/portal/login')->assertRedirect(route('clubunio.verein.oidc.start'));
+        $this->get($base.'/platform/login')->assertRedirect(route('clubunio.platform.oidc.start'));
+        $this->post($base.'/portal/login')->assertNotFound();
+        $this->post($base.'/platform/login')->assertNotFound();
+        $this->get($base.'/account/security')->assertNotFound();
+        $this->postJson($base.'/account/security/password')->assertNotFound();
+        $this->postJson($base.'/api/mobile/v1/session')->assertNotFound();
+        $unmapped = (new \App\ClubUnio\Models\Account)->forceFill(['id' => 123]);
+        $this->assertTrue(\App\ClubUnio\Http\PlatformOidcController::requiresClubOidc($unmapped));
+    }
+
     public function test_platform_flow_requires_exact_origin_and_one_time_state(): void
     {
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',

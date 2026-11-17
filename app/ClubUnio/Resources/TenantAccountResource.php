@@ -123,7 +123,7 @@ class TenantAccountResource extends CatalogResource
             ->recordActions([
                 Action::make('securityRecovery')->label(fn () => trans('account-security.reset_title'))->icon('heroicon-o-key')->iconButton()
                     ->tooltip(fn () => trans('account-security.reset_title'))
-                    ->visible(fn (TenantAccount $record) => app(TenantSecurityRecovery::class)->allowed(Filament::auth()->user(), Filament::getTenant(), $record))
+                    ->visible(fn (TenantAccount $record) => !config('clubunio-verein-oidc.only') && app(TenantSecurityRecovery::class)->allowed(Filament::auth()->user(), Filament::getTenant(), $record))
                     ->url(fn (TenantAccount $record) => route('clubunio.security.recovery', ['tenantId' => $record->tenant_id, 'linkId' => $record->id])),
                 Action::make('appProfile')->label('App-Modulprofil')->icon('heroicon-o-device-phone-mobile')->iconButton()->tooltip(__('App-Modulprofil zuordnen'))
                 ->visible(static::canManageAccounts(...))

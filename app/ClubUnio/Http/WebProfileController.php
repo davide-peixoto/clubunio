@@ -67,6 +67,7 @@ final class WebProfileController
 
     public function password(Request $request)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $actor = $this->actor($request);
         $data = $request->validate([
             'current_password' => 'required|string|max:4096',

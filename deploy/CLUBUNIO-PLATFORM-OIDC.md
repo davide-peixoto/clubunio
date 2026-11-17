@@ -80,3 +80,19 @@ Die Plattformanmeldung bleibt getrennt. Die vorhandenen Tabellen genügen.
 Für einen Testbuild in Flutter Stage wählen. Auf Android und iOS noch
 Anmeldung mit MFA, automatische Rückkehr, Abbruch und Kontowechsel auf
 dem Gerät prüfen.
+
+## Stage verlangt Keycloak
+
+Nach dem Pilot gilt auf Stage `CLUBUNIO_KEYCLOAK_ONLY=true` sowie
+`CLUBUNIO_PLATFORM_OIDC_LEGACY_ALLOWED=false` und
+`CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED=false`. Die drei Web-Loginseiten
+leiten zu Keycloak weiter. Lokales Passwort, lokale MFA samt Rücksetzung
+und eigene Passwortregistrierung sind gesperrt. Die App erhält
+`passwordLoginAvailable: false` und akzeptiert nur Sitzungen mit einem
+gültigen Nachweis aus dem Keycloak-Pairing. Bestehende lokale Sitzungen
+erfordern eine neue Anmeldung. Mitgliedsanträge bleiben möglich.
+
+Die Zugriffsfreigabe erfolgt über die expliziten Subject-Zuordnungen
+und bestehende ClubUnio-Rollen. Keine offene Registrierung und keine
+Migration. Für einen technischen Rückweg die gesicherte Stage-Umgebung
+wiederherstellen und den Konfigurationscache neu bauen.
