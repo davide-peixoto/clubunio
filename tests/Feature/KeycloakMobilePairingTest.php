@@ -77,6 +77,32 @@ SQL);
         $this->assertNull(app('router')->getRoutes()->getByName('clubunio.security.recovery'));
     }
 
+    public function test_native_pair_requires_the_browser_return_secret_and_device_proof(): void
+    {
+        $controller = app(KeycloakMobilePairingController::class);
+        $request = fn ($payload) => Request::create(self::ORIGIN.'/api/mobile/v1/session/security/redeem',
+            'POST', server: ['CONTENT_TYPE' => 'application/json'], content: json_encode($payload));
+        $proof = bin2hex(random_bytes(32));
+        $pair = $controller->pair($request(['proof_hash' => hash('sha256', $proof), 'native' => true]), 'begin')
+            ->getData(true)['data'];
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $pair['confirmation']);
+        $controller->validPair($request($pair), true);
+
+        $db = DB::connection('clubunio');
+        $issuer = config('clubunio-verein-oidc.issuer');
+        $db->table('clubora.keycloak_account_links')->insert(['issuer' => $issuer, 'subject' => 'native-subject', 'account_id' => 42]);
+        $actor = (new Account)->forceFill(['id' => 42, 'password' => 'synthetic-hash']);
+        $claims = (object) ['iss' => $issuer, 'sub' => 'native-subject', 'acr' => 'synthetic-mfa', 'auth_time' => time()];
+        $secret = $controller->complete($pair + ['native' => true], $actor, $claims);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $secret);
+        $payload = ['pair' => $pair['pair'], 'proof' => $proof];
+        $this->denied(404, fn () => $controller->pair($request($payload), 'redeem'));
+        $this->denied(404, fn () => $controller->pair($request($payload + ['return_secret' => str_repeat('0', 64)]), 'redeem'));
+        $this->denied(404, fn () => $controller->pair($request(['proof' => str_repeat('0', 64), 'return_secret' => $secret] + $payload), 'redeem'));
+        $this->assertSame(hash('sha256', hash('sha256', $proof).'|'.$secret),
+            $db->table('clubora.account_security_pairs')->value('proof_hash'));
+    }
+
     private function denied(int $expected, callable $action): void
     {
         try {

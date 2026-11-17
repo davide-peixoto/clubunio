@@ -53,10 +53,11 @@ final class PlatformOidcController
         $pair = null;
         $platformMigration = $request->routeIs('clubunio.verein.oidc.platform-migration');
         abort_if($platformMigration && !\App\ClubUnio\Services\PlatformAdminKeycloakLink::configured(), 404);
-        if ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
+        if ($request->routeIs('clubunio.verein.oidc.mobile.start', 'clubunio.verein.oidc.mobile.native')) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
-            app(KeycloakMobilePairingController::class)->validPair($request);
-            $pair = $request->only(['pair', 'confirmation']);
+            $native = $request->routeIs('clubunio.verein.oidc.mobile.native');
+            app(KeycloakMobilePairingController::class)->validPair($request, $native);
+            $pair = $request->only(['pair', 'confirmation']) + ['native' => $native];
         }
         if ($request->routeIs('clubunio.verein.oidc.invite.accept')) {
             abort_unless($config['invites_enabled'], 404);
@@ -139,7 +140,12 @@ final class PlatformOidcController
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
-            app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
+            $returnSecret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
+            if ($returnSecret !== null) {
+                return redirect()->away('clubunio-auth://signin?'.http_build_query([
+                    'pair' => $pending['pair']['pair'], 'return_secret' => $returnSecret,
+                ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
+            }
 
             return response()->view('clubunio.keycloak-mobile', ['pair' => null])
                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
