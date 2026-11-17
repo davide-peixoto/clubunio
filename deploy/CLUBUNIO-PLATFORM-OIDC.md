@@ -96,3 +96,18 @@ Die Zugriffsfreigabe erfolgt über die expliziten Subject-Zuordnungen
 und bestehende ClubUnio-Rollen. Keine offene Registrierung und keine
 Migration. Für einen technischen Rückweg die gesicherte Stage-Umgebung
 wiederherstellen und den Konfigurationscache neu bauen.
+
+## SV Sissach (Stage Refresh)
+
+`https://stage-clubunio.svsissach.ch` ist dem Mandanten
+`sv-sissach-refresh` zugeordnet. DNS und TLS sind aktiv.
+Der Keycloak-Client `clubunio-verein-stage` erlaubt den exakten
+HTTPS-Callback `/vereinslogin/oidc/callback` auf dieser Domain sowie
+die Domainwurzel als Logout-Ziel. Stage bindet Login-State und Sitzung
+an die jeweilige Origin und prüft auf der Vereinsdomain den Zugang
+zum zugeordneten Mandanten. Die zentrale Stage-Adresse und der
+Plattform-Client behalten ihre eigenen Einstiege.
+
+Die zentrale und die Vereinsadresse erreichten die Keycloak-Anmeldeseite
+mit HTTP 200 und dem jeweils korrekten Callback. Die persönliche
+Anmeldung mit MFA bis zum Vereinsdashboard steht noch aus.
