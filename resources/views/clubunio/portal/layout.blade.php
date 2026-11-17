@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="{{ asset('css/clubunio-planning.css').'?v=blue-v1' }}">
     @endisset
     @isset($tenant)
-        <link rel="stylesheet" href="{{ asset('css/clubunio-portal-shell.css').'?v=2' }}">
+        <link rel="stylesheet" href="{{ asset('css/clubunio-portal-shell.css').'?v=3' }}">
         <script src="{{ asset('js/clubunio-portal-shell.js').'?v=1' }}" defer></script>
     @endisset
 @include('clubunio.brand.head')</head>
