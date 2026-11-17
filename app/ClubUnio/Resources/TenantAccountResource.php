@@ -6,6 +6,7 @@ use App\ClubUnio\Models\AccountRole;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\TenantAccount;
 use App\ClubUnio\Services\AccountAdministrationService;
+use App\ClubUnio\Services\TenantSecurityRecovery;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
@@ -48,6 +49,13 @@ class TenantAccountResource extends CatalogResource
         $actor = Filament::auth()->user();
         $tenant = Filament::getTenant();
 
+        return $actor && $tenant && (static::canManageAccounts() || app(TenantSecurityRecovery::class)->operator($actor, $tenant));
+    }
+
+    public static function canManageAccounts(): bool
+    {
+        $actor = Filament::auth()->user();
+        $tenant = Filament::getTenant();
         return $actor && $tenant && app(AccountAdministrationService::class)->allowed($actor, $tenant);
     }
 
@@ -108,16 +116,24 @@ class TenantAccountResource extends CatalogResource
                 SelectFilter::make('access_profile_id')->label('Berechtigungsprofil')->searchable()
                     ->options(fn () => AccessProfile::where('tenant_id', Filament::getTenant()->id)->orderBy('name')->localizedPluck('name', 'id')->all()),
                 TernaryFilter::make('enabled')->label('Konto aktiv')->queries(true: fn ($q) => $q->whereHas('account', fn ($a) => $a->where('active', true)), false: fn ($q) => $q->whereHas('account', fn ($a) => $a->where('active', false)))])
-            ->headerActions([Action::make('support')->label('Benutzer simulieren')->icon('heroicon-o-eye')->url('/support/impersonation'),
+            ->headerActions([Action::make('support')->label('Benutzer simulieren')->icon('heroicon-o-eye')->url('/support/impersonation')->visible(static::canManageAccounts(...)),
                 Action::make('newAccount')->label('Benutzer hinzufügen')->icon('heroicon-o-user-plus')->schema(self::fields(false))
+                ->visible(static::canManageAccounts(...))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
-            ->recordActions([Action::make('appProfile')->label('App-Modulprofil')->icon('heroicon-o-device-phone-mobile')->iconButton()->tooltip(__('App-Modulprofil zuordnen'))
+            ->recordActions([
+                Action::make('securityRecovery')->label(fn () => trans('account-security.reset_title'))->icon('heroicon-o-key')->iconButton()
+                    ->tooltip(fn () => trans('account-security.reset_title'))
+                    ->visible(fn (TenantAccount $record) => app(TenantSecurityRecovery::class)->allowed(Filament::auth()->user(), Filament::getTenant(), $record))
+                    ->url(fn (TenantAccount $record) => route('clubunio.security.recovery', ['tenantId' => $record->tenant_id, 'linkId' => $record->id])),
+                Action::make('appProfile')->label('App-Modulprofil')->icon('heroicon-o-device-phone-mobile')->iconButton()->tooltip(__('App-Modulprofil zuordnen'))
+                ->visible(static::canManageAccounts(...))
                 ->schema([Select::make('mobile_profile_id')->label('App-Modulprofil')->searchable()->placeholder(__('Automatisch nach Berechtigung'))
                     ->options(fn () => AccessProfile::where('tenant_id',Filament::getTenant()->id)->where('active',true)->orderBy('name')->localizedPluck('name','id')->all()),
                     Hidden::make('revision'), Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500)])
                 ->fillForm(fn (TenantAccount $record)=>['mobile_profile_id'=>$record->mobile_profile_id,'revision'=>$record->revision])
                 ->action(fn (TenantAccount $record,array $data,$livewire)=>FormMutation::run($livewire,fn ()=>app(\App\ClubUnio\Services\MobileModuleSettings::class)->assign(Filament::auth()->user(),Filament::getTenant(),$record->id,$data))),
                 Action::make('manage')->label('Benutzer bearbeiten')->icon('heroicon-o-pencil-square')->iconButton()->tooltip(__('Benutzer und Rolle bearbeiten'))->schema(self::fields(true))
+                ->visible(static::canManageAccounts(...))
                 ->fillForm(fn (TenantAccount $record) => ['username' => $record->account->username, 'display_name' => $record->account->display_name, 'active' => $record->account->active, 'role' => $record->role, 'access_profile_id' => $record->access_profile_id, 'portal_enabled' => $record->portal_enabled, 'revision' => $record->revision, 'account_revision' => $record->account->revision])
                 ->action(fn (TenantAccount $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)))])
             ->defaultSort('id')->deferFilters(false)->persistFiltersInSession()->persistSearchInSession();

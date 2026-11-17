@@ -23,9 +23,14 @@ class MemberAccessService
 
     public function activeMembers(Tenant $tenant): Builder
     {
+        return $this->currentMembers()->where('tenant_id', $tenant->id);
+    }
+
+    public function currentMembers(): Builder
+    {
         $today = now('Europe/Zurich')->toDateString();
 
-        return Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')
+        return Member::withoutGlobalScopes()->whereNull('archived_at')
             ->where(fn ($q) => $q->whereNull('exit_date')->orWhere('exit_date', '>', $today))
             ->whereDoesntHave('status', fn ($q) => $q->where('ends_membership', true));
     }

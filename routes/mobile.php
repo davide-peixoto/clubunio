@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.mobile.')->group(function () {
     Route::post('session', [Mobile::class, 'login'])->name('login');
+    Route::post('session/security/{operation}', [\App\ClubUnio\Http\StrongLoginController::class, 'pair'])
+        ->whereIn('operation', ['begin', 'redeem'])->middleware('throttle:40,1')->name('security-pair');
     Route::post('preferences', [Mobile::class, 'preferences']);
     Route::get('context', [Mobile::class, 'context'])->name('context');
     Route::get('profile', [\App\ClubUnio\Mobile\MobileAccountController::class, 'profile'])->name('profile');
-    Route::get('profile/photo', [\App\ClubUnio\Mobile\MobileAccountController::class, 'photo'])->name('profile.photo');
-    Route::post('profile/photo', [\App\ClubUnio\Mobile\MobileAccountController::class, 'uploadPhoto'])->name('profile.photo.upload');
     \App\ClubUnio\Mobile\MobilePushRoutes::registerAccount();
     Route::post('password', [\App\ClubUnio\Mobile\MobileAccountController::class, 'password'])->name('password');
     Route::get('sessions', [Mobile::class, 'sessions'])->name('sessions');
@@ -23,7 +23,6 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         \App\ClubUnio\Mobile\MobileAdminNoticeRoutes::register();
         Route::get('teams', [Mobile::class, 'teams']);
         Route::get('members/{member}', [\App\ClubUnio\Mobile\MobileMemberController::class, 'show'])->whereNumber('member');
-        Route::get('members/{member}/photo', [\App\ClubUnio\Mobile\MobileMemberController::class, 'photo'])->whereNumber('member');
         Route::get('members/{member}/invoices', [\App\ClubUnio\Mobile\MobileMemberController::class, 'invoices'])->whereNumber('member');
         Route::get('members/{member}/change-requests', [\App\ClubUnio\Mobile\MobileMemberController::class, 'changes'])->whereNumber('member');
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');

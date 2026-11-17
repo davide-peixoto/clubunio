@@ -119,10 +119,6 @@ class ClubUnioPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return SessionPanel::make()->default()->id('clubunio')->path('')->authGuard('clubunio')
-            ->userMenuItems([
-                \Filament\Actions\Action::make('myProfile')->label(fn () => __('profile_web.title'))
-                    ->icon('heroicon-o-user-circle')->url(fn () => route('clubunio.web-profile.show')),
-            ])
             ->login(Login::class)->brandName('ClubUnio')
             ->brandLogo(asset('brand/blue-v1/clubunio-logo-horizontal.svg'))
             ->darkModeBrandLogo(asset('brand/blue-v1/clubunio-logo-horizontal-white.svg'))
@@ -215,6 +211,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                \App\ClubUnio\Http\RequireStrongWebSession::class,
                 \App\ClubUnio\Http\UseLanguage::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
@@ -222,6 +219,13 @@ class ClubUnioPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])->authMiddleware([Authenticate::class]);
+            ])->authMiddleware([Authenticate::class])
+            ->userMenuItems([
+                'account-security' => \Filament\Actions\Action::make('account-security')
+                    ->label(fn () => trans('account-security.setup'))
+                    ->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('clubunio.security.show'))
+                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
+            ]);
     }
 }

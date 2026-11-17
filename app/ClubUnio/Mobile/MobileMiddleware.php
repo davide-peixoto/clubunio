@@ -21,7 +21,7 @@ final class MobileMiddleware
                 && $request->routeIs('clubunio.mobile.logout', 'clubunio.mobile.revoke');
             abort_unless(config('clubunio-mobile.enabled') || $logout, 503);
             $bound = app(TenantDomainService::class)->resolve($request);
-            if ($request->routeIs('clubunio.mobile.login')) {
+            if ($request->routeIs('clubunio.mobile.login', 'clubunio.mobile.security-pair')) {
                 return $this->protect($next($request));
             }
             $actor = app(MobileSessions::class)->authenticate($request);
@@ -32,7 +32,6 @@ final class MobileMiddleware
                 RateLimiter::hit($key, 60);
                 if ($request->route('tenant')) {
                     $tenant = Tenant::whereKey($request->route('tenant'))->firstOrFail();
-                    abort_unless(StageMobilePilot::allowsTenant($actor->username, $tenant->slug), 404);
                     abort_if($bound && ! $bound->is($tenant), 404);
                     app(MobileAccess::class)->enter($actor, $tenant);
                     app(MobileBootstrapState::class)->authorizeTenant($request, $tenant);

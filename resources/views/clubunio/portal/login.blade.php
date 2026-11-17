@@ -11,6 +11,9 @@
         @if($errors->any())<p role="alert" class="error">{{ $errors->first() }}</p>@endif
         <button class="primary" type="submit">{{ __('Anmelden') }}</button>
     </form>
+    @if(config('clubunio-security.enabled'))
+        <a href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}">{{ trans('account-security.strong_login') }}</a>
+    @endif
     <a class="admin-link" href="{{ url('/login') }}">{{ __('Verwaltung') }}</a>
 </section>
 @endsection

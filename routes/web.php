@@ -35,6 +35,19 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/clubunio-platform.php';
 require __DIR__.'/clubunio-marketing.php';
 
+Route::get('/account/security', [\App\ClubUnio\Http\StrongLoginController::class, 'show'])->name('clubunio.security.show');
+Route::post('/account/security/{operation}', [\App\ClubUnio\Http\StrongLoginController::class, 'action'])
+    ->middleware('throttle:30,1')->block(10, 10)->name('clubunio.security.action');
+Route::match(['GET', 'POST'], '/account/recovery/{tenantId}/{linkId}', \App\ClubUnio\Http\TenantSecurityRecoveryController::class)
+    ->whereNumber(['tenantId', 'linkId'])->middleware(['auth:clubunio', 'throttle:20,1'])->name('clubunio.security.recovery');
+
+Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
+    ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
+Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
+    ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
+Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
+    ->whereNumber('campaign')->middleware(['auth:clubunio', 'throttle:4,1'])->name('clubunio.campaign.letters');
+
 Route::match(['GET', 'POST'], '/social-data/{operation}', \App\ClubUnio\Http\SocialStudioController::class)
     ->where('operation', '[a-z-]+')
     ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])
@@ -55,27 +68,6 @@ Route::middleware('auth:clubunio')->group(function () {
 });
 
 Route::get('/signage/{tenant:slug}', [PublicWebController::class, 'signage'])->middleware('throttle:120,1')->name('clubunio.public.signage');
-Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
-    ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
-Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
-    ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
-Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
-    ->whereNumber('campaign')->middleware(['auth:clubunio', 'throttle:4,1'])->name('clubunio.campaign.letters');
-Route::get('/profile-photo', [\App\ClubUnio\Http\ProfilePhotoController::class, 'personal'])
-    ->middleware('auth:clubunio')->name('clubunio.photo.personal');
-foreach (['clubunio' => ['my-profile', 'clubunio.web-profile.'], 'portal' => ['portal/profile', 'clubunio.portal.profile.']] as $guard => [$path, $name]) {
-    Route::prefix($path)->name($name)->middleware('auth:'.$guard)->group(function () {
-        $controller = \App\ClubUnio\Http\WebProfileController::class;
-        Route::get('/', [$controller, 'show'])->name('show');
-        Route::get('photo', [$controller, 'photo'])->name('photo');
-        Route::post('photo', [$controller, 'upload'])->name('upload');
-        Route::post('password', [$controller, 'password'])->name('password');
-    });
-}
-Route::get('/campaign-photo/{tenant:slug}/{change}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'campaign'])
-    ->whereNumber('change')->middleware('auth:clubunio')->name('clubunio.photo.campaign');
-Route::get('/member-photo/{tenant:slug}/{member}', [\App\ClubUnio\Http\ProfilePhotoController::class, 'member'])
-    ->whereNumber('member')->middleware('auth:clubunio')->name('clubunio.photo.member');
 Route::get('/join/{tenant:slug}', [PublicWebController::class, 'registration'])->middleware('throttle:60,1')->name('clubunio.public.registration');
 Route::post('/join/{tenant:slug}', [PublicWebController::class, 'submit'])->middleware('throttle:5,10')->name('clubunio.public.registration.submit');
 

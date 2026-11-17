@@ -120,3 +120,23 @@ fuer diese App deaktivieren oder auf diesen Branch umstellen. Die Einstellung
 in RunCloud wurde in diesem Lauf nicht geaendert. Vor Aktivierung mit der
 tatsaechlichen Stage-Verbindung einen lesenden Zugriff auf
 `clubunio.accounts` pruefen; ein Loginseiten-200 allein reicht nicht.
+
+## RunCloud-Bestand und Migrationsjournal (17.11.2026)
+
+Der aktive RunCloud-Webroot verwendet den Stage-Basiscommit 3c51136 mit
+direkt eingespielten Änderungen. Dieser Commit übernimmt die Serverdateien
+für Kontosicherheit, Plattform-Lizenzen und Monitoring sowie die übrigen
+versionierbaren Änderungen aus dem Webroot.
+
+Lesender Abgleich in `clubunio_stage.clubunio`: Die Tabellen
+`account_security`, `account_passkeys` und `account_security_pairs` sowie
+`mobile_sessions.security_stamp` entsprechen dem DDL der Sicherheitsmigration.
+Geprüft wurden Spaltentypen, Nullbarkeit, Vorgaben, Primär- und Fremdschlüssel,
+die Prüfung des Signaturzählers und beide ergänzenden Indizes. Die Rolle
+`userunio` hat Lese- und Schreibrechte auf den drei Sicherheitstabellen.
+
+`2026_11_13_001000_account_security` fehlt im Migrationsjournal. Die DDL wurde
+bereits angewendet. Vor dem nächsten Migrationslauf den Eintrag nach erneuter
+Schema-Prüfung gezielt nachtragen. Die vorhandenen Tabellen enthalten den
+aktiven Sicherheitsbestand und dürfen dafür nicht neu erstellt werden.
+`2026_11_15_000100_tenant_license` ist bereits als Batch 125 verbucht.

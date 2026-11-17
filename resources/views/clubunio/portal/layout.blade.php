@@ -5,16 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('ClubUnio · Vereinsportal') }}</title>
     <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css').'?v=blue-v1' }}">
-@include('clubunio.brand.head')
-@stack('head')
-</head>
+@include('clubunio.brand.head')</head>
 <body>
     <header class="portal-header">
         @include('clubunio.brand.logo')
-        @yield('account-navigation')
-        @auth('portal')
-            <a href="{{ route('clubunio.portal.profile.show') }}">{{ __('profile_web.title') }}</a>
-        @endauth
         @isset($tenant)
             <nav aria-label="{{ __('Verein') }}">
                 @foreach($tenants as $availableTenant)
@@ -34,6 +28,9 @@
             <a href="{{ route('clubunio.bus.index', $tenant->slug) }}">{{ __('Bus') }}</a>
             @if(in_array(app(\App\ClubUnio\Services\MemberAccessService::class)->membership(auth('portal')->user(), $tenant)?->role, ['admin','office','technical_lead'], true))
                 <a href="{{ route('clubunio.portal.registrations', ['tenant' => $tenant->slug]) }}">{{ __('Anmeldungen') }}</a>
+            @endif
+            @if(app(\App\ClubUnio\Services\AccountSecurity::class)->enabled() && !request()->attributes->has('clubunio_impersonation'))
+                <a class="icon-button" href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}" title="{{ trans('account-security.setup') }}" aria-label="{{ trans('account-security.setup') }}">@svg('heroicon-o-shield-check')</a>
             @endif
             <form method="post" action="{{ route('clubunio.portal.logout') }}">@csrf
                 <button class="icon-button" type="submit" title="{{ __('Abmelden') }}" aria-label="{{ __('Abmelden') }}">@svg('heroicon-o-arrow-right-on-rectangle')</button>
