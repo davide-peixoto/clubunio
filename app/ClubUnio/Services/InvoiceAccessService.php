@@ -12,6 +12,7 @@ class InvoiceAccessService
     public function visible(Account $actor, Tenant $tenant): Builder
     {
         $query = Invoice::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
+        app(TrainerWebSeasonScope::class)->seasonRecords($query, $actor, $tenant);
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'invoices', 'view')) {
             return $query;
         }

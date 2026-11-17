@@ -41,6 +41,7 @@ class BusReservationService
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'team_seasons')->where('active', true)
             ->whereIn('team_id', $this->table($tenant, 'teams')->where('active', true)->select('id'));
+        app(TrainerWebSeasonScope::class)->seasonRecords($q, $actor, $tenant);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'view')) {
             $q->whereIn('id', app(MemberAccessService::class)->responsibleTeams($actor, $tenant));
         }
@@ -52,6 +53,7 @@ class BusReservationService
     {
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'bus_reservations')->where('active', true);
+        app(TrainerWebSeasonScope::class)->teamRecords($q, $actor, $tenant);
         if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'bus', 'view')) {
             $ids = app(MemberAccessService::class)->represented($actor, $tenant, true)->select('clubunio.members.id');
             $q->where(fn ($q) => $q->whereIn('member_id', $ids)->orWhereIn('team_season_id', $this->teams($actor, $tenant)->select('id')));

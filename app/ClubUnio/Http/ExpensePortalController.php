@@ -12,6 +12,7 @@ use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\ExpenseService;
 use App\ClubUnio\Services\MemberAccessService;
 use App\ClubUnio\Services\MemberDocumentService;
+use App\ClubUnio\Services\TrainerWebSeasonScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -54,8 +55,9 @@ class ExpensePortalController
         $members = app(MemberAccessService::class)->represented($request->user('portal'), $tenant, true)->get();
         $member = $members->first();
         abort_unless($member, 403);
-        $teams = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereIn('id', DB::connection('clubunio')->table('clubunio.team_staff')
-            ->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $member->id)->select('team_season_id'))->orderByDesc('season_id')->get();
+        $teamQuery = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereIn('id', DB::connection('clubunio')->table('clubunio.team_staff')
+            ->where('tenant_id', $tenant->id)->where('active', true)->where('member_id', $member->id)->select('team_season_id'));
+        $teams = app(TrainerWebSeasonScope::class)->seasonRecords($teamQuery, $request->user('portal'), $tenant)->orderByDesc('season_id')->get();
         $banks = MemberBankAccount::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('active', true)->with('bank')->get();
         $rounds = ExpenseRound::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->get();
 

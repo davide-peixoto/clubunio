@@ -92,6 +92,9 @@ class ExpenseService
     {
         $q = Expense::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true);
         app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($q, $tenant);
+        $scope = app(TrainerWebSeasonScope::class);
+        $scope->seasonRecords($q, $actor, $tenant);
+        $scope->teamRecords($q, $actor, $tenant);
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'view')) {
             return $q;
         }
@@ -231,6 +234,7 @@ class ExpenseService
             }
             $teamQuery = TeamSeason::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->whereHas('team', fn ($q) => $q->where('active', true));
             app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->finance($teamQuery, $tenant);
+            app(TrainerWebSeasonScope::class)->seasonRecords($teamQuery, $actor, $tenant);
             $team = $teamQuery->findOrFail($data['team_season_id']);
             if (! $access->activeMembers($tenant)->whereKey($data['member_id'])->exists()) {
                 throw ValidationException::withMessages(['member_id' => __('Bitte ein aktives Mitglied wählen.')]);

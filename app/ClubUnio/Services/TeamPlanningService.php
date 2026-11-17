@@ -106,6 +106,7 @@ class TeamPlanningService
     {
         $this->enter($actor, $tenant);
         $q = $this->table($tenant, 'team_seasons')->where('active', true);
+        app(TrainerWebSeasonScope::class)->seasonRecords($q, $actor, $tenant);
         if (app(ModulePermissionService::class)->allows($actor, $tenant, 'planning', $manage ? $function : 'view')) {
             return $q;
         }
@@ -143,7 +144,14 @@ class TeamPlanningService
             return $this->table($tenant, 'team_invitations')->whereRaw('1=0');
         }
 
-        return $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubunio.members.id'));
+        $query = $this->table($tenant, 'team_invitations')->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubunio.members.id'));
+        $scope = app(TrainerWebSeasonScope::class);
+        if ($scope->applies($actor, $tenant)) {
+            $events = $this->table($tenant, 'team_events')->whereIn('team_season_id', $scope->currentTeams($tenant)->select('id'));
+            $query->whereIn('event_id', $events->select('id'));
+        }
+
+        return $query;
     }
 
     public function options(Tenant $tenant): array
@@ -335,7 +343,9 @@ class TeamPlanningService
         $own = $access->membership($actor->fresh(), $tenant)?->role === 'profile' ? collect() : $access->represented($actor, $tenant)->pluck('id');
         $teams = $this->teams($actor, $tenant, true, 'view')->pluck('id');
 
-        return $this->table($tenant, 'team_absences')->whereNull('deleted_at')->where(function ($q) use ($tenant, $own, $teams) {
+        $query = app(TrainerWebSeasonScope::class)->absences($this->table($tenant, 'team_absences'), $actor, $tenant);
+
+        return $query->whereNull('deleted_at')->where(function ($q) use ($tenant, $own, $teams) {
             $q->whereIn('member_id', $own);
             foreach (['team_players', 'team_staff'] as $table) {
                 $q->orWhereIn('member_id', $this->table($tenant, $table)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
@@ -370,7 +380,8 @@ class TeamPlanningService
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $input, $delete) {
             $this->lock($tenant);
             $this->authorizeOperation($actor, $tenant, $delete ? 'deactivate' : ($id ? 'update' : 'create'));
-            $old = $id ? $this->table($tenant, 'team_absences')->where('id', $id)->whereNull('deleted_at')->first() : null;
+            $scope = app(TrainerWebSeasonScope::class);
+            $old = $id ? $scope->absences($this->table($tenant, 'team_absences'), $actor, $tenant)->where('id', $id)->whereNull('deleted_at')->first() : null;
             if ($id) {
                 abort_unless($old, 404);
             }
@@ -387,6 +398,7 @@ class TeamPlanningService
             } else {
                 $data = Validator::make($input, ['starts_on' => 'required|date_format:Y-m-d', 'ends_on' => 'required|date_format:Y-m-d|after_or_equal:starts_on',
                     'kind' => $this->optionRule($tenant, 'absence'), 'note' => 'nullable|string|max:1000'])->validate();
+                $scope->validateAbsence($actor, $tenant, $data['starts_on'], $data['ends_on']);
                 if (array_key_exists('starts_at', $input) || array_key_exists('ends_at', $input)) {
                     $window = Validator::make($input, ['starts_at' => 'required|date', 'ends_at' => 'required|date|after:starts_at'])->validate();
                     foreach (['starts_at' => 'starts_on', 'ends_at' => 'ends_on'] as $time => $date) {
