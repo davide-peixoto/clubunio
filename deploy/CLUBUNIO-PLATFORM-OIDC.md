@@ -66,3 +66,17 @@ Die lokale Anmeldung bleibt verfügbar.
 Die beiden OIDC-Starts erreichten die Keycloak-Anmeldeseite. Falscher
 Callback-State ergab HTTP 403. Die drei lokalen Loginseiten blieben
 erreichbar. Die persönliche Browserabnahme nach Passwort und MFA steht aus.
+
+## Nativer App-Pilot auf Stage
+
+Der Stage-Client für Vereine verwendet denselben HTTPS-Callback auch für
+die native Anmeldung. Der Server prüft frische Keycloak-MFA und leitet
+ein einmaliges Rückgabegeheimnis an `clubunio-auth://signin` weiter.
+Die App löst es zusammen mit dem ursprünglichen Gerätenachweis ein.
+Die Freigabe verwendet die expliziten Vereins-Subject-Zuordnungen.
+Einladungen und öffentliche Selbstregistrierung werden dafür nicht aktiviert.
+Die Plattformanmeldung bleibt getrennt. Die vorhandenen Tabellen genügen.
+
+Für einen Testbuild in Flutter Stage wählen. Auf Android und iOS noch
+Anmeldung mit MFA, automatische Rückkehr, Abbruch und Kontowechsel auf
+dem Gerät prüfen.

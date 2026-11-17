@@ -61,8 +61,7 @@ final class MobileBootstrapState {
         $data['pushAdminAvailable']=false;
         $data['strongLoginAvailable']=$data['loginAllowed'] && config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
         $data['keycloakLoginAvailable'] = $data['strongLoginAvailable']
-            && config('clubunio-verein-oidc.enabled') && config('clubunio-verein-oidc.mobile_enabled')
-            && config('clubunio-verein-oidc.invites_enabled') && config('clubunio-verein-oidc.origin') === $origin;
+            && \App\ClubUnio\Http\KeycloakMobilePairingController::available($origin);
         return $data;
     }
     public function personalState(Account $actor,Tenant $tenant): array {

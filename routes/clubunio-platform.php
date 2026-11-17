@@ -12,6 +12,8 @@ Route::get('/vereinslogin/oidc/invitation', [\App\ClubUnio\Http\PlatformOidcCont
     ->middleware('throttle:20,1')->name('clubunio.verein.oidc.invite');
 Route::post('/vereinslogin/oidc/invitation', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
     ->middleware('throttle:10,1')->block(10,10)->name('clubunio.verein.oidc.invite.accept');
+Route::get('/vereinslogin/oidc/mobile/native', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])
+    ->middleware('throttle:20,1')->name('clubunio.verein.oidc.mobile.native');
 Route::get('/vereinslogin/oidc/mobile', [\App\ClubUnio\Http\PlatformOidcController::class, 'mobile'])
     ->middleware('throttle:20,1')->name('clubunio.verein.oidc.mobile');
 Route::post('/vereinslogin/oidc/mobile', [\App\ClubUnio\Http\PlatformOidcController::class, 'start'])

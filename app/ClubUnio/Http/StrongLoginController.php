@@ -166,6 +166,10 @@ final class StrongLoginController
         abort_unless($request->isJson() && $request->query->count() === 0, 415);
         $this->security->origin($request);
         app(MobileBootstrapState::class)->authorizeLogin($request);
+        if (($operation === 'begin' && $request->boolean('native'))
+            || ($operation === 'redeem' && $request->has('return_secret'))) {
+            return app(KeycloakMobilePairingController::class)->pair($request, $operation);
+        }
         if ($operation === 'begin') {
             $data = $request->validate(['proof_hash' => 'required|regex:/^[a-f0-9]{64}$/D']);
             $id = (string) Str::uuid();

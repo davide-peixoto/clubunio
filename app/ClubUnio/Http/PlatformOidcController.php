@@ -50,7 +50,10 @@ final class PlatformOidcController
         $config = $this->configuration($request);
         $invitation = null;
         $pair = null;
-        if ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
+        if ($request->routeIs('clubunio.verein.oidc.mobile.native')) {
+            app(KeycloakMobilePairingController::class)->validPair($request, true);
+            $pair = $request->only(['pair', 'confirmation']) + ['native' => true];
+        } elseif ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
             app(StrongLoginController::class)->validPair($request);
             $pair = $request->only(['pair', 'confirmation']);
@@ -123,6 +126,15 @@ final class PlatformOidcController
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
         if ($club && is_array($pending['pair'] ?? null)) {
+            if (($pending['pair']['native'] ?? false) === true) {
+                abort_unless($actor?->active && !$actor->api_only && $actor->tenants()->get()
+                    ->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
+                $secret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
+
+                return redirect()->away('clubunio-auth://signin?'.http_build_query([
+                    'pair' => $pending['pair']['pair'], 'return_secret' => $secret,
+                ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
+            }
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
