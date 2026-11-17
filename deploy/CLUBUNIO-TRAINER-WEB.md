@@ -68,3 +68,5 @@ Internet, Browseraufbau oder Keycloak-Anmeldung:
 Aktiv als `20261117-clubunio-trainer-polish`; Rueckweg:
 `20261117-clubunio-keycloak-invite-names`. Keine Migration oder
 Konfigurationsaenderung. Stage unveraendert.
+Nach erneuter Keycloak-Anmeldung wurden die vier aktualisierten Ansichten im
+angemeldeten Trainer-Browser auf DEV geoeffnet und kontrolliert.
