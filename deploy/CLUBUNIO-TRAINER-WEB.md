@@ -70,3 +70,24 @@ Aktiv als `20261117-clubunio-trainer-polish`; Rueckweg:
 Konfigurationsaenderung. Stage unveraendert.
 Nach erneuter Keycloak-Anmeldung wurden die vier aktualisierten Ansichten im
 angemeldeten Trainer-Browser auf DEV geoeffnet und kontrolliert.
+
+## Durchgaengige Portal-Ansichten
+
+Sponsorenlauf (Anlaesse, Teilnahmen, Zusagen, Erfassung und Freigabelink) und
+Materialuebergabe (Uebersicht, Quittungsarchiv, Materialpositionen und
+Empfangsbestaetigung) verwenden dieselben Bedienelemente wie Spesen und
+Busreservierungen. Mitglieder, Anmeldungen, Rechnungen, Ankuendigungen,
+Benachrichtigungen, Absenzen, SFV-Spiele und Trainingsplaene uebernehmen
+die gemeinsamen Portalstile. Die Unterbereiche der Teamplanung erscheinen
+im jeweiligen Inhaltsbereich, damit die Seitenleiste stabil bleibt.
+
+Keine Schema- oder Rechteaenderung. Release:
+`20261117-clubunio-trainer-consistency`; Rueckweg:
+`20261117-clubunio-personal-profile-host-scope`. Stage unveraendert.
+Vierzehn Ansichten und der Kalenderexport wurden schreibgeschuetzt mit
+einem DEV-Trainer gerendert. Im Trainer-Browser wurden insbesondere die
+Uebersichten Sponsorenlauf und Material, die Modulnavigation der
+Teamplanung sowie Ankuendigungen und Benachrichtigungen geprueft.
+Fuer Sponsorenlauf und Material waren in dieser Sitzung keine
+Detaildatensaetze sichtbar; der lokale DE/EN-Rendercheck deckt beide
+Detailansichten und ihre Aktionsformulare mit synthetischen Daten ab.
