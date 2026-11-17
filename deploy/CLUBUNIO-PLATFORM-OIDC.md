@@ -52,3 +52,17 @@ abbilden. Lokale Anmeldung mit MFA während des Pilots beibehalten.
 Die Aktivierung ist offen. Zammad, KI-Triage und ERPNext warten auf
 separate Stage-Testkonfigurationen. Native App-Anmeldung bleibt
 bis zur Übernahme und Abnahme des nativen Callbacks deaktiviert.
+
+### Web-Pilot aktiviert
+
+Beide vertraulichen Stage-Clients sind mit PKCE S256, exaktem Callback
+und dem MFA-Browserflow im Realm `clubunio` angelegt. Stage verlangt
+frische MFA und prüft den zugesicherten ACR vor der Anmeldung.
+Der Vereinsclient ist für zwei verifizierte Davide-Konten zugeordnet.
+Das bestehende Plattformrecht hat davon nur das SV-Sissach-Konto.
+Für `info@clubunio.ch` wurde keine passende aktive Identität gefunden.
+Die lokale Anmeldung bleibt verfügbar.
+
+Die beiden OIDC-Starts erreichten die Keycloak-Anmeldeseite. Falscher
+Callback-State ergab HTTP 403. Die drei lokalen Loginseiten blieben
+erreichbar. Die persönliche Browserabnahme nach Passwort und MFA steht aus.
