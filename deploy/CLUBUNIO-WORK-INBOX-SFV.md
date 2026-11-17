@@ -21,3 +21,35 @@ In **SFV-Wettkämpfe** zeigt die Einzelvorschau bei einem Platz- oder Terminwech
 Für die Änderung ist keine Migration erforderlich. Rückweg ist der vorherige Web-Release. Bereits bestätigte fachliche Änderungen bleiben im Änderungsverlauf erhalten.
 
 Auf DEV aktiv als `20261114-clubunio-inbox-sfv-v2`. Rückweg ist `20261113-clubunio-veo-planning`. Die angemeldete HTTPS-Abnahme mit zwei getrennten TOTP-Testkonten hat alle Arbeitskorbbereiche geprüft. Ein synthetisches Spiel wurde in der Sammelvorschau zur Einzelprüfung verwiesen und erst nach bestätigter Einzelvorschau verschoben. Der separate PostgreSQL-Test für die gemeinsame Aktualisierung von Spiel und Teamtermin bestand.
+
+## Für Stage vorbereitet
+
+Arbeitskorb und SFV verwenden die vorhandenen Tabellen. Die Veo-Migration
+legt zwei leere Konfigurationstabellen im Schema `clubunio` an. Die dafür
+benötigten eindeutigen Schlüssel in `training_options` und `team_seasons`
+sind auf Stage vorhanden. Beide Veo-Tabellen und der Migrationseintrag
+fehlten bei der lesenden Vorprüfung.
+
+Beim freigegebenen Rollout zuerst den Stage-Stand und die Sicherung prüfen.
+Die Veo-Migration mit `php deploy/apply-stage-veo.php` aus dem vorbereiteten
+Release gezielt auf `clubunio_stage` anwenden und den Eintrag im Journal
+prüfen. Danach den Webcode aktivieren. Beim Rückweg die beiden additiven
+Veo-Tabellen und ihre Konfiguration stehen lassen.
+
+Stage-Abnahme mit zwei Testvereinen und synthetischen Spielen:
+
+1. Arbeitskorb als Vereinsadmin und Geschäftsstelle öffnen. Platz, Bus,
+   Spesen und Bexio-Prüffälle mit den jeweiligen Modulrechten und Links prüfen.
+2. Einen SFV-Terminwechsel aus der Sammelvorschau zur Einzelprüfung führen.
+   Auswirkung auf Platz und Teamtermin prüfen, Konflikte ablehnen und die
+   Änderung erst nach Bestätigung gemeinsam übernehmen.
+3. Die Grenzen der letzten Stunde prüfen. Vor dem Fenster und ab Anpfiff
+   blockieren, am Fensterbeginn erlauben. Den Schutz der lokalen Zuteilung
+   beim SFV-Import bis zum Belegungsende prüfen.
+4. Zwei Kameras hinterlegen und eine Saisonmannschaft freigeben. Nach dem
+   bestätigten Wechsel müssen Zeit und Kamera im Veo-Plan folgen.
+   Absage und Mandantentrennung ebenfalls prüfen.
+
+Die DEV-Bereinigung und der gezielte SFV-Datenbackfill gehören nicht zum
+Stage-Codepaket. Ein allfälliger Datenabgleich braucht einen eigenen
+Nachweis anhand der Stage-Daten.

@@ -380,7 +380,7 @@ class PitchPlanningDomainTest extends TestCase
     {
         $this->travelTo(\Carbon\Carbon::parse('2026-11-04 12:00:00', 'Europe/Zurich'));
         \App\ClubUnio\Services\TeamPlanningService::seedOptions($this->tenant->id);
-        $this->db->table('clubora.competitions')->where('id', $this->competition)
+        $this->db->table('clubunio.competitions')->where('id', $this->competition)
             ->update(['association_match_id' => 818181]);
         $match = $this->insert('sfv_schedule', ['match_id' => 818181, 'season_id' => 2026, 'home' => true,
             'title' => 'A - B', 'host_name' => 'A', 'guest_name' => 'B',
@@ -396,7 +396,7 @@ class PitchPlanningDomainTest extends TestCase
         $this->assertSame([], $preview['impact']['conflicts']);
         $this->assertSame('2026-11-07T15:00', $preview['impact']['events'][0]['input']['starts_at']);
 
-        $this->db->table('clubora.team_events')->where('id', $event)->update(['revision' => 2]);
+        $this->db->table('clubunio.team_events')->where('id', $event)->update(['revision' => 2]);
         try {
             $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
             $this->fail('Stale reschedule was approved');
@@ -405,10 +405,10 @@ class PitchPlanningDomainTest extends TestCase
         }
         $preview['impact'] = $impact->preview($this->actor, $this->tenant, $preview);
         $sfv->apply($this->actor, $this->tenant, $preview, reschedule: true);
-        $updated = $this->db->table('clubora.team_events')->where('id', $event)->firstOrFail();
+        $updated = $this->db->table('clubunio.team_events')->where('id', $event)->firstOrFail();
         $this->assertSame('2026-11-07 16:30', \Carbon\CarbonImmutable::parse($updated->ends_at)->tz('Europe/Zurich')->format('Y-m-d H:i'));
         $this->assertSame('Fixture description', $updated->description);
-        $this->assertSame('team.changed', $this->db->table('clubora.team_planning_messages')->where('event_id', $event)->value('event_key'));
+        $this->assertSame('team.changed', $this->db->table('clubunio.team_planning_messages')->where('event_id', $event)->value('event_key'));
         $this->assertSame('sfv_moved', end($this->events)['action']);
         $this->travelBack();
     }

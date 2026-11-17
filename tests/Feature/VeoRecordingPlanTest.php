@@ -19,7 +19,7 @@ class VeoRecordingPlanTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
         $db = DB::connection('clubunio');
-        $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'competitions' => 'id integer primary key, tenant_id integer, active boolean, plays_on text, starts_at text, field_id integer, association_match_id integer',
             'sfv_schedule' => 'tenant_id integer, match_id integer, team_a_id integer, team_b_id integer, starts_at text, title text, home boolean, state text',
@@ -33,7 +33,7 @@ class VeoRecordingPlanTest extends TestCase
             'veo_recording_teams' => 'tenant_id integer, team_season_id integer, primary key(tenant_id,team_season_id)',
             'object_changes' => 'id integer primary key, tenant_id integer, object_type text, object_id integer, after_value text',
         ] as $table => $columns) {
-            $db->statement("CREATE TABLE clubora.$table ($columns)");
+            $db->statement("CREATE TABLE clubunio.$table ($columns)");
         }
         $this->tenant = (new Tenant)->forceFill(['id' => 1]);
         $this->plan = app(VeoRecordingPlan::class);
@@ -154,6 +154,6 @@ class VeoRecordingPlanTest extends TestCase
 
     private function table(string $name): \Illuminate\Database\Query\Builder
     {
-        return DB::connection('clubunio')->table('clubora.'.$name);
+        return DB::connection('clubunio')->table('clubunio.'.$name);
     }
 }

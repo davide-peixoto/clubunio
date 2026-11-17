@@ -1236,3 +1236,10 @@ Abfrage-/History-/Cachegrenzen: MOBILE-CHAT-DELTA.md.
 Die optionale Reply-To-Adresse wird pro Mandant nach dem Import gepflegt.
 Keine Schemaaenderung und keine automatische Uebernahme aus Altdaten.
 Siehe [Mailversand](CLUBUNIO-MAIL-DELIVERY.md).
+
+## Stage-Paket Arbeitskorb, SFV und Veo
+
+Die Vorbereitung enthält genau eine neue additive Migration für die beiden
+Veo-Konfigurationstabellen. Arbeitskorb und SFV verwenden das bestehende
+Schema. Zielprüfung, Ablauf, Rückweg und Fachabnahme stehen in
+[Arbeitskorb und SFV](/deploy/CLUBUNIO-WORK-INBOX-SFV.md#für-stage-vorbereitet).
