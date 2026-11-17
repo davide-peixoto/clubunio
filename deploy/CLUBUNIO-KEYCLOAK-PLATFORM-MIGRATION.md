@@ -66,6 +66,13 @@ unveraendert. Keine DB-Migration. DEV-Release
 `20261117-clubunio-profile-security-ui`, Rueckweg
 `20261117-clubunio-trainer-consistency`; keine Stage-Aenderung.
 
+DEV-Hotfix `20261117-clubunio-profile-schema-fix`: Das Dateidelta hatte
+die lokale Schemaqualifizierung im Portalprofil wieder eingefuehrt.
+Die Vereinsabfrage nutzt jetzt die Pivot-Abfrage der bestehenden
+Kontobeziehung. Angemeldeter HTTP-Kernel-Test in einer lesenden
+DEV-PostgreSQL-Transaktion: normales Mitglied, HTTP 200, Vereinsschale
+und Sicherheitslink vorhanden. Keine Migration oder Stage-Aenderung.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten

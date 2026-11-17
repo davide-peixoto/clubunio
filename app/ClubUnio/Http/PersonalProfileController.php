@@ -6,7 +6,6 @@ use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
 use App\ClubUnio\Services\{KeycloakAccountConsole, MemberAccessService, TenantDomainService};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 final class PersonalProfileController
 {
@@ -14,8 +13,8 @@ final class PersonalProfileController
     {
         $actor = $this->personalAccount($request, 'portal');
         $bound = $request->attributes->get(TenantDomainService::class);
-        $memberships = DB::connection('clubunio')->table('clubora.tenant_accounts')->where('account_id', $actor->id);
-        $tenants = Tenant::whereIn('id', $memberships->select('tenant_id'))
+        $memberships = $actor->tenants()->newPivotQuery()->select('tenant_id');
+        $tenants = Tenant::whereIn('id', $memberships)
             ->when($bound instanceof Tenant, fn ($query) => $query->whereKey($bound->id))->orderBy('name')->get()
             ->filter(fn ($tenant) => $access->canEnter($actor, $tenant));
         $club = $request->query('club');

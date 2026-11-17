@@ -25,13 +25,14 @@ final class PersonalProfileTest extends TestCase
         $db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $db->unprepared(<<<'SQL'
 CREATE TABLE clubora.accounts (id integer PRIMARY KEY, username text, display_name text, active boolean, api_only boolean, preferred_locale text);
-CREATE TABLE clubora.tenants (id integer PRIMARY KEY, name text);
+CREATE TABLE clubora.tenants (id integer PRIMARY KEY, name text, slug text);
 CREATE TABLE clubora.tenant_accounts (account_id integer, tenant_id integer, role text);
 CREATE TABLE clubora.platform_admins (account_id integer, active boolean);
 INSERT INTO clubora.accounts VALUES
  (1,'platform@example.invalid','Synthetic Platform',1,0,'en'),
  (2,'member@example.invalid','Synthetic Member',1,0,'en');
 INSERT INTO clubora.platform_admins VALUES (1,1);
+INSERT INTO clubora.tenants VALUES (10,'Synthetic Club','synthetic-club'), (20,'Other Club','other-club');
 SQL);
     }
 
@@ -52,6 +53,19 @@ SQL);
         $this->actingAs(Account::findOrFail(1), 'clubunio')->get('/platform/profile?account=2')->assertOk()
             ->assertSee('Synthetic Platform')->assertDontSee('Synthetic Member')
             ->assertSee('Open security settings')->assertSee('href="'.self::SECURITY.'"', false);
+    }
+
+    public function test_portal_profile_resolves_only_the_actors_club_memberships(): void
+    {
+        $db = DB::connection('clubunio')->table('clubora.tenant_accounts');
+        $db->insert([
+            ['account_id' => 2, 'tenant_id' => 10, 'role' => 'office'],
+            ['account_id' => 1, 'tenant_id' => 20, 'role' => 'office'],
+        ]);
+
+        $this->actingAs(Account::findOrFail(2), 'portal')->get('/portal/profile?club=other-club')->assertOk()
+            ->assertSee('Synthetic Club')->assertDontSee('Other Club')
+            ->assertSee('href="'.self::SECURITY.'"', false);
     }
 
     public function test_invalid_issuer_does_not_create_an_external_link(): void

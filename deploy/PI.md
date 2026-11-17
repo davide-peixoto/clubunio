@@ -1,5 +1,16 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Persoenliches Profil (17.11.2026)
+
+Aktiv: `20261117-clubunio-profile-schema-fix`. Der Profilcontroller nutzt
+die bestehende Kontobeziehung fuer die Vereinszuordnung. Beim vorherigen
+Oberflaechendelta war das lokale Schema im Controller erneut enthalten.
+Vor der Umschaltung den angemeldeten Aufruf gegen DEV-PostgreSQL pruefen:
+HTTP 200 mit Vereinsschale und Sicherheitslink; ein anonymer Redirect
+prueft die Mitgliedschaftsabfrage nicht. Keine DB- oder Stage-Aenderung.
+Rueckweg zum letzten fehlerfreien Release:
+`20261117-clubunio-trainer-consistency`.
+
 ## Trainer-Webportal (17.11.2026)
 
 Aktiv: `20261117-clubunio-trainer-consistency`, Rueckweg:
