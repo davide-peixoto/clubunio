@@ -56,6 +56,16 @@ lieferte vor dem Profil HTTP 403; ein neuer Login behob dies ohne
 Konfigurationsaenderung. Keine Kontoeinstellungen veraendert, Stage
 unveraendert.
 
+Web-Profil-Update: Die drei Profilansichten verwenden ein gemeinsames
+Layout fuer Kontodaten und Kontosicherheit. «Sicherheitseinstellungen
+öffnen» / «Open security settings» fuehrt direkt zu den Anmeldemethoden,
+ohne einen Anbieternamen im Profil zu zeigen. Das Ziel bleibt die
+verifizierte HTTPS-Domain; keine Tokens oder Benutzerkennungen im Link.
+Der Flutter-API-Vertrag und das Theme des Identitaetsdienstes bleiben
+unveraendert. Keine DB-Migration. DEV-Release
+`20261117-clubunio-profile-security-ui`, Rueckweg
+`20261117-clubunio-trainer-consistency`; keine Stage-Aenderung.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten

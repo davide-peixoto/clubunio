@@ -1,5 +1,6 @@
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/clubunio-profile.css') }}">
+@endpush
 <x-filament-panels::page>
-    <x-filament::section>
-        @include('clubunio.profile.details', ['backoffice' => true])
-    </x-filament::section>
+    @include('clubunio.profile.details')
 </x-filament-panels::page>

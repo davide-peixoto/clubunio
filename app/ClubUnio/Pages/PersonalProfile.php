@@ -28,6 +28,6 @@ final class PersonalProfile extends Page
 
     protected function getViewData(): array
     {
-        return ['actor' => Filament::auth()->user(), 'accountConsole' => KeycloakAccountConsole::url()];
+        return ['actor' => Filament::auth()->user(), 'accountConsole' => KeycloakAccountConsole::securityUrl()];
     }
 }

@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="{{ asset('css/clubunio-portal-shell.css').'?v=3' }}">
         <script src="{{ asset('js/clubunio-portal-shell.js').'?v=1' }}" defer></script>
     @endisset
+    @stack('head')
 @include('clubunio.brand.head')</head>
 <body>
     @isset($tenant)

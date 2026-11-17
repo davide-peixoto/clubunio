@@ -10,6 +10,7 @@ use Tests\TestCase;
 final class PersonalProfileTest extends TestCase
 {
     private const CONSOLE = 'https://auth.clubunio.com/realms/clubunio/account/';
+    private const SECURITY = self::CONSOLE.'account-security/signing-in';
 
     protected function setUp(): void
     {
@@ -38,7 +39,9 @@ SQL);
     {
         $this->get('/portal/profile')->assertRedirect();
         $this->actingAs(Account::findOrFail(2), 'portal')->get('/portal/profile?account=1')->assertOk()
-            ->assertSee('Synthetic Member')->assertDontSee('Synthetic Platform')->assertSee(self::CONSOLE)
+            ->assertSee('Synthetic Member')->assertDontSee('Synthetic Platform')
+            ->assertSee('Open security settings')->assertDontSee('Keycloak')
+            ->assertSee('href="'.self::SECURITY.'"', false)->assertSee('clubunio-profile.css')
             ->assertSee('rel="noopener noreferrer"', false);
     }
 
@@ -47,7 +50,8 @@ SQL);
         $this->get('/platform/profile')->assertRedirect();
         $this->actingAs(Account::findOrFail(2), 'clubunio')->get('/platform/profile')->assertForbidden();
         $this->actingAs(Account::findOrFail(1), 'clubunio')->get('/platform/profile?account=2')->assertOk()
-            ->assertSee('Synthetic Platform')->assertDontSee('Synthetic Member')->assertSee(self::CONSOLE);
+            ->assertSee('Synthetic Platform')->assertDontSee('Synthetic Member')
+            ->assertSee('Open security settings')->assertSee('href="'.self::SECURITY.'"', false);
     }
 
     public function test_invalid_issuer_does_not_create_an_external_link(): void
@@ -55,6 +59,16 @@ SQL);
         $this->assertSame(self::CONSOLE, KeycloakAccountConsole::url());
         config(['clubunio-verein-oidc.issuer' => 'https://auth.clubunio.com.evil.test/realms/clubunio']);
         $this->assertNull(KeycloakAccountConsole::url());
+        $this->assertNull(KeycloakAccountConsole::securityUrl());
+    }
+
+    public function test_german_profile_uses_clubunio_language_for_security(): void
+    {
+        $member = Account::findOrFail(2);
+        DB::connection('clubunio')->table('clubora.accounts')->where('id', 2)->update(['preferred_locale' => 'de']);
+
+        $this->actingAs($member->refresh(), 'portal')->get('/portal/profile')->assertOk()
+            ->assertSee('Kontodaten')->assertSee('Sicherheitseinstellungen öffnen')->assertDontSee('Keycloak');
     }
 
     public function test_keycloak_only_does_not_offer_the_local_password_endpoint(): void

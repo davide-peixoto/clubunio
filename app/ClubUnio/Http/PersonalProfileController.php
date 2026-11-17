@@ -23,7 +23,7 @@ final class PersonalProfileController
 
         return response()->view('clubunio.profile.portal', [
             'actor' => $actor, 'tenants' => $tenants, 'tenant' => $tenant,
-            'accountConsole' => KeycloakAccountConsole::url(),
+            'accountConsole' => KeycloakAccountConsole::securityUrl(),
         ])->header('Cache-Control', 'private, no-store');
     }
 
@@ -32,7 +32,7 @@ final class PersonalProfileController
         $actor = $this->personalAccount($request, PlatformOidcController::guard($request));
 
         return response()->view('clubunio.profile.platform', [
-            'actor' => $actor, 'accountConsole' => KeycloakAccountConsole::url(platform: true),
+            'actor' => $actor, 'accountConsole' => KeycloakAccountConsole::securityUrl(platform: true),
         ])->header('Cache-Control', 'private, no-store');
     }
 
