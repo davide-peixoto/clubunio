@@ -73,6 +73,14 @@ Kontobeziehung. Angemeldeter HTTP-Kernel-Test in einer lesenden
 DEV-PostgreSQL-Transaktion: normales Mitglied, HTTP 200, Vereinsschale
 und Sicherheitslink vorhanden. Keine Migration oder Stage-Aenderung.
 
+DEV-Oberflaeche `20261117-clubunio-profile-brand`: Vereinsportal,
+Plattform und Backoffice nutzen ClubUnio Blau und die vorhandenen
+Seitenkopf-Konventionen. Kontodaten und Sicherheitsaktion stehen in
+einem gemeinsamen Panel; bei schmaler Anzeige stapeln sich die Felder
+und die Aktion. Blade-Pfade zeigen auf das aktive Release; Stylesheet
+`blue-v2`. Angemeldete Sichtpruefung in Vereinsportal und Plattform
+auf Desktop erfolgreich. Keine DB-Migration; Stage unveraendert.
+
 ## Namen und Mailstatus (17.11.2026)
 
 DEV-Release `20261117-clubunio-keycloak-invite-names`. Neue Identitaeten

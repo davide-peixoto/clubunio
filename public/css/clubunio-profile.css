@@ -1,21 +1,28 @@
 .cu-profile {
-    --profile-line: #d8e2ec;
-    --profile-muted: #526477;
-    --profile-accent: #164b8a;
-    --profile-tint: #e9f2fc;
-    max-width: 56rem;
-    margin-block-start: 1rem;
-    border-block: 1px solid var(--profile-line);
+    --profile-line: var(--cu-line, #dce4ec);
+    --profile-muted: var(--cu-muted, #536373);
+    --profile-ink: var(--cu-ink, #202c3b);
+    --profile-accent: var(--cu-primary, #164b8a);
+    --profile-action-ink: var(--clubunio-club-ink, #fff);
+    --profile-tint: #eaf2fc;
+    --profile-surface: #fff;
+    max-width: 62rem;
+    border: 1px solid var(--profile-line);
+    border-radius: 8px;
+    background: var(--profile-surface);
+    color: var(--profile-ink);
 }
 
 .cu-profile-section {
     display: grid;
     grid-template-columns: 2.5rem minmax(0, 1fr);
     gap: 1rem;
-    padding-block: 1.25rem;
+    align-items: start;
+    padding: 1.25rem 1.5rem;
 }
 
 .cu-profile-section + .cu-profile-section { border-top: 1px solid var(--profile-line); }
+.cu-profile-security { grid-template-columns: 2.5rem minmax(0, 1fr) auto; align-items: center; }
 
 .cu-profile-icon {
     display: grid;
@@ -28,14 +35,14 @@
 }
 
 .cu-profile .cu-profile-icon svg { width: 1.375rem; height: 1.375rem; }
-.cu-profile .cu-profile-content h2 { margin: 0 0 .5rem; font-size: 1.125rem; font-weight: 650; line-height: 1.4; }
-.cu-profile-content > p { margin: 0 0 .875rem; color: var(--profile-muted); }
+.cu-profile .cu-profile-content h2 { margin: 0 0 .25rem; font-size: 1.125rem; font-weight: 650; line-height: 1.4; }
+.cu-profile-content > p { margin: 0; color: var(--profile-muted); font-size: .875rem; }
 
 .cu-profile-details {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .875rem 1.5rem;
-    margin: 0;
+    margin: 1rem 0 0;
     overflow-wrap: anywhere;
 }
 
@@ -52,25 +59,32 @@ a.cu-profile-action {
     padding: .5rem .8rem;
     border-radius: 6px;
     background: var(--profile-accent);
-    color: #fff;
+    color: var(--profile-action-ink);
     font-size: .875rem;
     font-weight: 650;
     overflow-wrap: anywhere;
     text-decoration: none;
 }
 
-a.cu-profile-action:hover { background: #103e77; color: #fff; }
+a.cu-profile-action:hover { filter: brightness(.92); color: var(--profile-action-ink); }
 a.cu-profile-action:focus-visible { outline: 2px solid #3072b7; outline-offset: 3px; }
 .cu-profile .cu-profile-action svg { flex: 0 0 auto; width: 1rem; height: 1rem; }
 
+@media (max-width: 920px) {
+    .cu-profile-security { grid-template-columns: 2.5rem minmax(0, 1fr); align-items: start; }
+    .cu-profile-action { grid-column: 2; justify-self: start; }
+}
+
 @media (max-width: 540px) {
-    .cu-profile-section { gap: .75rem; }
+    .cu-profile-section { gap: .75rem; padding: 1rem; }
     .cu-profile-details { grid-template-columns: minmax(0, 1fr); }
 }
 
 .dark .cu-profile {
     --profile-line: #3b4655;
     --profile-muted: #b9c6d4;
+    --profile-ink: #eff3f8;
     --profile-accent: #275b95;
+    --profile-surface: #181f29;
     --profile-tint: #e9f2fc;
 }

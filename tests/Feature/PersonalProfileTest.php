@@ -42,7 +42,7 @@ SQL);
         $this->actingAs(Account::findOrFail(2), 'portal')->get('/portal/profile?account=1')->assertOk()
             ->assertSee('Synthetic Member')->assertDontSee('Synthetic Platform')
             ->assertSee('Open security settings')->assertDontSee('Keycloak')
-            ->assertSee('href="'.self::SECURITY.'"', false)->assertSee('clubunio-profile.css')
+            ->assertSee('href="'.self::SECURITY.'"', false)->assertSee('clubunio-profile.css?v=blue-v2')
             ->assertSee('rel="noopener noreferrer"', false);
     }
 
@@ -65,6 +65,8 @@ SQL);
 
         $this->actingAs(Account::findOrFail(2), 'portal')->get('/portal/profile?club=other-club')->assertOk()
             ->assertSee('Synthetic Club')->assertDontSee('Other Club')
+            ->assertSee('cu-profile-section cu-profile-identity')
+            ->assertSee('cu-profile-section cu-profile-security')
             ->assertSee('href="'.self::SECURITY.'"', false);
     }
 
