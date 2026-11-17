@@ -39,7 +39,7 @@ final class PlatformOidcController
     {
         $club = $request->routeIs('clubunio.verein.oidc.*');
         $config = config($club ? 'clubunio-verein-oidc' : 'clubunio-platform-oidc');
-        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback')
+        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback', 'clubunio.verein.oidc.mobile', 'clubunio.verein.oidc.mobile.*')
             && $domain = app(\App\ClubUnio\Services\VereinOidcDomain::class)->configuration($request)) {
             $config = array_replace($config, $domain);
         }
@@ -153,9 +153,10 @@ final class PlatformOidcController
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
-            $returnSecret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
+            $returnSecret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims, $config['origin']);
             if ($returnSecret !== null) {
-                return redirect()->away('clubunio-auth://signin?'.http_build_query([
+                $scheme = $config['mobile_callback_scheme'] ?? 'clubunio-auth';
+                return redirect()->away($scheme.'://signin?'.http_build_query([
                     'pair' => $pending['pair']['pair'], 'return_secret' => $returnSecret,
                 ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
             }

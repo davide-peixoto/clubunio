@@ -20,6 +20,9 @@ final class VereinOidcDomain
             return null;
         }
 
-        return ['origin' => $origin, 'client' => $entry['client'], 'secret' => $entry['secret'], 'tenant' => $tenant];
+        $scheme = $entry['mobile_callback_scheme'] ?? null;
+        return ['origin' => $origin, 'client' => $entry['client'], 'secret' => $entry['secret'], 'tenant' => $tenant]
+            + (is_string($scheme) && preg_match('/\A[a-z][a-z0-9-]{2,60}\z/', $scheme)
+                ? ['mobile_callback_scheme' => $scheme] : []);
     }
 }
