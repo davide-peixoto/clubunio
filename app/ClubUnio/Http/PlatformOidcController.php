@@ -38,10 +38,9 @@ final class PlatformOidcController
     {
         $club = $request->routeIs('clubunio.verein.oidc.*');
         $config = config($club ? 'clubunio-verein-oidc' : 'clubunio-platform-oidc');
-        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback')
-            && $tenant = app(\App\ClubUnio\Services\VereinOidcDomain::class)->tenant($request)) {
-            $config['origin'] = $request->getSchemeAndHttpHost();
-            $config['tenant'] = $tenant;
+        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback', 'clubunio.verein.oidc.mobile', 'clubunio.verein.oidc.mobile.*')
+            && $domain = app(\App\ClubUnio\Services\VereinOidcDomain::class)->configuration($request)) {
+            $config = array_replace($config, $domain);
         }
         abort_unless($config['enabled'] && $request->isSecure() && $request->getSchemeAndHttpHost() === $config['origin'], 404);
         abort_unless($config['client'] && $config['secret'] && is_array($config['subjects'])
@@ -137,9 +136,9 @@ final class PlatformOidcController
             if (($pending['pair']['native'] ?? false) === true) {
                 abort_unless($actor?->active && !$actor->api_only && $actor->tenants()->get()
                     ->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
-                $secret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims);
+                $secret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims, $config['origin']);
 
-                return redirect()->away('clubunio-auth://signin?'.http_build_query([
+                return redirect()->away(($config['mobile_callback_scheme'] ?? 'clubunio-auth').'://signin?'.http_build_query([
                     'pair' => $pending['pair']['pair'], 'return_secret' => $secret,
                 ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
             }

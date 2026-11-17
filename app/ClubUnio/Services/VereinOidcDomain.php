@@ -17,4 +17,12 @@ final class VereinOidcDomain
 
         return $tenant?->slug === $slug ? $tenant : null;
     }
+
+    public function configuration(Request $request): ?array
+    {
+        $tenant = $this->tenant($request);
+
+        return $tenant ? ['origin' => $request->getSchemeAndHttpHost(), 'tenant' => $tenant,
+            'mobile_callback_scheme' => 'sv-sissach-test-auth'] : null;
+    }
 }

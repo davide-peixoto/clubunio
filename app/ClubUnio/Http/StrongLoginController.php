@@ -166,12 +166,12 @@ final class StrongLoginController
     public function pair(Request $request, string $operation)
     {
         abort_unless($request->isJson() && $request->query->count() === 0, 415);
-        $this->security->origin($request);
-        app(MobileBootstrapState::class)->authorizeLogin($request);
         if (($operation === 'begin' && $request->boolean('native'))
             || ($operation === 'redeem' && $request->has('return_secret'))) {
             return app(KeycloakMobilePairingController::class)->pair($request, $operation);
         }
+        $this->security->origin($request);
+        app(MobileBootstrapState::class)->authorizeLogin($request);
         abort_if(config('clubunio-verein-oidc.only'), 404);
         if ($operation === 'begin') {
             $data = $request->validate(['proof_hash' => 'required|regex:/^[a-f0-9]{64}$/D']);

@@ -61,7 +61,7 @@ final class MobileBootstrapState {
         $data['pushAdminAvailable']=false;
         $data['passwordLoginAvailable'] = $data['loginAllowed'] && !config('clubunio-verein-oidc.only');
         $data['strongLoginAvailable']=$data['loginAllowed'] && config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
-        $data['keycloakLoginAvailable'] = $data['strongLoginAvailable']
+        $data['keycloakLoginAvailable'] = $data['loginAllowed']
             && \App\ClubUnio\Http\KeycloakMobilePairingController::available($origin);
         return $data;
     }
