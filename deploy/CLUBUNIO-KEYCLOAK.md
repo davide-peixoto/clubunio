@@ -178,3 +178,21 @@ Vereinsbereich bis zurück zur Vereinsanmeldung testen.
   Builds können den bisherigen Code-Dialog weiterverwenden. Vor Stage auf
   iOS und Android Passkey, automatische Rückkehr, Abbruch, zweites Konto
   und anschliessenden Kontowechsel am Gerät abnehmen.
+
+### Native Anmeldung der SV-Sissach-Test-App
+
+Der gemeinsame SV-Sissach-Testbuild verwendet auf DEV die Custom Domain
+dev-clubunio.svsissach.ch und Mandant 4, auf Stage
+stage-clubunio.svsissach.ch und Mandant 3 (sv-sissach-refresh).
+Beide Origins sind im jeweiligen mobilen Bootstrap freigeschaltet. Das
+native Pairing ist an die verifizierte Origin gebunden, und der Browser
+kehrt über sv-sissach-test-auth zur Test-App zurück. Die zentrale
+ClubUnio-App verwendet ihren bisherigen Callback.
+
+DEV-Release 20261117-sv-sissach-mobile-oidc, Rückweg
+20261117-sv-sissach-domain-oidc. Stage-Code 242c75d.
+HTTPS-Smokes bestätigen den richtigen Mandanten, den Pairing-Start und die
+exakte Keycloak-Callback-URL auf beiden Domains. Die zentrale Stage-Origin
+weist die Einlösung eines Custom-Domain-Pairings ab. Ein Geräte-Login mit
+einem echten Konto und Push auf der Testkennung bleiben offen.
+App-Quellstand c6388bd.
