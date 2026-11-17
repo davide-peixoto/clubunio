@@ -44,3 +44,27 @@ Eine aktuelle Mannschaft bleibt sichtbar, vier historische Zuordnungen
 werden ausgeschlossen. Fuer dieses Konto gab es keinen alten Veranstaltungstermin
 fuer einen Live-Direktlink; den 404-Fall deckt der lokale Regressionstest ab.
 Der interaktive Browserlogin bei Keycloak war nicht Teil dieser Abnahme.
+
+## DEV-Nachbesserung: Oberflaeche und Antwortzeiten
+
+Spesen und Bankkonten haben jetzt kompakte Tabellen mit Status und Aktionen.
+Spesen, Bus und Teamplanung nutzen eine gemeinsame Filter- und Tabellenoptik
+mit passenden Leerzustaenden. Die Trainer-Lesesicht bestimmt Rollen und
+Teamzuordnungen pro Anfrage nur einmal. Keine Cache-Wiederverwendung bei
+Schreibvorgaengen, Simulation oder zwischen HTTP-Anfragen.
+
+Gemessen mit demselben DEV-Trainer im schreibgeschuetzten Anwendungskernel.
+Die Zeiten enthalten die Abfragen ueber den DEV-PostgreSQL-Tunnel, nicht
+Internet, Browseraufbau oder Keycloak-Anmeldung:
+
+| Ansicht | SQL-Abfragen vorher/nachher | Serverzeit vorher/nachher |
+| --- | ---: | ---: |
+| Spesen | 54 / 14 | 2.13 s / 0.67 s |
+| Bankkonten | 42 / 13 | 3.29 s / 1.96 s |
+| Busreservierungen | 116 / 20 | 5.69 s / 0.84 s |
+| Teamplanung | 149 / 20 | 6.30 s / 0.87 s |
+| Kalender | 219 / 21 | 10.21 s / 0.93 s |
+
+Aktiv als `20261117-clubunio-trainer-polish`; Rueckweg:
+`20261117-clubunio-keycloak-invite-names`. Keine Migration oder
+Konfigurationsaenderung. Stage unveraendert.
