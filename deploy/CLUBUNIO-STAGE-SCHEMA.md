@@ -140,3 +140,17 @@ im Stage-Migrationsjournal als Batch 126 nachgetragen (ID 127). Eine separate
 Abfrage nach dem Commit bestätigte genau einen Eintrag. Die Änderung betraf
 ausschliesslich das Journal. `2026_11_15_000100_tenant_license` ist als Batch 125
 verbucht.
+
+## RunCloud-Rollout vom 17.11.2026
+
+Der Push nach `origin/stage` löste den RunCloud-Webhook aus. Der automatische
+Pull scheiterte am Eigentümer von `.git/index`. Nach Korrektur auf
+`runcloud` wurde der Checkout manuell mit Commit `64c8400` abgeglichen.
+Die 48 zuvor direkt eingespielten Dateien entsprachen dem Commit und wurden
+vor dem Abgleich gesichert. Der Checkout war danach sauber.
+
+Vereinslogin, Plattformlogin und MFA-Seite antworteten über HTTPS mit 200.
+Die Plattformübersicht leitete anonyme Anfragen zum Login um. Mit einem
+synthetischen Plattformkonto auf Stage führten Passwort und TOTP zur
+angemeldeten Übersicht mit Vereinslinks. Diese Prüfung lief serverseitig.
+Die Testdaten wurden zurückgerollt.
