@@ -100,7 +100,7 @@ class PortalController
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return KeycloakLogout::redirect('clubunio-verein-oidc');
+            return KeycloakLogout::redirect('clubunio-verein-oidc', $request);
         }
         $request->session()->regenerate();
         $request->session()->regenerateToken();

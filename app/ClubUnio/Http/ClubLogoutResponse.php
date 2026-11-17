@@ -11,7 +11,7 @@ final class ClubLogoutResponse extends LogoutResponse
     public function toResponse($request): RedirectResponse | Redirector
     {
         return config('clubunio-verein-oidc.only')
-            ? KeycloakLogout::redirect('clubunio-verein-oidc')
+            ? KeycloakLogout::redirect('clubunio-verein-oidc', $request)
             : parent::toResponse($request);
     }
 }

@@ -95,12 +95,20 @@ Pilotdomain `dev-clubunio.svsissach.ch` ist dem Mandanten `sv-sissach`
 zugeordnet. Der vertrauliche Client `clubunio-sv-sissach-dev` verwendet
 PKCE S256, das Theme `sv-sissach` und das bestehende MFA-Niveau 2.
 Der öffentliche Einstieg erreicht das Keycloak-Anmeldeformular mit
-dem Vereins-Theme. Anmeldung, Rücksprung und Profilabnahme sind offen.
+dem Vereins-Theme. Der Vereinsclient übernimmt den Browserflow
+`clubunio-verein-dev-mfa`. Der Betreiber zeigte den angemeldeten
+SV-Sissach-Vereinsbereich und den Wechsel zur Keycloak-Kontosicherheit.
+Das Kontoprofil-Theme `clubunio` ist im Realm aktiv. Logo und Kopfzeile
+wurden im angemeldeten Browser geprüft.
 Das vorherige DEV-Release ist `20261117-clubunio-native-login`.
 
-Die Theme-Dateien für das ClubUnio-Kontoprofil und für die Anmeldung
-des SV Sissach wurden am 17.11.2026 auf den VPS kopiert. Die Aktivierung
-und die Browserabnahme stehen aus.
+Die Korrektur der Abmeldung liegt im Projekt. Sie verwendet bei einer
+freigegebenen Vereinsdomain deren Keycloak-Client und HTTPS-Origin. Für
+die DEV-Abnahme zuerst beim Client `clubunio-sv-sissach-dev` die exakte
+**Valid post logout redirect URI** `https://dev-clubunio.svsissach.ch/`
+speichern. Der direkte Logout-Aufruf wurde ohne diesen Eintrag von
+Keycloak abgelehnt. Danach den Fix auf DEV ausrollen und aus dem
+Vereinsbereich bis zurück zur Vereinsanmeldung testen.
 
 - Das Login-Theme `sv-sissach` erweitert `clubunio` um das Vereinslogo.
   Der DEV-OIDC-Client des Vereins erhält dieses Theme als Client-Override.
@@ -121,7 +129,38 @@ und die Browserabnahme stehen aus.
   Vereinsdomain, den Ausschluss von Benutzern ohne Vereinsberechtigung und
   die Profilansicht nach der Anmeldung.
 
-Für eine spätere OIDC-Anbindung die Zielinstanz und ihre exakten Redirect-URIs festlegen, den Client anlegen und die Zuordnung bestehender Konten prüfen. Vor einer Umstellung Anmeldung, Rollen, Mandantenzuordnung und Rückfall auf den bestehenden Login in der Zielinstanz testen.
+### Stage vorbereiten und abnehmen
+
+1. `stage.clubunio.com` ist die zentrale Stage-Adresse. Die separate
+   Vereinsdomain für Stage festlegen und mit DNS, TLS und verifizierter
+   Mandantenzuordnung bereitstellen. Die DEV-Domain bleibt der DEV-Pilot.
+2. Im Realm `clubunio` einen eigenen vertraulichen OIDC-Client für den
+   Stage-Verein anlegen. Standard Flow, PKCE S256 und den auf Stage
+   vorgesehenen MFA-Browserflow mit passendem ACR-Mapping konfigurieren.
+   Das Login-Theme `sv-sissach` am Client auswählen. Die vollständige URI
+   `https://<stage-vereinsdomain>/vereinslogin/oidc/callback` als Redirect
+   und `https://<stage-vereinsdomain>/` als Post-Logout-Redirect eintragen.
+3. In der privaten Stage-Konfiguration unter
+   `CLUBUNIO_VEREIN_OIDC_DOMAINS` die exakte HTTPS-Origin mit
+   `tenant: sv-sissach`, der Stage-Client-ID und dem eigenen Client-Secret
+   hinterlegen. Vorhandene Stage-Einträge erhalten. Keycloak-Konto und
+   Vereinsberechtigung in Stage prüfen und den Konfigurationscache neu
+   erstellen.
+4. Für Vereinsmails die Stage-Client-ID in der Provider-Factory ebenfalls
+   `sv-sissach` zuordnen. Die bestätigte DEV-Zuordnung beibehalten.
+   Provider und Theme gemäss Mail-Anleitung ausliefern. Für die
+   Mailabnahme den Stage-Client beim Versand explizit angeben.
+5. Nach erfolgreicher DEV-Abmeldung auf Stage mit einem berechtigten
+   Testkonto Anmeldung, MFA und Rücksprung auf die Vereinsdomain prüfen.
+   Das ClubUnio-Kontoprofil aus dem Vereinsbereich öffnen. Über die
+   Abmeldung muss die Vereinsdomain wieder erreicht werden und der
+   anschliessende Login muss das Vereinslogo zeigen. DE und EN sowie die
+   Ablehnung eines Kontos ohne Vereinsberechtigung prüfen. Die
+   Stage-Testmail im Posteingang auf Logo, Farbe und Links kontrollieren.
+6. Bei einem Rollback den vorherigen Stage-Release und dessen private
+   Konfiguration wiederherstellen und den Konfigurationscache neu
+   erstellen. Falls der Mail-Provider geändert wurde, dessen bisheriges
+   JAR und Theme gemäss Mail-Anleitung wiederherstellen.
 
 ## Nativer App-Anmeldedialog (DEV)
 
