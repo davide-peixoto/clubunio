@@ -51,8 +51,14 @@ final class RequireStrongWebSession
             }
             if ($guard === 'clubunio' && $actor && config('clubunio-verein-oidc.enabled')) {
                 $id = $request->session()->get('clubunio.oidc.account');
+                $origin = config('clubunio-verein-oidc.origin');
+                $domain = app(\App\ClubUnio\Services\VereinOidcDomain::class)->configuration($request);
+                if ($domain && $actor->canAccessTenant($domain['tenant'])) {
+                    $origin = $domain['origin'];
+                }
                 if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
-                    && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
+                    && $request->isSecure() && $request->getSchemeAndHttpHost() === $origin
+                    && $request->session()->get('clubunio.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
                         || (config('clubunio-verein-oidc.invites_enabled')
                             && is_string($subject = $request->session()->get('clubunio.oidc.subject'))
@@ -61,7 +67,7 @@ final class RequireStrongWebSession
                             ) === $id))) continue;
                 if ($id !== null || PlatformOidcController::requiresClubOidc($actor)) {
                     Auth::guard($guard)->logout();
-                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject']);
+                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject', 'clubunio.oidc.origin']);
                     if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
                     return redirect()->route('clubunio.verein.oidc.start');
                 }

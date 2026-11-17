@@ -39,6 +39,10 @@ final class PlatformOidcController
     {
         $club = $request->routeIs('clubunio.verein.oidc.*');
         $config = config($club ? 'clubunio-verein-oidc' : 'clubunio-platform-oidc');
+        if ($club && $config['enabled'] && $request->routeIs('clubunio.verein.oidc.start', 'clubunio.verein.oidc.callback')
+            && $domain = app(\App\ClubUnio\Services\VereinOidcDomain::class)->configuration($request)) {
+            $config = array_replace($config, $domain);
+        }
         abort_unless($config['enabled'] && $request->isSecure() && $request->getSchemeAndHttpHost() === $config['origin'], 404);
         abort_unless($config['client'] && $config['secret'] && is_array($config['subjects'])
             && ($config['subjects'] || ($club && $config['invites_enabled'])), 503);
@@ -68,7 +72,9 @@ final class PlatformOidcController
         $state = bin2hex(random_bytes(32));
         $nonce = bin2hex(random_bytes(32));
         $verifier = bin2hex(random_bytes(32));
-        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair','platformMigration') + ['expires' => time() + 300]);
+        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair','platformMigration') + [
+            'expires' => time() + 300, 'callback' => $config['callback'], 'client' => $config['client'],
+        ]);
 
         $clubMfa = $config['guard'] === 'clubunio' && config('clubunio-verein-oidc.only');
         return redirect()->away($config['issuer'].'/protocol/openid-connect/auth?'.http_build_query([
@@ -110,6 +116,10 @@ final class PlatformOidcController
         abort_unless(is_array($pending) && $pending['expires'] >= time() && is_string($state)
             && hash_equals($pending['state'], $state) && is_string($code) && $code !== '' && strlen($code) <= 4096, 403);
         abort_if($request->query('iss') !== null && $request->query('iss') !== $config['issuer'], 403);
+        if (isset($config['tenant']) || isset($pending['callback'])) {
+            abort_unless(($pending['callback'] ?? null) === $config['callback']
+                && ($pending['client'] ?? null) === $config['client'], 403);
+        }
         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
         $club = $config['guard'] === 'clubunio';
         $clubMfa = $club && config('clubunio-verein-oidc.only') && ($level = KeycloakMobileAssurance::level()) !== null;
@@ -130,12 +140,15 @@ final class PlatformOidcController
                 $id = (int) $links->accept($pending['invitation'], $claims, $clubMfa)->id;
             } elseif ($id === null) {
                 $id = $links->accountId($claims->iss, $claims->sub);
-                if ($id === null && !is_array($pending['pair'] ?? null)) {
+                if ($id === null && !isset($config['tenant']) && !is_array($pending['pair'] ?? null)) {
                     $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims, $clubMfa);
                 }
             }
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
+        if (isset($config['tenant'])) {
+            abort_unless($actor?->active && ! $actor->api_only && $actor->canAccessTenant($config['tenant']), 403);
+        }
         if ($club && is_array($pending['pair'] ?? null)) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
@@ -175,6 +188,7 @@ final class PlatformOidcController
         if ($club) {
             $request->session()->put('clubunio.oidc.account', (int) $actor->id);
             $request->session()->put('clubunio.oidc.subject', $claims->sub);
+            $request->session()->put('clubunio.oidc.origin', $config['origin']);
         }
         return ($club ? redirect('/') : redirect()->route('clubunio.platform.index'))
             ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');

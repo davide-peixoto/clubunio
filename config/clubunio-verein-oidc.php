@@ -18,4 +18,5 @@ return [
     'client' => env('CLUBUNIO_VEREIN_OIDC_CLIENT'),
     'secret' => env('CLUBUNIO_VEREIN_OIDC_SECRET'),
     'subjects' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_SUBJECTS', '{}'), true),
+    'domains' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_DOMAINS', '{}'), true),
 ];

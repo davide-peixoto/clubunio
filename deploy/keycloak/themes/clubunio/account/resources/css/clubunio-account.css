@@ -1,0 +1,20 @@
+.pf-v5-c-masthead {
+    background: #164b8a;
+}
+
+.pf-v5-c-masthead .pf-v5-c-brand {
+    width: 9rem;
+    height: auto;
+    max-height: 2.5rem;
+}
+
+.pf-v5-c-button.pf-m-primary {
+    --pf-v5-c-button--m-primary--BackgroundColor: #164b8a;
+    --pf-v5-c-button--m-primary--hover--BackgroundColor: #103864;
+    --pf-v5-c-button--m-primary--Color: #fff;
+    border-radius: .5rem;
+}
+
+.pf-v5-c-page {
+    font-family: system-ui, sans-serif;
+}

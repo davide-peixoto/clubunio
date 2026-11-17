@@ -1,0 +1,17 @@
+#kc-header-wrapper {
+    background-image: url("../img/svs-logo.png");
+}
+
+.login-pf-page .card-pf {
+    border-top-color: #164b8a;
+}
+
+#kc-content .pf-m-primary {
+    background: #164b8a;
+    border-color: #164b8a;
+}
+
+#kc-content .pf-m-primary:hover {
+    background: #103864;
+    border-color: #103864;
+}
