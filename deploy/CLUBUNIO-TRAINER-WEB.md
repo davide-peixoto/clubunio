@@ -34,3 +34,13 @@ erscheinen. Die lokale Renderpruefung ist `TrainerPortalShellTest`.
 `TrainerWebSeasonScopeTest` prueft aktive Altzuordnungen, die Sicht nach
 Saisonwechsel und den Direktzugriff auf alte Einladungen. Bei der Abnahme
 einen Trainer mit Zuordnungen in mindestens zwei Saisons verwenden.
+
+## DEV-Release 17.11.2026
+
+Im authentifizierten Anwendungskontext mit einem vorhandenen DEV-Trainer
+schreibgeschuetzt geprueft: Mitglieder, Kalender, Absenzen und Bus liefern
+HTTP 200 im gemeinsamen Layout, DE/EN und der Kalenderexport funktionieren.
+Eine aktuelle Mannschaft bleibt sichtbar, vier historische Zuordnungen
+werden ausgeschlossen. Fuer dieses Konto gab es keinen alten Veranstaltungstermin
+fuer einen Live-Direktlink; den 404-Fall deckt der lokale Regressionstest ab.
+Der interaktive Browserlogin bei Keycloak war nicht Teil dieser Abnahme.

@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Trainer-Webportal (17.11.2026)
+
+Aktiv: `20261117-clubunio-trainer-web`, Rueckweg:
+`20261116-clubunio-material-returns`. Gezieltes Web-Delta, Konfiguration und
+Shared Storage unveraendert, keine Migration. HTTPS-Health, Auth-Redirect
+sowie CSS und JavaScript geprueft. Stage unveraendert.
+Siehe [Trainerportal und Abnahme](CLUBUNIO-TRAINER-WEB.md).
+
 ## Dashboard: offene Reservierungsanfragen
 
 Offene Bus- und Platzanfragen stehen als klickbare Kennzahlen oben im Dashboard.
