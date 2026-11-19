@@ -1985,3 +1985,13 @@ Trainingsperiode. Sommer- und Winterzeiten werden anhand der Perioden-ID
 gefiltert. Fehlt eine gültige aktive Periode, bleibt die Liste leer. Die
 Platzverfügbarkeit wird weiterhin berücksichtigt. Drei PostgreSQL-Tests mit
 70 Assertions und die DE/EN-Sprachprüfung sind grün.
+
+
+## 19.11.2026 – Vereinsbuild und Stage-Anmeldung
+
+My SV Sissach Test hat eigene iOS-/Android-Firebase-Registrierungen und einen
+vorbereiteten signierten Mac-Buildpfad für 2.0.0 (1). Native Geräteabnahme
+übernimmt der Benutzer. APNs bleibt auf seinen Wunsch offen. Die gemeldete
+Stage-Anmeldung scheitert nach der Sitzungsausgabe. Ein redigierter
+Diagnosecode grenzt den betroffenen Appschritt ein. Details und Abnahmestand
+stehen im [SV-Sissach-Testbuild](CLUBUNIO-SVS-TEST-BUILD.md).

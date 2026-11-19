@@ -1204,3 +1204,14 @@ neue App löscht RAMdaten beim Konto-/Vereinswechsel und bei Zugriffsentzug.
 DEV20261104-clubunio-chat-delta-v1 aus7442f67; Rückweg direct-contacts-v1.
 Delta62 Prüfungen plus56/896 Regression und653 App-Tests grün.
 Abfrage-/History-/Cachegrenzen: MOBILE-CHAT-DELTA.md.
+
+
+## 19.11.2026 – My SV Sissach Test
+
+Firebase-Clients für beide Testkennungen erstellt. Markenbuild unterstützt
+native Firebase-Konfiguration und signierten iOS-Release 2.0.0 (1) mit
+Signaturprüfung. Keine Datenmigration. Mac- und Geräteprüfung übernimmt der
+Benutzer. APNs auf ausdrücklichen Wunsch offen. Stage-Anmeldung erstellt eine
+Sitzung und widerruft sie anschliessend. Konkrete Appursache noch offen,
+redigierter Anmeldecode ergänzt. Prüfungen und offene Abnahme sind in
+[SV-Sissach-Testbuild](CLUBUNIO-SVS-TEST-BUILD.md) dokumentiert.
