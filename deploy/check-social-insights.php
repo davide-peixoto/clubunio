@@ -58,8 +58,8 @@ try {
     $metrics=json_decode($service->table('imported_posts')->where('tenant_id',$tenant->id)->where('connection_id',$ig)->value('metrics'),true);
     $require($metrics['likes']===0 && $metrics['reach']===null,'Missing value confused with zero');
     \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
-    \Filament\Facades\Filament::setTenant($tenant);
     \Illuminate\Support\Facades\Auth::guard('clubunio')->setUser($actor);
+    \Filament\Facades\Filament::setTenant($tenant);
     request()->setUserResolver(fn ($guard=null)=>$actor);
     request()->setLaravelSession(app('session')->driver());
     $dashboard=new \App\ClubUnio\Pages\SocialInsights;
