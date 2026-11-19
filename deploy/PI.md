@@ -2494,3 +2494,11 @@ DE/EN-Loginformulare, Redirect-/PKCE-Abweisung und Client-Secrets geprueft.
 Keycloak-only aktiv; Benutzerzuordnungen leer, Wartungsmodus erhalten.
 Vollstaendige Login-Abnahme folgt mit der ersten Administration.
 [Konfiguration und Nachweise](keycloak/clients/PRODUCTION.md).
+
+
+## Erster PROD-Plattformadmin (19.11.2026)
+
+info@clubunio.com als Plattformadmin angelegt und mit bestehendem
+Keycloak-Subject verbunden. Audit/Berechtigung und Rollback-Probelauf
+geprueft; keine Vereinszuordnung, keine Migration. Wartungsmodus aktiv.
+[Nachweis und offene Login-Abnahme](keycloak/clients/PRODUCTION.md).

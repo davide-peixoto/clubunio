@@ -80,3 +80,31 @@ Geprueft fuer jeden der beiden Clients vom PROD-PHP aus:
 Wartungsmodus bleibt aktiv. Vollstaendige Benutzeranmeldung, Tokenpruefung
 mit echtem ID-Token und Logout-Abnahme folgen nach expliziter Einrichtung
 der ersten Administration. Keine automatische Rechtevergabe.
+## Erster PROD-Plattformadmin (19.11.2026)
+
+Auf ausdruecklichen Auftrag info@clubunio.com als aktives persoenliches
+PROD-Konto angelegt, account_id=2. Der Rollback-Probelauf verbrauchte die
+erste Sequenznummer; keine Lueckenauffuellung. Einziger Plattformadmin,
+keine Vereinszuordnung. Bootstrap ueber PlatformAdministrationService
+mit genau einem platform.bootstrap-Auditeintrag. Zufaelliges, nicht
+ausgegebenes lokales Passwort; lokaler Login bleibt durch Keycloak-only
+gesperrt.
+
+Bestehende Keycloak-Identitaet im Realm clubunio vorab eindeutig anhand
+Username/E-Mail geprueft: aktiv und E-Mail verifiziert. Ihr Subject ist
+ausschliesslich in CLUBUNIO_PLATFORM_OIDC_SUBJECTS auf Konto 2 abgebildet.
+Keine neue Keycloak-Identitaet, keine Keycloak-Rollen und keine
+Vereinslogin-Zuordnung angelegt. Private .env-/DB-Sicherung:
+ /root/clubunio-prod-backups/platform-admin-20261119T214308Z
+
+Probelauf samt Audit und Berechtigungspruefung zurueckgerollt, danach
+verbindlicher Bootstrap in einer Transaktion. Configcache erneuert.
+Lesende Nachkontrolle: Konto aktiv, api_only=false, Plattformfreigabe
+aktiv, null Mitgliedschaften, ein Bootstrap-Auditeintrag; exakte
+Subject-Map und Keycloak-only bestaetigt. Keine Migration.
+
+Ein zusaetzlicher synthetischer Controller-Loginstart wurde von der
+automatischen Ausfuehrungspruefung mit 'blocked by policy' abgelehnt;
+keine Login- oder Sitzungspruefung daraus behaupten. Vollstaendige
+Browseranmeldung/MFA und Rueckkehr zu /platform bleiben offen.
+Wartungsmodus bleibt aktiv, Einstieg nach Freigabe unter /platform/login.
