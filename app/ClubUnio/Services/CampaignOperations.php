@@ -197,10 +197,6 @@ final class CampaignOperations
                     $tenant, $copy['subject'], $copy['body'], $service->url($tenant, $recipient),
                     trans('mail_theme.open', [], $recipient->locale), $recipient->locale,
                 ));
-                    $message->html(app(ClubUnioMailTheme::class)->render(
-                    $tenant, $copy['subject'], $copy['body'], $service->url($tenant, $recipient),
-                    trans('mail_theme.open', [], $recipient->locale), $recipient->locale,
-                ));
                     $message->getHeaders()->addIdHeader('Message-ID', $row->id.'@campaign.clubunio.invalid');
                     $message->getHeaders()->addTextHeader('X-ClubUnio-Campaign-Address-Hash', $row->address_hash);
                     $sent = (new \Illuminate\Mail\Transport\ArrayTransport())->send($message);
