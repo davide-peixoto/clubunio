@@ -73,3 +73,23 @@ Die im Mobile-Remote inzwischen ergänzten Simulatorbefehle sind übernommen.
 Nach `git pull` im Mobile-Checkout startet `./test-app svs` den vorhandenen
 SV-Sissach-Simulatorablauf. Der neue Diagnosecode wird bei einer erneuten
 fehlgeschlagenen Anmeldung auf dem Startscreen angezeigt.
+
+## Simulator-Korrektur nach dem Code storage/platform
+
+Der Benutzer bestätigt nach dem aktualisierten Testlauf `storage/platform`.
+Der Simulatorlauncher startete bisher eine mit `--no-codesign` erzeugte App
+direkt. Der korrigierte Ablauf signiert eingebettete Frameworks/Bibliotheken
+und die Simulator-App lokal ad hoc. Die App erhält eine auf ihre Bundle-ID
+begrenzte Keychain-Identität. Vor dem Start werden die Signatur und die
+Zugriffsgruppe gegen das gewählte Profil geprüft. Physische Signaturen mit
+Apple-Provisionierung sind davon getrennt.
+
+Der sichere Diagnosecode übernimmt bei Keychain-Fehlern zusätzlich den
+numerischen OSStatus aus dem bestehenden Storage-Plugin. Freie native
+Fehlermeldungen und Speicherinhalte werden dabei nicht ausgegeben.
+
+14 Pythonfälle, davon ein Bash-Test unter Windows übersprungen, und die
+gezielten Fluttertests sind grün. DE/EN-Katalogcheck ebenfalls grün. Der
+tatsächliche Codesign-/Keychain-Lauf auf macOS ist hier mangels Mac-Zugang
+weiterhin offen. Nach `git pull` startet der Benutzer den neuen Ablauf über
+`./test-app svs` und prüft die Anmeldung erneut.
