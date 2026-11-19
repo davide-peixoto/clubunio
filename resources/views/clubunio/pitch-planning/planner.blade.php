@@ -1,11 +1,11 @@
     <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=6">
-    <script src="{{ asset('js/pitch-planning.js') }}?v=3"></script>
+    <script src="{{ asset('js/pitch-planning.js') }}?v=4"></script>
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
         $fields = collect($options['fields'])->keyBy('id');
     @endphp
-    <div class="pitch-planner" x-data="clubunioPitchPlanner()" x-on:dragend="dragKey = null" x-on:keydown.escape.window="cancelRange()" x-on:blur.window="cancelRange()" x-on:visibilitychange.document="if (document.hidden) cancelRange()" wire:loading.class="pitch-loading">
+    <div class="pitch-planner" x-data="clubunioPitchPlanner()" x-on:dragend="endMove()" x-on:keydown.escape.window="cancelRange()" x-on:blur.window="cancelRange()" x-on:visibilitychange.document="if (document.hidden) cancelRange()" wire:loading.class="pitch-loading">
         <div class="pitch-toolbar">
             <div class="pitch-controls">
                 <x-filament::icon-button wire:click="browse(-1)" wire:loading.attr="disabled" icon="heroicon-o-chevron-left" :label="__('Vorheriger Zeitraum')" :tooltip="__('Vorheriger Zeitraum')" />
@@ -39,7 +39,7 @@
         @if(!$editor && $errors->any())<div class="pitch-alert" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
         @if(!$loadError && !$options['fields'])<p class="pitch-empty">{{ __('Keine aktiven Spielfelder vorhanden.') }}</p>@endif
         @if($options['fields'] && $mode === 'day')
-            <div class="pitch-scroll" tabindex="0" role="region" aria-label="{{ __('Tagesplan nach Spielfeld') }}" x-init="$nextTick(() => $el.scrollTop = 720)">
+            <div class="pitch-scroll" tabindex="0" role="region" aria-label="{{ __('Tagesplan nach Spielfeld') }}" x-init="$nextTick(() => $el.scrollTop = 720)" x-on:dragover.prevent="updateMove($event)">
                 <div class="pitch-board" style="grid-template-columns: 60px repeat({{ count($columns) }}, minmax(240px, 1fr))">
                     <div class="pitch-heading pitch-time-heading">{{ __('Zeit') }}</div>
                     @foreach($columns as $column)
@@ -49,10 +49,10 @@
                     @foreach($columns as $column)
                         <div class="pitch-column" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}"
                             x-on:pointerdown="startRange($event, {{ $column['field']['id'] }}, @js($date))"
-                            x-on:pointermove="extendRange($event)" x-on:pointerup="finishRange($event)" x-on:pointercancel="cancelRange()" x-on:lostpointercapture="cancelRange()">
+                            x-on:pointermove="extendRange($event)" x-on:pointerup="finishRange($event)" x-on:pointercancel="cancelPointerRange($event)" x-on:lostpointercapture="cancelPointerRange($event)" x-on:drop.prevent="dropMove($event, {{ $column['field']['id'] }}, @js($date))">
                             @for($minute = 0; $minute < 1440; $minute += 30)
                                 @php($slotTime = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60))
-                                <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px" x-on:dragover.prevent x-on:drop.prevent="if (dragKey && !busy) { busy = true; $wire.proposeMove(dragKey, {{ $column['field']['id'] }}, @js($date), @js($slotTime)).finally(() => { busy = false; dragKey = null }) }">
+                                <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px">
                                     @if($this->capability('request'))
                                         <button type="button" class="pitch-slot" data-pitch-minute="{{ $minute }}" x-on:click="activateSlot($event, {{ $column['field']['id'] }}, @js($date), {{ $minute }})" wire:loading.attr="disabled" aria-label="{{ __('Request :field on :date at :time', ['field' => $column['field']['name'], 'date' => $days[0]['date']->format('d.m.Y'), 'time' => $slotTime]) }}"></button>
                                     @endif
