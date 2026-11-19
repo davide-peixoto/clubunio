@@ -2978,5 +2978,7 @@
     "keycloak.continue": "Weiter zur Anmeldung",
     "keycloak.mobile": "ClubUnio-App anmelden",
     "keycloak.confirmation": "Bestätigungscode aus der App",
-    "keycloak.return_to_app": "Kehre zur ClubUnio-App zurück und schliesse die Anmeldung ab."
+    "keycloak.return_to_app": "Kehre zur ClubUnio-App zurück und schliesse die Anmeldung ab.",
+    "This pitch is currently closed. You can still submit your request. Availability for the requested date will be checked when it is approved.": "Dieses Spielfeld ist aktuell gesperrt. Du kannst die Anfrage trotzdem senden. Die Verfügbarkeit für den gewünschten Termin wird bei der Freigabe geprüft.",
+    "Request :field on :date at :time": "Anfrage für :field am :date um :time erstellen"
 }
