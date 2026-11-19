@@ -165,3 +165,18 @@ Keine Datenbankmigration. Rueckweg ueber die vor dem Austausch erstellte
 Sicherung /root/clubunio-marketing-20261119-* auf dem VPS.
 Lokale Quelle: Marketing-Blade und beide Sprachkataloge.
 Abnahme: Sprach-/Platzhaltercheck sowie MarketingWebsiteTest erfolgreich.
+
+## Demoaufnahmen 19.11.2026
+
+Neue DE/EN-Bilder fuer Trainerportal, Social Media und Veo-Aufnahmeplanung
+unter public/images/marketing/{de,en}/{trainer,social,veo}.png.
+Lokal aus den vorhandenen Blade-Oberflaechen und dem echten Social-Media-
+Editor mit synthetischen FC-Horizon-Daten gerendert. Trainerportal verwendet
+die bestehende Portal-Testfixture. Social Media und Veo sind in einer
+reduzierten Demo-Seitenschale dargestellt. Keine Anmeldung an fremden
+Mandanten und keine Produktionsdaten oder externen Zustellungen.
+Die Demo-Bilder stehen direkt bei den Funktionen, mit uebersetzter
+Bildbeschreibung, Demohinweis und bestehender Lightbox.
+Keine DB-Migration. Rueckweg: vorherige Marketing-Blade und Bilderversion,
+statisches HTML-Backup auf dem VPS unter /root/clubunio-new-screens-*.
+Sprachpruefung und MarketingWebsiteTest erfolgreich.

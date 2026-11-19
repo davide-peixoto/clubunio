@@ -1243,3 +1243,11 @@ Rändern. Markierung und Dauer folgen dem Scrollen, auch bei stillstehendem
 Zeiger. Abbruch, Ansichtswechsel und Hintergrundwechsel beenden die
 Frame-Schleife. DEV und Stage aktualisiert, Stagecommit caa3e20. Prüfung und
 Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## Laravel-E-Mail-Themes auf DEV und Stage (19.11.2026)
+
+ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
+aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
+Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
+Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.

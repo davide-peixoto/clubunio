@@ -2027,3 +2027,11 @@ Gemeinsames E-Mail-Theme und Provider mit SV-Sissach-Zuordnung für DEV und
 Stage aktiviert. Acht isolierte vollständige Passwortabläufe bestanden.
 Beide Umgebungen nach Dienstneustart über HTTPS geprüft. Rückweg und
 Nachweise stehen in deploy/CLUBUNIO-KEYCLOAK.md. Kein Laravel-Schemamigrationsschritt.
+
+
+## Laravel-E-Mail-Themes auf DEV und Stage (19.11.2026)
+
+ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
+aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
+Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
+Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.

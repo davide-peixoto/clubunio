@@ -1,0 +1,116 @@
+{
+  "dev": {
+    "environment": "https://dev.clubunio.ch",
+    "cases": [
+      {
+        "locale": "de",
+        "brand": "clubunio",
+        "render": true
+      },
+      {
+        "locale": "de",
+        "brand": "custom",
+        "render": true
+      },
+      {
+        "locale": "de",
+        "purpose": "register",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "de",
+        "purpose": "enroll",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "de",
+        "purpose": "reset",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "brand": "clubunio",
+        "render": true
+      },
+      {
+        "locale": "en",
+        "brand": "custom",
+        "render": true
+      },
+      {
+        "locale": "en",
+        "purpose": "register",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "purpose": "enroll",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "purpose": "reset",
+        "mime_html_text_proof": true
+      }
+    ],
+    "legacy_fallback": true,
+    "transport": "in-memory only"
+  },
+  "stage": {
+    "environment": "https://stage.clubunio.com",
+    "cases": [
+      {
+        "locale": "de",
+        "brand": "clubunio",
+        "render": true
+      },
+      {
+        "locale": "de",
+        "brand": "custom",
+        "render": true
+      },
+      {
+        "locale": "de",
+        "purpose": "register",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "de",
+        "purpose": "enroll",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "de",
+        "purpose": "reset",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "brand": "clubunio",
+        "render": true
+      },
+      {
+        "locale": "en",
+        "brand": "custom",
+        "render": true
+      },
+      {
+        "locale": "en",
+        "purpose": "register",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "purpose": "enroll",
+        "mime_html_text_proof": true
+      },
+      {
+        "locale": "en",
+        "purpose": "reset",
+        "mime_html_text_proof": true
+      }
+    ],
+    "legacy_fallback": true,
+    "transport": "in-memory only"
+  }
+}

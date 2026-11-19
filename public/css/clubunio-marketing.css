@@ -805,3 +805,5 @@ footer>div:last-child {
 }
 a[data-lightbox] { cursor: zoom-in; }
 
+
+.feature-preview figcaption { margin-top: 8px; color: #52677d; font-size: 12px; }

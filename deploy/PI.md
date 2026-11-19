@@ -2645,3 +2645,11 @@ und JavaScript v3 liefern auf beiden Customdomains HTTP 200, das JavaScript
 ist bytegleich zum geprüften Quellstand. Rückwegsicherung unter
 shared/pitch-edge-scroll-backup-20261119. Details in
 [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## Laravel-E-Mail-Themes auf DEV und Stage (19.11.2026)
+
+ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
+aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
+Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
+Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
