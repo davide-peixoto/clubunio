@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
+require __DIR__.'/clubunio-social-insights.php';
 Route::get('/help', \App\ClubUnio\Http\SupportCenterController::class)->name('clubunio.support.help');
 Route::post('/help', \App\ClubUnio\Http\SupportCenterController::class)->middleware('throttle:6,1');
 Route::match(['get','post'], '/help/sign-in', \App\ClubUnio\Http\PublicSupportIntake::class)

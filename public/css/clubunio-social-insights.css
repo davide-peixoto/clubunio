@@ -1,0 +1,8 @@
+.cu-insights-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin:0; }
+.cu-insights-metrics dt { font-size:14px; }
+.cu-insights-metrics dd { font-size:24px; font-weight:600; margin:4px 0; }
+.cu-insights-metrics small { font-size:12px; }
+.cu-insights-posts table { min-width:1200px; }
+.cu-insights-posts th { min-width:95px; word-break:normal; }
+.cu-insights-posts td:nth-child(3) { min-width:240px; max-width:400px; }
+.cu-insights-caption { white-space:pre-wrap; overflow-wrap:anywhere; }
