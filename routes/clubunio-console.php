@@ -25,6 +25,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 
+Artisan::command('clubunio:social-insights', function () {
+    $this->line((string) app(\App\ClubUnio\Services\SocialInsightsService::class)->tick());
+})->purpose('Read approved Meta test accounts and retain import diagnostics');
+Schedule::command('clubunio:social-insights')->everyMinute()->withoutOverlapping(10)->runInBackground()
+    ->when(fn () => config('clubunio-social-insights.enabled'));
+
 Artisan::command('clubunio:import-football-clubs', function () {
     $this->line(json_encode(app(FootballClubImporter::class)->run(), JSON_THROW_ON_ERROR));
 })->purpose('Import club directory from immutable snapshot without guessing conflicting numbers');
