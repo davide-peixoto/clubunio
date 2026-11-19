@@ -45,3 +45,19 @@ ausgetretenes Mitglied weiterhin gesperrt. Alle Testdaten zurueckgerollt,
 kein Mailversand. Fuenf lokale Tests und DE-/EN-Katalogpruefung erfolgreich.
 Health HTTP 200; Login unveraendert HTTP 302 zum bestehenden OIDC-Einstieg.
 Keine interaktive Browserabnahme oder Freigabe echter offener Antraege.
+
+## Stage-Abnahme am 19.11.2026
+
+Der gezielte Port auf den Stage-Branch wurde ebenfalls umgesetzt.
+Keine DEV-Testmodus-Aenderungen uebernommen und keine Datenmigration.
+Abnahme: `php deploy/check-stage-member-change-conflicts.php` verlangt
+explizit Stage-URL, Stage-Umgebung und `clubunio_stage`.
+Im Pilotmandanten synthetische Konten, Mitglieder, Antraege und benoetigte
+Statuswerte ausschliesslich in einer Rueckrolltransaktion erzeugt.
+Alle sieben fachlichen und Rechte-Szenarien der DEV-Abnahme erfolgreich,
+kein Versand und keine Freigabe echter Antraege.
+Fuenf lokale Tests, DE-/EN-Pruefung sowie Stage-Health HTTP 200 erfolgreich.
+Login antwortet mit HTTP 302. Keine interaktive Browserabnahme.
+PROD und DEV fuer diesen Stage-Port unveraendert.
+Rueckweg fuer den Fachcode ist Stage-Commit `8c45b1e`; die Datenstruktur
+bleibt unveraendert.
