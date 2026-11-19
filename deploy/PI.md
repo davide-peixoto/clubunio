@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Feldbezogene Freigabe von Mitgliederaenderungen
+
+Fachregel, Tests und migrationsfreier Rueckweg:
+[Mitgliederaenderungen und Konflikte](CLUBUNIO-MEMBER-CHANGE-CONFLICTS.md).
+Nur das Fachservice-Delta und die DE-/EN-Texte auf die aktive DEV-Basis
+aufsetzen; keine Stage- oder PROD-Aktualisierung.
+
 ## Persoenliches Profil (17.11.2026)
 
 Aktiv: `20261117-clubunio-profile-brand`, Rueckweg:

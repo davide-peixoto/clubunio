@@ -171,12 +171,14 @@ class MemberChangeService
                 } catch (ModelNotFoundException|\Illuminate\Database\RecordNotFoundException|\Symfony\Component\HttpKernel\Exception\HttpException) {
                     throw ValidationException::withMessages(['revision' => __('Die Mitglieds-, Eltern- oder Trainerberechtigung ist nicht mehr gültig. Bitte Antrag ablehnen.')]);
                 }
-                if (! hash_equals($r->member_version, MemberService::version($member))) {
+                // Photos have no field-level baseline in older requests; retain their version guard.
+                if ($r->portrait_encrypted && ! hash_equals($r->member_version, MemberService::version($member))) {
                     throw ValidationException::withMessages(['revision' => __('Konflikt: Mitglied wurde inzwischen geändert. Antrag ablehnen und neu erfassen lassen.')]);
                 }
-                $changes = $this->snapshot($r)['changes'];
+                $snapshot = $this->snapshot($r);
+                $changes = self::pendingChanges($snapshot['before'], $snapshot['changes'], $this->values($member));
                 if ($changes) {
-                    app(MemberService::class)->update($actor, $tenant, $member->id, $changes + ['_version' => $r->member_version]);
+                    app(MemberService::class)->update($actor, $tenant, $member->id, $changes + ['_version' => MemberService::version($member)]);
                 }
                 if ($r->portrait_encrypted) {
                     app(ProfilePhotoService::class)->publishCampaign($tenant, $member->id, $r->portrait_encrypted);
@@ -205,6 +207,33 @@ class MemberChangeService
             $r->forceFill(['state' => 'withdrawn', 'status_id' => $this->status($tenant, 'withdrawn'), 'revision' => $revision + 1])->save();
             $this->audit($actor, $r, 'withdrawn');
         });
+    }
+
+    public static function pendingChanges(array $before, array $requested, array $current): array
+    {
+        $pending = [];
+        foreach ($requested as $field => $target) {
+            if (! array_key_exists($field, self::FIELDS) || ! array_key_exists($field, $before)
+                || ! array_key_exists($field, $current)
+                || ! self::comparable($target) || ! self::comparable($before[$field]) || ! self::comparable($current[$field])) {
+                throw ValidationException::withMessages(['revision' => trans('member_change_conflicts.invalid_snapshot')]);
+            }
+            // Match submission semantics for nullable text and numeric lookup IDs.
+            if ((string) $current[$field] === (string) $target) {
+                continue;
+            }
+            if ((string) $current[$field] !== (string) $before[$field]) {
+                throw ValidationException::withMessages(['revision' => trans('member_change_conflicts.changed_field', ['field' => __(self::FIELDS[$field])])]);
+            }
+            $pending[$field] = $target;
+        }
+
+        return $pending;
+    }
+
+    private static function comparable(mixed $value): bool
+    {
+        return $value === null || is_string($value) || is_int($value);
     }
 
     public function snapshot(MemberChangeRequest $request): array
