@@ -1215,3 +1215,13 @@ Benutzer. APNs auf ausdrücklichen Wunsch offen. Stage-Anmeldung erstellt eine
 Sitzung und widerruft sie anschliessend. Konkrete Appursache noch offen,
 redigierter Anmeldecode ergänzt. Prüfungen und offene Abnahme sind in
 [SV-Sissach-Testbuild](CLUBUNIO-SVS-TEST-BUILD.md) dokumentiert.
+
+
+## 19.11.2026 – Platzanfragen aus Kalenderslots
+
+App und Web öffnen in der Tagesansicht eine Anfrage aus einem 30-Minuten-Slot
+mit Platz, Datum und Beginn. Die lokale Appvalidierung erlaubt ausstehende
+Anfragen bei aktuell gesperrten Plätzen entsprechend dem vorhandenen
+Serverablauf. Ein neutraler Hinweis erklärt die Prüfung bei der Freigabe.
+DE/EN-Kataloge geprüft. DEV und Stage aktualisiert, Stagecommit 8c45b1e.
+Abnahme und Rückweg sind in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md) dokumentiert.

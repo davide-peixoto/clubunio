@@ -2988,5 +2988,7 @@
     "AHV-Nummer": "AHV-Nummer",
     "Land des Vorvereins": "Land des Vorvereins",
     "Schweiz": "Schweiz",
-    "Ausland": "Ausland"
+    "Ausland": "Ausland",
+    "This pitch is currently closed. You can still submit your request. Availability for the requested date will be checked when it is approved.": "Dieses Spielfeld ist aktuell gesperrt. Du kannst die Anfrage trotzdem senden. Die Verfügbarkeit für den gewünschten Termin wird bei der Freigabe geprüft.",
+    "Request :field on :date at :time": "Anfrage für :field am :date um :time erstellen"
 }

@@ -1,4 +1,4 @@
-    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=4">
+    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=5">
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
@@ -47,7 +47,12 @@
                     @foreach($columns as $column)
                         <div class="pitch-column" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}">
                             @for($minute = 0; $minute < 1440; $minute += 30)
-                                <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px" x-on:dragover.prevent x-on:drop.prevent="if (dragKey && !busy) { busy = true; $wire.proposeMove(dragKey, {{ $column['field']['id'] }}, @js($date), @js(sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60))).finally(() => { busy = false; dragKey = null }) }"></div>
+                                @php($slotTime = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60))
+                                <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px" x-on:dragover.prevent x-on:drop.prevent="if (dragKey && !busy) { busy = true; $wire.proposeMove(dragKey, {{ $column['field']['id'] }}, @js($date), @js($slotTime)).finally(() => { busy = false; dragKey = null }) }">
+                                    @if($this->capability('request'))
+                                        <button type="button" class="pitch-slot" wire:click="requestSlot({{ $column['field']['id'] }}, @js($date), @js($slotTime))" wire:loading.attr="disabled" aria-label="{{ __('Request :field on :date at :time', ['field' => $column['field']['name'], 'date' => $days[0]['date']->format('d.m.Y'), 'time' => $slotTime]) }}"></button>
+                                    @endif
+                                </div>
                             @endfor
                             @foreach($column['events'] as $entry)
                                 @include('clubunio.pitch-planning.entry', ['timeline' => true, 'lanes' => $column['lanes']])

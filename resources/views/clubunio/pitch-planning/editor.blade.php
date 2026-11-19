@@ -25,6 +25,9 @@
                     </fieldset>
                 @else
                 <label>{{ __('Spielfeld') }}<select wire:model.live="form.field_id" required><option value="">{{ __('Auswählen') }}</option>@foreach($options['fields'] as $field)<option value="{{ $field['id'] }}">{{ $field['name'] }}{{ !$field['available'] ? ' / '.__('Gesperrt') : '' }}</option>@endforeach</select></label>
+                @if($editor === 'request' && isset($form['field_id']) && !($fields->get($form['field_id'])['available'] ?? true))
+                    <p class="pitch-wide pitch-status-hint" role="status">{{ __('This pitch is currently closed. You can still submit your request. Availability for the requested date will be checked when it is approved.') }}</p>
+                @endif
                 <label>{{ __('Teilfläche') }}<select wire:model="form.area_id"><option value="">{{ __('Ganzer Platz') }}</option>@foreach($areas as $area)<option value="{{ $area['id'] }}">{{ $area['name'] }}</option>@endforeach</select></label>
                 <label>{{ __('Datum') }}<input type="date" required wire:model="form.date"></label>
                 <label>{{ __('Beginn') }}<input type="time" required wire:model="form.starts_at"></label>

@@ -2607,3 +2607,13 @@ Liste und Detail verfügbar. Die Mannschaftsliste zeigt übernommene Mitglieder.
 DEV-Release `20261109-clubunio-my-teams-trial`, Basis `20261107-clubunio-tenant-storage`.
 Zwei PostgreSQL-Tests mit 57 Assertions bestanden. DE/EN-Sprachprüfung grün.
 Health200/context401 und FPM/Pushdienst aktiv. Keine Migration und kein App-Build erforderlich.
+
+
+## 19.11.2026 – Kalenderslots für Platzanfragen
+
+Gezieltes Delta im aktuellen Release 20261117-sv-sissach-mobile-oidc.
+Die Webaktion requestSlot füllt eine Anfrage aus dem Tageskalender vor.
+Neuer DE/EN-Hinweis erklärt den aktuellen Anlagenstatus im Anfrageablauf.
+Bootstrap/CSS HTTP 200, beide Bladevorlagen kompiliert, PHP-FPM aktiv.
+Quelldateisicherung unter shared/pitch-slots-backup-20261119. Details und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

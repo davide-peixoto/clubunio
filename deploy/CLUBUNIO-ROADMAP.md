@@ -1995,3 +1995,11 @@ vorbereiteten signierten Mac-Buildpfad für 2.0.0 (1). Native Geräteabnahme
 Stage-Anmeldung scheitert nach der Sitzungsausgabe. Ein redigierter
 Diagnosecode grenzt den betroffenen Appschritt ein. Details und Abnahmestand
 stehen im [SV-Sissach-Testbuild](CLUBUNIO-SVS-TEST-BUILD.md).
+
+
+## 19.11.2026 – Direkte Slotauswahl für Platzanfragen
+
+Die Tageskalender in App und Web übernehmen bei Klick auf einen Slot Datum,
+Beginn und Spielfeld ins Anfrageformular. Der aktuelle Anlagenstatus wird
+als Hinweis zur anschliessenden Freigabe erklärt. Auf DEV und Stage verfügbar.
+Prüfung und Stand in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

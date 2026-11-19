@@ -154,6 +154,17 @@ class PitchPlanning extends Page
         $this->showEditor();
     }
 
+    public function requestSlot(int $fieldId, string $date, string $time): void
+    {
+        $data = \Illuminate\Support\Facades\Validator::make(
+            ['field_id' => $fieldId, 'date' => $date, 'starts_at' => $time],
+            ['field_id' => 'required|integer|min:1', 'date' => 'required|date_format:Y-m-d', 'starts_at' => 'required|date_format:H:i'],
+        )->validate();
+        $this->createEntry('request');
+        abort_unless(collect($this->options['fields'])->contains('id', $fieldId), 404);
+        $this->form = array_replace($this->form, $data);
+    }
+
     public function editArea(?int $fieldId = null, ?int $areaId = null): void
     {
         $this->refreshCalendar();

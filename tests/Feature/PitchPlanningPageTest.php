@@ -17,11 +17,40 @@ class PitchPlanningPageTest extends TestCase
         PitchPlanningHarness::$calls = [];
         PitchPlanningHarness::$failure = null;
         PitchPlanningHarness::$manage = true;
+        PitchPlanningHarness::$request = true;
         PitchPlanningHarness::$fixtureEntries = [self::entry()];
         $part = json_decode(file_get_contents(base_path('lang/parts/pitch-web.en.json')), true, flags: JSON_THROW_ON_ERROR);
         $en = json_decode(file_get_contents(lang_path('en.json')), true, flags: JSON_THROW_ON_ERROR) + $part;
-        app('translator')->setLoaded(['*' => ['*' => ['en' => $en, 'de' => array_combine(array_keys($en), array_keys($en))]]]);
+        $de = json_decode(file_get_contents(lang_path('de.json')), true, flags: JSON_THROW_ON_ERROR)
+            + array_combine(array_keys($en), array_keys($en));
+        app('translator')->setLoaded(['*' => ['*' => ['en' => $en, 'de' => $de]]]);
         app()->setLocale('de');
+    }
+
+    public function test_selecting_calendar_slot_prefills_request_and_permits_pending_request_on_closed_field(): void
+    {
+        $component = Livewire::test(PitchPlanningHarness::class)
+            ->call('requestSlot', 2, '2026-11-04', '12:30')
+            ->assertSet('editor', 'request')
+            ->assertSet('form.field_id', 2)
+            ->assertSet('form.date', '2026-11-04')
+            ->assertSet('form.starts_at', '12:30')
+            ->assertSee('Dieses Spielfeld ist aktuell gesperrt.');
+        $this->assertNotContains('requestFriendly', array_column(PitchPlanningHarness::$calls, 0));
+        $component->set('form.opponent', 'Visitors')->call('saveEntry')->assertSet('editor', null);
+        $call = collect(PitchPlanningHarness::$calls)->first(fn ($call) => $call[0] === 'requestFriendly');
+        $this->assertSame(2, $call[1][0]['field_id']);
+        $this->assertSame('12:30', $call[1][0]['starts_at']);
+    }
+
+    public function test_calendar_slot_checks_permission_field_and_civil_time(): void
+    {
+        Livewire::test(PitchPlanningHarness::class)->call('requestSlot', 1, '2026-02-30', '12:30')->assertHasErrors('date');
+        Livewire::test(PitchPlanningHarness::class)->call('requestSlot', 1, '2026-11-04', '25:00')->assertHasErrors('starts_at');
+        Livewire::test(PitchPlanningHarness::class)->call('requestSlot', 999, '2026-11-04', '12:30')->assertStatus(404);
+        PitchPlanningHarness::$request = false;
+        Livewire::test(PitchPlanningHarness::class)->assertDontSee('class="pitch-slot"', false)
+            ->call('requestSlot', 1, '2026-11-04', '12:30')->assertStatus(403);
     }
 
     public static function entry(): array
@@ -266,6 +295,7 @@ class PitchPlanningHarness extends PitchPlanning
     public static array $fixtureEntries = [];
     public static ?\Throwable $failure = null;
     public static bool $manage = true;
+    public static bool $request = true;
 
     public static function canAccess(): bool { return true; }
 
@@ -294,7 +324,7 @@ class PitchPlanningHarness extends PitchPlanning
             ['id' => 2, 'name' => 'Pitch Two', 'available' => false, 'areas' => []],
             ['id' => 3, 'name' => 'Pitch Three', 'available' => true, 'areas' => []],
         ], 'teams' => [['id' => 2, 'name' => 'U18']],
-            'capabilities' => ['view' => true, 'request' => true, 'manage' => self::$manage, 'approve' => self::$manage]];
+            'capabilities' => ['view' => true, 'request' => self::$request, 'manage' => self::$manage, 'approve' => self::$manage]];
 
         return match ($method) { 'options' => $options, 'calendar' => $options + ['entries' => self::$fixtureEntries], default => self::$fixtureEntries[0] };
     }
