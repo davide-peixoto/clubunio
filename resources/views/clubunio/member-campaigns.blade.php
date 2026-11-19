@@ -185,7 +185,7 @@
                             <x-filament::badge color="warning">{{ __('campaign.no_post') }}</x-filament::badge>
                         @elseif($canManage && $open && !$row->acknowledged_at)
                             <x-filament::button size="sm" tag="a" :href="route('clubunio.campaign.letter', [$tenant->slug, $campaign->id, $row->id])">{{ __('campaign.letter') }}</x-filament::button>
-                            @unless($row->posted_at)<x-filament::button size="sm" wire:click="markPosted({{ $row->id }})">{{ __('campaign.posted') }}</x-filament::button>@endunless
+                            @if($row->printed_at && !$row->posted_at)<x-filament::button size="sm" wire:click="markPosted({{ $row->id }})">{{ __('campaign.posted') }}</x-filament::button>@endif
                         @endif
                         @if($row->posted_at)<x-filament::badge>{{ __('campaign.posted_state') }}</x-filament::badge>@endif
                     @endif

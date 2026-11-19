@@ -278,7 +278,7 @@ class MemberCampaigns extends Page
         $service = app(MemberCampaignService::class);
         $service->openCampaign($tenant, $this->selected);
         $service->recipients($tenant, $this->selected)->where('id', $recipient)
-            ->whereIn('channel', ['post', 'both'])->whereNull('posted_at')->update(['posted_at' => now()]);
+            ->whereIn('channel', ['post', 'both'])->whereNotNull('printed_at')->whereNull('posted_at')->update(['posted_at' => now()]);
     }
 
     public function testMail(int $recipient): void
@@ -385,6 +385,6 @@ class MemberCampaigns extends Page
             'mailQueueEnabled' => app(\App\ClubUnio\Services\CampaignMailQueue::class)->enabled(),
             'canEditMembers' => app(\App\ClubUnio\Services\ModulePermissionService::class)->allows(Filament::auth()->user(), $tenant, 'members', 'update'),
             'teamOptions' => $teamOptions, 'count' => $count, 'total' => $campaign ? $service->recipients($tenant, $campaign->id)->count() : 0,
-            'hasLetters' => $campaign && $service->recipients($tenant, $campaign->id)->whereIn('channel', ['post','both'])->whereNotNull('token_encrypted')->exists()];
+            'hasLetters' => $campaign && $service->recipients($tenant, $campaign->id)->whereIn('channel', ['post','both'])->whereNotNull('token_encrypted')->whereNull('posted_at')->exists()];
     }
 }
