@@ -1,10 +1,11 @@
-    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=5">
+    <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=6">
+    <script src="{{ asset('js/pitch-planning.js') }}?v=2"></script>
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
         $fields = collect($options['fields'])->keyBy('id');
     @endphp
-    <div class="pitch-planner" x-data="{ dragKey: null, busy: false }" x-on:dragend="dragKey = null" wire:loading.class="pitch-loading">
+    <div class="pitch-planner" x-data="clubunioPitchPlanner()" x-on:dragend="dragKey = null" x-on:keydown.escape.window="cancelRange()" x-on:blur.window="cancelRange()" wire:loading.class="pitch-loading">
         <div class="pitch-toolbar">
             <div class="pitch-controls">
                 <x-filament::icon-button wire:click="browse(-1)" wire:loading.attr="disabled" icon="heroicon-o-chevron-left" :label="__('Vorheriger Zeitraum')" :tooltip="__('Vorheriger Zeitraum')" />
@@ -28,6 +29,7 @@
                 @endif
             </div>
         </div>
+        @if($mode === 'day' && $this->capability('request'))<p class="pitch-status-hint">{{ __('Drag across time slots to select the start and duration.') }}</p>@endif
         <div class="pitch-summary">
             <strong>{{ $days[0]['date']->locale(app()->getLocale())->isoFormat($mode === 'day' ? 'dddd, LL' : 'LL') }}@if($mode !== 'day') - {{ end($days)['date']->locale(app()->getLocale())->isoFormat('LL') }}@endif</strong>
             <span>{{ __('Zeitzone: Europe/Zurich') }}</span>
@@ -45,15 +47,18 @@
                     @endforeach
                     <div class="pitch-hours">@for($hour = 0; $hour < 24; $hour++)<span style="top: {{ $hour * 90 }}px">{{ sprintf('%02d:00', $hour) }}</span>@endfor</div>
                     @foreach($columns as $column)
-                        <div class="pitch-column" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}">
+                        <div class="pitch-column" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}"
+                            x-on:pointerdown="startRange($event, {{ $column['field']['id'] }}, @js($date))"
+                            x-on:pointermove="extendRange($event)" x-on:pointerup="finishRange($event)" x-on:pointercancel="cancelRange()" x-on:lostpointercapture="cancelRange()">
                             @for($minute = 0; $minute < 1440; $minute += 30)
                                 @php($slotTime = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60))
                                 <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px" x-on:dragover.prevent x-on:drop.prevent="if (dragKey && !busy) { busy = true; $wire.proposeMove(dragKey, {{ $column['field']['id'] }}, @js($date), @js($slotTime)).finally(() => { busy = false; dragKey = null }) }">
                                     @if($this->capability('request'))
-                                        <button type="button" class="pitch-slot" wire:click="requestSlot({{ $column['field']['id'] }}, @js($date), @js($slotTime))" wire:loading.attr="disabled" aria-label="{{ __('Request :field on :date at :time', ['field' => $column['field']['name'], 'date' => $days[0]['date']->format('d.m.Y'), 'time' => $slotTime]) }}"></button>
+                                        <button type="button" class="pitch-slot" data-pitch-minute="{{ $minute }}" x-on:click="activateSlot($event, {{ $column['field']['id'] }}, @js($date), {{ $minute }})" wire:loading.attr="disabled" aria-label="{{ __('Request :field on :date at :time', ['field' => $column['field']['name'], 'date' => $days[0]['date']->format('d.m.Y'), 'time' => $slotTime]) }}"></button>
                                     @endif
                                 </div>
                             @endfor
+                            <div class="pitch-range" x-cloak x-show="selection && selection.field === {{ $column['field']['id'] }}" :style="rangeStyle({{ $column['field']['id'] }})" x-text="rangeText(@js(__(':start–:end · :minutes min')))" role="status"></div>
                             @foreach($column['events'] as $entry)
                                 @include('clubunio.pitch-planning.entry', ['timeline' => true, 'lanes' => $column['lanes']])
                             @endforeach
