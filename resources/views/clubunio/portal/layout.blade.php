@@ -22,7 +22,9 @@
         <main>@yield('content')</main>
     @endisset
     @if(config('clubunio-support.enabled') && !isset($portalModule))
-        <script src="{{ asset('js/clubunio-help-widget.js') }}"></script>
+        <script src="{{ asset('js/clubunio-help-widget.js').'?v=2' }}"
+            data-support-url="{{ isset($tenant) ? route('clubunio.support.center', ['club' => $tenant->id]) : url('/help') }}"
+            data-support-label="{{ trans('support.title') }}"></script>
     @endif
 </body>
 </html>
