@@ -63,6 +63,7 @@ return [
     'escalate' => 'An Plattform eskalieren',
     'summary' => 'Freigegebene Zusammenfassung',
     'close' => 'Ticket schliessen',
+    'close_panel' => 'Supportfenster schliessen',
     'article' => 'Artikel veröffentlichen',
     'subject' => 'Betreff',
     'body' => 'Nachricht',

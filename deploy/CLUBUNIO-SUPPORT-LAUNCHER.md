@@ -1,5 +1,17 @@
 # Support-Einstieg: DEV-Abnahme 19.11.2026
 
+## Seitliches Supportfenster
+
+DEV `20261119-clubunio-support-panel`, Rueckweg
+`20261119-clubunio-laravel-mail-theme`. Vollstaendiges Supportcenter im
+gleich-originigen Iframe mit nativer Dialog-Fokusbegrenzung und Escape/Schliessen.
+Die Ausgangsseite wird nicht navigiert; der Inhalt bleibt beim Schliessen
+im Fenster erhalten. Mobile Ansicht fuellt die Bildschirmbreite.
+Desktop und 390 x 844 im angemeldeten Browser geprueft: Ticketformular,
+Vereinskontext und Schliessen ohne Seitenwechsel. Stylesheet versioniert,
+damit das neue Formular-Design nicht aus einem alten Browsercache kommt.
+Keine Datenbankmigration, keine neuen Rechte; Stage unveraendert.
+
 - DEV: `20261119-clubunio-support-launcher`; Rueckweg:
   `20261119-clubunio-member-change-conflicts`.
 - Blauer schwebender Supportlink im Vereinsportal, auf Mobilbreite als

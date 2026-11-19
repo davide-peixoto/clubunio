@@ -21,3 +21,23 @@
     .cu-help-launcher > span:last-child { display: none; }
 }
 @media print { .cu-help-launcher { display: none; } }
+.cu-help-panel {
+    position: fixed; inset: 0 0 0 auto; margin: 0;
+    width: min(100%, 560px); height: 100dvh; max-height: 100dvh;
+    max-width: 100%; padding: 0; border: 0; background: #f5f8fc;
+    color: #18354d; box-shadow: -8px 0 32px #16354a33;
+}
+.cu-help-panel[open] { display: flex; flex-direction: column; }
+.cu-help-panel::backdrop { background: #16354a33; }
+.cu-help-panel header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; background: #075ca8; color: white;
+    font: 600 16px/1.4 system-ui, sans-serif; flex: 0 0 auto;
+}
+.cu-help-panel header button {
+    width: 40px; height: 40px; padding: 0; border: 1px solid #ffffff66;
+    border-radius: 6px; background: transparent; color: white; font-size: 28px;
+    cursor: pointer;
+}
+.cu-help-panel header button:focus-visible { outline: 3px solid white; outline-offset: 2px; }
+.cu-help-panel iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: #f5f8fc; }

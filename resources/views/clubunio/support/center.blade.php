@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ trans('support.title') }} · ClubUnio</title>
 <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}">
-<link rel="stylesheet" href="{{ asset('css/clubunio-support.css') }}">
+<link rel="stylesheet" href="{{ asset('css/clubunio-support.css') }}?v=panel-1">
 </head>
 <body>
 <main class="cu-support">
