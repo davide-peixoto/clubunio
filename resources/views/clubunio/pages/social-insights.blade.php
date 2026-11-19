@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-social-insights.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-social-insights.css') }}?v=3">
     <div class="cu-admin-toolbar">
         <x-filament::button tag="a" :href="url('/social-media')" icon="heroicon-o-arrow-left" color="gray">{{ trans('social.title') }}</x-filament::button>
         <label>{{ trans('social_insights.platform') }}<x-filament::input.wrapper><x-filament::input.select wire:model.live="platform">
@@ -27,7 +27,7 @@
                 <x-filament::button wire:click="choose({{ $index }})" icon="heroicon-o-check">{{ $page['name'] ?? $page['id'] }}</x-filament::button>
             @endforeach
         @endif
-        <div class="cu-admin-journal"><table><thead><tr>
+        <div class="cu-admin-journal cu-insights-accounts"><table><thead><tr>
             @foreach(['platform','account','status','followers','growth','updated','actions'] as $column)<th scope="col">{{ trans('social_insights.'.$column) }}</th>@endforeach
         </tr></thead><tbody>
         @forelse($connections as $connection)

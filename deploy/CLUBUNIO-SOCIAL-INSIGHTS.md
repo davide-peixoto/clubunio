@@ -116,8 +116,8 @@ DEV und Stage: vier Tabellen nach privater Custom-Sicherung migriert;
 Backups `/root/clubunio-backups/clubunio_dev-before-social-insights-20261119.dump`
 und entsprechend `clubunio_stage-before-social-insights-20261119.dump`,
 beide mit `pg_restore --list` geprueft. Keine PROD- oder Snapshot-Aenderung.
-DEV-Release `20261119-clubunio-social-insights-v2`; unmittelbarer Rueckweg
-`20261119-clubunio-social-insights`, vor dem Paket `20261119-clubunio-campaign-visual`.
+DEV-Release `20261119-clubunio-social-insights-v3`; unmittelbarer Rueckweg
+`20261119-clubunio-social-insights-v2`, vor dem Paket `20261119-clubunio-campaign-visual`.
 Stage gezielt auf Branch stage. Bestehende parallele Mailtheme-Arbeiten erhalten.
 
 18 lokale Tests / 83 Assertions, DE-/EN-Katalogpruefung erfolgreich.
@@ -131,6 +131,10 @@ vorhandenen Default-/Legacy-Datenbank. Token-/Fehlerpruefung und gecachte
 Beitraege nach Fehler sowie Ablehnung deaktivierter Konten abgedeckt.
 
 Angemeldete Dashboard-Leeransicht auf DEV/Stage ohne Fehler geladen.
+DEV zusaetzlich bei 390 Pixel Breite geprueft: keine Seitenverbreiterung,
+lesbare horizontal scrollbare Tabellen und kompakte fehlende KPI-Werte.
+Dashboardaggregation, Plattform-/Textfilter und KPI-Sortierung mit
+synthetischen importierten Beitraegen auch im Server-Fachtest geprueft.
 Meta-Verbindungsschaltflaechen bleiben deaktiviert, solange die private
 Testkonfiguration fehlt. Echte OAuth-Abnahme weiterhin offen wie oben.
 

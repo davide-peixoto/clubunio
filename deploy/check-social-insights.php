@@ -57,6 +57,18 @@ try {
     $require($service->table('imported_posts')->where('tenant_id',$tenant->id)->count()===2,'Repeat duplicated post');
     $metrics=json_decode($service->table('imported_posts')->where('tenant_id',$tenant->id)->where('connection_id',$ig)->value('metrics'),true);
     $require($metrics['likes']===0 && $metrics['reach']===null,'Missing value confused with zero');
+    \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+    \Filament\Facades\Filament::setTenant($tenant);
+    \Illuminate\Support\Facades\Auth::guard('clubunio')->setUser($actor);
+    request()->setUserResolver(fn ($guard=null)=>$actor);
+    request()->setLaravelSession(app('session')->driver());
+    $dashboard=new \App\ClubUnio\Pages\SocialInsights;
+    $data=(new ReflectionMethod($dashboard,'getViewData'))->invoke($dashboard);
+    $require($data['total']===2 && $data['totals']['likes']['value']===2 && $data['totals']['reach']['value']===null,'Dashboard aggregation incorrect');
+    $require(!isset($data['connections'][0]->token_encrypted),'Token exposed to dashboard');
+    $dashboard->platform='facebook'; $dashboard->sort='likes'; $dashboard->search='Synthetic';
+    $filtered=(new ReflectionMethod($dashboard,'getViewData'))->invoke($dashboard);
+    $require($filtered['total']===1 && $filtered['posts'][0]->platform==='facebook','Dashboard filter incorrect');
     $require(Http::recorded()->every(fn ($pair)=>$pair[0]->method()==='GET' && str_starts_with($pair[0]->url(),'https://graph.facebook.com/')),'Unexpected outbound write');
     Http::swap(new \Illuminate\Http\Client\Factory);
     Http::preventStrayRequests();
