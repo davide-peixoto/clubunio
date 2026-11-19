@@ -135,3 +135,13 @@ Echter SMTP-Versand und externe Ruecklaeuferzulieferung sind weiterhin
 nicht aktiviert. Fuer Letztere fehlen ein angebundener Zustelldienst
 und sein privates Signatursecret. Es wurden keine Testempfaenger-
 Konten dauerhaft fuer eine Browserpruefung angelegt.
+
+Nachfolgende parallele Support-Releases haben das Kampagnenpaket auf DEV
+uebernommen; der komplette Fachtest wurde auch im danach aktiven
+20261119-clubunio-support-management erneut erfolgreich ausgefuehrt.
+Auf Stage war das parallel bereitgestellte Verzeichnis
+resources/views/clubunio/mail aufgrund seiner Root-Eigentuemerschaft und
+einer geerbten Gruppen-ACL fuer den App-Benutzer nicht durchsuchbar.
+Nur dieses Stage-Verzeichnis wurde runcloud:runcloud zugeordnet; danach
+funktionierte der Mailtheme-Test mit dem kompletten Kampagnenfachtest.
+Keine allgemeinen ACL-, Rollen- oder Dienstaenderungen.

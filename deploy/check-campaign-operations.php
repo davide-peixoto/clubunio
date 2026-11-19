@@ -60,7 +60,12 @@ try {
     $ops->table('campaign_dispatches')->where('id', $dispatch->id)->update(['due_at' => now()->subSeconds(2)]);
     $require($ops->runOne($dispatch->id), 'initial dispatch processed');
     $require(!$ops->runOne($dispatch->id), 'no duplicate dispatch');
-    $require($ops->table('campaign_dispatches')->where('id', $dispatch->id)->value('outcome') === 'memory_simulated', 'memory only');
+    $outcome = $ops->table('campaign_dispatches')->where('id', $dispatch->id)->value('outcome');
+    if ($outcome !== 'memory_simulated') {
+        $diagnostic = $ops->table('campaign_delivery_events')->where('tenant_id', $tenant->id)->where('dispatch_id', $dispatch->id)
+            ->orderByDesc('id')->value('details_encrypted');
+        throw new RuntimeException('memory transport: '.$outcome.' '.($diagnostic ? Crypt::decryptString($diagnostic) : 'no diagnostic'));
+    }
     $ops->table('campaign_dispatches')->where('id', $dispatch->id)->update(['accepted_at' => now()->subDays(8), 'attempted_at' => now()->subDays(8)]);
     $require($ops->reminders($actor, $tenant, $id) === 1 && $ops->reminders($actor, $tenant, $id) === 0, 'reminder idempotency');
     $row = $service->recipients($tenant, $id)->sole();
