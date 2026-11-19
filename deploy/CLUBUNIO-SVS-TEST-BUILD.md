@@ -38,10 +38,12 @@ Origins HTTP 200. Das prüft den Servereinstieg.
 Beim vom Benutzer gemeldeten Stage-Versuch am 19.11.2026 wurde die
 Keycloak-Kopplung abgeschlossen und um 07:53:34 UTC eine mobile Sitzung
 erstellt. Sie wurde um 07:53:35 UTC wieder widerrufen. Der gespeicherte
-federierte Sicherheitsnachweis entspricht dem aktuellen Konto. Ein interner
-lesender Kontextaufruf für dasselbe Konto liefert HTTP 200, Mandant 3 und
-eine gültige DE/EN-Sprachfreigabe. Das beweist noch keinen erfolgreichen
-HTTP-Kontextabruf aus der betroffenen App.
+federierte Sicherheitsnachweis entspricht dem aktuellen Konto. Das nach dem
+Leeren der Nginx-Protokollpuffer geprüfte HTTP-Protokoll bestätigt um
+07:53:35 UTC den Tokenabruf, den Kontextabruf und den anschliessenden
+Sitzungswiderruf jeweils mit HTTP 200. Damit liegt der Fehler bei der lokalen
+Sitzungsübernahme. Ein zusätzlicher interner Kontextaufruf bestätigt Mandant 3
+und eine gültige DE/EN-Sprachfreigabe.
 
 Der Screenshot zeigt ausschliesslich die allgemeine Anmeldefehlermeldung.
 Die konkrete Ursache ist noch offen. Der neue Appstand ergänzt einen
