@@ -148,3 +148,20 @@ Frontend und inquiry.php zusammen bereitstellen. Vorher im PHP-FPM-Pool unio
 CLUBUNIO_RECAPTCHA_PROJECT_ID und CLUBUNIO_RECAPTCHA_API_KEY konfigurieren.
 Den API-Schlüssel auf die reCAPTCHA Enterprise API und die ausgehende
 VPS-IP beschränken. Der öffentliche Site-Key bleibt Exportparameter.
+
+## Inhaltsaktualisierung 19.11.2026
+
+DE/EN-Marketing mit dem dokumentierten Entwicklungsstand abgeglichen:
+Trainerportal der aktuellen Saison, feldweise Mitgliederdatenfreigabe,
+Serien und Absenzen, Saisonplanungs-Assistent, Materialquittungen,
+Social-Media-Vorlagen und geplante Jobs, Veo-Wochenplanung sowie
+Kampagnen zur Stammdatenpflege und Empfangsbestaetigung.
+Social-Media-Publikation und Kampagnenversand als Pilot gekennzeichnet;
+Veo als Vorbereitung fuer die Camera App beschrieben.
+Pakete und Extras weiterhin auf Anfrage.
+
+Statische Hauptseiten in /home/runcloud/webapps/unio aktualisiert.
+Keine Datenbankmigration. Rueckweg ueber die vor dem Austausch erstellte
+Sicherung /root/clubunio-marketing-20261119-* auf dem VPS.
+Lokale Quelle: Marketing-Blade und beide Sprachkataloge.
+Abnahme: Sprach-/Platzhaltercheck sowie MarketingWebsiteTest erfolgreich.
