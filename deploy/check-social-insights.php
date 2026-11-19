@@ -68,6 +68,8 @@ try {
     $denied(fn ()=>$service->import($actor,$tenant,$ig,(int) $row->revision));
     $require($service->table('connections')->where('id',$ig)->value('token_encrypted')===null,'Disconnected credential retained');
     $require($service->table('metric_snapshots')->where('tenant_id',$tenant->id)->count()===2,'Disconnect lost history');
+    $actor->forceFill(['active'=>false])->save();
+    $denied(fn ()=>$service->authorize($actor,$tenant));
     $require(Http::recorded()->every(fn ($pair)=>$pair[0]->method()==='GET' && str_starts_with($pair[0]->url(),'https://graph.facebook.com/')),'Unexpected outbound write');
     echo "Social test-account gates, encrypted connections, both imports, snapshots, no duplicates, failure audit and disconnect passed. Rollback only; no real Meta request or publication.\n";
 } catch (Throwable $error) {
