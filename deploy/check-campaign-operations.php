@@ -57,6 +57,7 @@ try {
     $service->release($actor, $tenant, $id);
     $denied(fn () => $service->release($actor, $tenant, $id), 'duplicate release accepted');
     $dispatch = $ops->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('campaign_id', $id)->sole();
+    $ops->table('campaign_dispatches')->where('id', $dispatch->id)->update(['due_at' => now()->subSeconds(2)]);
     $require($ops->runOne($dispatch->id), 'initial dispatch processed');
     $require(!$ops->runOne($dispatch->id), 'no duplicate dispatch');
     $require($ops->table('campaign_dispatches')->where('id', $dispatch->id)->value('outcome') === 'memory_simulated', 'memory only');
@@ -66,6 +67,7 @@ try {
     $responses->opened($tenant, $row);
     $service->acknowledge($tenant, Crypt::decryptString($row->token_encrypted));
     $reminder = $ops->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('sequence', 1)->sole();
+    $ops->table('campaign_dispatches')->where('id', $reminder->id)->update(['due_at' => now()->subSeconds(2)]);
     $require($ops->runOne($reminder->id) && $ops->table('campaign_dispatches')->where('id', $reminder->id)->value('state') === 'cancelled', 'response cancels reminder');
     $feedback = ['event_id' => (string) Str::uuid(), 'dispatch_id' => $dispatch->id, 'state' => 'bounced', 'address_hash' => $dispatch->address_hash];
     $ops->feedback($feedback);

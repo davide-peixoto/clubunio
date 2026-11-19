@@ -35,7 +35,7 @@
             <h2>{{ $campaign->title }}</h2>
             <span>{{ \App\ClubUnio\Services\MemberCampaignService::kindLabel($campaign->kind) }}</span>
             <x-filament::badge>{{ $draft ? __('campaign.draft') : ($open ? __('campaign.open') : __('campaign.closed')) }}</x-filament::badge>
-            <span>{{ __('campaign.recipient_count') }}: {{ $count }}</span>
+            <span>{{ trans('campaign_ops.recipient_count') }}: {{ $count }}</span>
             @error('release')<span role="alert">{{ $message }}</span>@enderror
             @if($canManage && $draft && $total && $pilot)
                 <x-filament::button icon="heroicon-o-eye" wire:click="previewDispatch">{{ trans('campaign_ops.preview') }}</x-filament::button>
