@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-social-insights.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-social-insights.css') }}?v=2">
     <div class="cu-admin-toolbar">
         <x-filament::button tag="a" :href="url('/social-media')" icon="heroicon-o-arrow-left" color="gray">{{ trans('social.title') }}</x-filament::button>
         <label>{{ trans('social_insights.platform') }}<x-filament::input.wrapper><x-filament::input.select wire:model.live="platform">
@@ -48,7 +48,7 @@
     <dl class="cu-insights-metrics">
         <div><dt>{{ trans('social_insights.posts') }}</dt><dd>{{ $total }}</dd></div>
         @foreach($totals as $key=>$metric)
-            <div><dt>{{ trans('social_insights.'.$key) }}</dt><dd>{{ $metric['value'] ?? trans('social_insights.na') }}</dd>
+            <div><dt>{{ trans('social_insights.'.$key) }}</dt><dd @class(['cu-insights-unavailable'=>$metric['value']===null])>{{ $metric['value'] ?? trans('social_insights.na') }}</dd>
                 <small>{{ trans('social_insights.coverage',['count'=>$metric['coverage'],'total'=>$total]) }}</small></div>
         @endforeach
     </dl>

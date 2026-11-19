@@ -1,6 +1,8 @@
 .cu-insights-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin:0; }
+.cu-insights-metrics > div { min-width:0; overflow-wrap:anywhere; }
 .cu-insights-metrics dt { font-size:14px; }
 .cu-insights-metrics dd { font-size:24px; font-weight:600; margin:4px 0; }
+.cu-insights-metrics dd.cu-insights-unavailable { font-size:16px; font-weight:400; }
 .cu-insights-metrics small { font-size:12px; }
 .cu-insights-posts table { min-width:1200px; }
 .cu-insights-posts th { min-width:95px; word-break:normal; }

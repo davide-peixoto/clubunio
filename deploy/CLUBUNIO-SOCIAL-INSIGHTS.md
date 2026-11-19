@@ -110,7 +110,33 @@ Echter OAuth-/Meta-Liveabruf bleibt offen: Der Benutzer hat bestaetigt,
 dass Meta-Test-App, Instagram-Testkonto und Facebook-Testseite noch
 erstellt werden muessen. Simulierte Tests ersetzen diesen Nachweis nicht.
 
-Primaerquellen (19.11.2026):
+## Releaseabnahme 19.11.2026
+
+DEV und Stage: vier Tabellen nach privater Custom-Sicherung migriert;
+Backups `/root/clubunio-backups/clubunio_dev-before-social-insights-20261119.dump`
+und entsprechend `clubunio_stage-before-social-insights-20261119.dump`,
+beide mit `pg_restore --list` geprueft. Keine PROD- oder Snapshot-Aenderung.
+DEV-Release `20261119-clubunio-social-insights-v2`; unmittelbarer Rueckweg
+`20261119-clubunio-social-insights`, vor dem Paket `20261119-clubunio-campaign-visual`.
+Stage gezielt auf Branch stage. Bestehende parallele Mailtheme-Arbeiten erhalten.
+
+18 lokale Tests / 83 Assertions, DE-/EN-Katalogpruefung erfolgreich.
+Synthetischer Datenbank-Fachtest auf beiden Instanzen erfolgreich,
+ohne PHPUnit-Laufzeitabhaengigkeit, ohne echte Meta-Anfragen.
+Bei der Pruefung fehlte zunaechst die registrierte Aktion social_media.sync;
+sie ist nun separat im Berechtigungskatalog verfuegbar. Keine Profil-Grants
+nachgezogen; Vereinsadmins folgen der bestehenden obersten Rollenlogik.
+Der Trennvorgang nutzt explizit die ClubUnio-Verbindung statt der nicht
+vorhandenen Default-/Legacy-Datenbank. Token-/Fehlerpruefung und gecachte
+Beitraege nach Fehler sowie Ablehnung deaktivierter Konten abgedeckt.
+
+Angemeldete Dashboard-Leeransicht auf DEV/Stage ohne Fehler geladen.
+Meta-Verbindungsschaltflaechen bleiben deaktiviert, solange die private
+Testkonfiguration fehlt. Echte OAuth-Abnahme weiterhin offen wie oben.
+
+## Quellen
+
+Primaerquellen, geprueft am 19.11.2026:
 [Meta Page Insights](https://developers.facebook.com/docs/graph-api/reference/insights/),
 [Instagram Insights](https://developers.facebook.com/docs/graph-api/reference/shadow-ig-user/insights/),
 [Meta Login](https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow/).
