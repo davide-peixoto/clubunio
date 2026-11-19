@@ -155,6 +155,24 @@ try {
     $pledge = $db->table('clubunio.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('participant_id', $participant)->sole();
     $require((int) $pledge->amount_cents === 1250, 'reviewed CHF pledge uses domain logic, not supplied cents');
     $require(!$db->table('clubunio.invoices')->where('tenant_id', $tenant->id)->exists(), 'no automatic invoices');
+    $errorMember = $makeMember(5);
+    $errorCampaign = $service->create($actor, $tenant, 'Synthetic recovery', 'email', false);
+    $service->saveContent($actor, $tenant, $errorCampaign, 'acknowledgement', []);
+    $service->recipient($actor, $tenant, $errorCampaign, $errorMember->id, 'email');
+    $service->release($actor, $tenant, $errorCampaign);
+    $errorRecipient = $service->recipients($tenant, $errorCampaign)->sole();
+    $errorDispatch = $ops->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('campaign_id', $errorCampaign)->sole();
+    $ops->table('campaign_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('attempted_at')->update(['attempted_at' => now()->subMinutes(2)]);
+    $ops->table('campaign_dispatches')->where('id', $errorDispatch->id)->update(['due_at' => now()->subSeconds(2)]);
+    $service->recipients($tenant, $errorCampaign)->where('id', $errorRecipient->id)->update(['token_encrypted' => 'synthetic-invalid-ciphertext']);
+    $require($ops->runOne($errorDispatch->id) && $ops->table('campaign_dispatches')->where('id', $errorDispatch->id)->value('state') === 'attention',
+        'processing error remains traceable and is not automatically retried');
+    $denied(fn () => $ops->retry($actor, $tenant, $errorCampaign, $errorDispatch->id, ''), 'retry without review accepted');
+    $service->recipients($tenant, $errorCampaign)->where('id', $errorRecipient->id)->update(['token_encrypted' => $errorRecipient->token_encrypted]);
+    $ops->retry($actor, $tenant, $errorCampaign, $errorDispatch->id, 'Synthetic: verified no delivery occurred');
+    $ops->table('campaign_dispatches')->where('tenant_id', $tenant->id)->whereNotNull('attempted_at')->update(['attempted_at' => now()->subMinutes(2)]);
+    $ops->table('campaign_dispatches')->where('id', $errorDispatch->id)->update(['due_at' => now()->subSeconds(2)]);
+    $require($ops->runOne($errorDispatch->id) && (int) $ops->table('campaign_dispatches')->where('id', $errorDispatch->id)->value('attempts') === 2, 'reviewed retry uses same dispatch');
     $require(Http::recorded()->isEmpty(), 'no outbound HTTP');
     echo "Campaign cockpit, test dispatch, reminders, feedback, templates, verified guardian PDF, event and sponsor review passed; rollback only. No SMTP.\n";
 } catch (Throwable $error) {
