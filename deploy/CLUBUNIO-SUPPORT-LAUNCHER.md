@@ -1,5 +1,17 @@
 # Support-Einstieg: DEV-Abnahme 19.11.2026
 
+## Verwaltungsbereiche
+
+DEV `20261119-clubunio-support-management`, Rueckweg
+`20261119-clubunio-campaign-operations-v3`. Gemeinsames Launcher-Partial
+fuer Filament-Vereinsverwaltung (aktueller Tenant) und Plattformverwaltung
+(Plattform-Support). Auf Supportseiten kein rekursiver Launcher.
+Keine DB-Migration oder Rechteaenderung; Stage unveraendert.
+PHP-Syntax, Viewkompilierung und DEV-Datenbankcheck erfolgreich.
+Angemeldete Sichtpruefung dieser zwei neuen Einstiegspunkte noch offen:
+Vereinslogin erfordert erneute Anmeldung, vorhandene Browseridentitaet
+erhaelt am Plattformcallback HTTP 403. Keine Rechte dafuer erweitert.
+
 ## Seitliches Supportfenster
 
 DEV `20261119-clubunio-support-panel`, Rueckweg

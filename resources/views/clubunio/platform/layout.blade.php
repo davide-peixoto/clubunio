@@ -9,4 +9,8 @@
 @if(session('notice'))<div class="notice" role="status">{{ session('notice') }}</div>@endif
 @if($errors->any())<div class="errors" role="alert"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 @yield('content')
-</main></body></html>
+</main>
+@isset($actor)
+    @include('clubunio.support.launcher', ['supportPlatform' => true])
+@endisset
+</body></html>
