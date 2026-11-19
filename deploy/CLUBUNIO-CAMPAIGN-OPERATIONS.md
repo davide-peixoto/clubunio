@@ -145,3 +145,37 @@ einer geerbten Gruppen-ACL fuer den App-Benutzer nicht durchsuchbar.
 Nur dieses Stage-Verzeichnis wurde runcloud:runcloud zugeordnet; danach
 funktionierte der Mailtheme-Test mit dem kompletten Kampagnenfachtest.
 Keine allgemeinen ACL-, Rollen- oder Dienstaenderungen.
+
+## Angemeldete Web-Sichtpruefung vom 19.11.2026
+
+Die zuvor offene Desktop-/Mobile-Sichtpruefung ist fuer DEV und Stage
+abgeschlossen. DEV: leerer QA-Entwurf im Demo-Verein erstellt, geoeffnet
+und anschliessend entfernt; keine Empfaenger uebernommen. Stage: vorhandenen
+Entwurf nur lesend geprueft. Mitgliederfilter liefert den passenden Datensatz,
+die Bearbeitung oeffnet den regulaeren Mitgliederdialog und wurde ohne
+Speichern abgebrochen. Filter anschliessend zurueckgesetzt. Keine Freigabe
+oder Versandaktion gegen bestehende Empfaenger ausgefuehrt.
+
+Korrigiert: Kampagnen im DEV-Hauptmenue unter Anlagen & Kommunikation
+eingeordnet (auf Stage bereits vorhanden). Nur vorhandene autorisierte
+Navigationseintraege werden umgruppiert; keine erweiterten Rechte.
+Die sieben Empfaengerspalten behalten lesbare Mindestbreiten in ihrem
+horizontalen Scrollbereich. Bei 390 Pixel Seitenbreite bleibt auch die
+Dokumentbreite 390 Pixel, die Tabelle ist intern 1150 Pixel breit. Uebersicht,
+Formulare, Vorlagen und zweispaltige Ruecklaufkennzahlen auf Mobile sowie
+der seitliche Mitgliederdialog geprueft. Stage zusaetzlich auf Englisch
+geprueft, danach wieder Deutsch eingestellt. Keine weiteren Layoutfehler
+im geprueften Umfang gefunden. Keine physische iOS-/Android-Geraeteabnahme.
+
+DEV-Delta: 20261119-clubunio-campaign-visual, Basis/Rueckweg:
+20261119-clubunio-support-management. Stage-Code: 9eca8ee.
+Keine neue Datenmigration; bestehende additive Kampagnenmigration bleibt
+unveraendert. Ein Rueckweg betrifft nur Navigation, View und CSS, nicht
+Empfaenger, Versandprotokolle oder Mitgliederdaten.
+
+Neun lokale Tests mit 27 Assertions erfolgreich; 2994 DE-/EN-Schluessel
+geprueft. Vollstaendiger synthetischer Kampagnenfachtest auf DEV und Stage
+erfolgreich, einschliesslich Sammel-PDF, Ruecklauf und Testwarteschlange.
+Alle Fachtestdaten zurueckgerollt, kein SMTP und kein echter Versand.
+PROD bleibt unveraendert. Externe Ruecklaeuferzulieferung und echter
+SMTP-Massenversand sind weiterhin nicht freigeschaltet.
