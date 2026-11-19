@@ -2674,3 +2674,8 @@ DEV und Stage. Bootstrap und JavaScript v4 liefern HTTP 200, JavaScript
 bytegleich zum geprüften Quellstand. Sicherung der drei Quelldateien unter
 shared/pitch-move-scroll-backup-20261119. Details und Rückweg in
 [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 19.11.2026: Horizontaler Kalender-Randlauf
+
+Gezieltes Zwei-Dateien-Webdelta auf `20261119-clubunio-support-management`, Stage `3ac81c0`. Belegungs-Drag scrollt in beide Achsen; Zielspielfeld wird beim Drop frisch ermittelt. Blade kompiliert, JS v5 öffentlich HTTP 200 und bytegleich auf DEV/Stage. Backup `shared/pitch-horizontal-scroll-backup-20261119`; Details/Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

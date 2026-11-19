@@ -2043,3 +2043,8 @@ App und Web scrollen nun auch beim Ziehen vorhandener Belegungskarten.
 Korrekte Zielzeit, Dauer, Teilfläche, Platzwechsel und Abbruch sind geprüft.
 Auf DEV und Stage ausgerollt. Details und Abnahme in
 [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 19.11.2026: Kalender – horizontaler Randlauf erledigt
+
+Bestehende Belegungen lassen sich in App und Web durch Randscrollen auf weitere Spielfelder ziehen, auch diagonal. Frisches Ziel beim Ablegen, Dauerübernahme und Abbruch geprüft. DEV/Stage ausgerollt; iPhone-Abnahme auf Benutzer-Mac offen. Siehe [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

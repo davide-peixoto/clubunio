@@ -1,5 +1,5 @@
     <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=6">
-    <script src="{{ asset('js/pitch-planning.js') }}?v=4"></script>
+    <script src="{{ asset('js/pitch-planning.js') }}?v=5"></script>
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
@@ -47,9 +47,9 @@
                     @endforeach
                     <div class="pitch-hours">@for($hour = 0; $hour < 24; $hour++)<span style="top: {{ $hour * 90 }}px">{{ sprintf('%02d:00', $hour) }}</span>@endfor</div>
                     @foreach($columns as $column)
-                        <div class="pitch-column" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}"
+                        <div class="pitch-column" data-pitch-field="{{ $column['field']['id'] }}" wire:key="pitch-field-{{ $column['field']['id'] }}-{{ $date }}"
                             x-on:pointerdown="startRange($event, {{ $column['field']['id'] }}, @js($date))"
-                            x-on:pointermove="extendRange($event)" x-on:pointerup="finishRange($event)" x-on:pointercancel="cancelPointerRange($event)" x-on:lostpointercapture="cancelPointerRange($event)" x-on:drop.prevent="dropMove($event, {{ $column['field']['id'] }}, @js($date))">
+                            x-on:pointermove="extendRange($event)" x-on:pointerup="finishRange($event)" x-on:pointercancel="cancelPointerRange($event)" x-on:lostpointercapture="cancelPointerRange($event)" x-on:drop.prevent="dropMove($event, @js($date))">
                             @for($minute = 0; $minute < 1440; $minute += 30)
                                 @php($slotTime = sprintf('%02d:%02d', intdiv($minute, 60), $minute % 60))
                                 <div class="pitch-drop" style="top: {{ $minute * 1.5 }}px">

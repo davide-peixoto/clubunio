@@ -29,7 +29,7 @@ function planner() {
 
 function event(minute, pointerType = 'mouse', viewport = null) {
     return {
-        pointerType, button: 0, pointerId: 1, clientY: 100 + minute * 1.5 + 22,
+        pointerType, button: 0, pointerId: 1, clientX: 300, clientY: 100 + minute * 1.5 + 22,
         target: { closest: () => ({ dataset: { pitchMinute: minute } }) },
         currentTarget: {
             isConnected: true,
@@ -102,8 +102,10 @@ test('range stays inside the displayed day and field', () => {
 function scrollViewport(scrollTop = 900) {
     return {
         scrollTop, scrollHeight: 2160, clientHeight: 400,
-        getBoundingClientRect: () => ({ top: 100, bottom: 500 }),
-        querySelector: () => ({ getBoundingClientRect: () => ({ height: 60 }) }),
+        scrollLeft: 0, scrollWidth: 400, clientWidth: 400, columns: [],
+        getBoundingClientRect: () => ({ top: 100, bottom: 500, left: 100, right: 500 }),
+        querySelector: () => ({ getBoundingClientRect: () => ({ height: 60, width: 60 }) }),
+        querySelectorAll() { return this.columns; },
     };
 }
 
@@ -163,10 +165,13 @@ test('edge scrolling clamps to the final day slot and stops when the column disc
     assert.equal(frames.size, 0);
 });
 
-function moveEvent(viewport) {
+function moveEvent(viewport, field = 5, left = 100, width = 400) {
     const column = event(750, 'mouse', viewport).currentTarget;
+    column.dataset = { pitchField: String(field) };
+    column.getBoundingClientRect = () => ({ top: 100 - viewport.scrollTop, left: left - viewport.scrollLeft, right: left + width - viewport.scrollLeft });
+    viewport.columns.push(column);
     return {
-        clientY: 347,
+        clientX: 300, clientY: 347,
         currentTarget: { draggable: true, closest: () => column },
         target: { closest: () => column },
         dataTransfer: { effectAllowed: '', setData() {} },
@@ -190,7 +195,7 @@ for (const direction of ['up', 'down']) {
         assert.ok(direction === 'up' ? viewport.scrollTop < 500 : viewport.scrollTop > 1300);
         assert.equal(moves.length, 0);
         assert.equal(requests.length, 0);
-        await state.dropMove({ currentTarget: start.column, clientY: pointerY }, 5, '2026-11-19');
+        await state.dropMove({ currentTarget: start.column, clientX: 300, clientY: pointerY }, '2026-11-19');
         assert.deepEqual(moves, [['training:7', 5, '2026-11-19', direction === 'up' ? '06:00' : '19:00']]);
         assert.equal(frames.size, 0);
         assert.equal(state.dragKey, null);
@@ -207,7 +212,7 @@ test('cancelled or forbidden booking move never saves and endMove disposes its f
     assert.equal(frames.size, 0);
     state.startMove(start, 'training:7');
     state.cancelRange();
-    state.dropMove({ currentTarget: start.column, clientY: 496 }, 5, '2026-11-19');
+    state.dropMove({ currentTarget: start.column, clientX: 300, clientY: 496 }, '2026-11-19');
     assert.deepEqual(moves, []);
     assert.equal(frames.size, 0);
     state.startMove(start, 'training:7');
@@ -220,15 +225,55 @@ test('cancelled or forbidden booking move never saves and endMove disposes its f
 test('booking move can change target field while scrolling and still submits only once', async () => {
     const { state, moves, frame, frames } = planner();
     const viewport = scrollViewport();
-    const start = moveEvent(viewport);
+    const start = moveEvent(viewport, 5, 100, 200);
     state.startMove(start, 'training:7');
-    const target = moveEvent(viewport).column;
-    state.updateMove({ clientY: 496, target: { closest: () => target } });
+    const target = moveEvent(viewport, 8, 300, 200).column;
+    state.updateMove({ clientX: 400, clientY: 496, target: { closest: () => target } });
     assert.equal(state.scrollColumn, target);
     frame(0); frame(1000);
-    await state.dropMove({ currentTarget: target, clientY: 496 }, 8, '2026-11-19');
-    await state.dropMove({ currentTarget: target, clientY: 496 }, 8, '2026-11-19');
+    await state.dropMove({ currentTarget: target, clientX: 400, clientY: 496 }, '2026-11-19');
+    await state.dropMove({ currentTarget: target, clientX: 400, clientY: 496 }, '2026-11-19');
     assert.equal(moves.length, 1);
     assert.equal(moves[0][1], 8);
     assert.equal(frames.size, 0);
+});
+
+for (const direction of ['left', 'right', 'diagonal']) {
+    test(`stationary ${direction} edge resolves the newly scrolled field even with a stale drop target`, async () => {
+        const { state, moves, frame, frames } = planner();
+        const viewport = scrollViewport();
+        viewport.scrollWidth = 1500;
+        viewport.scrollLeft = direction === 'left' ? 600 : 400;
+        const columns = Array.from({ length: 6 }, (_, index) => moveEvent(viewport, index + 1, 160 + index * 240, 240));
+        const start = columns[direction === 'left' ? 3 : 1];
+        state.startMove(start, 'training:7');
+        const clientX = direction === 'left' ? 164 : 496;
+        const clientY = direction === 'diagonal' ? 496 : 347;
+        state.updateMove({ ...start, clientX, clientY });
+        for (let time = 0; time <= 960; time += 16) frame(time);
+        assert.ok(Math.abs(viewport.scrollLeft - (direction === 'left' ? 177.6 : 822.4)) < .001);
+        assert.equal(moves.length, 0);
+        await state.dropMove({ currentTarget: start.column, clientX, clientY }, '2026-11-19');
+        assert.deepEqual(moves, [['training:7', direction === 'left' ? 1 : 5, '2026-11-19', direction === 'diagonal' ? '19:00' : '12:30']]);
+        assert.equal(frames.size, 0);
+    });
+}
+
+test('horizontal scrolling clamps, pauses in the middle and cancels without saving over the time axis', () => {
+    const { state, moves, frame, frames } = planner();
+    const viewport = scrollViewport();
+    viewport.scrollWidth = 1500;
+    const start = moveEvent(viewport);
+    for (const [clientX, initial, expected] of [[496, 1090, 1100], [164, 10, 0], [300, 500, 500]]) {
+        viewport.scrollLeft = initial;
+        state.startMove(start, 'training:7');
+        state.updateMove({ ...start, clientX, clientY: 347 });
+        frame(0); frame(1000);
+        assert.equal(viewport.scrollLeft, expected);
+        state.endMove();
+    }
+    state.startMove(start, 'training:7');
+    state.dropMove({ currentTarget: start.column, clientX: 130, clientY: 347 }, '2026-11-19');
+    assert.equal(frames.size, 0);
+    assert.deepEqual(moves, []);
 });

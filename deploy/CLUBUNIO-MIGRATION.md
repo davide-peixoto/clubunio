@@ -1261,3 +1261,8 @@ Spalte berechnet. Dauer, Teilfläche und bisherige Raster werden übernommen.
 Abgebrochene Drags räumen die Scrollschleife auf. Auf DEV und Stage
 eingespielt, Stage-Fachdelta bc2faab mit Git-Abgleich 99ba847. Tests und
 Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 19.11.2026: Spielfeldwechsel mit horizontalem Randscrollen
+
+Flutter und Web scrollen beim Verschieben bestehender Belegungen auch links/rechts. Frische Zielgeometrie verhindert Ablage auf veralteten Spielfeldern. DEV und Stage gezielt aktualisiert (Stage `3ac81c0`), keine Schemaänderung. 63 Fluttertests, 18 JS-Fälle, 25 PHP-Webtests und Sprachcheck grün. Native iPhone-Abnahme ausstehend. Details und Rückweg: [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

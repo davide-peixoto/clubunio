@@ -183,3 +183,40 @@ liegen unter `/var/www/svs-laravel/shared/pitch-move-scroll-backup-20261119`
 auf DEV und `/root/clubunio-backups/pitch-move-scroll-20261119` auf Stage.
 Der gezielte RÃ¼ckweg stellt diese drei Dateien mit ihren ursprÃ¼nglichen
 Besitzerrechten wieder her und lÃ¤dt Ansichten sowie PHP-FPM neu.
+
+
+## 19.11.2026 – Horizontaler Randlauf beim Verschieben
+
+Bestehende Belegungen scrollen beim Ziehen nahe dem linken oder rechten
+Kalenderrand automatisch über weitere Spielfelder. Das gilt für Flutter
+und den Webkalender; diagonales Scrollen bleibt gleichzeitig möglich.
+Die Geschwindigkeit steigt zur Kante hin bis 480 Pixel pro Sekunde.
+Die fixierte Zeitachse gehört nicht zur nutzbaren Ablagefläche.
+Ein stillstehender Finger oder Mauszeiger hält den Randlauf aufrecht.
+
+Beim Loslassen wird das Zielspielfeld aus der aktuellen Bildschirmgeometrie
+ermittelt. Damit wird auch nach stationärem Scrollen das neue Feld unter
+dem Zeiger verwendet, statt eines zuvor getroffenen Drag-Ziels. Dauer,
+Zeit-Raster und bestehende Berechtigungs-/Konfliktprüfungen gelten weiter.
+Beim Feldwechsel wird die bisherige Teilfläche zurückgesetzt. Abbruch,
+Ansichts- und Hintergrundwechsel stoppen beide Scrollrichtungen.
+Die Bereichsauswahl bleibt beim ursprünglich gewählten Spielfeld.
+
+Prüfung: 63 Fluttertests (Kalender, Bereichsauswahl und Belegungs-Drag),
+18 JavaScriptfälle sowie 25 PHP-Webtests mit 136 Assertions erfolgreich;
+ein optionaler Fixtureexport übersprungen. Dart-Analyse ohne Befund,
+Sprachcheck 2994 Schlüssel DE/EN. Neue Regressionen prüfen stationäre
+Links-/Rechtsbewegung mit veraltetem Drag-Ziel, diagonale Bewegung,
+Scrollgrenzen, Zeitachse und Abbruch. Native iPhone-Abnahme auf dem
+Benutzer-Mac steht aus.
+
+DEV auf Basis `20261119-clubunio-support-management` und Stage aktualisiert.
+Nur JavaScript und Kalender-Bladevorlage ausgerollt, keine Migration.
+Beide Vorlagen kompilieren; JavaScript v5 liefert über beide Customdomains
+HTTP 200 und den geprüften SHA256
+`c85241d801ef4899f1f1d50806f856c49b54663403c4a8dd1ba1e6ccf2576d4c`.
+Stage-Fachdelta und synchronisierter Stage-Stand: `3ac81c0`.
+Sicherung: DEV `shared/pitch-horizontal-scroll-backup-20261119`,
+Stage `/root/clubunio-backups/pitch-horizontal-scroll-20261119`.
+Rückweg: die zwei gesicherten Dateien inklusive ursprünglicher
+Besitzerrechte wiederherstellen, Bladecache leeren und PHP-FPM neu laden.
