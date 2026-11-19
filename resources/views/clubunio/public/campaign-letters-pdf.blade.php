@@ -12,11 +12,14 @@
 @foreach($letters as $letter)
     <section class="letter">
         <strong>{{ $tenant->name }}</strong>
-        <address>{{ $letter['member']->first_name }} {{ $letter['member']->last_name }}<br>
-            {{ $letter['member']->street }} {{ $letter['member']->house_number }}<br>
-            {{ $letter['member']->postal_code }} {{ $letter['member']->city }}</address>
-        <h1>{{ $copy['subject'] }}</h1>
-        <p>{!! nl2br(e($copy['body'])) !!}</p>
+        @php($address = $letter['address'] ?? ['name' => $letter['member']->first_name.' '.$letter['member']->last_name,
+            'street' => $letter['member']->street.' '.$letter['member']->house_number,
+            'postal_code' => $letter['member']->postal_code, 'city' => $letter['member']->city])
+        <address>{{ $address['name'] }}<br>
+            {{ $address['street'] }}<br>
+            {{ $address['postal_code'] }} {{ $address['city'] }}</address>
+        <h1>{{ ($letter['copy'] ?? $copy)['subject'] }}</h1>
+        <p>{!! nl2br(e(($letter['copy'] ?? $copy)['body'])) !!}</p>
         <img src="{{ $letter['qr'] }}" width="150" height="150" alt="{{ __('campaign.qr') }}">
         <p class="url">{{ $letter['url'] }}</p>
         @include('clubunio.brand.attribution')

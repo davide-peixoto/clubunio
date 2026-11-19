@@ -26,6 +26,131 @@ class MemberCampaigns extends Page
     public array $filters = [];
     public string $sort = 'name';
     public bool $descending = false;
+    public ?int $targetId = null;
+    public int $reminderDays = 7;
+    public bool $autoReminders = false;
+    public string $templateName = '';
+    public ?int $templateId = null;
+    public int $operationsLimit = 25;
+    #[Locked]
+    public ?array $dispatchPreview = null;
+
+    public function previewDispatch(): void
+    {
+        abort_unless($this->selected, 404);
+        $this->saveContent();
+        $this->dispatchPreview = app(\App\ClubUnio\Services\CampaignOperations::class)->preview(
+            Filament::auth()->user(), Filament::getTenant(), $this->selected);
+    }
+
+    public function releaseCampaignAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('releaseCampaign')->label(trans('campaign_ops.release_test'))
+            ->requiresConfirmation()->modalDescription(trans('campaign_ops.release_warning'))->action(fn () => $this->release());
+    }
+
+    public function saveTemplate(): void
+    {
+        abort_unless($this->selected, 404);
+        $this->saveContent();
+        $this->templateId = app(\App\ClubUnio\Services\CampaignOperations::class)->saveTemplate(
+            Filament::auth()->user(), Filament::getTenant(), $this->selected, $this->templateName);
+    }
+
+    public function useTemplate(): void
+    {
+        abort_unless($this->selected && $this->templateId, 404);
+        app(\App\ClubUnio\Services\CampaignOperations::class)->applyTemplate(
+            Filament::auth()->user(), Filament::getTenant(), $this->selected, $this->templateId);
+        $this->select($this->selected);
+    }
+
+    public function updateTemplate(int $revision): void
+    {
+        abort_unless($this->selected && $this->templateId, 404);
+        $this->saveContent();
+        app(\App\ClubUnio\Services\CampaignOperations::class)->updateTemplate(
+            Filament::auth()->user(), Filament::getTenant(), $this->selected, $this->templateId, $revision);
+    }
+
+    public function archiveTemplate(int $revision): void
+    {
+        abort_unless($this->templateId, 404);
+        app(\App\ClubUnio\Services\CampaignOperations::class)->archiveTemplate(
+            Filament::auth()->user(), Filament::getTenant(), $this->templateId, $revision);
+        $this->templateId = null;
+    }
+
+    public function remindCampaignAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('remindCampaign')->label(trans('campaign_ops.remind'))->requiresConfirmation()
+            ->action(function () {
+                abort_unless($this->selected, 404);
+                app(\App\ClubUnio\Services\CampaignOperations::class)->reminders(
+                    Filament::auth()->user(), Filament::getTenant(), $this->selected);
+            });
+    }
+
+    public function retryDispatchAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('retryDispatch')->label(trans('campaign_ops.retry'))
+            ->schema([
+                \Filament\Forms\Components\Textarea::make('reason')->label(trans('campaign_ops.reason'))->required()->minLength(10)->maxLength(500),
+                \Filament\Forms\Components\Checkbox::make('not_sent')->label(trans('campaign_ops.not_sent'))->accepted()->required(),
+            ])->action(function (array $arguments, array $data) {
+                abort_unless($this->selected && \Illuminate\Support\Str::isUuid($arguments['dispatch'] ?? ''), 422);
+                app(\App\ClubUnio\Services\CampaignOperations::class)->retry(Filament::auth()->user(), Filament::getTenant(),
+                    $this->selected, $arguments['dispatch'], $data['reason']);
+            });
+    }
+
+    public function recordBounceAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('recordBounce')->label(trans('campaign_ops.record_bounce'))
+            ->schema([\Filament\Forms\Components\Textarea::make('reason')->label(trans('campaign_ops.reason'))->required()->minLength(10)->maxLength(500)])
+            ->action(function (array $arguments, array $data) {
+                abort_unless($this->selected && \Illuminate\Support\Str::isUuid($arguments['dispatch'] ?? ''), 422);
+                app(\App\ClubUnio\Services\CampaignOperations::class)->manualBounce(Filament::auth()->user(), Filament::getTenant(),
+                    $this->selected, $arguments['dispatch'], $data['reason']);
+            });
+    }
+
+    public function reviewResponseAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('reviewResponse')->label(trans('campaign_ops.review'))->requiresConfirmation()
+            ->action(function (array $arguments) {
+                abort_unless($this->selected && isset($arguments['recipient']) && is_bool($arguments['approve'] ?? null), 422);
+                app(\App\ClubUnio\Services\CampaignResponses::class)->review(Filament::auth()->user(), Filament::getTenant(),
+                    $this->selected, (int) $arguments['recipient'], $arguments['approve']);
+            });
+    }
+
+    public function verifyContactAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('verifyContact')->label(trans('campaign_ops.verify_parent'))->slideOver()
+            ->schema([
+                \Filament\Forms\Components\Select::make('parent')->label(trans('campaign_ops.parent'))
+                    ->options(['mother' => __('Name Mutter'), 'father' => __('Name Vater')])->required(),
+                ...array_map(fn ($key) => \Filament\Forms\Components\TextInput::make($key)->label(trans('campaign_ops.fields.'.$key))
+                    ->required($key !== 'email')->maxLength($key === 'email' ? 254 : ($key === 'postal_code' ? 20 : 160)),
+                    ['name','email','street','postal_code','city']),
+                \Filament\Forms\Components\Textarea::make('evidence')->label(trans('campaign_ops.evidence'))->required()->minLength(10)->maxLength(500),
+            ])
+            ->fillForm(function (array $arguments) {
+                abort_unless($this->selected && static::canManage(), 403);
+                $tenant = Filament::getTenant();
+                $row = app(MemberCampaignService::class)->recipients($tenant, $this->selected)->where('id', $arguments['recipient'] ?? 0)->firstOrFail();
+                $member = app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->findOrFail($row->member_id);
+                return ['parent' => 'mother', 'name' => $member->mother_name, 'email' => $member->mother_email,
+                    'street' => trim($member->street.' '.$member->house_number), 'postal_code' => $member->postal_code, 'city' => $member->city];
+            })
+            ->action(function (array $arguments, array $data) {
+                abort_unless($this->selected, 404);
+                app(\App\ClubUnio\Services\CampaignContact::class)->verify(Filament::auth()->user(), Filament::getTenant(),
+                    $this->selected, (int) ($arguments['recipient'] ?? 0), $data);
+                $this->dispatchPreview = null;
+            });
+    }
 
     public function sortBy(string $column): void
     {
@@ -72,6 +197,7 @@ class MemberCampaigns extends Page
     }
 
     public static function getNavigationLabel(): string { return __('campaign.title'); }
+    public static function getNavigationGroup(): ?string { return SocialStudio::getNavigationGroup(); }
     public static function getNavigationIcon(): string { return 'heroicon-o-megaphone'; }
     public function getTitle(): string { return __('campaign.title'); }
     public static function canAccess(): bool
@@ -102,6 +228,11 @@ class MemberCampaigns extends Page
         $campaign = app(MemberCampaignService::class)->campaigns(Filament::getTenant())->where('id', $id)->firstOrFail();
         $this->kind = $campaign->kind;
         $this->content = json_decode($campaign->content ?? '{}', true);
+        $this->targetId = $campaign->target_id;
+        $this->reminderDays = (int) $campaign->reminder_days;
+        $this->autoReminders = (bool) $campaign->auto_reminders;
+        $this->dispatchPreview = null;
+        $this->operationsLimit = 25;
         $this->selected = $id;
         $this->limit = 50;
     }
@@ -110,6 +241,18 @@ class MemberCampaigns extends Page
     {
         abort_unless($this->selected, 404);
         app(MemberCampaignService::class)->recipient(Filament::auth()->user(), Filament::getTenant(), $this->selected, $memberId, $channel);
+    }
+
+    public function recipientLocale(int $id, string $locale): void
+    {
+        abort_unless($this->selected && static::canManage() && array_key_exists($locale, config('clubunio-languages.enabled')), 403);
+        $service = app(MemberCampaignService::class);
+        DB::connection('clubunio')->transaction(function () use ($service, $id, $locale) {
+            $tenant = Filament::getTenant();
+            $c = $service->campaigns($tenant)->where('id', $this->selected)->lockForUpdate()->firstOrFail();
+            abort_if($c->released_at || $c->revoked_at, 409);
+            $service->recipients($tenant, $c->id)->where('id', $id)->update(['locale' => $locale]);
+        });
     }
 
     public function release(): void
@@ -123,6 +266,9 @@ class MemberCampaigns extends Page
     {
         abort_unless($this->selected && static::canManage(), 403);
         app(MemberCampaignService::class)->saveContent(Filament::auth()->user(), Filament::getTenant(), $this->selected, $this->kind, $this->content);
+        app(\App\ClubUnio\Services\CampaignOperations::class)->configure(Filament::auth()->user(), Filament::getTenant(),
+            $this->selected, $this->targetId, $this->reminderDays, $this->autoReminders);
+        $this->dispatchPreview = null;
     }
 
     public function markPosted(int $recipient): void
@@ -185,6 +331,9 @@ class MemberCampaigns extends Page
             ->leftJoinSub($teams, 'roster', 'roster.member_id', '=', 'member.id')
             ->select('campaign_recipients.id', 'campaign_recipients.member_id', 'campaign_recipients.channel', 'campaign_recipients.mail_state',
                 'campaign_recipients.request_id', 'campaign_recipients.acknowledged_at', 'campaign_recipients.posted_at', 'campaign_recipients.mail_address_hash',
+                'campaign_recipients.first_opened_at', 'campaign_recipients.printed_at', 'campaign_recipients.verified_at',
+                'campaign_recipients.locale',
+                'campaign_recipients.contact_encrypted', 'campaign_recipients.contact_baseline', 'campaign_recipients.verified_by',
                 'member.first_name', 'member.last_name', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state',
                 'status.name as member_status', 'type.name as member_type', 'roster.teams', 'roster.team_ids')
             ->selectRaw("CASE WHEN member.billing_recipient_id IS NULL OR billing.email_field = 'email' THEN trim(member.email)
@@ -208,6 +357,17 @@ class MemberCampaigns extends Page
         $count = $query ? (clone $query)->count() : 0;
         $recipients = $query ? $query->orderBy(self::COLUMNS[$this->sort] ?? 'last_name', $this->descending ? 'desc' : 'asc')
             ->orderBy('id')->limit(min(5000, max(50, $this->limit)))->get() : collect();
+        foreach ($recipients as $row) {
+            if (! $row->contact_encrypted) continue;
+            $member = app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->find($row->member_id);
+            $contact = $member ? app(\App\ClubUnio\Services\CampaignContact::class)->details($tenant, $row, $member) : null;
+            if ($contact) {
+                $row->email = $contact['email'];
+                $row->street = $contact['street'];
+                $row->postal_code = $contact['postal_code'];
+                $row->city = $contact['city'];
+            }
+        }
         $canManage = static::canManage();
         $matches = $canManage && $campaign && ! $campaign->released_at && ! $campaign->revoked_at && mb_strlen(trim($this->search)) >= 2
             ? app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->where(function ($q) {
@@ -216,6 +376,11 @@ class MemberCampaigns extends Page
             })->orderBy('last_name')->limit(15)->get(['id', 'first_name', 'last_name']) : collect();
 
         return ['campaigns' => $service->campaigns($tenant)->latest('id')->limit(100)->get(), 'campaign' => $campaign,
+            'operations' => $campaign ? app(\App\ClubUnio\Services\CampaignOperations::class)->cockpit(Filament::auth()->user(), $tenant, $campaign->id, min(1000, max(25, $this->operationsLimit))) : null,
+            'templates' => app(\App\ClubUnio\Services\CampaignOperations::class)->templates($tenant)->orderBy('name')->get(),
+            'targetOptions' => $this->kind === 'event'
+                ? \App\ClubUnio\Models\ClubEvent::where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->pluck('name', 'id')
+                : ($this->kind === 'sponsor' ? \App\ClubUnio\Models\SponsorRunEvent::where('tenant_id', $tenant->id)->where('status_code', 'open')->orderBy('title')->pluck('title', 'id') : collect()),
             'recipients' => $recipients, 'matches' => $matches, 'tenant' => $tenant, 'pilot' => $service->isPilot($tenant), 'canManage' => $canManage,
             'mailQueueEnabled' => app(\App\ClubUnio\Services\CampaignMailQueue::class)->enabled(),
             'canEditMembers' => app(\App\ClubUnio\Services\ModulePermissionService::class)->allows(Filament::auth()->user(), $tenant, 'members', 'update'),

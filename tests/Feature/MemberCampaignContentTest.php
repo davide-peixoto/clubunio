@@ -14,6 +14,8 @@ final class MemberCampaignContentTest extends TestCase
         $service = app(MemberCampaignService::class);
         app()->setLocale('de');
         self::assertSame(['subject' => 'Vereinsbrief', 'body' => 'Einladung'], $service->copy($campaign));
+        self::assertSame('Club letter', $service->copyFor($campaign, 'en')['subject']);
+        self::assertSame('de', app()->getLocale());
         app()->setLocale('en');
         self::assertSame(['subject' => 'Club letter', 'body' => __('campaign.body_acknowledgement')], $service->copy($campaign));
     }

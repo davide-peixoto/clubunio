@@ -1,5 +1,27 @@
 # Kampagnen: Stammdaten-Pilot
 
+## Erweiterter Ablauf
+
+Der neue Arbeitsstand erweitert diesen urspruenglichen Pilot:
+[Versandcockpit, Ruecklauf und Migration](CLUBUNIO-CAMPAIGN-OPERATIONS.md).
+Neue Kampagnen nutzen getrennte Versandauftraege, Vorlagen, Fachantworten
+und gepruefte Elternkontakte. Die nachfolgenden Pilotgrenzen beschreiben
+den bisherigen workflow_version=1; der neue Ablauf bleibt ebenfalls
+ausschliesslich Testbetrieb ohne reale Zustellung.
+
+## DEV-Testmodus
+
+Nur auf `https://dev.clubunio.ch` im bestehenden DEV-Mandanten SV Sissach:
+Freigabe ausschliesslich per E-Mail an Testmitglieder mit eigener Adresse
+`campaign-test-<kennung>@example.invalid`. Normale Adressen, Post und
+gemischte Kanaele blockieren die gesamte Freigabe. Der Scheduler verarbeitet
+die Testqueue ueber einen In-Memory-Transport ohne SMTP. Kampagnenantraege
+in diesem Modus erzeugen keine Benachrichtigungen an die Geschaeftsstelle.
+Keine Migration. Abnahme: `php deploy/check-dev-campaign-mail.php` mit Rollback.
+Aktiver DEV-Release: `20261115-clubunio-campaign-test-v2`; Rueckweg:
+`20261115-clubunio-support-workspace`. DEV-Abnahme bestaetigt die blockierte
+Freigabe fuer Nicht-Testadressen, In-Memory-Versand und einmalige Bestaetigung.
+
 Die Vorauswahl umfasst alle aktiven Mitglieder. Der Entwurf zeigt die
 Mitgliederart und bietet ein Mannschafts-Dropdown fuer die laufende Saison.
 Freigabe bleibt auf den Pilotverein beschraenkt und blockiert Empfaenger
@@ -46,9 +68,8 @@ Nach SMTP-Annahme kann die Geschaeftsstelle einen spaeteren permanenten
 Ruecklaeufer manuell erfassen; die Adresse wird mandantenbezogen gesperrt.
 Keine automatische Ruecklaeuferabholung. Keine Produktionsfreigabe.
 
-Vereinsadmins haben dieselben Kampagnenrechte wie die Geschaeftsstelle im
-eigenen Verein. Freigabe und Versand behalten die Stage-Pilotgrenzen.
-Keine weitere Migration fuer diese Rechteanpassung.
+Vereinsadmins sehen Kampagnen des eigenen Vereins lesend. Bearbeitung,
+Einladungen und Entscheide bleiben der Geschaeftsstelle vorbehalten.
 
 Die Geschaeftsstelle erstellt Entwuerfe mit E-Mail, Post oder beidem und
 bearbeitet die Empfaenger vor der Freigabe. Aktive Erwachsene sind

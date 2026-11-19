@@ -2,9 +2,9 @@
 @section('title', $copy['subject'])
 @section('content')
 <address>
-    {{ $member->first_name }} {{ $member->last_name }}<br>
-    {{ $member->street }} {{ $member->house_number }}<br>
-    {{ $member->postal_code }} {{ $member->city }}
+    {{ $address['name'] }}<br>
+    {{ $address['street'] }}<br>
+    {{ $address['postal_code'] }} {{ $address['city'] }}
 </address>
 <h1>{{ $copy['subject'] }}</h1>
 <p>{!! nl2br(e($copy['body'])) !!}</p>
