@@ -1,0 +1,74 @@
+[
+  {
+    "brand": "central",
+    "locale": "de",
+    "kind": "invitation",
+    "subject": "Aktualisieren Sie Ihr Konto",
+    "html": true,
+    "text": true,
+    "logo": false
+  },
+  {
+    "brand": "central",
+    "locale": "de",
+    "kind": "reset",
+    "subject": "Passwort zurücksetzen",
+    "html": true,
+    "text": true,
+    "logo": false
+  },
+  {
+    "brand": "central",
+    "locale": "en",
+    "kind": "invitation",
+    "subject": "Update Your Account",
+    "html": true,
+    "text": true,
+    "logo": false
+  },
+  {
+    "brand": "central",
+    "locale": "en",
+    "kind": "reset",
+    "subject": "Reset password",
+    "html": true,
+    "text": true,
+    "logo": false
+  },
+  {
+    "brand": "svs",
+    "locale": "de",
+    "kind": "invitation",
+    "subject": "Aktualisieren Sie Ihr Konto",
+    "html": true,
+    "text": true,
+    "logo": true
+  },
+  {
+    "brand": "svs",
+    "locale": "de",
+    "kind": "reset",
+    "subject": "Passwort zurücksetzen",
+    "html": true,
+    "text": true,
+    "logo": true
+  },
+  {
+    "brand": "svs",
+    "locale": "en",
+    "kind": "invitation",
+    "subject": "Update Your Account",
+    "html": true,
+    "text": true,
+    "logo": true
+  },
+  {
+    "brand": "svs",
+    "locale": "en",
+    "kind": "reset",
+    "subject": "Reset password",
+    "html": true,
+    "text": true,
+    "logo": true
+  }
+]

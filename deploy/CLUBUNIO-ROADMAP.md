@@ -2019,3 +2019,11 @@ Die Bereichsauswahl in App und Web scrollt am oberen und unteren Rand
 weiter und übernimmt die erweiterte Dauer. Stationäres Randhalten und
 Abbruch sind geprüft. Auf DEV und Stage ausgerollt. Abnahme und
 Bedienung in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## Keycloak-E-Mail-Theme auf DEV und Stage (19.11.2026)
+
+Gemeinsames E-Mail-Theme und Provider mit SV-Sissach-Zuordnung für DEV und
+Stage aktiviert. Acht isolierte vollständige Passwortabläufe bestanden.
+Beide Umgebungen nach Dienstneustart über HTTPS geprüft. Rückweg und
+Nachweise stehen in deploy/CLUBUNIO-KEYCLOAK.md. Kein Laravel-Schemamigrationsschritt.

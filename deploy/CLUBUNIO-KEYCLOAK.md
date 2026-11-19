@@ -196,3 +196,98 @@ exakte Keycloak-Callback-URL auf beiden Domains. Die zentrale Stage-Origin
 weist die Einlösung eines Custom-Domain-Pairings ab. Ein Geräte-Login mit
 einem echten Konto und Push auf der Testkennung bleiben offen.
 App-Quellstand c6388bd.
+
+## Isolierte E-Mail-Abnahme vom 19.11.2026
+
+Separate Keycloak-26.8.2-Instanz auf Loopback-Port 18080 mit In-Memory-DB,
+synthetischem Realm clubunio und vier synthetischen Konten. Die Instanz
+verwendete das vorhandene Provider-JAR und eine Kopie des lokalen E-Mail-Themes.
+Ein lokaler SMTP-Empfänger fing alle Nachrichten ab.
+
+Alle acht Kombinationen bestanden: ClubUnio und SV Sissach, jeweils Einladung
+per execute-actions-email und Passwort-Reset über das Anmeldeformular in DE/EN.
+HTML- und Klartextteile, Aktionslink, HTML-Sprachattribut, Designfarbe und
+Vereinsattribution geprüft. Das SV-Sissach-PNG lieferte HTTP 200.
+Die Einladungen forderten UPDATE_PASSWORD an. Aktionslinks wurden auf
+Vorhandensein geprüft; die Passwortänderung wurde nicht abgeschlossen.
+Die Loopback-HTTP-Prüfung erlaubte Secure-Cookies im Testclient ausdrücklich
+auch über HTTP. Das HTTPS-Verhalten und die Darstellung in E-Mail-Clients
+sind damit nicht abgenommen.
+
+[Technische Ergebnisse ohne Tokens](evidence/keycloak-email-theme-20261119.json).
+Testinstanz gestoppt, temporäre Daten und Bootstrap-Zugang entfernt.
+Keine Änderung an DEV, Stage oder dem laufenden Identitätsdienst.
+
+## Vollständiger Passwortablauf vom 19.11.2026
+
+Erneut separate Keycloak-26.8.2-Loopback-Instanz mit In-Memory-Datenbank,
+isoliertem Realm und synthetischen Konten. Alle acht Kombinationen aus
+ClubUnio/SV Sissach, DE/EN und Einladung/Passwort-Reset bestanden.
+Der SMTP-Testempfänger fing die Mails ab. Die Prüfung öffnete den echten
+Aktionslink, bestätigte gegebenenfalls die Aktionsseite und speicherte das
+neue Passwort im Keycloak-Formular.
+
+Nach jeder Passwortänderung bestanden ein frischer OIDC-Formularlogin
+bis zur Callback-Weiterleitung und eine zusätzliche Token-Anmeldung.
+Nach jedem Reset wurde das vorherige Passwort abgelehnt.
+Verbrauchte Einladungs- und Resetlinks boten keine erneute Passwortvergabe an.
+Die Testclients erlaubten den Passwort-Grant ausschliesslich als zusätzliche
+Kontrolle in dieser temporären Instanz. Die HTTP-Cookie-Ausnahme für Loopback
+aus der vorigen Prüfung gilt weiterhin. Die Darstellung in echten
+E-Mail-Clients und die HTTPS-Cookie-Eigenschaften sind separat zu prüfen.
+
+[Ergebnisse ohne Passwörter und Tokens](evidence/keycloak-password-flow-20261119.json).
+Die Instanz und temporären Zugangsdaten wurden entfernt. DEV, Stage und der
+laufende Identitätsdienst wurden nicht verändert.
+
+## HTTPS-Cookie-Prüfung vom 19.11.2026
+
+Separate Loopback-Instanz mit eigenem kurzlebigem TLS-Testzertifikat für
+127.0.0.1 und eigener In-Memory-Datenbank. Die Python-Testclients validierten
+Zertifikat und Hostnamen anhand des explizit vertrauten Testzertifikats.
+Die acht Passwortabläufe bestanden erneut über HTTPS. Die geprüften
+AUTH_SESSION_ID-, KC_RESTART- und KEYCLOAK_IDENTITY-Cookies trugen Secure,
+HttpOnly und einen SameSite-Wert. Der unveränderte Python-CookieJar fügte
+diese sicheren Cookies einer HTTP-Testanfrage nicht hinzu.
+Eine Browserprüfung der SameSite-Durchsetzung und JavaScript-Zugriffe ist
+hiermit noch offen. Der historische Ergebnisname browser_login bezeichnet
+den per HTTP-Client durchlaufenen OIDC-Formularlogin.
+
+[HTTPS-Ergebnisse ohne Tokens](evidence/keycloak-https-cookie-20261119.json).
+Instanz, privater Testschlüssel und temporäre Zugangsdaten entfernt.
+Für die Outlook-/Gmail-Sichtprüfung werden freigegebene Testpostfächer und
+die gewünschte Outlook-Version benötigt. Diese Sichtprüfung ist offen.
+Keine Änderung an DEV, Stage oder dem laufenden Identitätsdienst.
+
+## Sichtabnahme durch den Betreiber (19.11.2026)
+
+Der Betreiber bestätigte die Sichtprüfung der E-Mail-Themes in den Clients
+Outlook und Gmail als erfolgreich. Die Bestätigung bezieht sich auf die
+angefragten ClubUnio- und SV-Sissach-Varianten für Einladungen und
+Passwort-Reset in Deutsch und Englisch. Die Clientprüfung wurde durch den
+Betreiber durchgeführt. Clientversionen und Screenshots wurden nicht erfasst.
+Damit ist die zuvor offene Client-Sichtabnahme erledigt.
+Die separate Browserprüfung der SameSite-Durchsetzung bleibt offen.
+
+## E-Mail-Release auf DEV und Stage (19.11.2026)
+
+Das geprüfte HTML-Theme und der aktualisierte E-Mail-Provider wurden im
+gemeinsamen Keycloak-Dienst aktiviert. Der Realm verwendet bereits
+emailTheme=clubunio. Die Zuordnung umfasst jetzt clubunio-sv-sissach-dev und
+clubunio-verein-stage für SV Sissach. Plattformclients verwenden ClubUnio.
+Vor der Aktivierung bestanden acht vollständige Einladungs-/Resetabläufe mit
+dem neuen JAR in der isolierten Instanz, einschliesslich der Stage-Client-ID.
+[Ergebnisse](evidence/keycloak-stage-email-release-20261119.json).
+
+Rückweg: JAR und Theme unter
+/root/clubunio-email-release-20261119-YyEanW gesichert. Für Rückkehr den Dienst
+stoppen, die gesicherten Dateien wiederherstellen, mit
+kc.sh build --db=postgres --spi-email-template--provider=clubunio bauen und
+den Dienst starten. Der Release aktualisierte nur den gemeinsamen
+Identitätsdienst. Keine Laravel-Dateien oder Anwendungsdatenbanken verändert.
+
+Nach Neustart Keycloak aktiv, externe OIDC-Discovery erfolgreich. Die Vereins-
+und Plattformlogins von DEV und Stage liefern nach Weiterleitung HTTP 200
+auf auth.clubunio.com. Installiertes JAR und HTML-Theme stimmen per SHA-256
+mit den geprüften Release-Dateien überein. Kein erneuter Versand an echte
+Empfänger bei dieser technischen Releaseprüfung.

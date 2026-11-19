@@ -28,7 +28,7 @@ public final class ClubUnioEmailProviderFactory extends FreeMarkerEmailTemplateP
                 String clientId = authenticationSession == null
                         ? session.getContext().getUri().getQueryParameters().getFirst("client_id")
                         : authenticationSession.getClient().getClientId();
-                if ("clubunio-sv-sissach-dev".equals(clientId)) {
+                if ("clubunio-sv-sissach-dev".equals(clientId) || "clubunio-verein-stage".equals(clientId)) {
                     attributes.put("clubunioMailBrand", "sv-sissach");
                 }
             }
