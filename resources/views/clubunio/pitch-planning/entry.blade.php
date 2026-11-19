@@ -13,7 +13,7 @@
     aria-label="{{ __('Belegung öffnen: :title', ['title' => $entry['title']]) }}"
     title="{{ $summary }}"
     draggable="{{ $entry['editable'] && $this->capability('manage') && $timeline ? 'true' : 'false' }}"
-    x-on:dragstart="if (busy || $el.draggable === false) { $event.preventDefault(); return; } dragKey = @js($entry['key']); $event.dataTransfer.effectAllowed = 'move'; $event.dataTransfer.setData('text/plain', dragKey)">
+    x-on:dragstart="startMove($event, @js($entry['key']))">
     <span class="pitch-entry-time">{{ $entry['time_label'] }}</span>
     <strong class="pitch-entry-title">{{ $entry['title'] }}</strong>
     <span>@if(!$timeline){{ $field['name'] ?? '' }} / @endif{{ $area['name'] ?? __('Ganzer Platz') }}</span>
