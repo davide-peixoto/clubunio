@@ -65,8 +65,8 @@ class ClubUnioBrandingTest extends TestCase
     public function test_internal_names_change_without_moving_the_database(): void
     {
         $this->assertSame('clubunio', (new \App\ClubUnio\Models\Member)->getConnectionName());
-        $this->assertSame('clubora.members', (new \App\ClubUnio\Models\Member)->getTable());
-        $this->assertSame('clubora', config('clubunio.connection.search_path'));
+        $this->assertSame('clubunio.members', (new \App\ClubUnio\Models\Member)->getTable());
+        $this->assertSame('clubunio', config('clubunio.connection.search_path'));
         $this->assertSame('clubunio', config('auth.defaults.guard'));
         $this->assertSame('/integrations/bexio/callback', route('clubunio.bexio.callback', [], false));
         $this->assertTrue(view()->exists('clubunio.invoices.viewer'));

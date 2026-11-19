@@ -15,18 +15,18 @@ class FootballClubImporter
 
         return $db->transaction(function () use ($db) {
             $db->select('SELECT pg_advisory_xact_lock(20261012, 34)');
-            if ($db->table('clubora.imports')->where('name', 'football-clubs-v1')->exists()) {
+            if ($db->table('clubunio.imports')->where('name', 'football-clubs-v1')->exists()) {
                 return ['already_imported' => true];
             }
-            $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->lockForUpdate()->first();
-            if (! $tenant || $db->table('clubora.football_clubs')->where('tenant_id', $tenant->id)->exists()) {
+            $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->lockForUpdate()->first();
+            if (! $tenant || $db->table('clubunio.football_clubs')->where('tenant_id', $tenant->id)->exists()) {
                 throw new \LogicException('Missing tenant or nonempty club directory');
             }
             $result = $this->prepare($db->table('legacy_prod.Vereine')->orderBy('_migration_row')->get());
             foreach ($result['clubs'] as $row) {
-                $db->table('clubora.football_clubs')->insert($row + ['tenant_id' => $tenant->id]);
+                $db->table('clubunio.football_clubs')->insert($row + ['tenant_id' => $tenant->id]);
             }
-            $db->table('clubora.imports')->insert(['name' => 'football-clubs-v1']);
+            $db->table('clubunio.imports')->insert(['name' => 'football-clubs-v1']);
 
             return ['imported' => count($result['clubs']), 'conflicts' => $result['conflicts'], 'invalid_rows' => $result['invalid_rows']];
         });

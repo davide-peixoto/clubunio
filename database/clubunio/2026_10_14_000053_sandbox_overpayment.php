@@ -13,8 +13,8 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->unprepared("ALTER TABLE clubora.bexio_financial_actions DROP CONSTRAINT bexio_financial_actions_operation_check;
-            ALTER TABLE clubora.bexio_financial_actions ADD CONSTRAINT bexio_financial_actions_operation_check
+        $db->unprepared("ALTER TABLE clubunio.bexio_financial_actions DROP CONSTRAINT bexio_financial_actions_operation_check;
+            ALTER TABLE clubunio.bexio_financial_actions ADD CONSTRAINT bexio_financial_actions_operation_check
             CHECK(operation IN ('payment_partial','payment_full','payment_overpaid','bill_book','bill_pay'));");
     }
 

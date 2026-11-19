@@ -27,18 +27,18 @@ try {
     $tenant = Tenant::create(['slug' => 'sync-view-perf-'.Str::random(16), 'name' => 'Synthetic']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
     $cipher = Crypt::encryptString(json_encode(['fixture' => str_repeat('x', 1000)]));
     $note = Crypt::encryptString(str_repeat('Synthetic note. ', 40));
     for ($i = 0; $i < 20; $i++) {
-        $id = $db->table('clubora.sync_work_items')->insertGetId(['tenant_id' => $tenant->id, 'operation' => 'catalog', 'object_id' => $i,
+        $id = $db->table('clubunio.sync_work_items')->insertGetId(['tenant_id' => $tenant->id, 'operation' => 'catalog', 'object_id' => $i,
             'deduplication_key' => hash('sha256', (string) $i), 'encrypted_payload' => $cipher, 'created_by' => $actor->id,
             'attempts' => 50, 'state' => 'attention', 'error_code' => 'status_503']);
         $events = [];
         for ($j = 0; $j < 100; $j++) {
             $events[] = ['work_item_id' => $id, 'actor_id' => $actor->id, 'event' => 'attention', 'code' => 'status_503', 'encrypted_note' => $note];
         }
-        $db->table('clubora.sync_work_events')->insert($events);
+        $db->table('clubunio.sync_work_events')->insert($events);
     }
     Auth::guard('clubunio')->setUser($actor);
     Filament::setCurrentPanel(Filament::getPanel('clubunio'));

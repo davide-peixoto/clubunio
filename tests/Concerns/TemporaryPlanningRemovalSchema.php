@@ -13,17 +13,17 @@ trait TemporaryPlanningRemovalSchema
             throw new \LogicException('Opt-in rolled-back PostgreSQL fixture required');
         }
         // Copy only the caller's newly-created synthetic tenant fixtures, never club data.
-        $db->statement('CREATE TEMP TABLE team_events (LIKE clubora.team_events INCLUDING ALL) ON COMMIT DROP');
-        $db->statement('INSERT INTO pg_temp.team_events SELECT * FROM clubora.team_events WHERE tenant_id = ?', [$tenant]);
+        $db->statement('CREATE TEMP TABLE team_events (LIKE clubunio.team_events INCLUDING ALL) ON COMMIT DROP');
+        $db->statement('INSERT INTO pg_temp.team_events SELECT * FROM clubunio.team_events WHERE tenant_id = ?', [$tenant]);
         $db->statement('ALTER TABLE pg_temp.team_events DROP COLUMN IF EXISTS deleted_at');
         $ddl = $db->pretend(fn () => (require database_path('clubunio/2026_11_03_000087_planning_event_removal.php'))->up());
-        $db->statement(str_replace('clubora.team_events', 'pg_temp.team_events', $ddl[0]['query']));
+        $db->statement(str_replace('clubunio.team_events', 'pg_temp.team_events', $ddl[0]['query']));
         $db->setQueryGrammar(new class($db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
             public function wrapTable($table, $prefix = null) {
-                return parent::wrapTable($table === 'clubora.team_events' ? 'pg_temp.team_events' : $table, $prefix);
+                return parent::wrapTable($table === 'clubunio.team_events' ? 'pg_temp.team_events' : $table, $prefix);
             }
             public function wrap($value, $prefixAlias = false) {
-                if (is_string($value)) { $value = str_replace('clubora.team_events.', 'pg_temp.team_events.', $value); }
+                if (is_string($value)) { $value = str_replace('clubunio.team_events.', 'pg_temp.team_events.', $value); }
                 return parent::wrap($value, $prefixAlias);
             }
         });

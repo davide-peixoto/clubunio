@@ -20,8 +20,8 @@ try {
     $tenant = Tenant::create(['slug' => 'season-perf-'.Str::random(16), 'name' => 'Synthetic']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
-    $insert = fn ($table, $values) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
+    $insert = fn ($table, $values) => $db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
     $source = $insert('seasons', ['name' => 'Synthetic source']);
     $target = $insert('seasons', ['name' => 'Synthetic target']);
     $function = $insert('staff_functions', ['code' => 'coach', 'name' => 'Synthetic']);
@@ -46,7 +46,7 @@ try {
     $queries = $db->getQueryLog();
     echo json_encode(['scenario' => 'four-teams-eighty-members', 'rows' => count($plan['rows']),
         'elapsed_ms' => round((microtime(true) - $start) * 1000), 'queries' => count($queries),
-        'member_reads' => count(array_filter($queries, fn ($q) => str_contains($q['query'], 'from "clubora"."members"'))),
+        'member_reads' => count(array_filter($queries, fn ($q) => str_contains($q['query'], 'from "clubunio"."members"'))),
         'query_ms' => round(array_sum(array_column($queries, 'time'))), 'rollback' => true], JSON_THROW_ON_ERROR).PHP_EOL;
 } finally {
     $db->disableQueryLog();

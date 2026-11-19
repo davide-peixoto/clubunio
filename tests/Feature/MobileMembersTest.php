@@ -29,7 +29,7 @@ class MobileMembersTest extends TestCase
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
         $this->db->statement("SET LOCAL application_name = 'mobile-member-id-card-regression'");
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'mobile-dossier-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic dossier']);
         $this->admin = $this->account('admin'); $this->parent = $this->account('member'); $this->trainer = $this->account('trainer');
         $this->country = $this->db->table('countries')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'CH', 'iso3' => 'CHE', 'name' => 'Schweiz']);

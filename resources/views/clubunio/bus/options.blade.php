@@ -15,7 +15,7 @@
 <label>{{ __('Bezeichnung') }}
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input name="name" value="{{ $item->name }}" required maxlength="160" /></x-filament::input.wrapper>@else<input name="name" value="{{ $item->name }}" required maxlength="160">@endif</label>
 @if($kind==='status')<span>{{ $item->code }}</span>@endif
-<input type="hidden" name="active" value="{{ $canChangeActive ? 0 : (int) $item->active }}"><label><input type="checkbox" name="active" value="1" @checked($item->active) @disabled(!$canChangeActive)> {{ __('Aktiv') }}</label>
+<input type="hidden" name="active" value="{{ $canChangeActive ? 0 : (int) $item->active }}"><label>@if($workspaceComponents)<x-filament::input.checkbox name="active" value="1" :checked="(bool) $item->active" :disabled="!$canChangeActive" />@else<input type="checkbox" name="active" value="1" @checked($item->active) @disabled(!$canChangeActive)>@endif {{ __('Aktiv') }}</label>
 
 @if($workspaceComponents)<x-filament::icon-button title="{{ __('Speichern') }}" label="{{ __(':name speichern', ['name' => $itemLabel]) }}" icon="heroicon-o-check" type="submit" color="gray" />@else<button class="icon-button" title="{{ __('Speichern') }}" aria-label="{{ __(':name speichern', ['name' => $itemLabel]) }}">@svg('heroicon-o-check')</button>@endif
 </form>

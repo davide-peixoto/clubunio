@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->unprepared('ALTER TABLE clubora.bexio_balances ADD COLUMN cash_received_cents bigint CHECK(cash_received_cents>=0), ADD COLUMN cash_excess_cents bigint CHECK(cash_excess_cents>=0);');
+        $db->unprepared('ALTER TABLE clubunio.bexio_balances ADD COLUMN cash_received_cents bigint CHECK(cash_received_cents>=0), ADD COLUMN cash_excess_cents bigint CHECK(cash_excess_cents>=0);');
     }
 
     public function down(): void

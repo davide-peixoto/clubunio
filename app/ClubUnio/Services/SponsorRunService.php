@@ -35,14 +35,14 @@ class SponsorRunService
     {
         $this->authorize($actor, $tenant);
 
-        return ['seasons' => $this->db()->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->localizedPluck('name', 'id')->all(),
-            'statuses' => $this->db()->table('clubora.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->localizedPluck('name', 'code')->all(),
+        return ['seasons' => $this->db()->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('active', true)->orderByDesc('id')->localizedPluck('name', 'id')->all(),
+            'statuses' => $this->db()->table('clubunio.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->localizedPluck('name', 'code')->all(),
             'teams' => $season ? $this->teams($tenant, $season)->orderBy('st.label')->pluck('st.label', 'st.id')->all() : []];
     }
 
     private function teams(Tenant $tenant, int $season)
     {
-        return $this->db()->table('clubora.team_seasons as st')->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'st.team_id')->on('t.tenant_id', '=', 'st.tenant_id'))
+        return $this->db()->table('clubunio.team_seasons as st')->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'st.team_id')->on('t.tenant_id', '=', 'st.tenant_id'))
             ->where('st.tenant_id', $tenant->id)->where('st.season_id', $season)->where('st.active', true)->where('t.active', true);
     }
 
@@ -58,8 +58,8 @@ class SponsorRunService
                 'team_ids' => 'required|array|min:1|max:500', 'team_ids.*' => 'required|integer|min:1|distinct',
                 'revision' => 'required|integer|min:0', 'reason' => ($id ? 'required' : 'nullable').'|string|max:1000',
             ])->validate();
-            abort_unless($this->db()->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('id', $data['season_id'])->where('active', true)->exists(), 422);
-            abort_unless($this->db()->table('clubora.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('code', $data['status_code'])->where('active', true)->exists(), 422);
+            abort_unless($this->db()->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('id', $data['season_id'])->where('active', true)->exists(), 422);
+            abort_unless($this->db()->table('clubunio.sponsor_run_statuses')->where('tenant_id', $tenant->id)->where('code', $data['status_code'])->where('active', true)->exists(), 422);
             $ids = array_map('intval', $data['team_ids']);
             abort_unless($this->teams($tenant, (int) $data['season_id'])->whereIn('st.id', $ids)->count() === count($ids), 422);
             $event = $id ? $this->event($tenant, $id, true) : new SponsorRunEvent;
@@ -74,7 +74,7 @@ class SponsorRunService
                 }
                 // Past rosters and event dates cannot be rewritten to reopen operations.
                 if ($event->event_date->toDateString() < $this->today() || SponsorRunParticipant::where('tenant_id', $tenant->id)->where('event_id', $id)->whereNotNull('approved_at')->exists()) {
-                    $oldIds = $this->db()->table('clubora.sponsor_run_event_teams')->where('tenant_id', $tenant->id)->where('event_id', $id)->orderBy('team_season_id')->pluck('team_season_id')->map(fn ($v) => (int) $v)->all();
+                    $oldIds = $this->db()->table('clubunio.sponsor_run_event_teams')->where('tenant_id', $tenant->id)->where('event_id', $id)->orderBy('team_season_id')->pluck('team_season_id')->map(fn ($v) => (int) $v)->all();
                     sort($ids);
                     abort_unless($oldIds === $ids && $event->event_date->toDateString() === $data['event_date'] && $event->registration_deadline->toDateString() === $data['registration_deadline'], 409);
                 }
@@ -100,10 +100,10 @@ class SponsorRunService
     private function snapshotRoster(Tenant $tenant, SponsorRunEvent $event, array $ids): void
     {
         $db = $this->db();
-        $db->table('clubora.sponsor_run_event_teams')->where('tenant_id', $tenant->id)->where('event_id', $event->id)->delete();
-        $db->table('clubora.sponsor_run_event_teams')->insert(array_map(fn ($id) => ['tenant_id' => $tenant->id, 'event_id' => $event->id, 'team_season_id' => $id], $ids));
-        $roster = $db->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $ids)
-            ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubora.members.id'))
+        $db->table('clubunio.sponsor_run_event_teams')->where('tenant_id', $tenant->id)->where('event_id', $event->id)->delete();
+        $db->table('clubunio.sponsor_run_event_teams')->insert(array_map(fn ($id) => ['tenant_id' => $tenant->id, 'event_id' => $event->id, 'team_season_id' => $id], $ids));
+        $roster = $db->table('clubunio.team_players')->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $ids)
+            ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubunio.members.id'))
             ->selectRaw('member_id, min(team_season_id) as team_season_id')->groupBy('member_id')->get();
         $existing = SponsorRunParticipant::where('tenant_id', $tenant->id)->where('event_id', $event->id)->lockForUpdate()->get()->keyBy('member_id');
         foreach ($roster as $row) {
@@ -164,7 +164,7 @@ class SponsorRunService
             return false;
         }
 
-        return $this->db()->table('clubora.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('event_id', $eventId)->where('account_id', $actor->id)
+        return $this->db()->table('clubunio.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('event_id', $eventId)->where('account_id', $actor->id)
             ->where('valid_from', '<=', now()->toIso8601String())->where('valid_until', '>=', now()->toIso8601String())
             ->when($right, fn ($q) => $q->where($right, true), fn ($q) => $q->where(fn ($q) => $q->where('can_checkin', true)->orWhere('can_record_laps', true)))->exists();
     }
@@ -173,7 +173,7 @@ class SponsorRunService
     {
         abort_unless(in_array($scope, ['all', 'manage', 'mine', 'teams', 'helper'], true), 422);
         $access = app(MemberAccessService::class);
-        $q = $this->db()->table('clubora.sponsor_run_participants as p')->where('p.tenant_id', $tenant->id);
+        $q = $this->db()->table('clubunio.sponsor_run_participants as p')->where('p.tenant_id', $tenant->id);
         if (in_array($scope, ['all', 'manage'], true) && $this->allows($actor, $tenant)) {
             return $q;
         }
@@ -181,19 +181,19 @@ class SponsorRunService
         if ($scope === 'manage') {
             abort(403);
         }
-        $q->whereExists(fn ($q) => $q->selectRaw('1')->from('clubora.sponsor_run_events as e')->whereColumn('e.id', 'p.event_id')->whereColumn('e.tenant_id', 'p.tenant_id')->where('e.status_code', '!=', 'draft'));
+        $q->whereExists(fn ($q) => $q->selectRaw('1')->from('clubunio.sponsor_run_events as e')->whereColumn('e.id', 'p.event_id')->whereColumn('e.tenant_id', 'p.tenant_id')->where('e.status_code', '!=', 'draft'));
 
         return $q->where(function ($q) use ($scope, $access, $actor, $tenant) {
             $q->whereRaw('1=0');
             if (in_array($scope, ['all', 'mine'], true)) {
-                $q->orWhereIn('p.member_id', $access->represented($actor, $tenant)->select('clubora.members.id'));
+                $q->orWhereIn('p.member_id', $access->represented($actor, $tenant)->select('clubunio.members.id'));
             }
             if (in_array($scope, ['all', 'teams'], true)) {
-                $q->orWhereIn('p.member_id', $this->db()->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('active', true)
-                    ->whereIn('team_season_id', $access->responsibleTeams($actor, $tenant))->whereIn('team_season_id', $this->db()->table('clubora.sponsor_run_event_teams as et')->whereColumn('et.event_id', 'p.event_id')->where('et.tenant_id', $tenant->id)->select('et.team_season_id'))->select('member_id'));
+                $q->orWhereIn('p.member_id', $this->db()->table('clubunio.team_players')->where('tenant_id', $tenant->id)->where('active', true)
+                    ->whereIn('team_season_id', $access->responsibleTeams($actor, $tenant))->whereIn('team_season_id', $this->db()->table('clubunio.sponsor_run_event_teams as et')->whereColumn('et.event_id', 'p.event_id')->where('et.tenant_id', $tenant->id)->select('et.team_season_id'))->select('member_id'));
             }
             if (in_array($scope, ['all', 'helper'], true)) {
-                $q->orWhereIn('p.event_id', $this->db()->table('clubora.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
+                $q->orWhereIn('p.event_id', $this->db()->table('clubunio.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)
                     ->where('valid_from', '<=', now()->toIso8601String())->where('valid_until', '>=', now()->toIso8601String())->where(fn ($q) => $q->where('can_checkin', true)->orWhere('can_record_laps', true))->select('event_id'));
             }
         });
@@ -203,8 +203,8 @@ class SponsorRunService
     {
         $event = $this->event($tenant, $eventId);
         $q = $this->visibleParticipants($actor, $tenant, $filters['scope'] ?? 'all')->where('p.event_id', $eventId)
-            ->join('clubora.members as m', fn ($j) => $j->on('m.id', '=', 'p.member_id')->on('m.tenant_id', '=', 'p.tenant_id'))
-            ->join('clubora.team_seasons as t', fn ($j) => $j->on('t.id', '=', 'p.team_season_id')->on('t.tenant_id', '=', 'p.tenant_id'))
+            ->join('clubunio.members as m', fn ($j) => $j->on('m.id', '=', 'p.member_id')->on('m.tenant_id', '=', 'p.tenant_id'))
+            ->join('clubunio.team_seasons as t', fn ($j) => $j->on('t.id', '=', 'p.team_season_id')->on('t.tenant_id', '=', 'p.tenant_id'))
             ->select('p.id', 'p.member_id', 'p.team_season_id', 'p.required', 'p.checked_in_at', 'p.draft_laps', 'p.final_laps', 'p.approved_at', 'p.revision', 'm.first_name', 'm.last_name', 't.label as team_label');
 
         return $q->when($filters['team_season_id'] ?? null, fn ($q, $id) => $q->where('p.team_season_id', $id))
@@ -230,7 +230,7 @@ class SponsorRunService
             $visible = $this->visibleParticipants($actor, $tenant, 'mine')->whereIn('p.id', $visible)->pluck('p.id')->merge(
                 $this->visibleParticipants($actor, $tenant, 'teams')->whereIn('p.id', $visible)->pluck('p.id'))->unique()->all();
         }
-        $sum = $this->db()->table('clubora.sponsor_run_pledges as g')->join('clubora.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
+        $sum = $this->db()->table('clubunio.sponsor_run_pledges as g')->join('clubunio.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
             ->where('g.tenant_id', $tenant->id)->whereIn('g.participant_id', $visible)->groupBy('g.participant_id')
             ->selectRaw("g.participant_id, count(*) as pledge_count, sum(CASE WHEN amount_type='per_lap' THEN amount_cents ELSE 0 END) as per_lap_cents,
                 sum(CASE WHEN amount_type='fixed' THEN least(amount_cents,coalesce(cap_cents,amount_cents)) ELSE 0 END) as fixed_cents,
@@ -300,12 +300,12 @@ class SponsorRunService
             abort_if($e->status_code === 'cancelled', 409);
             $candidate = Account::whereKey($data['account_id'])->where('active', true)->firstOrFail();
             abort_unless(app(MemberAccessService::class)->represented($candidate, $tenant, true)->exists(), 422);
-            $table = $this->db()->table('clubora.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('event_id', $eventId)->where('account_id', $candidate->id);
+            $table = $this->db()->table('clubunio.sponsor_run_helpers')->where('tenant_id', $tenant->id)->where('event_id', $eventId)->where('account_id', $candidate->id);
             $old = (clone $table)->lockForUpdate()->first();
             abort_unless((int) ($old->revision ?? 0) === (int) $data['revision'], 409);
             $row = $data + ['tenant_id' => $tenant->id, 'event_id' => $eventId];
             $row['revision'] = (int) $data['revision'] + 1;
-            $old ? $table->update($row) : $this->db()->table('clubora.sponsor_run_helpers')->insert($row);
+            $old ? $table->update($row) : $this->db()->table('clubunio.sponsor_run_helpers')->insert($row);
             $this->audit($e, $actor, 'helper_changed', $old ? (array) $old : null, $row);
         });
     }
@@ -315,7 +315,7 @@ class SponsorRunService
         $this->authorize($actor, $tenant);
         $this->event($tenant, $eventId);
 
-        return $this->db()->table('clubora.sponsor_run_helpers as h')->join('clubora.accounts as a', 'a.id', '=', 'h.account_id')->where('h.tenant_id', $tenant->id)->where('h.event_id', $eventId)
+        return $this->db()->table('clubunio.sponsor_run_helpers as h')->join('clubunio.accounts as a', 'a.id', '=', 'h.account_id')->where('h.tenant_id', $tenant->id)->where('h.event_id', $eventId)
             ->select('h.*', 'a.display_name')->orderBy('a.display_name')->get()->map(fn ($r) => (array) $r)->all();
     }
 
@@ -466,7 +466,7 @@ class SponsorRunService
             return collect();
         }
 
-        return $this->db()->table('clubora.sponsor_run_pledges as g')->join('clubora.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
+        return $this->db()->table('clubunio.sponsor_run_pledges as g')->join('clubunio.sponsor_run_participants as p', fn ($j) => $j->on('p.id', '=', 'g.participant_id')->on('p.tenant_id', '=', 'g.tenant_id'))
             ->where('g.tenant_id', $tenant->id)->where('g.event_id', $e->id)->where('p.required', true)->whereNotNull('p.final_laps')->whereNotNull('p.approved_at')
             ->where(fn ($q) => $q->where('g.payment_mode', 'invoice')->orWhere(fn ($q) => $q->whereNotNull('g.collector_account_id')->whereNotNull('g.collector_confirmed_at')))
             ->select('g.id', 'g.sponsor_name', 'g.amount_type', 'g.amount_cents', 'g.cap_cents', 'p.final_laps')->orderBy('g.id')->get()
@@ -485,7 +485,7 @@ class SponsorRunService
 
     public function audit(SponsorRunEvent $event, ?Account $actor, string $action, ?array $before, array $after, ?string $reason = null): void
     {
-        $this->db()->table('clubora.sponsor_run_audits')->insert(['tenant_id' => $event->tenant_id, 'event_id' => $event->id, 'actor_id' => $actor?->id,
+        $this->db()->table('clubunio.sponsor_run_audits')->insert(['tenant_id' => $event->tenant_id, 'event_id' => $event->id, 'actor_id' => $actor?->id,
             'action' => $action, 'reason' => $reason, 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null, 'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);
     }
 }

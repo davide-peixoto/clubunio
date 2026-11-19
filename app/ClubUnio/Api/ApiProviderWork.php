@@ -21,23 +21,27 @@ class ApiProviderWork
 {
     public function table()
     {
-        return DB::connection('clubunio')->table('clubora.api_provider_work');
+        return DB::connection('clubunio')->table('clubunio.api_provider_work');
     }
 
     public function stage(ApiContext $c, string $operation, int $id, array $input): array
     {
         $registry = app(ProviderApiRegistry::class);
-        $input = $registry->validate($c, $operation, $id, $input);
-        $key = (string) Str::uuid();
-        $work = $this->table()->insertGetId([
-            'tenant_id' => $c->tenant->id, 'integration_id' => $c->integration->id,
-            'token_id' => $c->token->id, 'actor_id' => $c->actor->id,
-            'request_key' => $key, 'operation' => $operation, 'object_id' => $id,
-            'authorization_hash' => $c->authorizationFingerprint(),
-            'encrypted_input' => Crypt::encryptString(json_encode($input, JSON_THROW_ON_ERROR)),
-            'state' => $registry->definitions()[$operation]['approval'] === 'admin' ? 'awaiting_approval' : 'pending',
-        ]);
-        $this->event($work, $c->actor, 'staged');
+        $work = DB::connection('clubunio')->transaction(function () use ($c, $operation, $id, $input, $registry) {
+            Tenant::whereKey($c->tenant->id)->lockForUpdate()->firstOrFail();
+            $input = $registry->validate($c, $operation, $id, $input);
+            $work = $this->table()->insertGetId([
+                'tenant_id' => $c->tenant->id, 'integration_id' => $c->integration->id,
+                'token_id' => $c->token->id, 'actor_id' => $c->actor->id,
+                'request_key' => (string) Str::uuid(), 'operation' => $operation, 'object_id' => $id,
+                'authorization_hash' => $c->authorizationFingerprint(),
+                'encrypted_input' => Crypt::encryptString(json_encode($input, JSON_THROW_ON_ERROR)),
+                'state' => $registry->definitions()[$operation]['approval'] === 'admin' ? 'awaiting_approval' : 'pending',
+            ]);
+            $this->event($work, $c->actor, 'staged');
+
+            return $work;
+        });
 
         return $this->show($c, $work);
     }
@@ -171,7 +175,7 @@ class ApiProviderWork
         $row = $this->table()->where('tenant_id', $tenant->id)->find($id) ?? abort(404);
 
         return $this->dto($row) + ['input' => $this->input($row),
-            'events' => DB::connection('clubunio')->table('clubora.api_provider_events')->where('work_id', $id)
+            'events' => DB::connection('clubunio')->table('clubunio.api_provider_events')->where('work_id', $id)
                 ->orderByDesc('id')->limit(20)->get(['event', 'actor_id', 'code', 'created_at'])];
     }
 
@@ -210,6 +214,6 @@ class ApiProviderWork
 
     private function event(int $id, Account $actor, string $event, ?string $code = null): void
     {
-        DB::connection('clubunio')->table('clubora.api_provider_events')->insert(['work_id' => $id, 'actor_id' => $actor->id, 'event' => $event, 'code' => $code]);
+        DB::connection('clubunio')->table('clubunio.api_provider_events')->insert(['work_id' => $id, 'actor_id' => $actor->id, 'event' => $event, 'code' => $code]);
     }
 }

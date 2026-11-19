@@ -32,7 +32,7 @@ final class LookupTranslations
         if (! is_string($table)) {
             return null;
         }
-        $name = str_starts_with($table, 'clubora.') ? substr($table, 8) : $table;
+        $name = str_starts_with($table, 'clubunio.') ? substr($table, strlen('clubunio.')) : $table;
 
         return array_key_exists($name, $this->tables()) ? $name : null;
     }
@@ -49,7 +49,7 @@ final class LookupTranslations
 
     public function available(): bool
     {
-        return $this->available ??= DB::connection('clubunio')->getSchemaBuilder()->hasTable('clubora.lookup_translations');
+        return $this->available ??= DB::connection('clubunio')->getSchemaBuilder()->hasTable('clubunio.lookup_translations');
     }
 
     public function allowed(?Account $actor, ?Tenant $tenant): bool
@@ -113,8 +113,8 @@ final class LookupTranslations
         $table = $this->tableName($query->from);
         // Complex projections keep native pluck semantics rather than guessing row identity.
         if ($query->getConnection()->getName() !== 'clubunio' || ! $table
-            || ! in_array($column, ['name', $table.'.name', 'clubora.'.$table.'.name'], true)
-            || ($key !== null && (! is_string($key) || ! preg_match('/^(?:clubora\.)?(?:'.$table.'\.)?[a-z_][a-z0-9_]*$/D', $key)))
+            || ! in_array($column, ['name', $table.'.name', 'clubunio.'.$table.'.name'], true)
+            || ($key !== null && (! is_string($key) || ! preg_match('/^(?:clubunio\.)?(?:'.$table.'\.)?[a-z_][a-z0-9_]*$/D', $key)))
             || $query->joins || $query->groups || $query->havings || $query->unions || $query->distinct) {
             return $builder->pluck($column, $key);
         }
@@ -172,7 +172,7 @@ final class LookupTranslations
     public function sourceOptions(string $table, Tenant $tenant, ?string $search = null): array
     {
         abort_unless($this->tableName($table) === $table, 422);
-        $query = DB::connection('clubunio')->table('clubora.'.$table);
+        $query = DB::connection('clubunio')->table('clubunio.'.$table);
         if (! $this->isGlobal($table)) {
             $query->where('tenant_id', $tenant->id);
         }
@@ -207,7 +207,7 @@ final class LookupTranslations
             if (trim($data['label']) === '' || strip_tags($data['label']) !== $data['label']) {
                 throw ValidationException::withMessages(['label' => __('Die Übersetzung muss reiner Text sein.')]);
             }
-            $source = DB::connection('clubunio')->table('clubora.'.$data['source_table'])
+            $source = DB::connection('clubunio')->table('clubunio.'.$data['source_table'])
                 ->where($this->sourceKey($data['source_table']), $data['source_id']);
             if (! $this->isGlobal($data['source_table'])) {
                 $source->where('tenant_id', $tenant->id);
@@ -224,7 +224,7 @@ final class LookupTranslations
             $before = $record->exists ? $record->getAttributes() : null;
             $record->forceFill($identity + ['tenant_id' => $tenant->id, 'source_name' => $source->name,
                 'label' => $data['label'], 'revision' => $data['revision'] + 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'lookup_translations', 'object_id' => $record->id,
                 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($record->getAttributes() + ['reason' => $data['reason']], JSON_THROW_ON_ERROR),

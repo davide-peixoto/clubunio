@@ -14,7 +14,7 @@ final class MobileBootstrapState {
         return $origin;
     }
     private function value(Tenant $tenant,string $key): ?string {
-        $rows=DB::connection('clubunio')->table('clubora.tenant_settings')->where('tenant_id',$tenant->id)->where('area','app')->where('key',$key)
+        $rows=DB::connection('clubunio')->table('clubunio.tenant_settings')->where('tenant_id',$tenant->id)->where('area','app')->where('key',$key)
             ->where('enabled',true)->where('is_secret',false)->limit(2)->pluck('encrypted_value');
         if($rows->isEmpty()) return null;
         if($rows->count()!==1) throw new \LogicException('Ambiguous app setting');
@@ -59,6 +59,10 @@ final class MobileBootstrapState {
         $data['announcements']=$tenant?app(MobileAppAnnouncements::class)->active($tenant,false):[];
         $data['roleGuideAvailable']=false;
         $data['pushAdminAvailable']=false;
+        $data['passwordLoginAvailable'] = $data['loginAllowed'] && !config('clubunio-verein-oidc.only');
+        $data['strongLoginAvailable']=$data['loginAllowed'] && config('clubunio-security.enabled') === true && config('clubunio-security.origin') === $origin;
+        $data['keycloakLoginAvailable'] = $data['loginAllowed']
+            && \App\ClubUnio\Http\KeycloakMobilePairingController::available($origin);
         return $data;
     }
     public function personalState(Account $actor,Tenant $tenant): array {

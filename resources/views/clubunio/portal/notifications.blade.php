@@ -1,20 +1,29 @@
 @extends('clubunio.portal.layout')
 @section('content')
-<h1>{{ __('Benachrichtigungen') }} <small>({{ $unread }} {{ __('ungelesen)') }}</small></h1>
+<div class="page-heading">
+    <div><h1>{{ __('Benachrichtigungen') }}</h1><p>({{ $unread }} {{ __('ungelesen)') }}</p></div>
+    @if($unread)
+        <form method="post" action="{{ route('clubunio.portal.notifications.read-all', ['tenant'=>$tenant->slug]) }}">@csrf<button type="submit" class="primary">@svg('heroicon-o-check') {{ __('Alle als gelesen markieren') }}</button></form>
+    @endif
+</div>
+<div class="cu-portal-list">
 <form method="get" class="toolbar"><label><input type="checkbox" name="unreadOnly" value="1" @checked(request()->boolean('unreadOnly'))> {{ __('Nur ungelesene') }}</label><button type="submit" class="icon-button" title="{{ __('Filtern') }}" aria-label="{{ __('Filtern') }}">@svg('heroicon-o-funnel')</button></form>
-<form method="post" action="{{ route('clubunio.portal.notifications.read-all', ['tenant'=>$tenant->slug]) }}">@csrf<button type="submit" class="primary">{{ __('Alle als gelesen markieren') }}</button></form>
 @forelse($notifications as $notification)
 <article class="notification-row">
     <h2>{{ $notification->title }}</h2><p>{{ $notification->body }}</p><time>{{ $notification->created_at }}</time>
+    @if($notification->object_type === 'support' && config('clubunio-support.enabled'))
+        @php($ticket = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.support_posts as post')->join('clubunio.support_tickets as ticket', 'ticket.id', '=', 'post.ticket_id')->where('post.id', $notification->object_id)->where('post.internal', false)->where('ticket.tenant_id', $tenant->id)->where('ticket.requester_id', auth('portal')->id())->where('ticket.audience', 'club')->value('ticket.id'))
+        @if($ticket)<a href="{{ route('clubunio.support.center', ['club' => $tenant->id, 'ticket' => $ticket]) }}">{{ trans('support.title') }}</a>@endif
+    @endif
     @if($notification->object_type === 'announcement' && app(\App\ClubUnio\Services\AnnouncementService::class)->portal(auth('portal')->user(),$tenant)->whereKey($notification->object_id)->exists())
         <a href="{{ route('clubunio.portal.announcement',[$tenant->slug,$notification->object_id]) }}">{{ __('Ankündigung öffnen') }}</a>
     @endif
     @if($notification->object_type === 'member_document')
-        @php($memberDocument = \App\ClubUnio\Models\MemberDocument::where('tenant_id',$tenant->id)->where('active',true)->where('portal_visible',true)->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubora.members.id'))->find($notification->object_id))
+        @php($memberDocument = \App\ClubUnio\Models\MemberDocument::where('tenant_id',$tenant->id)->where('active',true)->where('portal_visible',true)->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubunio.members.id'))->find($notification->object_id))
         @if($memberDocument)<a href="{{ route('clubunio.portal.member.edit',[$tenant->slug,$memberDocument->member_id]) }}">{{ __('Dokumente öffnen') }}</a>@endif
     @endif
     @if($notification->object_type === 'member_change_request')
-        @php($memberChange = \App\ClubUnio\Models\MemberChangeRequest::where('tenant_id',$tenant->id)->where('requested_by',auth('portal')->id())->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubora.members.id'))->find($notification->object_id))
+        @php($memberChange = \App\ClubUnio\Models\MemberChangeRequest::where('tenant_id',$tenant->id)->where('requested_by',auth('portal')->id())->whereIn('member_id',app(\App\ClubUnio\Services\MemberAccessService::class)->represented(auth('portal')->user(),$tenant)->select('clubunio.members.id'))->find($notification->object_id))
         @if($memberChange)<a href="{{ route('clubunio.portal.member.edit',[$tenant->slug,$memberChange->member_id]) }}">{{ __('Antrag öffnen') }}</a>@endif
     @endif
     @if($notification->object_type === 'team_event')<a href="{{ route('clubunio.planning.show',[$tenant->slug,$notification->object_id]) }}">{{ __('Termin öffnen') }}</a>@endif
@@ -27,6 +36,9 @@
         <a href="{{ route('clubunio.portal.expense', ['tenant'=>$tenant->slug, 'expense'=>$notification->object_id]) }}">{{ __('Spesenbeleg öffnen') }}</a>
     @endif
 </article>
-@empty<p>{{ __('Keine Benachrichtigungen vorhanden.') }}</p>@endforelse
-<div class="pagination">{{ $notifications->links('pagination::simple-default') }}</div>
+@empty
+    @include('clubunio.portal.empty-state', ['icon' => 'heroicon-o-bell', 'message' => __('Keine Benachrichtigungen vorhanden.')])
+@endforelse
+{{ $notifications->links('pagination::simple-default') }}
+</div>
 @endsection

@@ -80,7 +80,7 @@ class SponsorRunTablesTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $data);
     }
 
     private function pledge(string $name): int
@@ -162,14 +162,14 @@ class SponsorRunTablesTest extends TestCase
     public function test_child_tables_recheck_tenant_and_revoked_access(): void
     {
         $foreign = Tenant::create(['name' => 'Foreign table club', 'slug' => 'foreign-'.Str::random(12)]);
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign season']);
-        $this->db->table('clubora.sponsor_run_statuses')->insert(['tenant_id' => $foreign->id, 'code' => 'open', 'name' => 'Offen']);
-        $id = $this->db->table('clubora.sponsor_run_events')->insertGetId(['tenant_id' => $foreign->id, 'season_id' => $season,
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign season']);
+        $this->db->table('clubunio.sponsor_run_statuses')->insert(['tenant_id' => $foreign->id, 'code' => 'open', 'name' => 'Offen']);
+        $id = $this->db->table('clubunio.sponsor_run_events')->insertGetId(['tenant_id' => $foreign->id, 'season_id' => $season,
             'title' => 'Foreign secret run', 'place' => 'Test', 'event_date' => '2032-05-14', 'registration_deadline' => '2032-05-14', 'status_code' => 'open', 'created_by' => $this->actor->id]);
         Livewire::test(SponsorRuns::class)->assertDontSee('Foreign secret run')->call('openEvent', $id)->assertNotFound();
         Livewire::test(SponsorRunTable::class, ['kind' => 'participants', 'eventId' => $id])->assertNotFound();
         $table = Livewire::test(SponsorRunTable::class, ['kind' => 'participants', 'eventId' => $this->event]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->delete();
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->delete();
         $table->searchTable('Table')->assertForbidden();
     }
 

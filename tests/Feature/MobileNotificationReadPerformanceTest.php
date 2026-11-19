@@ -14,27 +14,27 @@ final class MobileNotificationReadPerformanceTest extends TestCase
         parent::setUp();
         config(['database.default'=>'clubunio','database.connections.clubunio'=>['driver'=>'sqlite','database'=>':memory:','prefix'=>'']]);
         DB::purge('clubunio'); $this->db=DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\SQLiteGrammar {
             public function compileWheres($query) { return str_replace('source.id::text','CAST(source.id AS text)',parent::compileWheres($query)); }
         });
         $this->db->unprepared(<<<'SQL'
-CREATE TABLE clubora.accounts (id integer PRIMARY KEY,username text,password text,display_name text,active boolean,api_only boolean);
-CREATE TABLE clubora.tenants (id integer PRIMARY KEY,name text);
-CREATE TABLE clubora.tenant_accounts (tenant_id integer,account_id integer,role text,portal_enabled boolean,access_profile_id integer);
-CREATE TABLE clubora.mobile_sessions (id text PRIMARY KEY,account_id integer,token_hash text,revoked_at text,expires_at text);
-CREATE TABLE clubora.mobile_inbox (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,account_id integer,kind text,object_id integer,event_key text,read_at text,created_at text);
-CREATE TABLE clubora.notifications (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,account_id integer,object_type text,object_id integer,read_at text,created_at text,title text,body text);
-CREATE TABLE clubora.chat_conversations (id integer PRIMARY KEY,tenant_id integer,kind text);
-CREATE TABLE clubora.chat_memberships (conversation_id integer,tenant_id integer,account_id integer,muted boolean,left_at text);
-INSERT INTO clubora.accounts VALUES(1,'fixture',null,'Synthetic',1,0),(2,'foreign',null,'Foreign',1,0);
-INSERT INTO clubora.tenants VALUES(1,'Synthetic'),(2,'Foreign');
-INSERT INTO clubora.tenant_accounts VALUES(1,1,'admin',1,null),(1,2,'admin',1,null);
-INSERT INTO clubora.chat_conversations VALUES(1,1,'announcements');
+CREATE TABLE clubunio.accounts (id integer PRIMARY KEY,username text,password text,display_name text,active boolean,api_only boolean);
+CREATE TABLE clubunio.tenants (id integer PRIMARY KEY,name text);
+CREATE TABLE clubunio.tenant_accounts (tenant_id integer,account_id integer,role text,portal_enabled boolean,access_profile_id integer);
+CREATE TABLE clubunio.mobile_sessions (id text PRIMARY KEY,account_id integer,token_hash text,revoked_at text,expires_at text);
+CREATE TABLE clubunio.mobile_inbox (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,account_id integer,kind text,object_id integer,event_key text,read_at text,created_at text);
+CREATE TABLE clubunio.notifications (id integer PRIMARY KEY AUTOINCREMENT,tenant_id integer,account_id integer,object_type text,object_id integer,read_at text,created_at text,title text,body text);
+CREATE TABLE clubunio.chat_conversations (id integer PRIMARY KEY,tenant_id integer,kind text);
+CREATE TABLE clubunio.chat_memberships (conversation_id integer,tenant_id integer,account_id integer,muted boolean,left_at text);
+INSERT INTO clubunio.accounts VALUES(1,'fixture',null,'Synthetic',1,0),(2,'foreign',null,'Foreign',1,0);
+INSERT INTO clubunio.tenants VALUES(1,'Synthetic'),(2,'Foreign');
+INSERT INTO clubunio.tenant_accounts VALUES(1,1,'admin',1,null),(1,2,'admin',1,null);
+INSERT INTO clubunio.chat_conversations VALUES(1,1,'announcements');
 SQL);
         $this->actor=Account::findOrFail(1); $this->tenant=Tenant::findOrFail(1);
         $secret=str_repeat('a',64); $session='00000000-0000-4000-8000-000000000001';
-        $this->db->table('clubora.mobile_sessions')->insert(['id'=>$session,'account_id'=>1,'token_hash'=>hash('sha256',$secret),'expires_at'=>now()->addHour()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_sessions')->insert(['id'=>$session,'account_id'=>1,'token_hash'=>hash('sha256',$secret),'expires_at'=>now()->addHour()->toIso8601String()]);
         $this->request=Request::create('/notifications/read-all','POST');
         $this->request->headers->set('Authorization','Bearer '.$session.'.'.$secret);
         $this->request->attributes->set('mobile.actor',$this->actor); $this->request->attributes->set('mobile.tenant',$this->tenant);
@@ -42,7 +42,7 @@ SQL);
         $this->app->instance('request',$this->request); Http::preventStrayRequests();
     }
     private function notice(array $extra=[]): int {
-        return $this->db->table('clubora.mobile_inbox')->insertGetId($extra+['tenant_id'=>1,'account_id'=>1,'kind'=>'announcement','object_id'=>1,'event_key'=>'synthetic:'.bin2hex(random_bytes(6)),'created_at'=>now()->toIso8601String()]);
+        return $this->db->table('clubunio.mobile_inbox')->insertGetId($extra+['tenant_id'=>1,'account_id'=>1,'kind'=>'announcement','object_id'=>1,'event_key'=>'synthetic:'.bin2hex(random_bytes(6)),'created_at'=>now()->toIso8601String()]);
     }
     public function test_twenty_three_notices_share_fresh_target_facts_and_use_batched_writes(): void {
         $ids=[]; for($i=0;$i<23;$i++) $ids[]=$this->notice();
@@ -51,7 +51,7 @@ SQL);
         $ack=(new MobileNotificationController)->readAll($this->request)->getData(true)['data'];
         $queries=$this->db->getQueryLog(); $this->db->disableQueryLog();
         self::assertSame(1,$ack['unreadCount']); self::assertEqualsCanonicalizing($ids,$ack['marked_ids']);
-        self::assertEqualsCanonicalizing($ids,$ack['read_ids']); self::assertNull($this->db->table('clubora.mobile_inbox')->where('id',$late)->value('read_at'));
+        self::assertEqualsCanonicalizing($ids,$ack['read_ids']); self::assertNull($this->db->table('clubunio.mobile_inbox')->where('id',$late)->value('read_at'));
         self::assertLessThan(30,count($queries));
         self::assertCount(3,array_filter($queries,fn($q)=>str_starts_with(strtolower($q['query']),'update')));
         self::assertFalse($this->request->attributes->has(MobileReadContext::class));
@@ -74,15 +74,15 @@ SQL);
         $spy->checks=[];
         $ack=$service->read($this->actor,$this->tenant,null,$otherTenant,[$valid,$invalid,$foreign,$otherTenant]);
         self::assertSame([$valid],$ack['read_ids']); self::assertCount(2,$spy->checks); self::assertSame(0,$ack['unreadCount']);
-        foreach([$invalid,$foreign,$otherTenant] as $id) self::assertNull($this->db->table('clubora.mobile_inbox')->where('id',$id)->value('read_at'));
-        $this->db->table('clubora.mobile_inbox')->where('id',$invalid)->update(['read_at'=>now()->toIso8601String()]);
+        foreach([$invalid,$foreign,$otherTenant] as $id) self::assertNull($this->db->table('clubunio.mobile_inbox')->where('id',$id)->value('read_at'));
+        $this->db->table('clubunio.mobile_inbox')->where('id',$invalid)->update(['read_at'=>now()->toIso8601String()]);
         $spy->checks=[]; self::assertSame(0,$service->count($this->actor,$this->tenant)['unreadCount']); self::assertSame([],$spy->checks);
         $service->read($this->actor,$this->tenant,null,$otherTenant); self::assertSame([],$spy->checks);
     }
     public function test_distinct_targets_reuse_only_locked_actor_facts_and_source_updates_match_kind_object_and_owner(): void {
         $ids=[];
         for($i=2;$i<=24;$i++) {
-            $this->db->table('clubora.chat_conversations')->insert(['id'=>$i,'tenant_id'=>1,'kind'=>'announcements']);
+            $this->db->table('clubunio.chat_conversations')->insert(['id'=>$i,'tenant_id'=>1,'kind'=>'announcements']);
             $ids[]=$this->notice(['object_id'=>$i]);
         }
         $this->request->merge(['through_id'=>max($ids),'observed_ids'=>$ids]);
@@ -91,16 +91,16 @@ SQL);
         $queries=$this->db->getQueryLog(); $this->db->disableQueryLog();
         self::assertCount(23,$ack['marked_ids']); self::assertSame(0,$ack['unreadCount']);
         self::assertLessThan(85,count($queries),'Distinct targets retain object checks, shared actor facts must not multiply');
-        self::assertLessThan(5,count(array_filter($queries,fn($q)=>str_contains($q['query'],'from "clubora"."tenant_accounts"'))));
+        self::assertLessThan(5,count(array_filter($queries,fn($q)=>str_contains($q['query'],'from "clubunio"."tenant_accounts"'))));
         $spy=new class { public function targetAllowed($actor,$tenant,$kind,$object,$delivery=true): bool {return $kind==='bus';} };
         $this->app->instance(MobilePushOutbox::class,$spy);
-        $matching=$this->db->table('clubora.notifications')->insertGetId(['tenant_id'=>1,'account_id'=>1,'object_type'=>'bus_reservation','object_id'=>7]);
-        $wrong=$this->db->table('clubora.notifications')->insertGetId(['tenant_id'=>1,'account_id'=>1,'object_type'=>'bus_reservation','object_id'=>8]);
+        $matching=$this->db->table('clubunio.notifications')->insertGetId(['tenant_id'=>1,'account_id'=>1,'object_type'=>'bus_reservation','object_id'=>7]);
+        $wrong=$this->db->table('clubunio.notifications')->insertGetId(['tenant_id'=>1,'account_id'=>1,'object_type'=>'bus_reservation','object_id'=>8]);
         $owned=$this->notice(['kind'=>'bus','object_id'=>7,'event_key'=>'notification:'.$matching]);
         $mismatch=$this->notice(['kind'=>'bus','object_id'=>99,'event_key'=>'notification:'.$wrong]);
         app(MobileNotificationService::class)->read($this->actor,$this->tenant,null,$mismatch,[$owned,$mismatch]);
-        self::assertNotNull($this->db->table('clubora.notifications')->where('id',$matching)->value('read_at'));
-        self::assertNull($this->db->table('clubora.notifications')->where('id',$wrong)->value('read_at'));
+        self::assertNotNull($this->db->table('clubunio.notifications')->where('id',$matching)->value('read_at'));
+        self::assertNull($this->db->table('clubunio.notifications')->where('id',$wrong)->value('read_at'));
     }
     public function test_locked_projection_is_explicit_request_actor_tenant_and_transaction_bound_and_cleans_before_writes(): void {
         $reads=app(MobileReadContext::class); $count=0; $value=function()use(&$count){return ++$count;};
@@ -118,13 +118,13 @@ SQL);
             });
             self::assertFalse($reads->lockedFor($this->actor,$this->tenant));
             self::assertSame(6,$reads->remember($this->actor,'probe',$value));
-            $this->db->table('clubora.tenant_accounts')->where('account_id',1)->delete();
+            $this->db->table('clubunio.tenant_accounts')->where('account_id',1)->delete();
             self::assertNull(app(\App\ClubUnio\Services\MemberAccessService::class)->membership($this->actor,$this->tenant));
         });
         try {$this->db->transaction(fn()=>$reads->duringLockedProjection($this->request,$this->actor,$this->tenant,fn()=>throw new \LogicException('synthetic')));}
         catch(\LogicException $e) { self::assertSame('synthetic',$e->getMessage()); }
         self::assertFalse($this->request->attributes->has(MobileReadContext::class));
-        $this->db->table('clubora.mobile_sessions')->update(['revoked_at'=>now()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_sessions')->update(['revoked_at'=>now()->toIso8601String()]);
         try {
             $this->db->transaction(fn()=>$reads->duringLockedProjection($this->request,$this->actor,$this->tenant,fn()=>self::fail('Revoked session entered projection')));
             self::fail('Revoked session accepted');

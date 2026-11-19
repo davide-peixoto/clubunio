@@ -43,7 +43,35 @@
 <tr><th class="break-words p-2">{{ $label }}</th><td class="break-words p-2">{{ ($key === 'field_id' ? $preview['previous_field'] : ($preview['before'][$key] ?? null)) ?? '–' }}</td><td class="break-words p-2">{{ $key === 'field_id' ? $preview['field'] : $preview['after'][$key] }}</td></tr>
 @endforeach</tbody></table></div>
 <p>{{ $preview['target_id'] ? __('Wettkampf #').$preview['target_id'].__(' wird aktualisiert.') : __('Neuer Wettkampf wird erstellt.') }} {{ __('Garderoben, Seiten, Kategorien, Vereinsnummern und Bemerkungen bleiben unverändert.') }} {{ ($preview['kind'] ?? '')==='withdrawal' ? __('Signage-Sichtbarkeit wird ausgeschaltet.') : __('Bestehende Sichtbarkeit bleibt unverändert.') }}</p>
-@if($canSync)<x-filament::button wire:click="apply" wire:confirm="{{ __('Geprüfte SFV-Daten in diesen Wettkampf übernehmen?') }}" wire:loading.attr="disabled" icon="heroicon-o-check">{{ __('Übernehmen') }}</x-filament::button>@endif
+@if($impact = ($preview['impact'] ?? null))
+    <div class="space-y-2">
+        <h3 class="font-semibold">{{ trans('sfv_reschedule.heading') }}</h3>
+        @if($impact['conflicts'])
+            <ul class="list-disc ps-5">
+                @foreach($impact['conflicts'] as $conflict)
+                    <li>{{ trans('sfv_reschedule.conflicts.'.($conflict['source'] ?? 'unavailable')) }}
+                        {{ $conflict['date'] }} {{ $conflict['starts_at'] }} @if($conflict['ends_at'])– {{ $conflict['ends_at'] }}@endif</li>
+                @endforeach
+            </ul>
+        @else
+            <p>{{ trans('sfv_reschedule.no_conflicts') }}</p>
+        @endif
+        @if($impact['events'])
+            <ul class="list-disc ps-5">
+                @foreach($impact['events'] as $event)
+                    <li>{{ $event['input']['title'] }} · {{ $event['previous_start'] }} · {{ $event['previous_location'] }} → {{ str_replace('T', ' ', $event['input']['starts_at']) }} · {{ $event['input']['location'] }}</li>
+                @endforeach
+            </ul>
+        @endif
+        @if($impact['restricted'])
+            <p>{{ trans('sfv_reschedule.restricted', ['count' => $impact['restricted']]) }}</p>
+        @endif
+        @if($impact['conflicts'] || $impact['restricted'])
+            <p>{{ trans('sfv_reschedule.blocked') }}</p>
+        @endif
+    </div>
+@endif
+@if($canSync && (! $impact || (! $impact['conflicts'] && ! $impact['restricted'])))<x-filament::button wire:click="apply" wire:confirm="{{ $impact ? trans('sfv_reschedule.confirm') : __('Geprüfte SFV-Daten in diesen Wettkampf übernehmen?') }}" wire:loading.attr="disabled" icon="heroicon-o-check">{{ $impact ? trans('sfv_reschedule.apply') : __('Übernehmen') }}</x-filament::button>@endif
 @endif
 </div>
 </x-filament::section>

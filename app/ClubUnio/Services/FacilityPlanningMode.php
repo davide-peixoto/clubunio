@@ -13,7 +13,7 @@ final class FacilityPlanningMode
 
     public static function ready(): bool
     {
-        return Schema::connection('clubunio')->hasColumn('clubora.tenants', 'facility_planning_mode');
+        return Schema::connection('clubunio')->hasColumn('clubunio.tenants', 'facility_planning_mode');
     }
 
     public static function protected(Tenant $tenant): bool
@@ -47,7 +47,7 @@ final class FacilityPlanningMode
     public static function checkUnused(Tenant $tenant, int $field): void
     {
         $db = DB::connection('clubunio');
-        $onField = fn ($table) => $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('field_id', $field);
+        $onField = fn ($table) => $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('field_id', $field);
         $today = now('Europe/Zurich')->toDateString();
         if ($onField('training_slots')->where('active', true)->exists()
             || $onField('competitions')->where('active', true)->where('plays_on', '>=', $today)->exists()

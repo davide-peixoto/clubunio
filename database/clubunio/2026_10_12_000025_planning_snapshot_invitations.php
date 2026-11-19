@@ -17,15 +17,15 @@ return new class extends Migration
         }
         $tenant = Tenant::where('slug', 'sv-sissach')->firstOrFail();
         // Existing explicit participants retain event-only access, never general team access.
-        $rows = $db->table('clubora.team_participations as p')
-            ->join('clubora.team_events as e', fn ($j) => $j->on('e.tenant_id', '=', 'p.tenant_id')->on('e.id', '=', 'p.event_id'))
+        $rows = $db->table('clubunio.team_participations as p')
+            ->join('clubunio.team_events as e', fn ($j) => $j->on('e.tenant_id', '=', 'p.tenant_id')->on('e.id', '=', 'p.event_id'))
             ->where('p.tenant_id', $tenant->id)->whereNotNull('e.legacy_id')
             ->whereIn('p.member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('id'))
-            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.team_players as t')->whereColumn('t.tenant_id', 'e.tenant_id')->whereColumn('t.team_season_id', 'e.team_season_id')->whereColumn('t.member_id', 'p.member_id')->where('t.active', true))
-            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.team_staff as t')->whereColumn('t.tenant_id', 'e.tenant_id')->whereColumn('t.team_season_id', 'e.team_season_id')->whereColumn('t.member_id', 'p.member_id')->where('t.active', true))
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubunio.team_players as t')->whereColumn('t.tenant_id', 'e.tenant_id')->whereColumn('t.team_season_id', 'e.team_season_id')->whereColumn('t.member_id', 'p.member_id')->where('t.active', true))
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubunio.team_staff as t')->whereColumn('t.tenant_id', 'e.tenant_id')->whereColumn('t.team_season_id', 'e.team_season_id')->whereColumn('t.member_id', 'p.member_id')->where('t.active', true))
             ->get(['p.event_id', 'p.member_id']);
         foreach ($rows as $row) {
-            $db->table('clubora.team_invitations')->insertOrIgnore(['tenant_id' => $tenant->id, 'event_id' => $row->event_id, 'member_id' => $row->member_id]);
+            $db->table('clubunio.team_invitations')->insertOrIgnore(['tenant_id' => $tenant->id, 'event_id' => $row->event_id, 'member_id' => $row->member_id]);
         }
     }
 

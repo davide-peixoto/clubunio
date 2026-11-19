@@ -11,6 +11,15 @@
         @if($errors->any())<p role="alert" class="error">{{ $errors->first() }}</p>@endif
         <button class="primary" type="submit">{{ __('Anmelden') }}</button>
     </form>
+    @if(config('clubunio-security.enabled'))
+        <a href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}">{{ trans('account-security.strong_login') }}</a>
+    @endif
+    @if(config('clubunio-support.enabled'))
+        <a href="{{ route('clubunio.support.login-help') }}">{{ trans('support-intake.title') }}</a>
+    @endif
     <a class="admin-link" href="{{ url('/login') }}">{{ __('Verwaltung') }}</a>
 </section>
+@if(config('clubunio-verein-oidc.enabled'))
+    <a href="{{ route('clubunio.verein.oidc.start') }}">{{ trans('account-security.keycloak_sign_in') }}</a>
+@endif
 @endsection

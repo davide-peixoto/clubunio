@@ -14,11 +14,11 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->transaction(function () use ($db) {
-            $rows = $db->table('clubora.tenant_settings')->where('area', 'general')
+            $rows = $db->table('clubunio.tenant_settings')->where('area', 'general')
                 ->whereIn('key', ['SommerWinter', 'StatusPlatz1', 'StatusPlatz2', 'StatusPlatz3'])
                 ->lockForUpdate()->get();
             if ($rows->isEmpty()) { return; }
-            $changes = $db->table('clubora.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->lockForUpdate()->get();
+            $changes = $db->table('clubunio.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->lockForUpdate()->get();
             $directory = storage_path('app/private/migration-backups');
             if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
                 throw new RuntimeException('Could not create private backup directory');
@@ -32,8 +32,8 @@ return new class extends Migration
             if (hash_file('sha256', $path) !== hash('sha256', $bytes)) {
                 throw new RuntimeException('Backup verification failed');
             }
-            $db->table('clubora.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->delete();
-            $db->table('clubora.tenant_settings')->whereIn('id', $rows->pluck('id'))->delete();
+            $db->table('clubunio.setting_changes')->whereIn('setting_id', $rows->pluck('id'))->delete();
+            $db->table('clubunio.tenant_settings')->whereIn('id', $rows->pluck('id'))->delete();
         });
     }
 

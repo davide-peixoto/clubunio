@@ -25,7 +25,7 @@ class TestOutboxDispatcher
         if ($db->transactionLevel() !== 0) {
             throw new \LogicException('Dispatch requires a committed transaction');
         }
-        $table = 'clubora.'.$table;
+        $table = 'clubunio.'.$table;
         for ($i = 0; $i < min(50, max(0, $limit)); $i++) {
             $event = $db->transaction(function () use ($db, $table, $tenantId, $eventId, $pitch) {
                 $row = $db->table($table)
@@ -53,7 +53,9 @@ class TestOutboxDispatcher
                 }
                 $status = 'accepted';
                 foreach ($deliveries as $delivery) {
-                    $sent = Mail::mailer('clubunio_test')->raw(str_replace('\\n', "\n", $delivery['body']), function ($mail) use ($delivery) {
+                    $sent = Mail::mailer('clubunio_test')->send(['raw' => str_replace('\\n', "\n", $delivery['body'])], [
+                        'clubunio_reply_to_tenant_id' => (int) $event->tenant_id,
+                    ], function ($mail) use ($delivery) {
                         $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($delivery['title']);
                     });
                     if (! $sent) {

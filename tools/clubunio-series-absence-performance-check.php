@@ -25,8 +25,8 @@ try {
     $tenant = Tenant::create(['slug' => 'series-perf-'.Str::random(16), 'name' => 'Synthetic']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
-    $insert = fn ($table, $values) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
+    $insert = fn ($table, $values) => $db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $values);
     TeamPlanningService::seedOptions($tenant->id);
     $season = $insert('seasons', ['name' => 'Synthetic season']);
     $team = $insert('teams', ['name' => 'Synthetic team']);
@@ -68,7 +68,7 @@ try {
         'member_id' => $members[0], 'starts_on' => now('Europe/Zurich')->toDateString(), 'ends_on' => now('Europe/Zurich')->addDays(25)->toDateString(), 'kind' => 'KRANK',
     ]));
     abort_unless($absence['skipped'] === 2, 409);
-    abort_unless($db->table('clubora.team_participations')->where('tenant_id', $tenant->id)->where('source', 'absence')->count() === 10, 409);
+    abort_unless($db->table('clubunio.team_participations')->where('tenant_id', $tenant->id)->where('source', 'absence')->count() === 10, 409);
 } finally {
     $db->disableQueryLog();
     $db->rollBack();

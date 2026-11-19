@@ -26,18 +26,18 @@ class MemberProfilePermissionTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        if (! Schema::connection('clubunio')->hasTable('clubora.access_profiles')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.access_profiles')) {
             (require database_path('clubunio/2026_10_16_000069_access_profiles.php'))->up();
         }
-        if (! Schema::connection('clubunio')->hasColumn('clubora.tenant_accounts', 'access_profile_id')) {
+        if (! Schema::connection('clubunio')->hasColumn('clubunio.tenant_accounts', 'access_profile_id')) {
             (require database_path('clubunio/2026_10_16_000070_account_access_profiles.php'))->up();
         }
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
         $this->tenant = Tenant::create(['slug' => 'member-permission-'.Str::random(12), 'name' => 'Synthetic fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic profile', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic permissions', 'permissions' => '[]']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile, 'portal_enabled' => false]);
+        $this->profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic permissions', 'permissions' => '[]']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'profile', 'access_profile_id' => $this->profile, 'portal_enabled' => false]);
         $this->member = new Member;
         $this->member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Member'])->save();
         Http::preventStrayRequests();
@@ -54,7 +54,7 @@ class MemberProfilePermissionTest extends TestCase
 
     private function permissions(array $permissions): void
     {
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
     }
 
     private function denied(callable $action): void
@@ -86,7 +86,7 @@ class MemberProfilePermissionTest extends TestCase
 
     public function test_material_portal_render_never_offers_profile_actions_even_with_self_link(): void
     {
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $this->actor->id, 'member_id' => $this->member->id,
             'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
         $this->actingAs($this->actor, 'portal');
@@ -108,17 +108,17 @@ class MemberProfilePermissionTest extends TestCase
     public function test_material_portal_render_preserves_legacy_ownership_and_receipt_states(): void
     {
         $this->member->forceFill(['birth_date' => now()->subYears(12)->toDateString()])->save();
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'member', 'access_profile_id' => null, 'portal_enabled' => true]);
         $this->actingAs($this->actor, 'portal');
         $data = $this->materialPortalFixture();
         $this->view('clubunio.material.show', $data)
             ->assertDontSee('Empfang bestätigen')->assertDontSee('PDF-Quittung');
-        $link = $this->db->table('clubora.account_member_links')->insertGetId(['tenant_id' => $this->tenant->id,
+        $link = $this->db->table('clubunio.account_member_links')->insertGetId(['tenant_id' => $this->tenant->id,
             'account_id' => $this->actor->id, 'member_id' => $this->member->id,
             'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
         foreach (['self', 'parent'] as $kind) {
-            $this->db->table('clubora.account_member_links')->where('id', $link)->update(['kind' => $kind]);
+            $this->db->table('clubunio.account_member_links')->where('id', $link)->update(['kind' => $kind]);
             $this->view('clubunio.material.show', $data)->assertSee('Empfang bestätigen')->assertSee('PDF-Quittung');
             $this->view('clubunio.material.index', $data)
                 ->assertSee(route('clubunio.portal.material.show', [$this->tenant->slug, 987654]), false)
@@ -175,7 +175,7 @@ class MemberProfilePermissionTest extends TestCase
     public function test_profile_never_inherits_portal_or_generic_member_scope(): void
     {
         $this->permissions(PermissionCatalog::keys());
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'member_id' => $this->member->id, 'kind' => 'self', 'state' => 'approved', 'source' => 'manual']);
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'member_id' => $this->member->id, 'kind' => 'self', 'state' => 'approved', 'source' => 'manual']);
         $access = app(MemberAccessService::class);
         $this->assertTrue($this->actor->canAccessTenant($this->tenant));
         $this->assertFalse($this->actor->hasUnrestrictedBackofficeAccess($this->tenant));
@@ -247,14 +247,14 @@ class MemberProfilePermissionTest extends TestCase
         $this->assertFalse($service->canReview($this->actor, $this->tenant, $registration));
         $this->permissions(['registrations.view', 'registrations.approve']);
         $this->assertTrue($service->canReview($this->actor, $this->tenant, $registration));
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => false]);
         $this->assertFalse($service->visible($this->actor, $this->tenant)->exists());
         $this->assertFalse($service->canReview($this->actor, $this->tenant, $registration));
     }
 
     public function test_copy_permission_does_not_require_create_or_grant_update(): void
     {
-        $this->db->table('clubora.announcement_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Synthetic draft']);
+        $this->db->table('clubunio.announcement_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => 'draft', 'name' => 'Synthetic draft']);
         $announcement = new \App\ClubUnio\Models\Announcement;
         $announcement->forceFill(['tenant_id' => $this->tenant->id, 'title' => 'Synthetic copy', 'body' => 'Synthetic body', 'target_type' => 'all', 'target_ids' => [], 'state' => 'draft', 'revision' => 1, 'created_by' => $this->actor->id])->save();
         $this->permissions(['announcements.view', 'announcements.copy']);
@@ -273,10 +273,10 @@ class MemberProfilePermissionTest extends TestCase
         $service = app(MemberNoteService::class);
         $other = Tenant::create(['slug' => 'foreign-permission-'.Str::random(12), 'name' => 'Synthetic foreign tenant']);
         $this->denied(fn () => $service->save($this->actor, $other, $this->member->id, null, ['body' => 'Forbidden']));
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => false]);
         $this->denied(fn () => $service->save($this->actor, $this->tenant, $this->member->id, null, ['body' => 'Forbidden']));
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
         $this->denied(fn () => $service->save($this->actor, $this->tenant, $this->member->id, null, ['body' => 'Forbidden']));
         $this->assertFalse(app(MemberAccessService::class)->canEnter($this->actor, $this->tenant));
     }

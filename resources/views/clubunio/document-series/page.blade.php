@@ -7,6 +7,7 @@
     </style>
     <style>
         .ds-field input[type=checkbox],.ds-table input[type=checkbox]{width:1rem;height:1rem;min-width:1rem;flex:0 0 1rem;padding:0}
+        .ds-conditions{margin:16px 0}.ds-conditions textarea.fi-input{padding:8px 12px;resize:vertical}
         .ds-check{justify-content:flex-start;overflow-wrap:anywhere}
         .ds-scroll{min-width:0;max-width:100%}
         .ds-table .fi-badge-label{white-space:normal;overflow:visible;text-overflow:clip}
@@ -26,8 +27,8 @@
             <label class="ds-field">{{ __('Dokumenttyp') }}<x-filament::input.wrapper><x-filament::input.select wire:model="editor.type_id"><option value="">{{ __('Auswählen') }}</option>@foreach($lookups['types'] as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach</x-filament::input.select></x-filament::input.wrapper></label>
             <label class="ds-check"><x-filament::input.checkbox wire:model="editor.signature_required" />{{ __('Unterschrift erforderlich') }}</label>
         </div>
-        <label class="ds-field" style="margin-top:1rem">{{ __('Bedingungen') }}<textarea wire:model="editor.text" rows="10" maxlength="15000"></textarea></label>
-        <div class="ds-scroll"><table class="cu-admin-journal ds-table"><thead><tr><th>{{ __('Artikel / Marke') }}</th><th>{{ __('Artikelnummer') }}</th><th>{{ __('Menge') }}</th><th>{{ __('Preis (Rappen)') }}</th><th>{{ __('Grösse') }}</th><th>{{ __('Initialen') }}</th><th></th></tr></thead><tbody>
+        <label class="cu-admin-field ds-conditions">{{ __('Bedingungen') }}<x-filament::input.wrapper><textarea class="fi-input" wire:model="editor.text" rows="10" maxlength="15000"></textarea></x-filament::input.wrapper></label>
+        <div class="cu-admin-journal ds-scroll"><table class="ds-table"><thead><tr><th>{{ __('Artikel / Marke') }}</th><th>{{ __('Artikelnummer') }}</th><th>{{ __('Menge') }}</th><th>{{ __('Preis (Rappen)') }}</th><th>{{ __('Grösse') }}</th><th>{{ __('Initialen') }}</th><th></th></tr></thead><tbody>
         @foreach($editor['items'] as $i => $item)
         <tr wire:key="ds-item-{{ $i }}"><td><x-filament::input.wrapper><x-filament::input aria-label="{{ __('Artikel') }}" wire:model="editor.items.{{ $i }}.description" /></x-filament::input.wrapper><x-filament::input.wrapper><x-filament::input aria-label="{{ __('Marke') }}" wire:model="editor.items.{{ $i }}.brand" /></x-filament::input.wrapper></td><td><x-filament::input.wrapper><x-filament::input aria-label="{{ __('Artikelnummer') }}" wire:model="editor.items.{{ $i }}.reference" /></x-filament::input.wrapper></td><td><x-filament::input.wrapper><x-filament::input type="number" min="1" max="999" aria-label="{{ __('Menge') }}" wire:model="editor.items.{{ $i }}.quantity" /></x-filament::input.wrapper></td><td><x-filament::input.wrapper><x-filament::input type="number" min="0" max="100000000" aria-label="{{ __('Preis in Rappen') }}" wire:model="editor.items.{{ $i }}.price_cents" /></x-filament::input.wrapper></td><td><x-filament::input.wrapper><x-filament::input aria-label="{{ __('Grösse') }}" wire:model="editor.items.{{ $i }}.size" /></x-filament::input.wrapper></td><td><x-filament::input.wrapper><x-filament::input aria-label="{{ __('Initialen') }}" wire:model="editor.items.{{ $i }}.initials" /></x-filament::input.wrapper></td><td><x-filament::icon-button wire:click="removeItem({{ $i }})" icon="heroicon-o-trash" label="{{ __('Position entfernen') }}" tooltip="{{ __('Position entfernen') }}" color="danger" /></td></tr>
         @endforeach
@@ -59,7 +60,7 @@
     <x-filament::section>
         <x-slot name="heading">{{ __('Empfänger') }}</x-slot>
         <div class="ds-tools"><x-filament::input.wrapper><x-filament::input type="search" aria-label="{{ __('Empfänger suchen') }}" placeholder="{{ __('Empfänger suchen') }}" wire:model.live.debounce.300ms="recipientSearch" /></x-filament::input.wrapper><x-filament::icon-button wire:click="$set('recipientSearch', '')" icon="heroicon-o-x-mark" label="{{ __('Suche leeren') }}" tooltip="{{ __('Suche leeren') }}" :disabled="$recipientSearch === ''" /></div>
-        <div class="ds-scroll"><table class="cu-admin-journal ds-table"><thead><tr><th></th><th>{{ __('Mitglied / Mannschaft') }}</th><th>{{ __('Schlüsselnummer') }}</th><th>{{ __('Grundnummer') }}</th><th>{{ __('Verantwortlicher') }}</th></tr></thead><tbody>
+        <div class="cu-admin-journal ds-scroll"><table class="ds-table"><thead><tr><th></th><th>{{ __('Mitglied / Mannschaft') }}</th><th>{{ __('Schlüsselnummer') }}</th><th>{{ __('Grundnummer') }}</th><th>{{ __('Verantwortlicher') }}</th></tr></thead><tbody>
         @forelse($filteredCandidates as $person)<tr wire:key="ds-person-{{ $person['id'] }}"><td><x-filament::input.checkbox aria-label="{{ __(':name auswählen', ['name' => $person['name']]) }}" wire:model.live="selected.{{ $person['id'] }}" /></td><td>{{ $person['name'] }}<br><small>{{ $person['teams'] }}</small></td>@foreach(['number'=>__('Schlüsselnummer'),'base'=>__('Grundnummer'),'responsible'=>__('Verantwortlicher')] as $key=>$label)<td><x-filament::input.wrapper><x-filament::input aria-label="{{ __(':label für :name', ['label' => $label, 'name' => $person['name']]) }}" maxlength="160" wire:model.live.debounce.500ms="individual.{{ $person['id'] }}.{{ $key }}" /></x-filament::input.wrapper></td>@endforeach</tr>@empty<tr><td colspan="5">{{ __('Keine passenden Empfänger.') }}</td></tr>@endforelse
         </tbody></table></div>
     </x-filament::section>
@@ -78,7 +79,7 @@
     @if($seriesId)
     <x-filament::section>
         <div class="ds-tools"><h2 class="ds-heading">{{ __('Serie #') }}{{ $seriesId }}</h2>@if($can('create') && $can('upload') && $can('send') && $recipients->contains(fn($r) => !$r->document_id))<x-filament::button wire:click="processNext" icon="heroicon-o-play" wire:loading.attr="disabled">{{ __('Nächstes Dokument') }}</x-filament::button>@endif</div>
-        <div class="ds-scroll"><table class="cu-admin-journal ds-table"><thead><tr><th>{{ __('Mitglied') }}</th><th>{{ __('Status / Nachweis') }}</th><th>{{ __('Dokumente / Rückgabe') }}</th></tr></thead><tbody>
+        <div class="cu-admin-journal ds-scroll"><table class="ds-table"><thead><tr><th>{{ __('Mitglied') }}</th><th>{{ __('Status / Nachweis') }}</th><th>{{ __('Dokumente / Rückgabe') }}</th></tr></thead><tbody>
         @foreach($recipients as $row)
         <tr wire:key="ds-result-{{ $row->id }}"><td>{{ $row->snapshot['member_name'] }}</td><td>
         @php

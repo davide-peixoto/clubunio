@@ -69,10 +69,14 @@ class ActiveTenant
         $request->session()->put($this->key($request), $context);
     }
 
-    public function assertSnapshot(Request $request, array $context): void
+    public function assertSnapshot(Request $request, array $context, ?Tenant $resolved = null): void
     {
         $current = $request->session()->get($this->key($request));
         abort_unless($current && $context === $current, 419, __('Der Verein wurde gewechselt. Bitte die Seite neu laden.'));
-        $this->resolve($request);
+        if ($resolved === null) {
+            $this->resolve($request);
+        } else {
+            abort_unless((int) $resolved->getKey() === $context['tenant'], 419, __('Der Verein wurde gewechselt. Bitte die Seite neu laden.'));
+        }
     }
 }

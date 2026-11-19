@@ -82,7 +82,7 @@ class MaterialReceiptResource extends CatalogResource
         $tenant = fn () => Filament::getTenant();
         $service = fn () => app(MaterialReceiptService::class);
 
-        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.material_receipt_statuses')
+        $statusRows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.material_receipt_statuses')
             ->where('tenant_id', $tenant()->id)->orderBy('sort_order')->get();
         $rawStates = $statusRows->pluck('name', 'code')->all();
         $states = $statusRows->mapWithKeys(fn ($row) => [

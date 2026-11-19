@@ -70,7 +70,7 @@ class PublicWebTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function submit(array $extra = [])
@@ -81,8 +81,10 @@ class PublicWebTest extends TestCase
 
     public function test_public_pages_and_registered_signage_component_render_without_login(): void
     {
-        $this->get('/join/'.$this->tenant->slug)->assertOk()->assertSee('Synthetic country')->assertSee('Testanmeldung absenden')->assertDontSee('synthetic@example.invalid');
-        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Trainingsplan heute')->assertDontSee('sg-games')->assertSee('Wird geladen');
+        $this->get('/join/'.$this->tenant->slug)->assertOk()->assertSee('Synthetic country')
+            ->assertSee('Mitgliedsantrag absenden')->assertSee('zur Bearbeitung meines Mitgliedsantrags')
+            ->assertDontSee('Testanmeldung')->assertSee('Powered by ClubUnio')->assertDontSee('synthetic@example.invalid');
+        $this->get('/signage/'.$this->tenant->slug)->assertOk()->assertSee('Trainingsplan heute')->assertDontSee('sg-games')->assertSee('Wird geladen')->assertSee('Powered by ClubUnio');
         Livewire::test('clubunio.signage-feeds', ['tenantId' => $this->tenant->id, 'publicDisplay' => true])->call('refreshFeeds')->assertSee('Instagram ist nicht aktiviert');
         Http::assertNothingSent();
     }
@@ -91,11 +93,11 @@ class PublicWebTest extends TestCase
     {
         $actor = new Account;
         $actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic admin', 'active' => true, 'password' => bcrypt('fixture')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($actor, 'clubunio');
         Filament::setTenant($this->tenant);
-        Livewire::test(SignagePreview::class)->assertSee('Signage-Vorschau')->assertSee('Wird geladen')->assertSee('Öffentliche Signage');
+        Livewire::test(SignagePreview::class)->assertSee('Signage-Vorschau')->assertSee('Wird geladen')->assertSee('Öffentliche Signage')->assertSee('Powered by ClubUnio');
     }
 
     public function test_submission_persists_once_with_private_document_and_workflow_events(): void
@@ -108,10 +110,10 @@ class PublicWebTest extends TestCase
         $this->assertNull($r->member_id);
         $this->assertSame('Synthetic street', app(RegistrationDataService::class)->values($r)['street']);
         $this->assertStringNotContainsString('Synthetic street', $r->applicant_encrypted);
-        $this->assertSame(1, $this->db->table('clubora.registration_documents')->where('registration_id', $r->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.registration_documents')->where('registration_id', $r->id)->count());
         $this->submit()->assertRedirect();
         $this->assertSame(1, Registration::where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(2, $this->db->table('clubora.registration_events')->where('registration_id', $r->id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.registration_events')->where('registration_id', $r->id)->count());
         Mail::assertNothingSent();
         Http::assertNothingSent();
     }
@@ -132,7 +134,7 @@ class PublicWebTest extends TestCase
     public function test_disabled_public_surfaces_and_stale_session_are_rejected(): void
     {
         $this->withSession([])->post('/join/'.$this->tenant->slug, $this->input)->assertStatus(419);
-        $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->update(['enabled' => false]);
+        $this->db->table('clubunio.tenant_settings')->where('tenant_id', $this->tenant->id)->update(['enabled' => false]);
         $this->get('/signage/'.$this->tenant->slug)->assertNotFound();
         $this->get('/join/'.$this->tenant->slug)->assertNotFound();
         $this->submit()->assertNotFound();
@@ -169,12 +171,12 @@ class PublicWebTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('ausweis.pdf', "%PDF-1.4\nSynthetic test only\n%%EOF");
         $this->submit(['identity' => [$file]])->assertSessionHasNoErrors()->assertSessionHas('uploads_pending', true);
         $this->assertSame(1, Registration::where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.public_registration_submissions')->where('tenant_id', $this->tenant->id)->count());
-        $upload = $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->sole();
+        $this->assertSame(1, $this->db->table('clubunio.public_registration_submissions')->where('tenant_id', $this->tenant->id)->count());
+        $upload = $this->db->table('clubunio.document_uploads')->where('tenant_id', $this->tenant->id)->sole();
         $this->assertSame('pending', $upload->state);
         $this->assertNotNull($upload->encrypted_bytes);
         $this->assertNull($upload->created_by);
-        $this->assertSame(0, $this->db->table('clubora.registration_documents')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.registration_documents')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_public_feed_mode_cannot_be_tampered_with(): void
@@ -187,8 +189,8 @@ class PublicWebTest extends TestCase
     {
         $actor = new Account;
         $actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic office', 'active' => true, 'password' => bcrypt('fixture')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
-        $id = $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->where('key', 'SIGNAGE_PUBLIC_ENABLED')->value('id');
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
+        $id = $this->db->table('clubunio.tenant_settings')->where('tenant_id', $this->tenant->id)->where('key', 'SIGNAGE_PUBLIC_ENABLED')->value('id');
         $this->expectException(HttpException::class);
         app(SettingsService::class)->update($actor, $this->tenant, $id, '0');
     }

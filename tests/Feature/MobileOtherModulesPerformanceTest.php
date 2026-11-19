@@ -32,7 +32,7 @@ final class MobileOtherModulesPerformanceTest extends TestCase
         if (isset($this->db)) { $this->db->disableQueryLog(); while ($this->db->transactionLevel()) $this->db->rollBack(); }
         parent::tearDown();
     }
-    private function insert(string $table,array $values): int { return $this->db->table('clubora.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]); }
+    private function insert(string $table,array $values): int { return $this->db->table('clubunio.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]); }
     private function account(string $role='admin'): Account {
         $a=new Account; $a->forceFill(['username'=>'other-perf-'.bin2hex(random_bytes(6)),'display_name'=>'Synthetic','password'=>bcrypt('fixture'),'active'=>true,'api_only'=>false])->save();
         $this->insert('tenant_accounts',['account_id'=>$a->id,'role'=>$role,'portal_enabled'=>true]); return $a;
@@ -61,14 +61,14 @@ final class MobileOtherModulesPerformanceTest extends TestCase
     public function test_source_read_sync_and_current_visibility_account_scope_are_preserved(): void {
         $service=app(MobileNotificationService::class); $notice=$this->notice(); $this->notice(); $this->notice($this->other);
         $page=$service->page($this->actor,$this->tenant,0,20,false); self::assertSame(2,$page['unreadCount']);
-        $this->db->table('clubora.notifications')->where('tenant_id',$this->tenant->id)->where('id',$notice)->update(['read_at'=>now()->toIso8601String()]);
+        $this->db->table('clubunio.notifications')->where('tenant_id',$this->tenant->id)->where('id',$notice)->update(['read_at'=>now()->toIso8601String()]);
         self::assertSame(1,$service->count($this->actor,$this->tenant)['unreadCount']);
-        self::assertNotNull($this->db->table('clubora.mobile_inbox')->where('tenant_id',$this->tenant->id)->where('account_id',$this->actor->id)->where('event_key','notification:'.$notice)->value('read_at'));
+        self::assertNotNull($this->db->table('clubunio.mobile_inbox')->where('tenant_id',$this->tenant->id)->where('account_id',$this->actor->id)->where('event_key','notification:'.$notice)->value('read_at'));
         self::assertSame(1,$service->page($this->other,$this->tenant,0,20,false)['unreadCount']);
-        $this->db->table('clubora.registrations')->where('tenant_id',$this->tenant->id)->where('id',$this->registration)->update(['active'=>false]);
+        $this->db->table('clubunio.registrations')->where('tenant_id',$this->tenant->id)->where('id',$this->registration)->update(['active'=>false]);
         self::assertSame(0,$service->page($this->actor,$this->tenant,0,20,false)['totalRecordCount']);
         self::assertSame(0,$service->count($this->other,$this->tenant)['unreadCount']);
-        $this->db->table('clubora.accounts')->where('id',$this->actor->id)->update(['active'=>false]);
+        $this->db->table('clubunio.accounts')->where('id',$this->actor->id)->update(['active'=>false]);
         try { $service->page($this->actor,$this->tenant,0,20,false); self::fail('Revoked account succeeded'); }
         catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { self::assertSame(403,$e->getStatusCode()); }
     }
@@ -85,7 +85,7 @@ final class MobileOtherModulesPerformanceTest extends TestCase
         [$one,$oneQueries]=$this->queries(fn()=>$this->training());
         for($i=0;$i<18;$i++) $this->plan(); $private=$this->plan(false);
         $target=$this->insert('team_seasons',['team_id'=>$this->insert('teams',['name'=>'Synthetic target']),'season_id'=>$this->season,'label'=>'Synthetic target']);
-        $this->db->table('clubora.mobile_training_plan_shares')->insert(['tenant_id'=>$this->tenant->id,'plan_id'=>$first,'team_season_id'=>$target,'shared_by'=>$this->actor->id]);
+        $this->db->table('clubunio.mobile_training_plan_shares')->insert(['tenant_id'=>$this->tenant->id,'plan_id'=>$first,'team_season_id'=>$target,'shared_by'=>$this->actor->id]);
         [$rows,$manyQueries]=$this->queries(fn()=>$this->training()); self::assertCount(20,$rows); self::assertCount(count($oneQueries),$manyQueries);
         $byId=array_column($rows,null,'id'); self::assertSame($target,$byId[$first]['sharedTeamSaisonId']); self::assertNull($byId[$private]['sharedTeamSaisonId']);
         foreach($rows as $row) { self::assertTrue($row['hasPdf']); if($row['id']!==$private&&$row['id']!==$first) self::assertSame($this->team,$row['sharedTeamSaisonId']); }
@@ -106,7 +106,7 @@ final class MobileOtherModulesPerformanceTest extends TestCase
         foreach($many['Dokumente'] as $row) self::assertSame($service->view($this->actor,$this->tenant,$row['QuittungID'],'file'),$row);
         self::assertFalse($many['Dokumente'][0]['CanSign']); self::assertSame('Synthetic',$many['Dokumente'][0]['Vorname']);
         self::assertStringNotContainsString('never-read',json_encode($many));
-        $this->db->table('clubora.member_documents')->where('tenant_id',$this->tenant->id)->update(['portal_visible'=>false]);
+        $this->db->table('clubunio.member_documents')->where('tenant_id',$this->tenant->id)->update(['portal_visible'=>false]);
         $personal=$this->account('member');
         $this->insert('account_member_links',['account_id'=>$personal->id,'member_id'=>$member,'kind'=>'self','state'=>'approved','source'=>'synthetic']);
         self::assertSame(0,$service->index(Request::create('/synthetic','GET',['mine'=>0]),$personal,$this->tenant)['totalRecordCount']);
@@ -136,7 +136,7 @@ final class MobileOtherModulesPerformanceTest extends TestCase
         [$one,$oneQueries]=$this->queries(fn()=>$service->events($this->actor,$this->tenant,$rows->take(1)));
         [$many,$manyQueries]=$this->queries(fn()=>$service->events($this->actor,$this->tenant,$rows));
         self::assertCount(count($oneQueries),$manyQueries);
-        $this->db->table('clubora.sponsor_run_helpers')->where('tenant_id',$this->tenant->id)->where('id',$helperId)->update(['valid_until'=>now()->subMinute()->toIso8601String()]);
+        $this->db->table('clubunio.sponsor_run_helpers')->where('tenant_id',$this->tenant->id)->where('id',$helperId)->update(['valid_until'=>now()->subMinute()->toIso8601String()]);
         self::assertFalse($service->events($helper,$this->tenant,$rows)[1]['CanCheckIn']);
     }
     public function test_sponsor_participant_batch_matches_parent_trainer_helper_and_office_without_financial_leak(): void {
@@ -164,7 +164,7 @@ final class MobileOtherModulesPerformanceTest extends TestCase
         [$many,$manyQueries]=$this->queries(fn()=>$data->participants($trainer,$this->tenant,$event->id,$rows,[]));
         self::assertCount(count($oneQueries),$manyQueries);
         foreach($data->participants($helper,$this->tenant,$event->id,$rows,[]) as $row) { self::assertFalse($row['CanViewPledges']); self::assertNull($row['SponsorCount']); }
-        $this->db->table('clubora.account_member_links')->where('tenant_id',$this->tenant->id)->where('account_id',$parent->id)->delete();
+        $this->db->table('clubunio.account_member_links')->where('tenant_id',$this->tenant->id)->where('account_id',$parent->id)->delete();
         try { $data->participants($parent,$this->tenant,$event->id,$rows,[]); self::fail('Revoked parent succeeded'); }
         catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) { self::assertSame(403,$e->getStatusCode()); }
         Http::assertNothingSent(); Mail::assertNothingSent();

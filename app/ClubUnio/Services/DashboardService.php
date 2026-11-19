@@ -51,10 +51,10 @@ class DashboardService
 
     private function refundableCashQuery(Tenant $tenant): \Illuminate\Database\Query\Builder
     {
-        return DB::connection('clubunio')->table('clubora.bexio_balances as b')->join('clubora.invoices as i', fn ($j) => $j->on('i.id', '=', 'b.object_id')->on('i.tenant_id', '=', 'b.tenant_id'))
+        return DB::connection('clubunio')->table('clubunio.bexio_balances as b')->join('clubunio.invoices as i', fn ($j) => $j->on('i.id', '=', 'b.object_id')->on('i.tenant_id', '=', 'b.tenant_id'))
             ->where('b.tenant_id', $tenant->id)->where('b.object_type', 'invoice')->where('i.active', true)
-            ->selectRaw("COALESCE(SUM(GREATEST(0,COALESCE(b.cash_excess_cents,0)-(SELECT COALESCE(SUM(r.amount_cents),0) FROM clubora.refunds r
-                JOIN clubora.financial_adjustment_statuses s ON s.id=r.status_id AND s.tenant_id=r.tenant_id WHERE r.invoice_id=i.id AND r.tenant_id=i.tenant_id AND s.code<>'cancelled'))),0) AS amount");
+            ->selectRaw("COALESCE(SUM(GREATEST(0,COALESCE(b.cash_excess_cents,0)-(SELECT COALESCE(SUM(r.amount_cents),0) FROM clubunio.refunds r
+                JOIN clubunio.financial_adjustment_statuses s ON s.id=r.status_id AND s.tenant_id=r.tenant_id WHERE r.invoice_id=i.id AND r.tenant_id=i.tenant_id AND s.code<>'cancelled'))),0) AS amount");
     }
 
     public function newMembersMonthly(Account $actor, Tenant $tenant): array
@@ -65,7 +65,7 @@ class DashboardService
         for ($i = 0; $i < 12; $i++) {
             $months[$first->copy()->addMonths($i)->format('Y-m')] = 0;
         }
-        $counts = DB::connection('clubunio')->table('clubora.members')->where('tenant_id', $tenant->id)->whereNull('archived_at')
+        $counts = DB::connection('clubunio')->table('clubunio.members')->where('tenant_id', $tenant->id)->whereNull('archived_at')
             ->where('recorded_at', '>=', $first->toDateTimeString())->where('recorded_at', '<=', now('Europe/Zurich')->toDateTimeString())
             ->selectRaw("to_char(recorded_at, 'YYYY-MM') as month, count(*) as total")->groupBy('month')->pluck('total', 'month');
 
@@ -76,10 +76,10 @@ class DashboardService
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'view');
 
-        return DB::connection('clubunio')->table('clubora.invoices as i')
-            ->leftJoin('clubora.invoice_lines as p', fn ($join) => $join->on('p.invoice_id', '=', 'i.id')->on('p.tenant_id', '=', 'i.tenant_id')->where('p.active', true))
-            ->leftJoin('clubora.invoice_line_statuses as st', fn ($join) => $join->on('st.id', '=', 'p.status_id')->on('st.tenant_id', '=', 'p.tenant_id'))
-            ->leftJoin('clubora.bexio_balances as b', fn ($join) => $join->on('b.object_id', '=', 'i.id')->on('b.tenant_id', '=', 'i.tenant_id')->where('b.object_type', 'invoice'))
+        return DB::connection('clubunio')->table('clubunio.invoices as i')
+            ->leftJoin('clubunio.invoice_lines as p', fn ($join) => $join->on('p.invoice_id', '=', 'i.id')->on('p.tenant_id', '=', 'i.tenant_id')->where('p.active', true))
+            ->leftJoin('clubunio.invoice_line_statuses as st', fn ($join) => $join->on('st.id', '=', 'p.status_id')->on('st.tenant_id', '=', 'p.tenant_id'))
+            ->leftJoin('clubunio.bexio_balances as b', fn ($join) => $join->on('b.object_id', '=', 'i.id')->on('b.tenant_id', '=', 'i.tenant_id')->where('b.object_type', 'invoice'))
             ->where('i.tenant_id', $tenant->id)->where('i.active', true)->groupBy('i.id', 'i.season_id')
             ->selectRaw("i.id, i.season_id, count(p.id) as position_count, COALESCE(sum(COALESCE(NULLIF(p.net_amount,0),NULLIF(p.gross_amount,0),0)),0) + MAX(i.rounding_cents)/100.0 as amount,
                 count(p.id) FILTER (WHERE st.code IN ('O','T','U')) as open_count, count(p.id) FILTER (WHERE st.code='B') as paid_count,
@@ -97,7 +97,7 @@ class DashboardService
     public function invoicesBySeason(Account $actor, Tenant $tenant): array
     {
         return DB::connection('clubunio')->query()->fromSub($this->invoiceTotals($actor, $tenant), 'totals')
-            ->leftJoin('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'totals.season_id')->where('s.tenant_id', $tenant->id)->where('s.active', true))
+            ->leftJoin('clubunio.seasons as s', fn ($join) => $join->on('s.id', '=', 'totals.season_id')->where('s.tenant_id', $tenant->id)->where('s.active', true))
             ->selectRaw("s.id as season_id, COALESCE(s.name,'Ohne Saison') as season, count(*) as total, sum(amount) as amount, sum(open_amount) as open_amount")
             ->groupBy('s.id', 's.name')->orderByDesc('s.id')->limit(10)->get()->map(fn ($row) => (array) $row)->all();
     }
@@ -112,13 +112,13 @@ class DashboardService
 
     public function scopeOpenInvoices(Builder $query, Tenant $tenant): Builder
     {
-        return $query->where('clubora.invoices.tenant_id', $tenant->id)->where(fn ($q) => $q
+        return $query->where('clubunio.invoices.tenant_id', $tenant->id)->where(fn ($q) => $q
             ->whereHas('bexioBalance', fn ($b) => $b->where('tenant_id', $tenant->id)->where('remaining_cents', '>', 0))
             ->orWhere(fn ($q) => $q->whereDoesntHave('bexioBalance')->whereHas('activeLines', fn ($p) => $p->whereHas('status', fn ($s) => $s->whereIn('code', ['O', 'T', 'U'])))))
-            ->select('clubora.invoices.*')->selectRaw("COALESCE(
-                (SELECT b.remaining_cents/100.0 FROM clubora.bexio_balances b WHERE b.object_type='invoice' AND b.object_id=invoices.id AND b.tenant_id=invoices.tenant_id),
-                (SELECT COALESCE(sum(COALESCE(NULLIF(p.net_amount,0),NULLIF(p.gross_amount,0),0)),0) FROM clubora.invoice_lines p
-                 JOIN clubora.invoice_line_statuses s ON s.id=p.status_id AND s.tenant_id=p.tenant_id
+            ->select('clubunio.invoices.*')->selectRaw("COALESCE(
+                (SELECT b.remaining_cents/100.0 FROM clubunio.bexio_balances b WHERE b.object_type='invoice' AND b.object_id=invoices.id AND b.tenant_id=invoices.tenant_id),
+                (SELECT COALESCE(sum(COALESCE(NULLIF(p.net_amount,0),NULLIF(p.gross_amount,0),0)),0) FROM clubunio.invoice_lines p
+                 JOIN clubunio.invoice_line_statuses s ON s.id=p.status_id AND s.tenant_id=p.tenant_id
                  WHERE p.invoice_id=invoices.id AND p.tenant_id=invoices.tenant_id AND p.active AND s.code IN ('O','T','U')) + invoices.rounding_cents/100.0
                 ) as open_amount");
     }

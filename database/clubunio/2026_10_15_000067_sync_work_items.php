@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
-        Schema::connection('clubunio')->create('clubora.sync_work_items', function (Blueprint $t) {
+        Schema::connection('clubunio')->create('clubunio.sync_work_items', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');
             $t->string('operation', 60);
@@ -32,9 +32,9 @@ return new class extends Migration
             $t->unique(['tenant_id', 'deduplication_key']);
             $t->index(['tenant_id', 'state', 'updated_at']);
         });
-        Schema::connection('clubunio')->create('clubora.sync_work_events', function (Blueprint $t) {
+        Schema::connection('clubunio')->create('clubunio.sync_work_events', function (Blueprint $t) {
             $t->id();
-            $t->foreignId('work_item_id')->constrained('clubora.sync_work_items')->restrictOnDelete();
+            $t->foreignId('work_item_id')->constrained('clubunio.sync_work_items')->restrictOnDelete();
             $t->bigInteger('actor_id');
             $t->string('event', 40);
             $t->string('code', 60)->nullable();

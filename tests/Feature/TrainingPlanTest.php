@@ -40,7 +40,7 @@ class TrainingPlanTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'training-'.Str::random(12), 'name' => 'Training fixture']);
         $this->actor = $this->account('admin');
         $this->trainer = $this->account('trainer');
@@ -163,7 +163,7 @@ class TrainingPlanTest extends TestCase
         try {
             $response = $this->get('/planning/training-plans?q=Testtraining&team='.$this->team)->assertOk()->assertSee('Fixture team');
             $listQueries = collect($this->db->getQueryLog())->pluck('query')
-                ->filter(fn ($sql) => str_contains($sql, 'from "clubora"."training_plans"'));
+                ->filter(fn ($sql) => str_contains($sql, 'from "clubunio"."training_plans"'));
         } finally {
             $this->db->disableQueryLog();
         }

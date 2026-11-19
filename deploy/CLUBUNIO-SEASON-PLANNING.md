@@ -1,5 +1,20 @@
 # Saisonplanungs-Wizard
 
+## Einheitliches Administrationslayout (13.11.2026)
+
+Filament-Felder, Schrittleiste und Statusbadges wie in der übrigen Verwaltung.
+Auf schmalen Ansichten bleiben alle sieben Schritte sichtbar; Mitgliederpool
+und Mannschaften stehen untereinander. Die Planungslogik, Berechtigungen
+und Datenbank bleiben unverändert. Synthetischer Rendering-Test über alle
+sieben Schritte; Layoutprüfung bei 320, 390, 900 und 1440 Pixeln.
+
+Live auf ClubUnio DEV (`5efc40e`, Release `20261113-clubunio-season-layout`)
+und Stage (`0f58abd`). Angemeldete Playwright-Prüfung auf beiden Umgebungen
+bei 1440 × 900 und 390 × 844: HTTP 200, native Eingabefelder und kein
+horizontaler Überlauf. Keine Planung gespeichert oder geändert; keine
+Datenbankmigration. PROD unverändert. Rückweg: auf DEV zum Release
+`20261113-clubunio-join-notice`, auf Stage nur den Layoutcommit zurücknehmen.
+
 ## Aktueller Abnahmestand (23.10.2026)
 
 Technische Fachabnahme mit isolierten synthetischen Daten abgeschlossen:

@@ -47,7 +47,7 @@ class SponsorRunBillingTest extends TestCase
         $this->db->beginTransaction();
         Http::preventStrayRequests();
         Mail::fake();
-        $this->tenant = Tenant::create(['name' => 'Synthetic billing', 'slug' => 'billing-'.Str::random(15)]);
+        $this->tenant = Tenant::create(['accounting_provider' => 'bexio', 'name' => 'Synthetic billing', 'slug' => 'billing-'.Str::random(15)]);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(25), 'display_name' => 'Synthetic billing admin', 'password' => bcrypt('fixture'), 'active' => true])->save();
         $this->insert('tenant_accounts', ['account_id' => $this->actor->id, 'role' => 'admin']);
@@ -86,7 +86,7 @@ class SponsorRunBillingTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function action(int $id, string $action, array $input = []): object
@@ -180,7 +180,7 @@ class SponsorRunBillingTest extends TestCase
         $id = $this->service->prepare($this->actor, $this->tenant, $this->pledge);
         $this->rejects(409, fn () => $this->service->execute($this->actor, $this->tenant, $id, 99, 'create-contact'));
         $this->assertCount(0, $this->client->writes);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'office']);
         $this->rejects(403, fn () => $this->action($id, 'create-contact'));
         $other = Tenant::create(['name' => 'Other synthetic', 'slug' => 'other-'.Str::random(14)]);
         $this->rejects(403, fn () => $this->service->get($this->actor, $other, $id));
@@ -213,7 +213,7 @@ class SponsorRunBillingTest extends TestCase
         $this->service->table($this->tenant)->where('id', $id)->update(['state' => 'send_uncertain']);
         $this->assertSame('send_uncertain', $this->action($id, 'sync')->state);
         $this->assertSame('sent', $this->action($id, 'confirm-sent', ['reason' => 'Synthetic dispatch checked manually'])->state);
-        $audit = $this->db->table('clubora.sponsor_run_billing_audit')->where('invoice_id', $id)->where('action', 'confirm-sent')->sole();
+        $audit = $this->db->table('clubunio.sponsor_run_billing_audit')->where('invoice_id', $id)->where('action', 'confirm-sent')->sole();
         $this->assertSame('Synthetic dispatch checked manually', Crypt::decryptString($audit->note_encrypted));
         $this->assertCount(3, $this->client->writes);
     }

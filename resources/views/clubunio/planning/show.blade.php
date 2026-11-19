@@ -14,7 +14,7 @@
 <div><dt>{{ __('Teilnahme') }}</dt><dd>{{ app(\App\ClubUnio\Services\LookupTranslations::class)->label('planning_options', ($options['mode'][$record->mode] ?? ['name' => $record->mode]), tenant: $tenant->id ?? null) }} · {{ $record->capacity ? $record->capacity.__(' Plätze') : __('Unbegrenzte Plätze') }}</dd></div></dl>
 @if($record->description)<p class="pre-line">{{ $record->description }}</p>@endif
 @if($locked && !$manager)<p class="notice">{{ __('Die Teilnahme ist gesperrt. Bitte das Trainerteam kontaktieren.') }}</p>@endif
-<h2>{{ __('Teilnehmer') }}</h2><div class="table-scroll"><table class="cu-admin-journal"><thead><tr><th>{{ __('Mitglied') }}</th><th>{{ __('Teilnahme') }}</th><th>{{ __('Anwesenheit') }}</th><th>{{ __('Bemerkung') }}</th><th></th></tr></thead><tbody>
+<h2>{{ __('Teilnehmer') }}</h2><div @class(['table-scroll', 'cu-admin-journal' => $workspaceComponents])><table @class(['cu-admin-journal' => !$workspaceComponents])><thead><tr><th scope="col">{{ __('Mitglied') }}</th><th scope="col">{{ __('Teilnahme') }}</th><th scope="col">{{ __('Anwesenheit') }}</th><th scope="col">{{ __('Bemerkung') }}</th><th></th></tr></thead><tbody>
 @foreach($roster as $member)
 @php($part=$parts[$member->id]??null)
 @php($status=$part->status??($record->mode==='ABMELDEN'?'DABEI':'OFFEN'))
@@ -35,7 +35,7 @@
 @if($workspaceComponents)<x-filament::icon-button form-id="member-{{ $member->id }}" type="submit" title="{{ __('Teilnahme speichern') }}" label="{{ __('Teilnahme speichern') }}" icon="heroicon-o-check" color="gray" />@else<button form="member-{{ $member->id }}" type="submit" class="icon-button" title="{{ __('Teilnahme speichern') }}" aria-label="{{ __('Teilnahme speichern') }}">@svg('heroicon-o-check')</button>@endif @endif</td></tr>
 @endforeach</tbody></table></div>
 <h2>{{ __('Gastspieler') }}</h2>
-<div class="table-scroll"><table class="cu-admin-journal"><thead><tr><th>{{ __('Vorname') }}</th><th>{{ __('Nachname') }}</th><th>{{ __('Teilnahme') }}</th><th>{{ __('Anwesenheit') }}</th><th>{{ __('Bemerkung') }}</th><th></th></tr></thead><tbody>
+<div @class(['table-scroll', 'cu-admin-journal' => $workspaceComponents])><table @class(['cu-admin-journal' => !$workspaceComponents])><thead><tr><th scope="col">{{ __('Vorname') }}</th><th scope="col">{{ __('Nachname') }}</th><th scope="col">{{ __('Teilnahme') }}</th><th scope="col">{{ __('Anwesenheit') }}</th><th scope="col">{{ __('Bemerkung') }}</th><th></th></tr></thead><tbody>
 @foreach($guests as $guest)
 <tr><td>@if($canEditGuests)<form id="guest-{{ $guest->id }}" method="post" action="{{ route('clubunio.planning.guest',[$tenant->slug,$record->id,$guest->id]) }}">@csrf @include('clubunio.workspace.context')<input type="hidden" name="revision" value="{{ $guest->revision }}"></form>
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input form="guest-{{ $guest->id }}" name="first_name" value="{{ $guest->first_name }}" required maxlength="100" aria-label="{{ __('Vorname') }}" /></x-filament::input.wrapper>@else<input form="guest-{{ $guest->id }}" name="first_name" value="{{ $guest->first_name }}" required maxlength="100" aria-label="{{ __('Vorname') }}">@endif @else {{ $guest->first_name }} @endif</td>

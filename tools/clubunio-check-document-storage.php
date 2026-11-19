@@ -4,7 +4,7 @@ $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $db = \Illuminate\Support\Facades\DB::connection('clubunio');
 if (in_array('--read-expense-sample', $argv, true)) {
-    $line = $db->table('clubora.expense_lines')->where('active', true)->whereNotNull('storage_reference')->where('storage_reference', '!=', '')->orderByDesc('id')->first();
+    $line = $db->table('clubunio.expense_lines')->where('active', true)->whereNotNull('storage_reference')->where('storage_reference', '!=', '')->orderByDesc('id')->first();
     if (!$line) { throw new LogicException('No expense document reference'); }
     try {
         $filename = trim(explode(',', $line->storage_reference)[0]);
@@ -16,10 +16,10 @@ if (in_array('--read-expense-sample', $argv, true)) {
     }
     exit(0);
 }
-foreach ($db->table('clubora.member_documents')->selectRaw('storage_path, count(*) AS total')->groupBy('storage_path')->get() as $row) {
+foreach ($db->table('clubunio.member_documents')->selectRaw('storage_path, count(*) AS total')->groupBy('storage_path')->get() as $row) {
     echo json_encode($row, JSON_UNESCAPED_SLASHES).PHP_EOL;
     if (in_array('--read-sample', $argv, true)) {
-        $doc = $db->table('clubora.member_documents')->where('storage_path', $row->storage_path)->where('active', true)->orderBy('id')->first();
+        $doc = $db->table('clubunio.member_documents')->where('storage_path', $row->storage_path)->where('active', true)->orderBy('id')->first();
         if ($doc) {
             try {
                 $bytes = app(\App\ClubUnio\Services\AzureDocumentReader::class)->read($doc->storage_path, $doc->filename);

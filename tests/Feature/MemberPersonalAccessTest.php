@@ -36,7 +36,7 @@ class MemberPersonalAccessTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $this->tenant = Tenant::create(['slug' => 'access-'.Str::random(12), 'name' => 'Access fixture']);
         $this->admin = $this->account('admin');
         $this->member = new Member;

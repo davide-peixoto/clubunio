@@ -1,0 +1,74 @@
+.sp-heading { flex-wrap: wrap; margin-bottom: 12px; }
+.sp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 8px 12px; border: 1px solid #bfcad4; border-radius: 6px; color: #164b8a; background: #fff; text-decoration: none; font-weight: 600; }
+.sp-button:hover, .sp-ticket-list a:hover, .sp-tabs a:hover { background: #edf4fd; }
+.sp-tabs { display: flex; gap: 4px 12px; border-bottom: 1px solid #dce2e8; margin-bottom: 20px; }
+.sp-tabs a { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 8px 12px; border-bottom: 3px solid transparent; font-size: 15px; color: #405365; }
+.sp-tabs a[aria-current] { border-color: #164b8a; color: #164b8a; }
+.sp-desk { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; }
+.sp-inbox, .sp-detail, .sp-reading { min-width: 0; }
+.sp-detail { border-left: 1px solid #dce2e8; padding-left: 24px; scroll-margin: 16px; }
+.sp-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sp-panel-head h2, .sp-reading h2 { font-size: 20px; margin: 0 0 14px; overflow-wrap: anywhere; }
+.sp-detail-head h2 { margin-top: 4px; }
+.sp-filters, .sp-inline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: 12px; }
+.sp-inline { margin-bottom: 0; }
+.sp-filters label { flex: 1 1 108px; }
+.sp-filters label:first-child { flex: 2 1 150px; }
+.sp-filters label:has(select[name=assignee]) { flex-basis: 148px; }
+.sp-inline label { flex: 1 1 210px; }
+.sp-filters label, .sp-inline label, .sp-composer label { display: grid; gap: 5px; margin: 0; min-width: 0; }
+.sp-filters input, .sp-filters select, .sp-inline input, .sp-inline select, .sp-composer :is(input:not([type=checkbox],[type=radio]), textarea, select) { width: 100%; min-width: 0; }
+.sp-composer textarea { min-height: 100px; resize: vertical; padding: 10px; border: 1px solid #aeb6c1; border-radius: 4px; font: inherit; }
+.sp-ticket-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid #dce2e8; background: #fff; }
+.sp-ticket-list li + li { border-top: 1px solid #dce2e8; }
+.sp-ticket-list a { display: grid; gap: 6px; padding: 12px; border-left: 3px solid transparent; text-decoration: none; color: #233344; }
+.sp-ticket-list a[aria-current] { background: #eaf3ff; border-color: #164b8a; }
+.sp-ticket-line { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
+.sp-ticket-line strong, .sp-meta, .sp-detail p, .sp-reading p { overflow-wrap: anywhere; }
+.sp-meta { color: #526171; font-size: 13px; }
+.sp-status { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.sp-status-open { color: #164b8a; background: #eaf3ff; }
+.sp-status-waiting { color: #714500; background: #fff0c2; }
+.sp-status-closed { color: #155d36; background: #d9f4e3; }
+.sp-empty { text-align: center; color: #526171; padding: 24px 12px; border-bottom: 1px solid #dce2e8; }
+.sp-empty h2, .sp-empty p { font-size: 15px; margin: 8px 0 0; font-weight: 500; }
+.sp-detail > .sp-empty { border: 0; padding-top: 44px; }
+.sp-pagination, .sp-ticket-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.sp-ticket-controls .sp-inline { flex: 1 1 280px; }
+.sp-thread { margin-top: 20px; border-top: 1px solid #dce2e8; }
+.sp-thread h3, .sp-composer h3 { margin: 14px 0 8px; font-size: 16px; }
+.sp-message { padding: 10px 12px; background: #fff; border-bottom: 1px solid #dce2e8; }
+.sp-note { background: #fff6df; border-left: 3px solid #c78e28; }
+.sp-message p, .sp-disclosure p, .sp-composer output { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sp-message p { margin: 8px 0; }
+.sp-file { display: inline-flex; gap: 6px; align-items: center; max-width: 100%; overflow-wrap: anywhere; }
+.sp-composer { display: grid; gap: 12px; max-width: 48rem; }
+.sp-detail > .sp-composer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #dce2e8; }
+.sp-composer :is(button, a) { justify-self: start; }
+.sp-composer input:is([type=checkbox],[type=radio]) { min-height: auto; }
+.sp-composer label:has(input[type=checkbox]), .sp-composer .sp-segment label { display: flex; align-items: center; gap: 8px; }
+.sp-segment { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; padding: 0; margin: 0; border: 0; }
+.sp-segment label { padding: 8px; background: #fff; border: 1px solid #bfcad4; border-radius: 4px; }
+.sp-segment label:has(:checked) { border-color: #164b8a; background: #eaf3ff; }
+.sp-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sp-knowledge { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; }
+.sp-reading { max-width: 60rem; }
+.sp-disclosure { border-bottom: 1px solid #dce2e8; padding: 0 0 10px; margin-top: 10px; }
+.sp-disclosure summary { cursor: pointer; font-weight: 600; padding: 8px 0; overflow-wrap: anywhere; }
+.sp-disclosure summary svg { display: inline-block; vertical-align: text-bottom; margin-right: 5px; color: #164b8a; }
+.sp-disclosure .sp-composer { margin-top: 8px; }
+.sp-composer output:empty { display: none; }
+.sp-composer output p { padding: 10px 12px; border-left: 3px solid #164b8a; background: #fff; }
+@media (max-width: 850px) {
+    .sp-desk, .sp-knowledge { grid-template-columns: minmax(0, 1fr); }
+    .sp-detail { border-left: 0; padding-left: 0; }
+    .sp-desk:not(.sp-has-ticket) .sp-detail { display: none; }
+    .sp-has-ticket .sp-detail { border-top: 1px solid #dce2e8; padding-top: 16px; }
+}
+@media (max-width: 520px) {
+    .sp-tabs { gap: 0 4px; }
+    .sp-tabs a { gap: 5px; padding-inline: 6px; font-size: 14px; }
+    .sp-tabs a svg { width: 16px; height: 16px; }
+    .sp-filters label:first-child { flex-basis: 100%; }
+    .sp-knowledge { gap: 24px; }
+}

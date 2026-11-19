@@ -54,13 +54,13 @@ class FinanceProfilePermissionTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        if (! Schema::connection('clubunio')->hasTable('clubora.access_profiles')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.access_profiles')) {
             (require database_path('clubunio/2026_10_16_000069_access_profiles.php'))->up();
         }
-        if (! Schema::connection('clubunio')->hasColumn('clubora.tenant_accounts', 'access_profile_id')) {
+        if (! Schema::connection('clubunio')->hasColumn('clubunio.tenant_accounts', 'access_profile_id')) {
             (require database_path('clubunio/2026_10_16_000070_account_access_profiles.php'))->up();
         }
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
         $this->tenant = Tenant::create(['slug' => 'finance-permissions-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic', 'password' => bcrypt('fixture'), 'active' => true])->save();
@@ -102,12 +102,12 @@ class FinanceProfilePermissionTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function grant(array $permissions): void
     {
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode($permissions)]);
     }
 
     private function denied(callable $action): void
@@ -206,7 +206,7 @@ class FinanceProfilePermissionTest extends TestCase
         $this->assertSame(['F'], $service->targets($this->actor, $this->tenant, $expense));
         $this->grant(['expenses.view', 'expenses.cancel']);
         $this->assertSame(['R'], $service->targets($this->actor, $this->tenant, $expense));
-        $status = $this->db->table('clubora.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'R')->value('id');
+        $status = $this->db->table('clubunio.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'R')->value('id');
         $expense = $service->transition($this->actor, $this->tenant, $expense->id, ['revision' => $expense->revision, 'status_id' => $status, 'reason' => 'Synthetic rejection']);
         $this->assertSame('R', $expense->status->code);
         $this->grant(['expenses.view']);
@@ -234,13 +234,13 @@ class FinanceProfilePermissionTest extends TestCase
         $this->assertFalse($access->visible($this->actor, $this->tenant)->exists());
         $this->denied(fn () => $this->invoice());
         $this->grant(['invoices.view', 'invoices.create']);
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => false]);
         $this->denied(fn () => $this->invoice());
-        $this->db->table('clubora.account_roles')->where('code', 'profile')->update(['active' => true]);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => false]);
+        $this->db->table('clubunio.account_roles')->where('code', 'profile')->update(['active' => true]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => false]);
         $this->denied(fn () => $this->invoice());
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => true]);
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => true]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
         $this->denied(fn () => $this->invoice());
     }
 
@@ -261,7 +261,7 @@ class FinanceProfilePermissionTest extends TestCase
     public function test_admin_and_office_keep_business_access_but_office_cannot_manage_oauth(): void
     {
         foreach (['office', 'admin'] as $role) {
-            $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
                 ->update(['role' => $role, 'access_profile_id' => null]);
             $invoice = $this->invoice();
             $this->assertTrue(app(InvoiceWorkflowService::class)->editable($this->actor, $this->tenant, $invoice));
@@ -311,7 +311,7 @@ class FinanceProfilePermissionTest extends TestCase
         $this->denied(fn () => $service->previewNow($this->actor, $this->tenant, 'invoice', $invoice->id));
         $this->grant(['bexio.view', 'bexio.sync', 'invoices.view', 'invoices.sync']);
         $check = $service->previewNow($this->actor, $this->tenant, 'invoice', $invoice->id);
-        $this->assertSame('disabled', $this->db->table('clubora.bexio_checks')->where('id', $check)->value('state'));
+        $this->assertSame('disabled', $this->db->table('clubunio.bexio_checks')->where('id', $check)->value('state'));
         $this->grant(['bexio.view', 'invoices.view', 'invoices.sync']);
         $this->denied(fn () => $service->previewNow($this->actor, $this->tenant, 'invoice', $invoice->id));
         Http::assertNothingSent();
@@ -326,14 +326,14 @@ class FinanceProfilePermissionTest extends TestCase
             'kind' => 'self', 'state' => 'approved', 'source' => 'synthetic']);
         $foreignMember = $this->insert('members', ['first_name' => 'Another synthetic member']);
         $foreignExpense = $this->insert('expenses', ['member_id' => $foreignMember, 'status_id' => $expense->status_id]);
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'member', 'access_profile_id' => null, 'portal_enabled' => true]);
         $this->assertTrue($service->portalAllowed($this->actor, $this->tenant));
         $this->assertTrue($service->editable($this->actor, $this->tenant, $expense));
         $this->assertTrue($service->visible($this->actor, $this->tenant)->whereKey($expense->id)->exists());
         $this->assertFalse($service->visible($this->actor, $this->tenant)->whereKey($foreignExpense)->exists());
         $this->assertSame(['F'], $service->targets($this->actor, $this->tenant, $expense));
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'profile', 'access_profile_id' => $this->profile, 'portal_enabled' => false]);
         $this->grant(['expenses.view']);
         $this->assertFalse($service->editable($this->actor, $this->tenant, $expense));
@@ -371,7 +371,7 @@ class FinanceProfilePermissionTest extends TestCase
 
     private function uploadLine(): ExpenseLine
     {
-        $status = $this->db->table('clubora.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'O')->value('id');
+        $status = $this->db->table('clubunio.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'O')->value('id');
         $expense = $this->insert('expenses', ['member_id' => $this->member, 'status_id' => $status]);
         $line = $this->insert('expense_lines', ['expense_id' => $expense, 'amount' => '10.00']);
         config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
@@ -429,7 +429,7 @@ class FinanceProfilePermissionTest extends TestCase
         } catch (HttpException $error) {
             $this->assertSame(409, $error->getStatusCode());
         }
-        $released = $this->db->table('clubora.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'F')->value('id');
+        $released = $this->db->table('clubunio.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'F')->value('id');
         $line->expense->forceFill(['status_id' => $released])->save();
         $this->denied(fn () => $uploads->process($this->actor, $this->tenant, $id));
         $this->assertNull($line->fresh()->storage_reference);
@@ -478,7 +478,7 @@ class FinanceProfilePermissionTest extends TestCase
         foreach (['Position bearbeiten', 'Neue Position', 'Status ändern'] as $control) {
             $this->assertStringNotContainsString($control, $html);
         }
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'member', 'access_profile_id' => null, 'portal_enabled' => true]);
         $html = $render();
         foreach (['Position bearbeiten', 'Neue Position', 'Status ändern', 'Beleg 1'] as $control) {
@@ -541,7 +541,7 @@ class FinanceProfilePermissionTest extends TestCase
         $this->assertStringContainsString('download=1', $html);
         $this->grant(['invoices.view']);
         $this->assertStringNotContainsString('download=1', view('clubunio.invoices.viewer-content', $data)->render());
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)
             ->update(['role' => 'office', 'access_profile_id' => null]);
         $this->assertStringContainsString('download=1', view('clubunio.invoices.viewer-content', $data)->render());
     }

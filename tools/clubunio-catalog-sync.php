@@ -20,7 +20,7 @@ if (in_array('--test-article', $argv, true)) {
 }
 if (in_array('--test-invoice', $argv, true)) {
     $id = app(BexioCatalogFixtureService::class)->prepareInvoice($actor, $tenant);
-    $query = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $id);
+    $query = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $id);
     $dispatch = (clone $query)->value('id');
     $service = app(BexioSandboxDispatchService::class);
     if (! $dispatch) {

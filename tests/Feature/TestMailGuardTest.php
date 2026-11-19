@@ -3,11 +3,28 @@
 namespace Tests\Feature;
 
 use App\ClubUnio\Services\TestMailGuard;
+use App\ClubUnio\Services\TenantMailSettings;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class TestMailGuardTest extends TestCase
 {
+    public function test_club_reply_to_uses_the_dispatch_tenant_without_changing_the_envelope(): void
+    {
+        config(['clubunio-integrations.test_mail_enabled' => true, 'mail.mailers.clubunio_test' => ['transport' => 'array']]);
+        $this->mock(TenantMailSettings::class, function ($settings) {
+            $settings->shouldReceive('replyTo')->once()->with(1)->andReturn('club-one@example.invalid');
+            $settings->shouldReceive('replyTo')->once()->with(2)->andReturnNull();
+        });
+        $mailer = Mail::mailer('clubunio_test');
+        foreach ([1 => 'club-one@example.invalid', 2 => TestMailGuard::RECIPIENT, 0 => TestMailGuard::RECIPIENT] as $id => $expected) {
+            $sent = $mailer->send(['raw' => 'Synthetic'], ['clubunio_reply_to_tenant_id' => $id],
+                fn ($mail) => $mail->from('from@example.invalid')->to('member@example.invalid')->subject('Reply test'));
+            $this->assertSame(TestMailGuard::RECIPIENT, $sent->getSymfonySentMessage()->getEnvelope()->getRecipients()[0]->getAddress());
+            $this->assertSame($expected, $sent->getOriginalMessage()->getReplyTo()[0]->getAddress());
+        }
+    }
+
     public function test_global_guard_removes_all_real_recipients_from_smtp_envelope(): void
     {
         config(['clubunio-integrations.test_mail_enabled' => true, 'mail.mailers.safety_test' => ['transport' => 'array']]);

@@ -29,7 +29,7 @@ if ($operation !== 'status') {
     abort_unless(in_array($kind, ['invoice', 'expense'], true) && ctype_digit($objectId) && (int) $objectId > 0, 422);
     if ($operation === 'proof' && $kind === 'expense') {
         $row = $service->statusDocument($actor, $tenant, $kind, (int) $objectId);
-        $action = $db->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->where('operation', 'bill_pay')->first();
+        $action = $db->table('clubunio.bexio_financial_actions')->where('dispatch_id', $row->id)->where('operation', 'bill_pay')->first();
         abort_unless($action && $action->remote_id, 409);
         $token = app(BexioConnectionService::class)->accessToken($tenant);
         $data = app(BexioSandboxClient::class)->get($token, '/4.0/purchase/outgoing-payments/'.$action->remote_id);
@@ -49,13 +49,13 @@ if ($operation !== 'status') {
         app(BexioFinancialActionService::class)->execute($actor, $tenant, $kind, (int) $objectId, $operation);
     }
 }
-foreach ($db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('state', 'accepted')->get() as $row) {
+foreach ($db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('state', 'accepted')->get() as $row) {
     $data = $service->readStatus($actor, $tenant, $row->kind, (int) $row->{$row->kind.'_id'});
     $local = ($row->kind === 'invoice' ? Invoice::class : Expense::class)::where('tenant_id', $tenant->id)->findOrFail($row->{$row->kind.'_id'});
-    $balance = $db->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', $row->kind)->where('object_id', $local->id)->first(['paid_cents', 'credit_cents', 'remaining_cents']);
+    $balance = $db->table('clubunio.bexio_balances')->where('tenant_id', $tenant->id)->where('object_type', $row->kind)->where('object_id', $local->id)->first(['paid_cents', 'credit_cents', 'remaining_cents']);
     echo json_encode(['kind' => $row->kind, 'id' => $row->{$row->kind.'_id'}, 'financial' => array_intersect_key($data, array_flip(['document_no', 'kb_item_status_id', 'status', 'currency_id', 'currency_code', 'total', 'total_received_payments', 'total_credit_vouchers', 'total_remaining_payments', 'pending_amount', 'amount_calc', 'manual_amount', 'bill_date']))], JSON_THROW_ON_ERROR).PHP_EOL;
-    echo json_encode(['local_status' => $local->status?->code, 'balance' => $balance, 'paid_events' => $row->kind === 'expense' ? $db->table('clubora.expense_events')->where('expense_id', $local->id)->where('event_key', 'expense.paid')->count() : null], JSON_THROW_ON_ERROR).PHP_EOL;
-    foreach ($db->table('clubora.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']) as $action) {
+    echo json_encode(['local_status' => $local->status?->code, 'balance' => $balance, 'paid_events' => $row->kind === 'expense' ? $db->table('clubunio.expense_events')->where('expense_id', $local->id)->where('event_key', 'expense.paid')->count() : null], JSON_THROW_ON_ERROR).PHP_EOL;
+    foreach ($db->table('clubunio.bexio_financial_actions')->where('dispatch_id', $row->id)->get(['operation', 'state', 'amount_cents', 'http_status', 'remote_id']) as $action) {
         echo json_encode($action, JSON_THROW_ON_ERROR).PHP_EOL;
     }
 }

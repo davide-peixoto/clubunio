@@ -14,7 +14,7 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->unprepared(<<<'SQL'
-ALTER TABLE clubora.bexio_dispatch_trials
+ALTER TABLE clubunio.bexio_dispatch_trials
  ADD COLUMN attachment_count integer CHECK(attachment_count >= 0),
  ADD COLUMN attachment_bytes bigint CHECK(attachment_bytes >= 0);
 SQL);

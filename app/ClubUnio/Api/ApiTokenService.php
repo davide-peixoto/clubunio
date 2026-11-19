@@ -31,8 +31,8 @@ final class ApiTokenService
 
     public function isAdmin(?Account $actor, Tenant $tenant): bool
     {
-        return $actor && ! $actor->api_only && DB::connection('clubunio')->table('clubora.tenant_accounts as ta')
-            ->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')
+        return $actor && ! $actor->api_only && DB::connection('clubunio')->table('clubunio.tenant_accounts as ta')
+            ->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')
             ->where('ta.tenant_id', $tenant->id)->where('ta.account_id', $actor->id)
             ->where('ta.role', 'admin')->where('a.active', true)->where('a.api_only', false)->exists();
     }
@@ -40,8 +40,8 @@ final class ApiTokenService
     private function authorizeAdminLocked(Account $actor, Tenant $tenant): void
     {
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-        $row = DB::connection('clubunio')->table('clubora.tenant_accounts as ta')
-            ->join('clubora.accounts as a', 'a.id', '=', 'ta.account_id')
+        $row = DB::connection('clubunio')->table('clubunio.tenant_accounts as ta')
+            ->join('clubunio.accounts as a', 'a.id', '=', 'ta.account_id')
             ->where('ta.tenant_id', $tenant->id)->where('ta.account_id', $actor->id)
             ->where('ta.role', 'admin')->where('a.active', true)->where('a.api_only', false)->sharedLock()->first(['ta.account_id']);
         abort_unless($row, 403);
@@ -110,7 +110,7 @@ final class ApiTokenService
                 $input['name'] = trim($input['name']);
             }
             $data = Validator::make($input, [
-                'name' => ['required', 'string', 'max:120', Rule::unique('clubunio.clubora.api_integrations')->where('tenant_id', $tenant->id)],
+                'name' => ['required', 'string', 'max:120', Rule::unique('clubunio.clubunio.api_integrations')->where('tenant_id', $tenant->id)],
                 'access_profile_id' => 'required|integer',
                 'scopes' => 'required|array|min:1', 'scopes.*' => ['required', 'string', 'distinct', Rule::in(array_keys($this->scopes()))],
                 'rate_limit' => 'sometimes|integer|min:1|max:600',
@@ -120,7 +120,7 @@ final class ApiTokenService
             $service = new Account;
             $service->forceFill(['username' => 'api-'.Str::uuid(), 'display_name' => 'API: '.$data['name'],
                 'password' => Hash::make(Str::random(80)), 'active' => true, 'api_only' => true])->save();
-            DB::connection('clubunio')->table('clubora.tenant_accounts')->insert([
+            DB::connection('clubunio')->table('clubunio.tenant_accounts')->insert([
                 'tenant_id' => $tenant->id, 'account_id' => $service->id, 'role' => 'profile', 'access_profile_id' => $profile->id,
             ]);
             $integration = new ApiIntegration;
@@ -191,7 +191,7 @@ final class ApiTokenService
 
     public function audit(Tenant $tenant, ?int $integration, ?int $actor, ?int $token, string $event, array $extra = []): void
     {
-        DB::connection('clubunio')->table('clubora.api_audit')->insert([
+        DB::connection('clubunio')->table('clubunio.api_audit')->insert([
             'tenant_id' => $tenant->id, 'integration_id' => $integration, 'actor_id' => $actor,
             'token_id' => $token, 'request_id' => $extra['request_id'] ?? (string) Str::uuid(), 'event' => $event,
             ...array_intersect_key($extra, array_flip(['method', 'route', 'status', 'duration_ms'])),

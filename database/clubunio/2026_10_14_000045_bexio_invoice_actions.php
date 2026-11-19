@@ -14,10 +14,10 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.bexio_invoice_actions (
+CREATE TABLE clubunio.bexio_invoice_actions (
  id bigserial PRIMARY KEY,
- dispatch_id bigint NOT NULL REFERENCES clubora.bexio_sandbox_dispatches(id),
- actor_id bigint NOT NULL REFERENCES clubora.accounts(id),
+ dispatch_id bigint NOT NULL REFERENCES clubunio.bexio_sandbox_dispatches(id),
+ actor_id bigint NOT NULL REFERENCES clubunio.accounts(id),
  operation varchar(12) NOT NULL CHECK (operation IN ('issue','cancel')),
  state varchar(12) NOT NULL CHECK (state IN ('running','uncertain','accepted')),
  connection_hash varchar(64) NOT NULL,

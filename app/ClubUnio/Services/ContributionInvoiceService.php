@@ -75,10 +75,10 @@ class ContributionInvoiceService
             ->whereHas('price', fn ($q) => $q->where('active', true))->with('price')->get();
         $families = FamilyMember::where('tenant_id', $tenant->id)->where('active', true)->whereIn('member_id', $memberIds)
             ->whereHas('family', fn ($q) => $q->where('active', true))->get()->groupBy('member_id');
-        $existing = InvoiceLine::query()->join('clubora.invoices as ci', fn ($join) => $join->on('ci.id', '=', 'clubora.invoice_lines.invoice_id')->on('ci.tenant_id', '=', 'clubora.invoice_lines.tenant_id'))
-            ->where('clubora.invoice_lines.tenant_id', $tenant->id)->where('clubora.invoice_lines.active', true)->where('clubora.invoice_lines.contribution', true)
+        $existing = InvoiceLine::query()->join('clubunio.invoices as ci', fn ($join) => $join->on('ci.id', '=', 'clubunio.invoice_lines.invoice_id')->on('ci.tenant_id', '=', 'clubunio.invoice_lines.tenant_id'))
+            ->where('clubunio.invoice_lines.tenant_id', $tenant->id)->where('clubunio.invoice_lines.active', true)->where('clubunio.invoice_lines.contribution', true)
             ->where('ci.active', true)->where('ci.season_id', $seasonId)->whereIn('ci.member_id', $memberIds)
-            ->get(['clubora.invoice_lines.*', 'ci.member_id as contribution_member_id'])->groupBy('contribution_member_id');
+            ->get(['clubunio.invoice_lines.*', 'ci.member_id as contribution_member_id'])->groupBy('contribution_member_id');
         $rows = [];
         foreach ($memberIds as $id) {
             // Authorization is fresh for each result, not cached with shared calculation data.
@@ -171,11 +171,11 @@ class ContributionInvoiceService
                 ->whereNull('invoice_line_id')->whereHas('teamSeason', fn ($q) => $q->where('active', true)->where('season_id', $seasonId))->lockForUpdate()->get();
             foreach ($players as $player) {
                 $player->forceFill(['invoice_line_id' => $line->id])->save();
-                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                     'object_type' => 'team_players', 'object_id' => $player->id, 'before_value' => json_encode(['invoice_line_id' => null]),
                     'after_value' => json_encode(['invoice_line_id' => $line->id])]);
             }
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'invoices', 'object_id' => $invoice->id,
                 'after_value' => json_encode(['action' => 'contribution_draft', 'line_id' => $line->id, 'calculation' => $preview], JSON_THROW_ON_ERROR)]);
 

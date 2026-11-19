@@ -33,9 +33,9 @@ final class ChatImageCompressionUploadTest extends TestCase
             $a=new Account; $a->forceFill(['username'=>'chat-image-'.bin2hex(random_bytes(12)), 'display_name'=>'Synthetic image '.$i,
                 'password'=>'not-an-authentication-fixture','active'=>true,'api_only'=>false])->save();
             $this->actors[]=$a;
-            $this->db->table('clubora.tenant_accounts')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$a->id,'role'=>'admin','portal_enabled'=>true]);
+            $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id'=>$this->tenant->id,'account_id'=>$a->id,'role'=>'admin','portal_enabled'=>true]);
             $session=(string)Str::uuid(); $secret=bin2hex(random_bytes(32));
-            $this->db->table('clubora.mobile_sessions')->insert(['id'=>$session,'account_id'=>$a->id,'token_hash'=>hash('sha256',$secret),
+            $this->db->table('clubunio.mobile_sessions')->insert(['id'=>$session,'account_id'=>$a->id,'token_hash'=>hash('sha256',$secret),
                 'device_name'=>'Synthetic image','expires_at'=>now()->addHour()->toIso8601String(),'created_at'=>now()->toIso8601String()]);
             $this->tokens[]=$session.'.'.$secret;
         }
@@ -50,7 +50,7 @@ final class ChatImageCompressionUploadTest extends TestCase
             $id=$this->tenant->id ?? null;
             $this->db->disableQueryLog(); $this->db->flushQueryLog();
             while($this->db->transactionLevel()) $this->db->rollBack();
-            if($id) $this->assertFalse($this->db->table('clubora.tenants')->where('id',$id)->exists(),'Synthetic tenant rolled back');
+            if($id) $this->assertFalse($this->db->table('clubunio.tenants')->where('id',$id)->exists(),'Synthetic tenant rolled back');
         }
         parent::tearDown();
     }
@@ -81,7 +81,7 @@ final class ChatImageCompressionUploadTest extends TestCase
     {
         $source=$this->source(); $this->assertGreaterThan(524288,strlen($source));
         $client=(string)Str::uuid(); $id=$this->upload($client,$source)->assertCreated()->assertJsonPath('data.state','quarantine')->json('data.id');
-        $row=$this->db->table('clubora.chat_attachments')->where('id',$id)->first();
+        $row=$this->db->table('clubunio.chat_attachments')->where('id',$id)->first();
         $canonical=Crypt::decryptString($row->bytes_encrypted);
         $this->assertLessThanOrEqual(358400,strlen($canonical));
         $this->assertSame(strlen($canonical),(int)$row->byte_count);
@@ -113,7 +113,7 @@ final class ChatImageCompressionUploadTest extends TestCase
     public function test_alpha_and_pdf_contracts_are_preserved_without_plaintext_metadata_leak(): void
     {
         $id=$this->upload((string)Str::uuid(),$this->source(true),'Transparent.png')->assertCreated()->json('data.id');
-        $row=$this->db->table('clubora.chat_attachments')->where('id',$id)->first();
+        $row=$this->db->table('clubunio.chat_attachments')->where('id',$id)->first();
         $this->assertSame('image/webp',$row->mime_type);
         $meta=json_decode(Crypt::decryptString($row->filename_encrypted),true,512,JSON_THROW_ON_ERROR);
         $this->assertSame('Transparent.webp',$meta['name']);
@@ -121,7 +121,7 @@ final class ChatImageCompressionUploadTest extends TestCase
         try { $this->assertSame(127,(imagecolorat($decoded,1,1)>>24)&127); } finally { imagedestroy($decoded); }
         $pdf="%PDF-1.4\nSynthetic unchanged PDF\n%%EOF";
         $pdfId=$this->upload((string)Str::uuid(),$pdf,'Original.pdf')->assertCreated()->json('data.id');
-        $pdfRow=$this->db->table('clubora.chat_attachments')->where('id',$pdfId)->first();
+        $pdfRow=$this->db->table('clubunio.chat_attachments')->where('id',$pdfId)->first();
         $this->assertSame($pdf,Crypt::decryptString($pdfRow->bytes_encrypted));
         $this->assertSame('Original.pdf',Crypt::decryptString($pdfRow->filename_encrypted));
         $this->assertSame(hash('sha256',$pdf),$pdfRow->sha256);
@@ -131,18 +131,18 @@ final class ChatImageCompressionUploadTest extends TestCase
     public function test_old_large_raw_image_and_filename_replay_without_reencoding_and_rejected_bytes_stay_purged(): void
     {
         $source=$this->source(); $client=(string)Str::uuid(); $id=(string)Str::uuid();
-        $this->db->table('clubora.chat_attachments')->insert(['id'=>$id,'tenant_id'=>$this->tenant->id,'conversation_id'=>$this->chat,
+        $this->db->table('clubunio.chat_attachments')->insert(['id'=>$id,'tenant_id'=>$this->tenant->id,'conversation_id'=>$this->chat,
             'account_id'=>$this->actors[0]->id,'client_id'=>$client,'filename_encrypted'=>Crypt::encryptString('Legacy.jpg'),
             'bytes_encrypted'=>Crypt::encryptString($source),'sha256'=>hash('sha256',$source),'byte_count'=>strlen($source),
             'mime_type'=>'image/jpeg','state'=>'quarantine']);
         $this->upload($client,$source)->assertCreated()->assertJsonPath('data.id',$id);
-        $row=$this->db->table('clubora.chat_attachments')->where('id',$id)->first();
+        $row=$this->db->table('clubunio.chat_attachments')->where('id',$id)->first();
         $this->assertSame($source,Crypt::decryptString($row->bytes_encrypted));
         $this->assertSame('Legacy.jpg',Crypt::decryptString($row->filename_encrypted));
         $this->mock(MalwareScanner::class)->shouldReceive('scan')->once()->with($source)->andReturn(['clean'=>false,'version'=>'synthetic']);
         $this->postJson($this->base.'attachments/'.$id.'/scan')->assertOk()->assertJsonPath('data.state','rejected');
-        $this->assertNull($this->db->table('clubora.chat_attachments')->where('id',$id)->value('bytes_encrypted'));
+        $this->assertNull($this->db->table('clubunio.chat_attachments')->where('id',$id)->value('bytes_encrypted'));
         $this->upload($client,$source)->assertCreated()->assertJsonPath('data.state','rejected');
-        $this->assertNull($this->db->table('clubora.chat_attachments')->where('id',$id)->value('bytes_encrypted'));
+        $this->assertNull($this->db->table('clubunio.chat_attachments')->where('id',$id)->value('bytes_encrypted'));
     }
 }

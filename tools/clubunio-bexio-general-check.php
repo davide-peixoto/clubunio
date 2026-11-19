@@ -27,7 +27,7 @@ try {
     foreach (['invoice' => Invoice::class, 'expense' => Expense::class] as $kind => $class) {
         $doc = $class::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('notes', 'SANDBOX allgemeiner Webversand v1 - keine echte Forderung oder Zahlung')->firstOrFail();
         if (in_array('--send', $argv, true)) {
-            $existing = $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where($kind.'_id', $doc->id)->first();
+            $existing = $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where($kind.'_id', $doc->id)->first();
             $service = app(BexioSandboxDispatchService::class);
             if (! $existing) {
                 $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, $kind, $doc->id);
@@ -40,14 +40,14 @@ try {
         if (in_array('--status', $argv, true)) {
             $service = app(BexioReconciliationService::class);
             $check = $service->preview($actor, $tenant, $kind, $doc->id);
-            $row = $db->table('clubora.bexio_checks')->find($check);
+            $row = $db->table('clubunio.bexio_checks')->find($check);
             echo json_encode(['type' => $kind, 'check' => $check, 'state' => $row->state, 'remote_status' => $row->remote_status], JSON_THROW_ON_ERROR).PHP_EOL;
             if (in_array('--apply-status', $argv, true) && $row->state === 'ready') {
                 $service->apply($actor, $tenant, $check);
                 echo 'Status applied.'.PHP_EOL;
             }
         }
-        echo json_encode($db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where($kind.'_id', $doc->id)->first(['id', 'source_trial_id', 'kind', 'invoice_id', 'expense_id', 'state', 'remote_id', 'expected_cents']), JSON_THROW_ON_ERROR).PHP_EOL;
+        echo json_encode($db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where($kind.'_id', $doc->id)->first(['id', 'source_trial_id', 'kind', 'invoice_id', 'expense_id', 'state', 'remote_id', 'expected_cents']), JSON_THROW_ON_ERROR).PHP_EOL;
     }
 } catch (Throwable $error) {
     if ($error instanceof ValidationException || $error instanceof HttpExceptionInterface) {

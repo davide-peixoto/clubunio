@@ -53,6 +53,174 @@ Fachschicht wiederholen. Erfolgreiche Ziele werden nicht nochmals importiert.
 
 ## Abnahme und Grenzen
 
+### Neuer PROD-Abzug fuer den zweiten Mandanten
+
+Am 10.11.2026, 15:58:54 bis 16:00:14 Uhr (Europe/Zurich), wurde
+`db_acdf8d_mysvs` lesend in `clubunio_stage_refresh_20261110` kopiert.
+Der erneute Verifikationslauf bestaetigte 100 Tabellen, 53'388 Zeilen
+und die Pruefsumme jeder Tabelle. Die Kopie enthaelt 81
+Mitgliederanmeldungen, 18 Mitgliederaenderungsantraege, 697
+Trainingszeiten und 35 Teamtermine (inklusive ggf. geloeschter Zeilen).
+Die Datenbank ist nicht mit der Stage-Webanwendung verbunden. Nur
+Snapshot und Audit wurden angelegt; kein Fachimport und keine Aktivierung
+eines weiteren Mandanten. Der bestehende Stand bleibt erhalten.
+
+### Fachimport des isolierten Kandidaten abgeschlossen
+
+Am 10.11.2026 wurde der vorhandene Abzug per `--resume-build` in
+`clubunio_stage_refresh_20261110` verarbeitet. Der Lauf wurde direkt von
+Windows per SSH gestartet und serverlokal in einem separaten Checkout
+ausgefuehrt. Kein neuer PROD-Abzug und keine Aenderung der laufenden Stage.
+
+- Mandant `sv-sissach-refresh`, 118 Migrationen, elf Basisimporte und
+  Saison 2026/2027 (Legacy-ID 38) bestaetigt; 697 Trainingszeiten.
+- 18 Aenderungsantraege im Ziel: 15 genehmigt, zwei offen, einer abgelehnt.
+- Aktive Winterperiode `W`; Projektionspruefung der Sportplatzbelegung
+  ergibt 61 Trainings fuer den geprueften Wochenzeitraum. Das ist keine
+  angemeldete Browserabnahme der laufenden Stage.
+- Keine aktiven importierten Konten und kein Providerbetrieb. 14 historische
+  Spesen-/Teamsaison-Konflikte sind im Kandidaten ausgewiesen und ungeaendert.
+
+Der Kandidat ist noch nicht als weiterer Mandant in die laufende Stage
+integriert. Der Abgleich ergab 75 gleiche globale Kontoidentitaeten.
+Vor der Uebernahme eine explizite, gepruefte Konto- und FK-Zuordnung
+festlegen; bestehende Benutzer, Rollen und Sitzungen nicht ueberschreiben
+oder automatisch berechtigen.
+
+### Kontoabgleich vor Aufnahme in die laufende Stage
+
+Der lesende Abgleich der Mitgliedschaften ergab 75 eindeutige Treffer
+ueber normalisierte Benutzernamen und keine Rollenabweichung. In der
+laufenden Stage sind 37 dieser Konten aktiv, davon sechs mit Rolle
+Geschaeftsstelle. Eine direkte Uebernahme der Mitgliedschaften wuerde
+deren Zugriff erweitern; `portal_enabled=false` allein sperrt
+Geschaeftsstelle/Admin nicht. Der isolierte Kandidat bleibt unveraendert.
+
+Vor der Integration in einer separaten Kopie der laufenden Stage
+proben: globale Konten nicht duplizieren oder ueberschreiben; historische
+Antragsteller und Entscheider explizit zuordnen; Zugriffsfreigaben separat
+festlegen. Native IDs und zusammengesetzte Mandanten-FKs neu zuordnen.
+Auch native IDs in verschluesselten Einstellungen (Saison und
+Trainingsperiode) sowie Lookup-IDs in Antragssnapshots pruefen.
+Abnahme: Altmandanten und ihre Rechte unveraendert, Nicht-Testkonten
+ohne neuen Zugriff, Browserpruefung der Antraege und Sportplatzbelegung
+mit explizit berechtigtem Stage-Konto. Noch keine Uebernahme oder
+Browserabnahme erfolgt.
+
+Freigabe vom 10.11.2026: Im neuen Mandanten ausschliesslich das explizit
+benannte bestehende Stage-Konto fuer die Browserabnahme berechtigen.
+Die 75 Quellkonten dienen nur der historischen Zuordnung; keine
+Anmeldedaten oder Berechtigungen aus dem Abzug aktivieren. Insbesondere
+kein aktives Bestandskonto mit einer kopierten Mitgliedschaft versehen,
+nur um eine Antragsteller- oder Entscheider-FK zu erfuellen. Ist eine
+Mandantenmitgliedschaft technisch erforderlich, eine nicht anmeldbare
+historische Identitaet verwenden. Bestehende Mandanten, Rollen und
+Sitzungen unveraendert lassen.
+
+Vor Commit der Datenbanktransaktion genau eine neue aktive Berechtigung
+pruefen und die bisherigen Berechtigungen vergleichen. Danach Antraege
+und Winterbelegung angemeldet pruefen, ohne einen Antrag zu entscheiden
+oder Benachrichtigungen auszuloesen. Der Integrationsversuch konnte
+wegen direktem Windows-SSH-Timeout zunaechst nicht begonnen werden.
+
+Beim Wiederanlauf war direkter Windows-SSH erreichbar. Die lesende
+Vorpruefung bestaetigte das freigegebene aktive Stage-Konto mit Rolle
+Geschaeftsstelle im bisherigen Mandanten. Eine transaktionale Probe mit
+synthetischen Identitaeten und expliziten negativen IDs bestaetigte genau
+eine aktive Mitgliedschaft und 75 nicht anmeldbare historische
+Mitgliedschaften. Vollstaendiger Rollback; der Slug war danach in der
+laufenden Stage weiterhin nicht vorhanden. Die Probe ist kein Fachtransfer.
+Fuer diesen fehlt ein gepruefter Transfer mit Mandanten-FK-Mapping und
+Uebersetzung eingebetteter nativer IDs. Keine Browserabnahme erfolgt.
+
+Das separate CLI-Werkzeug `tools/clubunio-stage-tenant-transfer.php`
+erlaubt nur die Quelle `clubunio_stage_refresh_20261110`, das Probe-Ziel
+`clubunio_stage_transfer_rehearsal` und bei explizitem
+`--apply sv-sissach-refresh` das Ziel `clubunio_stage`. Erwartete Tabellen, Fremdschluessel,
+verschluesselte Saison-/Periodenwerte und Lookup-IDs in Antragssnapshots
+werden explizit geprueft. Die Probe setzt genau eine aktive Mitgliedschaft
+und 75 nicht anmeldbare historische Identitaeten voraus; sie rollt alle
+Fachzeilen zurueck. Sequenzen der Testkopie koennen dabei vorruecken.
+Offene Altantraege muessen vor einer Anwendung gegen den neuen
+Mitgliederstand geprueft werden.
+
+Die separate Stage-Kopie wurde per direktem Windows-SSH erstellt und
+enthaelt beide bisherigen Mandanten. Der erste Probelauf stoppte beim
+Inventar: `mobile_module_options` hat den zusammengesetzten Schluessel
+`(tenant_id,key)` und keine eigene `id`. Der Transfer beruecksichtigt
+diese Ausnahme jetzt. Die Wiederholung nach der Korrektur scheiterte
+bereits am SSH-Verbindungsaufbau. Keine Live-Integration.
+Die naechste Probe erreichte das Mapping der verschluesselten Einstellungen.
+Sie beruecksichtigt nun auch Team-Einladungen ohne eigene ID und ignoriert
+beim FK-Katalogvergleich den alten Namenspraefix `clubora_`. Der Saisonwert
+aus dem PROD-Abzug ist ein Legacy-Code und bleibt erhalten; die aktive
+Trainingsperiode verwendet dagegen eine native ID und wird umgeschluesselt.
+Der erneute Lauf nach dieser Korrektur war wegen SSH-Timeout nicht moeglich.
+Vor einem Live-Transfer bleiben Fachabgleich, Pruefung nicht per FK
+modellierter Verweise und Abnahme der Berechtigungen Pflicht.
+
+### Integration in die laufende Stage (10.11.2026)
+
+Korrigierte Probe erfolgreich und zurueckgerollt. Danach wurde ein privater
+Stage-Dump erzeugt und mit `pg_restore` gelesen. Der Transfer wurde
+in einer Transaktion auf `clubunio_stage` ausgefuehrt: 75 Tabellen,
+36'946 uebernommene Zeilen, 18 Aenderungsantraege und 61 projizierte
+Trainings im Wochenfenster. Nur das freigegebene Konto erhielt eine
+aktive Geschaeftsstellen-Mitgliedschaft; 75 historische Identitaeten
+sind nicht anmeldbar. Der Fingerabdruck der bisherigen Mitgliedschaften
+blieb unveraendert. Oeffentliches Signage und Registrierung antworteten
+fuer den neuen Mandanten mit HTTP 404. DEV und PROD unveraendert.
+Die angemeldete Browserabnahme setzt eine Stage-Sitzung des freigegebenen
+Kontos voraus.
+
+### Pflichtpunkte und bisherige Importversuche
+
+**Versuch 10.11.2026:** Der isolierte Aufbau in
+`clubunio_stage_refresh_20261110` verifiziert den bestehenden Snapshot
+erneut, ohne PROD neu zu lesen. Der vorbereitete Zusatzimport bildet
+`iniParameter.SommerWinter = W` auf die native Winterperiode ab, uebernimmt
+die Aenderungsantraege mit Status und verschluesseltem Alt-/Neuwert und
+prueft projizierte Trainings in der Sportplatzbelegung. Der erste Lauf
+stoppte beim Trainingsimport; der aktuelle PHPMaker-Katalog belegt den
+fehlenden Platzcode `L` (Halle) fuer zehn aktive Wintertrainings. Die
+Zuordnung wurde ergaenzt. Der Wiederanlauf stoppte frueher im Objektimport;
+parallel brach der direkte SSH-Pruefzugriff mit Timeout ab. Kein
+erfolgreicher Fachimport und keine Abnahme behauptet.
+
+Der Erstimport-Runner baut den Kandidaten separat auf und erzeugt keine
+zweite Mandanteninstanz in der laufenden Stage-Datenbank. Vor einer
+Uebernahme in die laufende Stage sind globale Konten und native
+Fremdschluessel fuer den neuen Mandanten explizit zuzuordnen. Keine
+bestehenden Konten oder Zuordnungen ueberschreiben. Im Kandidaten bleiben
+importierte Logins und Provider deaktiviert.
+
+Den neuen, lesenden PROD-Abzug in einer separaten, leeren Stage-Datenbank
+aufbauen. Den bisherigen Stand und die Stage-spezifischen Testkonten und
+Einstellungen erhalten. Erst nach Abnahme und separater Freigabe umschalten.
+
+- **Mitgliederaenderungsantraege:** Den fehlenden Fachimport fuer
+  `legacy_prod.MitgliederAenderungsantraege` nach
+  `clubunio.member_change_requests` ergaenzen. Im bisherigen Abzug lagen
+  18 Antraege, im Ziel 0. Mitglieder und weitere Verknuepfungen ueber
+  Legacy-IDs im Zielmandanten aufloesen. Status und Historie erhalten;
+  keine Genehmigung, E-Mail oder Push ausloesen. Wiederholbarkeit und
+  Vollstaendigkeit pruefen; ausgeschlossene Datensaetze begruenden.
+- **Trainingsperiode und Sportplatzbelegung:** Den aktiven Trainingsplan
+  aus PROD ermitteln, auf eine aktive Periode des Zielmandanten abbilden
+  und den Zielwert `general/SIGNAGE_PERIOD_ID` setzen. Keine Quell-ID
+  ungeprueft als native ID uebernehmen. Fehlt die eindeutige Zuordnung,
+  vor der Umschaltung zur manuellen Entscheidung melden. Im bisherigen
+  Stand waren 651 Trainingszeiten und 34 nicht geloeschte Teamtermine
+  vorhanden, aber die aktive Periode fehlte. Die Sportplatzbelegung
+  deshalb fuer einen bekannten Zeitraum als berechtigte Person im
+  SV-Sissach-Mandanten pruefen; ein Pilotkonto ist kein Ersatz.
+- **Datenabgleich:** Mitgliederanmeldungen, Aenderungsantraege,
+  Trainingszeiten und Teamtermine fuer den neuen Abzug zwischen Quelle
+  und Ziel abgleichen. Neben Summen auch Verknuepfungen und Anzeige in
+  den relevanten Ansichten pruefen.
+
+### Allgemeine Abnahme
+
 - Verifizierter Snapshot, genau ein Mandant, vollstaendiges Migrationsjournal,
   Fachimport-Marker, gueltige Saisonauflosung und keine fremden oder unerklaert
   geaenderten Saisonreferenzen. Der Runner gibt nur technische Summen aus.
@@ -113,3 +281,6 @@ Revision und Zeitstempel nachgefuehrt. 14 Audit-Eintraege enthalten vorherige
 Zuordnung, Revision und Zeitstempel fuer einen gezielten Rueckweg. Separater
 Lesecheck: 0 verbleibende Beleg-/Teamsaison-Konflikte, 14 verifizierte
 Audit-Eintraege. Kein neuer PROD-Abzug, DEV und PROD unveraendert.
+
+Historische Dateireferenzen koennen nach der separat freigegebenen
+Container-Kopie gelesen werden: [Stage-Azure](CLUBUNIO-STAGE-AZURE.md).

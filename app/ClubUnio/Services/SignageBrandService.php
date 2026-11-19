@@ -89,7 +89,7 @@ class SignageBrandService
                 $row->forceFill(['tenant_id' => $tenant->id, 'area' => 'signage', 'key' => $key, 'label' => self::LABELS[$field],
                     'enabled' => true, 'is_secret' => false, 'value_type' => 'string',
                     'encrypted_value' => Crypt::encryptString((string) ($data[$field] ?? 0))])->save();
-                DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'setting_id' => $row->id]);
+                DB::connection('clubunio')->table('clubunio.setting_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'setting_id' => $row->id]);
             }
         });
     }

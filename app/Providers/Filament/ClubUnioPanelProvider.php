@@ -125,6 +125,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
+            ->renderHook('panels::footer', fn () => view('clubunio.brand.panel-attribution'))
             ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=language-header-v3" rel="stylesheet" data-navigate-track />')])
@@ -201,7 +202,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 MemberStatusResource::class, MemberTypeResource::class,
                 RegistrationStatusResource::class,
             ])
-            ->pages([Dashboard::class, SettingsOverview::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class, \App\ClubUnio\Pages\PitchPlanning::class, \App\ClubUnio\Pages\Chats::class, \App\ClubUnio\Pages\BackofficeAssistant::class])->widgets([ClubOverview::class,
+            ->pages([Dashboard::class, SettingsOverview::class, \App\ClubUnio\Pages\ErpNextConnection::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class, \App\ClubUnio\Pages\PitchPlanning::class, \App\ClubUnio\Pages\Chats::class, \App\ClubUnio\Pages\BackofficeAssistant::class, \App\ClubUnio\Pages\MemberCampaigns::class, \App\ClubUnio\Pages\SocialStudio::class, \App\ClubUnio\Pages\VeoPlanning::class, \App\ClubUnio\Pages\WorkInbox::class, \App\ClubUnio\Pages\MaterialReturns::class])->widgets([ClubOverview::class,
                 MembersByStatus::class, ExpensesByStatus::class, MembersByAge::class,
                 ExpensesBySeason::class, NewMembersMonthly::class,
                 InvoicesByStatus::class, InvoicesBySeason::class,
@@ -210,6 +211,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                \App\ClubUnio\Http\RequireStrongWebSession::class,
                 \App\ClubUnio\Http\UseLanguage::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
@@ -217,6 +219,13 @@ class ClubUnioPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])->authMiddleware([Authenticate::class]);
+            ])->authMiddleware([Authenticate::class])
+            ->userMenuItems([
+                'account-security' => \Filament\Actions\Action::make('account-security')
+                    ->label(fn () => trans('account-security.setup'))
+                    ->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('clubunio.security.show'))
+                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
+            ]);
     }
 }

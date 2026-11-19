@@ -60,7 +60,7 @@ class DocumentSeriesTest extends TestCase
         }
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
-        if (! Schema::connection('clubunio')->hasTable('clubora.document_series')) {
+        if (! Schema::connection('clubunio')->hasTable('clubunio.document_series')) {
             $this->markTestSkipped('Parent must review/apply migration73; this test never migrates.');
         }
         $this->db->beginTransaction();
@@ -105,7 +105,7 @@ class DocumentSeriesTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function account(string $role = 'member', array $permissions = []): Account
@@ -156,7 +156,7 @@ class DocumentSeriesTest extends TestCase
     private function fakeStorage(): void
     {
         $this->mock(DocumentUploadService::class, function ($mock) {
-            $mock->shouldReceive('table')->andReturnUsing(fn () => $this->db->table('clubora.document_uploads'));
+            $mock->shouldReceive('table')->andReturnUsing(fn () => $this->db->table('clubunio.document_uploads'));
             $mock->shouldReceive('stage')->andReturnUsing(function ($actor, $tenant, $kind, $member, $metadata, $file) {
                 $this->assertGreaterThan($this->baselineLevel, $this->db->transactionLevel());
                 $id = $this->insert('document_uploads', ['kind' => $kind, 'object_id' => $member, 'deduplication_key' => hash('sha256', Str::uuid()),
@@ -174,7 +174,7 @@ class DocumentSeriesTest extends TestCase
                     $this->failUploads--;
                     throw new \RuntimeException('Synthetic storage failure');
                 }
-                $upload = $this->db->table('clubora.document_uploads')->find($id);
+                $upload = $this->db->table('clubunio.document_uploads')->find($id);
                 if ($upload->state === 'published') {
                     return $upload->result_id;
                 }
@@ -183,13 +183,13 @@ class DocumentSeriesTest extends TestCase
                 $document = $this->insert('member_documents', ['member_id' => $upload->object_id, 'document_type_id' => $metadata['type'],
                     'filename' => $upload->filename, 'storage_path' => 'synthetic/', 'sha256' => $upload->sha256,
                     'created_by' => $upload->created_by, 'portal_visible' => $metadata['portal_visible'], 'revision' => 1, 'content_type' => 'application/pdf']);
-                $this->db->table('clubora.document_uploads')->where('id', $id)->update(['state' => 'published', 'result_id' => $document]);
+                $this->db->table('clubunio.document_uploads')->where('id', $id)->update(['state' => 'published', 'result_id' => $document]);
 
                 return $document;
             });
         });
         $this->mock(AzureDocumentReader::class)->shouldReceive('read')->andReturnUsing(function ($folder, $name) {
-            $upload = $this->db->table('clubora.document_uploads')->where('filename', $name)->first();
+            $upload = $this->db->table('clubunio.document_uploads')->where('filename', $name)->first();
 
             return $this->bytes[$upload->id];
         });
@@ -225,23 +225,23 @@ class DocumentSeriesTest extends TestCase
     {
         $input = $this->input();
         $preview = $this->service->preview($this->actor, $this->tenant, $input);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['first_name' => 'Changed']);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['first_name' => 'Changed']);
         $this->assertHttpStatus(409, fn () => $this->service->create($this->actor, $this->tenant, $input, $preview['hash'], (string) Str::uuid()));
         $preview = $this->service->preview($this->actor, $this->tenant, $input);
         $key = (string) Str::uuid();
         $series = $this->service->create($this->actor, $this->tenant, $input, $preview['hash'], $key);
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['first_name' => 'Changed again']);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['first_name' => 'Changed again']);
         $this->assertSame($series->id, $this->service->create($this->actor, $this->tenant, $input, $preview['hash'], $key)->id);
         $input['date'] = '2030-10-26';
         $this->assertHttpStatus(409, fn () => $this->service->create($this->actor, $this->tenant, $input, $preview['hash'], $key));
-        $cipher = $this->db->table('clubora.document_series_recipients')->where('series_id', $series->id)->value('snapshot');
+        $cipher = $this->db->table('clubunio.document_series_recipients')->where('series_id', $series->id)->value('snapshot');
         $this->assertStringNotContainsString('Synthetic', $cipher);
     }
 
     public function test_storage_failure_resume_one_receipt_per_call_and_frozen_identity(): void
     {
         $series = $this->create();
-        $this->db->table('clubora.members')->where('id', $this->member)->update(['first_name' => 'Changed after approval']);
+        $this->db->table('clubunio.members')->where('id', $this->member)->update(['first_name' => 'Changed after approval']);
         $this->failUploads = 1;
         try {
             $this->service->process($this->actor, $this->tenant, $series->id);
@@ -258,7 +258,7 @@ class DocumentSeriesTest extends TestCase
         $receipt = MaterialReceipt::findOrFail($result['receipt_id']);
         $this->assertStringNotContainsString('Changed after approval', $receipt->snapshot['member']);
         $this->assertSame(1, MaterialReceipt::where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.document_uploads')->where('tenant_id', $this->tenant->id)->count());
         $this->assertTrue($this->service->process($this->actor, $this->tenant, $series->id)['done']);
         $this->assertTrue($this->service->process($this->actor, $this->tenant, $series->id)['done']);
         $this->assertSame(2, MaterialReceipt::where('tenant_id', $this->tenant->id)->count());
@@ -357,7 +357,7 @@ class DocumentSeriesTest extends TestCase
         $this->assertSame('parent', $receipt->confirmation_kind);
         $this->assertSame('confirmed', $receipt->state);
         $this->assertNull($row->fresh()->signed_document_id, 'Digital acceptance is not a handwritten PDF signature');
-        $this->db->table('clubora.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.account_member_links')->where('account_id', $parent->id)->update(['state' => 'revoked']);
         $this->assertHttpStatus(403, fn () => $this->service->download($parent, $this->tenant, $series->id, $row->id, false, true));
     }
 
@@ -391,7 +391,7 @@ class DocumentSeriesTest extends TestCase
         $series = $this->create();
         foreach (['document_series_templates' => $this->template, 'document_series' => $series->id] as $table => $id) {
             try {
-                $this->db->transaction(fn () => $this->db->table('clubora.'.$table)->where('id', $id)->update(['created_by' => $this->actor->id]));
+                $this->db->transaction(fn () => $this->db->table('clubunio.'.$table)->where('id', $id)->update(['created_by' => $this->actor->id]));
                 $this->fail('Immutable evidence changed');
             } catch (QueryException $e) {
                 $this->assertStringContainsString('immutable', $e->getMessage());
@@ -399,7 +399,7 @@ class DocumentSeriesTest extends TestCase
         }
         $row = $this->service->recipients($this->actor, $this->tenant, $series->id)->first();
         try {
-            $this->db->transaction(fn () => $this->db->table('clubora.document_series_recipients')->where('id', $row->id)->update(['snapshot_hash' => str_repeat('0', 64)]));
+            $this->db->transaction(fn () => $this->db->table('clubunio.document_series_recipients')->where('id', $row->id)->update(['snapshot_hash' => str_repeat('0', 64)]));
             $this->fail('Recipient snapshot changed');
         } catch (QueryException $e) {
             $this->assertStringContainsString('immutable', $e->getMessage());

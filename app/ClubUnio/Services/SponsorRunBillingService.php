@@ -25,7 +25,7 @@ class SponsorRunBillingService
 
     public function table(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.sponsor_run_invoices')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.sponsor_run_invoices')->where('tenant_id', $tenant->id);
     }
 
     public function authorize(Account $actor, Tenant $tenant, string $function = 'view'): void
@@ -62,7 +62,7 @@ class SponsorRunBillingService
             $setting->forceFill(['tenant_id' => $tenant->id, 'area' => 'sponsor_run', 'key' => 'BEXIO_BILLING',
                 'label' => 'Sponsorenlauf · Bexio-Abrechnung', 'value_type' => 'string', 'enabled' => true,
                 'encrypted_value' => Crypt::encryptString(json_encode($data, JSON_THROW_ON_ERROR)), 'is_secret' => false])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id]);
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id]);
         });
     }
 
@@ -149,6 +149,7 @@ class SponsorRunBillingService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($actor, $tenant, $this->function($action));
             abort_unless(BexioConnectionService::canManage($actor, $tenant), 403);
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $current = $this->table($tenant)->where('id', $id)->lockForUpdate()->first();
             abort_unless($current && (int) $current->revision === $revision, 409, __('Rechnung wurde geändert.'));
             abort_unless(! $current->operation_token || ($action === 'sync' && now()->greaterThan($current->lease_until)), 409, __('Laufende Aktion zuerst abwarten oder Ergebnis prüfen.'));
@@ -410,7 +411,7 @@ class SponsorRunBillingService
 
     private function audit(Account $actor, Tenant $tenant, int $id, string $action, string $state, ?string $note = null): void
     {
-        DB::connection('clubunio')->table('clubora.sponsor_run_billing_audit')->insert(['tenant_id' => $tenant->id, 'invoice_id' => $id,
+        DB::connection('clubunio')->table('clubunio.sponsor_run_billing_audit')->insert(['tenant_id' => $tenant->id, 'invoice_id' => $id,
             'actor_id' => $actor->id, 'action' => $action, 'state' => $state, 'note_encrypted' => $note === null ? null : Crypt::encryptString($note)]);
     }
 }

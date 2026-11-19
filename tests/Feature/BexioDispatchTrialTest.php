@@ -46,7 +46,7 @@ class BexioDispatchTrialTest extends TestCase
         $this->db = DB::connection('clubunio');
         $this->assertSame('db_acdf8d_dclubora', $this->db->getDatabaseName());
         $this->db->beginTransaction();
-        $this->db->statement('SET LOCAL search_path TO clubora');
+        $this->db->statement('SET LOCAL search_path TO clubunio');
         $suffix = bin2hex(random_bytes(8));
         $this->tenant = Tenant::create(['slug' => 'trial-'.$suffix, 'name' => 'Trial']);
         $this->actor = new Account;

@@ -92,7 +92,7 @@ final class ApiReportController
             'players' => TeamPlayer::class, 'staff' => TeamStaff::class, 'families' => FamilyMember::class, 'keys' => MemberKey::class
         };
         $query = $model::withoutGlobalScopes()->where('tenant_id', $c->tenant->id)->where('active', true)
-            ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($c->tenant)->select('clubora.members.id'));
+            ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($c->tenant)->select('clubunio.members.id'));
         if ($season && in_array($kind, ['players', 'staff'], true)) {
             $query->whereHas('teamSeason', fn ($q) => $q->where('tenant_id', $c->tenant->id)->where('season_id', $season));
         }

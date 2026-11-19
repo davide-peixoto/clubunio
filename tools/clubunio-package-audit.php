@@ -18,10 +18,10 @@ foreach ($legacy as $name) {
         echo 'Columns: '.implode(', ', $db->table('information_schema.columns')->where('table_schema', 'legacy_prod')->where('table_name', $name)->orderBy('ordinal_position')->pluck('column_name')->all()).PHP_EOL;
     }
 }
-$tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
-echo 'Unassigned historical buses: '.$db->table('clubora.bus_reservations')->where('tenant_id', $tenant)->whereNotNull('legacy_id')
+$tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
+echo 'Unassigned historical buses: '.$db->table('clubunio.bus_reservations')->where('tenant_id', $tenant)->whereNotNull('legacy_id')
     ->where(fn ($q) => $q->whereNull('member_id')->orWhereNull('team_season_id'))->count().PHP_EOL;
-echo 'Banks with imported address: '.$db->table('clubora.banks')->where('tenant_id', $tenant)->whereNotNull('street')->count().PHP_EOL;
+echo 'Banks with imported address: '.$db->table('clubunio.banks')->where('tenant_id', $tenant)->whereNotNull('street')->count().PHP_EOL;
 $modules = json_decode($db->table('migration_audit.catalog')->where('category', 'modules')->value('metadata'), true, 512, JSON_THROW_ON_ERROR);
 foreach ($modules as $module) {
     if (in_array($module['name'] ?? '', ['ListeSpotsFamilie', 'ListeSpots'], true)) {
@@ -41,7 +41,7 @@ foreach ($shapes as $shape => $count) {
     echo $count.' x '.$shape.PHP_EOL;
 }
 echo 'Key source rows: '.$db->table('legacy_prod.Schluesselliste')->count().PHP_EOL;
-echo 'Imported keys: '.$db->table('clubora.member_keys')->where('tenant_id', $tenant)->whereNotNull('legacy_id')->count().PHP_EOL;
-foreach ($db->table('clubora.spots_recipients')->where('tenant_id', $tenant)->selectRaw('kind, count(*) as total')->groupBy('kind')->get() as $row) {
+echo 'Imported keys: '.$db->table('clubunio.member_keys')->where('tenant_id', $tenant)->whereNotNull('legacy_id')->count().PHP_EOL;
+foreach ($db->table('clubunio.spots_recipients')->where('tenant_id', $tenant)->selectRaw('kind, count(*) as total')->groupBy('kind')->get() as $row) {
     echo 'Spots '.$row->kind.': '.$row->total.PHP_EOL;
 }

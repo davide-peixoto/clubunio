@@ -17,6 +17,7 @@ return [
     'registration_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_REGISTRATION_ENABLED'),
     'password_reset_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_PASSWORD_RESET_ENABLED'),
     'membership_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_MEMBERSHIP_ENABLED'),
+    'membership_account_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_MEMBERSHIP_ACCOUNT_ENABLED'),
     'email_enrollment_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_EMAIL_ENROLLMENT_ENABLED'),
     'mail_enabled' => $flag('CLUBUNIO_MOBILE_IDENTITY_MAIL_ENABLED'),
     'origins' => $origins, 'tenant_slugs' => $slugs,

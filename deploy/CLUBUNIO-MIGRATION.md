@@ -1,5 +1,55 @@
 # ClubUnio migration work packages
 
+## Kampagnen: Typ, Texte und Elternversand
+
+Auf Stage vor dem Webrelease `php deploy/apply-stage-member-campaigns.php`
+ausfuehren. Das Skript prueft die Ziel-DB und fuehrt nur die Kampagnenmigrationen
+aus. Migration 000630 ist additiv: Bestehende Kampagnen verwenden weiterhin
+ihren Typ und die Standardtexte; es gibt keinen Backfill fuer Elternkonten.
+Beim Rollback zuerst die Anwendung zurueckrollen, die neuen Spalten wegen
+bereits freigegebener Kampagnen behalten.
+
+Stage-Abnahme: `php deploy/check-stage-member-campaigns.php --queue`.
+Der Test arbeitet mit synthetischen Daten, rollt die Transaktion zurueck
+und verwendet einen In-Memory-Mailtransport. Keine echten Empfaenger.
+Stage-Abnahme erfolgreich: Freigabe, verifizierte Elternbindung samt
+Sperrpruefung, Testwarteschlange, Sammel-PDF und Geschaeftsstellenfreigabe.
+
+## Profilfotos
+
+Neue private Fotoablage ohne automatische Uebernahme von Altfotos oder
+Ausweisbildern. Stage-Migration und Rueckweg: [Profilfotos](CLUBUNIO-PROFILE-PHOTOS.md).
+
+## Kampagnen nach der Migration
+
+Der Stammdaten-Pilot uebernimmt keine Alt-Kampagnen und startet keinen
+Versand. Empfaenger werden in ClubUnio ausgewaehlt; Stammdatenantraege
+benoetigen die Freigabe der Geschaeftsstelle. Details: [Kampagnen](CLUBUNIO-CAMPAIGNS.md).
+
+## Stage-Schema clubunio (10.11.2026)
+
+Stage-spezifischer Code und Migrationspfad auf `codex/stage-clubunio-schema`.
+Umbenennung statt Neuimport; Backup, Abnahme und Rueckweg:
+[Stage-Schema](CLUBUNIO-STAGE-SCHEMA.md). Snapshot-Schemas, DEV und PROD
+werden nicht umgestellt.
+
+## Social Media Ladezeit (13.11.2026)
+
+Nur Code und gebuendelte Browserassets. Keine Schemamigration, kein Import,
+kein Backfill. [DEV-Abnahme und Rueckweg](CLUBUNIO-SOCIAL-PERFORMANCE.md).
+
+## Social Media V1 (13.11.2026)
+
+Sechs additive Tabellen fuer Medien, Vorlagenversionen, bestaetigte Resultate,
+Beitraege und getrennte Meta-Testzustellungen. Kein Import und keine Aenderung
+an Wettkaempfen oder Profilzuordnungen. [Migration und Rueckweg](CLUBUNIO-SOCIAL-STUDIO.md).
+
+Stage, 13.11.2026: Frontend-Build installiert und beide Migrationen per
+`php deploy/apply-stage-social.php` in `clubunio_stage.clubunio` angewendet.
+Acht additive Tabellen, keine Uebernahme von DEV-Jobs oder -Entwuerfen.
+Webmodul aktiviert, Social-Scheduler und Meta-Versand deaktiviert.
+[Abnahme und Rueckweg](CLUBUNIO-SOCIAL-STUDIO.md#stage-abnahme).
+
 ## Stage-Erstimport SV Sissach (09.11.2026)
 
 Eigener leerer Zielbestand `clubunio_stage` auf dem VPS. Aktueller lesender
@@ -1182,9 +1232,24 @@ Delta62 Prüfungen plus56/896 Regression und653 App-Tests grün.
 Abfrage-/History-/Cachegrenzen: MOBILE-CHAT-DELTA.md.
 
 
+
 ## ClubUnio PROD: Vorbereitung (19.11.2026)
 
 Neue VPS-App unter app.clubunio.com technisch vorbereitet, eigene leere
 Datenbank clubunio_prod, explizite Produktionskonfiguration und Wartungsmodus.
 Leerer Vereinsbestand gewuenscht; noch kein Schemaaufbau oder Fachstart.
 Nachweise und naechste Schritte: [Produktionsvorbereitung](CLUBUNIO-PRODUCTION.md).
+
+## Vereinsmail: Antwortadresse
+
+Die optionale Reply-To-Adresse wird pro Mandant nach dem Import gepflegt.
+Keine Schemaaenderung und keine automatische Uebernahme aus Altdaten.
+Siehe [Mailversand](CLUBUNIO-MAIL-DELIVERY.md).
+
+## Stage-Paket Arbeitskorb, SFV und Veo
+
+Die Vorbereitung enthält genau eine neue additive Migration für die beiden
+Veo-Konfigurationstabellen. Arbeitskorb und SFV verwenden das bestehende
+Schema. Zielprüfung, Ablauf, Rückweg und Fachabnahme stehen in
+[Arbeitskorb und SFV](/deploy/CLUBUNIO-WORK-INBOX-SFV.md#für-stage-vorbereitet).
+

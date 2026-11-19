@@ -62,16 +62,16 @@ class PitchCompetitionEditsTest extends TestCase
             'members', 'member_statuses', 'team_staff', 'account_member_links', 'lookup_translations', 'football_clubs',
             'notifications', 'mobile_inbox', 'mobile_push_outbox', 'message_templates', 'message_template_revisions',
             'account_roles', 'access_profiles'] as $table) {
-            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubora.$table INCLUDING ALL) ON COMMIT DROP");
+            $this->db->statement("CREATE TEMP TABLE $table (LIKE clubunio.$table INCLUDING ALL) ON COMMIT DROP");
         }
         foreach (['001500_pitch_planning', '001600_pitch_planning_notifications'] as $name) {
             $queries = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_04_'.$name.'.php'))->up());
             foreach ($queries as $query) {
-                if (! str_contains($query['query'], 'CREATE TABLE clubora.')) {
+                if (! str_contains($query['query'], 'CREATE TABLE clubunio.')) {
                     continue;
                 }
-                $sql = str_replace(['clubora.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
-                $this->assertStringNotContainsString('clubora.', $sql);
+                $sql = str_replace(['clubunio.', 'CREATE TABLE '], ['pg_temp.', 'CREATE TEMP TABLE '], $query['query']);
+                $this->assertStringNotContainsString('clubunio.', $sql);
                 $this->db->unprepared($sql);
             }
         }
@@ -79,16 +79,16 @@ class PitchCompetitionEditsTest extends TestCase
         {
             public function wrapTable($table, $prefix = null)
             {
-                return parent::wrapTable(str_replace('clubora.', 'pg_temp.', $table), $prefix);
+                return parent::wrapTable(str_replace('clubunio.', 'pg_temp.', $table), $prefix);
             }
 
             public function wrap($value)
             {
-                return parent::wrap(is_string($value) ? str_replace('clubora.', 'pg_temp.', $value) : $value);
+                return parent::wrap(is_string($value) ? str_replace('clubunio.', 'pg_temp.', $value) : $value);
             }
         });
         $this->db->beforeExecuting(function ($sql) {
-            if (preg_match('/^\s*(insert|update|delete|alter|create|drop|truncate)/i', $sql) && str_contains($sql, 'clubora')) {
+            if (preg_match('/^\s*(insert|update|delete|alter|create|drop|truncate)/i', $sql) && str_contains($sql, 'clubunio')) {
                 throw new \LogicException('Permanent writes forbidden in competition edit tests');
             }
         });
@@ -118,7 +118,7 @@ class PitchCompetitionEditsTest extends TestCase
         $season = $this->insert('seasons', ['name' => 'Season', 'starts_on' => '2026-01-01', 'ends_on' => '2026-12-31']);
         $team = $this->insert('teams', ['name' => 'Team']);
         $this->team = $this->insert('team_seasons', ['season_id' => $season, 'team_id' => $team, 'label' => 'Team']);
-        $this->db->table('clubora.pitch_competition_teams')->insert(['tenant_id' => $this->tenant->id, 'competition_id' => $this->competition->id, 'team_season_id' => $this->team]);
+        $this->db->table('clubunio.pitch_competition_teams')->insert(['tenant_id' => $this->tenant->id, 'competition_id' => $this->competition->id, 'team_season_id' => $this->team]);
         foreach (['de' => 'de-CH', 'en' => 'en-GB'] as $language => $locale) {
             foreach (['pitch.booking.moved', 'pitch.booking.created', 'pitch.booking.cancelled'] as $key) {
                 $template = MessageEventCatalog::all($language)[$key];
@@ -142,7 +142,7 @@ class PitchCompetitionEditsTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function save(array $changes = []): Competition
@@ -171,7 +171,7 @@ class PitchCompetitionEditsTest extends TestCase
 
     private function events(): array
     {
-        return $this->db->table('clubora.pitch_planning_events')->orderBy('id')->get()->map(fn ($row) => json_decode($row->payload, true, flags: JSON_THROW_ON_ERROR))->all();
+        return $this->db->table('clubunio.pitch_planning_events')->orderBy('id')->get()->map(fn ($row) => json_decode($row->payload, true, flags: JSON_THROW_ON_ERROR))->all();
     }
 
     public function test_room_text_and_equivalent_time_edits_do_not_check_existing_conflicts_or_notify(): void
@@ -182,8 +182,8 @@ class PitchCompetitionEditsTest extends TestCase
         $this->assertSame('Keep free text', $saved->remarks);
         $this->save();
         $this->assertSame([], $this->events());
-        $this->assertSame(0, $this->db->table('clubora.object_changes')->where('object_type', 'pitch_planning')->count());
-        $this->assertSame($this->area, (int) $this->db->table('clubora.pitch_competition_settings')->value('area_id'));
+        $this->assertSame(0, $this->db->table('clubunio.object_changes')->where('object_type', 'pitch_planning')->count());
+        $this->assertSame($this->area, (int) $this->db->table('clubunio.pitch_competition_settings')->value('area_id'));
     }
 
     public function test_real_move_clears_old_area_permanently_preserves_source_and_notifies_staff_in_de_en(): void
@@ -199,7 +199,7 @@ class PitchCompetitionEditsTest extends TestCase
         $source = $this->competition->only(['id', 'association_match_id', 'legacy_id', 'host_room_id', 'guest_room_id']);
         $saved = $this->save(['field_id' => $this->otherField]);
         $this->assertSame($source, $saved->only(array_keys($source)));
-        $settings = $this->db->table('clubora.pitch_competition_settings')->first();
+        $settings = $this->db->table('clubunio.pitch_competition_settings')->first();
         $this->assertNull($settings->area_id);
         $this->assertSame(2, $settings->revision);
         $this->assertSame(150, $settings->duration_minutes);
@@ -209,13 +209,13 @@ class PitchCompetitionEditsTest extends TestCase
         $this->assertSame($this->field, $events[0]['before']['field_id']);
         $this->assertSame($this->otherField, $events[0]['after']['field_id']);
         $this->assertSame([$this->team], $events[0]['team_season_ids']);
-        $titles = $this->db->table('clubora.notifications')->pluck('title')->all();
+        $titles = $this->db->table('clubunio.notifications')->pluck('title')->all();
         $this->assertContains('Platzbelegung verschoben', $titles);
         $this->assertContains('Pitch booking moved', $titles);
-        $this->assertSame(2, $this->db->table('clubora.mobile_inbox')->count());
-        $this->assertSame(0, $this->db->table('clubora.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
+        $this->assertSame(2, $this->db->table('clubunio.mobile_inbox')->count());
+        $this->assertSame(0, $this->db->table('clubunio.pitch_planning_events')->whereNotNull('payload_encrypted')->count());
         $this->save(['field_id' => $this->field]);
-        $this->assertNull($this->db->table('clubora.pitch_competition_settings')->value('area_id'));
+        $this->assertNull($this->db->table('clubunio.pitch_competition_settings')->value('area_id'));
         $this->assertCount(2, $this->events());
         Mail::assertNothingSent();
         Http::assertNothingSent();
@@ -245,7 +245,7 @@ class PitchCompetitionEditsTest extends TestCase
         $this->assertSame([], $this->events());
         $this->save(['field_id' => $this->otherField]);
         $this->assertSame([], $this->events());
-        $this->assertNull($this->db->table('clubora.pitch_competition_settings')->value('area_id'));
+        $this->assertNull($this->db->table('clubunio.pitch_competition_settings')->value('area_id'));
         $this->block($this->otherField);
         $this->fails(409, fn () => $this->save(['starts_at' => '15:00']));
         $this->save(['starts_at' => '18:00']);
@@ -269,7 +269,7 @@ class PitchCompetitionEditsTest extends TestCase
             public function record(Tenant $tenant, array $event): void
             {
                 parent::record($tenant, $event);
-                if (DB::connection('clubunio')->table('clubora.mobile_inbox')->count() !== 1) {
+                if (DB::connection('clubunio')->table('clubunio.mobile_inbox')->count() !== 1) {
                     throw new \RuntimeException('Expected transactional inbox fixture');
                 }
                 throw new \RuntimeException('Synthetic fanout failure');
@@ -283,10 +283,10 @@ class PitchCompetitionEditsTest extends TestCase
         }
         $this->assertSame($this->field, (int) $this->competition->fresh()->field_id);
         $this->assertSame(1, (int) $this->competition->fresh()->revision);
-        $this->assertSame($this->area, (int) $this->db->table('clubora.pitch_competition_settings')->value('area_id'));
-        $this->assertSame(1, $this->db->table('clubora.pitch_competition_settings')->value('revision'));
+        $this->assertSame($this->area, (int) $this->db->table('clubunio.pitch_competition_settings')->value('area_id'));
+        $this->assertSame(1, $this->db->table('clubunio.pitch_competition_settings')->value('revision'));
         foreach (['object_changes', 'pitch_planning_events', 'notifications', 'mobile_inbox'] as $table) {
-            $this->assertSame(0, $this->db->table('clubora.'.$table)->count());
+            $this->assertSame(0, $this->db->table('clubunio.'.$table)->count());
         }
     }
 
@@ -298,19 +298,19 @@ class PitchCompetitionEditsTest extends TestCase
         } catch (ValidationException $error) {
             $this->assertArrayHasKey('revision', $error->errors());
         }
-        $this->db->table('clubora.account_roles')->insert(['code' => 'profile', 'name' => 'Profile', 'description' => 'Fixture']);
+        $this->db->table('clubunio.account_roles')->insert(['code' => 'profile', 'name' => 'Profile', 'description' => 'Fixture']);
         $profile = $this->insert('access_profiles', ['name' => 'Competition editor', 'permissions' => json_encode(['competitions.view', 'competitions.update'])]);
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'profile', 'access_profile_id' => $profile, 'portal_enabled' => false]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'profile', 'access_profile_id' => $profile, 'portal_enabled' => false]);
         $this->save(['field_id' => $this->otherField]);
         $this->assertCount(1, $this->events());
         $this->fails(403, fn () => $this->save(['active' => false]));
         $frame = ['account' => $this->actor->id, 'tenants' => collect([$this->tenant]), 'permissionCache' => []];
         request()->attributes->set(BackofficeReadContext::class, $frame);
-        $this->db->table('clubora.access_profiles')->where('id', $profile)->update(['permissions' => json_encode(['competitions.view'])]);
+        $this->db->table('clubunio.access_profiles')->where('id', $profile)->update(['permissions' => json_encode(['competitions.view'])]);
         $this->fails(403, fn () => $this->save(['field_id' => $this->field]));
         $this->assertSame($frame, request()->attributes->get(BackofficeReadContext::class));
-        $this->db->table('clubora.tenant_accounts')->update(['role' => 'admin', 'access_profile_id' => null]);
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => false]);
+        $this->db->table('clubunio.tenant_accounts')->update(['role' => 'admin', 'access_profile_id' => null]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => false]);
         $this->fails(403, fn () => $this->save(['field_id' => $this->field]));
         $this->assertCount(1, $this->events());
     }
@@ -324,7 +324,7 @@ class PitchCompetitionEditsTest extends TestCase
         // Keeping the old left-half geometry would wrongly allow this move.
         $this->fails(409, fn () => $this->save(['field_id' => $this->otherField]));
         $this->assertSame($this->field, (int) $this->competition->fresh()->field_id);
-        $this->assertSame($this->area, (int) $this->db->table('clubora.pitch_competition_settings')->value('area_id'));
+        $this->assertSame($this->area, (int) $this->db->table('clubunio.pitch_competition_settings')->value('area_id'));
         $this->assertSame([], $this->events());
     }
 

@@ -103,7 +103,7 @@ class PitchPlanningService
         return ['from' => $data['from'], 'to' => $data['to'], 'timezone' => 'Europe/Zurich', 'fields' => $fields, 'entries' => $entries, 'capabilities' => $capabilities];
     }
 
-    public function requests(Account $actor, Tenant $tenant, array $filters = []): array
+    private function canReadAllRequests(Account $actor, Tenant $tenant): bool
     {
         abort_unless($this->canView($actor, $tenant), 403);
         $all = $this->office($actor, $tenant, 'competitions', 'view');
@@ -111,17 +111,29 @@ class PitchPlanningService
         abort_unless($all || (in_array($access->membership($actor, $tenant)?->role, ['trainer', 'technical_lead'], true)
             && $access->canEnter($actor, $tenant)
             && in_array('Platzverfugbarkeit', app(MobileModuleSettings::class)->visibleKeys($actor, $tenant), true)), 403);
-        abort_if(! $all && array_key_exists('status', $filters), 403);
         $this->ready();
+
+        return $all;
+    }
+
+    private function visibleRequests(Account $actor, Tenant $tenant, bool $all)
+    {
+        return $this->projection->table('pitch_requests', $tenant)
+            ->when(! $all, fn ($query) => $query->where('requester_account_id', $actor->id)
+                ->where('date', '>=', now('Europe/Zurich')->toDateString()));
+    }
+
+    public function requests(Account $actor, Tenant $tenant, array $filters = []): array
+    {
+        $all = $this->canReadAllRequests($actor, $tenant);
+        abort_if(! $all && isset($filters['status']) && $filters['status'] !== 'pending', 403);
         $data = Validator::make($filters, [
             'page' => 'sometimes|integer|min:1|max:2147483647', 'per_page' => 'sometimes|integer|min:1|max:100',
             'status' => 'sometimes|required|in:pending,approved,rejected,cancelled',
         ])->validate();
         $page = (int) ($data['page'] ?? 1);
         $size = (int) ($data['per_page'] ?? 30);
-        $rows = $this->projection->table('pitch_requests', $tenant)
-            ->when(! $all, fn ($query) => $query->where('requester_account_id', $actor->id)
-                ->where('date', '>=', now('Europe/Zurich')->toDateString()))
+        $rows = $this->visibleRequests($actor, $tenant, $all)
             ->when(isset($data['status']), fn ($query) => $query->where('status', $data['status']))
             ->orderByDesc('id')->offset(($page - 1) * $size)->limit($size + 1)->get();
         $hasMore = $rows->count() > $size;
@@ -140,6 +152,14 @@ class PitchPlanningService
         }
         return ['timezone' => 'Europe/Zurich', 'fields' => $fields, 'teams' => $teams, 'entries' => $entries,
             'capabilities' => $capabilities, 'can_filter_status' => $all, 'page' => $page, 'has_more' => $hasMore];
+    }
+
+    public function pendingRequestCount(Account $actor, Tenant $tenant): int
+    {
+        $all = $this->canReadAllRequests($actor, $tenant);
+
+        return $this->visibleRequests($actor, $tenant, $all)->where('status', 'pending')
+            ->count();
     }
 
     private function write(Account $actor, Tenant $tenant, \Closure $action): mixed
@@ -257,8 +277,40 @@ class PitchPlanningService
             if (array_intersect_key($before, $data) == $data) return $before;
             $after = array_replace($before, $data, $this->times($data));
             $this->ensureFree($tenant, $after);
+            $competition = $before['source'] === 'competition'
+                ? Competition::where('tenant_id', $tenant->id)->findOrFail($before['source_id']) : null;
+            $impact = null;
+            if ($competition?->association_match_id) {
+                $matches = $this->projection->table('sfv_schedule', $tenant)
+                    ->where('match_id', $competition->association_match_id)->limit(2)->get();
+                $match = $matches->count() === 1 ? $matches->first() : null;
+                $kickoff = $match?->starts_at && in_array(mb_strtolower(trim((string) $match->state)),
+                    ['angesetzt', 'neu angesetzt', 'noch nicht ausgetragen'], true) ? Time::parse($match->starts_at) : null;
+                abort_unless($kickoff && SfvLocalOverride::allowsAt($kickoff, Time::now())
+                    && $data['date'] === $kickoff->tz('Europe/Zurich')->toDateString(), 422, trans('sfv_reschedule.override_window'));
+                $impact = app(SfvRescheduleImpact::class)->preview($actor, $tenant, [
+                    'target_id' => $competition->id,
+                    'before' => ['plays_on' => $before['date'], 'starts_at' => $before['starts_at'], 'field_id' => $before['field_id']],
+                    'after' => ['plays_on' => $data['date'], 'starts_at' => $data['starts_at'], 'field_id' => $data['field_id'],
+                        'association_match_id' => $competition->association_match_id],
+                    'field' => collect($this->projection->fields($tenant))->firstWhere('id', $data['field_id'])['name'],
+                ], checkPitch: false);
+                abort_if(($impact['restricted'] ?? 0) > 0, 422, trans('sfv_reschedule.blocked'));
+            }
             $this->persistPlacement($tenant, $before, $data);
             $after = $this->resolve($tenant, $key);
+            if ($competition?->association_match_id) {
+                $this->projection->table('object_changes', $tenant)->insert([
+                    'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'sfv_local_override',
+                    'object_id' => $competition->id, 'after_value' => json_encode([
+                        'placement' => [$after['date'], substr($after['starts_at'], 0, 5), (int) $after['field_id']],
+                        'until' => Time::parse($after['ends_at_iso'])->max($kickoff->addMinutes($data['duration_minutes']))->toIso8601String(),
+                    ], JSON_THROW_ON_ERROR),
+                ]);
+                if ($impact !== null) {
+                    app(SfvRescheduleImpact::class)->apply($actor, $tenant, $impact);
+                }
+            }
             $this->audit($actor, $tenant, $before, $after, 'moved');
             return $after;
         });
@@ -322,7 +374,7 @@ class PitchPlanningService
             $id = $before?->id ?? $this->insert($tenant, 'pitch_areas', $data);
             if ($before) $this->update($tenant, 'pitch_areas', $id, $data);
             $after = $this->projection->area($this->row($tenant, 'pitch_areas', $id));
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'pitch_areas', 'object_id' => $id, 'before_value' => $before ? json_encode($this->projection->area($before), JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);
             return $after;
@@ -360,9 +412,9 @@ class PitchPlanningService
         $match = $this->projection->table('sfv_schedule', $tenant)->where('match_id', $competition->association_match_id)->first();
         $teamIds = array_filter([(int) ($match?->team_a_id ?? 0), (int) ($match?->team_b_id ?? 0)]);
         if ($teamIds) {
-            $teams = DB::connection('clubunio')->table('clubora.team_seasons as ts')
-                ->join('clubora.teams as t', fn ($join) => $join->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
-                ->join('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
+            $teams = DB::connection('clubunio')->table('clubunio.team_seasons as ts')
+                ->join('clubunio.teams as t', fn ($join) => $join->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
+                ->join('clubunio.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
                 ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true)->where('s.active', true)
                 ->whereIn('t.sfv_team_id', $teamIds)->where('s.starts_on', '<=', $competition->plays_on->toDateString())->where('s.ends_on', '>=', $competition->plays_on->toDateString())
                 ->pluck('ts.id');
@@ -489,7 +541,7 @@ class PitchPlanningService
         $event = ['event_key' => $after['key'].':'.$after['revision'].':'.$action, 'action' => $action, 'actor_id' => (int) $actor->id,
             'requester_account_id' => $after['requester_account_id'] ?? $before['requester_account_id'] ?? null,
             'team_season_ids' => array_values(array_unique($teams)), 'before' => $before, 'after' => $after];
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'pitch_planning', 'object_id' => $after['source_id'], 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
             'after_value' => json_encode($event, JSON_THROW_ON_ERROR)]);
         if (in_array($action, ['requested', 'moved', 'approved', 'rejected', 'sfv_moved', 'created', 'cancelled'], true)) app(PitchPlanningNotificationService::class)->record($tenant, $event);

@@ -11,7 +11,7 @@ return new class extends Migration {
             throw new LogicException('Reviewed ClubUnio PostgreSQL required');
         }
         foreach (['team_participations', 'team_guests'] as $table) {
-            $db->statement('ALTER TABLE clubora.'.$table.' ADD COLUMN attendance_comment_encrypted text, ADD COLUMN attendance_updated_at timestamptz');
+            $db->statement('ALTER TABLE clubunio.'.$table.' ADD COLUMN attendance_comment_encrypted text, ADD COLUMN attendance_updated_at timestamptz');
         }
     }
     public function down(): void { throw new LogicException('Retain private attendance history; reviewed restore required'); }

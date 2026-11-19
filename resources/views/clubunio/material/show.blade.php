@@ -8,23 +8,31 @@
         && $materialAccess->represented($materialActor, $tenant)->whereKey($receipt->member_id)->exists();
     $materialDownload = $materialOwned && \App\ClubUnio\Resources\ProfileUi::profileAllows($materialActor, $tenant, 'documents', 'download');
 @endphp
-<a href="{{ route('clubunio.portal.material.index', $tenant->slug) }}">{{ __('Zurück') }}</a>
-<h1>{{ $receipt->title }}</h1>
+<div class="page-heading">
+    <div><h1>{{ $receipt->title }}</h1><p>{{ $receipt->snapshot['member'] ?? $receipt->member->display_name }} · {{ $receipt->handover_on->format('d.m.Y') }}</p></div>
+    <div class="cu-portal-actions">
+        <a class="cu-portal-secondary" href="{{ route('clubunio.portal.material.index', $tenant->slug) }}">@svg('heroicon-o-arrow-left') {{ __('Materialübergaben') }}</a>
+        @if($receipt->snapshot && $materialDownload)<a class="cu-portal-secondary" href="{{ route('clubunio.portal.material.pdf', [$tenant->slug, $receipt->id]) }}" target="_blank" rel="noopener">@svg('heroicon-o-arrow-down-tray') {{ __('PDF-Quittung') }}</a>@endif
+    </div>
+</div>
 @if(session('status'))<p role="status">{{ session('status') }}</p>@endif
-@foreach($errors->all() as $error)<p role="alert">{{ $error }}</p>@endforeach
-<p>{{ $receipt->snapshot['member'] ?? $receipt->member->display_name }} · {{ $receipt->handover_on->format('d.m.Y') }} · {{ $states[$receipt->state] ?? $receipt->state }}</p>
-<section class="table-wrap"><table><thead><tr><th>{{ __('Gegenstand') }}</th><th>{{ __('Anzahl') }}</th><th>{{ __('Nummer / Grösse') }}</th><th>{{ __('Zustand') }}</th></tr></thead><tbody>
+@if($errors->any())<ul class="errors" role="alert">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif
+<div class="cu-portal-list">
+<div class="cu-portal-list-bar">@include('clubunio.material.state')</div>
+<div class="table-scroll"><table><thead><tr><th scope="col">{{ __('Gegenstand') }}</th><th scope="col">{{ __('Anzahl') }}</th><th scope="col">{{ __('Nummer / Grösse') }}</th><th scope="col">{{ __('Zustand') }}</th></tr></thead><tbody>
 @foreach($receipt->items as $item)<tr><td>{{ $item['description'] }}</td><td>{{ $item['quantity'] }}</td><td>{{ $item['reference'] ?? '' }}</td><td>{{ $item['condition'] ?? '' }}</td></tr>@endforeach
-</tbody></table></section>
-<p style="white-space:pre-wrap">{{ $receipt->note }}</p>
+</tbody></table></div>
+</div>
+@if($receipt->note)<p class="cu-portal-prose">{{ $receipt->note }}</p>@endif
+<section class="cu-portal-form-section">
 @if($receipt->state === 'issued' && $receipt->snapshot && $materialOwned)
-<form method="post" action="{{ route('clubunio.portal.material.confirm', [$tenant->slug, $receipt->id]) }}">@csrf
+<form class="registration-form" method="post" action="{{ route('clubunio.portal.material.confirm', [$tenant->slug, $receipt->id]) }}">@csrf
 <input type="hidden" name="revision" value="{{ $receipt->revision }}">
-<label><input type="checkbox" name="accepted" value="1" required> {{ $receipt->snapshot['confirmation'] }}</label>
-<button type="submit">{{ __('Empfang bestätigen') }}</button>
+<label class="full-width"><input type="checkbox" name="accepted" value="1" required> <span>{{ $receipt->snapshot['confirmation'] }}</span></label>
+<button class="primary" type="submit">@svg('heroicon-o-check') {{ __('Empfang bestätigen') }}</button>
 </form>
 @elseif($receipt->confirmed_at)
 <p>{{ __('Bestätigt durch') }} {{ $receipt->confirmation_name }} ({{ $receipt->confirmation_kind === 'parent' ? __('Elternvertretung') : __('Mitglied') }}{{ __(') am') }} {{ $receipt->confirmed_at->timezone('Europe/Zurich')->format('d.m.Y H:i') }}.</p>
 @elseif($receipt->state === 'cancelled')<p>{{ __('Storniert:') }} {{ $receipt->cancellation_reason }}</p>@endif
-@if($receipt->snapshot && $materialDownload)<p><a href="{{ route('clubunio.portal.material.pdf', [$tenant->slug, $receipt->id]) }}" target="_blank" rel="noopener">{{ __('PDF-Quittung') }}</a></p>@endif
+</section>
 @endsection

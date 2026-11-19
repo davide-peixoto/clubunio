@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
-        Schema::connection('clubunio')->create('clubora.access_profiles', function (Blueprint $t) {
+        Schema::connection('clubunio')->create('clubunio.access_profiles', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');
             $t->string('name', 120);
@@ -22,7 +22,7 @@ return new class extends Migration
             $t->integer('revision')->default(1);
             $t->timestampsTz();
             $t->unique(['tenant_id', 'name']);
-            $t->foreign('tenant_id')->references('id')->on('clubora.tenants');
+            $t->foreign('tenant_id')->references('id')->on('clubunio.tenants');
         });
     }
 

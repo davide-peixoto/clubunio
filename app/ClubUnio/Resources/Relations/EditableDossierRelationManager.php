@@ -80,7 +80,7 @@ abstract class EditableDossierRelationManager extends DossierRelationManager
             $data['expires_on'] = substr((string) $record->getRawOriginal('expires_on'), 0, 10);
         }
         if (static::$kind === 'functions') {
-            $data['qualification_ids'] = $record->qualifications()->pluck('clubora.qualifications.id')->all();
+            $data['qualification_ids'] = $record->qualifications()->pluck('clubunio.qualifications.id')->all();
         }
 
         return $data;

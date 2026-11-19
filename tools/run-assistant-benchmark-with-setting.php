@@ -14,7 +14,7 @@ try {
     try {
         $db->statement('SET TRANSACTION READ ONLY');
         $db->statement("SET LOCAL statement_timeout='10s'");
-        $row = $db->table('clubora.tenant_settings')->where('tenant_id', 4)->where('key', 'OPENAI_API_KEY')->sole(['encrypted_value', 'is_secret']);
+        $row = $db->table('clubunio.tenant_settings')->where('tenant_id', 4)->where('key', 'OPENAI_API_KEY')->sole(['encrypted_value', 'is_secret']);
         if (!$row->is_secret) throw new LogicException('Encrypted credential required');
         $key = trim(Illuminate\Support\Facades\Crypt::decryptString($row->encrypted_value));
         if (strlen($key) < 20 || strlen($key) > 2048 || preg_match('/\s/', $key)) throw new LogicException('Invalid credential');

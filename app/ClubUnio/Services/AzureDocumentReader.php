@@ -46,14 +46,25 @@ class AzureDocumentReader
         $path = $this->blobPath($folder, $filename);
         $config = $destination ?? config('clubunio-integrations.azure');
         $container = $config['container'];
-        if (! $config['enabled'] || ! preg_match('/^[a-z0-9]{3,24}$/D', $config['account']) || ! $config['key']
-            || ($destination && ! preg_match('/^[a-z0-9-]{3,63}$/D', $container))) {
+        if (! $config['enabled'] || ! preg_match('/^[a-z0-9]{3,24}$/D', $config['account'])
+            || ! preg_match('/^[a-z0-9-]{3,63}$/D', $container)) {
             throw new \RuntimeException('Document storage disabled');
         }
-        // SDK-generated, read-only SAS stays server-side. A single bounded GET, no retry loop.
-        $sas = BlobSasBuilder::new()->setContainerName($container)->setBlobName($path)
-            ->setPermissions('r')->setProtocol(SasProtocol::HTTPS)->setExpiresOn(now()->addMinutes(2))
-            ->build(new StorageSharedKeyCredential($config['account'], $config['key']));
+        if ($destination === null && $container === 'svs-stage-private') {
+            parse_str($config['read_sas'] ?? '', $token);
+            if (($token['sp'] ?? null) !== 'r' || ($token['sr'] ?? null) !== 'c'
+                || ($token['spr'] ?? null) !== 'https' || ! is_string($token['sig'] ?? null)
+                || $token['sig'] === '' || array_diff(array_keys($token), ['sv', 'spr', 'se', 'sr', 'sp', 'sig', 'st'])) {
+                throw new \RuntimeException('Stage document storage disabled');
+            }
+            $sas = http_build_query($token, '', '&', PHP_QUERY_RFC3986);
+        } else {
+            if (empty($config['key'])) throw new \RuntimeException('Document storage disabled');
+            // SDK-generated read-only SAS stays server-side.
+            $sas = BlobSasBuilder::new()->setContainerName($container)->setBlobName($path)
+                ->setPermissions('r')->setProtocol(SasProtocol::HTTPS)->setExpiresOn(now()->addMinutes(2))
+                ->build(new StorageSharedKeyCredential($config['account'], $config['key']));
+        }
         $url = 'https://'.$config['account'].'.blob.core.windows.net/'.$container.'/'
             .implode('/', array_map('rawurlencode', explode('/', $path))).'?'.$sas;
         $body = null;

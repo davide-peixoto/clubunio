@@ -36,7 +36,7 @@ class ProfileAcceptanceTest extends TestCase
         $this->db = $db;
         $this->before = $this->rightsFingerprint();
         $db->beginTransaction();
-        $this->assertTrue((bool) $db->table('clubora.account_roles')->where('code', 'profile')->value('active'));
+        $this->assertTrue((bool) $db->table('clubunio.account_roles')->where('code', 'profile')->value('active'));
         Http::preventStrayRequests();
         Http::fake();
         Mail::fake();
@@ -74,10 +74,10 @@ class ProfileAcceptanceTest extends TestCase
     {
         // Compare rights without logging credentials or personal data.
         return hash('sha256', json_encode([
-            $this->db->table('clubora.accounts')->orderBy('id')->get(['id', 'active', 'revision']),
-            $this->db->table('clubora.tenant_accounts')->orderBy('id')->get(),
-            $this->db->table('clubora.access_profiles')->orderBy('id')->get(),
-            $this->db->table('clubora.account_roles')->orderBy('code')->get(),
+            $this->db->table('clubunio.accounts')->orderBy('id')->get(['id', 'active', 'revision']),
+            $this->db->table('clubunio.tenant_accounts')->orderBy('id')->get(),
+            $this->db->table('clubunio.access_profiles')->orderBy('id')->get(),
+            $this->db->table('clubunio.account_roles')->orderBy('code')->get(),
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -92,7 +92,7 @@ class ProfileAcceptanceTest extends TestCase
                     $this->assertSame($this->before, $this->rightsFingerprint(), 'Existing rights remain unchanged');
                 }
                 if (isset($this->tenant)) {
-                    $this->assertFalse($this->db->table('clubora.tenants')->where('id', $this->tenant->id)->exists());
+                    $this->assertFalse($this->db->table('clubunio.tenants')->where('id', $this->tenant->id)->exists());
                 }
             }
         } finally {
@@ -102,7 +102,7 @@ class ProfileAcceptanceTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     private function finance(): void
@@ -199,7 +199,7 @@ class ProfileAcceptanceTest extends TestCase
         $relation->ownerRecord = Member::findOrFail($this->member);
         $this->assertTrue(ProfileUi::actionAllowed(Action::make('editFinance')->livewire($relation)));
         $this->assertFalse(ProfileUi::actionAllowed(Action::make('releaseFinance')->livewire($relation)));
-        $this->assertGreaterThan(0, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertGreaterThan(0, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingOutgoing();
     }

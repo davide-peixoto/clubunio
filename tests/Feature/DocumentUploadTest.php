@@ -48,10 +48,10 @@ class DocumentUploadTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'upload-'.Str::random(10), 'name' => 'Synthetic upload club']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic uploader', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $this->member = new Member;
         $this->member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Upload'])->save();
-        $this->type = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'synthetic', 'name' => 'Synthetic attachment', 'active' => true]);
+        $this->type = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'synthetic', 'name' => 'Synthetic attachment', 'active' => true]);
         config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         Http::preventStrayRequests();
     }
@@ -146,7 +146,7 @@ class DocumentUploadTest extends TestCase
 
     private function expenseLine(): ExpenseLine
     {
-        $status = $this->db->table('clubora.expense_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'O', 'name' => 'Offen']);
+        $status = $this->db->table('clubunio.expense_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'O', 'name' => 'Offen']);
         $expense = new Expense;
         $expense->forceFill(['tenant_id' => $this->tenant->id, 'member_id' => $this->member->id, 'status_id' => $status, 'revision' => 1])->save();
         $line = new ExpenseLine;
@@ -177,7 +177,7 @@ class DocumentUploadTest extends TestCase
         $line = $this->expenseLine();
         $uploads = app(DocumentUploadService::class);
         $id = $uploads->stage($this->actor, $this->tenant, 'expense', $line->id, ['revision' => 1, 'expense_revision' => 1], UploadedFile::fake()->createWithContent('receipt.pdf', $this->bytes));
-        $released = $this->db->table('clubora.expense_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'F', 'name' => 'Freigegeben']);
+        $released = $this->db->table('clubunio.expense_statuses')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'F', 'name' => 'Freigegeben']);
         try {
             app(ExpenseService::class)->transition($this->actor, $this->tenant, $line->expense_id, ['revision' => 1, 'status_id' => $released, 'reason' => 'Synthetic release test']);
             $this->fail('Pending upload must block release');

@@ -18,7 +18,7 @@ class DashboardReservationRequests
                 || ! $permissions->allows($actor, $tenant, $module, $operation)) {
                 continue;
             }
-            $query = DB::connection('clubunio')->table('clubora.'.($kind === 'bus' ? 'bus_reservations' : 'pitch_requests'))
+            $query = DB::connection('clubunio')->table('clubunio.'.($kind === 'bus' ? 'bus_reservations' : 'pitch_requests'))
                 ->where('tenant_id', $tenant->id);
             if ($kind === 'bus') {
                 $query->where('active', true)->where('status', 'ANGEFRAGT');

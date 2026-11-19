@@ -293,7 +293,7 @@ class Synchronisation extends Page implements HasTable
         if ($this->historyItemId !== null) {
             app(SyncWorkService::class)->authorize(Filament::auth()->user(), Filament::getTenant());
             if ($rows->contains('id', $this->historyItemId)) {
-                $history = DB::connection('clubunio')->table('clubora.sync_work_events')->where('work_item_id', $this->historyItemId)
+                $history = DB::connection('clubunio')->table('clubunio.sync_work_events')->where('work_item_id', $this->historyItemId)
                     ->orderByDesc('id')->paginate(20, ['id', 'actor_id', 'event', 'code', 'encrypted_note', 'created_at'], 'historyPage');
                 foreach ($history as $event) {
                     $event->note = $event->encrypted_note ? Crypt::decryptString($event->encrypted_note) : null;

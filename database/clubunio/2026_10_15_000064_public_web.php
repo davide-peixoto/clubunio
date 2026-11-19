@@ -12,7 +12,7 @@ return new class extends Migration
     {
         $db = DB::connection('clubunio');
         abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows($db), 409);
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $db->unprepared(<<<'SQL'
 CREATE TABLE public_registration_submissions (
  request_id uuid PRIMARY KEY, tenant_id bigint NOT NULL REFERENCES tenants(id),
@@ -21,9 +21,9 @@ CREATE TABLE public_registration_submissions (
  UNIQUE(tenant_id,registration_id)
 );
 SQL);
-        foreach ($db->table('clubora.tenants')->get() as $tenant) {
+        foreach ($db->table('clubunio.tenants')->get() as $tenant) {
             foreach (['SIGNAGE_PUBLIC_ENABLED' => 'Signage oeffentlich', 'REGISTRATION_PUBLIC_ENABLED' => 'Anmeldeformular oeffentlich'] as $key => $label) {
-                $db->table('clubora.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant->id, 'area' => 'public', 'key' => $key,
+                $db->table('clubunio.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant->id, 'area' => 'public', 'key' => $key,
                     'label' => $label, 'value_type' => 'boolean', 'is_secret' => false, 'enabled' => true,
                     'encrypted_value' => Crypt::encryptString($tenant->slug === 'sv-sissach' ? '1' : '0')]);
             }

@@ -32,8 +32,8 @@
 <form method="post" action="{{ route('clubunio.training.save',[$tenant->slug,$row->id]) }}" class="planning-form">@csrf @include('clubunio.workspace.context')<input type="hidden" name="revision" value="{{ $row->revision }}">
 <label class="wide">{{ __('Titel') }}
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input name="plan[title]" value="{{ old('plan.title',$row->plan['title']) }}" maxlength="160" required /></x-filament::input.wrapper>@else<input name="plan[title]" value="{{ old('plan.title',$row->plan['title']) }}" maxlength="160" required>@endif</label>
-<label class="wide">{{ __('Schwerpunkt') }}<textarea name="plan[focus]" rows="3" required>{{ old('plan.focus',$row->plan['focus']) }}</textarea></label>
-<label class="wide">{{ __('Prinzipien') }}<textarea name="plan[principles]" rows="4" required>{{ old('plan.principles',implode("\n",$row->plan['principles'])) }}</textarea></label>
+<label class="wide">{{ __('Schwerpunkt') }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" name="plan[focus]" rows="3" required>{{ old('plan.focus',$row->plan['focus']) }}</textarea></x-filament::input.wrapper>@else<textarea name="plan[focus]" rows="3" required>{{ old('plan.focus',$row->plan['focus']) }}</textarea>@endif</label>
+<label class="wide">{{ __('Prinzipien') }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" name="plan[principles]" rows="4" required>{{ old('plan.principles',implode("\n",$row->plan['principles'])) }}</textarea></x-filament::input.wrapper>@else<textarea name="plan[principles]" rows="4" required>{{ old('plan.principles',implode("\n",$row->plan['principles'])) }}</textarea>@endif</label>
 @foreach($row->plan['exercises'] as $i=>$exercise)
 <h3 class="wide">{{ __('Übung') }} {{ $i+1 }}</h3>
 <label>{{ __('Phase') }}
@@ -41,10 +41,10 @@
 <label>{{ __('Minuten') }}
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input type="number" min="1" max="120" name="plan[exercises][{{ $i }}][durationMinutes]" value="{{ old("plan.exercises.$i.durationMinutes",$exercise['durationMinutes']) }}" required /></x-filament::input.wrapper>@else<input type="number" min="1" max="120" name="plan[exercises][{{ $i }}][durationMinutes]" value="{{ old("plan.exercises.$i.durationMinutes",$exercise['durationMinutes']) }}" required>@endif</label>
 @foreach(['title'=>__('Titel'),'setup'=>__('Aufbau'),'flow'=>__('Ablauf'),'coachingPoints'=>__('Coaching'),'easier'=>__('Einfacher'),'harder'=>__('Schwieriger'),'diagramDescription'=>__('Spielfeldaufteilung')] as $field=>$label)
-<label class="wide">{{ $label }}<textarea rows="3" name="plan[exercises][{{ $i }}][{{ $field }}]" required>{{ old("plan.exercises.$i.$field",is_array($exercise[$field]) ? implode("\n",$exercise[$field]) : $exercise[$field]) }}</textarea></label>
+<label class="wide">{{ $label }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" rows="3" name="plan[exercises][{{ $i }}][{{ $field }}]" required>{{ old("plan.exercises.$i.$field",is_array($exercise[$field]) ? implode("\n",$exercise[$field]) : $exercise[$field]) }}</textarea></x-filament::input.wrapper>@else<textarea rows="3" name="plan[exercises][{{ $i }}][{{ $field }}]" required>{{ old("plan.exercises.$i.$field",is_array($exercise[$field]) ? implode("\n",$exercise[$field]) : $exercise[$field]) }}</textarea>@endif</label>
 @endforeach
 @endforeach
-<label class="wide">{{ __('Qualitätsprüfung') }}<textarea name="plan[qualityChecks]" rows="4" required>{{ old('plan.qualityChecks',implode("\n",$row->plan['qualityChecks'])) }}</textarea></label>
+<label class="wide">{{ __('Qualitätsprüfung') }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" name="plan[qualityChecks]" rows="4" required>{{ old('plan.qualityChecks',implode("\n",$row->plan['qualityChecks'])) }}</textarea></x-filament::input.wrapper>@else<textarea name="plan[qualityChecks]" rows="4" required>{{ old('plan.qualityChecks',implode("\n",$row->plan['qualityChecks'])) }}</textarea>@endif</label>
 @if($trainingAllows('send'))
 <label class="wide"><input type="checkbox" name="shared" value="1" @checked(old('shared',$row->shared))> {{ __('Für zuständige Teamverantwortliche freigeben') }}</label>
 @else

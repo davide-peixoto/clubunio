@@ -18,7 +18,7 @@ final class PermissionCatalog
         'announcements' => 'Ankündigungen', 'chat' => 'Chats', 'events' => 'Veranstaltungen',
         'sponsor_runs' => 'Sponsorenlauf',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
-        'templates' => 'Nachrichtenvorlagen',
+        'templates' => 'Nachrichtenvorlagen', 'social_media' => 'Social Media',
     ];
 
     public const FUNCTIONS = [
@@ -31,6 +31,7 @@ final class PermissionCatalog
         'transfer' => 'Saisonübernahme',
         'poll' => 'Umfragen erstellen', 'announce' => 'Vereinsnachrichten veröffentlichen',
         'moderate' => 'Gruppenmeldungen moderieren', 'groups' => 'Alle Mannschafts- und Staffchats anzeigen',
+        'schedule' => 'Automatische Beiträge planen',
     ];
 
     public static function functions(string $module): array
@@ -50,6 +51,7 @@ final class PermissionCatalog
             'competitions', 'bexio' => ['sync', 'download', 'export'],
             'reports' => ['export', 'download'],
             'announcements', 'templates', 'signage' => ['send'],
+            'social_media' => ['upload', 'download', 'approve', 'send', 'schedule'],
             'bus' => ['approve', 'cancel', 'export'],
             default => ['export'],
         };

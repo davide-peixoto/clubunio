@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('ClubUnio target required');
         }
@@ -57,7 +57,7 @@ CREATE TABLE setting_changes (
 CREATE TABLE imports (
  name varchar(100) PRIMARY KEY, completed_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-REVOKE ALL ON ALL TABLES IN SCHEMA clubora FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA clubunio FROM PUBLIC;
 SQL);
     }
 

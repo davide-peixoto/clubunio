@@ -46,7 +46,7 @@ class ReadPerformanceTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'read-'.Str::random(12), 'name' => 'Synthetic']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Synthetic', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
     }
 
     protected function tearDown(): void
@@ -73,7 +73,7 @@ class ReadPerformanceTest extends TestCase
 
     private function revoke(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
     }
 
     public function test_signage_feed_presentation_reuses_only_verified_read_tenant(): void
@@ -118,7 +118,7 @@ class ReadPerformanceTest extends TestCase
 
     public function test_admin_page_is_tenant_scoped_and_post_revocation_is_immediate(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'admin']);
         $foreign = Tenant::create(['slug' => 'read-admin-'.Str::random(10), 'name' => 'Other']);
         $this->during('GET', function () use ($foreign) {
             $context = app(BackofficeReadContext::class);
@@ -168,7 +168,7 @@ class ReadPerformanceTest extends TestCase
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
         $foreign = Tenant::create(['slug' => 'read-other-admin-'.Str::random(8), 'name' => 'Other']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $foreign->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $this->during('GET', function () use ($foreign) {
             $this->assertTrue(SettingsOverview::canAccess());
             $this->assertFalse(Synchronisation::canAccess());
@@ -325,7 +325,7 @@ class PermissionRenderProbe extends Component
     {
         $actor = auth('clubunio')->user();
         abort_if(request()->attributes->has(BackofficeReadContext::class), 409);
-        DB::connection('clubunio')->table('clubora.tenant_accounts')->where('account_id', $actor->id)->update(['role' => 'trainer']);
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('account_id', $actor->id)->update(['role' => 'trainer']);
         $this->freshlyDenied = ! $actor->canAccessTenant(Filament::getTenant());
     }
 

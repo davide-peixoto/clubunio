@@ -15,7 +15,7 @@ $actor = Account::where('username', 'davide.peixoto@svsissach.ch')->where('activ
 $invoice = Invoice::where('tenant_id', $tenant->id)->where('active', true)->whereNotNull('bexio_invoice_id')
     ->whereRaw("bexio_invoice_id ~ '^[1-9][0-9]*$'")->orderByDesc('id')->firstOrFail();
 $id = app(BexioReconciliationService::class)->preview($actor, $tenant, 'invoice', $invoice->id);
-$check = DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $id)->first();
+$check = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $id)->first();
 echo json_encode(['check' => $id, 'state' => $check->state, 'provider_status' => $check->provider_status, 'remote_status' => $check->remote_status, 'reference' => $check->reference]).PHP_EOL;
 // Deliberately no apply: one live read and a technical audit entry only.
 exit($check->state === 'failed' ? 1 : 0);

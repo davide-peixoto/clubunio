@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement("INSERT INTO clubora.invoice_line_statuses (tenant_id,code,name) SELECT id,'P','Pendent' FROM clubora.tenants ON CONFLICT (tenant_id,code) DO NOTHING");
+        $db->statement("INSERT INTO clubunio.invoice_line_statuses (tenant_id,code,name) SELECT id,'P','Pendent' FROM clubunio.tenants ON CONFLICT (tenant_id,code) DO NOTHING");
     }
 
     public function down(): void

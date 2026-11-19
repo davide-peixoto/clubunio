@@ -59,7 +59,7 @@ class MobileTeamMemberAccessTest extends TestCase
     }
     private function insert(string $table,array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($values+['tenant_id'=>$this->tenant->id]);
     }
     public function test_responsible_trainer_gets_detail_options_and_request_only_in_explicit_team(): void
     {
@@ -83,17 +83,17 @@ class MobileTeamMemberAccessTest extends TestCase
             ->assertJsonPath('data.action','member-contact-change-request');
         $request=\App\ClubUnio\Models\MemberChangeRequest::withoutGlobalScopes()->findOrFail($reply->json('data.request_id'));
         $this->assertSame($this->team,app(\App\ClubUnio\Services\MemberChangeService::class)->snapshot($request)['team_id']);
-        $this->assertNull($this->db->table('clubora.members')->where('id',$this->child)->value('mobile'));
+        $this->assertNull($this->db->table('clubunio.members')->where('id',$this->child)->value('mobile'));
         $this->getJson($url.'/invoices')->assertForbidden();
         $this->getJson($url.'/change-requests')->assertForbidden();
         $this->withToken($this->tokens['admin'])->postJson($url.'/change-requests/'.$request->id.'/decide',['Revision'=>1,'approve'=>true])->assertOk()->assertJsonPath('data.status','GENEHMIGT');
-        $this->assertSame('+41000000000',$this->db->table('clubora.members')->where('id',$this->child)->value('mobile'));
+        $this->assertSame('+41000000000',$this->db->table('clubunio.members')->where('id',$this->child)->value('mobile'));
     }
     public function test_parent_team_players_even_own_child_are_name_only_but_staff_contacts_open_and_personal_dossier_stays_full(): void
     {
         $other=$this->insert('members',['first_name'=>'Other','last_name'=>'Player','email'=>'PRIVATE-PLAYER@example.invalid','mother_name'=>'PRIVATE-PARENT']);
         $this->insert('team_players',['team_season_id'=>$this->team,'member_id'=>$other]);
-        $this->db->table('clubora.members')->where('id',$this->members['trainer'])->update(['email'=>'trainer@example.invalid','mobile'=>'+41000000000','mother_name'=>'PRIVATE-STAFF-PARENT']);
+        $this->db->table('clubunio.members')->where('id',$this->members['trainer'])->update(['email'=>'trainer@example.invalid','mobile'=>'+41000000000','mother_name'=>'PRIVATE-STAFF-PARENT']);
         $this->withToken($this->tokens['parent']);
         $team=$this->getJson($this->base.'/my-teams/'.$this->team)->assertOk()->assertJsonCount(2,'data.Players');
         foreach ($team->json('data.Players') as $row) {
@@ -112,28 +112,28 @@ class MobileTeamMemberAccessTest extends TestCase
         $this->getJson($this->base.'/members/'.$other.'?team_id='.$this->team)->assertNotFound();
         $this->getJson($this->base.'/members/'.$this->child)->assertOk()->assertJsonPath('data.Member.CanEdit',true)->assertJsonPath('data.Member.CanReadInvoices',true);
         // A trainer role for a different team must not override this parent-team projection.
-        $this->db->table('clubora.tenant_accounts')->where('account_id',$this->actors['parent']->id)->update(['role'=>'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id',$this->actors['parent']->id)->update(['role'=>'trainer']);
         $this->insert('team_staff',['team_season_id'=>$this->otherTeam,'member_id'=>$this->members['parent'],'staff_function_id'=>$this->insert('staff_functions',['code'=>'OTHER_TRAINER','name'=>'Trainer'])]);
         $helper=$this->insert('team_staff',['team_season_id'=>$this->team,'member_id'=>$this->members['parent'],'staff_function_id'=>$this->insert('staff_functions',['code'=>'HELPER','name'=>'Helper'])]);
         $this->getJson($this->base.'/my-teams/'.$this->team)->assertOk()->assertJsonPath('data.Players.0.CanOpenDossier',false);
         $this->getJson($this->base.'/members/'.$this->child.'?team_id='.$this->team)->assertNotFound();
         $this->getJson($this->base.'/members/'.$this->child.'/contact-options?team_id='.$this->team)->assertNotFound();
         $this->getJson($this->base.'/members/'.$other)->assertNotFound();
-        $this->db->table('clubora.team_staff')->where('id',$helper)->update(['active'=>false]);
-        $this->db->table('clubora.account_member_links')->where('account_id',$this->actors['parent']->id)->where('kind','parent')->update(['state'=>'pending']);
+        $this->db->table('clubunio.team_staff')->where('id',$helper)->update(['active'=>false]);
+        $this->db->table('clubunio.account_member_links')->where('account_id',$this->actors['parent']->id)->where('kind','parent')->update(['state'=>'pending']);
         $this->getJson($this->base.'/my-teams/'.$this->team)->assertNotFound();
     }
     public function test_assistant_trainer_is_explicit_but_coach_and_missing_function_do_not_grant_dossiers(): void
     {
-        $function=$this->db->table('clubora.team_staff')->where('tenant_id',$this->tenant->id)->where('member_id',$this->members['trainer'])->value('staff_function_id');
+        $function=$this->db->table('clubunio.team_staff')->where('tenant_id',$this->tenant->id)->where('member_id',$this->members['trainer'])->value('staff_function_id');
         $url=$this->base.'/members/'.$this->child.'?team_id='.$this->team;
         foreach ([['code'=>'legacy_2','name'=>'Assistenztrainer'],['code'=>'ASSISTANT_TRAINER','name'=>'Synthetic assistant'],['code'=>'TRAINER_ASSISTANT','name'=>'Synthetic assistant']] as $values) {
-            $this->db->table('clubora.staff_functions')->where('id',$function)->update($values);
+            $this->db->table('clubunio.staff_functions')->where('id',$function)->update($values);
             $this->getJson($url)->assertOk()->assertJsonPath('data.Member.CanRequestChanges',true);
         }
-        $this->db->table('clubora.staff_functions')->where('id',$function)->update(['code'=>'legacy_3','name'=>'Coach']);
+        $this->db->table('clubunio.staff_functions')->where('id',$function)->update(['code'=>'legacy_3','name'=>'Coach']);
         $this->getJson($url)->assertNotFound();
-        $this->db->table('clubora.team_staff')->where('tenant_id',$this->tenant->id)->update(['staff_function_id'=>null]);
+        $this->db->table('clubunio.team_staff')->where('tenant_id',$this->tenant->id)->update(['staff_function_id'=>null]);
         $this->getJson($url)->assertNotFound();
     }
     public function test_trainer_request_cannot_be_approved_after_assignment_revocation_but_office_can_reject(): void
@@ -143,13 +143,13 @@ class MobileTeamMemberAccessTest extends TestCase
         $reply=$this->postJson($url.'/contact?team_id='.$this->team,['_version'=>$detail->json('data.Member._version'),'Mobile'=>'+41000000000'])->assertOk();
         $change=$reply->json('data.request_id');
         $this->postJson($url.'/change-requests/'.$change.'/decide',['Revision'=>1,'approve'=>true])->assertForbidden();
-        $this->db->table('clubora.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
+        $this->db->table('clubunio.team_staff')->where('tenant_id',$this->tenant->id)->update(['active'=>false]);
         $this->getJson($url.'?team_id='.$this->team)->assertNotFound();
         $this->getJson($url.'/contact-options?team_id='.$this->team)->assertNotFound();
         $this->postJson($url.'/contact?team_id='.$this->team,['_version'=>$detail->json('data.Member._version'),'Mobile'=>'x'])->assertNotFound();
         $this->withToken($this->tokens['admin']);
         $this->postJson($url.'/change-requests/'.$change.'/decide',['Revision'=>1,'approve'=>true])->assertUnprocessable();
         $this->postJson($url.'/change-requests/'.$change.'/decide',['Revision'=>1,'approve'=>false,'Begruendung'=>'Trainer assignment revoked'])->assertOk()->assertJsonPath('data.status','ABGELEHNT');
-        $this->assertNull($this->db->table('clubora.members')->where('id',$this->child)->value('mobile'));
+        $this->assertNull($this->db->table('clubunio.members')->where('id',$this->child)->value('mobile'));
     }
 }

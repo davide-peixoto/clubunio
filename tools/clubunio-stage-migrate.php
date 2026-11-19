@@ -66,16 +66,17 @@ try {
     config([
         'app.key' => $encodedKey, 'app.previous_keys' => [], 'logging.default' => 'null',
         'mail.default' => 'array', 'mail.mailers' => ['array' => ['transport' => 'array']],
-        'database.default' => 'clubunio', 'database.migrations.table' => 'clubora.migrations',
+        'database.default' => 'clubunio', 'database.migrations.table' => 'clubunio.migrations',
         'database.connections' => ['clubunio' => [
-            'driver' => 'pgsql', 'host' => $settings['PGHOST'], 'port' => $settings['PGPORT'],
+            'driver' => 'pgsql', 'host' => $settings['PGHOST'].(isset($settings['PGHOSTADDR']) ? ';hostaddr=127.0.0.1' : ''), 'port' => $settings['PGPORT'],
             'database' => $expected, 'username' => $settings['PGUSER'], 'password' => $settings['PGPASSWORD'],
             'sslmode' => 'verify-full', 'sslrootcert' => $settings['PGSSLROOTCERT'],
-            'charset' => 'utf8', 'search_path' => 'clubora', 'prefix' => '',
+            'charset' => 'utf8', 'search_path' => 'clubunio', 'prefix' => '',
             'options' => defined('PDO::PGSQL_ATTR_DISABLE_PREPARES') ? [PDO::PGSQL_ATTR_DISABLE_PREPARES => true] : [],
         ]],
     ]);
     Http::preventStrayRequests();
+    $phase = 'Stage connection verification';
     DB::purge('clubunio');
     $db = DB::connection('clubunio');
     StageMigrationTarget::authorize($db, $expected);
@@ -93,11 +94,11 @@ try {
         $db->select('SELECT pg_advisory_xact_lock(2026110901)');
         $run = $db->table('migration_audit.run')->sole();
         if ($run->source_database !== 'db_acdf8d_mysvs' || $run->status !== 'verified_snapshot'
-            || $db->selectOne("SELECT to_regnamespace('clubora') AS existing")->existing !== null) {
+            || $db->selectOne("SELECT coalesce(to_regnamespace('clubunio'),to_regnamespace('clubora')) AS existing")->existing !== null) {
             throw new LogicException('Verified PROD snapshot and absent application schema required');
         }
-        $db->statement('CREATE SCHEMA clubora');
-        $db->statement('REVOKE ALL ON SCHEMA clubora FROM PUBLIC');
+        $db->statement('CREATE SCHEMA clubunio');
+        $db->statement('REVOKE ALL ON SCHEMA clubunio FROM PUBLIC');
         foreach ($names as $name) {
             $phase = $name;
             if (Artisan::call('migrate', ['--database' => 'clubunio', '--path' => 'database/clubunio/'.$name.'.php', '--force' => true]) !== 0) {
@@ -113,11 +114,11 @@ try {
         $tenant = Tenant::where('slug', 'sv-sissach')->sole();
         app(MessageTemplateService::class)->seed($tenant);
         app(StatusStyleService::class)->seed($tenant);
-        $db->table('clubora.accounts')->update(['active' => false, 'password' => '']);
-        $db->table('clubora.tenant_settings')->where('tenant_id', $tenant->id)->where('is_secret', true)
+        $db->table('clubunio.accounts')->update(['active' => false, 'password' => '']);
+        $db->table('clubunio.tenant_settings')->where('tenant_id', $tenant->id)->where('is_secret', true)
             ->update(['enabled' => false, 'encrypted_value' => Crypt::encryptString('')]);
-        if ($db->table('clubora.tenants')->count() !== 1 || $db->table('clubora.migrations')->count() !== count($names)
-            || $db->table('clubora.imports')->count() < count($checkpoints)
+        if ($db->table('clubunio.tenants')->count() !== 1 || $db->table('clubunio.migrations')->count() !== count($names)
+            || $db->table('clubunio.imports')->count() < count($checkpoints)
             || ! app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->current($tenant)) {
             throw new LogicException('Tenant, migration ledger, import checkpoints or season mapping invalid');
         }
@@ -127,12 +128,19 @@ try {
             || array_sum(array_column($audit['snapshot_mappings'], 'unexplained_reference_differences')) !== 0) {
             throw new LogicException('Season reference audit failed');
         }
+        $refresh = [];
+        if ($db->getDatabaseName() === 'clubunio_stage_refresh_20261110') {
+            $phase = 'Stage refresh requests and occupancy';
+            $refresh = app(\App\ClubUnio\Services\StageRefreshImport::class)->run($db, $tenant);
+            $tenant->forceFill(['slug' => 'sv-sissach-refresh', 'name' => 'SV Sissach (Stage Refresh)'])->saveQuietly();
+        }
         return [
             'tenant' => $tenant->slug,
             'migration_count' => count($names),
             'import_count' => count($checkpoints),
             'season' => $audit['configured_lookup'],
             'source_expense_season_conflicts_for_review' => $audit['expense_team_season_disagreement'],
+            'refresh' => $refresh,
         ];
     });
     echo json_encode($result, JSON_THROW_ON_ERROR).PHP_EOL;

@@ -24,15 +24,15 @@ class DocumentSeriesHistoryTableTest extends TestCase
         // These fixtures exist only in an attached in-memory SQLite database.
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
-        DB::connection('clubunio')->statement("ATTACH DATABASE ':memory:' AS clubora");
+        DB::connection('clubunio')->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $schema = Schema::connection('clubunio');
-        $schema->create('clubora.document_series_templates', function (Blueprint $table) {
+        $schema->create('clubunio.document_series_templates', function (Blueprint $table) {
             $table->id();
             $table->integer('tenant_id');
             $table->string('name');
             $table->integer('version');
         });
-        $schema->create('clubora.document_series', function (Blueprint $table) {
+        $schema->create('clubunio.document_series', function (Blueprint $table) {
             $table->id();
             $table->integer('tenant_id');
             $table->integer('template_id');
@@ -40,7 +40,7 @@ class DocumentSeriesHistoryTableTest extends TestCase
             $table->string('snapshot_hash');
             $table->timestamps();
         });
-        $schema->create('clubora.document_series_recipients', function (Blueprint $table) {
+        $schema->create('clubunio.document_series_recipients', function (Blueprint $table) {
             $table->id();
             $table->integer('tenant_id');
             $table->integer('series_id');
@@ -60,7 +60,7 @@ class DocumentSeriesHistoryTableTest extends TestCase
             $mock->makePartial()->shouldReceive('authorize')->andReturnNull();
         });
 
-        DB::connection('clubunio')->table('clubora.document_series_templates')->insert([
+        DB::connection('clubunio')->table('clubunio.document_series_templates')->insert([
             ['id' => 1, 'tenant_id' => 1, 'name' => 'Material 100%', 'version' => 1],
             ['id' => 2, 'tenant_id' => 1, 'name' => 'Keys', 'version' => 2],
             ['id' => 3, 'tenant_id' => 2, 'name' => 'Private Other Club', 'version' => 1],
@@ -71,7 +71,7 @@ class DocumentSeriesHistoryTableTest extends TestCase
                 'template_id' => $id === 31 ? 3 : ($id <= 15 ? 1 : 2),
                 'snapshot' => [], 'snapshot_hash' => DocumentSeriesRenderer::hash([])])->save();
         }
-        DB::connection('clubunio')->table('clubora.document_series_recipients')->insert([
+        DB::connection('clubunio')->table('clubunio.document_series_recipients')->insert([
             ['tenant_id' => 1, 'series_id' => 30, 'document_id' => 100],
             ['tenant_id' => 1, 'series_id' => 30, 'document_id' => null],
             ['tenant_id' => 2, 'series_id' => 30, 'document_id' => 101],
@@ -129,7 +129,7 @@ class DocumentSeriesHistoryTableTest extends TestCase
     public function test_open_series_keeps_tenant_and_snapshot_guards(): void
     {
         Livewire::test(DocumentSeriesHistoryFixture::class)->call('openSeries', 31)->assertNotFound();
-        DB::connection('clubunio')->table('clubora.document_series')->where('id', 30)->update(['snapshot_hash' => 'invalid']);
+        DB::connection('clubunio')->table('clubunio.document_series')->where('id', 30)->update(['snapshot_hash' => 'invalid']);
         Livewire::test(DocumentSeriesHistoryFixture::class)->call('openSeries', 30)->assertStatus(409);
     }
 

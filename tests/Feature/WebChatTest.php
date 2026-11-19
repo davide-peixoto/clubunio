@@ -37,7 +37,7 @@ final class WebChatTest extends TestCase
         $this->db->statement("SET LOCAL lock_timeout TO '3s'");
         $this->db->statement("SET LOCAL statement_timeout TO '20s'");
         $this->tenant = Tenant::create(['slug' => 'webchat-'.Str::lower(Str::random(12)), 'name' => 'Synthetic webchat']);
-        $this->profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id,
+        $this->profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id,
             'name' => 'Synthetic chat reader', 'active' => true, 'permissions' => json_encode(['chat.view'])]);
         $this->admin = $this->account('admin'); $this->office = $this->account('office'); $this->reader = $this->account('profile');
     }
@@ -52,7 +52,7 @@ final class WebChatTest extends TestCase
         } finally {
             if (isset($this->db)) {
                 while ($this->db->transactionLevel()) $this->db->rollBack();
-                if (isset($this->tenant)) $this->assertFalse($this->db->table('clubora.tenants')->where('id', $this->tenant->id)->exists());
+                if (isset($this->tenant)) $this->assertFalse($this->db->table('clubunio.tenants')->where('id', $this->tenant->id)->exists());
             }
             parent::tearDown();
         }
@@ -63,7 +63,7 @@ final class WebChatTest extends TestCase
         $a = new Account;
         $a->forceFill(['username' => 'webchat-'.Str::random(20), 'display_name' => 'Synthetic '.$role,
             'password' => 'not-a-login-secret', 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $a->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $a->id,
             'role' => $role, 'portal_enabled' => false, 'access_profile_id' => $role === 'profile' ? $this->profile : null]);
         $this->contexts[$a->id] = ['tenant' => (int)$this->tenant->id, 'revision' => (string)Str::uuid()];
         return $a;
@@ -89,7 +89,7 @@ final class WebChatTest extends TestCase
         $input = ['chat_id' => $chat, 'client_id' => (string)Str::uuid(), 'text' => 'Synthetic web message', 'kind' => 'text'];
         $message = $this->chatRequest($this->office, 'send', $input, true)->assertOk()->json('data');
         $this->chatRequest($this->office, 'send', $input, true)->assertOk()->assertJsonPath('data.id', $message['id']);
-        $this->assertSame(1, $this->db->table('clubora.chat_messages')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.chat_messages')->where('tenant_id', $this->tenant->id)->count());
         $this->chatRequest($this->office, 'send', array_replace($input, ['text' => 'Different']), true)->assertStatus(409);
         $this->chatRequest($this->admin, 'messages', ['chat_id' => $chat])->assertOk()->assertJsonPath('data.0.text', 'Synthetic web message');
         $this->chatRequest($this->office, 'edit', ['message_id' => $message['id'], 'revision' => 1, 'text' => 'Edited'], true)->assertOk()->assertJsonPath('data.revision', 2);
@@ -120,7 +120,7 @@ final class WebChatTest extends TestCase
         $this->chatRequest($this->admin, 'list', ['context' => ['tenant' => $this->tenant->id + 1, 'revision' => $this->contexts[$this->admin->id]['revision']]])->assertStatus(419);
         $this->chatRequest($this->admin, 'send')->assertNotFound();
         $this->assertFalse(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($this->reader, $this->tenant, 'invoices', 'view'));
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => false]);
         $this->chatRequest($this->reader, 'list')->assertForbidden();
     }
 
@@ -184,7 +184,7 @@ final class WebChatTest extends TestCase
             'event-chat' => ['event_id' => PHP_INT_MAX], 'block' => ['account_id' => PHP_INT_MAX, 'blocked' => true]] as $op => $data) {
             $this->chatRequest($this->admin, $op, $data, true)->assertNotFound();
         }
-        $this->assertSame(0, $this->db->table('clubora.chat_messages')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.chat_messages')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_transport_rejects_invalid_identifiers_payloads_and_pagination(): void
@@ -211,7 +211,7 @@ final class WebChatTest extends TestCase
             ['scan', ['attachment_id' => 'bad']], ['attachment-remove', ['attachment_id' => 'bad']], ['event-chat', ['event_id' => 0]],
         ];
         foreach ($cases as [$op, $data]) $this->chatRequest($this->admin, $op, $data, true)->assertUnprocessable();
-        $this->assertSame(1, $this->db->table('clubora.chat_messages')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.chat_messages')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_read_only_profile_cannot_mutate_and_revocation_is_fresh_between_requests(): void
@@ -222,13 +222,13 @@ final class WebChatTest extends TestCase
             $this->chatRequest($this->reader, $op, $op === 'resolve' ? ['report_id' => PHP_INT_MAX] : [], true)->assertForbidden();
         }
         $this->chatRequest($this->office, 'list')->assertOk();
-        $this->db->table('clubora.accounts')->where('id', $this->office->id)->update(['api_only' => true]);
+        $this->db->table('clubunio.accounts')->where('id', $this->office->id)->update(['api_only' => true]);
         $this->chatRequest($this->office, 'list')->assertForbidden();
-        $this->db->table('clubora.accounts')->where('id', $this->office->id)->update(['api_only' => false, 'active' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->office->id)->update(['api_only' => false, 'active' => false]);
         $this->chatRequest($this->office, 'list')->assertForbidden();
-        $this->db->table('clubora.accounts')->where('id', $this->office->id)->update(['active' => true]);
+        $this->db->table('clubunio.accounts')->where('id', $this->office->id)->update(['active' => true]);
         $this->chatRequest($this->office, 'list')->assertOk();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->office->id)->delete();
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->office->id)->delete();
         $this->chatRequest($this->office, 'list')->assertForbidden();
     }
 
@@ -286,7 +286,7 @@ final class WebChatTest extends TestCase
         $this->chatRequest($this->office, 'attachment-remove', ['attachment_id' => $attachment], true)->assertConflict();
         $this->chatRequest($this->office, 'delete', ['message_id' => $message['id'], 'revision' => 1], true)->assertOk();
         $this->chatRequest($this->admin, 'download', ['attachment_id' => $attachment])->assertNotFound();
-        $this->assertNull($this->db->table('clubora.chat_attachments')->where('id', $attachment)->value('bytes_encrypted'));
+        $this->assertNull($this->db->table('clubunio.chat_attachments')->where('id', $attachment)->value('bytes_encrypted'));
     }
 
     public function test_rejected_and_unavailable_scans_never_publish_and_upload_limits_apply(): void
@@ -300,12 +300,12 @@ final class WebChatTest extends TestCase
             public function scan(string $bytes): array { abort(503); }
         });
         $this->chatRequest($this->office, 'scan', ['attachment_id' => $attachment], true)->assertStatus(503);
-        $this->assertSame('quarantine', $this->db->table('clubora.chat_attachments')->where('id', $attachment)->value('state'));
+        $this->assertSame('quarantine', $this->db->table('clubunio.chat_attachments')->where('id', $attachment)->value('state'));
         $this->app->instance(MalwareScanner::class, new class implements MalwareScanner {
             public function scan(string $bytes): array { return ['clean' => false, 'version' => 'synthetic-rejection']; }
         });
         $this->chatRequest($this->office, 'scan', ['attachment_id' => $attachment], true)->assertOk()->assertJsonPath('data.state', 'rejected');
-        $this->assertNull($this->db->table('clubora.chat_attachments')->where('id', $attachment)->value('bytes_encrypted'));
+        $this->assertNull($this->db->table('clubunio.chat_attachments')->where('id', $attachment)->value('bytes_encrypted'));
         $this->chatRequest($this->office, 'download', ['attachment_id' => $attachment])->assertNotFound();
         $this->chatRequest($this->office, 'send', ['chat_id' => $chat, 'client_id' => (string) Str::uuid(), 'text' => 'Rejected', 'attachment_id' => $attachment], true)->assertConflict();
         $this->chatRequest($this->office, 'attachment-remove', ['attachment_id' => $attachment], true)->assertOk();
@@ -324,11 +324,11 @@ final class WebChatTest extends TestCase
         $this->chatRequest($this->admin, 'vote', ['poll_id' => $id, 'choices' => [$options[1]]], true)->assertOk()->assertJsonPath('data.options.0.count', 0)->assertJsonPath('data.options.1.count', 1);
         $this->chatRequest($this->admin, 'vote', ['poll_id' => $id, 'choices' => []], true)->assertOk()->assertJsonPath('data.my_choices', []);
         $this->chatRequest($this->account('admin'), 'vote', ['poll_id' => $id, 'choices' => [$options[0]]], true)->assertNotFound();
-        $this->db->table('clubora.chat_polls')->where('id', $id)->update(['closes_at' => now()->subMinute()->toIso8601String()]);
+        $this->db->table('clubunio.chat_polls')->where('id', $id)->update(['closes_at' => now()->subMinute()->toIso8601String()]);
         $this->chatRequest($this->admin, 'vote', ['poll_id' => $id, 'choices' => [$options[0]]], true)->assertConflict();
-        $this->assertSame(0, $this->db->table('clubora.team_participations')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.team_participations')->where('tenant_id', $this->tenant->id)->count());
         $this->chatRequest($this->office, 'delete', ['message_id' => $poll['id'], 'revision' => 1], true)->assertOk();
-        $this->assertSame(0, $this->db->table('clubora.chat_votes')->where('poll_id', $id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.chat_votes')->where('poll_id', $id)->count());
     }
 
     public function test_announcement_reports_are_deduplicated_resolved_and_recipient_revocation_invalidates_preview(): void
@@ -337,13 +337,13 @@ final class WebChatTest extends TestCase
         $preview = $this->chatRequest($this->office, 'preview')->assertOk()->json('data');
         $input = ['chat_id' => $chat->id, 'client_id' => (string) Str::uuid(), 'text' => 'Synthetic announcement', 'kind' => 'announcement',
             'recipient_fingerprint' => $preview['fingerprint']];
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['active' => false]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['active' => false]);
         $this->chatRequest($this->office, 'send', $input, true)->assertConflict();
-        $this->assertSame(0, $this->db->table('clubora.mobile_inbox')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.mobile_inbox')->where('tenant_id', $this->tenant->id)->count());
         $input['recipient_fingerprint'] = $this->chatRequest($this->office, 'preview')->assertOk()->json('data.fingerprint');
         $message = $this->chatRequest($this->office, 'send', $input, true)->assertOk()->json('data');
         $this->chatRequest($this->office, 'send', $input, true)->assertOk()->assertJsonPath('data.id', $message['id']);
-        $this->assertSame(2, $this->db->table('clubora.mobile_inbox')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.mobile_inbox')->where('tenant_id', $this->tenant->id)->count());
         foreach ([1, 2] as $attempt) $this->chatRequest($this->admin, 'report', ['message_id' => $message['id'], 'reason' => 'Synthetic reason'], true)->assertOk();
         $reports = $this->chatRequest($this->office, 'reports', ['chat_id' => $chat->id])->assertOk()->assertJsonCount(1, 'data')->json('data');
         $this->chatRequest($this->office, 'resolve', ['report_id' => $reports[0]['id']], true)->assertOk()->assertJsonPath('data.resolved', true);
@@ -352,7 +352,7 @@ final class WebChatTest extends TestCase
 
     public function test_group_moderator_can_resolve_without_send_but_cannot_delete_or_read_private_chats(): void
     {
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update([
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update([
             'permissions' => json_encode(['chat.view', 'chat.groups', 'chat.moderate']),
         ]);
         $this->chatRequest($this->reader, 'list')->assertOk()->assertJsonPath('data.capabilities.send', false)
@@ -367,23 +367,23 @@ final class WebChatTest extends TestCase
         $this->chatRequest($this->reader, 'send', ['chat_id' => $chat->id, 'client_id' => (string) Str::uuid(), 'text' => 'Forbidden'], true)->assertForbidden();
         $this->chatRequest($this->reader, 'resolve', ['report_id' => $report['id']], true)->assertOk()->assertJsonPath('data.resolved', true);
         $this->chatRequest($this->reader, 'reports', ['chat_id' => $chat->id])->assertOk()->assertJsonCount(0, 'data');
-        $this->assertSame((int) $this->reader->id, (int) $this->db->table('clubora.chat_reports')->where('id', $report['id'])->value('resolved_by'));
-        $this->assertNull($this->db->table('clubora.chat_messages')->where('id', $message['id'])->value('deleted_at'));
+        $this->assertSame((int) $this->reader->id, (int) $this->db->table('clubunio.chat_reports')->where('id', $report['id'])->value('resolved_by'));
+        $this->assertNull($this->db->table('clubunio.chat_messages')->where('id', $message['id'])->value('deleted_at'));
         $this->chatRequest($this->reader, 'reports', ['chat_id' => $this->direct()])->assertNotFound();
         $this->assertFalse(app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($this->reader, $this->tenant, 'invoices', 'view'));
-        $this->db->table('clubora.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(['chat.view', 'chat.groups'])]);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profile)->update(['permissions' => json_encode(['chat.view', 'chat.groups'])]);
         $this->chatRequest($this->reader, 'resolve', ['report_id' => $report['id']], true)->assertForbidden();
     }
 
     private function syntheticBinding(Account $actor): string
     {
         $session = (string) Str::uuid(); $device = (string) Str::uuid(); $binding = (string) Str::uuid();
-        $this->db->table('clubora.mobile_sessions')->insert(['id' => $session, 'account_id' => $actor->id,
+        $this->db->table('clubunio.mobile_sessions')->insert(['id' => $session, 'account_id' => $actor->id,
             'token_hash' => hash('sha256', Str::random(64)), 'device_name' => 'Synthetic web chat', 'expires_at' => now()->addHour()->toIso8601String()]);
-        $this->db->table('clubora.mobile_push_devices')->insert(['id' => $device, 'proof_hash' => hash('sha256', $device),
+        $this->db->table('clubunio.mobile_push_devices')->insert(['id' => $device, 'proof_hash' => hash('sha256', $device),
             'app_id' => 'ch.clubunio.synthetic', 'platform' => 'android', 'origin' => 'https://synthetic.invalid',
             'token_cipher' => \Illuminate\Support\Facades\Crypt::encryptString('synthetic-not-a-provider-token'), 'token_hash' => hash('sha256', $binding)]);
-        $this->db->table('clubora.mobile_push_bindings')->insert(['id' => $binding, 'device_id' => $device, 'account_id' => $actor->id, 'session_id' => $session]);
+        $this->db->table('clubunio.mobile_push_bindings')->insert(['id' => $binding, 'device_id' => $device, 'account_id' => $actor->id, 'session_id' => $session]);
         return $binding;
     }
 
@@ -393,7 +393,7 @@ final class WebChatTest extends TestCase
         $message = $this->chatRequest($this->office, 'send', ['chat_id' => $chat, 'client_id' => (string) Str::uuid(), 'text' => 'Synthetic first tenant'], true)->assertOk()->json('data');
         $old = $this->contexts[$this->admin->id];
         $other = Tenant::create(['slug' => 'webchat-foreign-'.Str::lower(Str::random(12)), 'name' => 'Synthetic other tenant']);
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
         $this->contexts[$this->admin->id] = ['tenant' => (int) $other->id, 'revision' => (string) Str::uuid()];
         $this->chatRequest($this->admin, 'list', ['context' => $old])->assertStatus(419);
         $this->chatRequest($this->admin, 'send', ['context' => $old, 'chat_id' => $chat, 'client_id' => (string) Str::uuid(), 'text' => 'Stale draft'], true)->assertStatus(419);
@@ -404,7 +404,7 @@ final class WebChatTest extends TestCase
         $this->chatRequest($this->admin, 'list')->assertForbidden();
         $this->contexts[$this->admin->id] = $old;
         $this->chatRequest($this->admin, 'messages', ['chat_id' => $chat])->assertOk()->assertJsonPath('data.0.id', $message['id']);
-        $this->assertSame(0, $this->db->table('clubora.chat_messages')->where('tenant_id', $other->id)->count());
+        $this->assertSame(0, $this->db->table('clubunio.chat_messages')->where('tenant_id', $other->id)->count());
     }
 
     public function test_preferences_enforce_language_revision_and_disabled_ai_never_calls_provider(): void
@@ -442,7 +442,7 @@ final class WebChatTest extends TestCase
         $this->syntheticBinding($this->office);
         $recipient = $this->syntheticBinding($this->admin);
         config(['clubunio-mobile-push.enabled' => true, 'clubunio-mobile-push.delivery_enabled' => false]);
-        $outbox = fn () => $this->db->table('clubora.mobile_push_outbox')->where('tenant_id', $this->tenant->id);
+        $outbox = fn () => $this->db->table('clubunio.mobile_push_outbox')->where('tenant_id', $this->tenant->id);
         $input = ['chat_id' => $chat, 'client_id' => (string) Str::uuid(), 'text' => 'Synthetic private text never in outbox'];
         $message = $this->chatRequest($this->office, 'send', $input, true)->assertOk()->json('data');
         $this->chatRequest($this->office, 'send', $input, true)->assertOk()->assertJsonPath('data.id', $message['id']);
@@ -462,12 +462,12 @@ final class WebChatTest extends TestCase
             $this->db->rollBack();
         }
         $this->assertSame(1, $outbox()->count());
-        $this->assertFalse($this->db->table('clubora.chat_messages')->where('tenant_id', $this->tenant->id)->where('client_id', $rollbackClient)->exists());
+        $this->assertFalse($this->db->table('clubunio.chat_messages')->where('tenant_id', $this->tenant->id)->where('client_id', $rollbackClient)->exists());
         $this->chatRequest($this->admin, 'mute', ['chat_id' => $chat, 'muted' => true], true)->assertOk();
         $this->chatRequest($this->office, 'send', array_replace($input, ['client_id' => (string) Str::uuid()]), true)->assertOk();
         $this->assertSame(1, $outbox()->count());
         $this->chatRequest($this->admin, 'mute', ['chat_id' => $chat, 'muted' => false], true)->assertOk();
-        $this->db->table('clubora.mobile_push_bindings')->where('id', $recipient)->update(['revoked_at' => now()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_push_bindings')->where('id', $recipient)->update(['revoked_at' => now()->toIso8601String()]);
         $this->chatRequest($this->office, 'send', array_replace($input, ['client_id' => (string) Str::uuid()]), true)->assertOk();
         $this->assertSame(1, $outbox()->count());
     }

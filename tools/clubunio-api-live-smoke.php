@@ -25,7 +25,7 @@ try {
         $admin = new Account;
         $admin->forceFill(['username' => 'qa-api-admin-'.Str::uuid(), 'display_name' => 'QA API release smoke',
             'password' => Hash::make(Str::random(80)), 'active' => true])->save();
-        DB::connection('clubunio')->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $admin->id, 'role' => 'admin']);
+        DB::connection('clubunio')->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $admin->id, 'role' => 'admin']);
         $profile = new AccessProfile;
         $profile->forceFill(['tenant_id' => $tenant->id, 'name' => 'QA website read-only', 'active' => true,
             'permissions' => ['teams.view', 'competitions.view', 'training_slots.view', 'field_availability.view']])->save();
@@ -49,7 +49,7 @@ try {
     $response = Http::withToken($token)->acceptJson()->withoutRedirecting()->timeout(30)
         ->post('https://dev.clubunio.ch/api/v1/teams', ['name' => 'Must never be written', 'active' => true]);
     abort_unless($response->status() === 403, 409);
-    abort_if($db->table('clubora.teams')->where('tenant_id', $tenant->id)->exists(), 409);
+    abort_if($db->table('clubunio.teams')->where('tenant_id', $tenant->id)->exists(), 409);
     $checks['write_denied'] = 403;
     app(ApiTokenService::class)->disableIntegration($admin, $tenant, $integration->id);
     $response = Http::withToken($token)->acceptJson()->withoutRedirecting()->timeout(30)->get('https://dev.clubunio.ch/api/v1/context');
@@ -75,7 +75,7 @@ try {
     abort_unless($status->status() === 200 && $status->json('data.state') === 'pending', 409);
     $schedule = Http::withToken($providerToken)->acceptJson()->withoutRedirecting()->timeout(30)->get('https://dev.clubunio.ch/api/v1/sfv/schedule');
     abort_unless($schedule->status() === 200 && $schedule->json('data') === [], 409);
-    abort_if($db->table('clubora.sync_work_items')->where('tenant_id', $tenant->id)->exists(), 409);
+    abort_if($db->table('clubunio.sync_work_items')->where('tenant_id', $tenant->id)->exists(), 409);
     $checks['provider_stage'] = 202;
     $checks['provider_replay_same_id'] = true;
     $checks['provider_work_id'] = $work;

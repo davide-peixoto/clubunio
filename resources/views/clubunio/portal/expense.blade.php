@@ -4,8 +4,13 @@
     $financeActor = auth('portal')->user();
 @endphp
 @if(\App\ClubUnio\Resources\ProfileUi::profileAllows($financeActor, $tenant, 'expenses', 'view'))
-<a href="{{ route('clubunio.portal.expenses',['tenant'=>$tenant->slug]) }}">{{ __('Spesenbelege') }}</a>
-<h1>{{ $e->teamSeason?->label }}</h1><p>{{ app(\App\ClubUnio\Services\LookupTranslations::class)->label('expense_rounds', ($e->round ?? []), tenant: $tenant->id ?? null) }} · {{ $e->member?->display_name }} · {{ app(\App\ClubUnio\Services\LookupTranslations::class)->label('expense_statuses', ($e->status ?? []), tenant: $tenant->id ?? null) }}</p>
+<div class="page-heading">
+    <div>
+        <h1>{{ $e->teamSeason?->label ?? __('Spesenbelege') }}</h1>
+        <p>{{ app(\App\ClubUnio\Services\LookupTranslations::class)->label('expense_rounds', $e->round ?? [], tenant: $tenant->id) }} · {{ $e->member?->display_name }} · {{ app(\App\ClubUnio\Services\LookupTranslations::class)->label('expense_statuses', $e->status ?? [], tenant: $tenant->id) }}</p>
+    </div>
+    <a class="cu-portal-secondary" href="{{ route('clubunio.portal.expenses', $tenant->slug) }}">@svg('heroicon-o-arrow-left') {{ __('Spesenbelege') }}</a>
+</div>
 @if(session('saved'))<p role="status">{{ __('Änderung gespeichert.') }}</p>@endif
 @if($errors->any())<div role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 @foreach($e->activeLines as $line)

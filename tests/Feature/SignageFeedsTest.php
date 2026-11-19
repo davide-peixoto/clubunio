@@ -39,7 +39,7 @@ class SignageFeedsTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'feeds-'.$suffix, 'name' => 'Feed fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => 'feeds-'.$suffix, 'display_name' => 'Feed fixture', 'password' => password_hash('fixture', PASSWORD_BCRYPT), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $this->actingAs($this->actor, 'clubunio');
         config(['cache.default' => 'array']);
         Cache::flush();
@@ -57,7 +57,7 @@ class SignageFeedsTest extends TestCase
 
     private function setting(string $key, string $value, bool $enabled = true): void
     {
-        $this->db->table('clubora.tenant_settings')->updateOrInsert(['tenant_id' => $this->tenant->id, 'area' => 'integrations', 'key' => $key], ['label' => $key, 'encrypted_value' => Crypt::encryptString($value), 'value_type' => 'string', 'enabled' => $enabled]);
+        $this->db->table('clubunio.tenant_settings')->updateOrInsert(['tenant_id' => $this->tenant->id, 'area' => 'integrations', 'key' => $key], ['label' => $key, 'encrypted_value' => Crypt::encryptString($value), 'value_type' => 'string', 'enabled' => $enabled]);
     }
 
     private function weather(): array
@@ -87,18 +87,18 @@ class SignageFeedsTest extends TestCase
     public function test_instagram_activation_is_admin_only_scoped_audited_and_detects_stale_state(): void
     {
         $this->setting('INSTAGRAM_ACCESS_TOKEN', 'fixture-secret', false);
-        $id = $this->db->table('clubora.tenant_settings')->where('tenant_id', $this->tenant->id)->value('id');
+        $id = $this->db->table('clubunio.tenant_settings')->where('tenant_id', $this->tenant->id)->value('id');
         $service = app(SettingsService::class);
         $service->enableInstagram($this->actor, $this->tenant, $id, true, false);
-        $this->assertTrue($this->db->table('clubora.tenant_settings')->where('id', $id)->value('enabled'));
+        $this->assertTrue($this->db->table('clubunio.tenant_settings')->where('id', $id)->value('enabled'));
         try {
             $service->enableInstagram($this->actor, $this->tenant, $id, false, false);
             $this->fail('Stale state accepted');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('enabled', $e->errors());
         }
-        $this->assertSame(1, $this->db->table('clubora.setting_changes')->where('tenant_id', $this->tenant->id)->count());
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
+        $this->assertSame(1, $this->db->table('clubunio.setting_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->update(['role' => 'office']);
         Http::assertNothingSent();
         $this->expectException(HttpException::class);
         $service->enableInstagram($this->actor, $this->tenant, $id, false, true);
@@ -173,7 +173,7 @@ class SignageFeedsTest extends TestCase
     {
         Http::fake();
         $component = Livewire::test(SignageFeeds::class, ['tenantId' => $this->tenant->id]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $component->call('refreshFeeds')->assertForbidden();
         Http::assertNothingSent();
     }

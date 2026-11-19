@@ -15,7 +15,7 @@ if (in_array('--owner', $argv, true)) {
         echo json_encode($actor->toArray(), JSON_UNESCAPED_UNICODE).PHP_EOL;
     }
 }
-foreach (DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->selectRaw('role, count(*) as total')->groupBy('role')->get() as $group) {
+foreach (DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->selectRaw('role, count(*) as total')->groupBy('role')->get() as $group) {
     echo 'Role '.$group->role.': '.$group->total.PHP_EOL;
 }
 foreach (Setting::where('tenant_id', $tenant->id)->where('area', 'bexio')->orderBy('key')->get() as $row) {

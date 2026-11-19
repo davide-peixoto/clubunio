@@ -25,7 +25,7 @@
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input name="repeat_count" type="number" min="1" max="26" value="{{ old('repeat_count',1) }}" /></x-filament::input.wrapper>@else<input name="repeat_count" type="number" min="1" max="26" value="{{ old('repeat_count',1) }}">@endif</label>@endif
 <label>{{ __('Ort') }}
 @if($workspaceComponents)<x-filament::input.wrapper><x-filament::input name="location" maxlength="255" value="{{ old('location',$record->location??'') }}" /></x-filament::input.wrapper>@else<input name="location" maxlength="255" value="{{ old('location',$record->location??'') }}">@endif</label>
-<label class="wide">{{ __('Beschreibung') }}<textarea name="description" rows="4" maxlength="4000">{{ old('description',$record->description??'') }}</textarea></label>
+<label class="wide">{{ __('Beschreibung') }}@if($workspaceComponents)<x-filament::input.wrapper><textarea class="fi-input" name="description" rows="4" maxlength="4000">{{ old('description',$record->description??'') }}</textarea></x-filament::input.wrapper>@else<textarea name="description" rows="4" maxlength="4000">{{ old('description',$record->description??'') }}</textarea>@endif</label>
 <div class="wide actions">
 @if($workspaceComponents)<x-filament::button type="submit" icon="heroicon-o-check" color="primary">{{ __('Speichern') }}</x-filament::button>@else<button class="primary" type="submit">@svg('heroicon-o-check') {{ __('Speichern') }}</button>@endif<a href="{{ route('clubunio.planning.index',$tenant->slug) }}">{{ __('Abbrechen') }}</a></div></form>@endif
 @endsection

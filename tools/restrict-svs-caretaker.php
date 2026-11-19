@@ -20,10 +20,10 @@ try {
     $actor = Account::where('username', 'davide.peixoto@svsissach.ch')->sole();
     $profile = AccessProfile::where('tenant_id', $tenant->id)->where('name', 'Platzwart')->lockForUpdate()->sole();
     $fingerprint = fn () => hash('sha256', json_encode([
-        $db->table('clubora.accounts')->orderBy('id')->get(['id', 'active', 'revision']),
-        $db->table('clubora.tenant_accounts')->orderBy('id')->get(),
-        $db->table('clubora.account_roles')->orderBy('code')->get(),
-        $db->table('clubora.access_profiles')->where('id', '<>', $profile->id)->orderBy('id')->get(),
+        $db->table('clubunio.accounts')->orderBy('id')->get(['id', 'active', 'revision']),
+        $db->table('clubunio.tenant_accounts')->orderBy('id')->get(),
+        $db->table('clubunio.account_roles')->orderBy('code')->get(),
+        $db->table('clubunio.access_profiles')->where('id', '<>', $profile->id)->orderBy('id')->get(),
     ], JSON_THROW_ON_ERROR));
     $before = $fingerprint();
     $definition = (static fn () => require __DIR__.'/svs-access-profile-definitions.php')()['Platzwart'];
@@ -35,7 +35,7 @@ try {
         ]);
     }
     if ($before !== $fingerprint()) { throw new LogicException('Unrelated rights changed'); }
-    echo json_encode(['id' => $profile->id, 'permissions' => $profile->permissions, 'assignments' => $db->table('clubora.tenant_accounts')->where('access_profile_id', $profile->id)->count()], JSON_THROW_ON_ERROR).PHP_EOL;
+    echo json_encode(['id' => $profile->id, 'permissions' => $profile->permissions, 'assignments' => $db->table('clubunio.tenant_accounts')->where('access_profile_id', $profile->id)->count()], JSON_THROW_ON_ERROR).PHP_EOL;
     if ($apply) { $db->commit(); } else { $db->rollBack(); }
     echo ($apply ? 'COMMITTED' : 'PREVIEW ROLLED BACK').'; other profiles and assignments unchanged.'.PHP_EOL;
 } catch (Throwable $e) {

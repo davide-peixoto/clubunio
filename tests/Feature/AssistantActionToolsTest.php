@@ -78,12 +78,12 @@ final class AssistantActionToolsTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($values + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($values + ['tenant_id' => $this->tenant->id]);
     }
 
     private function table(string $table)
     {
-        return $this->db->table('clubora.'.$table)->where('tenant_id', $this->tenant->id);
+        return $this->db->table('clubunio.'.$table)->where('tenant_id', $this->tenant->id);
     }
 
     private function contact(array $extra = []): array
@@ -128,7 +128,7 @@ final class AssistantActionToolsTest extends TestCase
             };
             $queries = array_column(array_slice($this->db->getQueryLog(), $offset), 'query');
             foreach ($tables as $table) {
-                self::assertNotEmpty(array_filter($queries, fn ($sql) => str_contains($sql, '"clubora"."'.$table.'"') && str_contains($sql, 'for share')),
+                self::assertNotEmpty(array_filter($queries, fn ($sql) => str_contains($sql, '"clubunio"."'.$table.'"') && str_contains($sql, 'for share')),
                     'Semantic dependency must stay locked through domain service execution: '.$table);
             }
             return $result;
@@ -229,7 +229,7 @@ final class AssistantActionToolsTest extends TestCase
         self::assertSame('executed', $this->execute($plan)['status']);
         foreach (['billing_recipients', 'member_statuses'] as $table) {
             self::assertNotEmpty(array_filter($this->db->getQueryLog(), fn ($query) =>
-                str_contains($query['query'], '"clubora"."'.$table.'"') && str_contains($query['query'], 'for share')));
+                str_contains($query['query'], '"clubunio"."'.$table.'"') && str_contains($query['query'], 'for share')));
         }
         self::assertSame('After', $this->table('members')->where('id', $this->member)->value('city'));
         self::assertSame(1, $this->table('object_changes')->where('object_type', 'members')->where('actor_id', $this->actor->id)->count());
@@ -291,11 +291,11 @@ final class AssistantActionToolsTest extends TestCase
         }
         $this->table('tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'office', 'access_profile_id' => null, 'portal_enabled' => true]);
         foreach ([['active' => false], ['active' => true, 'api_only' => true]] as $change) {
-            $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update($change);
+            $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update($change);
             $this->denied(fn () => $this->tools->prepare($this->actor, $this->tenant, $plan['operation'], $plan['arguments']));
             $this->denied(fn () => $this->execute($plan));
         }
-        $this->db->table('clubora.accounts')->where('id', $this->actor->id)->update(['active' => true, 'api_only' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->actor->id)->update(['active' => true, 'api_only' => false]);
         self::assertSame('executed', $this->execute($plan)['status']);
     }
 
@@ -360,7 +360,7 @@ final class AssistantActionToolsTest extends TestCase
         $other = Tenant::create(['slug' => 'assistant-other-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic other']);
         $this->denied(fn () => $this->tools->prepare($this->actor, $other, $plan['operation'], $plan['arguments']));
         $this->denied(fn () => $this->tools->execute($this->actor, $other, $plan['operation'], $plan['arguments']));
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         try {
             $this->tools->prepare($this->actor, $other, $plan['operation'], $plan['arguments']);
             self::fail('Cross-tenant row found.');

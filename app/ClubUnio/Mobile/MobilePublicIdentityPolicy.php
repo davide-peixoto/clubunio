@@ -30,12 +30,12 @@ final class MobilePublicIdentityPolicy
     {
         $bound = $this->bound($origin);
         abort_if($bound && (int) $bound->id !== $id, 404);
-        return Tenant::whereKey($id)->whereIn('slug', config('clubunio-mobile.public_identity.tenant_slugs', []))->firstOrFail();
+        return Tenant::whereKey($id)->where('slug', StageMobilePilot::TENANT)->whereIn('slug', config('clubunio-mobile.public_identity.tenant_slugs', []))->firstOrFail();
     }
     public function clubs(string $origin): array
     {
         $bound = $this->bound($origin);
-        return Tenant::whereIn('slug', config('clubunio-mobile.public_identity.tenant_slugs', []))
+        return Tenant::where('slug', StageMobilePilot::TENANT)->whereIn('slug', config('clubunio-mobile.public_identity.tenant_slugs', []))
             ->when($bound, fn ($q) => $q->whereKey($bound->id))->orderBy('name')->limit(100)->get(['id','name'])
             ->map(fn ($tenant) => ['id' => (int) $tenant->id, 'name' => $tenant->name])->all();
     }
@@ -46,8 +46,14 @@ final class MobilePublicIdentityPolicy
         if ($surface === 'membership') {
             return config('clubunio-mobile.public_identity.membership_enabled', false) && app(PublicWebService::class)->enabled($tenant, 'registration');
         }
-        return in_array($surface, ['registration','password_reset','email_enrollment'], true) && config('clubunio-mobile.public_identity.'.$surface.'_enabled', false)
+        return !config('clubunio-verein-oidc.only') && in_array($surface, ['registration','password_reset','email_enrollment'], true) && config('clubunio-mobile.public_identity.'.$surface.'_enabled', false)
             && app(MobileIdentityMailGuard::class)->configured();
     }
     public function authorize(Tenant $tenant, string $surface): void { abort_unless($this->enabled($tenant, $surface), 503, 'Dieser öffentliche Ablauf ist noch nicht freigeschaltet.'); }
+
+    public function membershipAccount(Tenant $tenant): bool
+    {
+        return config('clubunio-mobile.public_identity.membership_account_enabled', false)
+            && $this->enabled($tenant, 'membership') && $this->enabled($tenant, 'registration');
+    }
 }

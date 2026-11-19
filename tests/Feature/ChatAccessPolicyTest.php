@@ -26,18 +26,18 @@ final class ChatAccessPolicyTest extends TestCase
         ]]);
         DB::purge('clubunio');
         $this->db = DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $this->db->unprepared(<<<'SQL'
-CREATE TABLE clubora.accounts (id integer PRIMARY KEY, active boolean, api_only boolean, display_name text);
-CREATE TABLE clubora.tenants (id integer PRIMARY KEY);
-INSERT INTO clubora.tenants VALUES (10);
-CREATE TABLE clubora.tenant_accounts (account_id integer, tenant_id integer, role text, access_profile_id integer);
-CREATE TABLE clubora.account_roles (code text PRIMARY KEY, active boolean);
-CREATE TABLE clubora.access_profiles (id integer PRIMARY KEY, tenant_id integer, active boolean, permissions text);
-INSERT INTO clubora.accounts VALUES (1, 1, 0, 'Synthetic profile'), (2, 1, 0, 'Synthetic office');
-INSERT INTO clubora.tenant_accounts VALUES (1, 10, 'profile', 100), (2, 10, 'office', null);
-INSERT INTO clubora.account_roles VALUES ('profile', 1);
-INSERT INTO clubora.access_profiles VALUES (100, 10, 1, '["chat.view"]');
+CREATE TABLE clubunio.accounts (id integer PRIMARY KEY, active boolean, api_only boolean, display_name text);
+CREATE TABLE clubunio.tenants (id integer PRIMARY KEY);
+INSERT INTO clubunio.tenants VALUES (10);
+CREATE TABLE clubunio.tenant_accounts (account_id integer, tenant_id integer, role text, access_profile_id integer);
+CREATE TABLE clubunio.account_roles (code text PRIMARY KEY, active boolean);
+CREATE TABLE clubunio.access_profiles (id integer PRIMARY KEY, tenant_id integer, active boolean, permissions text);
+INSERT INTO clubunio.accounts VALUES (1, 1, 0, 'Synthetic profile'), (2, 1, 0, 'Synthetic office');
+INSERT INTO clubunio.tenant_accounts VALUES (1, 10, 'profile', 100), (2, 10, 'office', null);
+INSERT INTO clubunio.account_roles VALUES ('profile', 1);
+INSERT INTO clubunio.access_profiles VALUES (100, 10, 1, '["chat.view"]');
 SQL);
         $this->actor = Account::findOrFail(1);
         $this->tenant = new Tenant;
@@ -47,7 +47,7 @@ SQL);
 
     private function grants(array $functions): void
     {
-        $this->db->table('clubora.access_profiles')->where('id', 100)->update([
+        $this->db->table('clubunio.access_profiles')->where('id', 100)->update([
             'permissions' => json_encode(array_map(fn ($function) => 'chat.'.$function, $functions)),
         ]);
     }
@@ -130,10 +130,10 @@ SQL);
         $policy->duringRead($this->actor, $this->tenant, function () use ($policy) {
             $this->assertFalse(request()->attributes->has(ChatAccess::class));
             $this->assertTrue($policy->allows($this->actor, $this->tenant, 'view'));
-            $this->db->table('clubora.accounts')->where('id', 1)->update(['active' => false]);
+            $this->db->table('clubunio.accounts')->where('id', 1)->update(['active' => false]);
             $this->assertFalse($policy->allows($this->actor, $this->tenant, 'view'));
-            $this->db->table('clubora.accounts')->where('id', 1)->update(['active' => true]);
-            $this->db->table('clubora.tenant_accounts')->where('account_id', 1)->delete();
+            $this->db->table('clubunio.accounts')->where('id', 1)->update(['active' => true]);
+            $this->db->table('clubunio.tenant_accounts')->where('account_id', 1)->delete();
             $this->assertFalse($policy->allows($this->actor, $this->tenant, 'view'));
         });
     }
@@ -186,14 +186,14 @@ SQL);
     {
         config(['clubunio-mobile-push.enabled' => false]);
         $this->db->unprepared(<<<'SQL'
-CREATE TABLE clubora.chat_conversations (id integer PRIMARY KEY, tenant_id integer, kind text, scope_key text, team_season_id integer, event_id integer);
-CREATE TABLE clubora.chat_memberships (tenant_id integer, conversation_id integer, account_id integer, joined_after integer, left_at text, read_message_id integer, muted boolean);
-CREATE TABLE clubora.chat_blocks (tenant_id integer, account_id integer, other_account_id integer);
-CREATE TABLE clubora.chat_messages (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, account_id integer, client_id text, content_hash text, kind text, body_encrypted text, object_id integer, revision integer DEFAULT 1, created_at text, deleted_at text, reply_to_message_id integer);
-CREATE TABLE clubora.chat_polls (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, question text, options text, multiple boolean, closes_at text);
-CREATE TABLE clubora.chat_changes (tenant_id integer, conversation_id integer, message_id integer, actor_id integer, action text, revision integer, created_at text);
-INSERT INTO clubora.chat_conversations VALUES (1, 10, 'direct', 'direct:1:2', null, null), (2, 10, 'direct', 'direct:2:3', null, null);
-INSERT INTO clubora.chat_memberships VALUES (10, 1, 1, 0, null, 0, 0), (10, 1, 2, 0, null, 0, 0), (10, 2, 2, 0, null, 0, 0), (10, 2, 3, 0, null, 0, 0);
+CREATE TABLE clubunio.chat_conversations (id integer PRIMARY KEY, tenant_id integer, kind text, scope_key text, team_season_id integer, event_id integer);
+CREATE TABLE clubunio.chat_memberships (tenant_id integer, conversation_id integer, account_id integer, joined_after integer, left_at text, read_message_id integer, muted boolean);
+CREATE TABLE clubunio.chat_blocks (tenant_id integer, account_id integer, other_account_id integer);
+CREATE TABLE clubunio.chat_messages (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, account_id integer, client_id text, content_hash text, kind text, body_encrypted text, object_id integer, revision integer DEFAULT 1, created_at text, deleted_at text, reply_to_message_id integer);
+CREATE TABLE clubunio.chat_polls (id integer PRIMARY KEY AUTOINCREMENT, tenant_id integer, conversation_id integer, question text, options text, multiple boolean, closes_at text);
+CREATE TABLE clubunio.chat_changes (tenant_id integer, conversation_id integer, message_id integer, actor_id integer, action text, revision integer, created_at text);
+INSERT INTO clubunio.chat_conversations VALUES (1, 10, 'direct', 'direct:1:2', null, null), (2, 10, 'direct', 'direct:2:3', null, null);
+INSERT INTO clubunio.chat_memberships VALUES (10, 1, 1, 0, null, 0, 0), (10, 1, 2, 0, null, 0, 0), (10, 2, 2, 0, null, 0, 0), (10, 2, 3, 0, null, 0, 0);
 SQL);
         $this->grants(['view', 'send', 'poll']);
         $s = app(ChatService::class);
@@ -215,15 +215,15 @@ SQL);
     public function test_profile_group_moderation_needs_both_visible_group_scope_and_moderate(): void
     {
         $this->db->unprepared(<<<'SQL'
-CREATE TABLE clubora.seasons (id integer PRIMARY KEY, tenant_id integer, legacy_id integer, name text, active boolean, starts_on text, ends_on text);
-CREATE TABLE clubora.teams (id integer PRIMARY KEY, tenant_id integer, name text, active boolean);
-CREATE TABLE clubora.team_seasons (id integer PRIMARY KEY, tenant_id integer, team_id integer, season_id integer, label text, active boolean);
-CREATE TABLE clubora.tenant_settings (tenant_id integer, area text, key text, encrypted_value text);
-INSERT INTO clubora.seasons VALUES (1, 10, null, 'Synthetic season', 1, null, null);
-INSERT INTO clubora.teams VALUES (1, 10, 'Synthetic team', 1);
-INSERT INTO clubora.team_seasons VALUES (1, 10, 1, 1, 'Synthetic team season', 1);
+CREATE TABLE clubunio.seasons (id integer PRIMARY KEY, tenant_id integer, legacy_id integer, name text, active boolean, starts_on text, ends_on text);
+CREATE TABLE clubunio.teams (id integer PRIMARY KEY, tenant_id integer, name text, active boolean);
+CREATE TABLE clubunio.team_seasons (id integer PRIMARY KEY, tenant_id integer, team_id integer, season_id integer, label text, active boolean);
+CREATE TABLE clubunio.tenant_settings (tenant_id integer, area text, key text, encrypted_value text);
+INSERT INTO clubunio.seasons VALUES (1, 10, null, 'Synthetic season', 1, null, null);
+INSERT INTO clubunio.teams VALUES (1, 10, 'Synthetic team', 1);
+INSERT INTO clubunio.team_seasons VALUES (1, 10, 1, 1, 'Synthetic team season', 1);
 SQL);
-        $this->db->table('clubora.tenant_settings')->insert(['tenant_id' => 10, 'area' => 'general',
+        $this->db->table('clubunio.tenant_settings')->insert(['tenant_id' => 10, 'area' => 'general',
             'key' => 'SaisonID', 'encrypted_value' => Crypt::encryptString('1')]);
         $chat = (object) ['tenant_id' => 10, 'kind' => 'staff', 'team_season_id' => 1];
         $controls = app(ChatControls::class);
@@ -234,22 +234,22 @@ SQL);
         $this->grants(['view', 'groups', 'moderate']);
         $this->assertTrue($controls->moderator($this->actor, $this->tenant, $chat));
         $this->assertTrue(app(ChatService::class)->allowed($this->actor, $this->tenant, $chat));
-        $this->db->table('clubora.team_seasons')->where('id', 1)->update(['active' => false]);
+        $this->db->table('clubunio.team_seasons')->where('id', 1)->update(['active' => false]);
         $this->assertFalse(app(ChatService::class)->allowed($this->actor, $this->tenant, $chat));
     }
 
     public function test_overview_latest_message_is_one_bounded_query_and_never_exposes_prejoin_deleted_or_foreign_content(): void
     {
         $this->db->unprepared(<<<'SQL'
-CREATE TABLE clubora.chat_messages (id integer PRIMARY KEY, tenant_id integer, conversation_id integer, account_id integer, body_encrypted text, created_at text, deleted_at text);
-CREATE TABLE clubora.chat_memberships (tenant_id integer, conversation_id integer, account_id integer, joined_after integer, left_at text);
-INSERT INTO clubora.chat_memberships VALUES (10, 1, 1, 2, null), (10, 2, 1, 5, null), (10, 3, 1, 0, 'left'), (11, 4, 1, 0, null);
+CREATE TABLE clubunio.chat_messages (id integer PRIMARY KEY, tenant_id integer, conversation_id integer, account_id integer, body_encrypted text, created_at text, deleted_at text);
+CREATE TABLE clubunio.chat_memberships (tenant_id integer, conversation_id integer, account_id integer, joined_after integer, left_at text);
+INSERT INTO clubunio.chat_memberships VALUES (10, 1, 1, 2, null), (10, 2, 1, 5, null), (10, 3, 1, 0, 'left'), (11, 4, 1, 0, null);
 SQL);
         foreach ([[1, 10, 1, 'Before join', null], [2, 10, 1, 'At join', null],
             [3, 10, 1, str_repeat('Visible ', 40), null], [4, 10, 1, 'Deleted secret', 'deleted'],
             [5, 10, 2, 'Old history', null], [6, 10, 3, 'Left conversation', null],
             [7, 11, 4, 'Other tenant', null], [8, 10, 5, 'No membership', null]] as [$id, $tenant, $chat, $text, $deleted]) {
-            $this->db->table('clubora.chat_messages')->insert(['id' => $id, 'tenant_id' => $tenant,
+            $this->db->table('clubunio.chat_messages')->insert(['id' => $id, 'tenant_id' => $tenant,
                 'conversation_id' => $chat, 'account_id' => 2, 'body_encrypted' => Crypt::encryptString($text),
                 'created_at' => '2026-11-04T12:00:00+00:00', 'deleted_at' => $deleted]);
         }
@@ -263,7 +263,7 @@ SQL);
         $this->assertSame(160, mb_strlen($result[1]['text']));
         $this->assertSame('Synthetic office', $result[1]['author_name']);
         $this->assertSame(['id', 'text', 'created_at', 'author_name'], array_keys($result[1]));
-        $this->db->table('clubora.chat_messages')->where('id', 3)->update(['deleted_at' => 'deleted']);
+        $this->db->table('clubunio.chat_messages')->where('id', 3)->update(['deleted_at' => 'deleted']);
         $this->assertSame([], $method->invoke(app(ChatService::class), $this->actor, $this->tenant, [1]));
     }
 }

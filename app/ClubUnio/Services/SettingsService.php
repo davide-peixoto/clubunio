@@ -26,7 +26,7 @@ class SettingsService
                 throw ValidationException::withMessages(['enabled' => __('Instagram-Zugang fehlt.')]);
             }
             $setting->forceFill(['enabled' => $enabled])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $id, 'actor_id' => $actor->id]);
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $id, 'actor_id' => $actor->id]);
         });
     }
 
@@ -36,6 +36,7 @@ class SettingsService
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $value) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $setting = Setting::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail();
+            abort_if(in_array($setting->area, ['mail', 'erpnext'], true), 403);
             app(SettingOptions::class)->validate($setting, $value);
             if (in_array($setting->area, ['public', 'signage'], true) || $setting->key === ActiveTrainingPlan::KEY) {
                 abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);
@@ -49,7 +50,7 @@ class SettingsService
             };
             Validator::make(['value' => $value], ['value' => ['required', $rule, 'max:65535']])->validate();
             $setting->forceFill(['encrypted_value' => Crypt::encryptString($value)])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert([
                 'tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id,
             ]);
         });

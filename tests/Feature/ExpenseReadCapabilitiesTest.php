@@ -50,7 +50,7 @@ final class ExpenseReadCapabilitiesTest extends TestCase
         if (isset($this->db)) { $this->db->disableQueryLog(); while ($this->db->transactionLevel()) $this->db->rollBack(); }
         parent::tearDown();
     }
-    private function insert(string $table, array $values): int { return $this->db->table('clubora.'.$table)->insertGetId($values + ['tenant_id' => $this->tenant->id]); }
+    private function insert(string $table, array $values): int { return $this->db->table('clubunio.'.$table)->insertGetId($values + ['tenant_id' => $this->tenant->id]); }
     private function expense(string $status = 'O', ?int $member = null, ?int $team = null, array $extra = []): Expense {
         $id = $this->insert('expenses', $extra + ['member_id' => $member ?? $this->member, 'team_season_id' => $team ?? $this->team,
             'season_id' => $this->season, 'round_id' => $this->round, 'bank_account_id' => $this->bank, 'status_id' => $this->statuses[$status]]);
@@ -77,7 +77,7 @@ final class ExpenseReadCapabilitiesTest extends TestCase
         $old = $this->insert('seasons', ['name' => 'Synthetic previous']);
         $rows = [$this->expense('O', extra: ['active' => false]), $this->expense('O', extra: ['season_id' => $old])];
         $foreign = Tenant::create(['slug' => 'expense-read-foreign-'.bin2hex(random_bytes(5)), 'name' => 'Synthetic foreign']);
-        $insert = fn ($table, $values) => $this->db->table('clubora.'.$table)->insertGetId($values + ['tenant_id' => $foreign->id]);
+        $insert = fn ($table, $values) => $this->db->table('clubunio.'.$table)->insertGetId($values + ['tenant_id' => $foreign->id]);
         $member = $insert('members', ['first_name' => 'Synthetic foreign']);
         $season = $insert('seasons', ['name' => 'Synthetic foreign']);
         $team = $insert('team_seasons', ['team_id' => $insert('teams', ['name' => 'Synthetic foreign']), 'season_id' => $season, 'label' => 'Synthetic foreign']);
@@ -96,15 +96,15 @@ final class ExpenseReadCapabilitiesTest extends TestCase
         $service = app(ExpenseService::class); $row = $this->expense();
         $actor = $this->actors['profile_edit'];
         self::assertTrue($this->parity($actor, [$row])[$row->id]['CanAddPosition']);
-        $this->db->table('clubora.access_profiles')->where('id', $this->profiles['profile_edit'])->update(['permissions' => '[]']);
+        $this->db->table('clubunio.access_profiles')->where('id', $this->profiles['profile_edit'])->update(['permissions' => '[]']);
         self::assertFalse($this->parity($actor, [$row])[$row->id]['CanAddPosition']);
         $actor = $this->actors['member'];
         self::assertTrue($this->parity($actor, [$row])[$row->id]['CanAddPosition']);
-        $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $actor->id)->delete();
+        $this->db->table('clubunio.account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $actor->id)->delete();
         self::assertFalse($this->parity($actor, [$row])[$row->id]['CanAddPosition']);
         $actor = $this->actors['office'];
         self::assertTrue($service->readCapabilities($actor, $this->tenant, [$row])[$row->id]['CanAddPosition']);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $actor->id)->update(['role' => 'profile', 'access_profile_id' => $this->profiles['profile_none'], 'portal_enabled' => false]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $actor->id)->update(['role' => 'profile', 'access_profile_id' => $this->profiles['profile_none'], 'portal_enabled' => false]);
         self::assertFalse($this->parity($actor, [$row])[$row->id]['CanAddPosition']);
         $actor = $this->actors['admin'];
         self::assertTrue($service->readCapabilities($actor, $this->tenant, [$row])[$row->id]['CanAddPosition']);

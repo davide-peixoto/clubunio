@@ -12,20 +12,27 @@ class MemberAccessService
 {
     public function membership(Account $actor, Tenant $tenant): ?object
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'membership:'.$tenant->id, function () use ($actor, $tenant) {
-            if (! app(\App\ClubUnio\Mobile\MobileReadContext::class)->freshActor($actor)?->active) {
+        return app(PortalReadContext::class)->accessFact($actor, 'membership:'.$tenant->id, function () use ($actor, $tenant) {
+            if (! app(PortalReadContext::class)->freshAccessActor($actor)?->active) {
                 return null;
             }
 
-            return DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+            $membership = DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
+
+            return $membership ? app(KeycloakSportRole::class)->effective($actor, $tenant, $membership) : null;
         });
     }
 
     public function activeMembers(Tenant $tenant): Builder
     {
+        return $this->currentMembers()->where('tenant_id', $tenant->id);
+    }
+
+    public function currentMembers(): Builder
+    {
         $today = now('Europe/Zurich')->toDateString();
 
-        return Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereNull('archived_at')
+        return Member::withoutGlobalScopes()->whereNull('archived_at')
             ->where(fn ($q) => $q->whereNull('exit_date')->orWhere('exit_date', '>', $today))
             ->whereDoesntHave('status', fn ($q) => $q->where('ends_membership', true));
     }
@@ -39,9 +46,9 @@ class MemberAccessService
         $today = now('Europe/Zurich')->toDateString();
 
         return $query->whereExists(function ($q) use ($actor, $tenant, $ownOnly, $today) {
-            $q->selectRaw('1')->from('clubora.account_member_links as access_link')
+            $q->selectRaw('1')->from('clubunio.account_member_links as access_link')
                 ->where('access_link.tenant_id', $tenant->id)->where('access_link.account_id', $actor->id)
-                ->where('access_link.state', 'approved')->whereColumn('access_link.member_id', 'clubora.members.id')
+                ->where('access_link.state', 'approved')->whereColumn('access_link.member_id', 'clubunio.members.id')
                 ->where(function ($q) use ($ownOnly, $today) {
                     $q->where('access_link.kind', 'self');
                     if (! $ownOnly) {
@@ -54,7 +61,7 @@ class MemberAccessService
 
     public function canEnter(Account $actor, Tenant $tenant): bool
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-enter:'.$tenant->id, function () use ($actor, $tenant) {
+        return app(PortalReadContext::class)->accessFact($actor, 'member-enter:'.$tenant->id, function () use ($actor, $tenant) {
             if (app(BackofficeReadContext::class)->tenantsFor($actor)?->contains(fn ($item) => (int) $item->id === (int) $tenant->id)) {
                 return true;
             }
@@ -69,21 +76,23 @@ class MemberAccessService
 
     public function responsibleTeams(Account $actor, Tenant $tenant): array
     {
-        return app(\App\ClubUnio\Mobile\MobileReadContext::class)->remember($actor, 'member-teams:'.$tenant->id, function () use ($actor, $tenant) {
+        return app(PortalReadContext::class)->accessFact($actor, 'member-teams:'.$tenant->id, function () use ($actor, $tenant) {
             $role = $this->membership($actor, $tenant)?->role;
             if (! in_array($role, ['trainer', 'technical_lead'], true) || ! $this->canEnter($actor, $tenant)) {
                 return [];
             }
             $table = $role === 'trainer' ? 'team_staff' : 'technical_leads';
 
-            return DB::connection('clubunio')->table('clubora.'.$table.' as assignment')
-                ->join('clubora.team_seasons as season_team', function ($join) {
+            $query = DB::connection('clubunio')->table('clubunio.'.$table.' as assignment')
+                ->join('clubunio.team_seasons as season_team', function ($join) {
                     $join->on('season_team.id', '=', 'assignment.team_season_id')->on('season_team.tenant_id', '=', 'assignment.tenant_id');
-                })->join('clubora.teams as team', function ($join) {
+                })->join('clubunio.teams as team', function ($join) {
                     $join->on('team.id', '=', 'season_team.team_id')->on('team.tenant_id', '=', 'season_team.tenant_id');
                 })->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)
                 ->where('season_team.active', true)->where('team.active', true)
-                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubora.members.id'))
+                ->whereIn('assignment.member_id', $this->represented($actor, $tenant, true)->select('clubunio.members.id'));
+
+            return app(TrainerWebSeasonScope::class)->seasonRecords($query, $actor, $tenant, 'season_team.season_id')
                 ->distinct()->pluck('assignment.team_season_id')->all();
         });
     }
@@ -100,9 +109,9 @@ class MemberAccessService
         $tables = $this->membership($actor, $tenant)->role === 'technical_lead' ? ['team_players', 'team_staff'] : ['team_players'];
 
         return $this->activeMembers($tenant)->where(function ($q) use ($actor, $tenant, $teams, $tables) {
-            $q->whereIn('clubora.members.id', $this->represented($actor, $tenant)->select('clubora.members.id'));
+            $q->whereIn('clubunio.members.id', $this->represented($actor, $tenant)->select('clubunio.members.id'));
             foreach ($tables as $table) {
-                $q->orWhereIn('clubora.members.id', DB::connection('clubunio')->table('clubora.'.$table)
+                $q->orWhereIn('clubunio.members.id', DB::connection('clubunio')->table('clubunio.'.$table)
                     ->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
             }
         });

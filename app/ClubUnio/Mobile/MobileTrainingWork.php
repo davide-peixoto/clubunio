@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 /** Durable, at-most-once dispatch. Polling and uncertain requests never repeat paid calls. */
 final class MobileTrainingWork
 {
-    private function table() { return DB::connection('clubunio')->table('clubora.mobile_ai_work'); }
+    private function table() { return DB::connection('clubunio')->table('clubunio.mobile_ai_work'); }
     public function available(Tenant $tenant): bool
     {
         try { $this->configuration($tenant); return true; } catch (\Symfony\Component\HttpKernel\Exception\HttpException) { return false; }
@@ -105,7 +105,7 @@ final class MobileTrainingWork
     }
     private function source(object $work, array $payload): array
     {
-        $session = DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $payload['session'])->where('account_id', $work->account_id)
+        $session = DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $payload['session'])->where('account_id', $work->account_id)
             ->whereNull('revoked_at')->where('expires_at', '>', now())->sharedLock()->first();
         abort_unless($session, 401);
         $actor = Account::whereKey($work->account_id)->where('active', true)->where('api_only', false)->firstOrFail();

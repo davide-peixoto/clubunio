@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('ALTER TABLE clubora.sfv_schedule ADD COLUMN host_name varchar(255), ADD COLUMN guest_name varchar(255)');
+        $db->statement('ALTER TABLE clubunio.sfv_schedule ADD COLUMN host_name varchar(255), ADD COLUMN guest_name varchar(255)');
     }
 
     public function down(): void

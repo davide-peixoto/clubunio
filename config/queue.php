@@ -43,6 +43,15 @@ return [
             'after_commit' => false,
         ],
 
+        'support' => [
+            'driver' => 'database',
+            'connection' => 'clubunio',
+            'table' => 'clubunio.support_jobs',
+            'queue' => 'support-triage',
+            'retry_after' => 90,
+            'after_commit' => false,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),

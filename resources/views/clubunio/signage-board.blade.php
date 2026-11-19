@@ -7,7 +7,7 @@
 @endphp
 <div class="sg-board {{ $competitions->isEmpty() ? 'sg-no-games':'' }} {{ $notices->isEmpty() ? 'sg-no-notices':'' }}" style="--sg-brand:{{ $brand['color'] }};--sg-ink:{{ $brand['ink'] }}" data-signage data-locale="{{ str_replace('_', '-', app()->getLocale()) }}">
     <header class="sg-header">
-        <div class="sg-brand"><img src="{{ $brand['logo'] }}" alt="{{ $brand['title'] }}" width="48" height="48"><h1>{{ $brand['title'] }} <span>{{ __('– Info-Display') }}</span></h1></div>
+        <div class="sg-brand"><img src="{{ $brand['logo'] }}" alt="{{ $brand['title'] }}" width="48" height="48"><div><h1>{{ $brand['title'] }} <span>{{ __('– Info-Display') }}</span></h1>@include('clubunio.brand.attribution')</div></div>
         <div class="sg-meta"><span class="sg-test">{{ __('TEST') }}</span><time class="sg-clock">{{ now('Europe/Zurich')->format('H:i:s') }}</time><span class="sg-date">{{ now('Europe/Zurich')->format('d.m.Y') }}</span>
         </div>
     </header>

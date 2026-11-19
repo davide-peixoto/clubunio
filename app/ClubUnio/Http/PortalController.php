@@ -14,11 +14,15 @@ class PortalController
 {
     public function loginForm()
     {
+        if (config('clubunio-verein-oidc.only')) {
+            return redirect()->route('clubunio.verein.oidc.start');
+        }
         return response()->view('clubunio.portal.login')->header('Cache-Control', 'private, no-store');
     }
 
     public function login(Request $request, MemberAccessService $access)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096']);
         $username = mb_strtolower(trim($data['username']));
         $keys = ['portal-login:'.hash('sha256', $request->ip().'|'.$username) => 5,
@@ -32,6 +36,12 @@ class PortalController
         $guard = Auth::guard('portal');
         if ($guard->attempt(['username' => $username, 'password' => $data['password'], 'active' => true, 'api_only' => false])) {
             $actor = $guard->user();
+            $security = app(\App\ClubUnio\Services\AccountSecurity::class);
+            if ($security->requiresStrongLogin($actor)) {
+                $guard->logout();
+                $request->session()->regenerate();
+                return redirect()->route('clubunio.security.show', ['mode' => 'portal', 'setup' => $security->mustEnroll($actor) ? '1' : null]);
+            }
             $tenants = $actor->tenants()->get()->filter(fn ($tenant) => $access->canEnter($actor, $tenant));
             if ($tenants->isNotEmpty()) {
                 $request->session()->regenerate();
@@ -51,14 +61,14 @@ class PortalController
         $data = $request->validate(['q' => 'nullable|string|max:120', 'status' => 'nullable|integer']);
         $q = trim($data['q'] ?? '');
         $query = $access->visibleMembers($actor, $tenant);
-        $members = $query->select(['clubora.members.id', 'first_name', 'last_name', 'company', 'city', 'email', 'mobile', 'status_id'])
+        $members = $query->select(['clubunio.members.id', 'first_name', 'last_name', 'company', 'city', 'email', 'mobile', 'status_id'])
             ->with('status:id,name')->when($q !== '', fn ($query) => $query->where(fn ($query) => $query->where('first_name', 'ilike', '%'.$q.'%')
             ->orWhere('last_name', 'ilike', '%'.$q.'%')->orWhere('company', 'ilike', '%'.$q.'%')))
             ->when($data['status'] ?? null, fn ($query, $status) => $query->where('status_id', $status))
             ->orderBy('last_name')->orderBy('first_name')->orderBy('id')->paginate(25)->withQueryString();
         $tenants = $actor->tenants()->get()->filter(fn ($t) => $access->canEnter($actor, $t));
         $statuses = MemberStatus::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('active', true)->orderBy('sort_order')->get(['id', 'tenant_id', 'name']);
-        $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubora.members.id')->all();
+        $editableMemberIds = $access->represented($actor, $tenant)->pluck('clubunio.members.id')->all();
 
         return response()->view('clubunio.portal.members', compact('tenant', 'tenants', 'members', 'q', 'statuses', 'editableMemberIds'))
             ->header('Cache-Control', 'private, no-store');
@@ -67,6 +77,12 @@ class PortalController
     public function logout(Request $request)
     {
         Auth::guard('portal')->logout();
+        if ($request->session()->has('portal.oidc.account') || config('clubunio-verein-oidc.only')) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return KeycloakLogout::redirect('clubunio-verein-oidc');
+        }
         $request->session()->regenerate();
         $request->session()->regenerateToken();
 

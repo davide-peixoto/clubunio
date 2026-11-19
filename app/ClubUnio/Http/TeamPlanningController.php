@@ -9,6 +9,7 @@ use App\ClubUnio\Services\PlanningGuestService;
 use App\ClubUnio\Services\PlanningSeriesService;
 use App\ClubUnio\Services\SfvPlanningService;
 use App\ClubUnio\Services\TeamPlanningService;
+use App\ClubUnio\Services\TrainerWebSeasonScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -206,7 +207,8 @@ class TeamPlanningController
         }
         $teamIds = $data['teams']->whereIn('id', $data['managed'])->pluck('team_id');
         $sfvIds = $this->service->table($tenant, 'teams')->whereIn('id', $teamIds)->whereNotNull('sfv_team_id')->pluck('sfv_team_id');
-        $matches = $this->service->table($tenant, 'sfv_schedule')->where(fn ($q) => $q->whereIn('team_a_id', $sfvIds)->orWhereIn('team_b_id', $sfvIds))
+        $matches = app(TrainerWebSeasonScope::class)->sfvMatches($this->service->table($tenant, 'sfv_schedule'), $data['actor'], $tenant)
+            ->where(fn ($q) => $q->whereIn('team_a_id', $sfvIds)->orWhereIn('team_b_id', $sfvIds))
             ->where('starts_at', '>=', CarbonImmutable::parse($filters['from'], 'Europe/Zurich')->toIso8601String())
             ->where('starts_at', '<', CarbonImmutable::parse($filters['to'], 'Europe/Zurich')->addDay()->toIso8601String())->orderBy('starts_at')->paginate(25)->withQueryString();
         $imported = $this->service->table($tenant, 'team_events')->whereIn('team_season_id', $data['managed'])->whereIn('sfv_match_id', $matches->pluck('match_id'))->get()->groupBy('sfv_match_id');
@@ -225,7 +227,8 @@ class TeamPlanningController
     {
         $this->service->authorizeOperation($request->user(), $tenant, 'sync');
         $data = $this->context($request, $tenant);
-        $sfv = $this->service->table($tenant, 'sfv_schedule')->where('id', $match)->first();
+        $sfv = app(TrainerWebSeasonScope::class)->sfvMatches($this->service->table($tenant, 'sfv_schedule'), $data['actor'], $tenant)
+            ->where('id', $match)->first();
         abort_unless($sfv, 404);
         $teamIds = $this->service->table($tenant, 'teams')->whereIn('sfv_team_id', [$sfv->team_a_id, $sfv->team_b_id])->pluck('id');
         $data['teams'] = $data['teams']->whereIn('id', $data['managed'])->whereIn('team_id', $teamIds);
@@ -291,7 +294,7 @@ class TeamPlanningController
             unset($absence->note_encrypted);
         }
         $data['absenceEditableIds'] = \App\ClubUnio\Resources\ProfileUi::profileAllows($data['actor'], $tenant, 'planning', 'update')
-            ? $this->service->absenceMembers($data['actor'], $tenant, 'update')->whereIn('clubora.members.id', $absences->pluck('member_id'))->pluck('id')->all()
+            ? $this->service->absenceMembers($data['actor'], $tenant, 'update')->whereIn('clubunio.members.id', $absences->pluck('member_id'))->pluck('id')->all()
             : [];
         $record = null;
         if ($request->filled('edit')) {
@@ -336,7 +339,7 @@ class TeamPlanningController
                 $id = $data['id'];
             } else {
                 abort_unless(in_array($data['category'], ['kind', 'absence'], true), 422);
-                Validator::make($data, ['code' => [Rule::unique('clubunio.clubora.planning_options', 'code')->where('tenant_id', $tenant->id)->where('category', $data['category'])]])->validate();
+                Validator::make($data, ['code' => [Rule::unique('clubunio.clubunio.planning_options', 'code')->where('tenant_id', $tenant->id)->where('category', $data['category'])]])->validate();
                 unset($data['id']);
                 $id = $q->insertGetId($data + ['tenant_id' => $tenant->id]);
             }

@@ -3,6 +3,7 @@
 namespace App\ClubUnio\Http;
 
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\AccountingProvider;
 use App\ClubUnio\Services\ActiveTenant;
 use App\ClubUnio\Services\BexioConnectionService;
 use App\ClubUnio\Services\BexioOidcClient;
@@ -49,6 +50,7 @@ class BexioConnectionController
         }
         $ready = false;
         $connected = false;
+        $active = AccountingProvider::current($tenant) === AccountingProvider::BEXIO;
         try {
             $config = $service->configuration($tenant);
             $ready = true;
@@ -59,13 +61,14 @@ class BexioConnectionController
         }
         $callback = $this->callbackUrl($tenant);
 
-        return response()->view('clubunio.bexio.connection', compact('tenant', 'ready', 'connected', 'callback'))
+        return response()->view('clubunio.bexio.connection', compact('tenant', 'active', 'ready', 'connected', 'callback'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
     public function start(Request $request, Tenant $tenant, BexioConnectionService $service)
     {
         $this->authorize($request, $tenant);
+        AccountingProvider::require($tenant, AccountingProvider::BEXIO);
         $prefix = $this->prefix($request, $tenant);
         $request->session()->forget($prefix);
         try {
@@ -89,6 +92,7 @@ class BexioConnectionController
         $this->authorize($request, $tenant);
         $prefix = $this->prefix($request, $tenant);
         try {
+            AccountingProvider::require($tenant, AccountingProvider::BEXIO);
             $query = $request->validate(['state' => 'required|string|max:256', 'code' => 'nullable|string|max:8192', 'error' => 'nullable|string|max:256']);
             $context = $request->session()->get($prefix.'.context');
             if (! is_array($context) || ($context['expires'] ?? 0) < time()) {

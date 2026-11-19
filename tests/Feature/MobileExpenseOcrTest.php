@@ -36,7 +36,7 @@ class MobileExpenseOcrTest extends TestCase
             state text NOT NULL, revision integer NOT NULL, bytes_encrypted text, filename_encrypted text NOT NULL, sha256 char(64) NOT NULL,
             byte_count integer NOT NULL, mime_type text NOT NULL, scanned_at timestamptz NOT NULL, scanner_version text NOT NULL, expires_at timestamptz NOT NULL) ON COMMIT DROP');
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
-            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubora.mobile_expense_receipts' ? 'pg_temp.expense_ocr_receipts' : $table, $prefix); }
+            public function wrapTable($table, $prefix = null) { return parent::wrapTable($table === 'clubunio.mobile_expense_receipts' ? 'pg_temp.expense_ocr_receipts' : $table, $prefix); }
         });
         $this->receipt = $this->draft();
         $this->url = '/api/mobile/v1/clubs/'.$this->tenant->id.'/expenses/receipts/'.$this->receipt.'/suggest';
@@ -62,9 +62,9 @@ class MobileExpenseOcrTest extends TestCase
     private function actor(string $name): Account {
         $actor = new Account;
         $actor->forceFill(['username' => 'ocr-'.bin2hex(random_bytes(8)), 'display_name' => $name, 'password' => bcrypt('fixture'), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'trainer', 'portal_enabled' => true]);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => $name]);
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'role' => 'trainer', 'portal_enabled' => true]);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => $name]);
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id, 'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'test']);
         return $actor;
     }
     private function draft(): string {
@@ -109,7 +109,7 @@ class MobileExpenseOcrTest extends TestCase
         $this->postJson($this->url, $input)->assertOk()->assertJsonPath('data.cached', true);
         $this->postJson($this->url, $this->input())->assertOk()->assertJsonPath('data.cached', true);
         Http::assertSentCount(2);
-        $rows = $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->orderBy('reserved_microusd')->get();
+        $rows = $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->orderBy('reserved_microusd')->get();
         $this->assertCount(2, $rows); $this->assertSame([0,1000], $rows->pluck('reserved_microusd')->map(fn ($v) => (int) $v)->all());
         $this->assertStringNotContainsString('Synthetic Merchant', $rows[1]->result_encrypted);
         $this->assertSame('expense_ocr', $rows[1]->operation);
@@ -141,10 +141,10 @@ class MobileExpenseOcrTest extends TestCase
         config(['clubunio-expense-ocr.enabled' => true, 'clubunio-expense-ocr.endpoint' => 'https://untrusted.example']); $this->postJson($this->url, $this->input())->assertStatus(503);
         config(['clubunio-expense-ocr.endpoint' => $this->origin, 'clubunio-expense-ocr.reservation_microusd' => 0]); $this->postJson($this->url, $this->input())->assertStatus(503);
         config(['clubunio-expense-ocr.reservation_microusd' => 1000]);
-        $this->db->table('clubora.mobile_ai_work')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
+        $this->db->table('clubunio.mobile_ai_work')->insert(['id' => (string) Str::uuid(), 'tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id,
             'request_key' => (string) Str::uuid(), 'fingerprint' => str_repeat('a', 64), 'provider' => 'synthetic-budget', 'operation' => 'correct', 'state' => 'attention', 'reserved_microusd' => 9500]);
         $this->postJson($this->url, $this->input())->assertStatus(429); Http::assertNothingSent();
-        $this->assertSame(1, $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->count());
     }
     public function test_untrusted_operation_location_and_uncertain_post_are_never_retried_or_logged_as_results(): void {
         $this->fakeHttp(fn () => Http::response('', 202, ['Operation-Location' => 'https://untrusted.example/analyzeResults/'.$this->job]));
@@ -153,7 +153,7 @@ class MobileExpenseOcrTest extends TestCase
         $this->postJson($this->url, $input)->assertConflict();
         $this->postJson($this->url, $this->input())->assertConflict();
         Http::assertSentCount(1);
-        $row = $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->sole();
+        $row = $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->sole();
         $this->assertSame('attention', $row->state); $this->assertNull($row->result_encrypted); $this->assertSame(1000, (int) $row->reserved_microusd);
     }
     public function test_expiry_revision_corruption_and_authority_change_never_release_provider_fields(): void {
@@ -171,7 +171,7 @@ class MobileExpenseOcrTest extends TestCase
             return Http::response($this->providerResult(), 200);
         });
         $this->postJson($this->url, $input)->assertConflict()->assertDontSee('Synthetic Merchant');
-        $this->assertSame('attention', $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->value('state'));
+        $this->assertSame('attention', $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->value('state'));
     }
     public function test_unknown_currency_low_confidence_and_extra_documents_never_guess_financial_values(): void {
         $result = $this->providerResult(['analyzeResult' => ['documents' => [['fields' => ['Total' => ['valueCurrency' => ['currencyCode' => 'EUR']],
@@ -199,7 +199,7 @@ class MobileExpenseOcrTest extends TestCase
         $this->assertTrue($duplicateRejected); Http::assertSentCount(2);
         $next = str_replace($this->receipt, $this->draft(), $this->url);
         $this->postJson($next, $this->input())->assertStatus(429); Http::assertSentCount(2);
-        $this->assertSame(1, $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->count());
     }
     public function test_provider_response_limit_and_revoked_membership_never_expose_a_result(): void {
         $input = $this->input();
@@ -211,13 +211,13 @@ class MobileExpenseOcrTest extends TestCase
         Http::assertSentCount(2);
         $this->fakeHttp(function ($request) {
             $this->assertSame('GET', $request->method());
-            $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['portal_enabled' => false]);
+            $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['portal_enabled' => false]);
             return Http::response($this->providerResult(), 200);
         });
         $this->travel(4)->seconds();
         try { $this->postJson($this->url, $input)->assertConflict()->assertDontSee('Synthetic Merchant'); }
         finally { $this->travelBack(); }
         Http::assertSentCount(1);
-        $this->assertSame('attention', $this->db->table('clubora.mobile_ai_work')->where('tenant_id', $this->tenant->id)->value('state'));
+        $this->assertSame('attention', $this->db->table('clubunio.mobile_ai_work')->where('tenant_id', $this->tenant->id)->value('state'));
     }
 }

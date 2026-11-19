@@ -96,7 +96,7 @@ class SeasonFinanceTest extends TestCase
 
     private function insert(string $table, array $data): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
+        return $this->db->table('clubunio.'.$table)->insertGetId($data + ['tenant_id' => $this->tenant->id]);
     }
 
     public function test_expense_button_checks_are_shared_only_inside_read_context(): void
@@ -124,7 +124,7 @@ class SeasonFinanceTest extends TestCase
         } finally {
             $request->setMethod($method);
         }
-        $this->db->table('clubora.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $action->clearVisibilityCache();
         $this->assertFalse($action->isVisible());
         $this->assertFalse($service->editable($this->actor, $this->tenant, $expense->fresh()));
@@ -187,7 +187,7 @@ class SeasonFinanceTest extends TestCase
             ->call('saveSeasonFinance', null, array_replace($this->expenseData, ['team_season_id' => $otherSeasonTeam]))->assertStatus(404);
         Livewire::test(InvoicesRelationManager::class, ['ownerRecord' => $teamSeason, 'pageClass' => ViewTeamSeason::class])
             ->call('saveSeasonFinance', null, ['member_id' => $this->member->id])->assertForbidden();
-        $this->db->table('clubora.team_players')->where('tenant_id', $this->tenant->id)->update(['invoice_line_id' => null]);
+        $this->db->table('clubunio.team_players')->where('tenant_id', $this->tenant->id)->update(['invoice_line_id' => null]);
         $lines->call('$refresh')->assertForbidden();
     }
 
@@ -218,7 +218,7 @@ class SeasonFinanceTest extends TestCase
         $this->manager()->assertTableActionHidden('editFinance', $invoice->fresh());
         $this->manager()->callTableAction('cancelFinance', $invoice->fresh(), data: ['reason' => 'Synthetic cancellation'])->assertHasNoTableActionErrors()->assertNoRedirect();
         $this->assertSame('cancelled', $invoice->fresh()->workflowStatus->code);
-        $this->assertGreaterThan(0, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertGreaterThan(0, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_expense_header_positions_and_transition_remain_inside_season(): void
@@ -244,7 +244,7 @@ class SeasonFinanceTest extends TestCase
         $this->assertFalse($copy->fresh()->active);
         $lines->filterTable('active', false)->callTableAction('restoreRecord', $copy->fresh())->assertHasNoTableActionErrors();
         $this->assertTrue($copy->fresh()->active);
-        $target = $this->db->table('clubora.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'F')->value('id');
+        $target = $this->db->table('clubunio.expense_statuses')->where('tenant_id', $this->tenant->id)->where('code', 'F')->value('id');
         $this->manager(false)->callTableAction('transition', $expense->fresh(), data: ['status_id' => $target, 'reason' => 'Synthetic test approval'])->assertHasNoTableActionErrors();
         $this->assertSame('F', $expense->fresh()->status->code);
     }
@@ -299,7 +299,7 @@ class SeasonFinanceTest extends TestCase
         $this->assertSame('Changed', $changes['notes']['after']);
         $this->assertSame($invoice->revision, $changes['revision']['after']);
         $this->assertFalse($changes->has('active'));
-        $this->db->table('clubora.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'invoices', 'object_id' => $invoice->id,
+        $this->db->table('clubunio.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'invoices', 'object_id' => $invoice->id,
             'before_value' => json_encode(['notes' => 'Changed']), 'after_value' => json_encode(['invoice' => ['notes' => null, 'api_key' => 'NEVER_SHOW'], 'secret' => 'NEVER_SHOW'])]);
         $entries = $history->entries($this->actor, $this->tenant, $invoice);
         $this->assertSame(['field' => 'notes', 'before' => 'Changed', 'after' => null], $entries[0]['changes'][0]);
@@ -339,7 +339,7 @@ class SeasonFinanceTest extends TestCase
         $this->manager()->assertTableActionHidden('editFinance', $invoice);
         $this->manager()->call('saveSeasonFinance', $invoice->id, ['revision' => $invoice->revision, 'notes' => 'Forbidden'])->assertForbidden();
         $component = $this->manager();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $component->call('saveSeasonFinance', $invoice->id, ['revision' => $invoice->revision, 'notes' => 'Forbidden'])->assertForbidden();
     }
 }

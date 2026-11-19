@@ -64,10 +64,10 @@ class DossierMaintenanceTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'dossier-'.Str::random(10), 'name' => 'Fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(14), 'display_name' => 'Fixture Office', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
         $this->member = new Member;
         $this->member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Dossier'])->save();
-        $this->season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture Season']);
+        $this->season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture Season']);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $this->actingAs($this->actor, 'clubunio');
         Filament::setTenant($this->tenant);
@@ -109,7 +109,7 @@ class DossierMaintenanceTest extends TestCase
             $this->assertSame($this->member->id, $copy->member_id);
             $this->assertSame(1, (int) $source->fresh()->revision);
             if ($model === MemberFunction::class) {
-                $this->assertSame([$qualification->id], $copy->qualifications()->pluck('clubora.qualifications.id')->all());
+                $this->assertSame([$qualification->id], $copy->qualifications()->pluck('clubunio.qualifications.id')->all());
             }
             $component->callTableAction('deactivateItem', $source)->assertHasNoTableActionErrors();
             $this->assertFalse($source->fresh()->active);
@@ -160,7 +160,7 @@ class DossierMaintenanceTest extends TestCase
         $this->assertEquals(100, $sponsor->amount);
         $this->save(MemberKey::class, ['revision' => 1, 'number' => '123', 'name' => 'Synthetic key', 'color' => 'Blue', 'active' => false], $key->id, $this->member->id);
         $this->assertFalse($key->fresh()->active);
-        $this->assertSame(3, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(3, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
     }
@@ -185,7 +185,7 @@ class DossierMaintenanceTest extends TestCase
 
     public function test_bank_and_note_shortcuts_preserve_content(): void
     {
-        $bankId = $this->db->table('clubora.banks')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture bank', 'active' => true]);
+        $bankId = $this->db->table('clubunio.banks')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture bank', 'active' => true]);
         $bank = app(BankAccountService::class)->save($this->actor, $this->tenant, $this->member->id, null, ['bank_id' => $bankId, 'iban' => 'CH9300762011623852957', 'active' => true]);
         $note = app(MemberNoteService::class)->save($this->actor, $this->tenant, $this->member->id, null, ['body' => 'Fixture note', 'active' => true]);
         foreach ([[BankAccountsRelationManager::class, $bank], [NotesRelationManager::class, $note]] as [$manager, $record]) {
@@ -212,7 +212,7 @@ class DossierMaintenanceTest extends TestCase
     public function test_foreign_qualification_and_protected_member_reassignment_are_rejected_atomically(): void
     {
         $other = Tenant::create(['slug' => 'foreign-'.Str::random(8), 'name' => 'Foreign']);
-        $foreign = $this->db->table('clubora.qualifications')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign qualification']);
+        $foreign = $this->db->table('clubunio.qualifications')->insertGetId(['tenant_id' => $other->id, 'name' => 'Foreign qualification']);
         $function = $this->save(ClubFunction::class, ['name' => 'Fixture function', 'active' => true]);
         try {
             $this->save(MemberFunction::class, ['club_function_id' => $function->id, 'qualification_ids' => [$foreign], 'active' => true], null, $this->member->id);
@@ -260,14 +260,14 @@ class DossierMaintenanceTest extends TestCase
             $this->assertTrue(true);
         }
         $foreign = Tenant::create(['slug' => 'foreign-'.Str::random(9), 'name' => 'Foreign']);
-        $event = $this->db->table('clubora.club_events')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign event']);
+        $event = $this->db->table('clubunio.club_events')->insertGetId(['tenant_id' => $foreign->id, 'name' => 'Foreign event']);
         $this->expectException(ValidationException::class);
         $this->save(EventGuest::class, ['club_event_id' => $event, 'active' => true], null, $this->member->id);
     }
 
     public function test_inactive_or_non_office_actor_cannot_mutate(): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         $this->save(Qualification::class, ['name' => 'Denied', 'active' => true]);
     }

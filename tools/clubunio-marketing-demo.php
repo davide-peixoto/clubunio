@@ -15,7 +15,7 @@ app(PlatformAdministrationService::class)->authorize($actor);
 if (Tenant::where('slug','fc-horizon-demo')->exists()) { echo "FC Horizon demo already exists; no changes.\n"; exit; }
 $db->transaction(function() use($db,$actor) {
 $t=app(PlatformAdministrationService::class)->create($actor,['name'=>'FC Horizon · DEMO','slug'=>'fc-horizon-demo','username'=>$actor->username,'reason'=>'Explicit user request: fictional marketing demo tenant and product screenshots.']);
-$insert=fn($table,$data)=>$db->table('clubora.'.$table)->insertGetId($data+['tenant_id'=>$t->id]);
+$insert=fn($table,$data)=>$db->table('clubunio.'.$table)->insertGetId($data+['tenant_id'=>$t->id]);
 $season=$insert('seasons',['name'=>'2026/2027','starts_on'=>'2026-07-01','ends_on'=>'2027-06-30']);
 $insert('tenant_settings',['area'=>'general','key'=>'SaisonID','label'=>'Saison','value_type'=>'integer','encrypted_value'=>Illuminate\Support\Facades\Crypt::encryptString((string)$season),'enabled'=>true,'is_secret'=>false]);
 $teams=[]; foreach(['U11','U13','U15','U17'] as $name){$id=$insert('teams',['name'=>$name]);$teams[]=$insert('team_seasons',['team_id'=>$id,'season_id'=>$season,'label'=>'FC Horizon '.$name]);}

@@ -13,7 +13,7 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $db->statement('SET LOCAL search_path TO clubora');
+        $db->statement('SET LOCAL search_path TO clubunio');
         $db->unprepared(<<<'SQL'
 ALTER TABLE registration_statuses ADD workflow_key varchar(20)
  CHECK(workflow_key IN ('submitted','review','trial','accepted','rejected','pool'));

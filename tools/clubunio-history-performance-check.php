@@ -23,15 +23,15 @@ try {
     $tenant = Tenant::create(['slug' => 'history-perf-'.Str::random(16), 'name' => 'Synthetic']);
     $actor = new Account;
     $actor->forceFill(['username' => Str::random(24), 'display_name' => 'Synthetic', 'active' => true, 'password' => bcrypt(Str::random(40))])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
-    $member = Member::findOrFail($db->table('clubora.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Fixture']));
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'office']);
+    $member = Member::findOrFail($db->table('clubunio.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Fixture']));
     $rows = [];
     for ($i = 0; $i < 110; $i++) {
         $rows[] = ['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'members', 'object_id' => $member->id,
             'before_value' => json_encode(['notes' => 'Before', 'revision' => $i]),
             'after_value' => json_encode(['notes' => 'After', 'revision' => $i + 1, 'ignored_fixture' => str_repeat('UNRELEASED-FIXTURE', 1200)])];
     }
-    $db->table('clubora.object_changes')->insert($rows);
+    $db->table('clubunio.object_changes')->insert($rows);
     $db->enableQueryLog();
     $db->flushQueryLog();
     $start = microtime(true);

@@ -14,12 +14,12 @@ return new class extends Migration
         if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected target');
         }
-        $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
+        $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
         if (! $tenant) {
             throw new LogicException('Missing tenant');
         }
         foreach (['USER_ID', 'LANGUAGE_ID', 'BANK_ACCOUNT_ID', 'CURRENCY_ID', 'PAYMENT_TYPE_ID', 'UNIT_ID', 'TAX_ID', 'MWST_TYPE', 'INVOICE_DUE_DAYS', 'BILL_CONTACT_PARTNER_ID', 'BILL_DUE_DAYS'] as $key) {
-            $db->table('clubora.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant, 'area' => 'bexio', 'key' => 'BEXIO_'.$key,
+            $db->table('clubunio.tenant_settings')->insertOrIgnore(['tenant_id' => $tenant, 'area' => 'bexio', 'key' => 'BEXIO_'.$key,
                 'label' => 'Bexio '.$key, 'encrypted_value' => Crypt::encryptString(''), 'value_type' => 'string', 'is_secret' => false, 'enabled' => true]);
         }
     }

@@ -33,7 +33,44 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
+Route::get('/help', \App\ClubUnio\Http\SupportCenterController::class)->name('clubunio.support.help');
+Route::post('/help', \App\ClubUnio\Http\SupportCenterController::class)->middleware('throttle:6,1');
+Route::match(['get','post'], '/help/sign-in', \App\ClubUnio\Http\PublicSupportIntake::class)
+    ->middleware('throttle:5,1')->name('clubunio.support.login-help');
+Route::get('/support/club/{club}/sign-in', [\App\ClubUnio\Http\PublicSupportIntake::class, 'inbox'])
+    ->whereNumber('club')->middleware('auth:clubunio')->name('clubunio.support.club-intake');
+Route::get('/platform/support/sign-in', [\App\ClubUnio\Http\PublicSupportIntake::class, 'inbox'])
+    ->middleware(\App\ClubUnio\Http\RequirePlatformAdministrator::class)->name('clubunio.support.platform-intake');
+Route::match(['get','post'], '/support/club/{club}', \App\ClubUnio\Http\SupportCenterController::class)
+    ->whereNumber('club')->middleware('throttle:30,1')->name('clubunio.support.center');
+Route::match(['get','post'], '/platform/support', \App\ClubUnio\Http\SupportCenterController::class)
+    ->middleware([\App\ClubUnio\Http\RequirePlatformAdministrator::class, 'throttle:30,1'])->name('clubunio.platform.support');
 require __DIR__.'/clubunio-marketing.php';
+
+Route::get('/account/security', [\App\ClubUnio\Http\StrongLoginController::class, 'show'])->name('clubunio.security.show');
+Route::post('/account/security/{operation}', [\App\ClubUnio\Http\StrongLoginController::class, 'action'])
+    ->middleware('throttle:30,1')->block(10, 10)->name('clubunio.security.action');
+Route::match(['GET', 'POST'], '/account/recovery/{tenantId}/{linkId}', \App\ClubUnio\Http\TenantSecurityRecoveryController::class)
+    ->whereNumber(['tenantId', 'linkId'])->middleware(['auth:clubunio', 'throttle:20,1'])->name('clubunio.security.recovery');
+
+Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
+    ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
+Route::post('/campaign-feedback', \App\ClubUnio\Http\CampaignFeedbackController::class)
+    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+    ->middleware('throttle:60,1')->name('clubunio.campaign.feedback');
+Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
+    ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
+Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
+    ->whereNumber('campaign')->middleware(['auth:clubunio', 'throttle:4,1'])->name('clubunio.campaign.letters');
+
+Route::match(['GET', 'POST'], '/social-data/{operation}', \App\ClubUnio\Http\SocialStudioController::class)
+    ->where('operation', '[a-z-]+')
+    ->middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, 'throttle:120,1'])
+    ->name('clubunio.social.data');
+
+Route::get('/social-test-image/{tenantId}/{id}', [\App\ClubUnio\Http\SocialStudioController::class, 'testImage'])
+    ->whereNumber('tenantId')->whereUuid('id')->middleware(['signed', 'throttle:120,1'])
+    ->name('clubunio.social.test-image');
 
 Route::match(['GET', 'POST'], '/chat-data/{operation}', \App\ClubUnio\Http\WebChatController::class)
     ->where('operation', '[a-z-]+')
@@ -130,7 +167,7 @@ Route::get('/clubunio/{tenant}/{path?}', [TenantNavigationController::class, 'le
     ->where('path', '.*')->middleware('auth:clubunio');
 
 // Preserve bookmarks without changing the registered Bexio callback or replaying writes.
-Route::get('/clubora/{path?}', function (Request $request, ?string $path = null) {
+Route::get('/clubunio/{path?}', function (Request $request, ?string $path = null) {
     $target = '/clubunio'.($path !== null ? '/'.$path : '');
 
     return redirect($target.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 302);
@@ -194,6 +231,12 @@ Route::middleware('auth:clubunio,portal')->prefix('/planning/{tenant:slug}')->na
     Route::post('/events/{event}/members/{member}', [$controller, 'participate'])->whereNumber('event')->whereNumber('member')->name('participate');
 });
 
+Route::middleware(['auth:clubunio', SetUpPanel::class.':clubunio', UseActiveTenant::class, UseClubWorkspace::class])
+    ->prefix('/accounting-provider')->name('clubunio.accounting-provider.')->group(function () {
+        Route::get('/', [\App\ClubUnio\Http\AccountingProviderController::class, 'show'])->name('show');
+        Route::post('/', [\App\ClubUnio\Http\AccountingProviderController::class, 'update'])->name('update');
+    });
+
 Route::middleware('auth:clubunio')->prefix('/integrations/bexio')->name('clubunio.bexio.')->group(function () {
     $workspace = [SetUpPanel::class.':clubunio', UseActiveTenant::class, UseClubWorkspace::class];
     Route::get('/', [BexioConnectionController::class, 'centralShow'])->middleware($workspace)->name('show');
@@ -201,14 +244,14 @@ Route::middleware('auth:clubunio')->prefix('/integrations/bexio')->name('clubuni
     Route::get('/callback', [BexioConnectionController::class, 'centralCallback'])->middleware('throttle:10,1')->name('callback');
 });
 
-Route::middleware('auth:clubunio')->prefix('/clubora-bexio/{tenant:slug}')->name('clubunio.bexio.legacy.')->group(function () {
+Route::middleware('auth:clubunio')->prefix('/clubunio-bexio/{tenant:slug}')->name('clubunio.bexio.legacy.')->group(function () {
     $controller = BexioConnectionController::class;
     Route::get('/', [$controller, 'show'])->name('show');
     Route::post('/connect', [$controller, 'start'])->middleware('throttle:5,1')->name('start');
     Route::get('/callback', [$controller, 'callback'])->middleware('throttle:10,1')->name('callback');
 });
 
-Route::get('/clubora-invoice-preview/{tenant:slug}/{invoice}/{source}', function (Request $request, Tenant $tenant, int $invoice, string $source) {
+Route::get('/clubunio-invoice-preview/{tenant:slug}/{invoice}/{source}', function (Request $request, Tenant $tenant, int $invoice, string $source) {
     abort_unless($request->user('clubunio')->canAccessTenant($tenant), 403);
     app(InvoiceAccessService::class)->visible($request->user('clubunio'), $tenant)->findOrFail($invoice);
 
@@ -218,23 +261,23 @@ Route::get('/clubora-invoice-preview/{tenant:slug}/{invoice}/{source}', function
         ->header('X-Content-Type-Options', 'nosniff');
 })->middleware('auth:clubunio')->whereNumber('invoice')->whereIn('source', ['bexio', 'local'])->name('clubunio.invoices.preview');
 
-Route::get('/clubora-invoice-pdf/{tenant:slug}/{invoice}/{source}', function (Request $request, Tenant $tenant, int $invoice, string $source) {
+Route::get('/clubunio-invoice-pdf/{tenant:slug}/{invoice}/{source}', function (Request $request, Tenant $tenant, int $invoice, string $source) {
     abort_unless($request->user('clubunio')->canAccessTenant($tenant), 403);
 
     return app(InvoicePdfService::class)->open($request->user('clubunio'), $tenant, $invoice, $source === 'bexio', $request->boolean('download'));
 })->middleware('auth:clubunio')->whereNumber('invoice')->whereIn('source', ['bexio', 'local'])->name('clubunio.invoices.pdf');
 
-Route::get('/clubora-expense-documents/{tenant:slug}/{line}', function (Request $request, Tenant $tenant, int $line) {
+Route::get('/clubunio-expense-documents/{tenant:slug}/{line}', function (Request $request, Tenant $tenant, int $line) {
     $data = $request->validate(['index' => 'nullable|integer|min:0|max:100']);
 
     return app(MemberDocumentService::class)->openExpense($request->user('clubunio'), $tenant, $line, $request->boolean('download'), (int) ($data['index'] ?? 0));
 })->middleware('auth:clubunio')->whereNumber('line')->name('clubunio.expenses.document');
 Route::get('/admin/{path?}', fn () => redirect('/'))->where('path', '.*');
 
-Route::get('/clubora-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
+Route::get('/clubunio-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
     return app(MemberDocumentService::class)->open($request->user('clubunio'), $tenant, $document, $request->boolean('download'));
 })->middleware('auth:clubunio')->whereNumber('document')->name('clubunio.documents.open');
 
-Route::get('/clubora-registration-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
+Route::get('/clubunio-registration-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
     return app(MemberDocumentService::class)->openRegistration($request->user('clubunio'), $tenant, $document, $request->boolean('download'));
 })->middleware('auth:clubunio')->whereNumber('document')->name('clubunio.registrations.document');

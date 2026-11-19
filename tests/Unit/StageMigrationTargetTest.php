@@ -36,7 +36,7 @@ class StageMigrationTargetTest extends TestCase
         StageMigrationTarget::authorize($connection, 'clubunio_stage');
         $this->assertTrue(StageMigrationTarget::allows($connection));
         $this->assertFalse(StageMigrationTarget::allows($this->connection('clubunio_stage', 'clubunio_stage')));
-        $this->assertTrue(StageMigrationTarget::allows($this->connection('db_acdf8d_dclubora', 'db_acdf8d_dclubora')));
+        $this->assertFalse(StageMigrationTarget::allows($this->connection('db_acdf8d_dclubora', 'db_acdf8d_dclubora')));
     }
 
     private function connection(string $configured, string $actual): Connection

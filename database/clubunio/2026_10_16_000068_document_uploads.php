@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         abort_unless(\App\ClubUnio\Services\StageMigrationTarget::allows(DB::connection('clubunio')), 409);
-        Schema::connection('clubunio')->create('clubora.document_uploads', function (Blueprint $t) {
+        Schema::connection('clubunio')->create('clubunio.document_uploads', function (Blueprint $t) {
             $t->id();
             $t->bigInteger('tenant_id');
             $t->string('kind', 20);
@@ -35,8 +35,8 @@ return new class extends Migration
             $t->unique(['tenant_id', 'deduplication_key']);
             $t->index(['tenant_id', 'kind', 'object_id', 'state']);
         });
-        DB::connection('clubunio')->statement('ALTER TABLE clubora.sync_work_items ALTER COLUMN created_by DROP NOT NULL');
-        DB::connection('clubunio')->statement('ALTER TABLE clubora.sync_work_events ALTER COLUMN actor_id DROP NOT NULL');
+        DB::connection('clubunio')->statement('ALTER TABLE clubunio.sync_work_items ALTER COLUMN created_by DROP NOT NULL');
+        DB::connection('clubunio')->statement('ALTER TABLE clubunio.sync_work_events ALTER COLUMN actor_id DROP NOT NULL');
     }
 
     public function down(): void

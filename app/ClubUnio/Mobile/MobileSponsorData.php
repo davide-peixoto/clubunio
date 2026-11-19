@@ -3,7 +3,7 @@ namespace App\ClubUnio\Mobile;
 use App\ClubUnio\Models\{Account, Tenant, SponsorRunParticipant};
 use App\ClubUnio\Services\{SponsorRunService, SponsorRunPublicService, MemberAccessService};
 final class MobileSponsorData {
-    public function table(Tenant $tenant, string $table) { return app(SponsorRunService::class)->db()->table('clubora.'.$table)->where('tenant_id', $tenant->id); }
+    public function table(Tenant $tenant, string $table) { return app(SponsorRunService::class)->db()->table('clubunio.'.$table)->where('tenant_id', $tenant->id); }
     public function views(Account $actor, Tenant $tenant): array {
         $views = [['Key'=>'mine','Label'=>'Ich / meine Kinder'],['Key'=>'teams','Label'=>'Meine Mannschaften'],['Key'=>'helper','Label'=>'Helferdienst']];
         if (app(SponsorRunService::class)->allows($actor,$tenant)) $views[]=['Key'=>'manage','Label'=>'Verwaltung'];
@@ -52,7 +52,7 @@ final class MobileSponsorData {
         abort_unless($view||$enter,403);
         $mine=$enter&&(!$view||!$create) ? array_fill_keys($s->participants($actor,$tenant,$event,['scope'=>'mine'])->whereIn('p.id',$ids)->pluck('p.id')->all(),true) : [];
         $team=!$view&&$enter ? array_fill_keys($s->participants($actor,$tenant,$event,['scope'=>'teams'])->whereIn('p.id',$ids)->pluck('p.id')->all(),true) : [];
-        $own=array_fill_keys($access->represented($actor,$tenant)->whereIn('id',$rows->pluck('member_id'))->pluck('clubora.members.id')->all(),true);
+        $own=array_fill_keys($access->represented($actor,$tenant)->whereIn('id',$rows->pluck('member_id'))->pluck('clubunio.members.id')->all(),true);
         $public=app(SponsorRunPublicService::class)->publicEnabled($tenant);
         return $rows->map(fn($p)=>$this->participant($actor,$tenant,$p,$summary[$p->id]??null,[
             'view'=>$view||isset($mine[$p->id])||isset($team[$p->id]),'add'=>$create||($enter&&isset($mine[$p->id])),

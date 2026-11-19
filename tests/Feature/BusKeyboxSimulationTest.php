@@ -35,12 +35,12 @@ class BusKeyboxSimulationTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'keybox-'.Str::random(8), 'name' => 'Fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(10), 'display_name' => 'Fixture', 'active' => true, 'password' => bcrypt('test')])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
-        $this->bus = $this->db->table('clubora.buses')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture bus']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
+        $this->bus = $this->db->table('clubunio.buses')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture bus']);
         foreach (['GENEHMIGT', 'ANGEFRAGT'] as $status) {
-            $this->db->table('clubora.bus_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $status]);
+            $this->db->table('clubunio.bus_statuses')->insert(['tenant_id' => $this->tenant->id, 'code' => $status, 'name' => $status]);
         }
-        $this->reservation = $this->db->table('clubora.bus_reservations')->insertGetId(['tenant_id' => $this->tenant->id, 'bus_id' => $this->bus, 'status' => 'GENEHMIGT',
+        $this->reservation = $this->db->table('clubunio.bus_reservations')->insertGetId(['tenant_id' => $this->tenant->id, 'bus_id' => $this->bus, 'status' => 'GENEHMIGT',
             'starts_at' => now()->addHour()->toIso8601String(), 'ends_at' => now()->addHours(2)->toIso8601String()]);
         Http::preventStrayRequests();
     }
@@ -59,7 +59,7 @@ class BusKeyboxSimulationTest extends TestCase
         $code = $service->issueSimulation($this->actor, $this->tenant, $this->reservation, 1);
         $this->assertStringStartsWith('TEST-', $code);
         $this->assertSame($code, $service->issueSimulation($this->actor, $this->tenant, $this->reservation, 1));
-        $cipher = $this->db->table('clubora.bus_keybox_codes')->where('tenant_id', $this->tenant->id)->value('pin_cipher');
+        $cipher = $this->db->table('clubunio.bus_keybox_codes')->where('tenant_id', $this->tenant->id)->value('pin_cipher');
         $this->assertNotSame($code, $cipher);
         $service->invalidate($this->actor, $this->tenant, $this->reservation);
         $this->assertNull($service->inspect($this->actor, $this->tenant, $this->reservation)['testCode']);
@@ -70,7 +70,7 @@ class BusKeyboxSimulationTest extends TestCase
     {
         $service = app(BusKeyboxAccessService::class);
         $service->configure($this->actor, $this->tenant, null, ['revision' => 0, 'bus_id' => $this->bus, 'name' => 'Simulation', 'active' => true]);
-        $this->db->table('clubora.bus_reservations')->where('id', $this->reservation)->update(['status' => 'ANGEFRAGT']);
+        $this->db->table('clubunio.bus_reservations')->where('id', $this->reservation)->update(['status' => 'ANGEFRAGT']);
         $this->expectException(HttpException::class);
         $service->issueSimulation($this->actor, $this->tenant, $this->reservation, 1);
     }
@@ -82,6 +82,6 @@ class BusKeyboxSimulationTest extends TestCase
         $service->issueSimulation($this->actor, $this->tenant, $this->reservation, 1);
         $service->configure($this->actor, $this->tenant, $box->id, ['revision' => $box->revision, 'bus_id' => $this->bus, 'name' => 'Simulation', 'active' => false]);
         $this->assertFalse($service->inspect($this->actor, $this->tenant, $this->reservation)['simulationEnabled']);
-        $this->assertSame('invalidated',$this->db->table('clubora.bus_keybox_codes')->where('tenant_id',$this->tenant->id)->value('state'));
+        $this->assertSame('invalidated',$this->db->table('clubunio.bus_keybox_codes')->where('tenant_id',$this->tenant->id)->value('state'));
     }
 }

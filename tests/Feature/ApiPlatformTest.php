@@ -49,7 +49,7 @@ class ApiPlatformTest extends TestCase
         $this->tenant = Tenant::create(['name' => 'API fixture', 'slug' => 'api-'.Str::random(15)]);
         $this->admin = new Account;
         $this->admin->forceFill(['username' => 'api-admin-'.Str::random(15), 'display_name' => 'API fixture', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->admin->id, 'role' => 'admin']);
         $this->profile = new AccessProfile;
         $this->profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'API fixture', 'active' => true,
             'permissions' => ['teams.view', 'teams.create', 'teams.update', 'seasons.view', 'competitions.view', 'training_slots.view', 'field_availability.view']])->save();
@@ -101,14 +101,14 @@ class ApiPlatformTest extends TestCase
         $this->withToken($token)->getJson('/api/v1/website/teams')->assertOk();
         $this->withToken($token)->getJson('/api/v1/members')->assertForbidden();
         $this->withToken($token)->postJson('/api/v1/teams', ['name' => 'Never written', 'active' => true], ['Idempotency-Key' => 'read-only-write'])->assertForbidden();
-        $this->assertFalse($this->db->table('clubora.teams')->where('tenant_id', $this->tenant->id)->where('name', 'Never written')->exists());
+        $this->assertFalse($this->db->table('clubunio.teams')->where('tenant_id', $this->tenant->id)->where('name', 'Never written')->exists());
     }
 
     public function test_website_is_tenant_scoped_and_has_no_private_fields(): void
     {
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture season']);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture team', 'laundry_allowance' => 99]);
-        $this->db->table('clubora.team_seasons')->insert(['tenant_id' => $this->tenant->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Fixture label']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture season']);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Fixture team', 'laundry_allowance' => 99]);
+        $this->db->table('clubunio.team_seasons')->insert(['tenant_id' => $this->tenant->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Fixture label']);
         $response = $this->withToken($this->token)->getJson('/api/v1/website/teams')->assertOk()->assertJsonCount(1, 'data');
         $this->assertSame(['id', 'team_id', 'season_id', 'name', 'label', 'season'], array_keys($response->json('data.0')));
         $this->withToken($this->token)->getJson('/api/v1/website/teams?tenant_id=4')->assertUnprocessable();
@@ -124,7 +124,7 @@ class ApiPlatformTest extends TestCase
         $first = $this->withToken($this->token)->postJson('/api/v1/teams', $data, $headers)->assertCreated();
         $second = $this->withToken($this->token)->postJson('/api/v1/teams', $data, $headers)->assertCreated()->assertHeader('Idempotency-Replayed', 'true');
         $this->assertSame($first->json('data.id'), $second->json('data.id'));
-        $this->assertSame(1, $this->db->table('clubora.teams')->where('tenant_id', $this->tenant->id)->where('name', $data['name'])->count());
+        $this->assertSame(1, $this->db->table('clubunio.teams')->where('tenant_id', $this->tenant->id)->where('name', $data['name'])->count());
         $this->withToken($this->token)->postJson('/api/v1/teams', ['name' => 'Different', 'active' => true], $headers)->assertConflict();
         $this->withToken($this->token)->postJson('/api/v1/teams', $data)->assertUnprocessable();
         // A permission removal also blocks an otherwise valid stored replay.
@@ -139,7 +139,7 @@ class ApiPlatformTest extends TestCase
         $session = ['clubunio_context.'.$this->admin->id => ['tenant' => $this->tenant->id, 'revision' => (string) Str::uuid()]];
         $this->actingAs($this->admin, 'clubunio')->withSession($session)->get('/api-docs')->assertOk();
         $this->actingAs($this->admin, 'clubunio')->withSession($session)->get('/api-docs/openapi.json')->assertOk()->assertJsonPath('openapi', '3.0.3');
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->admin->id)->update(['role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->admin->id)->update(['role' => 'office']);
         $this->actingAs($this->admin, 'clubunio')->withSession($session)->get('/api-docs')->assertForbidden();
         $this->assertFalse(app(ApiTokenService::class)->isAdmin($this->admin, $this->tenant));
     }
@@ -149,7 +149,7 @@ class ApiPlatformTest extends TestCase
         $this->integration->forceFill(['rate_limit' => 1])->save();
         $this->withToken($this->token)->getJson('/api/v1/context')->assertOk()->assertHeader('X-Request-ID');
         $this->withToken($this->token)->getJson('/api/v1/context')->assertStatus(429)->assertHeader('Retry-After');
-        $rows = $this->db->table('clubora.api_audit')->where('tenant_id', $this->tenant->id)->get();
+        $rows = $this->db->table('clubunio.api_audit')->where('tenant_id', $this->tenant->id)->get();
         $this->assertStringNotContainsString($this->token, json_encode($rows));
         $this->assertTrue($rows->contains('status', 429));
     }
@@ -178,8 +178,8 @@ class ApiPlatformTest extends TestCase
     {
         config(['clubunio-integrations.azure.tenant_slug' => $this->tenant->slug]);
         $token = $this->documentToken(['documents:upload']);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Upload']);
-        $type = $this->db->table('clubora.document_types')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'API_TEST', 'name' => 'Fixture']);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Upload']);
+        $type = $this->db->table('clubunio.document_types')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'API_TEST', 'name' => 'Fixture']);
         $bytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3x8AAAAASUVORK5CYII=');
         $upload = fn () => UploadedFile::fake()->createWithContent('fixture.png', $bytes);
         $headers = ['Idempotency-Key' => 'api-upload-fixture', 'Accept' => 'application/json'];
@@ -188,11 +188,11 @@ class ApiPlatformTest extends TestCase
         $id = $result->json('data.id');
         $this->withToken($token)->post('/api/v1/uploads/member/'.$member,
             ['type' => $type, 'portal_visible' => '0', 'file' => $upload()], $headers)->assertStatus(202)->assertJsonPath('data.id', $id)->assertHeader('Idempotency-Replayed', 'true');
-        $stored = $this->db->table('clubora.document_uploads')->find($id);
+        $stored = $this->db->table('clubunio.document_uploads')->find($id);
         $this->assertNotSame($bytes, $stored->encrypted_bytes);
         $this->assertSame($bytes, Crypt::decryptString($stored->encrypted_bytes));
-        $this->assertSame(1, $this->db->table('clubora.document_uploads')->where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.sync_work_items')->where('tenant_id', $this->tenant->id)->where('operation', 'azure_upload')->count());
+        $this->assertSame(1, $this->db->table('clubunio.document_uploads')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.sync_work_items')->where('tenant_id', $this->tenant->id)->where('operation', 'azure_upload')->count());
         $this->withToken($token)->getJson('/api/v1/uploads/'.$id)->assertOk()->assertJsonMissingPath('data.encrypted_bytes')->assertJsonMissingPath('data.filename');
         $this->withToken($this->token)->getJson('/api/v1/uploads/'.$id)->assertForbidden();
         $this->withToken($token)->post('/api/v1/uploads/member/'.$member,
@@ -217,9 +217,9 @@ class ApiPlatformTest extends TestCase
         $scopes = ['reports:read', 'reports:export', 'members:read'];
         $this->integration->forceFill(['scopes' => $scopes])->save();
         $token = app(ApiTokenService::class)->issueToken($this->admin, $this->tenant, $this->integration->id, 'Reports fixture', $scopes, now()->addHour())['token'];
-        $status = $this->db->table('clubora.member_statuses')->insertGetId(['tenant_id' => $this->tenant->id,
+        $status = $this->db->table('clubunio.member_statuses')->insertGetId(['tenant_id' => $this->tenant->id,
             'code' => 'MEMBER', 'name' => 'Fixture member', 'restores_membership' => true]);
-        $this->db->table('clubora.members')->insert(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic report',
+        $this->db->table('clubunio.members')->insert(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic report',
             'last_name' => 'Fixture', 'status_id' => $status, 'email' => 'not-in-report@example.invalid']);
         $this->withToken($token)->getJson('/api/v1/reports/members')->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.first_name', 'Synthetic report')->assertJsonMissingPath('data.0.email');

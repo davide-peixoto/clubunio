@@ -23,13 +23,13 @@ $service->authorize($actor, $tenant);
 $operation = $argv[1] ?? 'status';
 if ($operation === 'prepare') {
     $id = app(BexioGeneralSandboxFixtureService::class)->prepareParent($actor, $tenant);
-    if (! $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $id)->exists()) {
+    if (! $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $id)->exists()) {
         $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $id);
         $service->prepareTrial($actor, $tenant, $trial);
     }
 }
 $invoice = Invoice::where('tenant_id', $tenant->id)->whereNull('legacy_id')->where('notes', BexioGeneralSandboxFixtureService::PARENT_NOTES)->firstOrFail();
-$row = $db->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoice->id)->first();
+$row = $db->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoice->id)->first();
 abort_unless($row, 409);
 if ($operation === 'send') {
     $service->send($actor, $tenant, $row->id);
@@ -47,5 +47,5 @@ if ($operation === 'send') {
     throw new LogicException('Unsupported test action');
 }
 $invoice->refresh();
-$row = $db->table('clubora.bexio_sandbox_dispatches')->find($row->id);
+$row = $db->table('clubunio.bexio_sandbox_dispatches')->find($row->id);
 echo json_encode(['invoice_id' => $invoice->id, 'dispatch_id' => $row->id, 'state' => $row->state, 'remote_id' => $row->remote_id, 'status' => $invoice->status?->code, 'workflow' => $invoice->workflowStatus?->code]).PHP_EOL;

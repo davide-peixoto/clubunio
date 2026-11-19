@@ -29,7 +29,7 @@ class TenantDocumentStorage
 
     private function profiles(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.tenant_storage_profiles')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.tenant_storage_profiles')->where('tenant_id', $tenant->id);
     }
 
     public function active(Tenant $tenant): ?object

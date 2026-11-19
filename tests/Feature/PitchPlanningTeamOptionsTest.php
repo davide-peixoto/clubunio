@@ -24,7 +24,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
         config(['database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]]);
         DB::purge('clubunio');
         $this->db = DB::connection('clubunio');
-        $this->db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $this->db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         foreach ([
             'tenants' => 'id integer primary key, slug text, name text',
             'accounts' => 'id integer primary key, active boolean default true',
@@ -46,7 +46,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
             'pitch_competition_teams' => 'tenant_id integer, competition_id integer, team_season_id integer',
             'pitch_requests' => 'id integer primary key, tenant_id integer, team_season_id integer, date text, starts_at text, duration_minutes integer, field_id integer, area_id integer, opponent text, status text, revision integer, requester_account_id integer',
             'pitch_blocks' => 'id integer primary key, tenant_id integer, date text',
-        ] as $table => $columns) $this->db->statement("CREATE TABLE clubora.$table ($columns)");
+        ] as $table => $columns) $this->db->statement("CREATE TABLE clubunio.$table ($columns)");
         $this->db->beginTransaction();
         $this->row('tenants', ['id' => 1, 'slug' => 'options-one', 'name' => 'Options one']);
         $this->row('tenants', ['id' => 2, 'slug' => 'options-two', 'name' => 'Options two']);
@@ -92,12 +92,12 @@ class PitchPlanningTeamOptionsTest extends TestCase
     private function row(string $table, array $data): void
     {
         if (! in_array($table, ['tenants', 'accounts', 'account_roles'], true)) $data += ['tenant_id' => 1];
-        $this->db->table('clubora.'.$table)->insert($data);
+        $this->db->table('clubunio.'.$table)->insert($data);
     }
 
     private function setting(string $value): void
     {
-        $this->db->table('clubora.tenant_settings')->updateOrInsert(['tenant_id' => 1, 'area' => 'general', 'key' => 'SaisonID'],
+        $this->db->table('clubunio.tenant_settings')->updateOrInsert(['tenant_id' => 1, 'area' => 'general', 'key' => 'SaisonID'],
             ['encrypted_value' => Crypt::encryptString($value)]);
         $this->clearSeason();
     }
@@ -109,7 +109,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
 
     private function role(string $role, ?int $profile = null): void
     {
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', 1)->update(['role' => $role, 'access_profile_id' => $profile]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', 1)->update(['role' => $role, 'access_profile_id' => $profile]);
     }
 
     private function plannerOptions(): array
@@ -174,14 +174,14 @@ class PitchPlanningTeamOptionsTest extends TestCase
             $this->assertSame([], $this->plannerOptions()['teams'], $value);
         }
         $this->setting('700');
-        $this->db->table('clubora.seasons')->where('id', 10)->update(['active' => false]);
+        $this->db->table('clubunio.seasons')->where('id', 10)->update(['active' => false]);
         $this->assertSame([], $this->plannerOptions()['teams']);
-        $this->db->table('clubora.seasons')->where('id', 10)->update(['active' => true]);
-        $this->db->table('clubora.tenant_settings')->delete();
+        $this->db->table('clubunio.seasons')->where('id', 10)->update(['active' => true]);
+        $this->db->table('clubunio.tenant_settings')->delete();
         $this->clearSeason();
         $this->assertSame([], $this->plannerOptions()['teams']);
         $this->setting('700');
-        $this->db->table('clubora.tenant_settings')->update(['encrypted_value' => 'not-ciphertext']);
+        $this->db->table('clubunio.tenant_settings')->update(['encrypted_value' => 'not-ciphertext']);
         $this->clearSeason();
         $this->assertSame([], $this->plannerOptions()['teams']);
     }
@@ -190,7 +190,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
     {
         $this->row('tenant_settings', ['area' => 'general', 'key' => 'SaisonID', 'encrypted_value' => Crypt::encryptString('20')]);
         $this->assertSame([], $this->plannerOptions()['teams']);
-        $this->db->table('clubora.tenant_settings')->delete();
+        $this->db->table('clubunio.tenant_settings')->delete();
         $this->setting('700');
         $this->row('seasons', ['id' => 40, 'legacy_id' => 700, 'name' => 'Duplicate imported ID']);
         $this->assertSame([], $this->plannerOptions()['teams']);
@@ -214,17 +214,17 @@ class PitchPlanningTeamOptionsTest extends TestCase
         $this->assignments();
         foreach (['trainer' => 'team_staff', 'technical_lead' => 'technical_leads'] as $role => $table) {
             $this->role($role);
-            $this->db->table('clubora.'.$table)->where('team_season_id', 101)->update(['active' => false]);
+            $this->db->table('clubunio.'.$table)->where('team_season_id', 101)->update(['active' => false]);
             $this->assertSame([], $this->plannerOptions()['teams']);
-            $this->db->table('clubora.'.$table)->where('team_season_id', 101)->update(['active' => true]);
+            $this->db->table('clubunio.'.$table)->where('team_season_id', 101)->update(['active' => true]);
             foreach ([['state' => 'pending'], ['kind' => 'parent']] as $change) {
-                $this->db->table('clubora.account_member_links')->update($change);
+                $this->db->table('clubunio.account_member_links')->update($change);
                 $this->assertSame([], $this->plannerOptions()['teams']);
-                $this->db->table('clubora.account_member_links')->update(['state' => 'approved', 'kind' => 'self']);
+                $this->db->table('clubunio.account_member_links')->update(['state' => 'approved', 'kind' => 'self']);
             }
         }
         $this->role('trainer');
-        $this->db->table('clubora.staff_functions')->where('id', 1)->update(['active' => false]);
+        $this->db->table('clubunio.staff_functions')->where('id', 1)->update(['active' => false]);
         $this->assertSame([], $this->plannerOptions()['teams']);
     }
 
@@ -247,7 +247,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
     public function test_missing_membership_and_inactive_account_are_denied(): void
     {
         foreach ([Tenant::findOrFail(2), $this->tenant] as $tenant) {
-            if ($tenant->id === $this->tenant->id) $this->db->table('clubora.accounts')->update(['active' => false]);
+            if ($tenant->id === $this->tenant->id) $this->db->table('clubunio.accounts')->update(['active' => false]);
             try {
                 $this->service->options($this->actor, $tenant);
                 $this->fail('Expected forbidden options.');
@@ -284,7 +284,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
     public function test_options_are_read_only_bounded_and_do_not_rewrite_names_or_merge_distinct_ids(): void
     {
         $this->row('team_seasons', ['id' => 110, 'team_id' => 1, 'season_id' => 10]);
-        $this->db->table('clubora.teams')->where('id', 1)->update(['name' => 'Original / U18']);
+        $this->db->table('clubunio.teams')->where('id', 1)->update(['name' => 'Original / U18']);
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         $options = $this->plannerOptions();
@@ -293,7 +293,7 @@ class PitchPlanningTeamOptionsTest extends TestCase
         $this->assertSame([101, 103, 110], array_column($options['teams'], 'id'));
         $this->assertSame('Original / U18 (2030/31)', $options['teams'][0]['name']);
         $this->assertSame($options['teams'][0]['name'], $options['teams'][2]['name']);
-        $this->assertSame('Original / U18', $this->db->table('clubora.teams')->where('id', 1)->value('name'));
+        $this->assertSame('Original / U18', $this->db->table('clubunio.teams')->where('id', 1)->value('name'));
         foreach (range(200, 219) as $id) $this->row('team_seasons', ['id' => $id, 'team_id' => 1, 'season_id' => 10]);
         $this->clearSeason();
         $this->db->flushQueryLog();

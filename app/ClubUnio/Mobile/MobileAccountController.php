@@ -4,6 +4,8 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Services\ModulePermissionService;
+use App\ClubUnio\Services\ProfilePhotoService;
+use App\ClubUnio\Services\TenantDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,14 +18,37 @@ final class MobileAccountController
     {
         $actor = $request->attributes->get('mobile.actor');
         $language = app(MobileLanguages::class)->forAccount($actor);
+        $photoAllowed = app(ProfilePhotoService::class)->canUpload($actor, app(TenantDomainService::class)->resolve($request));
         return response()->json(['data' => ['id' => (int) $actor->id,
             'username' => $actor->username, 'name' => $actor->display_name,
             'language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback'],
             'recovery_tenants' => $this->recoveryTenants($request, $actor),
             'keybox_tenants' => app(MobileKeyboxService::class)->profileTenants($actor,
                 app(\App\ClubUnio\Services\TenantDomainService::class)->resolve($request)),
-            'password_change' => true, 'push' => app(MobilePushReady::class)->available($request), 'registration' => false,
-            'password_reset' => false]]);
+            'password_change' => !config('clubunio-verein-oidc.only'),
+            'keycloak_account_url' => config('clubunio-verein-oidc.only') ? config('clubunio-verein-oidc.issuer').'/account/' : null, 'push' => app(MobilePushReady::class)->available($request, registration: true), 'registration' => false,
+            'password_reset' => false, 'photo_upload_allowed' => $photoAllowed]]);
+    }
+
+    public function photo(Request $request, ProfilePhotoService $photos)
+    {
+        return $photos->response($photos->personal(
+            $request->attributes->get('mobile.actor'), app(TenantDomainService::class)->resolve($request),
+        ));
+    }
+
+    public function uploadPhoto(Request $request, ProfilePhotoService $photos)
+    {
+        abort_unless($photos->enabled(), 404);
+        $actor = $request->attributes->get('mobile.actor');
+        $key = 'mobile-profile-photo:'.$actor->id;
+        abort_if(RateLimiter::tooManyAttempts($key, 8), 429);
+        RateLimiter::hit($key, 3600);
+        $request->validate(['file' => 'required|file|max:5120']);
+
+        return response()->json(['data' => ['state' => $photos->upload(
+            $actor, app(TenantDomainService::class)->resolve($request), $request->file('file'),
+        )]]);
     }
 
     private function recoveryTenants(Request $request, Account $actor): array
@@ -45,6 +70,7 @@ final class MobileAccountController
 
     public function password(Request $request)
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         $data = $request->validate(['current_password' => 'required|string|max:4096',
             'password' => 'required|string|min:12|max:72|confirmed',
             'password_confirmation' => 'required|string|max:72']);
@@ -62,7 +88,7 @@ final class MobileAccountController
                 throw ValidationException::withMessages(['current_password' => 'Aktuelles Passwort ungueltig.']);
             }
             $fresh->forceFill(['password' => Hash::make($data['password'])])->save();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('account_id', $actor->id)
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('account_id', $actor->id)
                 ->whereNull('revoked_at')->update(['revoked_at' => now()->toIso8601String()]);
         });
         return response()->json(['data' => ['reauthentication_required' => true]]);
@@ -88,6 +114,9 @@ final class MobileAccountController
             }
         }
         $visibleKeys = app(\App\ClubUnio\Services\MobileModuleSettings::class)->visibleKeys($actor, $tenant);
+        $role = app(\App\ClubUnio\Services\MemberAccessService::class)->membership($actor, $tenant)?->role;
+        $showWork = in_array($role, ['admin', 'office', 'technical_lead'], true);
+        $permissions = app(ModulePermissionService::class);
         // Presentation compatibility only; feature claims never grant permissions.
         $supported = explode(',', substr((string) $request->header('X-ClubUnio-Mobile-Features', ''), 0, 512));
         $pitchAllowed = in_array('Platzverfugbarkeit', $visibleKeys, true)
@@ -122,9 +151,35 @@ final class MobileAccountController
                     'BusReservationen' => config('clubunio-mobile.native_bus_enabled') && in_array('bus-v1', $supported, true),
                     'Dokumente' => config('clubunio-mobile.native_documents_enabled') && in_array('member-documents-v1', $supported, true), default => false,
                 };
-                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native]
+                $work = $showWork && $native && match ($key) {
+                    'Mitglieder' => $permissions->allows($actor, $tenant, 'member_changes', 'approve'),
+                    'MitgliederAnmeldungen', 'BusReservationen', 'Dokumente' => true,
+                    'Platzverfugbarkeit' => $pitchNative && ($role !== 'technical_lead'
+                        || app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($actor, $tenant)),
+                    'Spesen' => $permissions->allows($actor, $tenant, 'expenses', 'approve') || $role === 'technical_lead',
+                    default => false,
+                };
+                $count = null;
+                if ($work && in_array('today-counts-v1', $supported, true)) {
+                    try {
+                        $count = app(MobileWorkCounts::class)->count($key, $actor, $tenant);
+                    } catch (\Illuminate\Database\QueryException $error) {
+                        report($error);
+                    }
+                }
+                $modules[] = ['key' => $key, 'available' => $key === 'Teamplanung' || $native, 'native' => $native, 'work' => $work]
+                    + ($count === null ? [] : ['work_count' => $count])
                     + ($key === 'Platzverfugbarkeit' ? ['pitch_planning' => $pitchNative, 'facilities' => $facilitiesNative] : []);
             }
+        }
+        if (in_array('family-intake-v1', $supported, true) && $role !== null && $role !== 'profile'
+            && app(\App\ClubUnio\Services\PublicWebService::class)->enabled($tenant, 'registration')) {
+            foreach ($modules as &$module) {
+                if ($module['key'] === 'Mitglieder' && $module['native']) {
+                    $module['membership_intake'] = true;
+                }
+            }
+            unset($module);
         }
         $modules[] = ['key' => 'Profil', 'available' => true];
         return response()->json(['data' => ['modules' => $modules]]);

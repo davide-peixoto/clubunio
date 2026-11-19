@@ -4,7 +4,7 @@ namespace App\ClubUnio\Models;
 
 class MemberChangeRequest extends CatalogModel
 {
-    protected $hidden = ['snapshot_encrypted', 'member_version'];
+    protected $hidden = ['snapshot_encrypted', 'member_version', 'portrait_encrypted'];
 
     protected $casts = ['revision' => 'integer', 'created_at' => 'datetime', 'updated_at' => 'datetime', 'reviewed_at' => 'datetime'];
 

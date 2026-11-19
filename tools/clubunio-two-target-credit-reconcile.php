@@ -63,7 +63,7 @@ foreach ($targets as $role => [$id, $remoteId, $amount, $remaining]) {
         $credit = $credits->allocate($actor, $tenant, $credit->id, $credit->fresh()->revision, $id);
     }
     $check = $reconciliation->preview($actor, $tenant, 'invoice', $id);
-    $state = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $check)->value('state');
+    $state = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $check)->value('state');
     if ($state === 'ready') {
         $reconciliation->apply($actor, $tenant, $check);
     } else {

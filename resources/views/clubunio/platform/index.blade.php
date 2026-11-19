@@ -2,8 +2,13 @@
 @section('content')
 <div class="platform-heading"><div><span class="platform-eyebrow">{{ __('Plattformverwaltung') }}</span><h1>{{ __('Vereine') }}</h1></div><a class="primary" href="#new-club">@svg('heroicon-o-plus') {{ __('Verein erstellen') }}</a></div>
 <form method="get" class="platform-search"><label>{{ __('Verein suchen') }}<input type="search" name="q" value="{{ $q }}" maxlength="100"></label><button class="icon-button" title="{{ __('Suchen') }}" aria-label="{{ __('Suchen') }}">@svg('heroicon-o-magnifying-glass')</button>@if($q)<a href="{{ route('clubunio.platform.index') }}">{{ __('Zurücksetzen') }}</a>@endif</form>
-<div class="table-scroll"><table><thead><tr><th>{{ __('Verein') }}</th><th>{{ __('Kennung') }}</th><th>{{ __('Benutzerzuordnungen') }}</th><th></th></tr></thead><tbody>
-@forelse($rows as $row)<tr><td><a href="{{ route('clubunio.platform.show',$row->id) }}">{{ $row->name }}</a></td><td>{{ $row->slug }}</td><td>{{ $row->tenant_accounts_count }}</td><td><a class="icon-button" href="{{ route('clubunio.platform.show',$row->id) }}" title="{{ __('Verein bearbeiten') }}" aria-label="{{ __(':name bearbeiten', ['name' => $row->name]) }}">@svg('heroicon-o-pencil-square')</a></td></tr>@empty<tr><td colspan="4">{{ __('Keine Vereine gefunden.') }}</td></tr>@endforelse
+<div class="table-scroll"><table><thead><tr><th>{{ __('Verein') }}</th><th>{{ __('Kennung') }}</th><th>{{ __('Benutzerzuordnungen') }}</th><th>{{ trans('platform_metrics.license') }}</th><th>{{ trans('platform_metrics.members') }}</th><th>{{ trans('platform_metrics.errors_7') }}</th><th>{{ trans('platform_metrics.last_success') }}</th><th></th></tr></thead><tbody>
+@forelse($rows as $row)<tr><td><a href="{{ route('clubunio.platform.show',$row->id) }}">{{ $row->name }}</a></td><td>{{ $row->slug }}</td><td>{{ $row->tenant_accounts_count }}</td>
+@php($summary = $metrics[$row->id])
+<td>{{ trans('platform_metrics.plans.'.($row->license_plan ?: 'unassigned')) }}</td>
+<td>@include('clubunio.platform.member-count', ['tenant' => $row, 'count' => $summary['members']])</td>
+<td>{{ $summary['errors_7'] }}</td>
+<td>{{ $summary['last_success'] ? \Illuminate\Support\Carbon::parse($summary['last_success'])->timezone('Europe/Zurich')->isoFormat('lll') : trans('platform_metrics.no_success') }}</td><td><a class="icon-button" href="{{ route('clubunio.platform.show',$row->id) }}" title="{{ __('Verein bearbeiten') }}" aria-label="{{ __(':name bearbeiten', ['name' => $row->name]) }}">@svg('heroicon-o-pencil-square')</a></td></tr>@empty<tr><td colspan="8">{{ __('Keine Vereine gefunden.') }}</td></tr>@endforelse
 </tbody></table></div>{{ $rows->links('pagination::simple-default') }}
 <section id="new-club" class="platform-section"><h2>{{ __('Neuer Verein') }}</h2><form method="post" action="{{ route('clubunio.platform.create') }}" class="platform-form">@csrf
 <label>{{ __('Vereinsname') }}<input name="name" required maxlength="200" value="{{ old('name') }}"></label>

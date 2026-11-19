@@ -15,16 +15,16 @@ return new class extends Migration
         }
         $db->statement("SET LOCAL lock_timeout = '15s'");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.pitch_request_idempotency (
- tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
- account_id bigint NOT NULL REFERENCES clubora.accounts(id),
+CREATE TABLE clubunio.pitch_request_idempotency (
+ tenant_id bigint NOT NULL REFERENCES clubunio.tenants(id),
+ account_id bigint NOT NULL REFERENCES clubunio.accounts(id),
  key_hash char(64) NOT NULL CHECK (key_hash ~ '^[a-f0-9]{64}$'),
  payload_hash char(64) NOT NULL CHECK (payload_hash ~ '^[a-f0-9]{64}$'),
  response_encrypted text NOT NULL,
  created_at timestamptz NOT NULL DEFAULT now(),
  PRIMARY KEY (tenant_id,account_id,key_hash)
 );
-REVOKE ALL ON clubora.pitch_request_idempotency FROM PUBLIC;
+REVOKE ALL ON clubunio.pitch_request_idempotency FROM PUBLIC;
 SQL);
     }
 

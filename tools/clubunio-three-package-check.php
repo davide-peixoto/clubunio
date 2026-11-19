@@ -28,7 +28,7 @@ if ($operation === 'inspect') {
         $plan = json_decode($row->PlanJson, true, 64, JSON_THROW_ON_ERROR);
         $shape = json_encode(['phases' => array_values(array_unique(array_column($plan['exercises'], 'phase'))), 'diagramKeys' => array_keys($plan['exercises'][0]['diagram'] ?? []),
             'diagramDescription' => is_string($plan['exercises'][0]['diagram']['description'] ?? null), 'durationSum' => array_sum(array_column($plan['exercises'], 'durationMinutes')),
-            'duration' => $row->DurationMinutes, 'ownerMatches' => $db->table('clubora.accounts')->whereRaw('lower(username)=lower(?)', [$row->Username])->count(),
+            'duration' => $row->DurationMinutes, 'ownerMatches' => $db->table('clubunio.accounts')->whereRaw('lower(username)=lower(?)', [$row->Username])->count(),
             'hasSourceTeam' => $row->SharedTeamSaisonID !== null]);
         $shapes[$shape] = ($shapes[$shape] ?? 0) + 1;
     }
@@ -43,10 +43,10 @@ if ($operation === 'inspect') {
     $sample = json_decode($db->table('legacy_prod.TrainingPlannerAuditLog')->where('Status', 'success')->value('PlanJson'), true, 64, JSON_THROW_ON_ERROR)['exercises'][0];
     echo json_encode(['easier_type' => get_debug_type($sample['easier']), 'easier_keys' => is_array($sample['easier']) ? array_keys($sample['easier']) : [],
         'harder_type' => get_debug_type($sample['harder']), 'harder_keys' => is_array($sample['harder']) ? array_keys($sample['harder']) : []], JSON_THROW_ON_ERROR).PHP_EOL;
-    echo json_encode($db->table('clubora.buses')->where('tenant_id', $tenant->id)->get(['id', 'legacy_id', 'name', 'active']), JSON_THROW_ON_ERROR).PHP_EOL;
+    echo json_encode($db->table('clubunio.buses')->where('tenant_id', $tenant->id)->get(['id', 'legacy_id', 'name', 'active']), JSON_THROW_ON_ERROR).PHP_EOL;
 } elseif ($operation === 'stage') {
     echo json_encode(app(LegacyTrainingPlanImporter::class)->stage($actor, $tenant), JSON_THROW_ON_ERROR).PHP_EOL;
-    echo json_encode($db->table('clubora.legacy_training_plans')->where('tenant_id', $tenant->id)->selectRaw('state,error_code,count(*) AS total')->groupBy('state', 'error_code')->get(), JSON_THROW_ON_ERROR).PHP_EOL;
+    echo json_encode($db->table('clubunio.legacy_training_plans')->where('tenant_id', $tenant->id)->selectRaw('state,error_code,count(*) AS total')->groupBy('state', 'error_code')->get(), JSON_THROW_ON_ERROR).PHP_EOL;
 } elseif ($operation === 'import-unambiguous') {
     $service = app(LegacyTrainingPlanImporter::class);
     $rows = LegacyTrainingPlan::where('tenant_id', $tenant->id)->where('state', 'review')->whereNotNull('suggested_owner_id')->whereNotNull('suggested_team_season_id')->get();

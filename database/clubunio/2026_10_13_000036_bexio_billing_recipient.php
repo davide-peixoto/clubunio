@@ -14,7 +14,7 @@ return new class extends Migration
             throw new LogicException('Unexpected target');
         }
         $db->unprepared(<<<'SQL'
-ALTER TABLE clubora.members
+ALTER TABLE clubunio.members
  ADD COLUMN billing_bexio_contact_id integer CHECK (billing_bexio_contact_id > 0),
  ADD COLUMN billing_bexio_identity_hash text,
  ADD COLUMN billing_bexio_revision integer NOT NULL DEFAULT 0;

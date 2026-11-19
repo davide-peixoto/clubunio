@@ -114,7 +114,7 @@ class WorkspaceEditingTest extends TestCase
     public function test_settings_overview_is_not_accessible_after_role_revocation(): void
     {
         $this->get('/configuration')->assertOk();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->assertFalse(SettingsOverview::canAccess());
         $this->get('/configuration')->assertForbidden();
     }
@@ -146,7 +146,7 @@ class WorkspaceEditingTest extends TestCase
         $source = $save->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
         $member = new Member;
         $member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Synthetic'])->save();
-        $function = $this->db->table('clubora.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'coach', 'name' => 'Coach']);
+        $function = $this->db->table('clubunio.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'coach', 'name' => 'Coach']);
         foreach ([TeamPlayer::class, TeamStaff::class, TechnicalLead::class] as $model) {
             $save->save($this->actor, $this->tenant, $model, null, ['member_id' => $member->id, 'team_season_id' => $source->id, 'active' => true]
                 + ($model === TeamStaff::class ? ['staff_function_id' => $function] : []));
@@ -154,7 +154,7 @@ class WorkspaceEditingTest extends TestCase
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         $plan = app(SeasonAssignmentTransferService::class)->preview($this->actor, $this->tenant, $this->season->id, $target->id);
-        $memberReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."members"'));
+        $memberReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubunio"."members"'));
         $this->assertCount(2, $memberReads);
         $this->db->disableQueryLog();
         $sources = TeamSeason::where('tenant_id', $this->tenant->id)->where('season_id', $this->season->id)->where('active', true)->with('team')->orderBy('id')->get();
@@ -181,7 +181,7 @@ class WorkspaceEditingTest extends TestCase
         $this->db->enableQueryLog();
         $this->db->flushQueryLog();
         $page->callMountedTableAction()->assertHasNoTableActionErrors();
-        $batchReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubora"."team_seasons"')
+        $batchReads = array_filter($this->db->getQueryLog(), fn ($q) => str_contains($q['query'], 'from "clubunio"."team_seasons"')
             && str_contains($q['query'], '"id" in (') && str_contains($q['query'], 'for update'));
         $this->assertCount(1, $batchReads);
         $this->db->disableQueryLog();
@@ -199,7 +199,7 @@ class WorkspaceEditingTest extends TestCase
         $member = new Member;
         $member->forceFill(['tenant_id' => $this->tenant->id, 'first_name' => 'Fixture', 'last_name' => 'Player'])->save();
         app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamPlayer::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'active' => true]);
-        $function = $this->db->table('clubora.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'fixture-coach', 'name' => 'Fixture coach', 'active' => true]);
+        $function = $this->db->table('clubunio.staff_functions')->insertGetId(['tenant_id' => $this->tenant->id, 'code' => 'fixture-coach', 'name' => 'Fixture coach', 'active' => true]);
         app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamStaff::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'staff_function_id' => $function, 'active' => true]);
         app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TechnicalLead::class, null, ['member_id' => $member->id, 'team_season_id' => $team->id, 'active' => true]);
         $plan = $service->preview($this->actor, $this->tenant, $this->season->id, $target->id);
@@ -231,7 +231,7 @@ class WorkspaceEditingTest extends TestCase
         $component->callMountedTableAction()->assertHasTableActionErrors();
         $this->assertTrue($a->fresh()->active);
         $this->assertTrue($b->fresh()->active);
-        $this->assertSame(2, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(2, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_season_transfer_only_selected_teams_and_rejects_invalid_selection(): void
@@ -266,10 +266,10 @@ class WorkspaceEditingTest extends TestCase
     public function test_history_redacts_unknown_fields_and_rechecks_permissions(): void
     {
         $record = app(TeamAssignmentService::class)->save($this->actor, $this->tenant, TeamSeason::class, null, ['team_id' => $this->team->id, 'season_id' => $this->season->id, 'active' => true]);
-        $this->db->table('clubora.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'team_seasons', 'object_id' => $record->id, 'after_value' => json_encode(['active' => false, 'api_key' => 'NEVER_SHOW', 'iban_encrypted' => 'NEVER_SHOW'])]);
+        $this->db->table('clubunio.object_changes')->insert(['tenant_id' => $this->tenant->id, 'actor_id' => $this->actor->id, 'object_type' => 'team_seasons', 'object_id' => $record->id, 'after_value' => json_encode(['active' => false, 'api_key' => 'NEVER_SHOW', 'iban_encrypted' => 'NEVER_SHOW'])]);
         $service = app(DossierHistoryService::class);
         $this->assertStringNotContainsString('NEVER_SHOW', json_encode($service->entries($this->actor, $this->tenant, $record)));
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         $service->entries($this->actor, $this->tenant, $record);
     }
@@ -290,7 +290,7 @@ class WorkspaceEditingTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertFalse($destination->fresh()->active);
         }
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $this->expectException(HttpException::class);
         $service->apply($this->actor, $this->tenant, $this->season->id, $target->id, $plan['token']);
     }
@@ -315,7 +315,7 @@ class WorkspaceEditingTest extends TestCase
         $this->tenant = Tenant::create(['slug' => 'workspace-'.Str::random(12), 'name' => 'Fixture']);
         $this->actor = new Account;
         $this->actor->forceFill(['username' => Str::random(20), 'display_name' => 'Fixture', 'password' => bcrypt('fixture'), 'active' => true])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $this->actor->id, 'role' => 'office']);
         $this->season = new Season;
         $this->season->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Fixture Season', 'active' => true])->save();
         $this->team = new Team;
@@ -370,7 +370,7 @@ class WorkspaceEditingTest extends TestCase
         $this->assertSame($this->season->id, $record->season_id);
         $component->callTableAction('editAssignment', $record, data: ['active' => false])->assertHasNoTableActionErrors();
         $this->assertFalse($record->fresh()->active);
-        $this->assertGreaterThan(0, $this->db->table('clubora.object_changes')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertGreaterThan(0, $this->db->table('clubunio.object_changes')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_copy_requires_a_different_assignment_and_keeps_the_source(): void
@@ -442,7 +442,7 @@ class WorkspaceEditingTest extends TestCase
     public function test_revoked_role_cannot_submit_an_open_dialog(): void
     {
         $component = $this->manager()->mountTableAction('addAssignment');
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actor->id)->update(['role' => 'trainer']);
         $component->call('saveAssignment', null, ['team_id' => $this->team->id, 'active' => true])->assertStatus(403);
     }
 

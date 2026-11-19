@@ -10,9 +10,9 @@ return new class extends Migration {
         if ($db->getDriverName() !== 'pgsql' || !\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
             throw new LogicException('Reviewed ClubUnio PostgreSQL required');
         }
-        $db->statement("CREATE TABLE clubora.mobile_planning_commands (
-            tenant_id bigint NOT NULL REFERENCES clubora.tenants(id),
-            account_id bigint NOT NULL REFERENCES clubora.accounts(id),
+        $db->statement("CREATE TABLE clubunio.mobile_planning_commands (
+            tenant_id bigint NOT NULL REFERENCES clubunio.tenants(id),
+            account_id bigint NOT NULL REFERENCES clubunio.accounts(id),
             command_key uuid NOT NULL, operation varchar(30) NOT NULL,
             fingerprint char(64) NOT NULL, event_ids jsonb NOT NULL,
             created_at timestamptz NOT NULL DEFAULT now(),

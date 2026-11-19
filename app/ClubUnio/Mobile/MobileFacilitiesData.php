@@ -22,13 +22,13 @@ final class MobileFacilitiesData
         $permissions = app(ModulePermissionService::class);
         abort_unless($this->canRead($actor, $tenant), 403);
         $db = DB::connection('clubunio');
-        $statuses = $db->table('clubora.facility_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->orderBy('name')->orderBy('id')->get();
+        $statuses = $db->table('clubunio.facility_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->orderBy('name')->orderBy('id')->get();
         $neutral = FacilityPlanningMode::neutral($tenant);
-        $labels = $db->table('clubora.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('active', true)
+        $labels = $db->table('clubunio.training_options')->where('tenant_id', $tenant->id)->where('category', 'field')->where('active', true)
             ->when($neutral, fn ($query) => $query->orderBy('sort_order')->orderBy('id'))->pluck('name', 'id');
         $statusById = ($neutral ? $statuses->where('active', true) : $statuses)->keyBy('id');
         $canEdit = $permissions->allows($actor, $tenant, 'field_availability', 'update');
-        $rows = $db->table('clubora.field_availabilities')->where('tenant_id', $tenant->id)->where('active', true)->whereIn('field_id', $labels->keys())->orderBy('field_id')->get();
+        $rows = $db->table('clubunio.field_availabilities')->where('tenant_id', $tenant->id)->where('active', true)->whereIn('field_id', $labels->keys())->orderBy('field_id')->get();
         if ($neutral) {
             $order = $labels->keys()->flip();
             $rows = $rows->sortBy(fn ($field) => $order[$field->field_id])->values();

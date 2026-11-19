@@ -25,7 +25,7 @@ class MobilePenaltyTest extends TestCase
         $this->db->beginTransaction(); $this->db->statement("SET LOCAL application_name TO 'clubunio-mobile-penalty-test'");
         $this->tenant = Tenant::create(['slug' => 'penalty-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic challenge']);
         $this->foreign = Tenant::create(['slug' => 'penalty-foreign-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic foreign']);
-        foreach ([$this->tenant, $this->foreign] as $tenant) $this->db->table('clubora.mobile_module_options')->insert(['tenant_id' => $tenant->id, 'key' => 'Penalty', 'name' => 'Vereinschallenge']);
+        foreach ([$this->tenant, $this->foreign] as $tenant) $this->db->table('clubunio.mobile_module_options')->insert(['tenant_id' => $tenant->id, 'key' => 'Penalty', 'name' => 'Vereinschallenge']);
         foreach (['admin', 'member', 'other'] as $role) {
             $account = new Account; $account->forceFill(['username' => 'penalty-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic '.$role,
                 'active' => true, 'api_only' => false, 'password' => bcrypt('fixture')])->save();
@@ -41,13 +41,13 @@ class MobilePenaltyTest extends TestCase
         foreach ($this->actors as $actor) $this->db->table('pg_temp.penalty_parent_accounts')->insert(['tenant_id' => $this->tenant->id, 'account_id' => $actor->id]);
         $this->db->table('pg_temp.penalty_parent_accounts')->insert(['tenant_id' => $this->foreign->id, 'account_id' => $this->actors['member']->id]);
         $queries = $this->db->pretend(fn () => (require database_path('clubunio/2026_11_04_000600_mobile_penalty_challenge.php'))->up());
-        $sql = str_replace(['CREATE TABLE clubora.mobile_penalty_', 'clubora.mobile_penalty_', 'REFERENCES clubora.tenants', 'REFERENCES clubora.tenant_accounts'],
+        $sql = str_replace(['CREATE TABLE clubunio.mobile_penalty_', 'clubunio.mobile_penalty_', 'REFERENCES clubunio.tenants', 'REFERENCES clubunio.tenant_accounts'],
             ['CREATE TEMP TABLE mobile_penalty_', 'pg_temp.mobile_penalty_', 'REFERENCES pg_temp.penalty_parent_tenants', 'REFERENCES pg_temp.penalty_parent_accounts'], $queries[0]['query']);
         $this->db->unprepared($sql);
         $this->grammar = $this->db->getQueryGrammar();
         $this->db->setQueryGrammar(new class($this->db) extends \Illuminate\Database\Query\Grammars\PostgresGrammar {
-            public function wrapTable($table, $prefix = null) { return parent::wrapTable(str_replace('clubora.mobile_penalty_', 'pg_temp.mobile_penalty_', $table), $prefix); }
-            public function wrap($value, $prefixAlias = false) { return parent::wrap(is_string($value) ? str_replace('clubora.mobile_penalty_', 'pg_temp.mobile_penalty_', $value) : $value, $prefixAlias); }
+            public function wrapTable($table, $prefix = null) { return parent::wrapTable(str_replace('clubunio.mobile_penalty_', 'pg_temp.mobile_penalty_', $table), $prefix); }
+            public function wrap($value, $prefixAlias = false) { return parent::wrap(is_string($value) ? str_replace('clubunio.mobile_penalty_', 'pg_temp.mobile_penalty_', $value) : $value, $prefixAlias); }
         });
         $this->base = '/api/mobile/v1/clubs/'.$this->tenant->id.'/penalty';
         $this->withToken($this->tokens['member']);
@@ -59,9 +59,9 @@ class MobilePenaltyTest extends TestCase
     }
     private function membership(Tenant $tenant, Account $actor, string $role): void
     {
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => $role, 'portal_enabled' => true]);
-        $member = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Player', 'birth_date' => '1980-01-01']);
-        $this->db->table('clubora.account_member_links')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'synthetic-test']);
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => $role, 'portal_enabled' => true]);
+        $member = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $tenant->id, 'first_name' => 'Synthetic', 'last_name' => 'Player', 'birth_date' => '1980-01-01']);
+        $this->db->table('clubunio.account_member_links')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'member_id' => $member, 'kind' => 'self', 'state' => 'approved', 'source' => 'synthetic-test']);
     }
     private function start(string $mode = 'shoot', ?string $key = null): array
     {
@@ -69,7 +69,7 @@ class MobilePenaltyTest extends TestCase
     }
     private function age(string $id, int $seconds = 10): void
     {
-        $this->db->table('clubora.mobile_penalty_sessions')->where('tenant_id', $this->tenant->id)->where('id', $id)
+        $this->db->table('clubunio.mobile_penalty_sessions')->where('tenant_id', $this->tenant->id)->where('id', $id)
             ->update(['created_at' => now()->subSeconds($seconds)->toIso8601String()]);
     }
     public function test_original_scoring_both_modes_exact_finish_replay_and_best_only(): void
@@ -102,7 +102,7 @@ class MobilePenaltyTest extends TestCase
         $this->withToken($this->tokens['member']);
         $foreign = str_replace('/clubs/'.$this->tenant->id.'/', '/clubs/'.$this->foreign->id.'/', $finish);
         $this->postJson($foreign, ['choices' => array_fill(0, 10, 0)])->assertNotFound();
-        $this->db->table('clubora.mobile_penalty_sessions')->where('id', $round['sessionId'])->update(['expires_at' => now()->subSecond()->toIso8601String()]);
+        $this->db->table('clubunio.mobile_penalty_sessions')->where('id', $round['sessionId'])->update(['expires_at' => now()->subSecond()->toIso8601String()]);
         $this->postJson($finish, ['choices' => array_fill(0, 10, 0)])->assertConflict();
         for ($index = 1; $index < 30; $index++) $this->start();
         $this->postJson($this->base.'/sessions', ['mode' => 'shoot', 'command_key' => (string) Str::uuid()])->assertStatus(429);
@@ -125,9 +125,9 @@ class MobilePenaltyTest extends TestCase
         $notice = app(\App\ClubUnio\Mobile\MobilePenaltyAccess::class)->notice($this->actors['member'], $this->tenant, $reset);
         $this->assertStringNotContainsString('Synthetic', $notice->title_encrypted);
         $this->assertSame('Synthetic new round', decrypt($notice->title_encrypted, false));
-        $this->assertSame(1, $this->db->table('clubora.mobile_penalty_resets')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.mobile_penalty_resets')->where('tenant_id', $this->tenant->id)->count());
         $this->expectException(\Illuminate\Database\QueryException::class);
-        $this->db->transaction(fn () => $this->db->table('clubora.mobile_penalty_best')->insert(['tenant_id' => $this->foreign->id,
+        $this->db->transaction(fn () => $this->db->table('clubunio.mobile_penalty_best')->insert(['tenant_id' => $this->foreign->id,
             'account_id' => $this->actors['other']->id, 'mode' => 'shoot', 'display_name' => 'Synthetic', 'score' => 0]));
     }
     public function test_readiness_module_option_revoked_entry_and_personal_profile_safety(): void
@@ -142,13 +142,13 @@ class MobilePenaltyTest extends TestCase
         $this->getJson($this->base.'/options')->assertStatus(503);
         $this->assertNull(collect($this->getJson($menuUrl)->assertOk()->json('data.modules'))->firstWhere('key', 'Penalty'));
         config(['clubunio-mobile.native_penalty_enabled' => true]);
-        $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->where('key', 'Penalty')->update(['active' => false]);
+        $this->db->table('clubunio.mobile_module_options')->where('tenant_id', $this->tenant->id)->where('key', 'Penalty')->update(['active' => false]);
         $this->getJson($this->base.'/options')->assertForbidden();
-        $this->db->table('clubora.mobile_module_options')->where('tenant_id', $this->tenant->id)->where('key', 'Penalty')->update(['active' => true]);
-        $this->db->table('clubora.account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actors['member']->id)->update(['state' => 'revoked']);
+        $this->db->table('clubunio.mobile_module_options')->where('tenant_id', $this->tenant->id)->where('key', 'Penalty')->update(['active' => true]);
+        $this->db->table('clubunio.account_member_links')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actors['member']->id)->update(['state' => 'revoked']);
         $this->getJson($this->base.'/leaderboard?mode=shoot')->assertForbidden();
-        $profile = $this->db->table('clubora.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic profile', 'permissions' => '[]']);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actors['other']->id)->update(['role' => 'profile', 'access_profile_id' => $profile, 'portal_enabled' => false]);
+        $profile = $this->db->table('clubunio.access_profiles')->insertGetId(['tenant_id' => $this->tenant->id, 'name' => 'Synthetic profile', 'permissions' => '[]']);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)->where('account_id', $this->actors['other']->id)->update(['role' => 'profile', 'access_profile_id' => $profile, 'portal_enabled' => false]);
         $this->withToken($this->tokens['other'])->getJson($this->base.'/options')->assertForbidden();
     }
 }

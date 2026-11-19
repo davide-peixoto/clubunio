@@ -11,7 +11,7 @@ if ($db->getDatabaseName() !== 'db_acdf8d_dclubora') {
 $db->beginTransaction();
 try {
     $db->statement('SET TRANSACTION READ ONLY');
-    $tables = $db->select("SELECT table_name FROM information_schema.columns WHERE table_schema='clubora' AND column_name='tenant_id' ORDER BY table_name");
+    $tables = $db->select("SELECT table_name FROM information_schema.columns WHERE table_schema='clubunio' AND column_name='tenant_id' ORDER BY table_name");
     $missing = $db->select(<<<'SQL'
 SELECT c.conname, s.relname AS source_table, t.relname AS target_table,
  pg_get_constraintdef(c.oid) AS definition
@@ -19,7 +19,7 @@ FROM pg_constraint c
 JOIN pg_class s ON s.oid=c.conrelid
 JOIN pg_class t ON t.oid=c.confrelid
 JOIN pg_namespace n ON n.oid=s.relnamespace
-WHERE c.contype='f' AND n.nspname='clubora'
+WHERE c.contype='f' AND n.nspname='clubunio'
  AND EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=s.oid AND a.attname='tenant_id' AND NOT a.attisdropped)
  AND EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=t.oid AND a.attname='tenant_id' AND NOT a.attisdropped)
  AND NOT EXISTS(SELECT 1 FROM pg_attribute a WHERE a.attrelid=s.oid AND a.attname='tenant_id' AND a.attnum=ANY(c.conkey))

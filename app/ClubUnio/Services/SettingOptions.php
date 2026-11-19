@@ -20,12 +20,12 @@ class SettingOptions
         if ($setting->is_secret || $setting->area !== 'general') { return null; }
         $db = DB::connection('clubunio');
         if ($setting->key === ActiveTrainingPlan::KEY) {
-            return [0 => __('Nicht festgelegt')] + $db->table('clubora.training_options')
+            return [0 => __('Nicht festgelegt')] + $db->table('clubunio.training_options')
                 ->where('tenant_id', $setting->tenant_id)->where('category', 'period')
                 ->where('active', true)->orderBy('name')->localizedPluck('name', 'id')->all();
         }
         if ($setting->key === 'SaisonID') {
-            $rows = $db->table('clubora.seasons')->where('tenant_id', $setting->tenant_id)->orderByDesc('id')->get();
+            $rows = $db->table('clubunio.seasons')->where('tenant_id', $setting->tenant_id)->orderByDesc('id')->get();
             $options = [];
             foreach ($rows as $row) {
                 if (! $row->active) { continue; }
@@ -37,10 +37,10 @@ class SettingOptions
             return $options;
         }
         if ($setting->key === 'SommerWinter') {
-            return $db->table('clubora.training_options')->where('tenant_id', $setting->tenant_id)->where('category', 'period')->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
+            return $db->table('clubunio.training_options')->where('tenant_id', $setting->tenant_id)->where('category', 'period')->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
         }
         if (in_array($setting->key, ['StatusPlatz1', 'StatusPlatz2', 'StatusPlatz3'], true)) {
-            return $db->table('clubora.facility_statuses')->where('tenant_id', $setting->tenant_id)->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
+            return $db->table('clubunio.facility_statuses')->where('tenant_id', $setting->tenant_id)->where('active', true)->orderBy('name')->localizedPluck('name', 'code')->all();
         }
         return null;
     }

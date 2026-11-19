@@ -21,7 +21,7 @@ class RegistrationDocumentService
     public function addPublic(Tenant $tenant, Registration $registration, string $requestId, string $kind, UploadedFile $file): void
     {
         app(PublicWebService::class)->authorize($tenant, 'registration');
-        abort_unless(DB::connection('clubunio')->table('clubora.public_registration_submissions')->where('tenant_id', $tenant->id)
+        abort_unless(DB::connection('clubunio')->table('clubunio.public_registration_submissions')->where('tenant_id', $tenant->id)
             ->where('registration_id', $registration->id)->where('request_id', $requestId)->exists(), 403);
         app(DocumentUploadService::class)->stage(null, $tenant, 'registration', $registration->id, ['kind' => $kind], $file, $requestId);
     }
@@ -46,7 +46,7 @@ class RegistrationDocumentService
             $metadata = compact('kind');
             // A removed file is a retained historical record, not a successful current upload.
             // Bind a new explicit replacement to that record instead of replaying its old result.
-            $removed = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)
+            $removed = DB::connection('clubunio')->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)
                 ->where('registration_id', $id)->where('kind', $kind)->where('active', false)->where('sha256', hash('sha256', $file->get()))
                 ->orderByDesc('id')->value('id');
             if ($removed) { $metadata['replaces_removed_document_id'] = (int) $removed; }
@@ -61,12 +61,12 @@ class RegistrationDocumentService
         }
         abort_unless(DB::connection('clubunio')->transactionLevel() > 0, 409);
         $db = DB::connection('clubunio');
-        $query = $db->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $upload->object_id)->where('active', true)
+        $query = $db->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $upload->object_id)->where('active', true)
             ->where('kind', $metadata['kind'])->where('sha256', $upload->sha256);
         if ($existing = $query->value('id')) {
             return (int) $existing;
         }
-        $document = $db->table('clubora.registration_documents')->insertGetId(['tenant_id' => $tenant->id,
+        $document = $db->table('clubunio.registration_documents')->insertGetId(['tenant_id' => $tenant->id,
             'registration_id' => $upload->object_id, 'kind' => $metadata['kind'], 'storage_path' => $upload->folder,
             'filename' => $upload->filename, 'original_filename' => $metadata['original_filename'], 'sha256' => $upload->sha256,
             'file_size' => $upload->byte_count, 'mime_type' => $upload->mime_type, 'created_by' => $upload->created_by]);
@@ -88,7 +88,7 @@ class RegistrationDocumentService
             if ($r->revision !== $revision || $r->status?->workflow_key === 'accepted') {
                 throw ValidationException::withMessages(['revision' => __('Anmeldung geändert oder bereits abgeschlossen.')]);
             }
-            $changed = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)
+            $changed = DB::connection('clubunio')->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)
                 ->where('id', $document)->where('active', true)->update(['active' => false]);
             abort_unless($changed, 404);
             $r->forceFill(['revision' => $r->revision + 1])->save();
@@ -98,7 +98,7 @@ class RegistrationDocumentService
 
     private function audit(Account $actor, Tenant $tenant, int $document, int $registration, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'registration_documents', 'object_id' => $document,
             'after_value' => json_encode(['registration_id' => $registration, 'operation' => $operation], JSON_THROW_ON_ERROR)]);
     }

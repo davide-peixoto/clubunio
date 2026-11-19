@@ -108,8 +108,8 @@ class TenantNavigationTest extends TestCase
 
     public function test_clean_routes_and_automatic_tenant_preserve_scoping(): void
     {
-        $own = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->one->id, 'first_name' => 'VISIBLE-FIXTURE', 'last_name' => 'Test']);
-        $foreign = $this->db->table('clubora.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'FOREIGN-FIXTURE', 'last_name' => 'Test']);
+        $own = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->one->id, 'first_name' => 'VISIBLE-FIXTURE', 'last_name' => 'Test']);
+        $foreign = $this->db->table('clubunio.members')->insertGetId(['tenant_id' => $this->two->id, 'first_name' => 'FOREIGN-FIXTURE', 'last_name' => 'Test']);
         $this->get('/members')->assertOk()->assertSee('First club')->assertSee('VISIBLE-FIXTURE')->assertDontSee('FOREIGN-FIXTURE');
         $this->get('/members/'.$own)->assertOk();
         $this->get('/members/'.$foreign)->assertNotFound();
@@ -161,9 +161,9 @@ class TenantNavigationTest extends TestCase
 
     public function test_bus_and_planning_share_the_panel_and_clean_links(): void
     {
-        $season = $this->db->table('clubora.seasons')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture', 'starts_on' => now()->subYear()->toDateString(), 'ends_on' => now()->addYear()->toDateString()]);
-        $team = $this->db->table('clubora.teams')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture']);
-        $this->db->table('clubora.team_seasons')->insert(['tenant_id' => $this->one->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Fixture']);
+        $season = $this->db->table('clubunio.seasons')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture', 'starts_on' => now()->subYear()->toDateString(), 'ends_on' => now()->addYear()->toDateString()]);
+        $team = $this->db->table('clubunio.teams')->insertGetId(['tenant_id' => $this->one->id, 'name' => 'Fixture']);
+        $this->db->table('clubunio.team_seasons')->insert(['tenant_id' => $this->one->id, 'season_id' => $season, 'team_id' => $team, 'label' => 'Fixture']);
         foreach (['/bus', '/bus/options', '/planning', '/planning/calendar', '/planning/absences', '/planning/options', '/planning/sfv', '/planning/training-plans'] as $url) {
             $this->get($url)->assertOk()->assertSee('fi-main-sidebar')->assertSee('First club');
         }
@@ -187,13 +187,13 @@ class TenantNavigationTest extends TestCase
         $this->post('/bus/options', $input)->assertStatus(419);
         $this->post('/bus/options', $input + ['_workspace' => 'invalid'])->assertStatus(419);
         $this->post('/bus/options', $input + ['_workspace' => $token])->assertRedirect('/bus/options');
-        $this->assertSame(1, $this->db->table('clubora.buses')->where('tenant_id', $this->one->id)->where('name', 'Workspace fixture')->count());
+        $this->assertSame(1, $this->db->table('clubunio.buses')->where('tenant_id', $this->one->id)->where('name', 'Workspace fixture')->count());
         $this->actor->tenants()->attach($this->two, ['role' => 'admin']);
         $this->post('/tenant/switch', ['tenant' => $this->two->id, 'revision' => $this->context()['revision']])->assertRedirect('/');
         $this->post('/bus/options', $input + ['_workspace' => $token])->assertStatus(419);
         $this->get('/bus/'.$this->one->slug)->assertForbidden();
         $this->post('/bus/'.$this->two->slug.'/options', $input)->assertStatus(419);
-        $this->assertSame(0, $this->db->table('clubora.buses')->where('tenant_id', $this->two->id)->where('name', 'Workspace fixture')->count());
+        $this->assertSame(0, $this->db->table('clubunio.buses')->where('tenant_id', $this->two->id)->where('name', 'Workspace fixture')->count());
         $this->get('/planning')->assertOk()->assertSee('Second club');
         $this->actor->tenants()->detach($this->two);
         $this->get('/planning')->assertForbidden();

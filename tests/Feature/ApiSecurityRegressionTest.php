@@ -61,7 +61,7 @@ class ApiSecurityRegressionTest extends TestCase
         $this->admin = new Account;
         $this->admin->forceFill(['username' => 'api-security-'.Str::random(20), 'display_name' => 'Synthetic security admin',
             'password' => bcrypt(Str::random(32)), 'active' => true, 'api_only' => false])->save();
-        $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
+        $this->db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $this->tenant->id,
             'account_id' => $this->admin->id, 'role' => 'admin']);
         $this->profile = new AccessProfile;
         $this->profile->forceFill(['tenant_id' => $this->tenant->id, 'name' => 'Security fixture profile', 'active' => true,
@@ -112,7 +112,7 @@ class ApiSecurityRegressionTest extends TestCase
     public function test_previously_loaded_context_rejects_disabled_integration(): void
     {
         $this->context->authorize('teams:read', 'teams', 'view');
-        $this->db->table('clubora.api_integrations')->where('id', $this->integration->id)->update(['active' => false]);
+        $this->db->table('clubunio.api_integrations')->where('id', $this->integration->id)->update(['active' => false]);
         $this->assertTrue($this->context->integration->active);
         $this->forbidden(fn () => $this->context->authorize('teams:read', 'teams', 'view'));
     }
@@ -120,11 +120,11 @@ class ApiSecurityRegressionTest extends TestCase
     public function test_fresh_technical_principal_and_membership_are_required(): void
     {
         $this->context->authorize('teams:read', 'teams', 'view');
-        $this->db->table('clubora.accounts')->where('id', $this->context->actor->id)->update(['api_only' => false]);
+        $this->db->table('clubunio.accounts')->where('id', $this->context->actor->id)->update(['api_only' => false]);
         $this->assertTrue($this->context->actor->api_only);
         $this->forbidden(fn () => $this->context->authorize('teams:read', 'teams', 'view'));
-        $this->db->table('clubora.accounts')->where('id', $this->context->actor->id)->update(['api_only' => true]);
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+        $this->db->table('clubunio.accounts')->where('id', $this->context->actor->id)->update(['api_only' => true]);
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
             ->where('account_id', $this->context->actor->id)->update(['role' => 'office', 'access_profile_id' => null]);
         $this->forbidden(fn () => $this->context->authorize('teams:read', 'teams', 'view'));
     }
@@ -134,7 +134,7 @@ class ApiSecurityRegressionTest extends TestCase
         $this->context->token->forceFill(['abilities' => ['*']])->save();
         $this->forbidden(fn () => $this->context->authorize('teams:read', 'teams', 'view'));
         $this->context->token->forceFill(['abilities' => $this->integration->scopes])->save();
-        $this->db->table('clubora.api_access_tokens')->where('id', $this->context->token->id)
+        $this->db->table('clubunio.api_access_tokens')->where('id', $this->context->token->id)
             ->update(['abilities' => json_encode(['teams:read'], JSON_THROW_ON_ERROR)]);
         $this->forbidden(fn () => $this->context->authorize('teams:create', 'teams', 'create'));
         $this->context->authorize('teams:read', 'teams', 'view');
@@ -143,7 +143,7 @@ class ApiSecurityRegressionTest extends TestCase
     public function test_demoted_admin_cannot_issue_token_using_loaded_admin_object(): void
     {
         $before = $this->integration->tokens()->count();
-        $this->db->table('clubora.tenant_accounts')->where('tenant_id', $this->tenant->id)
+        $this->db->table('clubunio.tenant_accounts')->where('tenant_id', $this->tenant->id)
             ->where('account_id', $this->admin->id)->update(['role' => 'office']);
         $this->forbidden(fn () => app(ApiTokenService::class)->issueToken($this->admin, $this->tenant,
             $this->integration->id, 'Must not issue', ['teams:read'], now()->addHour()));
@@ -166,10 +166,10 @@ class ApiSecurityRegressionTest extends TestCase
         if ($change === 'profile') {
             $this->profile->forceFill(['permissions' => array_values(array_diff($this->profile->permissions, ['invoices.create']))])->save();
         } elseif ($change === 'token') {
-            $this->db->table('clubora.api_access_tokens')->where('id', $this->context->token->id)
+            $this->db->table('clubunio.api_access_tokens')->where('id', $this->context->token->id)
                 ->update(['abilities' => json_encode(array_values(array_diff($this->integration->scopes, ['invoices:create'])), JSON_THROW_ON_ERROR)]);
         } else {
-            $this->db->table('clubora.api_integrations')->where('id', $this->integration->id)
+            $this->db->table('clubunio.api_integrations')->where('id', $this->integration->id)
                 ->update(['scopes' => json_encode(array_values(array_diff($this->integration->scopes, ['invoices:create'])), JSON_THROW_ON_ERROR)]);
         }
         // The top-level contributions:create grant still exists; only nested invoice authority changed.
@@ -178,8 +178,8 @@ class ApiSecurityRegressionTest extends TestCase
             ->assertConflict()->assertJsonMissingPath('data');
         $this->assertSame('conflict', $response->json('error.code'),
             'Unexpected error envelope; top-level keys: '.implode(', ', array_keys($response->json())));
-        $this->assertSame(1, $this->db->table('clubora.invoices')->where('tenant_id', $this->tenant->id)->count());
-        $this->assertSame(1, $this->db->table('clubora.api_idempotency')->where('integration_id', $this->integration->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.invoices')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.api_idempotency')->where('integration_id', $this->integration->id)->count());
         Http::assertNothingSent();
         Mail::assertNothingSent();
         Mail::assertNothingQueued();
@@ -187,7 +187,7 @@ class ApiSecurityRegressionTest extends TestCase
 
     private function insert(string $table, array $values): int
     {
-        return $this->db->table('clubora.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
+        return $this->db->table('clubunio.'.$table)->insertGetId(['tenant_id' => $this->tenant->id] + $values);
     }
 
     private function contributionInput(): array
@@ -212,7 +212,7 @@ class ApiSecurityRegressionTest extends TestCase
     {
         Log::spy();
         $this->db->beforeExecuting(function (string $sql) {
-            if ($this->failRequestAudit && str_starts_with($sql, 'insert into "clubora"."api_audit"')) {
+            if ($this->failRequestAudit && str_starts_with($sql, 'insert into "clubunio"."api_audit"')) {
                 throw new RuntimeException('SYNTHETIC-SENSITIVE-EXCEPTION '.$this->plainToken);
             }
         });
@@ -227,8 +227,8 @@ class ApiSecurityRegressionTest extends TestCase
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertStringNotContainsString($this->plainToken, $response->getContent());
         $this->assertStringNotContainsString('SYNTHETIC-SENSITIVE-EXCEPTION', $response->getContent());
-        $this->assertSame(1, $this->db->table('clubora.teams')->where('tenant_id', $this->tenant->id)->where('name', 'Audit fallback fixture')->count());
-        $this->assertSame('complete', $this->db->table('clubora.api_idempotency')->where('integration_id', $this->integration->id)->value('state'));
+        $this->assertSame(1, $this->db->table('clubunio.teams')->where('tenant_id', $this->tenant->id)->where('name', 'Audit fallback fixture')->count());
+        $this->assertSame('complete', $this->db->table('clubunio.api_idempotency')->where('integration_id', $this->integration->id)->value('state'));
         Log::shouldHaveReceived('critical')->once()->with('ClubUnio API audit unavailable', [
             'request_id' => $response->headers->get('X-Request-ID'), 'integration_id' => $this->integration->id,
             'token_id' => $this->context->token->id, 'tenant_id' => $this->tenant->id, 'status' => 201,
@@ -290,7 +290,7 @@ class ApiSecurityRegressionTest extends TestCase
             $this->assertStringNotContainsString($private, $response->getContent());
             $this->assertStringNotContainsString($private, $logged);
         }
-        $this->assertSame(1, $this->db->table('clubora.api_audit')->where('tenant_id', $this->tenant->id)
+        $this->assertSame(1, $this->db->table('clubunio.api_audit')->where('tenant_id', $this->tenant->id)
             ->where('request_id', $response->json('error.request_id'))->where('status', 500)->count());
     }
 }

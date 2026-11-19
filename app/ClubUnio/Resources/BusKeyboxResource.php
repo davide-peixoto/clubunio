@@ -41,7 +41,7 @@ class BusKeyboxResource extends CatalogResource
     {
         return $schema->components([TextInput::make('revision')->label('Version')->default(0)->readOnly()->required(),
             TextInput::make('name')->label('Bezeichnung')->required()->maxLength(160),
-            Select::make('bus_id')->label('Bus')->required()->options(fn () => DB::connection('clubunio')->table('clubora.buses')->where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
+            Select::make('bus_id')->label('Bus')->required()->options(fn () => DB::connection('clubunio')->table('clubunio.buses')->where('tenant_id', Filament::getTenant()->id)->where('active', true)->localizedPluck('name', 'id')),
             Toggle::make('active')->label('Simulation aktiv')->required()->default(false)]);
     }
 

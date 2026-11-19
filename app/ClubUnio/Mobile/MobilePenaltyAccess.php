@@ -28,7 +28,7 @@ final class MobilePenaltyAccess
     public function notice(Account $actor, Tenant $tenant, int $resetId): object
     {
         $this->authorize($actor, $tenant);
-        $row = DB::connection('clubunio')->table('clubora.mobile_penalty_resets')->where('tenant_id', $tenant->id)->where('id', $resetId)->first();
+        $row = DB::connection('clubunio')->table('clubunio.mobile_penalty_resets')->where('tenant_id', $tenant->id)->where('id', $resetId)->first();
         abort_unless($row, 404);
         return $row;
     }

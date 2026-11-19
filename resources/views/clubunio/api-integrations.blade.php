@@ -13,7 +13,8 @@
         .api-scope-grid label { display:flex; align-items:flex-start; gap:8px; min-width:0; }
         .api-scope-grid input { flex-shrink:0; margin-top:2px; }
         .api-scope-grid span { min-width:0; overflow-wrap:anywhere; }
-        .api-scroll { overflow-x:auto; min-width:0; max-width:100%; }
+        .api-fields > label { min-width:0; }
+        .api-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
         .api-table { min-width:760px; }
         .api-secret { overflow-wrap:anywhere; white-space:pre-wrap; user-select:all; }
         .api-section { display:grid; gap:16px; min-width:0; }
@@ -44,8 +45,7 @@
         <ul class="api-errors" role="alert">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
     @endif
 
-    <section class="api-section">
-        <h2>{{ __('Integration erstellen') }}</h2>
+    <x-filament::section :heading="__('Integration erstellen')">
         <form wire:submit="createIntegration" class="api-form">
             <div class="api-fields">
                 <label>{{ __('Name') }}<x-filament::input.wrapper><x-filament::input wire:model="name" required maxlength="120" /></x-filament::input.wrapper></label>
@@ -63,10 +63,9 @@
             </fieldset>
             <div><x-filament::button type="submit" icon="heroicon-o-plus" wire:loading.attr="disabled">{{ __('Integration erstellen') }}</x-filament::button></div>
         </form>
-    </section>
+    </x-filament::section>
 
-    <section class="api-section">
-        <h2>{{ __('Token erstellen') }}</h2>
+    <x-filament::section :heading="__('Token erstellen')">
         @php($selectedIntegration = $integrations->firstWhere('id', $integrationId))
         <form wire:submit="issueToken" class="api-form">
             <div class="api-fields">
@@ -87,7 +86,7 @@
             </fieldset>
             <div><x-filament::button type="submit" icon="heroicon-o-key" wire:loading.attr="disabled" :disabled="! $selectedIntegration?->active">{{ __('Token erstellen') }}</x-filament::button></div>
         </form>
-    </section>
+    </x-filament::section>
 
     <section class="api-section">
         <h2>{{ __('Integrationen und Tokens') }}</h2>
@@ -96,7 +95,7 @@
 
     <section class="api-section">
         <h2>{{ __('API-Synchronisationsaufträge') }}</h2>
-        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>{{ __('Auftrag') }}</th><th>{{ __('Integration') }}</th><th>{{ __('Aktion / Objekt') }}</th><th>{{ __('Status') }}</th><th>{{ __('Prüfen') }}</th></tr></thead><tbody>
+        <div class="cu-admin-journal"><table class="api-table"><thead><tr><th>{{ __('Auftrag') }}</th><th>{{ __('Integration') }}</th><th>{{ __('Aktion / Objekt') }}</th><th>{{ __('Status') }}</th><th>{{ __('Prüfen') }}</th></tr></thead><tbody>
             @forelse($providerWorkRows as $row)
                 <tr wire:key="api-work-{{ $row->id }}"><td>#{{ $row->id }}</td><td>#{{ $row->integration_id }}</td><td>{{ $providerActionLabels[$row->operation] ?? $row->operation }}<br>#{{ $row->object_id }}</td><td>{{ ['pending'=>__('Bereit'), 'awaiting_approval'=>__('Admin-Freigabe ausstehend'), 'running'=>__('In Ausführung'), 'succeeded'=>__('Abgeschlossen'), 'attention'=>__('Prüfung nötig'), 'rejected'=>__('Abgelehnt')][$row->state] }}@if($row->error_code)<br>{{ $row->error_code }}@endif</td><td><x-filament::icon-button icon="heroicon-o-eye" label="{{ __('Auftrag prüfen') }}" tooltip="{{ __('Auftrag prüfen') }}" wire:click="inspectProviderWork({{ $row->id }})" /></td></tr>
             @empty<tr><td colspan="5">{{ __('Keine API-Synchronisationsaufträge.') }}</td></tr>@endforelse
@@ -115,7 +114,7 @@
 
     <section class="api-section">
         <h2>{{ __('API-Audit') }}</h2>
-        <div class="api-scroll"><table class="cu-admin-journal api-table"><thead><tr><th>{{ __('Zeit (') }}{{ config('app.timezone') }})</th><th>{{ __('Integration') }}</th><th>{{ __('Token-ID') }}</th><th>{{ __('Ereignis') }}</th><th>{{ __('Status') }}</th><th>{{ __('Request-ID') }}</th><th>{{ __('Dauer (ms)') }}</th></tr></thead><tbody>
+        <div class="cu-admin-journal"><table class="api-table"><thead><tr><th>{{ __('Zeit (') }}{{ config('app.timezone') }})</th><th>{{ __('Integration') }}</th><th>{{ __('Token-ID') }}</th><th>{{ __('Ereignis') }}</th><th>{{ __('Status') }}</th><th>{{ __('Request-ID') }}</th><th>{{ __('Dauer (ms)') }}</th></tr></thead><tbody>
             @forelse($auditRows as $row)
                 <tr>
                     <td>{{ \Carbon\CarbonImmutable::parse($row->created_at)->timezone(config('app.timezone'))->format('d.m.Y H:i:s') }}</td>

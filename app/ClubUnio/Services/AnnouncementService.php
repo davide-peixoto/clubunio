@@ -19,7 +19,7 @@ class AnnouncementService
 
     public static function states(Tenant $tenant): array
     {
-        return DB::connection('clubunio')->table('clubora.announcement_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
+        return DB::connection('clubunio')->table('clubunio.announcement_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
     }
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): Announcement
@@ -55,7 +55,7 @@ class AnnouncementService
                     $valid = AccountRole::where('active', true)->whereIn('code', $ids)->count();
                 } else {
                     Validator::make(['ids' => $ids], ['ids.*' => 'required|integer|min:1'])->validate();
-                    $query = DB::connection('clubunio')->table($data['target_type'] === 'teams' ? 'clubora.team_seasons' : 'clubora.tenant_accounts')->where('tenant_id', $tenant->id);
+                    $query = DB::connection('clubunio')->table($data['target_type'] === 'teams' ? 'clubunio.team_seasons' : 'clubunio.tenant_accounts')->where('tenant_id', $tenant->id);
                     $valid = $query->when($data['target_type'] === 'teams', fn ($q) => $q->where('active', true))->whereIn($data['target_type'] === 'teams' ? 'id' : 'account_id', $ids)->count();
                     $ids = array_map('intval', $ids);
                 }
@@ -133,8 +133,8 @@ class AnnouncementService
             }
             $db = DB::connection('clubunio');
             foreach (array_chunk($plan['ids'], 250) as $chunk) {
-                $db->table('clubora.announcement_recipients')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account], $chunk));
-                $db->table('clubora.notifications')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account,
+                $db->table('clubunio.announcement_recipients')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account], $chunk));
+                $db->table('clubunio.notifications')->insert(array_map(fn ($account) => ['tenant_id' => $tenant->id, 'announcement_id' => $r->id, 'account_id' => $account,
                     'title' => $plan['messages'][$account]['title'], 'body' => $plan['messages'][$account]['body'], 'object_type' => 'announcement', 'object_id' => $r->id], $chunk));
             }
             $r->forceFill(['state' => 'published', 'revision' => $revision + 1, 'published_at' => now(), 'published_by' => $actor->id,
@@ -156,7 +156,7 @@ class AnnouncementService
                 $this->error(__('Datensatz wurde inzwischen geändert. Bitte erneut öffnen.'));
             }
             $r->forceFill(['state' => 'withdrawn', 'withdrawn_at' => now(), 'revision' => $revision + 1, 'preview_token' => null, 'preview_hash' => null])->save();
-            $notifications = DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id', $tenant->id)->where('announcement_id', $id);
+            $notifications = DB::connection('clubunio')->table('clubunio.notifications')->where('tenant_id', $tenant->id)->where('announcement_id', $id);
             $languages = app(MessageLanguageService::class)->forAccounts($tenant, (clone $notifications)->distinct()->pluck('account_id')->all());
             $groups = [];
             foreach ($languages as $accountId => $language) {
@@ -176,7 +176,7 @@ class AnnouncementService
     {
         abort_unless(app(MemberAccessService::class)->canEnter($actor->fresh(), $tenant), 403);
 
-        return Announcement::where('tenant_id', $tenant->id)->where('state', 'published')->whereIn('id', DB::connection('clubunio')->table('clubora.announcement_recipients')
+        return Announcement::where('tenant_id', $tenant->id)->where('state', 'published')->whereIn('id', DB::connection('clubunio')->table('clubunio.announcement_recipients')
             ->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->select('announcement_id'));
     }
 
@@ -186,7 +186,7 @@ class AnnouncementService
         if (! $message || mb_strlen($message['title']) > 200 || mb_strlen($message['body']) > 10000) {
             $this->error(__('Interne Ankündigungsvorlage fehlt, ist deaktiviert oder erzeugt zu langen Text.'));
         }
-        $ids = $this->recipients($tenant, $r)->orderBy('clubora.accounts.id')->limit(5001)->pluck('clubora.accounts.id')->map(fn ($v) => (int) $v)->all();
+        $ids = $this->recipients($tenant, $r)->orderBy('clubunio.accounts.id')->limit(5001)->pluck('clubunio.accounts.id')->map(fn ($v) => (int) $v)->all();
         if (! $ids || count($ids) > 5000) {
             $this->error(__('Keine erreichbaren Empfänger oder mehr als 5000. Bitte Auswahl prüfen.'));
         }
@@ -211,11 +211,11 @@ class AnnouncementService
         $db = DB::connection('clubunio');
         $today = now('Europe/Zurich')->toDateString();
         // Reuse active membership semantics; only approved self/minor-parent links count.
-        $links = $db->table('clubora.account_member_links as l')->selectRaw('1')->where('l.tenant_id', $tenant->id)
-            ->whereColumn('l.member_id', 'clubora.members.id')->whereColumn('l.account_id', 'clubora.accounts.id')->where('l.state', 'approved')
+        $links = $db->table('clubunio.account_member_links as l')->selectRaw('1')->where('l.tenant_id', $tenant->id)
+            ->whereColumn('l.member_id', 'clubunio.members.id')->whereColumn('l.account_id', 'clubunio.accounts.id')->where('l.state', 'approved')
             ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => $q->where('l.kind', 'parent')->where('birth_date', '<=', $today)->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today])));
         $linked = app(MemberAccessService::class)->activeMembers($tenant)->selectRaw('1')->whereExists($links);
-        $memberships = $db->table('clubora.tenant_accounts as ta')->selectRaw('1')->where('ta.tenant_id', $tenant->id)->whereColumn('ta.account_id', 'clubora.accounts.id')
+        $memberships = $db->table('clubunio.tenant_accounts as ta')->selectRaw('1')->where('ta.tenant_id', $tenant->id)->whereColumn('ta.account_id', 'clubunio.accounts.id')
             ->where(fn ($q) => $q->whereIn('ta.role', ['admin', 'office'])->orWhere(fn ($q) => $q->where('ta.portal_enabled', true)->whereExists($linked->toBase())));
         if ($r->target_type === 'roles') {
             $memberships->whereIn('ta.role', $r->target_ids);
@@ -225,12 +225,12 @@ class AnnouncementService
             $query->whereIn('id', $r->target_ids);
         }
         if ($r->target_type === 'teams') {
-            $teams = $db->table('clubora.team_seasons as ts')->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
+            $teams = $db->table('clubunio.team_seasons as ts')->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
                 ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true)->whereIn('ts.id', $r->target_ids)->select('ts.id');
             $teamLinks = clone $linked;
             $teamLinks->where(function ($q) use ($teams, $tenant, $db) {
                 foreach (['team_players', 'team_staff', 'technical_leads'] as $table) {
-                    $q->orWhereIn('clubora.members.id', $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
+                    $q->orWhereIn('clubunio.members.id', $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->whereIn('team_season_id', $teams)->select('member_id'));
                 }
             });
             $query->whereExists($teamLinks->toBase());
@@ -264,7 +264,7 @@ class AnnouncementService
 
     private function audit(Account $actor, Announcement $r, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $r->tenant_id, 'actor_id' => $actor->id,
             'object_type' => 'announcements', 'object_id' => $r->id, 'after_value' => json_encode(['operation' => $operation, 'revision' => $r->revision,
                 'target_type' => $r->target_type, 'recipient_count' => $r->recipient_count], JSON_THROW_ON_ERROR)]);
     }
