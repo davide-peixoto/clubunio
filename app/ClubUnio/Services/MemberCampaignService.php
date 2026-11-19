@@ -14,18 +14,21 @@ class MemberCampaignService
 
     public const FIELDS = ['email', 'street', 'house_number', 'postal_code', 'city', 'mobile'];
     public const CHANNELS = ['email', 'post', 'both'];
-    public const KINDS = ['member_update', 'acknowledgement'];
+    public const KINDS = ['member_update', 'acknowledgement', 'event', 'sponsor'];
 
     public static function kindLabel(string $kind): string
     {
-        return $kind === 'acknowledgement' ? __('campaign.kind_acknowledgement') : __('campaign.kind_member_update');
+        return match ($kind) {
+            'event' => trans('campaign_ops.kind_event'), 'sponsor' => trans('campaign_ops.kind_sponsor'),
+            'acknowledgement' => __('campaign.kind_acknowledgement'), default => __('campaign.kind_member_update'),
+        };
     }
 
     public function saveContent(Account $actor, Tenant $tenant, int $id, string $kind, array $content): void
     {
         abort_unless($this->allowed($actor, $tenant), 403);
         $data = validator(['kind' => $kind, 'content' => $content], [
-            'kind' => 'required|in:member_update,acknowledgement',
+            'kind' => ['required', \Illuminate\Validation\Rule::in(self::KINDS)],
             'content' => 'array:de,en', 'content.*' => 'array:subject,body',
             'content.*.subject' => 'nullable|string|max:160|regex:/\A[^\r\n]*\z/',
             'content.*.body' => 'nullable|string|max:1500',
@@ -42,12 +45,14 @@ class MemberCampaignService
 
         return [
             'subject' => trim($variant['subject'] ?? '') ?: self::kindLabel($kind),
-            'body' => trim($variant['body'] ?? '') ?: ($kind === 'acknowledgement'
-                ? __('campaign.body_acknowledgement') : __('campaign.body_member_update')),
+            'body' => trim($variant['body'] ?? '') ?: match ($kind) {
+                'event', 'sponsor' => trans('campaign_ops.body_'.$kind),
+                'acknowledgement' => __('campaign.body_acknowledgement'), default => __('campaign.body_member_update'),
+            },
         ];
     }
 
-    private function guardian(Tenant $tenant, Member $member): ?object
+    public function verifiedGuardian(Tenant $tenant, Member $member): ?object
     {
         $email = $this->email($member);
         if (! $email || ! in_array($member->billingRecipient?->email_field, ['mother_email', 'father_email'], true)) return null;
@@ -67,13 +72,18 @@ class MemberCampaignService
 
     public function deliveryMember(Tenant $tenant, object $row, bool $lock = false): ?Member
     {
+        if ($row->contact_encrypted ?? null) {
+            $member = app(MemberAccessService::class)->activeMembers($tenant)
+                ->when($lock, fn ($q) => $q->lockForUpdate())->find($row->member_id);
+            return $member && app(CampaignContact::class)->details($tenant, $row, $member) ? $member : null;
+        }
         $today = now('Europe/Zurich')->toDateString();
         $query = ($row->guardian_account_id ?? null) ? app(MemberAccessService::class)->activeMembers($tenant)
             ->where('birth_date', '<=', $today)
             ->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today]) : $this->eligible($tenant);
         $member = $query->when($lock, fn ($q) => $q->lockForUpdate())->find($row->member_id);
         if (! $member || ! ($row->guardian_account_id ?? null)) return $member;
-        $guardian = $this->guardian($tenant, $member);
+        $guardian = $this->verifiedGuardian($tenant, $member);
 
         return $guardian && (int) $guardian->account_id === (int) $row->guardian_account_id
             && hash_equals($row->guardian_email_hash, $guardian->email_hash) ? $member : null;
@@ -138,7 +148,8 @@ class MemberCampaignService
         abort_unless(in_array($channel, self::CHANNELS, true) && trim($title) !== '' && mb_strlen($title) <= 160, 422);
 
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $title, $channel, $populate) {
-            $id = $this->campaigns($tenant)->insertGetId(['tenant_id' => $tenant->id, 'title' => trim($title), 'channel' => $channel, 'created_by' => $actor->id]);
+            $id = $this->campaigns($tenant)->insertGetId(['tenant_id' => $tenant->id, 'title' => trim($title), 'channel' => $channel,
+                'created_by' => $actor->id, 'workflow_version' => 2]);
             if ($populate) {
                 app(MemberAccessService::class)->activeMembers($tenant)->with('billingRecipient')->select(['id','tenant_id','billing_recipient_id','email','mother_email','father_email'])->chunkById(300, function ($members) use ($tenant, $id, $channel) {
                     $this->recipients($tenant, $id)->insert($members->map(fn ($member) => [
@@ -172,10 +183,13 @@ class MemberCampaignService
     {
         abort_unless($this->allowed($actor, $tenant), 403);
         abort_unless($this->isPilot($tenant), 403);
-        DB::connection('clubunio')->transaction(function () use ($tenant, $id) {
+        DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id) {
             $campaign = $this->campaigns($tenant)->where('id', $id)->lockForUpdate()->firstOrFail();
             abort_if($campaign->released_at || $campaign->revoked_at, 409);
             abort_unless($this->recipients($tenant, $id)->exists(), 422);
+            $preview = app(CampaignOperations::class)->preview($actor, $tenant, $id);
+            if ($preview['issues']) throw \Illuminate\Validation\ValidationException::withMessages(['release' => trans('campaign_ops.preview_blocked')]);
+            $this->campaigns($tenant)->where('id', $id)->update(['workflow_version' => 2]);
             $this->recipients($tenant, $id)->chunkById(200, function ($rows) use ($tenant, $id) {
                 $members = app(MemberAccessService::class)->activeMembers($tenant)->with('billingRecipient')
                     ->whereIn('id', $rows->pluck('member_id'))->get()->keyBy('id');
@@ -186,11 +200,9 @@ class MemberCampaignService
                 $adults = $this->eligible($tenant)->whereIn('id', $rows->pluck('member_id'))->pluck('id')->flip();
                 foreach ($rows as $row) {
                     $member = $members->get($row->member_id);
-                    if (self::devTestMode() && ($row->channel !== 'email' || ! $member || ! $this->isDevTestRecipient($member))) {
-                        throw \Illuminate\Validation\ValidationException::withMessages(['release' => __('campaign.dev_test_recipients')]);
-                    }
-                    $guardian = $minors->has($row->member_id) && $member && $row->channel === 'email' ? $this->guardian($tenant, $member) : null;
-                    if (! $member || (! $adults->has($row->member_id) && ! $guardian)) {
+                    $manual = $member ? app(CampaignContact::class)->details($tenant, $row, $member) : null;
+                    $guardian = ! $manual && $minors->has($row->member_id) && $member && $row->channel === 'email' ? $this->verifiedGuardian($tenant, $member) : null;
+                    if (! $member || (! $adults->has($row->member_id) && ! $guardian && ! $manual)) {
                         throw \Illuminate\Validation\ValidationException::withMessages(['release' => __('campaign.guardian_required')]);
                     }
                     $token = bin2hex(random_bytes(32));
@@ -201,7 +213,7 @@ class MemberCampaignService
                 }
             });
             $this->campaigns($tenant)->where('id', $id)->update(['released_at' => now(), 'expires_at' => now()->addDays(30)]);
-            app(CampaignMailQueue::class)->enqueueReleased($tenant, $id);
+            app(CampaignOperations::class)->enqueueReleased($actor, $tenant, $id);
         });
     }
 
@@ -215,7 +227,11 @@ class MemberCampaignService
         $campaign = $this->openCampaign($tenant, $row->campaign_id);
         $member = $this->deliveryMember($tenant, $row, $lock);
         abort_unless($member, 404);
-        abort_if(self::devTestMode() && ($row->channel !== 'email' || ! $this->isDevTestRecipient($member)), 404);
+        if ((int) $campaign->workflow_version === 2) {
+            abort_unless(app(CampaignOperations::class)->delivery($tenant, $row), 404);
+        } else {
+            abort_if(self::devTestMode() && ($row->channel !== 'email' || ! $this->isDevTestRecipient($member)), 404);
+        }
 
         return [$row, $member, $campaign];
     }
@@ -240,8 +256,7 @@ class MemberCampaignService
 
     public function isPilot(Tenant $tenant): bool
     {
-        return self::devTestMode() ? $tenant->slug === 'sv-sissach'
-            : app()->environment('staging') && $tenant->slug === 'stage-mobile-pilot';
+        return app(CampaignOperations::class)->enabled();
     }
 
     public static function devTestMode(): bool

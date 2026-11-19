@@ -71,6 +71,14 @@ Artisan::command('clubunio:planning-reminders', function () {
     }
 });
 Schedule::command('clubunio:planning-reminders')->everyFiveMinutes()->withoutOverlapping();
+Artisan::command('clubunio:campaign-work', function () {
+    $this->info(app(\App\ClubUnio\Services\CampaignOperations::class)->runOne() ? 'Test dispatch processed.' : 'No due test dispatch.');
+});
+Schedule::command('clubunio:campaign-work')->everyMinute()->withoutOverlapping();
+Artisan::command('clubunio:campaign-reminders', function () {
+    $this->info((string) app(\App\ClubUnio\Services\CampaignOperations::class)->automaticReminders());
+});
+Schedule::command('clubunio:campaign-reminders')->hourly()->withoutOverlapping();
 if (\App\ClubUnio\Services\MemberCampaignService::devTestMode()) {
     Artisan::command('clubunio:campaign-dev-test-mail', function () {
         $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();

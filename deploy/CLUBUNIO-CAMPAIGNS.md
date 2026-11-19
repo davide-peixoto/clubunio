@@ -1,5 +1,14 @@
 # Kampagnen: Stammdaten-Pilot
 
+## Erweiterter Ablauf
+
+Der neue Arbeitsstand erweitert diesen urspruenglichen Pilot:
+[Versandcockpit, Ruecklauf und Migration](CLUBUNIO-CAMPAIGN-OPERATIONS.md).
+Neue Kampagnen nutzen getrennte Versandauftraege, Vorlagen, Fachantworten
+und gepruefte Elternkontakte. Die nachfolgenden Pilotgrenzen beschreiben
+den bisherigen workflow_version=1; der neue Ablauf bleibt ebenfalls
+ausschliesslich Testbetrieb ohne reale Zustellung.
+
 ## DEV-Testmodus
 
 Nur auf `https://dev.clubunio.ch` im bestehenden DEV-Mandanten SV Sissach:

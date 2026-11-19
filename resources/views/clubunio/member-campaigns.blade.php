@@ -1,5 +1,6 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-campaigns.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-campaigns.css') }}?v=2">
+    <p role="status" class="cu-campaign-test-note">{{ trans('campaign_ops.test_only') }}</p>
     @php
         $channels = ['email' => __('campaign.email'), 'post' => __('campaign.post'), 'both' => __('campaign.both')];
         $open = $campaign && $campaign->released_at && ! $campaign->revoked_at && \Illuminate\Support\Carbon::parse($campaign->expires_at)->isFuture();
@@ -36,23 +37,42 @@
             <x-filament::badge>{{ $draft ? __('campaign.draft') : ($open ? __('campaign.open') : __('campaign.closed')) }}</x-filament::badge>
             <span>{{ __('campaign.recipient_count') }}: {{ $count }}</span>
             @error('release')<span role="alert">{{ $message }}</span>@enderror
-            @if($canManage && $draft && $total && $pilot)<x-filament::button wire:click="release" wire:confirm="{{ __('campaign.release') }}?">{{ __('campaign.release') }}</x-filament::button>@endif
+            @if($canManage && $draft && $total && $pilot)
+                <x-filament::button icon="heroicon-o-eye" wire:click="previewDispatch">{{ trans('campaign_ops.preview') }}</x-filament::button>
+                <x-filament::button wire:click="mountAction('releaseCampaign')">{{ trans('campaign_ops.release_test') }}</x-filament::button>
+            @endif
+            @if($canManage && $open && (int) $campaign->workflow_version === 2)
+                <x-filament::button icon="heroicon-o-bell" wire:click="mountAction('remindCampaign')">{{ trans('campaign_ops.remind') }}</x-filament::button>
+            @endif
             @if($canManage && $draft)<x-filament::button color="danger" icon="heroicon-o-trash" wire:click="deleteDraft" wire:confirm="{{ __('campaign.confirm_delete') }}">{{ __('campaign.delete') }}</x-filament::button>@endif
             @if($canManage && $open)<x-filament::button color="danger" wire:click="revoke">{{ __('campaign.revoke') }}</x-filament::button>@endif
             @if($canManage && $open && $hasLetters)
                 <x-filament::button tag="a" icon="heroicon-o-arrow-down-tray" :href="route('clubunio.campaign.letters', [$tenant->slug, $campaign->id])">{{ __('campaign.pdf') }}</x-filament::button>
             @endif
         </div>
+        @include('clubunio.campaigns.cockpit')
         @if($canManage && $draft)
             <x-filament::section :heading="__('campaign.content')">
                 <form wire:submit="saveContent" class="space-y-4">
                     <label>{{ __('campaign.kind') }}
-                        <x-filament::input.wrapper><x-filament::input.select wire:model="kind">
+                        <x-filament::input.wrapper><x-filament::input.select wire:model.live="kind">
                             @foreach(\App\ClubUnio\Services\MemberCampaignService::KINDS as $key)
                                 <option value="{{ $key }}">{{ \App\ClubUnio\Services\MemberCampaignService::kindLabel($key) }}</option>
                             @endforeach
                         </x-filament::input.select></x-filament::input.wrapper>
                     </label>
+                    @if(in_array($kind, ['event','sponsor'], true))
+                        <label>{{ trans('campaign_ops.target') }}
+                            <x-filament::input.wrapper><x-filament::input.select wire:model="targetId">
+                                <option value="">{{ trans('campaign_ops.choose') }}</option>
+                                @foreach($targetOptions as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                            </x-filament::input.select></x-filament::input.wrapper>
+                        </label>
+                    @endif
+                    <label>{{ trans('campaign_ops.reminder_days') }} <x-filament::input.wrapper>
+                        <x-filament::input type="number" wire:model="reminderDays" min="1" max="30" />
+                    </x-filament::input.wrapper></label>
+                    <label class="cu-campaign-check"><x-filament::input.checkbox wire:model="autoReminders" /> {{ trans('campaign_ops.auto_reminders') }}</label>
                     @foreach(['de', 'en'] as $language)
                         <fieldset class="space-y-2">
                             <legend>{{ $language === 'de' ? __('campaign.language_de') : __('campaign.language_en') }}</legend>
@@ -65,6 +85,19 @@
                     @endforeach
                     <x-filament::button type="submit">{{ __('campaign.save_content') }}</x-filament::button>
                 </form>
+                <div class="cu-campaign-template-tools">
+                    <label>{{ trans('campaign_ops.template') }} <x-filament::input.wrapper><x-filament::input.select wire:model.live="templateId">
+                        <option value="">{{ trans('campaign_ops.choose') }}</option>
+                        @foreach($templates as $template)<option value="{{ $template->id }}">{{ $template->name }}</option>@endforeach
+                    </x-filament::input.select></x-filament::input.wrapper></label>
+                    @if($templateId && ($chosen = $templates->firstWhere('id', $templateId)))
+                        <x-filament::button color="gray" wire:click="useTemplate" icon="heroicon-o-document-duplicate">{{ trans('campaign_ops.apply_template') }}</x-filament::button>
+                        <x-filament::button color="gray" wire:click="updateTemplate({{ $chosen->revision }})">{{ trans('campaign_ops.update_template') }}</x-filament::button>
+                        <x-filament::button color="danger" wire:click="archiveTemplate({{ $chosen->revision }})">{{ trans('campaign_ops.archive_template') }}</x-filament::button>
+                    @endif
+                    <label>{{ trans('campaign_ops.template_name') }} <x-filament::input.wrapper><x-filament::input wire:model="templateName" maxlength="160" /></x-filament::input.wrapper></label>
+                    <x-filament::button color="gray" wire:click="saveTemplate" icon="heroicon-o-bookmark">{{ trans('campaign_ops.save_template') }}</x-filament::button>
+                </div>
             </x-filament::section>
             <x-filament::input.wrapper><x-filament::input wire:model.live.debounce.350ms="search" :placeholder="__('campaign.search')" :aria-label="__('campaign.search')" /></x-filament::input.wrapper>
             @foreach($matches as $member)
@@ -104,6 +137,11 @@
             @foreach($recipients as $row)
                 <tr wire:key="recipient-{{ $row->id }}">
                     <td><strong>{{ $row->first_name }} {{ $row->last_name }}</strong>
+                        @if($draft && $canManage)
+                            <x-filament::icon-button icon="heroicon-o-shield-check" :label="trans('campaign_ops.verify_parent')"
+                                :tooltip="trans('campaign_ops.verify_parent')" wire:click="mountAction('verifyContact', {recipient: {{ $row->id }}})" />
+                        @endif
+                        @if($row->verified_at)<x-filament::badge>{{ trans('campaign_ops.verified') }}</x-filament::badge>@endif
                         @if($canEditMembers)
                             <x-filament::icon-button icon="heroicon-o-pencil-square" :label="__('Mitglied bearbeiten')" :tooltip="__('Mitglied bearbeiten')" wire:click="mountAction('editMember', {member: {{ $row->member_id }}})" />
                         @endif
@@ -113,6 +151,11 @@
                     <td>{{ $row->teams ?? '–' }}</td>
                     <td>{{ $row->email ?? '–' }}</td>
                     <td><div class="flex flex-wrap items-center gap-2">
+                    @if($canManage && $draft)
+                        <x-filament::input.wrapper><x-filament::input.select :aria-label="trans('campaign_ops.language')" wire:change="recipientLocale({{ $row->id }}, $event.target.value)">
+                            @foreach(config('clubunio-languages.enabled') as $code => $name)<option value="{{ $code }}" @selected($row->locale === $code)>{{ $name }}</option>@endforeach
+                        </x-filament::input.select></x-filament::input.wrapper>
+                    @endif
                     @if($canManage && $draft)
                         <x-filament::input.wrapper><x-filament::input.select :aria-label="__('campaign.channel')" wire:change="recipient({{ $row->member_id }}, $event.target.value)">
                             @foreach($channels as $key => $label)<option value="{{ $key }}" @selected($row->channel === $key)>{{ $label }}</option>@endforeach
@@ -129,10 +172,10 @@
                             'attention' => 'campaign.attention', default => 'campaign.pending',
                             'queued' => 'campaign.queued', 'bounced' => 'campaign.bounced',
                         }) }}</x-filament::badge>
-                        @if($canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->acknowledged_at && $row->mail_state === 'pending')
+                        @if((int) $campaign->workflow_version === 1 && $canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->acknowledged_at && $row->mail_state === 'pending')
                             <x-filament::button size="sm" wire:click="testMail({{ $row->id }})">{{ __('campaign.enqueue_test') }}</x-filament::button>
                         @endif
-                        @if($canManage && $pilot && $mailQueueEnabled && $row->mail_state === 'accepted' && $row->mail_address_hash)
+                        @if((int) $campaign->workflow_version === 1 && $canManage && $pilot && $mailQueueEnabled && $row->mail_state === 'accepted' && $row->mail_address_hash)
                             <x-filament::button size="sm" wire:click="markBounce({{ $row->id }})" wire:confirm="{{ __('campaign.mark_bounce') }}?">{{ __('campaign.mark_bounce') }}</x-filament::button>
                         @endif
                     @endif
@@ -150,6 +193,7 @@
                         'withdrawn' => 'campaign.withdrawn', default => 'campaign.pending',
                     }) }}</x-filament::badge>@endif
                     @if($row->acknowledged_at && !$row->request_id)<x-filament::badge>{{ __('campaign.ack_received') }}</x-filament::badge>@endif
+                    @if($row->first_opened_at)<x-filament::badge color="gray">{{ trans('campaign_ops.opened') }}</x-filament::badge>@endif
                     </div></td>
                 </tr>
             @endforeach

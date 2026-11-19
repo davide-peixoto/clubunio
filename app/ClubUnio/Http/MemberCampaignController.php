@@ -17,22 +17,26 @@ class MemberCampaignController
         $rows = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
             ->whereNotNull('token_encrypted')->orderBy('id')->limit(1001)->get();
         abort_if($rows->isEmpty() || $rows->count() > 1000, 422, __('campaign.pdf_limit'));
-        $members = $service->eligible($tenant)->whereIn('id', $rows->pluck('member_id'))->get()->keyBy('id');
         $qr = new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions([
             'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class, 'outputBase64' => true,
             'drawCircularModules' => false,
         ]));
-        $letters = $rows->map(function ($row) use ($tenant, $service, $members, $qr) {
-            $member = $members->get($row->member_id);
-            abort_unless($member?->street && $member->postal_code && $member->city, 422, __('campaign.no_post'));
+        $letters = $rows->map(function ($row) use ($tenant, $service, $qr) {
+            $member = $service->deliveryMember($tenant, $row);
+            abort_unless($member, 422);
+            $address = app(\App\ClubUnio\Services\CampaignContact::class)->address($tenant, $row, $member);
+            abort_unless($address['street'] && $address['postal_code'] && $address['city'], 422, __('campaign.no_post'));
             $url = $service->url($tenant, $row);
 
-            return ['member' => $member, 'url' => $url, 'qr' => $qr->render($url)];
+            $c = $service->openCampaign($tenant, $row->campaign_id);
+            return ['member' => $member, 'address' => $address, 'url' => $url, 'qr' => $qr->render($url),
+                'copy' => app()->withLocale($row->locale, fn () => $service->copy($c))];
         });
         $pdf = new \Dompdf\Dompdf(new \Dompdf\Options(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']));
         $pdf->loadHtml(view('clubunio.public.campaign-letters-pdf', compact('letters', 'tenant', 'copy'))->render(), 'UTF-8');
         $pdf->setPaper('a4');
         $pdf->render();
+        $service->recipients($tenant, $campaign)->whereIn('id', $rows->pluck('id'))->whereNull('printed_at')->update(['printed_at' => now()]);
 
         return response($pdf->output(), 200, ['Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="campaign-letters.pdf"', 'Cache-Control' => 'private, no-store']);
@@ -46,15 +50,18 @@ class MemberCampaignController
         $copy = $service->copy($service->openCampaign($tenant, $campaign));
         $row = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
             ->whereNotNull('token_encrypted')->where('id', $recipient)->firstOrFail();
-        $member = $service->eligible($tenant)->findOrFail($row->member_id);
-        abort_unless($member->street && $member->postal_code && $member->city, 422);
+        $member = $service->deliveryMember($tenant, $row);
+        $copy = app()->withLocale($row->locale, fn () => $service->copy($service->openCampaign($tenant, $campaign)));
+        abort_unless($member, 422);
+        $address = app(\App\ClubUnio\Services\CampaignContact::class)->address($tenant, $row, $member);
+        abort_unless($address['street'] && $address['postal_code'] && $address['city'], 422);
         $url = $service->url($tenant, $row);
         $qr = (new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions([
             'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
             'outputBase64' => true,
         ])))->render($url);
 
-        return response()->view('clubunio.public.campaign-letter', compact('tenant', 'member', 'url', 'qr', 'copy'))
+        return response()->view('clubunio.public.campaign-letter', compact('tenant', 'member', 'address', 'url', 'qr', 'copy'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
@@ -62,24 +69,31 @@ class MemberCampaignController
     {
         $domain = app(TenantDomainService::class)->current();
         abort_if($domain && (int) $domain->id !== (int) $tenant->id, 404);
-        [, $member, $campaign] = $campaigns->invitation($tenant, $token);
+        [$row, $member, $campaign] = $campaigns->invitation($tenant, $token);
+        app()->setLocale($row->locale);
+        $kind = $campaign->kind;
         $acknowledge = $campaign->kind === 'acknowledgement';
         $copy = $campaigns->copy($campaign);
         if ($request->isMethod('post')) {
+            if (in_array($kind, ['event','sponsor'], true)) {
+                app(\App\ClubUnio\Services\CampaignResponses::class)->submit($tenant, $token, $request->except('_token'));
+                return $this->page($tenant, compact('copy', 'acknowledge', 'kind') + ['complete' => true]);
+            }
             if ($acknowledge) {
                 $campaigns->acknowledge($tenant, $token);
 
-                return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => true]);
+                return $this->page($tenant, compact('copy', 'acknowledge', 'kind') + ['complete' => true]);
             }
             $request->validate(['portrait' => 'nullable|file|max:5120'], [], ['portrait' => __('photo.title')]);
             $changes->submitCampaign($tenant, $token, array_filter(
                 $request->only([...MemberCampaignService::FIELDS, '_version']), fn ($value) => $value !== null && $value !== '',
             ), $request->file('portrait'));
 
-            return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => true]);
+            return $this->page($tenant, compact('copy', 'acknowledge', 'kind') + ['complete' => true]);
         }
 
-        return $this->page($tenant, compact('copy', 'acknowledge') + ['complete' => false, 'version' => MemberService::version($member)]);
+        app(\App\ClubUnio\Services\CampaignResponses::class)->opened($tenant, $row);
+        return $this->page($tenant, compact('copy', 'acknowledge', 'kind') + ['complete' => false, 'version' => MemberService::version($member)]);
     }
 
     private function page(Tenant $tenant, array $data)

@@ -49,6 +49,9 @@ require __DIR__.'/clubunio-marketing.php';
 
 Route::match(['get', 'post'], '/campaign-response/{tenant:slug}/{token}', [\App\ClubUnio\Http\MemberCampaignController::class, 'response'])
     ->where('token', '[a-f0-9]{64}')->middleware('throttle:20,1')->name('clubunio.campaign.response');
+Route::post('/campaign-feedback', \App\ClubUnio\Http\CampaignFeedbackController::class)
+    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+    ->middleware('throttle:60,1')->name('clubunio.campaign.feedback');
 Route::get('/campaign-letter/{tenant:slug}/{campaign}/{recipient}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letter'])
     ->whereNumber(['campaign', 'recipient'])->middleware(['auth:clubunio', 'throttle:120,1'])->name('clubunio.campaign.letter');
 Route::get('/campaign-letters/{tenant:slug}/{campaign}', [\App\ClubUnio\Http\MemberCampaignController::class, 'letters'])
