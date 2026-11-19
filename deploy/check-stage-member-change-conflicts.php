@@ -32,6 +32,11 @@ try {
     $admin = $account('admin');
     $requester = $account('member');
     $service = app(MemberChangeService::class);
+    foreach (['pending', 'approved', 'rejected', 'withdrawn'] as $code) {
+        $db->table('clubunio.member_change_statuses')->insertOrIgnore([
+            'tenant_id' => $tenant->id, 'code' => $code, 'name' => $code, 'color' => 'gray',
+        ]);
+    }
     $require = static function (bool $ok, string $step): void {
         if (! $ok) throw new RuntimeException($step);
     };
