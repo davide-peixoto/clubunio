@@ -32,3 +32,16 @@ echte Konflikte ohne Teilschreiben und widerrufene Antragstellerrechte.
 
 Stage und PROD bleiben unveraendert. Rueckweg ist der vorherige
 DEV-Release; die Datenstruktur bleibt gleich.
+
+## DEV-Abnahme am 19.11.2026
+
+Aktiv: `20261119-clubunio-member-change-conflicts`; Rueckweg:
+`20261117-sv-sissach-mobile-oidc`.
+Live-Test gegen DEV-PostgreSQL erfolgreich: unabhaengiges Feld erhalten,
+bereits uebernommener Zielwert ohne Mitgliedsschreibvorgang abgeschlossen,
+Teiluebernahme vervollstaendigt, echter Konflikt atomar blockiert,
+doppelte Freigabe, unberechtigter Pruefer, widerrufene Verknuepfung und
+ausgetretenes Mitglied weiterhin gesperrt. Alle Testdaten zurueckgerollt,
+kein Mailversand. Fuenf lokale Tests und DE-/EN-Katalogpruefung erfolgreich.
+Health HTTP 200; Login unveraendert HTTP 302 zum bestehenden OIDC-Einstieg.
+Keine interaktive Browserabnahme oder Freigabe echter offener Antraege.

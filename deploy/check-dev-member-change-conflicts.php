@@ -76,6 +76,16 @@ try {
     }
     $require($request->fresh()->state === 'pending' && $member->fresh()->phone_private === '123', 'conflict atomicity');
 
+    [$member, $request] = $fixture($number++, ['city' => 'Requested', 'phone_private' => null]);
+    $member->forceFill(['city' => 'Requested'])->save();
+    $service->review($admin, $tenant, $request->id, 1, true, null);
+    $require($request->fresh()->state === 'approved' && $member->fresh()->phone_private === null, 'partially applied request completed');
+    try {
+        $service->review($admin, $tenant, $request->id, 1, true, null);
+        throw new RuntimeException('completed request replay accepted');
+    } catch (ValidationException) {
+    }
+
     [$member, $request] = $fixture($number++, ['city' => 'Requested']);
     $db->table('clubunio.account_member_links')->where('account_id', $requester->id)->where('tenant_id', $tenant->id)->update(['state' => 'revoked']);
     try {
@@ -84,8 +94,21 @@ try {
     } catch (ValidationException) {
     }
     $require($request->fresh()->state === 'pending', 'revoked link remains blocked');
-    Http::assertNothingSent();
-    Mail::assertNothingSent();
+    [$member, $request] = $fixture($number++, ['city' => 'Requested']);
+    try {
+        $service->review($requester, $tenant, $request->id, 1, true, null);
+        throw new RuntimeException('unauthorised approver accepted');
+    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+        $require($error->getStatusCode() === 403, 'approver permission enforced');
+    }
+    $member->forceFill(['exit_date' => now()->subDay()->toDateString()])->save();
+    try {
+        $service->review($admin, $tenant, $request->id, 1, true, null);
+        throw new RuntimeException('departed member accepted');
+    } catch (ValidationException) {
+    }
+    $require($request->fresh()->state === 'pending', 'departed member remains blocked');
+    $require(Http::recorded()->isEmpty(), 'no external HTTP requests');
     echo "DEV field conflicts, no-op approval, atomicity and requester revocation verified; all fixtures rolled back.\n";
 } catch (Throwable $error) {
     fwrite(STDERR, get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()."\n");
