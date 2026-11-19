@@ -41,4 +41,15 @@ class CampaignOperationsTest extends TestCase
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
         (new \App\ClubUnio\Http\CampaignFeedbackController)(Request::create('/campaign-feedback', 'POST'), new CampaignOperations);
     }
+
+    public function test_guardian_scope_ends_on_the_eighteenth_birthday(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-19 12:00:00', 'Europe/Zurich'));
+        $member = new Member;
+        $member->setRawAttributes(['birth_date' => '2008-11-19']);
+        self::assertFalse(\App\ClubUnio\Services\CampaignContact::isMinor($member));
+        $member->setRawAttributes(['birth_date' => '2008-11-20']);
+        self::assertTrue(\App\ClubUnio\Services\CampaignContact::isMinor($member));
+        $this->travelBack();
+    }
 }

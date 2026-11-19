@@ -93,7 +93,7 @@ Kein Import und keine Auffrischung von DEV, Stage oder PROD.
 php deploy/check-campaign-operations.php prueft die exakte Ziel-DB und URL.
 Synthetische Mandanten, Konten, Mitglieder und Fachobjekte werden in einer
 Rueckrolltransaktion getestet. Http::preventStrayRequests und Mail::fake
-zusaetzlich zum In-Memory-Transport. Die Tests prüfen Vorlagenrevisionen,
+zusaetzlich zum In-Memory-Transport. Die Tests pruefen Vorlagenrevisionen,
 Fremdmandantensperre, doppelte Freigabe, Versand/Erinnerungs-Idempotenz,
 Ruecklaeufer-Replays, gepruefte Eltern-QR-Briefe, Eventfreigabe und
 Sponsorenlaufuebernahme ohne Rechnungen. Lokale Tests:
@@ -103,3 +103,35 @@ Rueckweg: vorherigen Release aktivieren und den neuen campaign-work-
 Scheduler nicht weiter ausfuehren. Additive Felder und Versandhistorie
 erhalten, keine automatische Down-Migration. Bereits freigegebene neue
 Kampagnen vor einem Rueckweg sperren. Keine automatisch versendeten Testmails.
+
+## Abnahme vom 19.11.2026
+
+DEV aktiv: 20261119-clubunio-campaign-operations-v3.
+Basis und Rueckweg: 20261119-clubunio-support-panel; die zwischenzeitlichen
+Support- und Maildesign-Aenderungen bleiben enthalten. Stage auf Branch stage
+mit gezieltem Fachport, ohne Uebernahme anderer DEV-Funktionen.
+Die parallel ergaenzte optionale ClubUnio-Mailgestaltung ist integriert.
+
+Beide Datenbanken vor der additiven Migration privat als Custom-Dump
+gesichert; Archive per pg_restore-Listing geprueft. DEV-App-Rolle hat nur
+die benoetigten Rechte an den neuen Tabellen und Sequenzen erhalten.
+Keine Aenderung an PROD oder Snapshot-Schemas.
+
+DEV und Stage: kompletter synthetischer Fachtest erfolgreich, einschliesslich
+signiertem Feedback und Ablehnung falscher Signaturen, no-op bei
+Feedbackwiederholung, Elternkontakt ohne App-Konto, QR-Sammel-PDF,
+Cockpit-Rendering, Eventuebernahme und CHF-Sponsorzusage ueber die
+bestehenden Fachservices. Keine Rechnungen, kein SMTP, keine echten
+Empfaenger; alle Testdaten zurueckgerollt. Verarbeitung defekter
+Auftragsdaten geht mit technischer Diagnose auf attention; nur ein
+begruendeter manueller Wiederanlauf gibt den Auftrag erneut frei.
+Zwoelf lokale Tests/27 Assertions und DE-/EN-Katalogpruefung erfolgreich.
+HTTP-Health auf DEV/Stage 200, anonymer DEV-Kampagnenzugriff 302,
+unsigniertes Feedback auf beiden Umgebungen 403.
+
+Die interaktive Desktop-/Mobile-Sichtpruefung ist noch offen: Der Browser
+hat beim Aufruf der Kampagnen keine aktive Vereinsanmeldung.
+Echter SMTP-Versand und externe Ruecklaeuferzulieferung sind weiterhin
+nicht aktiviert. Fuer Letztere fehlen ein angebundener Zustelldienst
+und sein privates Signatursecret. Es wurden keine Testempfaenger-
+Konten dauerhaft fuer eine Browserpruefung angelegt.
