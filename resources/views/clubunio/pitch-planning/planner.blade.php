@@ -1,11 +1,11 @@
     <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=6">
-    <script src="{{ asset('js/pitch-planning.js') }}?v=2"></script>
+    <script src="{{ asset('js/pitch-planning.js') }}?v=3"></script>
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];
         $sources = ['training' => __('Training'), 'competition' => __('Wettkampf'), 'request' => __('Trainingsspiel'), 'block' => __('Sperre'), 'manual' => __('Manuelle Belegung')];
         $fields = collect($options['fields'])->keyBy('id');
     @endphp
-    <div class="pitch-planner" x-data="clubunioPitchPlanner()" x-on:dragend="dragKey = null" x-on:keydown.escape.window="cancelRange()" x-on:blur.window="cancelRange()" wire:loading.class="pitch-loading">
+    <div class="pitch-planner" x-data="clubunioPitchPlanner()" x-on:dragend="dragKey = null" x-on:keydown.escape.window="cancelRange()" x-on:blur.window="cancelRange()" x-on:visibilitychange.document="if (document.hidden) cancelRange()" wire:loading.class="pitch-loading">
         <div class="pitch-toolbar">
             <div class="pitch-controls">
                 <x-filament::icon-button wire:click="browse(-1)" wire:loading.attr="disabled" icon="heroicon-o-chevron-left" :label="__('Vorheriger Zeitraum')" :tooltip="__('Vorheriger Zeitraum')" />

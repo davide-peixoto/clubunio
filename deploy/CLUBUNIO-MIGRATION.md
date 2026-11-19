@@ -1234,3 +1234,12 @@ App nutzt Gedrückthalten und Ziehen, das Web Maus- oder Stiftziehen. Vorschau
 und 30-Minuten-Raster funktionieren vorwärts und rückwärts. Der Server prüft
 die übergebene Dauer. DEV und Stage aktualisiert, Stagecommit ce5f4fd.
 Prüfung und Rückweg stehen in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Randscrollen während der Kalendermarkierung
+
+Die Tageskalender scrollen bei der Bereichsauswahl automatisch an beiden
+Rändern. Markierung und Dauer folgen dem Scrollen, auch bei stillstehendem
+Zeiger. Abbruch, Ansichtswechsel und Hintergrundwechsel beenden die
+Frame-Schleife. DEV und Stage aktualisiert, Stagecommit caa3e20. Prüfung und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

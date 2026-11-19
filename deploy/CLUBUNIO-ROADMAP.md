@@ -2011,3 +2011,11 @@ Mehrere Zeitfelder lassen sich in App und Web als Zeitraum auswählen. Das
 Anfrageformular übernimmt Beginn und Dauer. Vorschau, Abbruch und einfache
 Klicks sind geprüft. Auf DEV und Stage ausgerollt. Stand und Abnahme in
 [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Automatisches Scrollen im Tageskalender
+
+Die Bereichsauswahl in App und Web scrollt am oberen und unteren Rand
+weiter und übernimmt die erweiterte Dauer. Stationäres Randhalten und
+Abbruch sind geprüft. Auf DEV und Stage ausgerollt. Abnahme und
+Bedienung in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

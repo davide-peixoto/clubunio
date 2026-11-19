@@ -95,3 +95,44 @@ Quelldatei überein. Sicherungen vor der Bereichserweiterung liegen auf DEV
 unter `/var/www/svs-laravel/shared/pitch-range-backup-20261119` und auf Stage
 unter `/root/clubunio-backups/pitch-range-20261119`. Deren Manifest nennt die
 neu hinzugefügte JavaScriptdatei für den gezielten Rückweg.
+
+## Automatisches Scrollen bei der Bereichsauswahl
+
+Während des Aufziehens scrollt der Tageskalender am oberen und unteren
+Rand automatisch weiter. Auch ein stillstehender Finger oder Mauszeiger
+hält das Scrollen am Rand aufrecht. Die Markierung und die daraus berechnete
+Dauer folgen der verschobenen Kalenderfläche. Beim Zurückziehen in die
+Mitte stoppt die automatische Bewegung. Der Tag und das gewählte Spielfeld
+bleiben die Grenzen der Auswahl.
+
+Der aktive Randbereich umfasst bis zu 48 logische Pixel. Die Geschwindigkeit
+steigt mit der Nähe zum Rand auf maximal 480 Pixel pro Sekunde. Die
+Scrollschleife läuft im Takt der Bildschirmframes. Der Webkalender
+berücksichtigt die feststehenden Spaltenköpfe. Kurze Maus-Klicks starten
+erst bei einer tatsächlich aufgezogenen Auswahl das Randscrollen.
+
+Loslassen und Abbrechen beenden die Scrollschleife. Die App räumt sie auch
+beim Datums-/Datenwechsel, beim Verlassen der Ansicht und beim Wechsel der
+App in den Hintergrund auf. Im Web gilt das beim Fensterwechsel, beim
+Verbergen des Tabs und beim Entfernen der Kalenderkomponente. Die
+Zeitbeschriftungen verwenden weiterhin die zentralen Sprachkataloge.
+
+64 Fluttertests sind grün, darunter stationäres Randscrollen in beide
+Richtungen auf schmalen Displays mit normaler und grosser Schrift. Sie
+prüfen auch die exakt übernommene Dauer und das Ende der Scrollbewegung.
+Zehn JavaScriptfälle decken unter anderem die Scrollgrenzen, stationäre
+Zeiger, kurze Klicks und das Aufräumen der Frame-Schleife ab. Die 25
+PHP-Webtests mit 136 Assertions sind grün. Ein optionaler Fixtureexport
+ist übersprungen. Dartanalyse und DE/EN-Katalogcheck sind grün.
+Die native iPhone-Abnahme erfolgt weiterhin auf dem Benutzer-Mac.
+
+Das Oberflächendelta ist auf DEV und Stage eingespielt. Beide Customdomains
+liefern Bootstrap und JavaScript-Version 3 mit HTTP 200. Die öffentlich
+abgerufene JavaScriptdatei stimmt mit dem geprüften Quellstand überein.
+Stage führt Commit `caa3e20`. DEV verwendet weiterhin das aktuelle Release
+`20261119-clubunio-member-change-conflicts`. Quelldateisicherungen liegen
+unter `/var/www/svs-laravel/shared/pitch-edge-scroll-backup-20261119` auf
+DEV und `/root/clubunio-backups/pitch-edge-scroll-20261119` auf Stage.
+Für den gezielten Rückweg die beiden gesicherten Quelldateien mit ihren
+ursprünglichen Besitzerrechten wiederherstellen, Ansichten leeren und
+PHP-FPM neu laden.

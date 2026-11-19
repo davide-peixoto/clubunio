@@ -2634,3 +2634,14 @@ und Dauer an das Anfrageformular. CSS v6 und JavaScript v2 sowie Bootstrap
 liefern HTTP 200. JavaScriptquelle auf beiden Customdomains bytegleich
 geprüft. Rückwegsicherung unter shared/pitch-range-backup-20261119.
 Details in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Randscrollen für aufgezogene Platzanfragen
+
+Gezieltes Oberflächendelta auf 20261119-clubunio-member-change-conflicts.
+Der Webkalender scrollt während der Bereichsauswahl an seinen Rändern,
+Beginn und Dauer bleiben an die markierten Zeitfelder gebunden. Bootstrap
+und JavaScript v3 liefern auf beiden Customdomains HTTP 200, das JavaScript
+ist bytegleich zum geprüften Quellstand. Rückwegsicherung unter
+shared/pitch-edge-scroll-backup-20261119. Details in
+[Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
