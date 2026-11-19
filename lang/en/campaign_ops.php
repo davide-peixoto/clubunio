@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'state_pending' => 'Not queued yet',
     'auto_reminders' => 'Automatically queue due reminders (up to three)',
     'record_bounce' => 'Record a bounce',
     'history' => 'Dispatch history',

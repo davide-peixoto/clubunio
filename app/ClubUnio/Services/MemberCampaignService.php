@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\{Crypt, DB};
 
 class MemberCampaignService
 {
+    use \Illuminate\Support\Traits\Localizable;
+
+    public function copyFor(object $campaign, string $locale): array
+    {
+        abort_unless(array_key_exists($locale, config('clubunio-languages.enabled')), 422);
+        return $this->withLocale($locale, fn () => $this->copy($campaign));
+    }
+
     public function canView(?Account $actor, ?Tenant $tenant): bool
     {
         return $this->allowed($actor, $tenant);

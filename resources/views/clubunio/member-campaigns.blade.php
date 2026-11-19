@@ -167,11 +167,12 @@
                     </div></td>
                     <td><div class="flex flex-wrap items-center gap-2">
                     @if(in_array($row->channel, ['email','both'], true))
-                        <x-filament::badge>{{ !$row->email ? __('campaign.no_email') : __(match($row->mail_state) {
+                        <x-filament::badge>{{ !$row->email ? __('campaign.no_email') : ((int) $campaign->workflow_version === 2
+                            ? trans('campaign_ops.state_'.($row->mail_state === 'pending' ? 'pending' : $row->mail_state)) : __(match($row->mail_state) {
                             'sending' => 'campaign.sending', 'accepted' => 'campaign.accepted', 'failed' => 'campaign.failed',
                             'attention' => 'campaign.attention', default => 'campaign.pending',
                             'queued' => 'campaign.queued', 'bounced' => 'campaign.bounced',
-                        }) }}</x-filament::badge>
+                        })) }}</x-filament::badge>
                         @if((int) $campaign->workflow_version === 1 && $canManage && $open && $pilot && $mailQueueEnabled && str_ends_with(strtolower((string) $row->email), '@example.invalid') && !$row->acknowledged_at && $row->mail_state === 'pending')
                             <x-filament::button size="sm" wire:click="testMail({{ $row->id }})">{{ __('campaign.enqueue_test') }}</x-filament::button>
                         @endif

@@ -21,9 +21,9 @@ try {
     $db->selectOne('select pg_advisory_xact_lock(67162311)');
     $suffix = bin2hex(random_bytes(8));
     $tenant = new Tenant;
-    $tenant->forceFill(['slug' => 'campaign-ops-'.$suffix, 'name' => 'Synthetic campaigns', 'active' => true])->save();
+    $tenant->forceFill(['slug' => 'campaign-ops-'.$suffix, 'name' => 'Synthetic campaigns'])->save();
     $other = new Tenant;
-    $other->forceFill(['slug' => 'campaign-other-'.$suffix, 'name' => 'Synthetic other', 'active' => true])->save();
+    $other->forceFill(['slug' => 'campaign-other-'.$suffix, 'name' => 'Synthetic other'])->save();
     $actor = new Account;
     $actor->forceFill(['username' => "campaign-test-admin-$suffix@example.invalid", 'display_name' => 'Synthetic campaign admin',
         'active' => true, 'password' => bcrypt($suffix)])->save();
@@ -73,7 +73,23 @@ try {
     $require($ops->table('campaign_delivery_events')->where('source_key', $feedback['event_id'])->count() === 1, 'feedback replay idempotency');
     $ops->feedback(array_replace($feedback, ['event_id' => (string) Str::uuid(), 'state' => 'delivered']));
     $require($ops->table('campaign_dispatches')->where('id', $dispatch->id)->value('state') === 'bounced', 'late delivered does not undo bounce');
+    config(['clubunio-campaign-mail.feedback_secret' => bin2hex(random_bytes(32))]);
+    $body = json_encode(array_replace($feedback, ['event_id' => (string) Str::uuid()]), JSON_THROW_ON_ERROR);
+    $timestamp = (string) time();
+    $webhook = \Illuminate\Http\Request::create('/campaign-feedback', 'POST', [], [], [], [
+        'CONTENT_TYPE' => 'application/json', 'HTTP_X_CAMPAIGN_TIMESTAMP' => $timestamp,
+        'HTTP_X_CAMPAIGN_SIGNATURE' => hash_hmac('sha256', $timestamp.'.'.$body, config('clubunio-campaign-mail.feedback_secret')),
+    ], $body);
+    $require((new \App\ClubUnio\Http\CampaignFeedbackController)($webhook, $ops)->getStatusCode() === 200, 'signed feedback accepted');
+    $webhook->headers->set('X-Campaign-Signature', 'invalid');
+    $denied(fn () => (new \App\ClubUnio\Http\CampaignFeedbackController)($webhook, $ops), 'invalid signature accepted');
     $require((int) $ops->cockpit($actor, $tenant, $id)['summary']['responded'] === 1, 'cockpit response count');
+    \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+    \Filament\Facades\Filament::auth()->setUser($actor);
+    \Filament\Facades\Filament::setTenant($tenant);
+    $html = \Livewire\Livewire::mount(\App\ClubUnio\Pages\MemberCampaigns::class, ['selected' => $id, 'kind' => 'acknowledgement']);
+    $require(str_contains((string) $html, trans('campaign_ops.cockpit')) && str_contains((string) $html, trans('campaign_ops.status_note')),
+        'authenticated campaign cockpit renders');
     $ops->archiveTemplate($actor, $tenant, $template, 2);
     $require(!$ops->templates($tenant)->where('id', $template)->exists(), 'template archived');
 
@@ -142,6 +158,9 @@ try {
 } catch (Throwable $error) {
     fwrite(STDERR, get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()."\n");
     if (get_class($error) === RuntimeException::class) fwrite(STDERR, $error->getMessage()."\n");
+    if ($error instanceof \Illuminate\Database\QueryException) {
+        fwrite(STDERR, $error->getPrevious()?->getMessage()."\n");
+    }
     $exit = 1;
 } finally {
     $db->rollBack();

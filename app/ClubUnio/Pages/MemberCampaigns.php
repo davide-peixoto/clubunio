@@ -333,6 +333,7 @@ class MemberCampaigns extends Page
                 'campaign_recipients.request_id', 'campaign_recipients.acknowledged_at', 'campaign_recipients.posted_at', 'campaign_recipients.mail_address_hash',
                 'campaign_recipients.first_opened_at', 'campaign_recipients.printed_at', 'campaign_recipients.verified_at',
                 'campaign_recipients.locale',
+                'campaign_recipients.contact_encrypted', 'campaign_recipients.contact_baseline', 'campaign_recipients.verified_by',
                 'member.first_name', 'member.last_name', 'member.street', 'member.postal_code', 'member.city', 'request.state as request_state',
                 'status.name as member_status', 'type.name as member_type', 'roster.teams', 'roster.team_ids')
             ->selectRaw("CASE WHEN member.billing_recipient_id IS NULL OR billing.email_field = 'email' THEN trim(member.email)
@@ -356,6 +357,17 @@ class MemberCampaigns extends Page
         $count = $query ? (clone $query)->count() : 0;
         $recipients = $query ? $query->orderBy(self::COLUMNS[$this->sort] ?? 'last_name', $this->descending ? 'desc' : 'asc')
             ->orderBy('id')->limit(min(5000, max(50, $this->limit)))->get() : collect();
+        foreach ($recipients as $row) {
+            if (! $row->contact_encrypted) continue;
+            $member = app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->find($row->member_id);
+            $contact = $member ? app(\App\ClubUnio\Services\CampaignContact::class)->details($tenant, $row, $member) : null;
+            if ($contact) {
+                $row->email = $contact['email'];
+                $row->street = $contact['street'];
+                $row->postal_code = $contact['postal_code'];
+                $row->city = $contact['city'];
+            }
+        }
         $canManage = static::canManage();
         $matches = $canManage && $campaign && ! $campaign->released_at && ! $campaign->revoked_at && mb_strlen(trim($this->search)) >= 2
             ? app(\App\ClubUnio\Services\MemberAccessService::class)->activeMembers($tenant)->where(function ($q) {

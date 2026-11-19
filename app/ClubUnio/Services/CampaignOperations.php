@@ -71,7 +71,7 @@ final class CampaignOperations
                 $email = $service->email($member);
                 $manual = app(CampaignContact::class)->details($tenant, $row, $member);
                 if ($manual) $email = $manual['email'] ?: null;
-                if ($member->birth_date->age < 18 && ! $manual
+                if (CampaignContact::isMinor($member) && ! $manual
                     && ($row->channel !== 'email' || ! $service->verifiedGuardian($tenant, $member))) $reason = 'guardian';
                 if (! $this->testMember($member, in_array($row->channel, ['email','both'], true) ? ($email ?? '') : null)) $reason = 'test_only';
                 if (! $reason && in_array($row->channel, ['post','both'], true)) {
@@ -182,7 +182,7 @@ final class CampaignOperations
             $outcome = 'no_longer_eligible';
             if ($delivery && hash_equals($row->contact_hash, $delivery['contact_hash'])
                 && ! $this->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('address_hash', $row->address_hash)->where('state', 'bounced')->exists()) {
-                $copy = app()->withLocale($recipient->locale, fn () => $service->copy($campaign));
+                $copy = $service->copyFor($campaign, $recipient->locale);
                 $message = (new \Symfony\Component\Mime\Email())->from('campaign-test@example.invalid')
                     ->to('campaign-test-sink@example.invalid')->subject($copy['subject'])
                     ->text($copy['body']."\n\n".$service->url($tenant, $recipient));
@@ -212,6 +212,7 @@ final class CampaignOperations
 
     public function feedback(array $input): void
     {
+        abort_unless($this->enabled(), 403);
         $data = validator($input, ['event_id' => 'required|uuid', 'dispatch_id' => 'required|uuid',
             'state' => 'required|in:delivered,bounced', 'address_hash' => 'required|string|size:64'])->validate();
         DB::connection('clubunio')->transaction(function () use ($data) {
@@ -225,6 +226,12 @@ final class CampaignOperations
             // A delayed "delivered" report must not undo a permanent bounce.
             if ($row->state === 'bounced') return;
             $q->update(['state' => $data['state'], 'outcome' => 'feedback', 'finished_at' => now()]);
+            $latest = $this->table('campaign_dispatches')->where('tenant_id', $row->tenant_id)
+                ->where('recipient_id', $row->recipient_id)->orderByDesc('sequence')->value('id');
+            if ($latest === $row->id) {
+                app(MemberCampaignService::class)->recipients($tenant, $row->campaign_id)->where('id', $row->recipient_id)
+                    ->update(['mail_state' => $data['state']]);
+            }
             if ($data['state'] === 'bounced') {
                 $this->table('campaign_dispatches')->where('tenant_id', $row->tenant_id)->where('address_hash', $row->address_hash)->where('state', 'queued')
                     ->update(['state' => 'cancelled', 'outcome' => 'suppressed']);

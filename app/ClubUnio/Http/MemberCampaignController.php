@@ -30,7 +30,7 @@ class MemberCampaignController
 
             $c = $service->openCampaign($tenant, $row->campaign_id);
             return ['member' => $member, 'address' => $address, 'url' => $url, 'qr' => $qr->render($url),
-                'copy' => app()->withLocale($row->locale, fn () => $service->copy($c))];
+                'copy' => $service->copyFor($c, $row->locale)];
         });
         $pdf = new \Dompdf\Dompdf(new \Dompdf\Options(['isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']));
         $pdf->loadHtml(view('clubunio.public.campaign-letters-pdf', compact('letters', 'tenant', 'copy'))->render(), 'UTF-8');
@@ -51,7 +51,7 @@ class MemberCampaignController
         $row = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
             ->whereNotNull('token_encrypted')->where('id', $recipient)->firstOrFail();
         $member = $service->deliveryMember($tenant, $row);
-        $copy = app()->withLocale($row->locale, fn () => $service->copy($service->openCampaign($tenant, $campaign)));
+        $copy = $service->copyFor($service->openCampaign($tenant, $campaign), $row->locale);
         abort_unless($member, 422);
         $address = app(\App\ClubUnio\Services\CampaignContact::class)->address($tenant, $row, $member);
         abort_unless($address['street'] && $address['postal_code'] && $address['city'], 422);
