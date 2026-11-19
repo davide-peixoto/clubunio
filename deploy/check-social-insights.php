@@ -57,6 +57,9 @@ try {
     $require($service->table('imported_posts')->where('tenant_id',$tenant->id)->count()===2,'Repeat duplicated post');
     $metrics=json_decode($service->table('imported_posts')->where('tenant_id',$tenant->id)->where('connection_id',$ig)->value('metrics'),true);
     $require($metrics['likes']===0 && $metrics['reach']===null,'Missing value confused with zero');
+    $require(Http::recorded()->every(fn ($pair)=>$pair[0]->method()==='GET' && str_starts_with($pair[0]->url(),'https://graph.facebook.com/')),'Unexpected outbound write');
+    Http::swap(new \Illuminate\Http\Client\Factory);
+    Http::preventStrayRequests();
     Http::fake(['*'=>Http::response(['error'=>['code'=>190]],400)]);
     $work=$service->enqueue($actor,$tenant,$ig); $service->tick();
     $require(app(SyncWorkService::class)->table()->where('id',$work)->value('error_code')==='status_401','Missing failure audit');
@@ -65,9 +68,10 @@ try {
     $denied(fn ()=>$service->import($actor,$tenant,$ig,(int) $row->revision));
     $require($service->table('connections')->where('id',$ig)->value('token_encrypted')===null,'Disconnected credential retained');
     $require($service->table('metric_snapshots')->where('tenant_id',$tenant->id)->count()===2,'Disconnect lost history');
-    Http::assertNotSent(fn ($r)=>$r->method()!=='GET' || !str_starts_with($r->url(),'https://graph.facebook.com/'));
+    $require(Http::recorded()->every(fn ($pair)=>$pair[0]->method()==='GET' && str_starts_with($pair[0]->url(),'https://graph.facebook.com/')),'Unexpected outbound write');
     echo "Social test-account gates, encrypted connections, both imports, snapshots, no duplicates, failure audit and disconnect passed. Rollback only; no real Meta request or publication.\n";
 } catch (Throwable $error) {
     fwrite(STDERR,'Social acceptance failed: '.get_class($error).' at '.$error->getFile().':'.$error->getLine().' '.$error->getMessage()."\n"); $exit=1;
+    foreach (array_slice($error->getTrace(),0,7) as $frame) fwrite(STDERR,($frame['file'] ?? '').':'.($frame['line'] ?? '').' '.($frame['function'] ?? '')."\n");
 } finally { $db->rollBack(); }
 exit($exit);

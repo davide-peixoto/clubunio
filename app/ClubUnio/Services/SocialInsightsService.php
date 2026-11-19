@@ -58,7 +58,7 @@ final class SocialInsightsService
     {
         $this->authorize($actor, $tenant, 'update');
         abort_unless($this->table('connections')->where('tenant_id',$tenant->id)->where('id',$id)->update([
-            'active'=>false,'token_encrypted'=>null,'revision'=>DB::raw('revision + 1'),
+            'active'=>false,'token_encrypted'=>null,'revision'=>DB::connection('clubunio')->raw('revision + 1'),
         ]),404);
     }
 

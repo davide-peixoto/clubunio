@@ -51,7 +51,7 @@ final class PermissionCatalog
             'competitions', 'bexio' => ['sync', 'download', 'export'],
             'reports' => ['export', 'download'],
             'announcements', 'templates', 'signage' => ['send'],
-            'social_media' => ['upload', 'download', 'approve', 'send', 'schedule'],
+            'social_media' => ['upload', 'download', 'approve', 'send', 'schedule', 'sync'],
             'bus' => ['approve', 'cancel', 'export'],
             default => ['export'],
         };
