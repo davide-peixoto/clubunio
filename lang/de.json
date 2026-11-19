@@ -2990,5 +2990,7 @@
     "Schweiz": "Schweiz",
     "Ausland": "Ausland",
     "This pitch is currently closed. You can still submit your request. Availability for the requested date will be checked when it is approved.": "Dieses Spielfeld ist aktuell gesperrt. Du kannst die Anfrage trotzdem senden. Die Verfügbarkeit für den gewünschten Termin wird bei der Freigabe geprüft.",
-    "Request :field on :date at :time": "Anfrage für :field am :date um :time erstellen"
+    "Request :field on :date at :time": "Anfrage für :field am :date um :time erstellen",
+  "Drag across time slots to select the start and duration.": "Über mehrere Zeitfelder ziehen, um Beginn und Dauer zu wählen.",
+  ":start–:end · :minutes min": ":start–:end · :minutes Min."
 }

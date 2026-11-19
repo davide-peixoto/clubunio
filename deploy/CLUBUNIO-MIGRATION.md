@@ -1225,3 +1225,12 @@ Anfragen bei aktuell gesperrten Plätzen entsprechend dem vorhandenen
 Serverablauf. Ein neutraler Hinweis erklärt die Prüfung bei der Freigabe.
 DE/EN-Kataloge geprüft. DEV und Stage aktualisiert, Stagecommit 8c45b1e.
 Abnahme und Rückweg sind in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md) dokumentiert.
+
+
+## 19.11.2026 – Zeitraum im Platzkalender aufziehen
+
+App und Web übernehmen Beginn und Dauer eines aufgezogenen Bereichs. Die
+App nutzt Gedrückthalten und Ziehen, das Web Maus- oder Stiftziehen. Vorschau
+und 30-Minuten-Raster funktionieren vorwärts und rückwärts. Der Server prüft
+die übergebene Dauer. DEV und Stage aktualisiert, Stagecommit ce5f4fd.
+Prüfung und Rückweg stehen in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

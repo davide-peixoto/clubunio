@@ -53,6 +53,19 @@ class PitchPlanningPageTest extends TestCase
             ->call('requestSlot', 1, '2026-11-04', '12:30')->assertStatus(403);
     }
 
+    public function test_calendar_range_prefills_duration_and_rejects_invalid_lengths(): void
+    {
+        Livewire::test(PitchPlanningHarness::class)
+            ->call('requestSlot', 1, '2026-11-04', '12:30', 90)
+            ->assertSet('form.starts_at', '12:30')->assertSet('form.duration_minutes', 90)
+            ->assertSet('editor', 'request');
+        foreach ([0, 1441] as $duration) {
+            Livewire::test(PitchPlanningHarness::class)
+                ->call('requestSlot', 1, '2026-11-04', '12:30', $duration)
+                ->assertHasErrors('duration_minutes');
+        }
+    }
+
     public static function entry(): array
     {
         return ['key' => 'training:7:2026-11-04', 'source' => 'training', 'source_id' => 7, 'original_date' => '2026-11-04',

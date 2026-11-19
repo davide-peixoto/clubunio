@@ -2624,3 +2624,13 @@ Neuer DE/EN-Hinweis erklärt den aktuellen Anlagenstatus im Anfrageablauf.
 Bootstrap/CSS HTTP 200, beide Bladevorlagen kompiliert, PHP-FPM aktiv.
 Quelldateisicherung unter shared/pitch-slots-backup-20261119. Details und
 Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Aufgezogene Zeitbereiche für Platzanfragen
+
+Gezieltes Delta auf die aktuelle Basis
+20261119-clubunio-member-change-conflicts. Die Webauswahl übergibt Beginn
+und Dauer an das Anfrageformular. CSS v6 und JavaScript v2 sowie Bootstrap
+liefern HTTP 200. JavaScriptquelle auf beiden Customdomains bytegleich
+geprüft. Rückwegsicherung unter shared/pitch-range-backup-20261119.
+Details in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

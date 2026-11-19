@@ -2003,3 +2003,11 @@ Die Tageskalender in App und Web übernehmen bei Klick auf einen Slot Datum,
 Beginn und Spielfeld ins Anfrageformular. Der aktuelle Anlagenstatus wird
 als Hinweis zur anschliessenden Freigabe erklärt. Auf DEV und Stage verfügbar.
 Prüfung und Stand in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Bereichsauswahl im Tageskalender
+
+Mehrere Zeitfelder lassen sich in App und Web als Zeitraum auswählen. Das
+Anfrageformular übernimmt Beginn und Dauer. Vorschau, Abbruch und einfache
+Klicks sind geprüft. Auf DEV und Stage ausgerollt. Stand und Abnahme in
+[Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
