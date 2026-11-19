@@ -180,3 +180,21 @@ Bildbeschreibung, Demohinweis und bestehender Lightbox.
 Keine DB-Migration. Rueckweg: vorherige Marketing-Blade und Bilderversion,
 statisches HTML-Backup auf dem VPS unter /root/clubunio-new-screens-*.
 Sprachpruefung und MarketingWebsiteTest erfolgreich.
+
+## Echte Social-/Veo-Aufnahmen aus DEV (19.11.2026)
+
+Die vereinfachten lokalen Social-/Veo-Demoansichten wurden durch echte
+Browseraufnahmen der angemeldeten Anwendung dev.clubunio.ch ersetzt.
+Nach Betreiberanmeldung im ClubUnio-Mandantenwaehler FC Horizon · DEMO
+ausgewaehlt, Social Media und /veo-planning jeweils DE/EN aufgenommen.
+Vollstaendige ClubUnio-Oberflaeche mit Navigation, Topbar und Fachinhalt.
+Dateien: public/images/marketing/{de,en}/{social,veo}-live.jpg.
+Die Lightbox und die Vorschaubilder referenzieren diese neuen Dateinamen.
+
+Im ausschliesslich fiktiven Demoverein vier synthetische Spielzuordnungen,
+Aufnahmeauswahl je Team und Demo-Kamera ergaenzt. Keine externe
+Synchronisation, Veroeffentlichung oder Mailzustellung. Die Aufnahmen
+zeigen die echte Spieluebersicht und vier berechnete Aufnahmefenster.
+Kein Schemawechsel. Statischer Rueckweg auf dem VPS unter
+/root/clubunio-actual-screens-*; vorherige Bilder bleiben versioniert.
+Sprachpruefung und MarketingWebsiteTest erfolgreich.
