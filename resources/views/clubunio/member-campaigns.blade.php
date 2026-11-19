@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-campaigns.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-campaigns.css') }}?v=3">
     <p role="status" class="cu-campaign-test-note">{{ trans('campaign_ops.test_only') }}</p>
     @php
         $channels = ['email' => __('campaign.email'), 'post' => __('campaign.post'), 'both' => __('campaign.both')];
@@ -107,7 +107,7 @@
                 </div>
             @endforeach
         @endif
-        <div class="cu-admin-journal">
+        <div class="cu-admin-journal cu-campaign-recipients">
         <table>
             <thead><tr>
                 @foreach(['name' => __('Mitglied'), 'status' => __('Mitgliederstatus'), 'type' => __('Mitgliederart'), 'team' => __('Mannschaft'), 'email' => __('E-Mail'), 'channel' => __('campaign.channel'), 'delivery' => __('campaign.delivery')] as $key => $label)

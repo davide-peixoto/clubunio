@@ -8,6 +8,8 @@
 .cu-campaign-copy { white-space: pre-wrap; overflow-wrap: anywhere; }
 .cu-campaign-template-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 16px; }
 .cu-campaign-template-tools label { min-width: 180px; flex: 1; }
+.cu-campaign-recipients table { min-width: 1150px; }
+.cu-campaign-recipients th { min-width: 150px; word-break: normal; overflow-wrap: normal; }
 @media (max-width: 640px) {
     .cu-campaign-overview table { min-width: 0; table-layout: fixed; }
     .cu-campaign-overview :is(th, td) { padding: 10px 8px; }
