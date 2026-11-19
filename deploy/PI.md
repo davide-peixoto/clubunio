@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Kampagnen: Versandcockpit und Ruecklauf (19.11.2026)
+
+Aktiv: `20261119-clubunio-campaign-operations-v3`; Rueckweg:
+`20261119-clubunio-support-panel`. Die additive Migration
+`2026_11_19_010000_campaign_operations` wurde nach privater Sicherung
+gezielt auf DEV angewendet. Neue Versandauftraege laufen ausschliesslich
+im Speicher; kein SMTP und keine Rechnungen. Fachtest mit synthetischen
+Mandanten und Rueckrolltransaktion erfolgreich.
+[Fachregeln, Stage-Abnahme und Migrationsplan](CLUBUNIO-CAMPAIGN-OPERATIONS.md).
+
 ## Feldbezogene Freigabe von Mitgliederaenderungen
 
 Fachregel, Tests und migrationsfreier Rueckweg:
