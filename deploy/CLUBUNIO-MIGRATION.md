@@ -1253,3 +1253,11 @@ Veo-Konfigurationstabellen. Arbeitskorb und SFV verwenden das bestehende
 Schema. Zielprüfung, Ablauf, Rückweg und Fachabnahme stehen in
 [Arbeitskorb und SFV](/deploy/CLUBUNIO-WORK-INBOX-SFV.md#für-stage-vorbereitet).
 
+
+
+## PROD auf Stage-Code und leerem Schema (19.11.2026)
+
+Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
+141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
+App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
+Erster Verein und Administration folgen. [Nachweis und Rueckweg](CLUBUNIO-PRODUCTION.md).

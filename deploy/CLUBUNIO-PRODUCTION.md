@@ -18,7 +18,7 @@ Vorbereitung beauftragt. Entscheidung: leerer Vereinsbestand zum Start.
   DB-Verbindung verwendet die bestehenden Zugangsdaten, Ziel clubunio_prod.
   Keine Stage-Providerkonfiguration oder Stage-App-Schluessel uebernommen.
 - DB-Anmeldung als userunio mit bestehender TLS-Konfiguration erfolgreich;
-  current_database() = clubunio_prod, null Anwendungstabellen.
+  current_database() = clubunio_prod; initial leer, anschliessend Schemaaufbau wie unten.
 - Composer-Lock mit PHP 8.3 installiert, keine Entwicklungsabhaengigkeiten.
   Package Discovery, Filament-Assets, Livewire-Publikation und Configcache fertig.
 - Wartungsmodus mit vorgerenderter Fehlerseite: /login liefert HTTPS 503.
@@ -36,19 +36,66 @@ weder Wartungsmodus noch Fachabnahme und schaltet keinen Provider frei.
 Pruefung auf dem VPS: ohne Flag CLI-Exit 1, mit Flag erfolgreicher Bootstrap.
 Lokaler Katalogcheck: 2994 Schluessel in DE/EN, keine Platzhalterfehler.
 
+## Stage-Abgleich und leerer Schemaaufbau (19.11.2026)
+
+Freigegeben: aktueller Stage-Code und leerer Fachbestand. Uebernommen wurde
+der synchronisierte Stage-Commit f175b6f mit allen Vorfahren. Die explizite
+Produktionsfreigabe bleibt als PROD-Delta erhalten. Merge-Release: 2fe7a43.
+Uncommittierte Stage-Maildesign-Arbeiten und waehrend des Aufbaus parallel
+hinzugekommene Social-Insights-Tabellen sind nicht Teil dieses Releases.
+
+Das Werkzeug deploy/bootstrap-empty-production.py uebernimmt ausschliesslich
+das Schema clubunio und das Migrationsjournal. Es verlangt den exakten
+Zielnamen clubunio_prod, eine leere Datenbank, Owner userunio, Wartungsmodus
+und ein zum Code passendes Quelljournal. Kein Stage-Import, keine
+Legacy-Schemata, keine Provider-/Vereinseinstellungen und keine Fachdaten.
+Alle erzeugten Objekte gehoeren userunio. Die historischen
+Importmigrationen werden nicht ausgefuehrt und deren Schutz bleibt erhalten.
+
+Ablauf auf dem VPS als root aus dem Release-Verzeichnis:
+
+    python3 deploy/bootstrap-empty-production.py plan --target clubunio_prod
+    python3 deploy/bootstrap-empty-production.py rehearse --target clubunio_prod
+    python3 deploy/bootstrap-empty-production.py apply --target clubunio_prod
+
+Probelauf vollstaendig mit ROLLBACK erfolgreich. Verbindlicher Aufbau in
+einer Transaktion: 239 Tabellen, eine View, 141 Migrationsjournalzeilen.
+Alle 238 anderen Tabellen sind leer, insbesondere tenants und accounts.
+App-Verbindung als userunio mit search_path=clubunio erfolgreich.
+
+Private Abzuege liegen ausschliesslich auf dem VPS unter
+/root/clubunio-prod-backups/20261119T172651952164Z:
+before.sql (leere DB), schema.sql und migration-journal.sql. Der
+Probelauf liegt separat unter 20261119T172631555785Z.
+Originaler Schema-SHA256:
+3a9fdde50c3f15608b3167bdec5a24c570d08e23c79a9b0ba874d0e291f20180.
+
+Der erste Vergleich nach Commit meldete lediglich von PostgreSQL beim
+Restore umgeschriebene varchar[]/text[]-Pruefbedingungen. Exakte
+Normalisierung dieser Cast-Form ergaenzt; danach gesamtes Schema gegen
+den gespeicherten Abzug, alle 141 Journalnamen gegen den Code und jede
+einzelne Fachtabelle unabhaengig erfolgreich geprueft. Der Vergleich
+verwendet den gespeicherten Stand, weil Stage parallel weiterentwickelt
+wird. Ein erneuter Aufbau wird wegen des vorhandenen Schemas abgelehnt.
+
+    python3 deploy/bootstrap-empty-production.py verify --target clubunio_prod --baseline /root/clubunio-prod-backups/20261119T172651952164Z/schema.sql
+
+Composer-Lock installiert, Livewire byteweise geprueft, Konfiguration und
+alle Blade-Templates gecacht. DE/EN: 2984 Schluessel fehlerfrei.
+HTTPS /login bleibt 503, statisches Livewire 200. Kein Scheduler/Worker.
+
 ## Naechster Schritt vor Erststart
 
-Der verbundene prod-Stand ist aelter als Stage. Erst den gewuenschten,
-abgenommenen Produktstand auswaehlen und gezielt uebernehmen. Anschliessend
-einen eigenstaendigen Aufbau fuer die leere Produktionsdatenbank vorbereiten:
-Die vorhandenen Migrationen und Stage-Runner haben Zielschutz und
-Import-Zwischenpunkte; diese nicht durch Umbenennen der Umgebung oder mit
-dem Stage-Import umgehen. Es wurde noch keine Migration ausgefuehrt.
-Nach leerem Schemaaufbau Lookups/Sprachvarianten pruefen, ersten Verein und
-separat berechtigte Administration einrichten, Produktions-Login abnehmen.
-Backups samt Wiederherstellungsnachweis und Release-Rueckweg vor Freigabe
-einrichten. Erst dann Wartungsmodus gezielt aufheben.
+Ersten Verein und getrennt berechtigte Administration einrichten.
+Mandantenbezogene Lookups, Vorlagen und Sprachvarianten ueber die
+vorgesehenen Provisionierungsservices anlegen; keine Test-Fixtures oder
+fremden Konfigurationen uebernehmen. Danach Produktionslogin und
+Berechtigungen pruefen. Regelmaessige private Backups samt
+Wiederherstellungsnachweis einrichten. Erst nach dieser Abnahme den
+Wartungsmodus gezielt aufheben.
 
-Kein Datenrefresh, keine Stage-Uebernahme und keine echte Zahlung.
-Der Wartungsmodus bleibt bei einem Code-Rollback erhalten. Private
-Konfiguration und APP_KEY dauerhaft sichern und bei Updates erhalten.
+Der Wartungsmodus bleibt bei einem Code-Rollback erhalten. Vor dem
+ersten Fachdatensatz kann der ganze initiale Schemaaufbau bei Bedarf
+nach expliziter Entscheidung zurueckgenommen werden; kein automatischer
+Schema-Downgrade. Private Konfiguration und APP_KEY dauerhaft sichern
+und bei Updates erhalten. Keine echte Zahlung oder externer Versand.

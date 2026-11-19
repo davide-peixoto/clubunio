@@ -206,3 +206,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 Read [PILOT.md](PILOT.md) before running commands. Shared DEV database,
 read-only; no migrations or production deployment.
+
+
+## PROD auf Stage-Code und leerem Schema (19.11.2026)
+
+Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
+141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
+App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
+Erster Verein und Administration folgen. [Nachweis und Rueckweg](deploy/CLUBUNIO-PRODUCTION.md).

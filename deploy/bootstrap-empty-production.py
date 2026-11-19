@@ -26,6 +26,10 @@ def dump(db, *options):
 
 
 def normalized(content):
+    # PostgreSQL re-parses varchar[] -> text[] casts on restore and emits
+    # equivalent per-element casts. Canonicalize only this exact expression.
+    content = re.sub(r"\(\(ARRAY\[((?:'[^']*'::character varying(?:, )?)+)\]\)::text\[\]\)",
+                     lambda m: '(ARRAY[' + re.sub(r"('[^']*'::character varying)", r'(\1)::text', m[1]) + '])', content)
     return '\n'.join(line for line in content.splitlines()
                      if not line.startswith(('\\restrict ', '\\unrestrict ', '--'))).strip()
 
@@ -39,10 +43,21 @@ def assert_empty():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['plan', 'rehearse', 'apply'])
+    parser.add_argument('mode', choices=['plan', 'rehearse', 'apply', 'verify'])
     parser.add_argument('--target', required=True, choices=[TARGET])
+    parser.add_argument('--baseline', type=Path, help='Private schema.sql from the completed build; verify only')
     args = parser.parse_args()
     assert os.geteuid() == 0, 'Run on the VPS as root'
+    if args.mode == 'verify':
+        assert args.baseline and args.baseline.is_file(), 'Saved schema baseline required'
+        assert normalized(args.baseline.read_text()) == normalized(dump(TARGET, '--schema-only', '--schema=clubunio')), 'Schema comparison failed'
+        expected = sorted(p.stem for p in (Path(__file__).resolve().parent.parent / 'database/clubunio').glob('*.php'))
+        assert sql(TARGET, 'select migration from clubunio.migrations order by migration').splitlines() == expected
+        for table in sql(TARGET, "select tablename from pg_tables where schemaname='clubunio' and tablename<>'migrations' order by tablename").splitlines():
+            assert re.fullmatch('[a-z_0-9]+', table)
+            assert sql(TARGET, f'SELECT count(*) FROM clubunio."{table}"') == '0', table
+        print('Saved schema baseline and code journal match; all business tables empty.')
+        return
     assert_empty()
     assert Path('/home/runcloud/webapps/ClubUnioProd/storage/framework/down').exists(), 'Maintenance required'
     schema = dump(SOURCE, '--schema-only', '--schema=clubunio')

@@ -1985,3 +1985,11 @@ Neue VPS-App unter app.clubunio.com technisch vorbereitet, eigene leere
 Datenbank clubunio_prod, explizite Produktionskonfiguration und Wartungsmodus.
 Leerer Vereinsbestand gewuenscht; noch kein Schemaaufbau oder Fachstart.
 Nachweise und naechste Schritte: [Produktionsvorbereitung](CLUBUNIO-PRODUCTION.md).
+
+
+## PROD auf Stage-Code und leerem Schema (19.11.2026)
+
+Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
+141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
+App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
+Erster Verein und Administration folgen. [Nachweis und Rueckweg](CLUBUNIO-PRODUCTION.md).
