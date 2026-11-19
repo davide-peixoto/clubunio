@@ -15,7 +15,7 @@ class MemberCampaignController
         abort_unless($service->allowed($request->user('clubunio'), $tenant), 403);
         $copy = $service->copy($service->openCampaign($tenant, $campaign));
         $rows = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
-            ->whereNotNull('token_encrypted')->orderBy('id')->limit(1001)->get();
+            ->whereNotNull('token_encrypted')->whereNull('posted_at')->orderBy('id')->limit(1001)->get();
         abort_if($rows->isEmpty() || $rows->count() > 1000, 422, __('campaign.pdf_limit'));
         $qr = new \chillerlan\QRCode\QRCode(new \chillerlan\QRCode\QROptions([
             'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class, 'outputBase64' => true,
@@ -49,7 +49,7 @@ class MemberCampaignController
         abort_unless($service->allowed($request->user('clubunio'), $tenant), 403);
         $copy = $service->copy($service->openCampaign($tenant, $campaign));
         $row = $service->recipients($tenant, $campaign)->whereIn('channel', ['post','both'])
-            ->whereNotNull('token_encrypted')->where('id', $recipient)->firstOrFail();
+            ->whereNotNull('token_encrypted')->whereNull('posted_at')->where('id', $recipient)->firstOrFail();
         $member = $service->deliveryMember($tenant, $row);
         $copy = $service->copyFor($service->openCampaign($tenant, $campaign), $row->locale);
         abort_unless($member, 422);
@@ -60,6 +60,7 @@ class MemberCampaignController
             'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
             'outputBase64' => true,
         ])))->render($url);
+        $service->recipients($tenant, $campaign)->where('id', $row->id)->whereNull('printed_at')->update(['printed_at' => now()]);
 
         return response()->view('clubunio.public.campaign-letter', compact('tenant', 'member', 'address', 'url', 'qr', 'copy'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
