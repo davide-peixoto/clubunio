@@ -99,3 +99,12 @@ ersten Fachdatensatz kann der ganze initiale Schemaaufbau bei Bedarf
 nach expliziter Entscheidung zurueckgenommen werden; kein automatischer
 Schema-Downgrade. Private Konfiguration und APP_KEY dauerhaft sichern
 und bei Updates erhalten. Keine echte Zahlung oder externer Versand.
+
+## PROD-Keycloak angebunden (19.11.2026)
+
+Eigene Clients clubunio-verein-prod und clubunio-platform-prod im Realm
+clubunio. Private Secrets, exakte PROD-Callbacks, PKCE S256 und MFA Level 2.
+DE/EN-Loginformulare, Redirect-/PKCE-Abweisung und Client-Secrets geprueft.
+Keycloak-only aktiv; Benutzerzuordnungen leer, Wartungsmodus erhalten.
+Vollstaendige Login-Abnahme folgt mit der ersten Administration.
+[Konfiguration und Nachweise](keycloak/clients/PRODUCTION.md).

@@ -1993,3 +1993,13 @@ Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
 141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
 App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
 Erster Verein und Administration folgen. [Nachweis und Rueckweg](CLUBUNIO-PRODUCTION.md).
+
+
+## PROD-Keycloak angebunden (19.11.2026)
+
+Eigene Clients clubunio-verein-prod und clubunio-platform-prod im Realm
+clubunio. Private Secrets, exakte PROD-Callbacks, PKCE S256 und MFA Level 2.
+DE/EN-Loginformulare, Redirect-/PKCE-Abweisung und Client-Secrets geprueft.
+Keycloak-only aktiv; Benutzerzuordnungen leer, Wartungsmodus erhalten.
+Vollstaendige Login-Abnahme folgt mit der ersten Administration.
+[Konfiguration und Nachweise](keycloak/clients/PRODUCTION.md).
