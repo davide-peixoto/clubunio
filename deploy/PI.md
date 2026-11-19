@@ -2468,3 +2468,11 @@ Liste und Detail verfügbar. Die Mannschaftsliste zeigt übernommene Mitglieder.
 DEV-Release `20261109-clubunio-my-teams-trial`, Basis `20261107-clubunio-tenant-storage`.
 Zwei PostgreSQL-Tests mit 57 Assertions bestanden. DE/EN-Sprachprüfung grün.
 Health200/context401 und FPM/Pushdienst aktiv. Keine Migration und kein App-Build erforderlich.
+
+
+## ClubUnio PROD: Vorbereitung (19.11.2026)
+
+Neue VPS-App unter app.clubunio.com technisch vorbereitet, eigene leere
+Datenbank clubunio_prod, explizite Produktionskonfiguration und Wartungsmodus.
+Leerer Vereinsbestand gewuenscht; noch kein Schemaaufbau oder Fachstart.
+Nachweise und naechste Schritte: [Produktionsvorbereitung](CLUBUNIO-PRODUCTION.md).

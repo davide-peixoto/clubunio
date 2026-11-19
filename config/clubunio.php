@@ -4,6 +4,7 @@ $path = base_path('.env.postgresql.local');
 $v = is_file($path) ? \Dotenv\Dotenv::parse(file_get_contents($path)) : [];
 
 return [
+    'production_enabled' => (bool) env('CLUBUNIO_PRODUCTION_ENABLED', false),
     'outbound_enabled' => false,
     'connection' => [
         'driver' => 'pgsql', 'host' => $v['PGHOST'] ?? '',

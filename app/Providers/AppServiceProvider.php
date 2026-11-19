@@ -136,8 +136,9 @@ class AppServiceProvider extends ServiceProvider
         foreach ([Registration::class] as $model) {
             Gate::policy($model, ReadOnlyPolicy::class);
         }
-        if (! app()->environment(['local', 'testing', 'staging'])) {
-            throw new \LogicException('ClubUnio currently only supports local, testing and staging.');
+        if (! app()->environment(['local', 'testing', 'staging'])
+            && ! (app()->environment('production') && config('clubunio.production_enabled'))) {
+            throw new \LogicException('ClubUnio production requires explicit configuration approval.');
         }
     }
 }
