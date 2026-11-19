@@ -54,7 +54,17 @@
                 @foreach($operations['responses'] as $response)
                     <tr wire:key="response-{{ $response['id'] }}">
                         <td>{{ $response['label'] ?? '#'.$response['member_id'] }}</td>
-                        <td>{{ trans('campaign_ops.answer_'.$response['data']['answer']) }}<br>{{ $response['data']['note'] ?? '' }}</td>
+                        <td>{{ trans('campaign_ops.answer_'.$response['data']['answer']) }}<br>{{ $response['data']['note'] ?? '' }}
+                            @if(isset($response['data']['pledge']))
+                                <details><summary>{{ trans('campaign_ops.sponsor_details') }}</summary><dl>
+                                    @foreach(['sponsor_name','first_name','last_name','street','house_number','postal_code','city','country','email'] as $field)
+                                        <dt>{{ trans('campaign_ops.fields.'.$field) }}</dt><dd>{{ $response['data']['pledge'][$field] ?? '' }}</dd>
+                                    @endforeach
+                                    <dt>{{ trans('campaign_ops.amount_type') }}</dt><dd>{{ trans('campaign_ops.'.$response['data']['pledge']['amount_type']) }}</dd>
+                                    <dt>{{ trans('campaign_ops.cap') }}</dt><dd>{{ \App\ClubUnio\Services\SponsorRunMoney::format($response['data']['pledge']['cap_cents']) }}</dd>
+                                </dl></details>
+                            @endif
+                        </td>
                         <td>{{ isset($response['data']['pledge']) ? AppClubUnioServicesSponsorRunMoney::format($response['data']['pledge']['amount_cents']) : '–' }}</td>
                         <td>@if(!$response['reviewed'] && $canManage)
                             <x-filament::button size="sm" wire:click="mountAction('reviewResponse', {recipient: {{ $response['id'] }}, approve: true})">{{ trans('campaign_ops.approve') }}</x-filament::button>

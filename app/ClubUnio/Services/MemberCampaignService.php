@@ -38,8 +38,8 @@ class MemberCampaignService
         $data = validator(['kind' => $kind, 'content' => $content], [
             'kind' => ['required', \Illuminate\Validation\Rule::in(self::KINDS)],
             'content' => 'array:de,en', 'content.*' => 'array:subject,body',
-            'content.*.subject' => 'nullable|string|max:160|regex:/\A[^\r\n]*\z/',
-            'content.*.body' => 'nullable|string|max:1500',
+            'content.*.subject' => 'nullable|string|max:160|regex:/\A[^\x00-\x1F\x7F]*\z/u',
+            'content.*.body' => 'nullable|string|max:1500|regex:/\A[^\x00-\x08\x0B\x0C\x0E-\x1F\x7F]*\z/u',
         ], [], ['kind' => __('campaign.kind'), 'content.*.subject' => __('campaign.subject'), 'content.*.body' => __('campaign.body')])->validate();
         abort_unless($this->campaigns($tenant)->where('id', $id)->whereNull('released_at')->whereNull('revoked_at')
             ->update(['kind' => $kind, 'content' => json_encode($data['content'], JSON_THROW_ON_ERROR)]) === 1, 409);

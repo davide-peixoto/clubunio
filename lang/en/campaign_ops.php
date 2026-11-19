@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'outcome_processing_error' => 'Processing requires manual review',
     'recipient_count' => 'Recipients',
     'state_pending' => 'Not queued yet',
     'auto_reminders' => 'Automatically queue due reminders (up to three)',

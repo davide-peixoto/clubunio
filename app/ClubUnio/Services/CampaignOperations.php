@@ -63,6 +63,9 @@ final class CampaignOperations
         if ($rows->isEmpty() || $rows->count() > 1000) $issues[] = ['id' => null, 'reason' => 'size'];
         $members = app(MemberAccessService::class)->activeMembers($tenant)->with('billingRecipient')
             ->whereIn('id', $rows->pluck('member_id'))->get()->keyBy('id');
+        $participants = $c->kind === 'sponsor' ? \App\ClubUnio\Models\SponsorRunParticipant::where('tenant_id', $tenant->id)
+            ->where('event_id', $c->target_id ?? -1)->where('required', true)->whereNull('approved_at')
+            ->whereIn('member_id', $rows->pluck('member_id'))->pluck('member_id')->flip() : null;
         foreach ($rows as $row) {
             $member = $members->get($row->member_id);
             $reason = null;
@@ -78,6 +81,7 @@ final class CampaignOperations
                     $address = $manual ?: ['street' => $member->street, 'postal_code' => $member->postal_code, 'city' => $member->city];
                     if (! $address['street'] || ! $address['postal_code'] || ! $address['city']) $reason = 'address';
                 }
+                if ($participants !== null && ! $participants->has($row->member_id)) $reason = 'target';
             }
             if ($reason) { $counts['invalid']++; $issues[] = ['id' => $row->id, 'reason' => $reason]; }
             if (in_array($row->channel, ['email','both'], true)) $counts['email']++;
@@ -91,7 +95,8 @@ final class CampaignOperations
     {
         if (! $campaign->target_id) return false;
         if ($campaign->kind === 'event') return \App\ClubUnio\Models\ClubEvent::where('tenant_id', $tenant->id)->where('active', true)->whereKey($campaign->target_id)->exists();
-        return \App\ClubUnio\Models\SponsorRunEvent::where('tenant_id', $tenant->id)->where('status_code', 'open')->whereKey($campaign->target_id)->exists();
+        return \App\ClubUnio\Models\SponsorRunEvent::where('tenant_id', $tenant->id)->where('status_code', 'open')
+            ->where('registration_deadline', '>=', now('Europe/Zurich')->toDateString())->whereKey($campaign->target_id)->exists();
     }
 
     public function enqueueReleased(Account $actor, Tenant $tenant, int $campaign): void
@@ -177,19 +182,33 @@ final class CampaignOperations
                 && \Carbon\CarbonImmutable::parse($campaign->expires_at)->isFuture()
                 && $actor && $service->allowed($actor, $tenant) && $recipient
                 && ! $recipient->acknowledged_at && ! $recipient->request_id && $recipient->token_encrypted;
-            $delivery = $valid ? $this->delivery($tenant, $recipient) : null;
             $state = 'cancelled';
             $outcome = 'no_longer_eligible';
-            if ($delivery && hash_equals($row->contact_hash, $delivery['contact_hash'])
-                && ! $this->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('address_hash', $row->address_hash)->where('state', 'bounced')->exists()) {
-                $copy = $service->copyFor($campaign, $recipient->locale);
-                $message = (new \Symfony\Component\Mime\Email())->from('campaign-test@example.invalid')
-                    ->to('campaign-test-sink@example.invalid')->subject($copy['subject'])
-                    ->text($copy['body']."\n\n".$service->url($tenant, $recipient));
-                $message->getHeaders()->addIdHeader('Message-ID', $row->id.'@campaign.clubunio.invalid');
-                $sent = (new \Illuminate\Mail\Transport\ArrayTransport())->send($message);
-                $state = $sent ? 'accepted' : 'attention';
-                $outcome = $sent ? 'memory_simulated' : 'uncertain';
+            $diagnostic = null;
+            try {
+                $delivery = $valid ? $this->delivery($tenant, $recipient) : null;
+                if ($delivery && hash_equals($row->contact_hash, $delivery['contact_hash'])
+                    && ! $this->table('campaign_dispatches')->where('tenant_id', $tenant->id)->where('address_hash', $row->address_hash)->where('state', 'bounced')->exists()) {
+                    $copy = $service->copyFor($campaign, $recipient->locale);
+                    $message = (new \Symfony\Component\Mime\Email())->from('campaign-test@example.invalid')
+                        ->to('campaign-test-sink@example.invalid')->subject($copy['subject'])
+                        ->text($copy['body']."\n\n".$service->url($tenant, $recipient));
+                $message->html(app(ClubUnioMailTheme::class)->render(
+                    $tenant, $copy['subject'], $copy['body'], $service->url($tenant, $recipient),
+                    trans('mail_theme.open', [], $recipient->locale), $recipient->locale,
+                ));
+                    $message->getHeaders()->addIdHeader('Message-ID', $row->id.'@campaign.clubunio.invalid');
+                    $message->getHeaders()->addTextHeader('X-ClubUnio-Campaign-Address-Hash', $row->address_hash);
+                    $sent = (new \Illuminate\Mail\Transport\ArrayTransport())->send($message);
+                    $state = $sent ? 'accepted' : 'attention';
+                    $outcome = $sent ? 'memory_simulated' : 'uncertain';
+                }
+            } catch (\Illuminate\Database\QueryException $error) {
+                throw $error;
+            } catch (\Throwable $error) {
+                $state = 'attention';
+                $outcome = 'processing_error';
+                $diagnostic = ['exception' => $error::class, 'file' => basename($error->getFile()), 'line' => $error->getLine()];
             }
             $this->table('campaign_dispatches')->where('id', $row->id)->where('tenant_id', $tenant->id)->update([
                 'state' => $state, 'attempts' => $row->attempts + 1, 'attempted_at' => now(),
@@ -197,7 +216,7 @@ final class CampaignOperations
                 'finished_at' => now(), 'outcome' => $outcome,
             ]);
             $service->recipients($tenant, $row->campaign_id)->where('id', $row->recipient_id)->update(['mail_state' => $state]);
-            $this->event($tenant, $row->id, 'attempt-'.Str::uuid(), $state);
+            $this->event($tenant, $row->id, 'attempt-'.Str::uuid(), $state, $diagnostic);
             return true;
         });
     }

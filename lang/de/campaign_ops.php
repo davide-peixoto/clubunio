@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'outcome_processing_error' => 'Verarbeitung benötigt manuelle Prüfung',
     'recipient_count' => 'Empfänger',
     'state_pending' => 'Noch nicht eingereiht',
     'auto_reminders' => 'Fällige Erinnerungen automatisch einreihen (höchstens drei)',
