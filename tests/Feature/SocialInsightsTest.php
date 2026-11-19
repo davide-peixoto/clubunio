@@ -10,6 +10,11 @@ use Tests\TestCase;
 
 final class SocialInsightsTest extends TestCase
 {
+    public function test_import_has_a_registered_separate_permission(): void
+    {
+        self::assertArrayHasKey('sync',\App\ClubUnio\Services\PermissionCatalog::functions('social_media'));
+    }
+
     public function test_only_exact_nonproduction_test_accounts_are_allowed(): void
     {
         $this->app->instance('env','staging');
