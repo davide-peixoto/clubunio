@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'recipient_count' => 'Empfänger',
     'state_pending' => 'Noch nicht eingereiht',
     'auto_reminders' => 'Fällige Erinnerungen automatisch einreihen (höchstens drei)',
     'record_bounce' => 'Rückläufer erfassen',
