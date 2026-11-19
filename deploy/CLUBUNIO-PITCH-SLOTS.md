@@ -136,3 +136,50 @@ DEV und `/root/clubunio-backups/pitch-edge-scroll-20261119` auf Stage.
 Für den gezielten Rückweg die beiden gesicherten Quelldateien mit ihren
 ursprünglichen Besitzerrechten wiederherstellen, Ansichten leeren und
 PHP-FPM neu laden.
+
+## Randscrollen beim Verschieben bestehender Belegungen
+
+Auch bestehende Belegungskarten nutzen während des Verschiebens das
+automatische Scrollen am oberen und unteren Kalenderrand. In der App wird
+die Karte wie bisher gedrückt gehalten und gezogen, im Web per Drag-and-drop
+verschoben. Ein stillstehender Finger oder Zeiger am Rand hält das Scrollen
+aufrecht. Dafür wird dieselbe Frame-Schleife wie bei der Bereichsauswahl
+verwendet. Die Scrollgrenzen und die Geschwindigkeitssteuerung gelten für
+beide Abläufe.
+
+Beim Ablegen wird die Zielzeit aus der aktuellen, gescrollten Spalte
+berechnet. Die App behält das bisherige 15-Minuten-Raster, das Web das
+bisherige 30-Minuten-Raster bei. Dauer und Teilfläche werden entsprechend
+dem bestehenden Verschiebeablauf übernommen. Beim Wechsel des Spielfelds
+wird die alte Teilfläche zurückgesetzt. Die App speichert über den
+vorhandenen Ablauf, das Web öffnet den vorhandenen Verschiebedialog.
+
+Abbruch, Fenster-/Hintergrundwechsel und das Verlassen der Ansicht räumen
+die Scrollschleife auf. In der App wird ein dadurch verworfener Drag beim
+nachfolgenden Loslassen ignoriert. Im Web beendet das browserseitige
+Pointer-Abbruchereignis beim Start eines HTML-Drags nur eine eventuell
+aktive Bereichsauswahl. Der native Belegungs-Drag läuft danach weiter.
+Bestehende Berechtigungs-, Revisions- und Konfliktprüfungen bleiben für den
+eigentlichen Schreibvorgang massgeblich.
+
+72 Fluttertests, 14 JavaScriptfälle und 25 PHP-Webtests mit 136 Assertions
+sind grün. Ein optionaler Fixtureexport ist übersprungen. Die neuen
+Flutterfälle prüfen die Zielzeit nach stationärem Randscrollen in beide
+Richtungen mit normaler und grosser Schrift, Dauer-/Teilflächenübernahme,
+den Wechsel auf einen anderen Platz sowie Abbruch und Hintergrundwechsel.
+Die JavaScriptfälle prüfen zusätzlich native Pointer-Abbrüche,
+abgebrochene Drags, frische Drop-Koordinaten und genau einen Verschiebeaufruf.
+Dartanalyse und Sprachcheck mit 2994 Schlüsseln in DE/EN sind grün.
+Die native iPhone-Abnahme wird auf dem Benutzer-Mac durchgeführt.
+
+Die drei betroffenen Webquelldateien sind auf DEV und Stage eingespielt.
+Bootstrap und JavaScript-Version 4 liefern auf beiden Customdomains HTTP
+200. Die öffentlich geladene JavaScriptdatei ist bytegleich zum geprüften
+Quellstand, beide betroffenen Bladevorlagen kompilieren auf den Zielservern.
+Das Stage-Fachdelta ist `bc2faab`, der Git-Abgleich mit dem aktuellen
+Stage-Branch ist `99ba847`. DEV wurde auf der aktuellen Basis
+`20261119-clubunio-support-panel` aktualisiert. Die Quelldateisicherungen
+liegen unter `/var/www/svs-laravel/shared/pitch-move-scroll-backup-20261119`
+auf DEV und `/root/clubunio-backups/pitch-move-scroll-20261119` auf Stage.
+Der gezielte Rückweg stellt diese drei Dateien mit ihren ursprünglichen
+Besitzerrechten wieder her und lädt Ansichten sowie PHP-FPM neu.

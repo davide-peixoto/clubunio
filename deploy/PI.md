@@ -2653,3 +2653,14 @@ ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
 aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
 Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
 Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
+
+
+## 19.11.2026 – Randscrollen für vorhandene Belegungen
+
+Gezieltes Webdelta auf 20261119-clubunio-support-panel. Kalenderkarten
+scrollen beim Verschieben am Rand weiter. Die Drop-Zeit wird aus der
+aktuellen Spaltengeometrie ermittelt. Beide Bladevorlagen kompilieren auf
+DEV und Stage. Bootstrap und JavaScript v4 liefern HTTP 200, JavaScript
+bytegleich zum geprüften Quellstand. Sicherung der drei Quelldateien unter
+shared/pitch-move-scroll-backup-20261119. Details und Rückweg in
+[Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

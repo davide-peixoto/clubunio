@@ -2035,3 +2035,11 @@ ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
 aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
 Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
 Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
+
+
+## 19.11.2026 – Bestehende Belegungen mit Randscrollen verschieben
+
+App und Web scrollen nun auch beim Ziehen vorhandener Belegungskarten.
+Korrekte Zielzeit, Dauer, Teilfläche, Platzwechsel und Abbruch sind geprüft.
+Auf DEV und Stage ausgerollt. Details und Abnahme in
+[Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

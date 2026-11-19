@@ -1251,3 +1251,13 @@ ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
 aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
 Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
 Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
+
+
+## 19.11.2026 – Randscrollen beim Verschieben von Belegungen
+
+Bestehende Belegungskarten nutzen in App und Web dieselbe Scrollsteuerung
+wie die Bereichsauswahl. Die Zielzeit wird beim Ablegen aus der gescrollten
+Spalte berechnet. Dauer, Teilfläche und bisherige Raster werden übernommen.
+Abgebrochene Drags räumen die Scrollschleife auf. Auf DEV und Stage
+eingespielt, Stage-Fachdelta bc2faab mit Git-Abgleich 99ba847. Tests und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).

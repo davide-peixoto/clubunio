@@ -14,13 +14,17 @@ function planner() {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../../public/js/pitch-planning.js'), 'utf8'), context);
     const state = context.clubunioPitchPlanner();
     const requests = [];
-    state.$wire = { requestSlot: (...args) => { requests.push(args); return Promise.resolve(); } };
+    const moves = [];
+    state.$wire = {
+        requestSlot: (...args) => { requests.push(args); return Promise.resolve(); },
+        proposeMove: (...args) => { moves.push(args); return Promise.resolve(); },
+    };
     const frame = time => {
         const pending = [...frames.values()];
         frames.clear();
         pending.forEach(callback => callback(time));
     };
-    return { state, requests, frame, frames };
+    return { state, requests, moves, frame, frames };
 }
 
 function event(minute, pointerType = 'mouse', viewport = null) {
@@ -156,5 +160,75 @@ test('edge scrolling clamps to the final day slot and stops when the column disc
     assert.equal(state.rangeText(':start–:end · :minutes min'), '23:00–24:00 · 60 min');
     start.currentTarget.isConnected = false;
     frame(976);
+    assert.equal(frames.size, 0);
+});
+
+function moveEvent(viewport) {
+    const column = event(750, 'mouse', viewport).currentTarget;
+    return {
+        clientY: 347,
+        currentTarget: { draggable: true, closest: () => column },
+        target: { closest: () => column },
+        dataTransfer: { effectAllowed: '', setData() {} },
+        preventDefault() {},
+        column,
+    };
+}
+
+for (const direction of ['up', 'down']) {
+    test(`booking move scrolls ${direction} at a stationary pointer and drops at the fresh civil time`, async () => {
+        const { state, requests, moves, frame, frames } = planner();
+        const viewport = scrollViewport();
+        const start = moveEvent(viewport);
+        state.startMove(start, 'training:7');
+        // Native HTML drag cancels its pointer stream before delivering dragovers.
+        state.cancelPointerRange({ pointerId: 1 });
+        assert.equal(state.dragKey, 'training:7');
+        const pointerY = direction === 'up' ? 164 : 496;
+        state.updateMove({ ...start, clientY: pointerY });
+        for (let time = 0; time <= 960; time += 16) frame(time);
+        assert.ok(direction === 'up' ? viewport.scrollTop < 500 : viewport.scrollTop > 1300);
+        assert.equal(moves.length, 0);
+        assert.equal(requests.length, 0);
+        await state.dropMove({ currentTarget: start.column, clientY: pointerY }, 5, '2026-11-19');
+        assert.deepEqual(moves, [['training:7', 5, '2026-11-19', direction === 'up' ? '06:00' : '19:00']]);
+        assert.equal(frames.size, 0);
+        assert.equal(state.dragKey, null);
+        assert.equal(state.busy, false);
+    });
+}
+
+test('cancelled or forbidden booking move never saves and endMove disposes its frames', () => {
+    const { state, moves, frame, frames } = planner();
+    const viewport = scrollViewport();
+    const start = moveEvent(viewport);
+    state.startMove({ ...start, currentTarget: { ...start.currentTarget, draggable: false } }, 'training:7');
+    assert.equal(state.dragKey, null);
+    assert.equal(frames.size, 0);
+    state.startMove(start, 'training:7');
+    state.cancelRange();
+    state.dropMove({ currentTarget: start.column, clientY: 496 }, 5, '2026-11-19');
+    assert.deepEqual(moves, []);
+    assert.equal(frames.size, 0);
+    state.startMove(start, 'training:7');
+    state.endMove();
+    frame(1000);
+    assert.equal(frames.size, 0);
+    assert.equal(state.dragKey, null);
+});
+
+test('booking move can change target field while scrolling and still submits only once', async () => {
+    const { state, moves, frame, frames } = planner();
+    const viewport = scrollViewport();
+    const start = moveEvent(viewport);
+    state.startMove(start, 'training:7');
+    const target = moveEvent(viewport).column;
+    state.updateMove({ clientY: 496, target: { closest: () => target } });
+    assert.equal(state.scrollColumn, target);
+    frame(0); frame(1000);
+    await state.dropMove({ currentTarget: target, clientY: 496 }, 8, '2026-11-19');
+    await state.dropMove({ currentTarget: target, clientY: 496 }, 8, '2026-11-19');
+    assert.equal(moves.length, 1);
+    assert.equal(moves[0][1], 8);
     assert.equal(frames.size, 0);
 });
