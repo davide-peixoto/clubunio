@@ -7,6 +7,7 @@ function clubunioPitchPlanner() {
         scrollFrame: null,
         scrollColumn: null,
         pointerY: null,
+        pointerX: null,
         scrollTime: null,
         timeLabel(minute) {
             return `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
@@ -46,18 +47,32 @@ function clubunioPitchPlanner() {
             this.dragKey = key;
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('text/plain', key);
-            this.startEdgeScroll(column, event.clientY);
+            this.startEdgeScroll(column, event.clientY, event.clientX);
         },
         updateMove(event) {
             if (!this.dragKey || this.busy) return;
             const column = event.target.closest('.pitch-column');
             if (column) this.scrollColumn = column;
             this.pointerY = event.clientY;
+            this.pointerX = event.clientX;
         },
-        dropMove(event, field, date) {
+        dropMove(event, date) {
             if (!this.dragKey || this.busy) return;
+            const viewport = event.currentTarget.closest('.pitch-scroll');
+            if (!viewport) return this.cancelRange();
+            const bounds = viewport.getBoundingClientRect();
+            const axis = viewport.querySelector('.pitch-time-heading')?.getBoundingClientRect().width || 0;
+            const heading = viewport.querySelector('.pitch-heading')?.getBoundingClientRect().height || 0;
+            if (event.clientX < bounds.left + axis || event.clientX >= bounds.left + viewport.clientWidth ||
+                event.clientY < bounds.top + heading || event.clientY >= bounds.top + viewport.clientHeight) return this.cancelRange();
+            const target = [...viewport.querySelectorAll('.pitch-column')].find(column => {
+                const rect = column.getBoundingClientRect();
+                return event.clientX >= rect.left && event.clientX < rect.right;
+            });
+            if (!target) return this.cancelRange();
             const key = this.dragKey;
-            const y = event.clientY - event.currentTarget.getBoundingClientRect().top;
+            const field = Number(target.dataset.pitchField);
+            const y = event.clientY - target.getBoundingClientRect().top;
             const minute = Math.max(0, Math.min(47, Math.floor(y / 45))) * 30;
             this.endMove();
             this.busy = true;
@@ -71,10 +86,11 @@ function clubunioPitchPlanner() {
         cancelPointerRange(event) {
             if (this.selection?.pointer === event.pointerId) this.cancelRange();
         },
-        startEdgeScroll(column, pointerY) {
+        startEdgeScroll(column, pointerY, pointerX = null) {
             this.stopEdgeScroll();
             this.scrollColumn = column;
             this.pointerY = pointerY;
+            this.pointerX = pointerX;
             this.scrollFrame = requestAnimationFrame(time => this.scrollCalendar(time));
         },
         scrollCalendar(time) {
@@ -86,11 +102,8 @@ function clubunioPitchPlanner() {
             const heading = viewport.querySelector('.pitch-heading')?.getBoundingClientRect().height || 0;
             const top = bounds.top + heading;
             const bottom = bounds.top + viewport.clientHeight;
-            const edge = Math.min(48, (bottom - top) / 3);
-            if (edge <= 0) return this.cancelRange();
-            const strength = this.pointerY < top + edge
-                ? Math.max(-1, Math.min(0, (this.pointerY - top - edge) / edge))
-                : Math.max(0, Math.min(1, (this.pointerY - bottom + edge) / edge));
+            if (bottom <= top) return this.cancelRange();
+            const strength = this.edgeStrength(this.pointerY, top, bottom);
             const seconds = this.scrollTime === null ? 0 : Math.max(0, Math.min(50, time - this.scrollTime)) / 1000;
             this.scrollTime = time;
             const distance = (this.dragKey || this.selection?.moved) ? strength * 480 * seconds : 0;
@@ -99,13 +112,27 @@ function clubunioPitchPlanner() {
                 viewport.scrollTop = next;
                 this.updateRangeEnd();
             }
+            if (this.dragKey && this.pointerX !== null && viewport.scrollWidth > viewport.clientWidth) {
+                const axis = viewport.querySelector('.pitch-time-heading')?.getBoundingClientRect().width || 0;
+                const strengthX = this.edgeStrength(this.pointerX, bounds.left + axis, bounds.left + viewport.clientWidth);
+                const nextX = Math.max(0, Math.min(viewport.scrollWidth - viewport.clientWidth, viewport.scrollLeft + strengthX * 480 * seconds));
+                if (nextX !== viewport.scrollLeft) viewport.scrollLeft = nextX;
+            }
             this.scrollFrame = requestAnimationFrame(nextTime => this.scrollCalendar(nextTime));
+        },
+        edgeStrength(position, start, end) {
+            const edge = Math.min(48, (end - start) / 3);
+            if (edge <= 0) return 0;
+            return position < start + edge
+                ? Math.max(-1, Math.min(0, (position - start - edge) / edge))
+                : Math.max(0, Math.min(1, (position - end + edge) / edge));
         },
         stopEdgeScroll() {
             if (this.scrollFrame !== null) cancelAnimationFrame(this.scrollFrame);
             this.scrollFrame = null;
             this.scrollColumn = null;
             this.pointerY = null;
+            this.pointerX = null;
             this.scrollTime = null;
         },
         destroy() {
