@@ -14,7 +14,8 @@ class MemberWalletService
 
     public function capabilities(?Tenant $tenant = null): array
     {
-        return ['AppleAvailable' => $this->available() && ($tenant === null || app(MemberCardService::class)->logoBytes($tenant) !== null)];
+        return ['AppleAvailable' => $this->available() && ($tenant === null || app(MemberCardService::class)->logoBytes($tenant) !== null),
+            'GoogleAvailable' => app(GoogleMemberWalletService::class)->available($tenant)];
     }
 
     public function passes() { return DB::connection('clubunio')->table('clubora.member_wallet_passes'); }

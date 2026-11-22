@@ -1,7 +1,10 @@
 # Google Wallet: Einrichtung
 
-Stand22.11.2026. Apple Wallet ist separat eingerichtet. Google Wallet ist noch
-nicht im Backend/Flutter implementiert und noch nicht für Mitglieder verfügbar.
+Stand22.11.2026: Google Wallet ist im Backend und in Flutter implementiert und
+auf DEV, Stage und PROD serverseitig aktiviert. Core und Vereinsbuilds nutzen
+denselben autorisierten Vereinsausweis. Apple Wallet bleibt separat eingerichtet.
+Die Google-Konsole zeigt weiterhin Publishing access 1/2; der Request wurde noch
+nicht eingereicht. Reguläre Google-Konten sind damit noch nicht allgemein freigegeben.
 
 ## Aussteller und bestehendes Cloud-Projekt
 
@@ -30,7 +33,7 @@ zeigt die Rolle am PROD-Push-Konto. Für die drei Walletkonten und das separate
 Pushkonto je einen JSON-Schlüssel erstellt. Keine echte Testnachricht versandt.
 
 Ein Cloud-Projekt und ein Aussteller mit drei Dienstkonten schaffen keine harte
-Aussteller-/IAM-Isolation zwischen Umgebungen. Künftige Integration muss
+Aussteller-/IAM-Isolation zwischen Umgebungen. Die Integration muss
 Umgebungs-/Vereinsgrenzen durch getrennte Konfigurationen, Class-/Object-IDs,
 Mandantenautorisierung und getrennte sichere Schlüsselablage durchsetzen.
 Vereinsbuilds verwenden die freigegebene Umgebung mit autoritativem Vereinslogo
@@ -38,9 +41,10 @@ und Vereinsfarben, keine eigene Codekopie oder pauschale Fremdvereinsfreigabe.
 
 ## Nächste Schritte
 
-1. Google-Wallet-Backend, Klassen/Objekte, Status-/Widerrufupdates, mobile
-   Hinzufügen-Aktion, QR-Liveprüfung und DE/EN-Texte implementieren/testen.
-2. Demo-Testkonten, Google-Publishingfreigabe und echte Android-Geräteabnahme.
+1. Google-Publishingfreigabe beantragen; die Konsole zeigt 1/2, Request noch offen.
+   Ohne Publishing nur berechtigte Demo-Testkonten verwenden.
+2. Echte Android-Geräteabnahme mit einem autorisierten eigenen/Kinderausweis in
+   Core und SV-Sissach-Testbuild: Speichern, Statusänderung, QR mit anderem Handy.
 3. PROD-Push auf einem angemeldeten autorisierten Testgerät prüfen. Servereinrichtung
    und Provider-Dry-Run sind noch kein Nachweis einer realen Gerätezustellung.
 
@@ -70,8 +74,8 @@ Appbenutzer erfolgreich: OAuth und GET genericClass für den oben genannten
 Aussteller200, keine Klassen-/Passerstellung oder Datensatzänderung.
 Expliziter Operatorbefehl: `php deploy/check-google-wallet-credentials.php --verify dev|stage|prod`.
 Er prüft Umgebung, Datei/600, Konto/Projekt/Tokenziel/RSA und gibt nur technische
-Statuswerte aus. Die private Schlüsselablage macht Google Wallet noch nicht
-in der App verfügbar; die fachliche Integration folgt separat.
+Statuswerte aus. Dieser frühere reine Zugangstest ist inzwischen durch die unten
+beschriebene fachliche Integration und echte synthetische Provider-Schreibtests ergänzt.
 
 ## PROD-Push aktiviert
 
@@ -130,3 +134,124 @@ einer Storeveröffentlichung oder Google-Publishingfreigabe.
 
 Referenzen: [Google REST-Einrichtung](https://developers.google.com/wallet/generic/getting-started/auth/rest),
 [Firebase-FCM-Rollen](https://firebase.google.com/docs/projects/iam/roles-predefined-product).
+
+
+## Implementierung und Live-Rollout vom 22.11.2026
+
+`GoogleWalletClient` und `GoogleMemberWalletService` sind unabhängig von Apples
+Signierkonfiguration. `MobileMemberIdCardData::show()` bleibt die gemeinsame
+Berechtigungsprüfung für eigene/vertretene Kinder sowie berechtigte Verwaltung.
+Reine Team-/Kontakt-Sichtbarkeit berechtigt weiterhin nicht zum privaten Ausweis.
+SourceVersion und Rechte werden vor und nach der Vorbereitung erneut geprüft.
+
+Android erhält `Wallet.GoogleAvailable` im Ausweis-DTO und eine Hinzufügen-Aktion:
+`POST api/mobile/v1/clubs/{tenant}/members/{member}/id-card/wallet/google`, Body
+`{SourceVersion: <64 hex>}`, Antwort `data.SaveUrl` und `data.SourceVersion`.
+Öffnung extern nur für exakt `https://pay.google.com/gp/v/save/<JWT>`; kein SDK,
+kein Dienstkontoschlüssel im Build und kein zusätzlicher Android-Signaturfingerabdruck
+für diesen Web-Speicherablauf. Abbruch bei Konto-/Mandanten-/Versionswechsel.
+Der Browseraufruf wird nicht als erfolgreiche Speicherung ausgegeben.
+
+Der Pass übernimmt ausschliesslich Name, Verein, Gültigkeit, Vereinsfarben,
+normalisiertes Vereinslogo und die bestehende öffentliche QR-Prüfadresse.
+Keine AHV, Geburtstage, Kontakt-/Finanzdaten oder Dokumente an Google. Bei
+ungültiger Mitgliedschaft werden Name ausgeblendet und Objekt auf INACTIVE gesetzt.
+Die deutsche/englische Wallet-Projektion verwendet die zentralen lokalen Kataloge;
+Flutter pflegt die vorhandenen fünf Kataloge. Keine Übersetzungs-API.
+
+Logo-Endpunkt: `GET /wallet/google/artwork/{opaqueUUID}/{sha256}.png` unter der
+kanonischen HTTPS-Origin; ausschliesslich normalisiertes Vereinslogo, kein Name,
+Mitglieder-ID oder QR-Token im Bildpfad. Er wird mit aktuellem gespeicherten Logo
+bedient. Nach fehlgeschlagener Logoaktualisierung kann eine alte Google-Bildadresse
+bis zum erfolgreichen Abgleich vorübergehend 404 liefern.
+
+Neue additive Tabelle `member_google_wallet_passes`, Migration
+`2026_11_22_000130_google_wallet`, auf allen drei Ziel-Datenbanken eingespielt.
+Projektquelle verwendet clubora, Live-Schema clubunio. Stabile UUID pro Karte,
+Umgebungs- und Fremdschlüssel, eindeutige Objekt-ID, verschlüsselte Projektion/PNG,
+verschlüsselter OAuth-Cache, Fingerprints, Fehler-/Backoffzustand. Keine Save-JWTs,
+Private Keys oder Mitgliederdaten in Operatorausgaben und Git.
+
+### Umgebungsgrenzen und Konfiguration
+
+| Umgebung | Kanonische Wallet-/QR-Origin | Class-ID-Suffix |
+|---|---|---|
+| DEV | https://dev.clubunio.ch | clubunio_dev_membercard_v1 |
+| Stage | https://stage.clubunio.com | clubunio_stage_membercard_v1 |
+| PROD | https://app.clubunio.com | clubunio_prod_membercard_v1 |
+
+Alle IDs beginnen mit Issuer `3388000000023233410.`. Objekt-ID-Suffixe enthalten
+nur `clubunio_{environment}_{opaqueUUIDohneBindestriche}`. Keine Mitgliedernummer.
+Die Klasse verwendet ONE_USER_ALL_DEVICES. Der Client prüft Environment, App-Origin,
+Dienstkonto-E-Mail, Projekt, RSA, private Datei und feste Google-Endpunkte.
+Andere Umgebungen/Fremdklassen werden vor Provideränderungen abgewiesen.
+Vereinsbuilds bleiben an ihre freigegebenen Vereinsdomains und Mandanten gebunden;
+keine zusätzliche produktive SVS-Testkennung oder Domainfreigabe erteilt.
+
+Konfiguration in privater Umgebung (Werte keine Secrets ausser externer Schlüsseldatei):
+`GOOGLE_WALLET_ENABLED=true`, `GOOGLE_WALLET_ENVIRONMENT=dev|stage|prod`,
+`GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_PROJECT_ID`,
+`GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_WALLET_CREDENTIALS`,
+`GOOGLE_WALLET_PUBLIC_ORIGIN`. Private Pfade siehe Zugangstabelle oben.
+
+### Hintergrundaktualisierung und Wiederholungen
+
+`php artisan clubunio:google-wallet-refresh --limit=100` prüft ausgegebene Karten
+rotierend mit 40s Batchbudget. Netzwerk pro Google-Aufruf maximal8s, Connect3s;
+ein bereits laufender Objektabgleich darf das Batchbudget überschreiten.
+DEV: bestehender Minutenscheduler. Stage/PROD: ergänzte Wallet-only-Cronjobs mit
+je eigenem flock/privatem Log, keine übrigen Anwendungsschedules aktiviert.
+Erste echte Workeraufrufe überall checked0/failed0; es wurden keine echten
+Mitgliederausweise testweise an Google übertragen.
+
+Unveränderte Fingerprints verursachen keine Google-API-Änderung. GET/INSERT mit
+409-Abgleich und danach PATCH, stets gleiche Objekt-ID auch nach Timeout.
+Kurztransaktion nur zur lokalen Erstzuordnung; Provider-I/O ausserhalb der
+Transaktion mit Objektlock. Nach dem Provideraufruf lokale Revision erneut prüfen.
+Fehler sind dauerhaft mit begrenztem exponentiellem Retry gespeichert; geänderter
+Status umgeht alten Backoff. Rotierende Auswahl vermeidet Hunger durch Fehlerfälle.
+
+Wallet-Anzeige ist asynchron. Ein Minutentakt ist keine Garantie für Zustellung
+innerhalb einer Minute: Batchgrösse, Anzahl ausgegebener Pässe, Fehler und Googles
+Gerätesynchronisierung beeinflussen die Verzögerung. Der QR-Scan prüft sofort
+gegen den aktuellen Backendstatus, einschliesslich Widerruf/Tokenrotation, und
+ist für Partner verbindlich. Bei Scan keine alten Wallet-Anzeigen als Beleg nehmen.
+
+### Verifikation, Rückweg und offene Abnahme
+
+33 lokale Backendtests /200 Assertions erfolgreich, einschliesslich Apple-Regression,
+Google-Client/-Service, Status-/Revision-/Retry-/Environment-/Privacy-Prüfungen.
+3044 Übersetzungsschlüssel DE/EN und Literalprüfung grün. Mobile:20 fokussierte
+Tests bestanden,1 optionaler Capture-Skip; gezielte Analyse und i18n/AST grün.
+
+Auf DEV, Stage und PROD jeweils:
+
+- `php deploy/check-google-member-wallet.php --synthetic-rollback clubunio_<env>`:
+  echte PostgreSQL-Fixture inklusive DTO/Berechtigungspfad, stabiler Objekt-ID,
+  DE/EN QR-Seite, PNG-HTTP-Ausgabe, veralteter SourceVersion, Widerruf und Datenschutz;
+  alle synthetischen Datenbankzeilen anschliessend zurückgerollt, Provider ersetzt.
+- `php deploy/check-google-wallet-provider.php --synthetic-provider <env>`:
+  echte Google-Klasse, synthetisches INACTIVE-Objekt mit vollständiger Projektion,
+  wiederholtes PATCH und signierter kompakter Referenzlink. Keine realen
+  Mitgliederdaten, kein echter Pass in einem Google-Konto gespeichert.
+  Reservierte synthetische UUID 00000000-0000-4000-8000-000000000001 je Umgebung.
+- HTTPS /up200 und unauthentifizierter context401 auf allen drei Core-Origins und
+  beiden SVS-Testdomains. Privilegien/Modul-/Registrierungsrechte unverändert.
+
+Private Datenbank-/Konfigurationssicherungen vor dem Rollout:
+`/root/google-wallet-integration-20261122-214214` auf VPS und
+`/var/lib/clubunio-google-wallet/dev/integration-20261122-214214` auf DEV.
+Nur bestehende Walletdateien mit geprüftem Ausgangsstand ersetzt; sonstige
+Live-Abweichungen erhalten. Erst `.env`-Freigabe abschalten und Konfigcache als
+Appbenutzer erneuern, dann Google-Cronjob aussetzen, wenn ein Rückweg nötig ist.
+Installierte Ausweise vor einer bewussten dauerhaften Stilllegung auf INACTIVE
+setzen; Tabelle/Schlüssel nicht blind entfernen. QR-Prüfung unabhängig erhalten.
+
+Google-Konsole aktuell ausdrücklich geprüft: Businessprofile abgeschlossen,
+Publishing access1/2, Request noch nicht eingereicht. Google-Freigabe und reales
+Speichern auf Android bleiben offen. Eine API200 ist keine Publishingfreigabe.
+
+Referenzen: [GenericObject](https://developers.google.com/wallet/reference/rest/v1/genericobject),
+[GenericClass](https://developers.google.com/wallet/reference/rest/v1/genericclass),
+[Save-JWT](https://developers.google.com/wallet/generic/use-cases/jwt),
+[Pass-Updates](https://developers.google.com/wallet/generic/use-cases/updates).

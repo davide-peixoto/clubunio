@@ -2178,3 +2178,12 @@ Bestehende produktive Plattformpräfixe erhalten, gezielt im Source nachgeführt
 und gegen interne Präfixe als Clientkennung abgesichert.14Tests/35Assertions.
 Google-Wallet-Fachintegration/Publishing und echte Gerätezustellung noch offen.
 [Betrieb, private Ablage und Rückwege](CLUBUNIO-GOOGLE-WALLET.md).
+
+
+22.11.2026: Google Wallet Backend/Flutter implementiert und auf DEV/Stage/PROD
+aktiviert: Vereinsbranding, stabile umgebungsgetrennte Objekte, verschluesselte
+Projektion, idempotenter API-Abgleich, Hintergrund-Statusupdates und bestehende
+QR-Livepruefung. 33 Backendtests/200 Assertions, 20 Mobiletests (1 Capture-Skip),
+echte PG-Rollback- und synthetische Google-Providerpruefungen alle drei Umgebungen
+erfolgreich. Publishing access in Google-Konsole weiterhin1/2; Freigabe und
+Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
