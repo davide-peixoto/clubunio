@@ -6,6 +6,11 @@ getrennten privaten Schlüsseln und der Apple-Root-/WWDR-G4-Kette geprüft.
 Physische iPhone-Abnahme und echte Wallet-Push-Zustellung noch offen.
 App-/Firebase-APNs-Schlüssel werden hierfür nicht verwendet.
 
+Webruntime-Fix22.11.2026: Private Zertifikatspfade waren durch RunClouds
+FPM-open_basedir gesperrt. Stage/PROD gezielt korrigiert, Freigabe und synthetische
+Signierung jetzt auch im wirklichen FPM-Prozess geprueft.
+[Ursache, Betrieb und Nachweise](CLUBUNIO-WALLET-RUNTIME.md).
+
 ## Aktueller Umfang
 
 - Persönlich autorisierter Download unter

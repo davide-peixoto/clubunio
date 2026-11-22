@@ -7,6 +7,10 @@ Die Google-Konsole zeigt weiterhin Publishing access 1/2. Der Publishingantrag w
 am22.11.2026 ueber das Google-Supportformular eingereicht, weil der regulaere Request-
 Button nicht reagiert. Eingang als Submitted bestaetigt; Freigabe noch ausstehend.
 
+Webruntime-Fix22.11.2026: Stage-/PROD-FPM darf jetzt auch das jeweils eigene private
+Google-Wallet-Verzeichnis lesen. GoogleAvailabletrue im FPM nachgewiesen; dies
+ist keine Publishingfreigabe. [Runtime-Pruefung](CLUBUNIO-WALLET-RUNTIME.md).
+
 ## Aussteller und bestehendes Cloud-Projekt
 
 Benutzer hat das Google-Geschäftsprofil ausgefüllt/gespeichert und die
