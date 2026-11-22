@@ -94,6 +94,16 @@ try {
     try { $cards->ensureCard($other, $member->id); }
     catch (Illuminate\Database\Eloquent\ModelNotFoundException) { $crossTenantDenied = true; }
     $expect($crossTenantDenied);
+    $latest = $cards->verification($tenant, $member->id);
+    $racing = new class extends App\ClubUnio\Services\MemberCardService {
+        public function snapshot(App\ClubUnio\Models\Tenant $tenant, int $memberId): array {
+            $snapshot = parent::snapshot($tenant, $memberId);
+            parent::rotate($tenant, $memberId);
+            return $snapshot;
+        }
+    };
+    $race = $racing->resolve(basename(parse_url($latest['Url'], PHP_URL_PATH)));
+    $expect($race['Valid'] === false && $race['Name'] === null);
     echo "PG card branding/DTO, stable QR, live HTTP DE/EN, privacy, revoke/rotate, tenant isolation and Wallet revision/auth passed; rollback.\n";
 } catch (Throwable $error) {
     fwrite(STDERR, 'Synthetic check failed: '.get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()."\n");
