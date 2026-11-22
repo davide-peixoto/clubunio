@@ -1266,3 +1266,8 @@ Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
 ### 19.11.2026: Spielfeldwechsel mit horizontalem Randscrollen
 
 Flutter und Web scrollen beim Verschieben bestehender Belegungen auch links/rechts. Frische Zielgeometrie verhindert Ablage auf veralteten Spielfeldern. DEV und Stage gezielt aktualisiert (Stage `3ac81c0`), keine Schemaänderung. 63 Fluttertests, 18 JS-Fälle, 25 PHP-Webtests und Sprachcheck grün. Native iPhone-Abnahme ausstehend. Details und Rückweg: [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 22.11.2026: App-Designmigration
+
+Bestehende Flutter-App verwendet das neue gemeinsame Designsystem in allen Modulen; Home, Chat, Navigation und isolierte Banner gezielt angepasst. Markenfarbe bleibt #164B8A für ClubUnio und konfiguriert für Custom Builds. Keine API-/Berechtigungs-/Datenbankänderung, kein DEV-/Stage-Backenddelta. Figma-Quelle: https://www.figma.com/design/0uFRj7qf4SmdSPB54cafto. Details: https://github.com/davide-peixoto/clubunio_mobile/blob/main/docs/APP-REDESIGN.md. Tests 945 erfolgreich; native iPhone-Sichtabnahme und Store-Veröffentlichung damit nicht ersetzt. Mobile-Commit: `e001eb8` (main synchronisiert).

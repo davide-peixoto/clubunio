@@ -2048,3 +2048,8 @@ Auf DEV und Stage ausgerollt. Details und Abnahme in
 ### 19.11.2026: Kalender – horizontaler Randlauf erledigt
 
 Bestehende Belegungen lassen sich in App und Web durch Randscrollen auf weitere Spielfelder ziehen, auch diagonal. Frisches Ziel beim Ablegen, Dauerübernahme und Abbruch geprüft. DEV/Stage ausgerollt; iPhone-Abnahme auf Benutzer-Mac offen. Siehe [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 22.11.2026: Appweites Designsystem und Figma
+
+Freigegebenen Home-/Chat-Entwurf in das gemeinsame Flutter-Theme übernommen: Karten, Eingaben, Aktionen, Dialoge, Tabs und Navigation gelten für alle bestehenden Module. Home und Chat separat überarbeitet; SVS-Abläufe, persönliche Rechte und Markenbuilds bleiben erhalten. Bearbeitbare Figma-Datei: https://www.figma.com/design/0uFRj7qf4SmdSPB54cafto. Fünf Prüfrahmen und gemeinsame Komponenten/Variablen; keine vollständige Einzelzeichnung jeder Fachmaske behauptet. 945 App-Tests grün, 26 gezielte Nachprüfungen und Dartanalyse/i18n grün. Modulmatrix und offene native Sichtabnahme im Mobile-Repo unter docs/APP-REDESIGN.md. Reine Appänderung, kein Backendrelease. Mobile-Commit: `e001eb8` (main synchronisiert).
