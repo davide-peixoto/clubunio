@@ -1322,3 +1322,10 @@ Mobile-Commit `a0596e9` auf main synchronisiert. Öffentliche Association-Dateie
 auf allen vier Hosts geprüft. Neuer nativer Build und Geräteabnahme erforderlich;
 Android-Signierfingerabdruck laut Benutzer noch nicht vorhanden.
 [Bedienung, Deployment, Rückweg und native Einrichtung](CLUBUNIO-EVENT-CHECKIN-RELEASE.md).
+
+
+22.11.2026: Auf Benutzerauftrag Apple-Wallet-Zertifikatsvorbereitung für DEV,
+Stage und PROD: drei separate Schlüssel/CSRs privat auf VPS, CSR-Signaturen
+geprüft, nur öffentliche Anfragen im lokalen Downloads-Ordner bereitgestellt.
+Apple-Ausstellung noch offen; keine Wallet-/PROD-Aktivierung.
+Ablage und nächste Schritte: [Apple Wallet](CLUBUNIO-APPLE-WALLET.md).

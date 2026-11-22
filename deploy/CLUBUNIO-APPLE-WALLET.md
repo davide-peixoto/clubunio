@@ -2,8 +2,9 @@
 
 Stand: 22.11.2026. Implementiert, aber mangels Apple-Pass-Zertifikat noch nicht
 aktiviert. Die bereits vorhandenen App-/Firebase-APNs-Schlüssel ersetzen das
-Pass-Type-Zertifikat nicht. Keine echten Apple-Zertifikate oder produktiven
-privaten Schlüssel wurden erzeugt; keine echten Push-Nachrichten versandt.
+Pass-Type-Zertifikat nicht. Apple-Zertifikate fehlen weiterhin. Auf ausdrücklichen Benutzerauftrag wurden
+getrennte private Schlüssel und CSRs für DEV, Stage und PROD vorbereitet;
+keine Aktivierung und keine echten Push-Nachrichten.
 
 ## Aktueller Umfang
 
@@ -45,7 +46,8 @@ Mitgliedschaftsstatus begründet nicht automatisch einen bestimmten Rabatt.
    öffnen. Unter **Identifiers** einen neuen **Pass Type ID** registrieren.
    Getrennte IDs verhindern Überschreiben zwischen Umgebungen, beispielsweise
    `pass.com.clubunio.dev.membercard` und `pass.com.clubunio.stage.membercard`.
-   PROD erst beim freigegebenen Produktivstart einrichten. Diese IDs sind nicht
+   PROD-Zertifikatsvorbereitung ist ausdrücklich freigegeben, Aktivierung erst
+   beim freigegebenen Produktivstart. Diese IDs sind nicht
    die Bundle-ID einer App und erfordern keinen separaten Store-Eintrag.
    [Apple-Anleitung](https://developer.apple.com/help/account/capabilities/create-wallet-identifiers-and-certificates).
 2. Für jede Umgebung einen privaten Ordner ausserhalb des Webroots anlegen.
@@ -156,3 +158,33 @@ Pass-ID-/Team-/Zwischenzertifikatsabgleich, private Authentifizierung,
 Gerätezuordnung, identische Sekunde mit mehreren globalen Änderungstags,
 stabile Seriennummer/Geheimnis, Statussperre, APNs-Rückversuch/410-Auswertung,
 HTTPS/Host-/Grössenprüfung und vollständig inaktiver Zustand ohne DBabfrage.
+
+
+## Gemeinsame Vorbereitung aller drei Umgebungen (22.11.2026)
+
+Benutzer hat die Pass-IDs angelegt und die Zertifikatsvorbereitung für alle drei
+beauftragt. Vereinsbuilds verwenden dieselbe umgebungsbezogene Pass-ID wie Core;
+Logo und Farben bleiben pro Verein. Keine eigene Pass-ID je Vereinsbuild nötig,
+solange dieselbe Apple-Team-Signierung verwendet wird.
+
+| Umgebung | Pass Type ID | CSR-Datei |
+|---|---|---|
+| DEV | `pass.com.clubunio.dev.membercard` | `clubunio-dev.certSigningRequest` |
+| Stage | `pass.com.clubunio.stage.membercard` | `clubunio-stage.certSigningRequest` |
+| PROD | `pass.com.clubunio.membercard` | `clubunio-prod.certSigningRequest` |
+
+Drei getrennte RSA-2048-Schlüssel und SHA-256-CSRs auf dem VPS vorbereitet.
+Private Ablage `/root/clubunio-wallet-csr/{dev,stage,prod}` ausserhalb aller
+Webroots, Ordner0700/Dateien0600. CSR-Selbstsignaturen mit OpenSSL geprüft.
+Nur die öffentlichen CSRs nach
+`C:\Users\Administrator\Downloads\ClubUnio-Wallet-CSR` kopiert; keine Schlüssel
+auf den Arbeitsplatz oder ins Repository übertragen. Schlüssel später sicher
+in den jeweiligen App-Speicher überführen; PROD-Vorbereitung aktiviert keinen
+Produktivdienst. Wallet bleibt bis Zertifikatsimport deaktiviert.
+
+Nächster Benutzerschritt je Umgebung: Apple Developer → Certificates → + →
+Pass Type ID Certificate; passende Pass-ID und dazugehörige CSR wählen.
+Ausgestelltes `.cer` sofort eindeutig als `clubunio-dev.cer`,
+`clubunio-stage.cer`, `clubunio-prod.cer` benennen. Nach Bereitstellung Zertifikat/
+Schlüsselabgleich, WWDR-Kette und Laufzeitrechte prüfen; DEV/Stage aktivieren und
+auf echtem iPhone testen. PROD-Zertifikat lediglich sicher vorbereiten.
