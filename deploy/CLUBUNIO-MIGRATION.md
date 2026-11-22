@@ -1349,3 +1349,22 @@ Mobile-Commit `a0596e9` auf main synchronisiert. Öffentliche Association-Dateie
 auf allen vier Hosts geprüft. Neuer nativer Build und Geräteabnahme erforderlich;
 Android-Signierfingerabdruck laut Benutzer noch nicht vorhanden.
 [Bedienung, Deployment, Rückweg und native Einrichtung](CLUBUNIO-EVENT-CHECKIN-RELEASE.md).
+
+
+22.11.2026: Auf Benutzerauftrag Apple-Wallet-Zertifikatsvorbereitung für DEV,
+Stage und PROD: drei separate Schlüssel/CSRs privat auf VPS, CSR-Signaturen
+geprüft, nur öffentliche Anfragen im lokalen Downloads-Ordner bereitgestellt.
+Apple-Ausstellung noch offen; keine Wallet-/PROD-Aktivierung.
+Ablage und nächste Schritte: [Apple Wallet](CLUBUNIO-APPLE-WALLET.md).
+
+
+## Apple Wallet aktiviert (22.11.2026)
+
+Echte Apple-Zertifikate auf DEV/Stage und nach zusätzlicher ausdrücklicher
+Benutzerfreigabe auch PROD eingerichtet. PROD-Ausweis-/Walletdelta gezielt
+samt Migrationen000100/000110 und Sicherung ergänzt, kein Datenimport.
+Signaturen, PostgreSQL-Fachabläufe und HTTPS auf allen Instanzen geprüft;
+Testdaten zurückgerollt. Minutenupdates eingerichtet und Lauf nachgewiesen.
+Zertifikatsablauf22.12.2027. Physische iPhone-Abnahme und echte APNs-Zustellung
+noch offen; Google Wallet folgt separat.
+[Betrieb und Rückweg](CLUBUNIO-APPLE-WALLET.md).

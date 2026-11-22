@@ -1,0 +1,5 @@
+# Wallet-only updates; do not start unrelated application schedules.
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+* * * * * runcloud umask 077; cd /home/runcloud/webapps/ClubUnioStage && /usr/bin/flock -n /home/runcloud/wallet/stage/refresh.lock /usr/bin/php artisan clubunio:member-wallet-refresh --limit=200 >> /home/runcloud/wallet/stage/refresh.log 2>&1
+* * * * * runcloud umask 077; cd /home/runcloud/webapps/ClubUnioProd && /usr/bin/flock -n /home/runcloud/wallet/prod/refresh.lock /usr/bin/php artisan clubunio:member-wallet-refresh --limit=200 >> /home/runcloud/wallet/prod/refresh.log 2>&1

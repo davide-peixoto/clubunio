@@ -1,18 +1,20 @@
 <?php
 
 // Explicit synthetic PostgreSQL fixture. No pass is sent to Apple and all rows roll back.
-if (($argv[1] ?? '') !== '--synthetic-rollback' || ! in_array($argv[2] ?? '', ['clubunio_dev', 'clubunio_stage'], true)) {
+if (($argv[1] ?? '') !== '--synthetic-rollback' || ! in_array($argv[2] ?? '', ['clubunio_dev', 'clubunio_stage', 'clubunio_prod'], true)) {
     throw new RuntimeException('Explicit synthetic target required');
 }
 require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $db = Illuminate\Support\Facades\DB::connection('clubunio');
-if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== $argv[2]) {
+if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== $argv[2]
+    || config('app.url') !== ['clubunio_dev' => 'https://dev.clubunio.ch',
+        'clubunio_stage' => 'https://stage.clubunio.com', 'clubunio_prod' => 'https://app.clubunio.com'][$argv[2]]) {
     fwrite(STDERR, "Unexpected database\n");
     exit(1);
 }
-$expect = static function (bool $condition): void { if (! $condition) throw new RuntimeException('Synthetic card/wallet assertion failed'); };
+$expect = static function (bool $condition): void { if (! $condition) throw new RuntimeException('Synthetic card/wallet assertion failed at '.(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['line'] ?? 0)); };
 config(['cache.default' => 'array', 'clubunio-member-cards.verification_enabled' => true,
     'clubunio-member-cards.public_origin' => config('app.url'),
     'clubunio-wallet.enabled' => true, 'clubunio-wallet.web_service_origin' => config('app.url'),
@@ -37,6 +39,9 @@ $app->instance('request', $request);
 $db->beginTransaction();
 try {
     $db->statement("SET LOCAL application_name='member-card-wallet-synthetic-rollback'");
+    // Fresh PROD may have no catalogs yet; seed only this rollback fixture.
+    $db->table('clubora.account_roles')->insertOrIgnore(['code' => 'admin', 'name' => 'Synthetic admin',
+        'description' => 'Synthetic rollback only', 'sort_order' => 0, 'active' => true]);
     $tenant = App\ClubUnio\Models\Tenant::create(['slug' => 'wallet-qa-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic Card Club']);
     $other = App\ClubUnio\Models\Tenant::create(['slug' => 'wallet-other-'.bin2hex(random_bytes(6)), 'name' => 'Other Synthetic Club']);
     $status = new App\ClubUnio\Models\MemberStatus;
@@ -106,7 +111,7 @@ try {
     $expect($race['Valid'] === false && $race['Name'] === null);
     echo "PG card branding/DTO, stable QR, live HTTP DE/EN, privacy, revoke/rotate, tenant isolation and Wallet revision/auth passed; rollback.\n";
 } catch (Throwable $error) {
-    fwrite(STDERR, 'Synthetic check failed: '.get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()."\n");
+    fwrite(STDERR, 'Synthetic check failed: '.get_class($error).' at '.basename($error->getFile()).':'.$error->getLine().(str_starts_with($error->getMessage(), 'Synthetic card/wallet assertion failed at ') ? ' '.$error->getMessage() : '')."\n");
     $failed = true;
 } finally {
     $db->rollBack();
