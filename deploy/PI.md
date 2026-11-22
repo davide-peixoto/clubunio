@@ -2502,3 +2502,11 @@ info@clubunio.com als Plattformadmin angelegt und mit bestehendem
 Keycloak-Subject verbunden. Audit/Berechtigung und Rollback-Probelauf
 geprueft; keine Vereinszuordnung, keine Migration. Wartungsmodus aktiv.
 [Nachweis und offene Login-Abnahme](keycloak/clients/PRODUCTION.md).
+
+
+## PROD erreichbar und Plattformlogin abgenommen (22.11.2026)
+
+Wartungsmodus auf ausdrueckliche Freigabe aufgehoben. Echter Keycloak-
+Browserlogin mit info@clubunio.com bis /platform erfolgreich, Plattform-
+verwaltung und Aktion Verein erstellen sichtbar. Vereinsbestand leer;
+keine Migration oder neue Fachdatensaetze. [Nachweis](keycloak/clients/PRODUCTION.md).

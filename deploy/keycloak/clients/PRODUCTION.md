@@ -108,3 +108,26 @@ automatischen Ausfuehrungspruefung mit 'blocked by policy' abgelehnt;
 keine Login- oder Sitzungspruefung daraus behaupten. Vollstaendige
 Browseranmeldung/MFA und Rueckkehr zu /platform bleiben offen.
 Wartungsmodus bleibt aktiv, Einstieg nach Freigabe unter /platform/login.
+## Wartungsmodus aufgehoben und Plattformlogin abgenommen (22.11.2026)
+
+Auf ausdrueckliche Freigabe den PROD-Wartungsmodus mit artisan up aufgehoben.
+Server-Code zuvor sauber auf 16c1747. /, /platform und /platform/login
+leiten anonym weiter (HTTP 302), statisches Livewire liefert 200, /.env 403.
+
+Echter Browseraufruf von /platform/login erreicht den eigenen Client
+clubunio-platform-prod mit PKCE S256, exaktem Callback
+https://app.clubunio.com/platform/oidc/callback und angefordertem
+MFA-ACR clubunio-mobile-mfa. Der Betreiber hat die Keycloak-Anmeldung
+mit info@clubunio.com samt angefordertem MFA abgeschlossen.
+
+Danach im Browser bestaetigt: URL https://app.clubunio.com/platform,
+Titel Plattformverwaltung, Vereinsliste ohne Vereine und berechtigte
+Aktion Verein erstellen. Damit sind echter Codeaustausch, ID-Token-
+Pruefung, gespeicherte Subject-Zuordnung und Plattformberechtigung fuer
+diesen Login erfolgreich durchlaufen. Kein Verein oder Konto erzeugt.
+Die angemeldete Plattformseite wurde fuer den Betreiber offen gelassen.
+
+PROD ist erreichbar und bleibt ausserhalb des Wartungsmodus.
+Logout wurde bei dieser Abnahme nicht ausgefuehrt. Bei notwendigem
+Rueckweg artisan down --render=errors::503 mit Ziel-PHP ausfuehren;
+private Konfiguration und Konto erhalten.
