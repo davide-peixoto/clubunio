@@ -2729,3 +2729,23 @@ keine neuen Testdateien oder Konten und kein PROD-Eingriff. Acht Stage-Dateien
 inklusive zweier bisheriger422-Faelle jetzt200 mit passendem Hash; Ausweis auch
 fuer Elternprofil bestaetigt. Sechs PDFtests/31 Assertions und DE/EN-Pruefung gruen.
 Bereitstellung/Rueckweg: CLUBUNIO-MOBILE-DOCUMENT-PREVIEW.md.
+
+
+## 22.11.2026 - Vereinsausweis, Live-QR und Apple Wallet
+
+Mobile main `48f498f`: Ausweis immer mit autoritativem Vereinslogo/-farbe,
+unabhaengig vom App-Theme; echter QR in Ansicht/PNG und nativer PassKit-Dialog.
+1046 App-Tests bestanden, separate Bildaufnahme bestanden, Analyse/i18n2138 gruen.
+Backend: explizite Ausweisfreigabe je Mitgliederstatus, private Tokenausgabe mit
+Widerruf/Neuausgabe, oeffentliche statusfrische QR-Pruefung in DE/EN ohne Login.
+Kein Geburtsdatum/Kontakt/AHV im oeffentlichen Nachweis. Apple-Wallet-Ausgabe,
+signierter Pass, Updateprotokoll und begrenzter Zertifikats-Push vorbereitet.
+21 Backendtests/154 Assertions plus echte PG-Rueckrollpruefung auf DEV/Stage
+erfolgreich. Zwei additive Migrationen und gezieltes Dateidelta auf DEV/Stage
+bereitgestellt; QR-Pruefung aktiviert, Apple Wallet ohne Pass-Type-Zertifikat
+bewusst deaktiviert, keine echten Apple-Pushes. Konkreter Stage-Refresh-Ausweis
+mit rotem Logo/gueltigem Status und seinem oeffentlichen HTTPS-Ziel geprueft.
+Keine Kontorechte geaendert, kein Datenimport, kein PROD-/Store-Eingriff.
+Betrieb, Sicherungen und Rueckweg: CLUBUNIO-MEMBER-CARD-VERIFICATION.md.
+Ausstehende Zertifikatseinrichtung mit Anleitung: CLUBUNIO-APPLE-WALLET.md.
+Native iPhone-/Swift-/Wallet-Updateabnahme nach Einrichtung auf Benutzer-Mac.
