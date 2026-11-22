@@ -2216,3 +2216,12 @@ Testdaten zurückgerollt. Minutenupdates eingerichtet und Lauf nachgewiesen.
 Zertifikatsablauf22.12.2027. Physische iPhone-Abnahme und echte APNs-Zustellung
 noch offen; Google Wallet folgt separat.
 [Betrieb und Rückweg](CLUBUNIO-APPLE-WALLET.md).
+
+
+## Umgebungen konsolidiert (22.11.2026)
+
+Serverdeltas versioniert und DEV als eigener Quellstand mit 1301 Hashes
+festgehalten. DEV-Journal nach Strukturpruefung 147 (zwei DEV-Piloten),
+Stage/PROD je145 identisch. Social und Event-Check-in auf Stage fachlich
+geprueft und nach PROD uebernommen; Meta-Livezugriff bleibt gesperrt.
+[Nachweise, Sicherungen und Rueckweg](CLUBUNIO-ENVIRONMENT-CONSOLIDATION.md).
