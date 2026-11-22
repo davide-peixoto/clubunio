@@ -58,6 +58,6 @@ class ClubEventResource extends DossierCatalogResource
 
     public static function getRelations(): array
     {
-        return [Relations\EventAttendeesRelationManager::class];
+        return [Relations\EventAttendeesRelationManager::class, Relations\EventCheckinsRelationManager::class];
     }
 }
