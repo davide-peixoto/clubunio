@@ -1,5 +1,8 @@
 # ClubUnio
 
+SV-Sissach-Migrationsvorbereitung: [Fachzuordnungen v2 und Spesenpruefung](deploy/CLUBUNIO-SVS-HISTORY-MAPPING.md).
+Nur auf isolierten PROD-Kopien getestet, kein PROD-Import oder Release.
+
 Installation und Releases: [Statische Livewire-Dateien veroeffentlichen und pruefen](deploy/CLUBUNIO-INSTALL-ASSETS.md).
 
 Kommunikationsmodul fuer die Flutter-App: [API und Entwicklungsstand](deploy/CLUBUNIO-COMMUNICATION-API.md),

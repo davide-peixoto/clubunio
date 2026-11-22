@@ -6,6 +6,9 @@
 *.md diff=markdown
 *.php diff=php
 
+# Reviewed rule artifact: preserve exact bytes used by the projection receipt.
+deploy/svs-expense-season-rules-v1.json -text whitespace=cr-at-eol
+
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore

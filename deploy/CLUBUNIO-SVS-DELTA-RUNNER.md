@@ -1,5 +1,10 @@
 # SV Sissach: Import- und Delta-Runner auf PROD-Kopie
 
+Aktuelle Erweiterung: [Fachzuordnungen v2 und 14 Spesenpruefungen](CLUBUNIO-SVS-HISTORY-MAPPING.md).
+Die folgenden v1-Ergebnisse bleiben als historischer Nachweis erhalten. Der
+aktuelle CLI verwendet die v2-Vertraege (85 native Tabellen, Zielbasis 146
+PROD-Migrationen plus eine ausschliesslich auf Kopien vorbereitete Migration).
+
 Stand 22.11.2026. Umsetzung und Tests sind ausschliesslich fuer isolierte
 Datenbanken freigegeben. Der Runner lehnt clubunio_prod technisch ab.
 Kein neuer SV-Sissach-Fachbestand wurde auf der echten PROD angelegt.

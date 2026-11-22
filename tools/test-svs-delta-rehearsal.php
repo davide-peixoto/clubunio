@@ -5,15 +5,16 @@ $root=dirname(__DIR__);require __DIR__.'/svs-lab-autoload.php';
 $app=require $root.'/bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 config(['logging.default'=>'null']);Illuminate\Support\Facades\Http::preventStrayRequests();
 $base=config('database.connections.clubunio');
-$sourceName='clubunio_stage_svs_candidate_a1b2c3d4';$targetName=getenv('SVS_REHEARSAL_DB')?:'clubunio_svs_rehearsal_a1b2c3d4';
+$sourceName=getenv('SVS_CANDIDATE_DB')?:'clubunio_stage_svs_candidate_a1b2c3d4';$targetName=getenv('SVS_REHEARSAL_DB')?:'clubunio_svs_rehearsal_a1b2c3d4';
 $expectedMigrations=(int)(getenv('SVS_EXPECTED_MIGRATIONS')?:143);
-if(!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$targetName))throw new LogicException('Isolated test DB name required');
+if(!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$targetName)||!preg_match('/\Aclubunio_stage_svs_candidate_[a-f0-9]{8}\z/',$sourceName))throw new LogicException('Isolated test DB name required');
 foreach(['svs_test_source'=>$sourceName,'svs_test_target'=>$targetName] as $key=>$db){$c=$base;$c['database']=$db;config(['database.connections.'.$key=>$c]);}
 $source=Illuminate\Support\Facades\DB::connection('svs_test_source');$target=Illuminate\Support\Facades\DB::connection('svs_test_target');
 if($source->selectOne('select current_database() as n')->n!==$sourceName||$target->selectOne('select current_database() as n')->n!==$targetName)throw new LogicException('Wrong integration DB');
-$mapping=json_decode(file_get_contents($root.'/deploy/svs-import-mapping-v1.json'),true,512,JSON_THROW_ON_ERROR);
+$mappingFile=getenv('SVS_MAPPING_VERSION')==='2'?'svs-import-mapping-v2.json':'svs-import-mapping-v1.json';
+$mapping=json_decode(file_get_contents($root.'/deploy/'.$mappingFile),true,512,JSON_THROW_ON_ERROR);
 $receipt=$source->table('svs_projection.receipt')->sole();
-$version=hash('sha256',hash_file('sha256',$root.'/deploy/svs-import-mapping-v1.json').$receipt->projection_hash);
+$version=hash('sha256',hash_file('sha256',$root.'/deploy/'.$mappingFile).$receipt->projection_hash);
 $private=Dotenv\Dotenv::parse(file_get_contents($root.'/.env.import-target.local'));
 $targetCrypt=new Illuminate\Encryption\Encrypter(base64_decode(substr($private['APP_KEY'],7),true),'AES-256-CBC');
 $make=fn()=>new App\ClubUnio\Services\SvsDeltaImporter($source,$target,$mapping,app('encrypter'),$targetCrypt,$version);
@@ -65,7 +66,7 @@ try{
     $assert($target->table('clubunio.migrations')->count()===$expectedMigrations,'all existing migrations preserved');
     $passed['platform_admin_and_'.$expectedMigrations.'_migrations_preserved']=true;
     $resultFile=$expectedMigrations===143?'integration-results.json':'integration-results-current-prod.json';
-    file_put_contents('/root/clubunio-import-lab/'.$resultFile,json_encode($passed,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT));
+    file_put_contents((getenv('SVS_RESULT_DIR')?:'/root/clubunio-import-lab').'/'.$resultFile,json_encode($passed,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT));
     echo 'Integration scenarios passed: '.count($passed).'. No live PROD connection used.'.PHP_EOL;
 }catch(Throwable $e){
     $failed=true;fwrite(STDERR,'Rehearsal integration failed ['.get_class($e).']; private SQL values suppressed.'.PHP_EOL);

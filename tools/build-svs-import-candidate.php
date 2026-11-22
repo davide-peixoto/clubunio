@@ -78,6 +78,7 @@ try {
         $tenant=App\ClubUnio\Models\Tenant::where('slug','sv-sissach')->sole();
         app(App\ClubUnio\Services\MessageTemplateService::class)->seed($tenant);
         app(App\ClubUnio\Services\StatusStyleService::class)->seed($tenant);
+        (new App\ClubUnio\Services\SvsSupplementImporter($db))->run();
         $db->table('clubunio.accounts')->update(['active'=>false,'password'=>'']);
         $db->table('clubunio.tenant_accounts')->update(['portal_enabled'=>false]);
         $db->table('clubunio.tenant_settings')->where('is_secret',true)->update(['enabled'=>false,'encrypted_value'=>Illuminate\Support\Facades\Crypt::encryptString('')]);

@@ -78,12 +78,13 @@
     {{ $this->table }}
     @if($seriesId)
     <x-filament::section>
-        <div class="ds-tools"><h2 class="ds-heading">{{ __('Serie #') }}{{ $seriesId }}</h2>@if($can('create') && $can('upload') && $can('send') && $recipients->contains(fn($r) => !$r->document_id))<x-filament::button wire:click="processNext" icon="heroicon-o-play" wire:loading.attr="disabled">{{ __('Nächstes Dokument') }}</x-filament::button>@endif</div>
+        <div class="ds-tools"><h2 class="ds-heading">{{ __('Serie #') }}{{ $seriesId }}</h2>@if($can('create') && $can('upload') && $can('send') && $recipients->contains(fn($r) => !$r->legacy_read_only && !$r->document_id))<x-filament::button wire:click="processNext" icon="heroicon-o-play" wire:loading.attr="disabled">{{ __('Nächstes Dokument') }}</x-filament::button>@endif</div>
         <div class="cu-admin-journal ds-scroll"><table class="ds-table"><thead><tr><th>{{ __('Mitglied') }}</th><th>{{ __('Status / Nachweis') }}</th><th>{{ __('Dokumente / Rückgabe') }}</th></tr></thead><tbody>
         @foreach($recipients as $row)
         <tr wire:key="ds-result-{{ $row->id }}"><td>{{ $row->snapshot['member_name'] }}</td><td>
         @php
             $statusLabel = match(true) {
+                (bool) $row->legacy_read_only => __('svs.metadata_only'),
                 (bool) $row->signed_document_id => __('Geprüfte PDF-Rückgabe'),
                 (bool) $row->signed_upload_id => __('Rückgabe: Übertragung offen'),
                 $row->receipt?->state === 'confirmed' => __('Digital bestätigt'),
@@ -93,17 +94,24 @@
             };
             $statusKey = $row->signed_document_id || $row->receipt?->state === 'confirmed' ? 'akzeptiert'
                 : ($row->last_error || $row->signed_upload_id ? 'in prüfung' : ($row->document_id && !$row->snapshot['definition']['signature_required'] ? 'freigegeben' : 'offen'));
+            if ($row->legacy_read_only) $statusKey = 'in prüfung';
         @endphp
         <x-filament::badge :color="\App\ClubUnio\Services\StatusAppearance::palette($statusKey)">{{ $statusLabel }}</x-filament::badge>
+        @if(!$row->legacy_read_only)
         @if($row->signed_document_id)<small>{{ __('Upload/Prüfung: Konto #') }}{{ $row->checked_by }}, {{ $row->checked_at?->format('d.m.Y H:i') }}</small>@endif
         @if($row->receipt?->state === 'confirmed')<br><small>{{ __('Digital bestätigt:') }} {{ $row->receipt->confirmation_name }} / {{ $row->receipt->confirmation_kind === 'parent' ? __('Elternvertretung') : __('Mitglied') }}</small>@endif
         @if($row->document_id && !$row->snapshot['portal_visible'])<br><small>{{ __('Nur privates Dossier') }}</small>@endif
         @if($row->last_error)<br><span class="ds-error">{{ __('Wiederholung erforderlich') }}</span>@endif
+        @endif
         </td><td><div class="ds-tools">
+        @if($row->legacy_read_only)
+        <small>{{ __('svs.receipt_unverified') }}</small>
+        @else
         @if($can('download') && $row->document_id && \Illuminate\Support\Facades\Route::has('clubunio.document-series.original'))<x-filament::icon-button tag="a" :href="route('clubunio.document-series.original', [\Filament\Facades\Filament::getTenant()->slug, $seriesId, $row->id])" target="_blank" icon="heroicon-o-document-arrow-down" label="{{ __('Original-PDF') }}" tooltip="{{ __('Original-PDF') }}" />@endif
         @if($can('download') && $row->signed_document_id && \Illuminate\Support\Facades\Route::has('clubunio.document-series.signed'))<x-filament::icon-button tag="a" :href="route('clubunio.document-series.signed', [\Filament\Facades\Filament::getTenant()->slug, $seriesId, $row->id])" target="_blank" icon="heroicon-o-document-check" label="{{ __('Geprüfte PDF-Rückgabe') }}" tooltip="{{ __('Geprüfte PDF-Rückgabe') }}" />@endif
         @if($can('upload') && $can('update') && $row->document_id && $row->snapshot['definition']['signature_required'] && !$row->signed_upload_id)<x-filament::icon-button wire:click="chooseReturn({{ $row->id }})" icon="heroicon-o-arrow-up-tray" label="{{ __('Geprüfte Rückgabe hochladen') }}" tooltip="{{ __('Geprüfte Rückgabe hochladen') }}" />@endif
         @if($can('upload') && $can('update') && $row->signed_upload_id && !$row->signed_document_id)<x-filament::icon-button wire:click="retryReturn({{ $row->id }})" icon="heroicon-o-arrow-path" label="{{ __('Rückgabe fortsetzen') }}" tooltip="{{ __('Rückgabe fortsetzen') }}" />@endif
+        @endif
         </div></td></tr>
         @endforeach
         </tbody></table></div>

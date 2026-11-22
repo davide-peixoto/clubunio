@@ -11,6 +11,8 @@ final class SvsProjectionVersion
             $root.'/app/ClubUnio/Services/MessageTemplateService.php',$root.'/app/ClubUnio/Services/StatusStyleService.php',
             $root.'/tools/build-svs-import-candidate.php',
             $root.'/tools/svs-lab-autoload.php',
+            $root.'/deploy/svs-expense-season-rules-v1.json',
+            $root.'/app/ClubUnio/Services/DocumentSeriesRenderer.php',
         ]);
         sort($paths,SORT_STRING);$hash=hash_init('sha256');
         foreach($paths as $path){if(basename($path)==='SvsDeltaImporter.php')continue;hash_update($hash,substr($path,strlen($root))."\n".hash_file('sha256',$path)."\n");}

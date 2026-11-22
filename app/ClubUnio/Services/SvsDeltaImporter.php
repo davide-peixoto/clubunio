@@ -22,6 +22,7 @@ final class SvsDeltaImporter
             $parent=basename(str_replace('.','/',$fk['parent']));
             if(isset($mapping[$parent]))$this->incoming[$parent][json_encode($fk['referenced'])]=$fk['referenced'];
         }
+        foreach(['document_types','members','countries','genders','billing_recipients','document_series_templates'] as $table)if(isset($mapping[$table]))$this->incoming[$table]['opaque-id']=['id'];
     }
 
     public static function decision(string $oldSource,string $newSource,string $oldTarget,string $currentTarget): string
@@ -43,7 +44,7 @@ final class SvsDeltaImporter
     private function values(array $row,array $columns): array{$out=[];foreach($columns as $col){if(!array_key_exists($col,$row))throw new LogicException('Missing mapping field');$out[$col]=$row[$col];}return $out;}
     private function parent(string $name): string{return basename(str_replace('.','/',$name));}
 
-    public function run(bool $commit,string $snapshot,string $expectedTarget): array
+    public function run(bool $commit,string $snapshot,string $expectedTarget,bool $upgradeV1=false): array
     {
         if(PHP_SAPI!=='cli'||!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$expectedTarget)
             ||!preg_match('/\Aclubunio_stage_svs_candidate_[a-f0-9]{8}\z/',$this->source->getDatabaseName())
@@ -69,11 +70,26 @@ final class SvsDeltaImporter
             $this->target->statement('CREATE SCHEMA IF NOT EXISTS migration_control');
             $this->target->statement('REVOKE ALL ON SCHEMA migration_control FROM PUBLIC');
             $this->target->unprepared('CREATE TABLE IF NOT EXISTS migration_control.svs_state (entity text NOT NULL, identity_hash char(64) NOT NULL, target_pk jsonb NOT NULL, baseline jsonb NOT NULL, mapping_version text NOT NULL, PRIMARY KEY(entity,identity_hash)); CREATE TABLE IF NOT EXISTS migration_control.svs_runs (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, source_hash char(64) NOT NULL, mapping_version text NOT NULL, result jsonb NOT NULL, completed_at timestamptz NOT NULL DEFAULT now()); REVOKE ALL ON ALL TABLES IN SCHEMA migration_control FROM PUBLIC');
-            if($this->target->table('migration_control.svs_state')->where('mapping_version','<>',$this->version)->exists())throw new LogicException('Mapping upgrade requires explicit baseline migration');
+            if($this->target->table('migration_control.svs_state')->where('mapping_version','<>',$this->version)->exists()){
+                if(!$upgradeV1)throw new LogicException('Mapping upgrade requires explicit baseline migration');
+                if(!hash_equals('4f1b5bc8ef70fe0f6840a8b0cb2967e363b6acdd0b4da68203245ff18fba3b02',hash_file('sha256',base_path('deploy/svs-import-mapping-v1.json'))))throw new LogicException('Unrecognized v1 mapping contract');
+                $v1=json_decode(file_get_contents(base_path('deploy/svs-import-mapping-v1.json')),true,512,JSON_THROW_ON_ERROR);
+                $known='36bff90ccdb89434e8372968241fb1354d3acc46a5539cba47167200a0792b3c';
+                foreach($v1 as $t=>$c){
+                    // Preserve the existing field, identity and reference contracts verbatim.
+                    if(!isset($this->mapping[$t])||$c['pk']!==$this->mapping[$t]['pk']||$c['identity']!==$this->mapping[$t]['identity']||$c['fks']!==$this->mapping[$t]['fks'])throw new LogicException('Incompatible v1 identity/reference contract');
+                    foreach($c['columns'] as $column)if(!in_array($column,$this->mapping[$t]['columns'],true))throw new LogicException('Incompatible v1 field contract');
+                }
+                foreach($this->target->table('migration_control.svs_state')->get() as $state){
+                    if($state->mapping_version!==$known||!isset($v1[$state->entity]))throw new LogicException('Unknown baseline version');
+                }
+                $this->target->table('migration_control.svs_state')->update(['mapping_version'=>$this->version]);
+                $this->report['baseline_upgraded']=true;
+            }
             if(!$this->target->table('migration_control.svs_state')->exists()&&$this->target->table('clubunio.tenants')->where('slug','sv-sissach')->exists())throw new LogicException('Existing tenant requires reviewed adoption, not automatic merge');
             $pending=array_keys($this->mapping);$done=[];
             while($pending){
-                $ready=array_values(array_filter($pending,fn($t)=>!array_filter($this->mapping[$t]['fks'],fn($fk)=>isset($this->mapping[$this->parent($fk['parent'])])&&$this->parent($fk['parent'])!==$t&&!in_array($this->parent($fk['parent']),$done,true))));
+                $ready=array_values(array_filter($pending,fn($t)=>!array_diff($this->mapping[$t]['after']??[],$done)&&!array_filter($this->mapping[$t]['fks'],fn($fk)=>isset($this->mapping[$this->parent($fk['parent'])])&&$this->parent($fk['parent'])!==$t&&!in_array($this->parent($fk['parent']),$done,true))));
                 if(!$ready)throw new LogicException('Unresolved mapping dependency cycle');
                 foreach($ready as $table){$this->table($table);$done[]=$table;}
                 $pending=array_values(array_diff($pending,$ready));
@@ -106,6 +122,7 @@ final class SvsDeltaImporter
                 if(!$ref)throw new LogicException('Unresolved native reference');
                 foreach($fk['columns'] as $i=>$col)$desired[$col]=$ref[$fk['referenced'][$i]];
             }
+            $desired=$this->rebase($table,$desired);
             $identity=$this->values($desired,$contract['identity']);
             if(in_array(null,$identity,true))throw new LogicException('Null source identity');
             $id=$this->hash($identity);
@@ -120,10 +137,10 @@ final class SvsDeltaImporter
             foreach($contract['columns'] as $column){
                 $name=$column['name'];
                 if(!array_key_exists($name,$desired))throw new LogicException('Projection schema drift');
-                $encrypted=str_ends_with($name,'_encrypted')||$name==='encrypted_value';
+                $encrypted=str_ends_with($name,'_encrypted')||$name==='encrypted_value'||$name==='snapshot';
                 if($encrypted&&$desired[$name]!==null&&$desired[$name]!==''){
-                    $plain=$this->sourceCrypt->decryptString($desired[$name]);
-                    $desired[$name]=$this->targetCrypt->encryptString($plain);
+                    // rebase() has already encrypted opaque snapshots with the target key.
+                    if($name!=='snapshot'&&$name!=='snapshot_encrypted'){$plain=$this->sourceCrypt->decryptString($desired[$name]);$desired[$name]=$this->targetCrypt->encryptString($plain);}
                 }
                 $value=$desired[$name];
                 if($column['identity']==='YES'||($name==='id'&&in_array($name,$contract['pk'],true))){unset($desired[$name]);continue;}
@@ -162,7 +179,7 @@ final class SvsDeltaImporter
                 foreach($base as $name=>&$pair){
                     $column=current(array_filter($contract['columns'],fn($c)=>$c['name']===$name));$v=$current[$name];
                     if(in_array($column['type'],['json','jsonb'],true)&&$v!==null)$v=json_decode($v,true,512,JSON_THROW_ON_ERROR);
-                    if((str_ends_with($name,'_encrypted')||$name==='encrypted_value')&&$v!==null&&$v!=='')$v=$this->targetCrypt->decryptString($v);
+                    if((str_ends_with($name,'_encrypted')||$name==='encrypted_value'||$name==='snapshot')&&$v!==null&&$v!=='')$v=$this->targetCrypt->decryptString($v);
                     $pair[1]=$this->hash($v);
                 }unset($pair);
             }
@@ -174,5 +191,31 @@ final class SvsDeltaImporter
         $counts['missing_review']=count(array_diff(array_keys($states),array_keys($seen)));
         foreach($counts as $k=>$v)$this->report[$k]+=$v;
         $this->report['tables'][$table]=$counts;
+    }
+
+    private function native(string $table,mixed $id): mixed
+    {
+        if($id===null)return null;
+        return ($this->references[$table][$this->hash(['id'=>(int)$id])]??throw new LogicException('Unresolved embedded native reference'))['id'];
+    }
+    private function rebase(string $table,array $row): array
+    {
+        if($table==='document_series_templates'){
+            $d=json_decode($row['definition'],true,512,JSON_THROW_ON_ERROR);$d['type_id']=$this->native('document_types',$d['type_id']);
+            $row['definition']=json_encode($d,JSON_THROW_ON_ERROR);$row['definition_hash']=DocumentSeriesRenderer::hash($d);
+        }
+        if(in_array($table,['document_series','document_series_recipients','member_change_requests'],true)){
+            $column=$table==='member_change_requests'?'snapshot_encrypted':'snapshot';
+            $d=json_decode($this->sourceCrypt->decryptString($row[$column]),true,512,JSON_THROW_ON_ERROR);
+            if($table==='document_series'){
+                $d['template_id']=$this->native('document_series_templates',$d['template_id']);
+                $d['template_hash']=$this->target->table('clubunio.document_series_templates')->where('id',$d['template_id'])->sole()->definition_hash;
+            }elseif($table==='document_series_recipients'){
+                $d['member_id']=$this->native('members',$d['member_id']);$d['definition']['type_id']=$this->native('document_types',$d['definition']['type_id']);
+            }else foreach(['before','changes'] as $section)foreach(['country_id'=>'countries','nationality_id'=>'countries','gender_id'=>'genders','billing_recipient_id'=>'billing_recipients'] as $field=>$parent)if(isset($d[$section][$field])&&$d[$section][$field]!=='')$d[$section][$field]=$this->native($parent,$d[$section][$field]);
+            $row[$column]=$this->targetCrypt->encryptString(json_encode($d,JSON_THROW_ON_ERROR));
+            if(isset($row['snapshot_hash']))$row['snapshot_hash']=DocumentSeriesRenderer::hash($d);
+        }
+        return $row;
     }
 }

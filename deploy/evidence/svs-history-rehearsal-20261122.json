@@ -1,0 +1,227 @@
+{
+  "date": "2026-11-22",
+  "scope": "isolated PROD copies only; no live schema deployment or data import",
+  "branch": "codex/svs-history-mappings-20261122",
+  "source_manifest_sha256": "220663b8e05e25adcbefe1c8ac3e13bcec211bd270902e6c28d19e454f7bae85",
+  "prod_dump_sha256": "793f0a2bf037c863df08fc5e5a4cbf27aacdd709945c146ee9fa1d5585134194",
+  "prod_migrations": 146,
+  "rehearsal_migrations": 147,
+  "prod_tenants": 0,
+  "prod_import_ledger_present": false,
+  "platform_admin_unchanged": true,
+  "native_contract_tables": 85,
+  "new_source_tables": 9,
+  "new_source_rows": 343,
+  "full_import": {
+    "inserted": 37911,
+    "updated": 0,
+    "unchanged": 0,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+  },
+  "repeat": {
+    "inserted": 0,
+    "updated": 0,
+    "unchanged": 37911,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+  },
+  "v1_upgrade": {
+    "implicit_upgrade_rejected": true,
+    "conflict_rollback": true,
+    "old_ids_preserved": true,
+    "old_baselines_preserved_except_14_reviewed_fields": true,
+    "upgrade": {
+      "inserted": 361,
+      "updated": 14,
+      "unchanged": 37536,
+      "missing_review": 0,
+      "conflicts": 0,
+      "baseline_upgraded": true,
+      "committed": true,
+      "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+    },
+    "replay": {
+      "inserted": 0,
+      "updated": 0,
+      "unchanged": 37911,
+      "missing_review": 0,
+      "conflicts": 0,
+      "committed": true,
+      "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+    },
+    "status": "passed"
+  },
+  "cli_upgrade_default_memory_limit": {
+    "inserted": 361,
+    "updated": 14,
+    "unchanged": 37536,
+    "missing_review": 0,
+    "conflicts": 0,
+    "baseline_upgraded": true,
+    "committed": true,
+    "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+  },
+  "cli_upgrade_repeat": {
+    "inserted": 0,
+    "updated": 0,
+    "unchanged": 37911,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "641d7de751dbb6d4084e186a905cf77044061190d348e3949355edc0c848327d"
+  },
+  "history_checks": {
+    "passed": {
+      "count_mobile_app_announcements": true,
+      "count_document_series_templates": true,
+      "count_document_series": true,
+      "count_document_series_recipients": true,
+      "count_legacy_material_receipts": true,
+      "count_member_change_requests": true,
+      "count_legacy_training_plans": true,
+      "count_team_guests": true,
+      "count_sfv_schedule": true,
+      "count_svs_expense_season_reviews": true,
+      "expense_seasons_consistent": true,
+      "expense_lines_count": true,
+      "expenses_all_business_values_preserved": true,
+      "expense_lines_all_business_values_preserved": true,
+      "unresolved_authors_remain_unknown": true,
+      "receipts_metadata_only": true,
+      "no_user_access_granted": true,
+      "template_hashes_valid": true,
+      "template_native_type_refs": true,
+      "snapshot_hashes_valid": true,
+      "series_embedded_refs": true,
+      "recipient_embedded_refs": true,
+      "full_replay_no_changes": true,
+      "immutable_mobile_app_announcements": true,
+      "immutable_document_series_templates": true,
+      "immutable_document_series": true,
+      "immutable_document_series_recipients": true,
+      "immutable_legacy_material_receipts": true,
+      "immutable_member_change_requests": true,
+      "immutable_legacy_training_plans": true,
+      "guest_three_way_fields": true,
+      "guest_delta_replay": true,
+      "embedded_native_ids_rebased": true,
+      "embedded_rebase_replay": true,
+      "history_version_append": true,
+      "history_version_replay": true,
+      "outbound_disabled": true
+    },
+    "counts": {
+      "mobile_app_announcements": 1,
+      "document_series_templates": 8,
+      "document_series": 4,
+      "document_series_recipients": 17,
+      "legacy_material_receipts": 19,
+      "member_change_requests": 18,
+      "legacy_training_plans": 47,
+      "team_guests": 2,
+      "sfv_schedule": 231,
+      "svs_expense_season_reviews": 14
+    },
+    "status": "passed"
+  },
+  "service_checks": {
+    "status": "passed",
+    "passed": {
+      "historical_templates_not_offered": true,
+      "series_processing_blocked": true,
+      "series_download_blocked": true,
+      "signed_return_publish_blocked": true,
+      "signed_return_stage_blocked": true,
+      "history_template_reuse_blocked": true,
+      "history_preview_blocked": true,
+      "unverified_receipt_download_blocked": true,
+      "historical_training_import_blocked": true,
+      "historical_member_review_blocked": true,
+      "normal_template_creation_preserved": true,
+      "history_ui_metadata_only_de": true,
+      "history_ui_metadata_only_en": true,
+      "no_outbound": true
+    },
+    "all_fixtures_rolled_back": true
+  },
+  "reviewed_rule_checks": {
+    "status": "passed",
+    "cases": {
+      "reviewed": true,
+      "unknown": true,
+      "ambiguous": true,
+      "fractional_Menge_rejected": true,
+      "fractional_PreisRappen_rejected": true
+    },
+    "all_fixtures_rolled_back": true
+  },
+  "cli_gates": {
+    "status": "passed",
+    "gates": {
+      "live_merge": true,
+      "live_builder": true,
+      "live_schema_preparation": true,
+      "stale_projection": true,
+      "numeric_schema_drift": true
+    },
+    "live_writes": false
+  },
+  "prior_delta_regression_checks": {
+    "insert_update_local_preservation": {
+      "inserted": 1,
+      "updated": 1,
+      "unchanged": 37910,
+      "missing_review": 0,
+      "conflicts": 0,
+      "committed": true,
+      "mapping_version": "2f1133c1328a9549de965c3343c58ba64b75a8fc6686c6063e1dfbb7f5ba76bd"
+    },
+    "repeat_delta": {
+      "inserted": 0,
+      "updated": 0,
+      "unchanged": 37912,
+      "missing_review": 0,
+      "conflicts": 0,
+      "committed": true,
+      "mapping_version": "2f1133c1328a9549de965c3343c58ba64b75a8fc6686c6063e1dfbb7f5ba76bd"
+    },
+    "source_deletion_review": {
+      "inserted": 0,
+      "updated": 0,
+      "unchanged": 37911,
+      "missing_review": 1,
+      "conflicts": 0,
+      "committed": true,
+      "mapping_version": "2f1133c1328a9549de965c3343c58ba64b75a8fc6686c6063e1dfbb7f5ba76bd"
+    },
+    "conflict_rollback": true,
+    "late_failure_rollback": true,
+    "live_prod_rejected": true,
+    "foreign_source_tenant_rejected": true,
+    "platform_admin_and_147_migrations_preserved": true
+  },
+  "translations": {
+    "languages": [
+      "de",
+      "en"
+    ],
+    "keys_verified": 2989,
+    "errors": 0
+  },
+  "source_item_audit": {
+    "items": 8,
+    "non_integral_quantity": 0,
+    "non_integral_cents": 0,
+    "deleted_sfv_rows": 0
+  },
+  "remaining_limits": [
+    "19 receipt records contain source metadata only; no binary transfer or signature verification",
+    "4 series authors cannot be uniquely resolved; kept null with encrypted provenance",
+    "no live import authorization or deployment in this task"
+  ]
+}

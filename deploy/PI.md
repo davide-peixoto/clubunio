@@ -2543,3 +2543,20 @@ Auch neu aufbereiteter synthetischer Quelldump: genau 1 Insert, 1 Update,
 1 Review-Kandidat; Wiederholung 0 Writes und stabile Ziel-IDs. Numerische
 Schemaabweichung wird vor Import abgelehnt. Umsetzung nur auf eigenem
 Branch codex/svs-import-runner-20261122, nicht auf PROD ausgerollt.
+
+## SV-Sissach-Fachzuordnungen v2 (22.11.2026)
+
+Die neun zuvor offenen befuellten Quelltabellen sind fachlich zugeordnet.
+85 native Tabellen, 37'911 Datensaetze im Erstimport auf isolierter PROD-Kopie.
+14 Spesen-/Saisonabweichungen eindeutig geprueft und ausschliesslich durch
+Zuordnung zum selben Team in der Belegsaison korrigiert; keine Betragsaenderung.
+Historische Quelldokumente und Antraege sind unveraenderlich, Quittungen bleiben
+ungepruefte Dateimetadaten ohne Download. V1-Baselineupgrade erhaelt native IDs
+und Feldbaselines: 361 Inserts, 14 Updates, Wiederholung 0 Fachwrites;
+Konflikt rollt auch den Mappingversionswechsel zurueck.
+
+Die frische PROD-Sicherung enthaelt 146 Migrationen; die Kopie erhaelt zusaetzlich
+eine explizit auf isolierte Datenbanken begrenzte Zusatzmigration (147).
+Details, Grenzen und Nachweise: [Fachzuordnungen v2](CLUBUNIO-SVS-HISTORY-MAPPING.md).
+Arbeit nur im Branch codex/svs-history-mappings-20261122. Kein Release und
+kein Import auf PROD; produktive Freigabe und Dateiuebernahme stehen aus.

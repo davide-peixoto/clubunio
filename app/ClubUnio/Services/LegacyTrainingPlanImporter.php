@@ -108,6 +108,7 @@ class LegacyTrainingPlanImporter
                 $old = LegacyTrainingPlan::where('tenant_id', $tenant->id)->where('source_id', $row->TrainingPlannerAuditLogID)->first();
                 $hash = $source->hash($row);
                 if ($old) {
+                    if ($old->legacy_read_only) { $counts['unchanged']++; continue; }
                     if (! hash_equals($old->source_hash, $hash)) {
                         $counts['changed']++;
 
@@ -167,6 +168,7 @@ class LegacyTrainingPlanImporter
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'training', 'sync');
             $row = LegacyTrainingPlan::where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id);
+            abort_if($row->legacy_read_only, 409, __('svs.history_read_only'));
             if ($row->state === 'imported') {
                 abort_unless((int) $row->owner_id === (int) $data['owner_id'] && (int) $row->team_season_id === (int) $data['team_season_id'], 409);
 
