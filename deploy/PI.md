@@ -2685,3 +2685,14 @@ Gezieltes Zwei-Dateien-Webdelta auf `20261119-clubunio-support-management`, Stag
 Implementierungs-/Prüfliste im Mobile-Repository docs/EXPENSES-REDESIGN.md.
 44 gezielte Tests grün, native Geräteabnahme offen; weitere Module separat
 ausgewiesen in docs/APP-REDESIGN.md. Backend/API unverändert.
+
+
+## 22.11.2026: Modulweiser Appumbau abgeschlossen
+
+Mobile-Implementierung aller verbleibenden Modulgruppen im neuen Design mit
+vier parallelen Arbeitsgruppen integriert und gegenseitig geprüft. Mobile
+Commit `769bf3d` auf `main` synchronisiert. 965 Tests im Gesamtlauf plus 40
+Nachprüfungen nach den letzten Layoutkorrekturen erfolgreich; Dartanalyse und
+lokale Übersetzungsprüfung grün. Figma und Flutter-Prüfbilder nachgeführt.
+Umfang, Modulmatrix und native Restabnahmen: Mobile docs/APP-MODULE-REDESIGN.md.
+Keine Backend-/Datenbank-/APIänderung, kein Deployment oder Store-Release.

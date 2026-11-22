@@ -2061,3 +2061,17 @@ Freigegebenen Home-/Chat-Entwurf in das gemeinsame Flutter-Theme übernommen: Ka
 Spesenreferenzen ergänzt. Native iPhone-Abnahme offen. Nächster Modulumbau:
 Mitglieder. Details im Mobile-Repository docs/EXPENSES-REDESIGN.md und
 docs/APP-REDESIGN.md. Keine Backendänderung oder Deployment notwendig.
+
+
+## 22.11.2026: Alle weiteren Appmodule im neuen Design
+
+Vier parallele Gruppen haben die konkreten Mobilemasken für Mitglieder/Teams,
+Anmeldungen/Dokumente, Planung/Platz/Bus/Training, Profil/Login/Support sowie
+Chat/Challenge/Sponsorenlauf überarbeitet. 45 bestehende Präsentationsdateien
+und drei lokale Kompositionsbausteine; SVS-Abläufe, persönliche Rechte,
+Custom-Build-/Mandanten-/Sprachfreigaben und APIbudgets bleiben erhalten.
+Mobile `main` synchronisiert: `769bf3d`. Vollsuite 965 Tests grün, nach letzten
+Reviewkorrekturen 40 gezielte Tests grün; Analyse und i18n (2124 Texte) grün.
+13 zusätzliche bearbeitbare Figma-Referenzen, 19 echte Flutter-Prüfbilder.
+Aktuelle Matrix/Prüfgrenzen im Mobile-Repo docs/APP-MODULE-REDESIGN.md. Native
+iPhone-/Providerabnahme bleibt offen. Reines Appdelta, kein Backenddeployment.
