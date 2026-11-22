@@ -16,6 +16,12 @@ final class SocialStudio extends Page
     public static function getNavigationLabel(): string { return trans('social.title'); }
     public function getTitle(): string { return trans('social.title'); }
 
+    protected function getHeaderActions(): array
+    {
+        return [\Filament\Actions\Action::make('insights')->label(trans('social_insights.title'))
+            ->icon('heroicon-o-chart-bar')->url(SocialInsights::getUrl())];
+    }
+
     public static function canAccess(): bool
     {
         return config('clubunio-social.enabled') && ! request()->attributes->has('clubunio_impersonation')

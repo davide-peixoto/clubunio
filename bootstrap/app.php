@@ -11,6 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            \App\ClubUnio\Http\EventAppLinksController::routes();
+            \App\ClubUnio\Http\EventCheckinWebRoutes::public();
+            \App\ClubUnio\Http\MemberCardRoutes::public();
+            \App\ClubUnio\Wallet\MemberWalletRoutes::public();
+        },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trimStrings(except: ['account_password', 'operator_password']);

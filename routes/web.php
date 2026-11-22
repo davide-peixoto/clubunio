@@ -1,5 +1,7 @@
 <?php
 
+\App\ClubUnio\Http\EventCheckinWebRoutes::board();
+
 \Illuminate\Support\Facades\Route::post('/language', \App\ClubUnio\Http\LanguageController::class)
     ->middleware('throttle:30,1')->name('clubunio.language');
 
@@ -33,6 +35,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/clubunio-platform.php';
+require __DIR__.'/clubunio-social-insights.php';
 Route::get('/help', \App\ClubUnio\Http\SupportCenterController::class)->name('clubunio.support.help');
 Route::post('/help', \App\ClubUnio\Http\SupportCenterController::class)->middleware('throttle:6,1');
 Route::match(['get','post'], '/help/sign-in', \App\ClubUnio\Http\PublicSupportIntake::class)

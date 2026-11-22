@@ -293,7 +293,7 @@ final class MobileMemberDocuments
             $response = $this->administration($actor, $tenant) ? app(MemberDocumentService::class)->open($actor, $tenant, $id) : app(MemberDocumentService::class)->openPortal($actor, $tenant, $id);
             $bytes = $response->getContent();
             abort_unless(is_string($bytes) && (! $row->sha256 || hash_equals($row->sha256, hash('sha256', $bytes))), 409);
-            try { $bytes = app(MobileMemberDocumentPdf::class)->normalize($bytes)['bytes']; }
+            try { $bytes = app(MobileMemberDocumentPdf::class)->preview($bytes); }
             catch (\InvalidArgumentException $error) { abort(422, $error->getMessage()); }
             return $this->response($bytes, $id);
         }

@@ -22,6 +22,8 @@ class MemberStatusResource extends CatalogResource
             Toggle::make('ends_membership')->label('Austritt')->default(false),
             Toggle::make('restores_membership')->label('Wiedereintritt')->default(false),
             Toggle::make('spots_eligible')->label('Spots-Einzelversand zulässig')->default(true),
+            Toggle::make('member_card_eligible')->label(__('Gültiger Mitgliederausweis'))
+                ->helperText(__('Nur freigegebene Mitgliederstatus ergeben einen gültigen Ausweis.'))->default(false),
         ]));
     }
 

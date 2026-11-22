@@ -1298,3 +1298,127 @@ Delta-Planer und Dreiwege-Konfliktregeln vorbereitet; sechs Tests gruen.
 Kein Fachimport ausgefuehrt. Ziel aktuell 143 Migrationen samt fremden
 Walletaenderungen; fachlicher Apply-Runner/Mapping noch umzusetzen.
 [Plan und Nachweise](CLUBUNIO-PROD-SV-SISSACH-MIGRATION.md).
+## 19.11.2026 – Platzanfragen aus Kalenderslots
+
+App und Web öffnen in der Tagesansicht eine Anfrage aus einem 30-Minuten-Slot
+mit Platz, Datum und Beginn. Die lokale Appvalidierung erlaubt ausstehende
+Anfragen bei aktuell gesperrten Plätzen entsprechend dem vorhandenen
+Serverablauf. Ein neutraler Hinweis erklärt die Prüfung bei der Freigabe.
+DE/EN-Kataloge geprüft. DEV und Stage aktualisiert, Stagecommit 8c45b1e.
+Abnahme und Rückweg sind in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md) dokumentiert.
+
+
+## 19.11.2026 – Zeitraum im Platzkalender aufziehen
+
+App und Web übernehmen Beginn und Dauer eines aufgezogenen Bereichs. Die
+App nutzt Gedrückthalten und Ziehen, das Web Maus- oder Stiftziehen. Vorschau
+und 30-Minuten-Raster funktionieren vorwärts und rückwärts. Der Server prüft
+die übergebene Dauer. DEV und Stage aktualisiert, Stagecommit ce5f4fd.
+Prüfung und Rückweg stehen in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Randscrollen während der Kalendermarkierung
+
+Die Tageskalender scrollen bei der Bereichsauswahl automatisch an beiden
+Rändern. Markierung und Dauer folgen dem Scrollen, auch bei stillstehendem
+Zeiger. Abbruch, Ansichtswechsel und Hintergrundwechsel beenden die
+Frame-Schleife. DEV und Stage aktualisiert, Stagecommit caa3e20. Prüfung und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## Laravel-E-Mail-Themes auf DEV und Stage (19.11.2026)
+
+ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
+aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
+Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
+Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
+
+
+## 19.11.2026 – Randscrollen beim Verschieben von Belegungen
+
+Bestehende Belegungskarten nutzen in App und Web dieselbe Scrollsteuerung
+wie die Bereichsauswahl. Die Zielzeit wird beim Ablegen aus der gescrollten
+Spalte berechnet. Dauer, Teilfläche und bisherige Raster werden übernommen.
+Abgebrochene Drags räumen die Scrollschleife auf. Auf DEV und Stage
+eingespielt, Stage-Fachdelta bc2faab mit Git-Abgleich 99ba847. Tests und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 19.11.2026: Spielfeldwechsel mit horizontalem Randscrollen
+
+Flutter und Web scrollen beim Verschieben bestehender Belegungen auch links/rechts. Frische Zielgeometrie verhindert Ablage auf veralteten Spielfeldern. DEV und Stage gezielt aktualisiert (Stage `3ac81c0`), keine Schemaänderung. 63 Fluttertests, 18 JS-Fälle, 25 PHP-Webtests und Sprachcheck grün. Native iPhone-Abnahme ausstehend. Details und Rückweg: [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 22.11.2026: App-Designmigration
+
+Bestehende Flutter-App verwendet das neue gemeinsame Designsystem in allen Modulen; Home, Chat, Navigation und isolierte Banner gezielt angepasst. Markenfarbe bleibt #164B8A für ClubUnio und konfiguriert für Custom Builds. Keine API-/Berechtigungs-/Datenbankänderung, kein DEV-/Stage-Backenddelta. Figma-Quelle: https://www.figma.com/design/0uFRj7qf4SmdSPB54cafto. Details: https://github.com/davide-peixoto/clubunio_mobile/blob/main/docs/APP-REDESIGN.md. Tests 945 erfolgreich; native iPhone-Sichtabnahme und Store-Veröffentlichung damit nicht ersetzt. Mobile-Commit: `e001eb8` (main synchronisiert).
+
+
+## 22.11.2026 - Mobile: iPhone-Rueckmeldungen korrigiert
+
+Profil-/Login-/Sprachkarten und Mitgliederdossier vereinheitlicht; Teamplanung
+mit korrigierten Tab-Symbolen, Markenfarben und Teilnehmerdarstellung.
+Mobile-Quellcommit `9c4ffb4` baut auf dem erhaltenen iOS-Buildcommit `e842ff9` auf.
+Pruefung und native Grenzen im Mobile-Repo docs/PROFILE-MEMBERS-PLANNING-FIXES.md.
+
+Serverursachen behoben: Stage-Ausweisfreigabe war deaktiviert, jetzt aktiviert;
+DEV bereits aktiv. Bestehende Mitgliederdokument-PDFs verwenden reine Vorschau
+statt strenger Quittungsnormalisierung. Upload-/Scan-/Signaturregeln erhalten.
+Zwei-Dateien-Delta auf DEV/Stage nach Baselineabgleich, kein Schemawechsel,
+keine neuen Testdateien oder Konten und kein PROD-Eingriff. Acht Stage-Dateien
+inklusive zweier bisheriger422-Faelle jetzt200 mit passendem Hash; Ausweis auch
+fuer Elternprofil bestaetigt. Sechs PDFtests/31 Assertions und DE/EN-Pruefung gruen.
+Bereitstellung/Rueckweg: CLUBUNIO-MOBILE-DOCUMENT-PREVIEW.md.
+
+
+## 22.11.2026 - Vereinsausweis, Live-QR und Apple Wallet
+
+Mobile main `48f498f`: Ausweis immer mit autoritativem Vereinslogo/-farbe,
+unabhaengig vom App-Theme; echter QR in Ansicht/PNG und nativer PassKit-Dialog.
+1046 App-Tests bestanden, separate Bildaufnahme bestanden, Analyse/i18n2138 gruen.
+Backend: explizite Ausweisfreigabe je Mitgliederstatus, private Tokenausgabe mit
+Widerruf/Neuausgabe, oeffentliche statusfrische QR-Pruefung in DE/EN ohne Login.
+Kein Geburtsdatum/Kontakt/AHV im oeffentlichen Nachweis. Apple-Wallet-Ausgabe,
+signierter Pass, Updateprotokoll und begrenzter Zertifikats-Push vorbereitet.
+21 Backendtests/154 Assertions plus echte PG-Rueckrollpruefung auf DEV/Stage
+erfolgreich. Zwei additive Migrationen und gezieltes Dateidelta auf DEV/Stage
+bereitgestellt; QR-Pruefung aktiviert, Apple Wallet ohne Pass-Type-Zertifikat
+bewusst deaktiviert, keine echten Apple-Pushes. Konkreter Stage-Refresh-Ausweis
+mit rotem Logo/gueltigem Status und seinem oeffentlichen HTTPS-Ziel geprueft.
+Keine Kontorechte geaendert, kein Datenimport, kein PROD-/Store-Eingriff.
+Betrieb, Sicherungen und Rueckweg: CLUBUNIO-MEMBER-CARD-VERIFICATION.md.
+Ausstehende Zertifikatseinrichtung mit Anleitung: CLUBUNIO-APPLE-WALLET.md.
+Native iPhone-/Swift-/Wallet-Updateabnahme nach Einrichtung auf Benutzer-Mac.
+
+
+## Event-QR-Check-in (22.11.2026)
+
+Event-Zeitfenster, druckbarer QR-Aushang und ausdrückliche eigene
+Anwesenheitsbestätigung in der App auf DEV/Stage bereitgestellt. RSVP bleibt
+getrennt; Wiederholungen/Timeout-Abgleich ohne doppelte Anwesenheit. Additive
+Migration `2026_11_22_000120_event_checkin` nach privater Sicherung gezielt auf
+beiden Instanzen angewandt; synthetische PostgreSQL-Abnahme zurückgerollt.
+Backend 28 Tests/162 Assertions, Mobile 1061 Tests erfolgreich, Analyse sauber.
+Mobile-Commit `a0596e9` auf main synchronisiert. Öffentliche Association-Dateien
+auf allen vier Hosts geprüft. Neuer nativer Build und Geräteabnahme erforderlich;
+Android-Signierfingerabdruck laut Benutzer noch nicht vorhanden.
+[Bedienung, Deployment, Rückweg und native Einrichtung](CLUBUNIO-EVENT-CHECKIN-RELEASE.md).
+
+
+22.11.2026: Auf Benutzerauftrag Apple-Wallet-Zertifikatsvorbereitung für DEV,
+Stage und PROD: drei separate Schlüssel/CSRs privat auf VPS, CSR-Signaturen
+geprüft, nur öffentliche Anfragen im lokalen Downloads-Ordner bereitgestellt.
+Apple-Ausstellung noch offen; keine Wallet-/PROD-Aktivierung.
+Ablage und nächste Schritte: [Apple Wallet](CLUBUNIO-APPLE-WALLET.md).
+
+
+## Apple Wallet aktiviert (22.11.2026)
+
+Echte Apple-Zertifikate auf DEV/Stage und nach zusätzlicher ausdrücklicher
+Benutzerfreigabe auch PROD eingerichtet. PROD-Ausweis-/Walletdelta gezielt
+samt Migrationen000100/000110 und Sicherung ergänzt, kein Datenimport.
+Signaturen, PostgreSQL-Fachabläufe und HTTPS auf allen Instanzen geprüft;
+Testdaten zurückgerollt. Minutenupdates eingerichtet und Lauf nachgewiesen.
+Zertifikatsablauf22.12.2027. Physische iPhone-Abnahme und echte APNs-Zustellung
+noch offen; Google Wallet folgt separat.
+[Betrieb und Rückweg](CLUBUNIO-APPLE-WALLET.md).

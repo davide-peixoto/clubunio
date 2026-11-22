@@ -141,11 +141,12 @@ class Synchronisation extends Page implements HasTable
                         default => $query,
                     }),
                 SelectFilter::make('provider')->label('Verbindung')
-                    ->options(['all' => __('Alle'), 'bexio' => __('Bexio'), 'sfv' => __('SFV'), 'ai' => __('KI-Training'), 'azure' => __('Azure-Dokumente')])
+                    ->options(['all' => __('Alle'), 'bexio' => __('Bexio'), 'sfv' => __('SFV'), 'ai' => __('KI-Training'), 'azure' => __('Azure-Dokumente'), 'social' => trans('social.title')])
                     ->default('all')->selectablePlaceholder(false)
                     ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? 'all') {
                         'sfv' => $query->where('operation', 'sfv_schedule'),
-                        'bexio' => $query->whereNotIn('operation', ['sfv_schedule', 'training_review', 'azure_upload']),
+                        'bexio' => $query->whereNotIn('operation', ['sfv_schedule', 'training_review', 'azure_upload', 'social_insights']),
+                        'social' => $query->where('operation', 'social_insights'),
                         'ai' => $query->where('operation', 'training_review'),
                         'azure' => $query->where('operation', 'azure_upload'),
                         default => $query,
@@ -286,7 +287,7 @@ class Synchronisation extends Page implements HasTable
     protected function getViewData(): array
     {
         abort_unless(static::canAccess(), 403);
-        $this->validate(['state' => 'in:open,succeeded,closed,all', 'provider' => 'in:all,bexio,sfv,ai,azure']);
+        $this->validate(['state' => 'in:open,succeeded,closed,all', 'provider' => 'in:all,bexio,sfv,ai,azure,social']);
         $counts = $this->counts();
         $rows = $this->getTableRecords();
         $history = null;

@@ -19,6 +19,7 @@ class SyncWorkService
     ];
 
     public const LABELS = [
+        'social_insights' => 'social_insights.sync',
         'invoice_transfer' => 'Bexio · Rechnung übertragen',
         'invoice_action' => 'Bexio · Rechnung freigeben oder stornieren',
         'invoice_status' => 'Bexio · Rechnungsstatus lesen',
@@ -187,6 +188,7 @@ class SyncWorkService
     private function handle(?Account $actor, Tenant $tenant, object $row, array $payload): mixed
     {
         return match ($row->operation) {
+            'social_insights' => app(SocialInsightsService::class)->import($actor, $tenant, $row->object_id, (int) ($payload['revision'] ?? 0)),
             'azure_upload' => app(DocumentUploadService::class)->process($actor, $tenant, $row->object_id),
             'sponsor_run_billing' => $this->sponsorBilling($actor, $tenant, $row, $payload),
             'invoice_transfer' => app(BexioInvoiceTransferService::class)->transferNow($actor, $tenant, $row->object_id, (int) $payload['revision']),

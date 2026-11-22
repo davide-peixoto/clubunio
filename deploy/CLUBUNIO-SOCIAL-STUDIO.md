@@ -1,5 +1,8 @@
 # Social Media V1
 
+Ergaenzung: [Instagram-/Facebook-Kontoverbindung, Beitragsimport und KPI-Dashboard](CLUBUNIO-SOCIAL-INSIGHTS.md)
+mit eigenem additiven Migrationsplan und rein lesender Testanbindung.
+
 Im Web unter **Anlagen & Kommunikation → Social Media**. Keine App-Änderung.
 
 - **Spielübersicht:** Datum wählen, Wettkämpfe auswählen und Spieltagsgrafik
