@@ -1,10 +1,10 @@
 # Apple Wallet für Vereinsausweise
 
-Stand: 22.11.2026. Implementiert, aber mangels Apple-Pass-Zertifikat noch nicht
-aktiviert. Die bereits vorhandenen App-/Firebase-APNs-Schlüssel ersetzen das
-Pass-Type-Zertifikat nicht. Apple-Zertifikate fehlen weiterhin. Auf ausdrücklichen Benutzerauftrag wurden
-getrennte private Schlüssel und CSRs für DEV, Stage und PROD vorbereitet;
-keine Aktivierung und keine echten Push-Nachrichten.
+Stand: 22.11.2026. Apple Wallet auf DEV, Stage und nach ausdrücklicher weiterer
+Benutzerfreigabe auch PROD aktiviert. Drei echte Apple-Zertifikate mit den
+getrennten privaten Schlüsseln und der Apple-Root-/WWDR-G4-Kette geprüft.
+Physische iPhone-Abnahme und echte Wallet-Push-Zustellung noch offen.
+App-/Firebase-APNs-Schlüssel werden hierfür nicht verwendet.
 
 ## Aktueller Umfang
 
@@ -126,7 +126,7 @@ Mitgliedschaftsstatus begründet nicht automatisch einen bestimmten Rabatt.
    Update als `voided`. Abmelden des Passes muss die Registrierung entfernen.
    Rollen-/Mandantengrenzen und Core-/Custom-Build auf dem Gerät mitprüfen.
 
-Diese Aktivierung ist nach Zertifikatsbereitstellung noch durchzuführen.
+Serveraktivierung auf allen drei Instanzen abgeschlossen; Geräteabnahme offen.
 Die Tests verwenden ausschliesslich eine synthetische CA und bestätigen keine
 Apple-Ausstellung, reale APNs-Zustellung oder iPhone-Abnahme.
 
@@ -188,3 +188,89 @@ Ausgestelltes `.cer` sofort eindeutig als `clubunio-dev.cer`,
 `clubunio-stage.cer`, `clubunio-prod.cer` benennen. Nach Bereitstellung Zertifikat/
 Schlüsselabgleich, WWDR-Kette und Laufzeitrechte prüfen; DEV/Stage aktivieren und
 auf echtem iPhone testen. PROD-Zertifikat lediglich sicher vorbereiten.
+
+## Abschluss: alle drei Instanzen aktiviert (22.11.2026)
+
+Der Benutzer hat nachträglich auch die PROD-Aktivierung ausdrücklich freigegeben.
+Die vorherige Beschränkung auf Vorbereitung ist damit aufgehoben. Zertifikate:
+Team `XP7296D478`, passende UID je Umgebung, passende private Schlüssel,
+vollständige Apple-Root-/WWDR-G4-Kette mit OpenSSL erfolgreich verifiziert.
+Alle drei Zertifikate laufen am **22.12.2027** ab; rechtzeitig erneuern.
+Zwischen- und Rootzertifikat ausschliesslich über HTTPS von Apple PKI bezogen.
+
+| Umgebung | Private Laufzeitablage | Wallet-/QR-Origin |
+|---|---|---|
+| DEV | `/var/lib/clubunio-wallet/dev` | `https://dev.clubunio.ch` |
+| Stage | `/home/runcloud/wallet/stage` | `https://stage.clubunio.com` |
+| PROD | `/home/runcloud/wallet/prod` | `https://app.clubunio.com` |
+
+Ordner0700/Dateien0600, DEV-Eigentümer www-data, Stage/PROD runcloud. DEV-Schlüssel
+zwischen SSH-Verbindungen übertragen, keine lokale Schlüsseldatei. Keine
+Zertifikate/Schlüssel im Git. Konfigurationscache als Webserverbenutzer erneuert.
+Core und Vereinsbuild verwenden dieselbe Pass-ID je Umgebung.
+
+DEV nutzt den vorhandenen Minutenlauf clubora-scheduler.timer als www-data.
+Auf dem VPS war kein Laravel-Minutenlauf nachweisbar. Daher führt
+`/etc/cron.d/clubunio-wallet-refresh` nur den Walletbefehl für Stage/PROD aus:
+jede Minute, limit200, separater flock, umask077, private technische Summenlogs
+im jeweiligen Walletordner. Keine weiteren Scheduleraufträge aktiviert.
+Beide Cronläufe anhand der Logs nachgewiesen: configured=true, keine Fehler,
+noch keine Geräte registriert. Referenz: [Wallet-Cron](clubunio-wallet-refresh.cron).
+
+Bestehende root-owned Stage-Cachedateien sowie admin-owned DEV-Cachedateien und
+Tageslog waren für den Appbenutzer nicht beschreibbar. Nur betroffene
+Runtime-Caches und das Tageslog korrigiert. Eigentümerinventare privat unter
+`/root/wallet-cache-ownership-20261122-203251.json` beziehungsweise auf DEV
+`shared/wallet-cache-ownership-20261122-203251.json`.
+
+### PROD-Delta und Rückweg
+
+PROD unter `/home/runcloud/webapps/ClubUnioProd`, Datenbank clubunio_prod, hatte
+das Ausweis-/Walletdelta noch nicht. 26 gezielte Dateien anhand des ursprünglichen
+Ausweisrelease-Manifests bereitgestellt; vorhandene Baselines per SHA256 geprüft,
+PHP-Lint vor Austausch. Gemeinsame Routen/Scheduler nur additiv ergänzt, keine
+Event-/sonstigen Features übertragen, RunCloud-Eigentümer sichergestellt.
+
+Migrationen 000100_member_cards und 000110_member_wallet gezielt nach geprüftem
+pg_dump angewandt: Datenbankidentität, fehlende Zielobjekte, Transaktion,
+Advisorylock und Journal-Lock. Nur die SQL-Blöcke dieser Migrationen verwendet;
+generische DEV/Stage-Migrationsschutzschalter nicht aufgeweicht. Live-Schema
+clubunio, Tabellen-/Sequenzrechte für userunio. Keine Altdaten importiert.
+PROD enthält aktuell keine Mitgliedschaftsstatus; bei späterer Einrichtung muss
+deren Ausweisberechtigung ausdrücklich konfiguriert werden.
+
+Private Sicherungen:
+
+- DEV Konfiguration: `shared/wallet-activation-20261122-202652`.
+- Stage Konfiguration: `/root/wallet-activation-20261122-202651`.
+- PROD Code/Manifest: `/root/wallet-prod-release-20261122-202855`.
+- PROD Katalog-/Migrationsjournalbackup: `/root/wallet-prod-db-preflight-20261122-202915`.
+- PROD Konfiguration: `/root/wallet-prod-config-20261122-202937`.
+
+Rückweg: Wallet pro Instanz deaktivieren, config:cache als Appbenutzer erneuern,
+betroffene VPS-Cronzeile aussetzen. Daten und Seriennummern erhalten. Das gezielte
+PROD-Preflightbackup ist kein Vollbackup. Code anhand Manifest/Bestandssicherung
+zurücknehmen; nach ausgegebenen Pässen zuerst Widerrufs-/Updatezustellung beachten.
+
+### Nachweise und offene Geräteabnahme
+
+- Echte Zertifikate signieren auf allen drei Instanzen synthetische .pkpass-Dateien;
+  ZIP/Manifest und abgesetzte CMS-Signatur geprüft, Testpakete danach gelöscht.
+  Prüfbefehl: `php deploy/check-wallet-signing.php --synthetic-signing`.
+  Kein Datenbankzugriff, keine APNs-Geräteanfrage.
+- PostgreSQL-Fachprüfung auf DEV/Stage/PROD als Appbenutzer erfolgreich: DTO und
+  Vereinsbranding, QR-Webprüfung DE/EN, Datenschutz, Statussperre, Neuausgabe,
+  Mandantentrennung, Walletrevision und Authentifizierung. Alle synthetischen
+  Daten zurückgerollt. Fehlender PROD-Admin-Rollenkatalog nur innerhalb der
+  Testtransaktion ergänzt; anschliessend null Testvereine, Pässe, Registrierungen.
+- Extern alle drei Origins: /up200, unbekannter QR ungültige HTML-Seite,
+  unautorisierter Walletpass401.
+- APNs per TLS/HTTP2 mit jeweiligem Zertifikat erreichbar, HEAD405/version2.
+  Dies bestätigt Verbindung, keine echte Push-Zustellung.
+- Zehn Backendtests/73Assertions, PHP-Lint und zentrale DE/EN-Prüfung mit
+  3044 Schlüsseln erfolgreich.
+
+Noch offen: aktuellen nativen Build auf Benutzer-Mac erstellen, echten Ausweis
+auf physischem iPhone zu Wallet hinzufügen, Geräteanmeldung und Statusänderung/
+Widerruf samt APNs-Update testen. Simulator/TLS-Test ersetzen keine Geräteabnahme.
+Google Wallet ist ein separater nächster Einrichtungsschritt.
