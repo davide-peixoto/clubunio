@@ -171,3 +171,24 @@ keine SV-Sissach-Fachdaten in ClubUnio PROD angelegt. Der fachliche
 Erstimport-/Delta-Apply-Runner ist noch nicht implementiert oder
 freigegeben; das naechste Paket muss diese Umsetzung und die Probe auf
 einer isolierten Kopie liefern. Kein ungepruefter Apply-Befehl angeboten.
+
+## Delta-Runner auf isolierter PROD-Kopie (22.11.2026)
+
+Native Feldvertraege fuer 75 Tabellen, dauerhafte HMAC-Feldbasis und
+transaktionaler Dreiwegevergleich implementiert. Echter Erstimport:
+37550 Datensaetze; Wiederholung 0 Inserts/Updates. Acht Integrations-
+szenarien, feldweiser Parallelmerge und vier CLI-/Schemagates geprueft.
+Finanzsummen und Tabellenzaehler abgeglichen, Plattformadmin und 143
+Migrationen erhalten. 14 Quell-Saisonkonflikte bewusst nicht repariert.
+Neun befuellte Quelltabellen bleiben fachlich ungemappt; genaue Liste
+und Grenzen im [Runner-Nachweis](CLUBUNIO-SVS-DELTA-RUNNER.md).
+Keine PROD-Ausfuehrung; Live-Zielname ist technisch gesperrt.
+
+
+Nach paralleler PROD-Konsolidierung Abnahme auf frischer Kopie von
+b1d44c8 mit 145 Migrationen wiederholt: 37550 Erstimporte, identische
+Wiederholung ohne Fachwrites. Acht Integrationsszenarien erneut gruen.
+Auch neu aufbereiteter synthetischer Quelldump: genau 1 Insert, 1 Update,
+1 Review-Kandidat; Wiederholung 0 Writes und stabile Ziel-IDs. Numerische
+Schemaabweichung wird vor Import abgelehnt. Umsetzung nur auf eigenem
+Branch codex/svs-import-runner-20261122, nicht auf PROD ausgerollt.

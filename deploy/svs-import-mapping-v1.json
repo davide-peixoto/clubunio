@@ -1,0 +1,7864 @@
+{
+  "access_profiles": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": "nextval('clubunio.access_profiles_id_seq'::regclass)"
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "permissions",
+        "type": "jsonb",
+        "identity": "NO",
+        "default": "'[]'::jsonb"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mobile_modules",
+        "type": "jsonb",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "name"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "account_member_links": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "state",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "source",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "reviewed_by",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "reviewed_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "account_id",
+      "member_id",
+      "kind"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenant_accounts",
+        "columns": [
+          "tenant_id",
+          "account_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "account_id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenant_accounts",
+        "columns": [
+          "tenant_id",
+          "reviewed_by"
+        ],
+        "referenced": [
+          "tenant_id",
+          "account_id"
+        ]
+      }
+    ]
+  },
+  "account_roles": {
+    "columns": [
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      }
+    ],
+    "pk": [
+      "code"
+    ],
+    "identity": [
+      "code"
+    ],
+    "fks": []
+  },
+  "accounts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "username",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "display_name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "password",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "api_only",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "preferred_locale",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "username"
+    ],
+    "fks": []
+  },
+  "announcement_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "banks": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "city",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "swift",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "street",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "postal_address",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "postal_code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "postal_account",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "country_code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "clearing_number",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "billing_recipients": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "email_field",
+        "type": "character varying",
+        "identity": "NO",
+        "default": "'email'::character varying"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "bus_reservations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bus_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "starts_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "decision_note",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "decided_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "decided_by",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_workflow",
+        "type": "jsonb",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.accounts",
+        "columns": [
+          "decided_by"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.buses",
+        "columns": [
+          "tenant_id",
+          "bus_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.bus_statuses",
+        "columns": [
+          "tenant_id",
+          "status"
+        ],
+        "referenced": [
+          "tenant_id",
+          "code"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "bus_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "buses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "club_events": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.seasons",
+        "columns": [
+          "tenant_id",
+          "season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.teams",
+        "columns": [
+          "tenant_id",
+          "team_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "club_functions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "competitions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "plays_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "starts_at",
+        "type": "time without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "host_name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "guest_name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "host_category",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "guest_category",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "host_club_number",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "guest_club_number",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "field_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "host_room_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "guest_room_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "host_side_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "guest_side_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "remarks",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "show_on_signage",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "association_match_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "source",
+        "type": "character varying",
+        "identity": "NO",
+        "default": "'manual'::character varying"
+      },
+      {
+        "name": "imported_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "synced_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "field_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "guest_room_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "guest_side_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "host_room_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "host_side_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "contribution_prices": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_product_id",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_article_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "contribution_rules": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "price_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "gender_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "year_from",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "year_to",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.genders",
+        "columns": [
+          "tenant_id",
+          "gender_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.contribution_prices",
+        "columns": [
+          "tenant_id",
+          "price_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.seasons",
+        "columns": [
+          "tenant_id",
+          "season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "countries": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "iso3",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "document_types": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "event_guests": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "club_event_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.club_events",
+        "columns": [
+          "tenant_id",
+          "club_event_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "expense_lines": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "expense_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "expense_type_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "game_type_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "opponent",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "suggested_amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "suggestion_accepted",
+        "type": "boolean",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "filename",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "storage_reference",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "file_size",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "content_type",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.expenses",
+        "columns": [
+          "tenant_id",
+          "expense_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.expense_types",
+        "columns": [
+          "tenant_id",
+          "expense_type_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.game_types",
+        "columns": [
+          "tenant_id",
+          "game_type_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "expense_rounds": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "expense_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "expense_types": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "receipt_required",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "bexio_account_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "amount_source",
+        "type": "character varying",
+        "identity": "NO",
+        "default": "'manual'::character varying"
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "expenses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bank_account_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "round_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "released_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "payment_released_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "paid_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "released_by",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "payment_released_by",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "paid_by",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_bill_id",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.member_bank_accounts",
+        "columns": [
+          "tenant_id",
+          "bank_account_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.expense_rounds",
+        "columns": [
+          "tenant_id",
+          "round_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.seasons",
+        "columns": [
+          "tenant_id",
+          "season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.expense_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "facility_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "blocks_training",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "families": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "street",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "postal_code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "city",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "country_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.countries",
+        "columns": [
+          "tenant_id",
+          "country_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "family_members": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "family_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "discount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "family_id",
+      "member_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.families",
+        "columns": [
+          "tenant_id",
+          "family_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "field_availabilities": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "field_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "note",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "field_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "field_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.facility_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "financial_adjustment_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": "nextval('clubunio.financial_adjustment_statuses_id_seq'::regclass)"
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "football_clubs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "club_number",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "logo_enabled",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "club_number"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "game_types": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "genders": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoice_categories": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": "nextval('clubunio.invoice_categories_id_seq'::regclass)"
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoice_line_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoice_lines": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "invoice_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "gross_amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "discount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "net_amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "contribution",
+        "type": "boolean",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_product_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_catalog_article_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_catalog_tax_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "tax_snapshot",
+        "type": "jsonb",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.bexio_catalog_entries",
+        "columns": [
+          "bexio_catalog_article_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.bexio_catalog_entries",
+        "columns": [
+          "bexio_catalog_tax_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoices",
+        "columns": [
+          "tenant_id",
+          "invoice_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoice_line_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.bexio_catalog_entries",
+        "columns": [
+          "tenant_id",
+          "bexio_catalog_tax_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.bexio_catalog_entries",
+        "columns": [
+          "tenant_id",
+          "bexio_catalog_article_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoice_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "position_code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoice_workflow_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "invoices": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_invoice_id",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "workflow_status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "invoice_category_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "tax_mode",
+        "type": "text",
+        "identity": "NO",
+        "default": "'exempt'::text"
+      },
+      {
+        "name": "rounding_cents",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "cash_rounding",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.invoice_categories",
+        "columns": [
+          "invoice_category_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.seasons",
+        "columns": [
+          "tenant_id",
+          "season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoice_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoice_workflow_statuses",
+        "columns": [
+          "tenant_id",
+          "workflow_status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoice_categories",
+        "columns": [
+          "tenant_id",
+          "invoice_category_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "material_receipt_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_bank_accounts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bank_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "iban_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.banks",
+        "columns": [
+          "tenant_id",
+          "bank_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_change_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "color",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_documents": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "document_type_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "filename",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "original_filename",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "storage_path",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "file_size",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "content_type",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "source_created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "registration_document_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "sha256",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_by",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "portal_visible",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenant_accounts",
+        "columns": [
+          "tenant_id",
+          "created_by"
+        ],
+        "referenced": [
+          "tenant_id",
+          "account_id"
+        ]
+      },
+      {
+        "parent": "clubunio.document_types",
+        "columns": [
+          "tenant_id",
+          "document_type_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.registration_documents",
+        "columns": [
+          "tenant_id",
+          "registration_document_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_functions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "club_function_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_qualifications",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.club_functions",
+        "columns": [
+          "tenant_id",
+          "club_function_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_keys": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "number",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "color",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_notes": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "ends_membership",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "restores_membership",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "spots_eligible",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "member_types": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "team_required",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "passive_membership",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "members": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "company",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "city",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "type_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "birth_date",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_number",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "street",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "house_number",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "postal_code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "country_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "nationality_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "gender_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "phone_private",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "phone_business",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mobile",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "website",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "pass_number",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "exit_date",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mother_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mother_email",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mother_mobile",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "father_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "father_email",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "father_mobile",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "billing_recipient_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "honorary",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "free_membership",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "supporter",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "sponsor",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "spots",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "ahv_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_photo",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_photo2",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "bexio_contact_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "recorded_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "timezone('Europe/Zurich'::text, now())"
+      },
+      {
+        "name": "billing_bexio_contact_id",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "billing_bexio_identity_hash",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "billing_bexio_revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.billing_recipients",
+        "columns": [
+          "tenant_id",
+          "billing_recipient_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.countries",
+        "columns": [
+          "tenant_id",
+          "country_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.genders",
+        "columns": [
+          "tenant_id",
+          "gender_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.countries",
+        "columns": [
+          "tenant_id",
+          "nationality_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.member_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.member_types",
+        "columns": [
+          "tenant_id",
+          "type_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "message_template_revisions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "template_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "actor_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "template_id",
+      "revision"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.accounts",
+        "columns": [
+          "actor_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.message_templates",
+        "columns": [
+          "tenant_id",
+          "template_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "message_templates": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "event_key",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "channel",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "locale",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "event_key",
+      "channel",
+      "locale"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "mobile_module_options": {
+    "columns": [
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "key",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "tenant_id",
+      "key"
+    ],
+    "identity": [
+      "tenant_id",
+      "key"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "planning_options": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "category",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "category",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "qualifications": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "registration_documents": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "registration_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "filename",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "storage_path",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "original_filename",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "file_size",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mime_type",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sha256",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_by",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "registration_id",
+      "kind",
+      "filename"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenant_accounts",
+        "columns": [
+          "tenant_id",
+          "created_by"
+        ],
+        "referenced": [
+          "tenant_id",
+          "account_id"
+        ]
+      },
+      {
+        "parent": "clubunio.registrations",
+        "columns": [
+          "tenant_id",
+          "registration_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "registration_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "workflow_key",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "registrations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "first_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "last_name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "city",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "birth_date",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "submitted_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "technical_lead_member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "reviewed_by",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "reviewed_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "applicant_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "details_complete",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "accepted_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "rejected_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "acceptance_summary",
+        "type": "jsonb",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenant_accounts",
+        "columns": [
+          "tenant_id",
+          "reviewed_by"
+        ],
+        "referenced": [
+          "tenant_id",
+          "account_id"
+        ]
+      },
+      {
+        "parent": "clubunio.registration_statuses",
+        "columns": [
+          "tenant_id",
+          "status_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "technical_lead_member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "seasons": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "starts_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "signage_notices": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "shows_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "sponsor_run_statuses": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "sponsorships": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "expires_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "staff_functions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "status_styles": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "value_key",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "color",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "value_key"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_absences": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "starts_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_on",
+        "type": "date",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "note_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "deleted_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "starts_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_events": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "starts_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "deadline_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mode",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "identity": "NO",
+        "default": "'AKTIV'::text"
+      },
+      {
+        "name": "capacity",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "series_key",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "series_exception",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "sfv_match_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "deleted_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_invitations": {
+    "columns": [
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "event_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "tenant_id",
+      "event_id",
+      "member_id"
+    ],
+    "identity": [
+      "tenant_id",
+      "event_id",
+      "member_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.team_events",
+        "columns": [
+          "tenant_id",
+          "event_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_participations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "event_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "comment_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "attendance",
+        "type": "text",
+        "identity": "NO",
+        "default": "'OFFEN'::text"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "source",
+        "type": "text",
+        "identity": "NO",
+        "default": "'manual'::text"
+      },
+      {
+        "name": "original_status",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "original_comment_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": "now()"
+      },
+      {
+        "name": "attendance_comment_encrypted",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "attendance_updated_at",
+        "type": "timestamp with time zone",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "event_id",
+      "member_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.team_events",
+        "columns": [
+          "tenant_id",
+          "event_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_players": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "legacy_invoice_position_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "invoice_line_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.invoice_lines",
+        "columns": [
+          "tenant_id",
+          "invoice_line_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_seasons": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "label",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.seasons",
+        "columns": [
+          "tenant_id",
+          "season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.teams",
+        "columns": [
+          "tenant_id",
+          "team_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "team_staff": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "staff_function_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.staff_functions",
+        "columns": [
+          "tenant_id",
+          "staff_function_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "teams": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sfv_team_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "laundry_allowance",
+        "type": "numeric",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "technical_leads": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "member_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.members",
+        "columns": [
+          "tenant_id",
+          "member_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  },
+  "tenant_accounts": {
+    "columns": [
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "account_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "role",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_user_level",
+        "type": "integer",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "portal_enabled",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "access_profile_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "mobile_profile_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "tenant_id",
+      "account_id"
+    ],
+    "identity": [
+      "tenant_id",
+      "account_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.access_profiles",
+        "columns": [
+          "tenant_id",
+          "access_profile_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.accounts",
+        "columns": [
+          "account_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.access_profiles",
+        "columns": [
+          "tenant_id",
+          "mobile_profile_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.account_roles",
+        "columns": [
+          "role"
+        ],
+        "referenced": [
+          "code"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "tenant_settings": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "area",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "key",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "label",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "value_type",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "encrypted_value",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "is_secret",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "enabled",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "area",
+      "key"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "tenants": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "slug",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "platform_revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "default_locale",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "facility_planning_mode",
+        "type": "character varying",
+        "identity": "NO",
+        "default": "'legacy'::character varying"
+      },
+      {
+        "name": "license_plan",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "accounting_provider",
+        "type": "character varying",
+        "identity": "NO",
+        "default": "'none'::character varying"
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "slug"
+    ],
+    "fks": []
+  },
+  "training_options": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "category",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "identity": "NO",
+        "default": "0"
+      },
+      {
+        "name": "facility_kind",
+        "type": "character varying",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "category",
+      "code"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      }
+    ]
+  },
+  "training_slots": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "identity": "YES",
+        "default": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "legacy_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "true"
+      },
+      {
+        "name": "revision",
+        "type": "integer",
+        "identity": "NO",
+        "default": "1"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone",
+        "identity": "NO",
+        "default": "CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "team_season_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "period_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "weekday_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "starts_at",
+        "type": "time without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "ends_at",
+        "type": "time without time zone",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "field_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "room_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "side_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "hall",
+        "type": "text",
+        "identity": "NO",
+        "default": null
+      },
+      {
+        "name": "all_fields",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "without_main",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "synthetic_only",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "website_visible",
+        "type": "boolean",
+        "identity": "NO",
+        "default": "false"
+      },
+      {
+        "name": "area_id",
+        "type": "bigint",
+        "identity": "NO",
+        "default": null
+      }
+    ],
+    "pk": [
+      "id"
+    ],
+    "identity": [
+      "tenant_id",
+      "legacy_id"
+    ],
+    "fks": [
+      {
+        "parent": "clubunio.pitch_areas",
+        "columns": [
+          "tenant_id",
+          "field_id",
+          "area_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "field_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "field_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.tenants",
+        "columns": [
+          "tenant_id"
+        ],
+        "referenced": [
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "period_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "room_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "side_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.team_seasons",
+        "columns": [
+          "tenant_id",
+          "team_season_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      },
+      {
+        "parent": "clubunio.training_options",
+        "columns": [
+          "tenant_id",
+          "weekday_id"
+        ],
+        "referenced": [
+          "tenant_id",
+          "id"
+        ]
+      }
+    ]
+  }
+}

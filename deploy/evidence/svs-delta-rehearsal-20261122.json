@@ -1,0 +1,88 @@
+{
+  "source_projection_base": "38c428e",
+  "tested_prod_base": "b1d44c8",
+  "target_migrations": 145,
+  "mapped_tables": 75,
+  "native_rows_imported": 37550,
+  "table_counts_match": true,
+  "native_financial_totals_match": true,
+  "platform_admin_preserved": true,
+  "all_imported_accounts_disabled": true,
+  "stable_target_ids_after_source_rebuild": true,
+  "live_prod_tenants": 0,
+  "live_prod_import_ledger_absent": true,
+  "members": 2448,
+  "invoices": 6799,
+  "expenses": 487,
+  "historical_source_season_conflicts": 14,
+  "templates": {
+    "de-CH": 53,
+    "en-GB": 53
+  },
+  "current-prod-apply-result": {
+    "inserted": 37550,
+    "updated": 0,
+    "unchanged": 0,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "36bff90ccdb89434e8372968241fb1354d3acc46a5539cba47167200a0792b3c"
+  },
+  "current-prod-replay-result": {
+    "inserted": 0,
+    "updated": 0,
+    "unchanged": 37550,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "36bff90ccdb89434e8372968241fb1354d3acc46a5539cba47167200a0792b3c"
+  },
+  "raw-delta-apply-result": {
+    "inserted": 1,
+    "updated": 1,
+    "unchanged": 37548,
+    "missing_review": 1,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "36bff90ccdb89434e8372968241fb1354d3acc46a5539cba47167200a0792b3c"
+  },
+  "raw-delta-replay-result": {
+    "inserted": 0,
+    "updated": 0,
+    "unchanged": 37550,
+    "missing_review": 1,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "36bff90ccdb89434e8372968241fb1354d3acc46a5539cba47167200a0792b3c"
+  },
+  "guard_checks": {
+    "stale_snapshot_rejected": true,
+    "cli_live_prod_rejected": true,
+    "schema_drift_rejected": true,
+    "source_schema_drift_rejected": true,
+    "numeric_precision_drift_rejected": true
+  },
+  "integration_checks": [
+    "insert_update_local_preservation",
+    "repeat_delta",
+    "source_deletion_review",
+    "conflict_rollback",
+    "late_failure_rollback",
+    "live_prod_rejected",
+    "foreign_source_tenant_rejected",
+    "platform_admin_and_145_migrations_preserved"
+  ],
+  "same_record_field_merge_and_timestamp_check": "passed; outer test transactions rolled back",
+  "not_ready_for_live_prod": true,
+  "unmapped_nonempty_source_tables": {
+    "dbo.AppAnkuendigungen": 1,
+    "dbo.DokumentSerien": 4,
+    "dbo.DokumentSerienEmpfaenger": 17,
+    "dbo.DokumentVorlagen": 4,
+    "dbo.MitgliederAenderungsantraege": 18,
+    "dbo.MitgliederQuittungen": 19,
+    "dbo.TeamTerminGaeste": 2,
+    "dbo.TrainingPlannerAuditLog": 47,
+    "dbo.Verbandsspiele": 231
+  }
+}

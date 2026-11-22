@@ -1,0 +1,1820 @@
+{
+  "DataSync.BankkontoStaff_dss_tracking": {
+    "rows_in_test_snapshot": 159,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "BankkontoStaffID",
+      "update_scope_local_id",
+      "scope_update_peer_key",
+      "scope_update_peer_timestamp",
+      "local_update_peer_key",
+      "local_update_peer_timestamp",
+      "create_scope_local_id",
+      "scope_create_peer_key",
+      "scope_create_peer_timestamp",
+      "local_create_peer_key",
+      "local_create_peer_timestamp",
+      "sync_row_is_tombstone",
+      "restore_timestamp",
+      "last_change_datetime"
+    ]
+  },
+  "DataSync.provision_marker_dss": {
+    "rows_in_test_snapshot": 84,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "object_id",
+      "owner_scope_local_id",
+      "provision_scope_local_id",
+      "provision_timestamp",
+      "provision_local_peer_key",
+      "provision_scope_peer_key",
+      "provision_scope_peer_timestamp",
+      "provision_datetime",
+      "state",
+      "version"
+    ]
+  },
+  "DataSync.schema_info_dss": {
+    "rows_in_test_snapshot": 1,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "schema_major_version",
+      "schema_minor_version",
+      "schema_extended_info"
+    ]
+  },
+  "DataSync.scope_config_dss": {
+    "rows_in_test_snapshot": 1,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "config_id",
+      "config_data",
+      "scope_status"
+    ]
+  },
+  "DataSync.scope_info_dss": {
+    "rows_in_test_snapshot": 1,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "scope_local_id",
+      "scope_id",
+      "sync_scope_name",
+      "scope_sync_knowledge",
+      "scope_tombstone_cleanup_knowledge",
+      "scope_timestamp",
+      "scope_config_id",
+      "scope_restore_count",
+      "scope_user_comment"
+    ]
+  },
+  "DataSync.Spesenbelege_dss_tracking": {
+    "rows_in_test_snapshot": 151,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "SpesenID",
+      "update_scope_local_id",
+      "scope_update_peer_key",
+      "scope_update_peer_timestamp",
+      "local_update_peer_key",
+      "local_update_peer_timestamp",
+      "create_scope_local_id",
+      "scope_create_peer_key",
+      "scope_create_peer_timestamp",
+      "local_create_peer_key",
+      "local_create_peer_timestamp",
+      "sync_row_is_tombstone",
+      "restore_timestamp",
+      "last_change_datetime"
+    ]
+  },
+  "DataSync.SpesenPositionen_dss_tracking": {
+    "rows_in_test_snapshot": 2681,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "SpesenPositionID",
+      "update_scope_local_id",
+      "scope_update_peer_key",
+      "scope_update_peer_timestamp",
+      "local_update_peer_key",
+      "local_update_peer_timestamp",
+      "create_scope_local_id",
+      "scope_create_peer_key",
+      "scope_create_peer_timestamp",
+      "local_create_peer_key",
+      "local_create_peer_timestamp",
+      "sync_row_is_tombstone",
+      "restore_timestamp",
+      "last_change_datetime"
+    ]
+  },
+  "dbo.AnmeldungStatus": {
+    "rows_in_test_snapshot": 6,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php"
+    ],
+    "source_columns": [
+      "AnmeldungStatusID",
+      "StatusCode",
+      "Bezeichnung",
+      "Sortierung",
+      "Aktiv"
+    ]
+  },
+  "dbo.AppAnkuendigungen": {
+    "rows_in_test_snapshot": 1,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "AnkuendigungID",
+      "Betreff",
+      "Meldung",
+      "Aktiv",
+      "GueltigVon",
+      "GueltigBis",
+      "ErstelltAm",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.AppNotification": {
+    "rows_in_test_snapshot": 2290,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "NotificationID",
+      "PushID",
+      "Username",
+      "MitgliederID",
+      "UserLevel",
+      "Title",
+      "Body",
+      "ObjectType",
+      "ObjectID",
+      "Route",
+      "DataJson",
+      "ReadAt",
+      "CreatedAt",
+      "Environment"
+    ]
+  },
+  "dbo.AppPenaltyBest": {
+    "rows_in_test_snapshot": 8,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "Username",
+      "Mode",
+      "DisplayName",
+      "Score",
+      "AchievedAt"
+    ]
+  },
+  "dbo.AppPenaltyChallenge": {
+    "rows_in_test_snapshot": 1,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "ID",
+      "Generation",
+      "ResetAt",
+      "ResetBy"
+    ]
+  },
+  "dbo.AppPenaltySessions": {
+    "rows_in_test_snapshot": 2,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "SessionID",
+      "Username",
+      "Mode",
+      "Opponents",
+      "CreatedAt",
+      "ExpiresAt",
+      "FinishedAt",
+      "Choices",
+      "Score"
+    ]
+  },
+  "dbo.AppPushLog": {
+    "rows_in_test_snapshot": 3525,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "PushLogID",
+      "PushID",
+      "PushTokenID",
+      "Username",
+      "FcmToken",
+      "Status",
+      "FcmMessageName",
+      "ResponseText",
+      "ErrorText",
+      "SentAt"
+    ]
+  },
+  "dbo.AppPushNachricht": {
+    "rows_in_test_snapshot": 1216,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "PushID",
+      "Titel",
+      "Nachricht",
+      "TargetType",
+      "TargetValue",
+      "ObjectType",
+      "ObjectID",
+      "DataJson",
+      "CreatedAt",
+      "CreatedBy",
+      "SentAt",
+      "Status",
+      "ErrorText"
+    ]
+  },
+  "dbo.AppPushToken": {
+    "rows_in_test_snapshot": 86,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "PushTokenID",
+      "Username",
+      "MitgliederID",
+      "UserLevel",
+      "Platform",
+      "FcmToken",
+      "DeviceName",
+      "AppVersion",
+      "Environment",
+      "Aktiv",
+      "CreatedAt",
+      "UpdatedAt",
+      "LastSeenAt"
+    ]
+  },
+  "dbo.AuditTrail": {
+    "rows_in_test_snapshot": 2,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "Id",
+      "DateTime",
+      "Script",
+      "User",
+      "Action",
+      "Table",
+      "Field",
+      "KeyValue",
+      "OldValue",
+      "NewValue"
+    ]
+  },
+  "dbo.BankkontoStaff": {
+    "rows_in_test_snapshot": 159,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "BankkontoStaffID",
+      "MitgliederID",
+      "InstitutID",
+      "IBAN",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Beitragspreise": {
+    "rows_in_test_snapshot": 9,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ContributionTrainingImporter.php"
+    ],
+    "source_columns": [
+      "BeitragspreiseID",
+      "Bezeichnung",
+      "BeitragCHF",
+      "sdeletedAt",
+      "bexioProductId",
+      "bexioArticleId"
+    ]
+  },
+  "dbo.Beitragstabelle": {
+    "rows_in_test_snapshot": 117,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ContributionTrainingImporter.php"
+    ],
+    "source_columns": [
+      "BeitragID",
+      "SaisonID",
+      "BeitragspreiseID",
+      "JahrgangVon",
+      "JahrgangBis",
+      "Geschlaecht",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Bemerkungen": {
+    "rows_in_test_snapshot": 140,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/FacilityImporter.php",
+      "app/ClubUnio/Services/MemberDetailsImporter.php",
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "BemerkungsID",
+      "MitgliederID",
+      "Bemerkung",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.BexioStatusMapping": {
+    "rows_in_test_snapshot": 6,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "BexioStatus",
+      "StatusName",
+      "PositionStatus"
+    ]
+  },
+  "dbo.Bus": {
+    "rows_in_test_snapshot": 1,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_12_000029_bus_reservations.php"
+    ],
+    "source_columns": [
+      "BUSID",
+      "BUSDESCR",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.BusReservationPins": {
+    "rows_in_test_snapshot": 25,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "ScopeKey",
+      "ResID",
+      "PinCipher",
+      "StartsAt",
+      "ExpiresAt",
+      "Failures",
+      "EmergencyUntil",
+      "Lease",
+      "LeaseUntil"
+    ]
+  },
+  "dbo.BusReservierungen": {
+    "rows_in_test_snapshot": 28,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_12_000029_bus_reservations.php"
+    ],
+    "source_columns": [
+      "ResID",
+      "BusID",
+      "TeamID",
+      "ResVon",
+      "ResBis",
+      "Ort",
+      "Descr",
+      "sdeletedAt",
+      "TeamSaisonID",
+      "AntragstellerMitgliederID",
+      "ReservierungsStatus",
+      "AntragGestelltAm",
+      "GenehmigtAm",
+      "GenehmigtVon",
+      "AbgelehntAm",
+      "AbgelehntVon",
+      "EntscheidBemerkung"
+    ]
+  },
+  "dbo.Countries": {
+    "rows_in_test_snapshot": 250,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDetailsImporter.php"
+    ],
+    "source_columns": [
+      "ISO2",
+      "ISO3",
+      "NameDE",
+      "FlagEmoji",
+      "SortOrder",
+      "IsTop"
+    ]
+  },
+  "dbo.DokumentSerien": {
+    "rows_in_test_snapshot": 4,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "SerieID",
+      "RequestKey",
+      "RequestHash",
+      "VorlageID",
+      "Snapshot",
+      "CreatedAt",
+      "CreatedBy"
+    ]
+  },
+  "dbo.DokumentSerienEmpfaenger": {
+    "rows_in_test_snapshot": 17,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "EmpfaengerID",
+      "SerieID",
+      "MitgliederID",
+      "Snapshot",
+      "QuittungID"
+    ]
+  },
+  "dbo.DokumentTyp": {
+    "rows_in_test_snapshot": 5,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDetailsImporter.php"
+    ],
+    "source_columns": [
+      "DokumentTypID",
+      "Code",
+      "Bezeichnung",
+      "StorageBasePath",
+      "Aktiv"
+    ]
+  },
+  "dbo.DokumentVorlagen": {
+    "rows_in_test_snapshot": 4,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "VorlageID",
+      "Name",
+      "Revision",
+      "Definition",
+      "Aktiv",
+      "CreatedAt",
+      "ChangedAt",
+      "ChangedBy"
+    ]
+  },
+  "dbo.Events": {
+    "rows_in_test_snapshot": 1,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "EventID",
+      "Ort",
+      "SaisonID",
+      "Beschreibung",
+      "TeamID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.ExportLog": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "FileId",
+      "DateTime",
+      "User",
+      "ExportType",
+      "Table",
+      "KeyValue",
+      "Filename",
+      "Request",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Familie": {
+    "rows_in_test_snapshot": 88,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDetailsImporter.php"
+    ],
+    "source_columns": [
+      "FamilieID",
+      "FamilieName",
+      "FamilieStrasse",
+      "FamiliePLZ",
+      "FamilieOrt",
+      "FamilieLand",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.FamilieMitglieder": {
+    "rows_in_test_snapshot": 208,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDetailsImporter.php"
+    ],
+    "source_columns": [
+      "FamilieID",
+      "FamilieMID",
+      "FamilieRabatt",
+      "Bemerkungen",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Funktionaere": {
+    "rows_in_test_snapshot": 15,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "FunktionaerID",
+      "MitgliederID",
+      "FunktionsID",
+      "QualiID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Funktionen": {
+    "rows_in_test_snapshot": 40,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "FunktionsID",
+      "Bezeichnung",
+      "Vorstand",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Gaeste": {
+    "rows_in_test_snapshot": 19,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "VisitorID",
+      "EventID",
+      "MitgliederID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.iniApp": {
+    "rows_in_test_snapshot": 18,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "ParameterName",
+      "ParameterValue",
+      "Bemerkung",
+      "Aktiv",
+      "UpdatedAt"
+    ]
+  },
+  "dbo.iniBexio": {
+    "rows_in_test_snapshot": 18,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "ParameterName",
+      "ParameterValue",
+      "Bemerkung",
+      "Aktiv",
+      "UpdatedAt"
+    ]
+  },
+  "dbo.iniParameter": {
+    "rows_in_test_snapshot": 1,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/FacilityImporter.php",
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "iniID",
+      "SaisonID",
+      "SommerWinter",
+      "StatusPlatz1",
+      "StatusPlatz2",
+      "StatusPlatz3",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.iniWhatsApp": {
+    "rows_in_test_snapshot": 147,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "ParameterName",
+      "ParameterValue",
+      "Bemerkung",
+      "Aktiv",
+      "UpdatedAt"
+    ]
+  },
+  "dbo.Institut": {
+    "rows_in_test_snapshot": 3733,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_14_000039_training_archive_bank_details.php",
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "InstitutID",
+      "BCNr",
+      "Kurzbezeichnung",
+      "Bank",
+      "Domizil",
+      "Postadresse",
+      "PLZ",
+      "Ort",
+      "Landcode",
+      "Postkonto",
+      "SWIFT",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.languages": {
+    "rows_in_test_snapshot": 3,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_11_04_001600_pitch_planning_notifications.php"
+    ],
+    "source_columns": [
+      "Language_Code",
+      "Language_Name",
+      "Default",
+      "Site_Logo",
+      "Site_Title",
+      "Default_Thousands_Separator",
+      "Default_Decimal_Point",
+      "Default_Currency_Symbol",
+      "Default_Money_Thousands_Separator",
+      "Default_Money_Decimal_Point",
+      "Terms_And_Condition_Text",
+      "Announcement_Text",
+      "About_Text",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.MeldungenSignage": {
+    "rows_in_test_snapshot": 9,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/FacilityImporter.php"
+    ],
+    "source_columns": [
+      "MeldungID",
+      "Datum",
+      "Betreff",
+      "Meldung",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Mitglieder": {
+    "rows_in_test_snapshot": 2448,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_12_000020_member_recorded_at.php",
+      "app/ClubUnio/Services/ClubObjectsImporter.php",
+      "app/ClubUnio/Services/MemberDetailsImporter.php",
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "MitgliederID",
+      "Ehrenmitglied",
+      "Freimitglied",
+      "Supporter",
+      "Sponsor",
+      "Firma",
+      "Nachname",
+      "Vorname",
+      "Strasse",
+      "PLZ",
+      "Ort",
+      "Land",
+      "TelefonPrivat",
+      "TelefonGeschaeft",
+      "Mobile",
+      "Email",
+      "Homepage",
+      "Geburtsdatum",
+      "Geschlecht",
+      "MitgliederArt",
+      "FOTO1",
+      "FOTO2",
+      "Spots",
+      "Status",
+      "Passnummer",
+      "Austtritdatum",
+      "MobileMutter",
+      "MobileVater",
+      "EmailMutter",
+      "EmailVater",
+      "Mutter",
+      "Vater",
+      "UserID",
+      "sdeletedAt",
+      "HausNr",
+      "Nationalitaet",
+      "RechnungAn",
+      "GeaendertVon",
+      "GeaendertAm",
+      "AHVNummer",
+      "ErfasstVon",
+      "ErfasstAm",
+      "bexioContactId"
+    ]
+  },
+  "dbo.MitgliederAenderungsantraege": {
+    "rows_in_test_snapshot": 18,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "AenderungsantragID",
+      "MitgliederID",
+      "AntragstellerUsername",
+      "AntragstellerMitgliederID",
+      "AntragstellerUserLevel",
+      "AenderungenJson",
+      "AltwerteJson",
+      "NeuwerteJson",
+      "DatensatzVersion",
+      "Status",
+      "EntscheidVon",
+      "EntscheidAm",
+      "EntscheidBegruendung",
+      "AppliedAt",
+      "ApplyError",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.MitgliederAnhaenge": {
+    "rows_in_test_snapshot": 112,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDetailsImporter.php"
+    ],
+    "source_columns": [
+      "AnhangID",
+      "MitgliederID",
+      "DokumentTypID",
+      "FileName",
+      "OriginalFileName",
+      "StoragePath",
+      "FileSize",
+      "ContentType",
+      "CreatedAt",
+      "CreatedBy",
+      "UpdatedAt",
+      "UpdatedBy",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.MitgliederAnmeldungen": {
+    "rows_in_test_snapshot": 94,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_11_000009_registration_review.php",
+      "app/ClubUnio/Services/ClubObjectsImporter.php",
+      "app/ClubUnio/Services/MemberDossierImporter.php",
+      "app/ClubUnio/Services/RegistrationDetailsImporter.php"
+    ],
+    "source_columns": [
+      "AnmeldungID",
+      "AnmeldungStatusID",
+      "EingereichtAm",
+      "GeprueftAm",
+      "GeprueftVon",
+      "AkzeptiertAm",
+      "AbgelehntAm",
+      "MitgliederID",
+      "Nachname",
+      "Vorname",
+      "Geburtsdatum",
+      "Strasse",
+      "HausNr",
+      "PLZ",
+      "Ort",
+      "Land",
+      "Nationalitaet",
+      "Geschlecht",
+      "AHVNummer",
+      "Geburtsort",
+      "Email",
+      "TelefonPrivat",
+      "Mobile",
+      "Vater",
+      "MobileVater",
+      "EmailVater",
+      "Mutter",
+      "MobileMutter",
+      "EmailMutter",
+      "PassfotoUpload",
+      "AusweisUpload",
+      "Bemerkung",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt",
+      "RechnungAn",
+      "TeamSaisonID",
+      "HatVorverein",
+      "VorvereinLandTyp",
+      "VorvereinName",
+      "TechnischerLeiterMitgliederID"
+    ]
+  },
+  "dbo.MitgliederArt": {
+    "rows_in_test_snapshot": 4,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php"
+    ],
+    "source_columns": [
+      "MitgliederArtID",
+      "MitgliederArt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.MitgliederQuittungen": {
+    "rows_in_test_snapshot": 19,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "QuittungID",
+      "MitgliederID",
+      "OriginalAnhangID",
+      "SigniertAnhangID",
+      "Titel",
+      "Status",
+      "OriginalSha256",
+      "SigniertSha256",
+      "ErstelltVon",
+      "ErstelltAm",
+      "SigniertVon",
+      "SigniertName",
+      "SigniertAm",
+      "RequestKey",
+      "UnterschriftNotwendig"
+    ]
+  },
+  "dbo.MitgliederStatus": {
+    "rows_in_test_snapshot": 6,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php"
+    ],
+    "source_columns": [
+      "StatusID",
+      "Status",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Positionen": {
+    "rows_in_test_snapshot": 6750,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "PositionsID",
+      "RechnungsID",
+      "Bezeichnung",
+      "BruttoBetrag",
+      "Rabatt",
+      "NettoBetrag",
+      "Bemerkung",
+      "Status",
+      "Beitrag",
+      "sdeletedAt",
+      "bexioProductId"
+    ]
+  },
+  "dbo.Rechnung": {
+    "rows_in_test_snapshot": 6799,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "RechnungsID",
+      "MitgliederID",
+      "Bemerkung",
+      "SaisonID",
+      "sdeletedAt",
+      "bexioInvoiceId",
+      "bexioStatus",
+      "bexioError",
+      "bexioUpdatedAt"
+    ]
+  },
+  "dbo.Saison": {
+    "rows_in_test_snapshot": 37,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php",
+      "app/ClubUnio/Services/LegacyTrainingPlanImporter.php"
+    ],
+    "source_columns": [
+      "SaisonID",
+      "Saison",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Schluesselliste": {
+    "rows_in_test_snapshot": 20,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "SchuesselID",
+      "SchluesselNummer",
+      "SchluesselBezeichnung",
+      "Schlüsselfarbe",
+      "MitgliederID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.settings": {
+    "rows_in_test_snapshot": 1,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_12_000026_bexio_oidc_cleanup.php",
+      "database/clubunio/2026_11_03_000091_retire_general_parameters.php",
+      "database/clubunio/2026_11_03_000092_retire_integration_parameters.php",
+      "database/clubunio/2026_11_16_003000_tenant_accounting_provider.php"
+    ],
+    "source_columns": [
+      "Option_ID",
+      "Option_Default",
+      "Show_Announcement",
+      "Use_Announcement_Table",
+      "Maintenance_Mode",
+      "Maintenance_Finish_DateTime",
+      "Auto_Normal_After_Maintenance",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Spesenbelege": {
+    "rows_in_test_snapshot": 487,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "SpesenID",
+      "MitgliederID",
+      "TeamSaisonID",
+      "SaisonID",
+      "BankkontoStaffID",
+      "Runde",
+      "Status",
+      "FreigegebenAm",
+      "FreigegebenVon",
+      "ZurZahlungFreigegebenAm",
+      "ZurZahlungFreigegebenVon",
+      "BezahltAm",
+      "BezahltVon",
+      "Bemerkungen",
+      "sdeletedAt",
+      "bexioBillId",
+      "bexioBillStatus",
+      "bexioBillError",
+      "bexioBillUpdatedAt"
+    ]
+  },
+  "dbo.SpesenPositionen": {
+    "rows_in_test_snapshot": 3865,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "SpesenPositionID",
+      "SpesenID",
+      "SpesenTypID",
+      "Spieltyp",
+      "Gegner",
+      "Betrag",
+      "BelegFileName",
+      "BelegLength",
+      "BelegContentType",
+      "BemerkungenPos",
+      "FileUploadName",
+      "sdeletedAt",
+      "AiBetragUebernommen",
+      "AiVorschlagBetrag"
+    ]
+  },
+  "dbo.SpesenTyp": {
+    "rows_in_test_snapshot": 5,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "SpesenTypID",
+      "SpesenTyp",
+      "BelegZwingend",
+      "sdeletedAt",
+      "BexioBookingAccountId"
+    ]
+  },
+  "dbo.SPONSOR": {
+    "rows_in_test_snapshot": 6,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "SponsirID",
+      "MitgliederID",
+      "SponsorName",
+      "Betrag",
+      "Laufzeit",
+      "Bemerkungen",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.SponsorRunAudit": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "AuditID",
+      "ParticipantID",
+      "OldLaps",
+      "NewLaps",
+      "Actor",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunBillingAudit": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "AuditID",
+      "InvoiceID",
+      "Action",
+      "FromState",
+      "ToState",
+      "Reason",
+      "Actor",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunEventAudit": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "AuditID",
+      "EventID",
+      "BeforeJson",
+      "AfterJson",
+      "Reason",
+      "Actor",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunEvents": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "EventID",
+      "SaisonID",
+      "Title",
+      "EventDate",
+      "Place",
+      "CreatedBy",
+      "CreatedAt",
+      "Status",
+      "RegistrationDeadline",
+      "Revision",
+      "TeamsConfigured"
+    ]
+  },
+  "dbo.SponsorRunEventTeams": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "EventID",
+      "TeamSaisonID"
+    ]
+  },
+  "dbo.SponsorRunHelpers": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "HelperID",
+      "EventID",
+      "Username",
+      "CanCheckIn",
+      "CanRecordLaps",
+      "ValidFrom",
+      "ValidUntil",
+      "Revision"
+    ]
+  },
+  "dbo.SponsorRunInvoices": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "InvoiceID",
+      "PledgeID",
+      "EventID",
+      "SaisonID",
+      "RecipientID",
+      "Reference",
+      "SnapshotJson",
+      "ConfigJson",
+      "TotalCents",
+      "ConnectionID",
+      "State",
+      "Revision",
+      "BexioInvoiceID",
+      "CandidateContactID",
+      "DocumentNr",
+      "BexioStatus",
+      "PaidCents",
+      "OperationToken",
+      "OperationStartedAt",
+      "LastError",
+      "LastAction",
+      "SentAt",
+      "SyncedAt",
+      "CreatedBy",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunLinks": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "ParticipantID",
+      "TokenHash",
+      "TokenCipher",
+      "DisplayName",
+      "ExpiresOn",
+      "Revoked",
+      "CreatedBy",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunParticipants": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "ParticipantID",
+      "EventID",
+      "MitgliederID",
+      "TeamSaisonID",
+      "Laps",
+      "Revision",
+      "ApprovedBy",
+      "ApprovedAt",
+      "CreatedBy",
+      "CheckedInAt",
+      "CheckedInBy",
+      "ParticipationRequired"
+    ]
+  },
+  "dbo.SponsorRunPledges": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "PledgeID",
+      "ParticipantID",
+      "RequestKey",
+      "SponsorName",
+      "PaymentMode",
+      "AmountType",
+      "AmountCents",
+      "CapCents",
+      "RecipientJson",
+      "CollectorConfirmedBy",
+      "CreatedBy",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunPublicPending": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "RequestKey",
+      "ParticipantID",
+      "LinkHash",
+      "ConfirmHash",
+      "PayloadHash",
+      "RecipientJson",
+      "ExpiresAt",
+      "PledgeID",
+      "CreatedAt"
+    ]
+  },
+  "dbo.SponsorRunPublicRate": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "Bucket",
+      "Hits",
+      "ExpiresAt"
+    ]
+  },
+  "dbo.SponsorRunRecipients": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "RecipientID",
+      "PledgeID",
+      "RecipientJson",
+      "ConnectionID",
+      "BexioContactID",
+      "VerifiedAt",
+      "CreatedAt"
+    ]
+  },
+  "dbo.StaffQualifikationen": {
+    "rows_in_test_snapshot": 6,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php"
+    ],
+    "source_columns": [
+      "QualiID",
+      "Qualifikation",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.sysdiagrams": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "name",
+      "principal_id",
+      "diagram_id",
+      "version",
+      "definition"
+    ]
+  },
+  "dbo.TeamAbsenzen": {
+    "rows_in_test_snapshot": 2,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/TeamPlanningImporter.php"
+    ],
+    "source_columns": [
+      "AbsenzID",
+      "MitgliederID",
+      "DatumVon",
+      "DatumBis",
+      "Absenzart",
+      "Bemerkung",
+      "Revision",
+      "CreatedAt",
+      "CreatedBy",
+      "UpdatedAt",
+      "UpdatedBy",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamList": {
+    "rows_in_test_snapshot": 6777,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/MemberDossierImporter.php",
+      "app/ClubUnio/Services/TeamAssignmentsImporter.php"
+    ],
+    "source_columns": [
+      "TeamlistID",
+      "TeamSaisonID",
+      "MitgliederID",
+      "PositionsID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamMaterial": {
+    "rows_in_test_snapshot": 0,
+    "classification": "empty_no_native_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "TeamMaterialID",
+      "TeamSaisonID",
+      "MaterialBezeichnung",
+      "Farbe",
+      "Menge",
+      "Bemerkungen"
+    ]
+  },
+  "dbo.Teams": {
+    "rows_in_test_snapshot": 45,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php"
+    ],
+    "source_columns": [
+      "TeamID",
+      "Mannschaftsname",
+      "CMSID",
+      "ViewGeburtsdatum",
+      "ViewFamilienname",
+      "ViewWohnort",
+      "Bezeichnung",
+      "FootballLink",
+      "sdeletedAt",
+      "DressEntschaedigung",
+      "SFVTeamID"
+    ]
+  },
+  "dbo.TeamSatffFunktion": {
+    "rows_in_test_snapshot": 8,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/TeamAssignmentsImporter.php"
+    ],
+    "source_columns": [
+      "TeamSatffFunktionID",
+      "Bezeichnung",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamsSaison": {
+    "rows_in_test_snapshot": 422,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ClubObjectsImporter.php"
+    ],
+    "source_columns": [
+      "TeamSaisonID",
+      "SaisonID",
+      "TeamID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamStaff": {
+    "rows_in_test_snapshot": 461,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/TeamAssignmentsImporter.php"
+    ],
+    "source_columns": [
+      "TeamStaffID",
+      "MitgliederID",
+      "TeamSaisonID",
+      "TeamSatffFunktionID",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamTermine": {
+    "rows_in_test_snapshot": 58,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "database/clubunio/2026_10_12_000023_planning_snapshot_timezone.php",
+      "database/clubunio/2026_10_12_000024_planning_extensions.php",
+      "app/ClubUnio/Services/TeamPlanningImporter.php"
+    ],
+    "source_columns": [
+      "TeamTerminID",
+      "TeamSaisonID",
+      "VerbandMatchID",
+      "SerieID",
+      "Terminart",
+      "Titel",
+      "DatumVon",
+      "DatumBis",
+      "Ort",
+      "Beschreibung",
+      "TeilnahmeModus",
+      "MaxTeilnehmer",
+      "AnmeldeFrist",
+      "Status",
+      "ReminderDeadlineSentAt",
+      "ReminderEventSentAt",
+      "CreatedBy",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamTerminGaeste": {
+    "rows_in_test_snapshot": 2,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "GastID",
+      "TeamTerminID",
+      "Vorname",
+      "Nachname",
+      "TeilnahmeStatus",
+      "Kommentar",
+      "AnwesenheitsStatus",
+      "AnwesenheitsKommentar",
+      "UpdatedAt",
+      "UpdatedBy",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TeamTerminTeilnahmen": {
+    "rows_in_test_snapshot": 972,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/TeamPlanningImporter.php"
+    ],
+    "source_columns": [
+      "TeamTerminTeilnahmeID",
+      "TeamTerminID",
+      "MitgliederID",
+      "TeilnahmeStatus",
+      "Kommentar",
+      "AnwesenheitsStatus",
+      "AnwesenheitsKommentar",
+      "AnwesenheitUpdatedAt",
+      "AnwesenheitUpdatedBy",
+      "UpdatedAt",
+      "UpdatedBy",
+      "sdeletedAt",
+      "AbsenzID",
+      "AbsenzOriginalTeilnahmeStatus",
+      "AbsenzOriginalKommentar"
+    ]
+  },
+  "dbo.TechnischeLeiterTeams": {
+    "rows_in_test_snapshot": 29,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/TeamAssignmentsImporter.php"
+    ],
+    "source_columns": [
+      "TechnischeLeiterTeamID",
+      "MitgliederID",
+      "TeamSaisonID",
+      "SaisonID",
+      "Aktiv",
+      "CreatedAt",
+      "CreatedBy",
+      "ChangedAt",
+      "ChangedBy",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.TrainingPlannerAuditLog": {
+    "rows_in_test_snapshot": 47,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "TrainingPlannerAuditLogID",
+      "CreatedAt",
+      "Username",
+      "MitgliederID",
+      "TeamName",
+      "Goal",
+      "DurationMinutes",
+      "PlayerCount",
+      "Model",
+      "VectorStoreId",
+      "PromptTokens",
+      "CompletionTokens",
+      "TotalTokens",
+      "Status",
+      "ErrorMessage",
+      "RequestJson",
+      "PlanJson",
+      "SharedTeamSaisonID",
+      "PlanRevision",
+      "UpdatedBy",
+      "UpdatedAt"
+    ]
+  },
+  "dbo.Trainingszeiten": {
+    "rows_in_test_snapshot": 697,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/ContributionTrainingImporter.php"
+    ],
+    "source_columns": [
+      "TrainingID",
+      "TeamSaisonID",
+      "SommerWinter",
+      "Wochentag",
+      "ZeitVon",
+      "ZeitBis",
+      "Garderobe",
+      "Halle",
+      "Seite",
+      "sdeletedAt",
+      "trainingAll",
+      "trainingOhneHauptplatz",
+      "trainingNurKunstrasen",
+      "webseite",
+      "Feld"
+    ]
+  },
+  "dbo.userlevelpermissions": {
+    "rows_in_test_snapshot": 646,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "User_Level_ID",
+      "Table_Name",
+      "Permission",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.userlevels": {
+    "rows_in_test_snapshot": 7,
+    "classification": "archive_only_legacy_infrastructure",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "User_Level_ID",
+      "User_Level_Name",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.Users": {
+    "rows_in_test_snapshot": 78,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/AccountLinksImporter.php",
+      "routes/clubunio-console.php"
+    ],
+    "source_columns": [
+      "Username",
+      "Password",
+      "First_Name",
+      "Last_Name",
+      "Email",
+      "User_Level",
+      "Report_To",
+      "Activated",
+      "Locked",
+      "Profile",
+      "Photo",
+      "sdeletedAt",
+      "MitgliederID"
+    ]
+  },
+  "dbo.Verbandsspiele": {
+    "rows_in_test_snapshot": 231,
+    "classification": "deferred_business_mapping",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "matchId",
+      "matchNumber",
+      "matchDate",
+      "groupId",
+      "cupId",
+      "groupName",
+      "roundNbr",
+      "playgroundId",
+      "stadiumPlaygroundName",
+      "isUnkownPlayground",
+      "leagueId",
+      "leagueNumber",
+      "leagueName",
+      "divisionId",
+      "divisionName",
+      "organisationId",
+      "organisationName",
+      "matchType",
+      "matchTypeName",
+      "matchState",
+      "matchStateName",
+      "playDay",
+      "playDayName",
+      "seasonId",
+      "seasonName",
+      "scoreTeamA",
+      "scoreTeamB",
+      "teamAId",
+      "teamNameA",
+      "teamBId",
+      "teamNameB",
+      "TeamSaisonID",
+      "LastSyncAt",
+      "sdeletedAt",
+      "IsHomeGame",
+      "RawJson",
+      "SyncError",
+      "IsSvsFacilityGame",
+      "TeamAVereinID",
+      "TeamBVereinID"
+    ]
+  },
+  "dbo.Vereine": {
+    "rows_in_test_snapshot": 1601,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/FootballClubImporter.php"
+    ],
+    "source_columns": [
+      "VereinID",
+      "Vereinsname",
+      "sdeletedAt",
+      "VereineID"
+    ]
+  },
+  "dbo.Wettkaempfe": {
+    "rows_in_test_snapshot": 198,
+    "classification": "projection_mapping_in_code",
+    "mapping_code_evidence": [
+      "app/ClubUnio/Services/FacilityImporter.php"
+    ],
+    "source_columns": [
+      "SpielD",
+      "Datum",
+      "Zeit",
+      "Gastgeber",
+      "GastgeberKategorie",
+      "GastgeberVNR",
+      "GastgeberGarderobe",
+      "Gast",
+      "GastKategorie",
+      "GastVNR",
+      "GastGarderobe",
+      "Spielfeld",
+      "Bemerkungen",
+      "GastgeberGarderobeSeite",
+      "GastGarderobeSeite",
+      "sdeletedAt",
+      "VerbandMatchID",
+      "Quelle",
+      "ShowOnSignage",
+      "ImportedAt",
+      "LastSyncAt"
+    ]
+  },
+  "dbo.WhatsAppKontakte": {
+    "rows_in_test_snapshot": 7350,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppKontaktID",
+      "MitgliederID",
+      "KontaktTyp",
+      "AnzeigeName",
+      "TelefonQuelle",
+      "MobileRaw",
+      "MobileE164",
+      "IstGueltig",
+      "IstAktiv",
+      "OptInStatus",
+      "OptInAt",
+      "OptInQuelle",
+      "OptOutAt",
+      "OptOutQuelle",
+      "ChatwootContactId",
+      "ChatwootSourceId",
+      "MetaWaId",
+      "SyncQuelle",
+      "LastSyncedAt",
+      "ErrorText",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.WhatsAppKonversationen": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppKonversationID",
+      "WhatsAppKontaktID",
+      "MitgliederID",
+      "MobileE164",
+      "ProviderConversationId",
+      "ChatwootConversationId",
+      "Status",
+      "LastInboundAt",
+      "LastOutboundAt",
+      "LastMessageAt",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.WhatsAppNachrichten": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppNachrichtID",
+      "WhatsAppKonversationID",
+      "WhatsAppKontaktID",
+      "MitgliederID",
+      "Richtung",
+      "Kanal",
+      "WaMessageId",
+      "ChatwootMessageId",
+      "MessageType",
+      "Body",
+      "TemplateName",
+      "TemplateLanguage",
+      "PayloadJson",
+      "Status",
+      "StatusAt",
+      "ErrorText",
+      "CreatedBy",
+      "CreatedAt",
+      "ReceivedAt",
+      "SentAt",
+      "DeliveredAt",
+      "ReadAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.WhatsAppVersandQueue": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppVersandID",
+      "WhatsAppKontaktID",
+      "MitgliederID",
+      "ToMobileE164",
+      "MessageType",
+      "Body",
+      "TemplateName",
+      "TemplateLanguage",
+      "TemplateParametersJson",
+      "Status",
+      "Attempts",
+      "NextAttemptAt",
+      "ProviderMessageId",
+      "ErrorText",
+      "CreatedBy",
+      "CreatedAt",
+      "UpdatedAt",
+      "SentAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.WhatsAppVorlagen": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppVorlageID",
+      "TemplateName",
+      "LanguageCode",
+      "Category",
+      "Body",
+      "MetaTemplateId",
+      "Status",
+      "IstAktiv",
+      "CreatedAt",
+      "UpdatedAt",
+      "sdeletedAt"
+    ]
+  },
+  "dbo.WhatsAppWebhookLog": {
+    "rows_in_test_snapshot": 0,
+    "classification": "archive_only_provider_or_session_state",
+    "mapping_code_evidence": [],
+    "source_columns": [
+      "WhatsAppWebhookLogID",
+      "EventType",
+      "PayloadJson",
+      "Success",
+      "ErrorText",
+      "CreatedAt"
+    ]
+  }
+}
