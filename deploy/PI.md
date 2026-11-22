@@ -2679,3 +2679,9 @@ shared/pitch-move-scroll-backup-20261119. Details und Rückweg in
 ### 19.11.2026: Horizontaler Kalender-Randlauf
 
 Gezieltes Zwei-Dateien-Webdelta auf `20261119-clubunio-support-management`, Stage `3ac81c0`. Belegungs-Drag scrollt in beide Achsen; Zielspielfeld wird beim Drop frisch ermittelt. Blade kompiliert, JS v5 öffentlich HTTP 200 und bytegleich auf DEV/Stage. Backup `shared/pitch-horizontal-scroll-backup-20261119`; Details/Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+22.11.2026: Modulweiser Mobile-Designumbau mit Spesen gestartet; vollständige
+Implementierungs-/Prüfliste im Mobile-Repository docs/EXPENSES-REDESIGN.md.
+44 gezielte Tests grün, native Geräteabnahme offen; weitere Module separat
+ausgewiesen in docs/APP-REDESIGN.md. Backend/API unverändert.

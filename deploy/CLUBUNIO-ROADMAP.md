@@ -2053,3 +2053,11 @@ Bestehende Belegungen lassen sich in App und Web durch Randscrollen auf weitere 
 ### 22.11.2026: Appweites Designsystem und Figma
 
 Freigegebenen Home-/Chat-Entwurf in das gemeinsame Flutter-Theme übernommen: Karten, Eingaben, Aktionen, Dialoge, Tabs und Navigation gelten für alle bestehenden Module. Home und Chat separat überarbeitet; SVS-Abläufe, persönliche Rechte und Markenbuilds bleiben erhalten. Bearbeitbare Figma-Datei: https://www.figma.com/design/0uFRj7qf4SmdSPB54cafto. Fünf Prüfrahmen und gemeinsame Komponenten/Variablen; keine vollständige Einzelzeichnung jeder Fachmaske behauptet. 945 App-Tests grün, 26 gezielte Nachprüfungen und Dartanalyse/i18n grün. Modulmatrix und offene native Sichtabnahme im Mobile-Repo unter docs/APP-REDESIGN.md. Reine Appänderung, kein Backendrelease. Mobile-Commit: `e001eb8` (main synchronisiert).
+
+
+22.11.2026: App-Design wird je Fachmodul weitergezogen. Erstes Paket Spesen
+(Übersicht, Detail, Erfassung, Positionen, Bankkonten, Anhänge) implementiert.
+44 gezielte Fluttertests und Analyse/i18n grün; Figma um fünf bearbeitbare
+Spesenreferenzen ergänzt. Native iPhone-Abnahme offen. Nächster Modulumbau:
+Mitglieder. Details im Mobile-Repository docs/EXPENSES-REDESIGN.md und
+docs/APP-REDESIGN.md. Keine Backendänderung oder Deployment notwendig.
