@@ -12,8 +12,7 @@ final class KeycloakMobileAssurance
         $config = config('clubunio-verein-oidc');
         $level = $config['mobile_mfa_acr'] ?? null;
 
-        return $config['enabled'] && $config['mobile_enabled']
-            && ($config['invites_enabled'] || !empty($config['subjects']))
+        return $config['enabled'] && $config['invites_enabled'] && $config['mobile_enabled']
             && is_string($level) && preg_match('/\A[A-Za-z][A-Za-z0-9_.:-]{2,80}\z/', $level) ? $level : null;
     }
 
@@ -31,13 +30,8 @@ final class KeycloakMobileAssurance
             return null;
         }
         $issuer = config('clubunio-verein-oidc.issuer');
-        $subjects = (array) config('clubunio-verein-oidc.subjects');
-        $matches = array_keys($subjects, (int) $account->id, true);
-        $subject = count($matches) === 1 ? $matches[0] : null;
-        if ($subject === null && config('clubunio-verein-oidc.invites_enabled')) {
-            $subject = DB::connection('clubunio')->table('clubunio.keycloak_account_links')
-                ->where('issuer', $issuer)->where('account_id', $account->id)->value('subject');
-        }
+        $subject = DB::connection('clubunio')->table('clubunio.keycloak_account_links')
+            ->where('issuer', $issuer)->where('account_id', $account->id)->value('subject');
         if (!is_string($subject) || ($claims !== null && ($claims->iss !== $issuer || $claims->sub !== $subject))) {
             return null;
         }

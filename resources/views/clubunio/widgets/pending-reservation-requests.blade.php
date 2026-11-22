@@ -2,7 +2,7 @@
     <x-filament::section :heading="__('Offene Reservierungsanfragen')">
         <div class="grid gap-6 md:grid-cols-2">
             @foreach($groups as $kind => $group)
-                <section>
+                <section id="reservation-{{ $kind }}" class="scroll-mt-24">
                     <h3 class="font-semibold">{{ $kind === 'bus' ? __('Busreservierungen') : __('Sportplatzbelegung') }} ({{ $group['count'] }})</h3>
                     <ul class="mt-2 divide-y divide-gray-200 dark:divide-white/10">
                         @forelse($group['rows'] as $row)

@@ -126,6 +126,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
             ->renderHook('panels::footer', fn () => view('clubunio.brand.panel-attribution'))
+            ->renderHook('panels::body.end', fn () => auth('clubunio')->check() ? view('clubunio.support.launcher') : '')
             ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
             ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=language-header-v3" rel="stylesheet" data-navigate-track />')])
@@ -220,12 +221,13 @@ class ClubUnioPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])->authMiddleware([Authenticate::class])
+            ->pages([\App\ClubUnio\Pages\PersonalProfile::class])
             ->userMenuItems([
-                'account-security' => \Filament\Actions\Action::make('account-security')
-                    ->label(fn () => trans('account-security.setup'))
-                    ->icon('heroicon-o-shield-check')
-                    ->url(fn () => route('clubunio.security.show'))
-                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
+                'personal-profile' => \Filament\Actions\Action::make('personal-profile')
+                    ->label(fn () => trans('account-security.profile_title'))
+                    ->icon('heroicon-o-user-circle')
+                    ->url(fn () => \App\ClubUnio\Pages\PersonalProfile::getUrl())
+                    ->visible(fn () => \App\ClubUnio\Pages\PersonalProfile::canAccess()),
             ]);
     }
 }

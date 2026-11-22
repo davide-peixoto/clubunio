@@ -41,7 +41,7 @@ final class MobileIdentityMail extends Mailable
 
     public function subjectLine(): string
     {
-        return $this->delivery['tenant_name'].' · '.$this->copy($this->purpose().'.subject');
+        return $this->delivery['tenant_name'].' Â· '.$this->copy($this->purpose().'.subject');
     }
     public function actionUrl(): string
     {

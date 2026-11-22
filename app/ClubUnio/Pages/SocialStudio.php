@@ -24,8 +24,7 @@ final class SocialStudio extends Page
 
     public static function canAccess(): bool
     {
-        return config('clubunio-social.enabled') && ! request()->attributes->has('clubunio_impersonation')
-            && Filament::auth()->user() && Filament::getTenant()
+        return ! request()->attributes->has('clubunio_impersonation') && Filament::auth()->user() && Filament::getTenant()
             && app(ModulePermissionService::class)->allows(Filament::auth()->user(), Filament::getTenant(), 'social_media', 'view');
     }
 

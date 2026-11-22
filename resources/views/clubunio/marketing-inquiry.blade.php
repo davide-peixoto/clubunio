@@ -21,12 +21,13 @@
         <label>{{ $t('inquiry_email') }}<input type="email" name="email" value="{{ old('email') }}" autocomplete="email" maxlength="254" required></label>
         <label>{{ $t('inquiry_count') }}<input type="number" name="members" value="{{ old('members') }}" min="1" max="1000000"></label>
     </div>
-    <fieldset>
+    <fieldset aria-describedby="inquiry-integration-note">
         <legend>{{ $t('inquiry_interests') }}</legend>
         @foreach(explode('|', $t('inquiry_options')) as $option)
-            <label><input type="checkbox" name="interests[]" value="{{ $option }}" @checked(in_array($option, (array) old('interests', []), true))> {{ $option }}</label>
+            <label><input type="checkbox" name="interests[]" value="{{ $option }}" @checked(in_array($option, (array) old('interests', []), true))> {{ match ($option) { 'Bexio' => $t('inquiry_bexio'), 'SFV' => $t('inquiry_sfv'), default => $option } }}</label>
         @endforeach
     </fieldset>
+    <p class="small-note" id="inquiry-integration-note">{{ $t('inquiry_integration_note') }}</p>
     <label>{{ $t('inquiry_message') }}<textarea name="message" rows="4" maxlength="1200">{{ old('message') }}</textarea></label>
     <p id="inquiry-note">{{ $t('inquiry_note') }} <a href="{{ route('clubunio.marketing.privacy', ['locale' => $locale]) }}">{{ $t('privacy') }}</a></p>
     <button type="submit" class="button" aria-describedby="inquiry-note">{{ $t('inquiry_send') }}</button>

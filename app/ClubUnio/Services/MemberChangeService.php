@@ -142,7 +142,9 @@ class MemberChangeService
             if ($portrait) {
                 $request->forceFill(['portrait_encrypted' => $portrait])->save();
             }
-            $this->notify($tenant, $request, 'member.change.requested', true);
+            if ($actor || ! MemberCampaignService::devTestMode()) {
+                $this->notify($tenant, $request, 'member.change.requested', true);
+            }
 
             return $request;
     }

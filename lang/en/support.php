@@ -63,6 +63,7 @@ return [
     'escalate' => 'Escalate to platform support',
     'summary' => 'Approved summary',
     'close' => 'Close ticket',
+    'close_panel' => 'Close support panel',
     'article' => 'Publish article',
     'subject' => 'Subject',
     'body' => 'Message',

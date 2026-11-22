@@ -79,12 +79,12 @@ Artisan::command('clubunio:campaign-reminders', function () {
     $this->info((string) app(\App\ClubUnio\Services\CampaignOperations::class)->automaticReminders());
 });
 Schedule::command('clubunio:campaign-reminders')->hourly()->withoutOverlapping();
-Artisan::command('clubunio:campaign-test-mail', function () {
-    $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();
-    $this->line($processed ? 'One queue item processed.' : 'No queue item processed.');
-});
-if (config('clubunio-campaign-mail.enabled') && app()->environment('staging')) {
-    Schedule::command('clubunio:campaign-test-mail')->everyTenSeconds()->withoutOverlapping();
+if (\App\ClubUnio\Services\MemberCampaignService::devTestMode()) {
+    Artisan::command('clubunio:campaign-dev-test-mail', function () {
+        $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();
+        $this->info($processed ? 'DEV test message processed in memory.' : 'No due DEV test message.');
+    });
+    Schedule::command('clubunio:campaign-dev-test-mail')->everyMinute()->withoutOverlapping();
 }
 Schedule::command('clubunio:expire-mobile-expense-receipts')->hourly()->withoutOverlapping();
 Schedule::command('clubunio:expire-mobile-expense-ocr')->hourly()->withoutOverlapping();

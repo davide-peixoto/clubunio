@@ -10,7 +10,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if (! StageMigrationTarget::allows($db)) throw new LogicException('Unexpected campaign queue target');
+        if (! \App\ClubUnio\Services\CampaignMigrationTarget::allows($db)) throw new LogicException('Unexpected campaign queue target');
         $db->unprepared(<<<'SQL'
 ALTER TABLE clubunio.campaign_recipients
  ADD COLUMN mail_attempts integer NOT NULL DEFAULT 0,

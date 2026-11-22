@@ -171,9 +171,6 @@ Artisan::command('clubunio:status', function () {
 
 Artisan::command('clubunio:foundation', function () {
     $db = DB::connection('clubunio');
-    if (app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com') {
-        \App\ClubUnio\Services\StageMigrationTarget::authorize($db, 'clubunio_stage');
-    }
     if (!\App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
         throw new LogicException('Unexpected database');
     }

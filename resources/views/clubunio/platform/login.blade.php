@@ -4,11 +4,5 @@
 <label>{{ __('Benutzername') }}<input name="username" autocomplete="username" required maxlength="255" value="{{ old('username') }}"></label>
 <label>{{ __('Passwort') }}<input name="password" type="password" autocomplete="current-password" required maxlength="255"></label>
 <button class="primary">@svg('heroicon-o-lock-closed') {{ __('Anmelden') }}</button></form>
-@if (app(\App\ClubUnio\Services\AccountSecurity::class)->enabled())
-    <a href="{{ route('clubunio.security.show', ['mode' => 'platform']) }}">{{ trans('account-security.strong_login') }}</a>
-@endif
-@if (config('clubunio-platform-oidc.enabled'))
-    <a href="{{ route('clubunio.platform.oidc.start') }}">{{ trans('account-security.keycloak_sign_in') }}</a>
-@endif
 </section>
 @endsection

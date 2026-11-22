@@ -1,6 +1,5 @@
 <?php
 
-use App\ClubUnio\Services\StageMigrationTarget;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -11,8 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if (! StageMigrationTarget::allows($db)) {
-            throw new LogicException('Reviewed Stage database required for the invitation pilot.');
+        if ($db->selectOne('SELECT current_database() AS name')->name !== 'clubunio_dev') {
+            throw new LogicException('DEV database required for the invitation pilot.');
         }
         $db->unprepared(<<<'SQL'
 CREATE TABLE clubunio.keycloak_account_links (

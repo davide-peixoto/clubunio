@@ -5,19 +5,13 @@ use Illuminate\Http\Request;
 
 final class MobilePushReady
 {
-    public function available(?Request $request = null, bool $registration = false): bool
+    public function available(?Request $request = null): bool
     {
         $request ??= request();
-        $stage = config('app.url') === 'https://stage.clubunio.com';
-        $platform = $stage && $registration ? StageMobilePilot::pushPlatform($request->attributes->get('mobile.actor')?->username) : null;
-        if (! config('clubunio-mobile-push.enabled', false)
-            || (! config('clubunio-mobile-push.delivery_enabled', false) && $platform === null)
-            || ($stage && $registration && $platform === null)
+        if (! config('clubunio-mobile-push.enabled', false) || ! config('clubunio-mobile-push.delivery_enabled', false)
             || ! in_array('personal-push-v1', explode(',', $request->header('X-ClubUnio-Mobile-Features', '')), true)) return false;
         foreach (config('clubunio-mobile-push.apps', []) as $id => $app) {
             if (! is_array($app) || ($app['origin'] ?? null) !== $request->getSchemeAndHttpHost()) continue;
-            if ($platform !== null && ($app['platform'] ?? null) !== $platform) continue;
-            if (str_contains($id, ':')) [, $id] = explode(':', $id, 2);
             try {
                 app(MobilePushRegistry::class)->request($request, $id, $app['platform'] ?? '');
                 $path = $app['credentials_file'] ?? '';

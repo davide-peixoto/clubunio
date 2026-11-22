@@ -86,7 +86,7 @@ final class PlatformAdministrationService
             'tenant_id' => $tenant?->id, 'action' => $action, 'details' => json_encode($details, JSON_THROW_ON_ERROR)]);
     }
 
-    public function createAccount(Account $actor, array $input): void
+    public function createAccount(Account $actor, array $input, bool $platform = false): void
     {
         $this->authorize($actor);
         abort_if(array_diff(array_keys($input), ['username', 'display_name', 'password', 'password_confirmation', 'reason']), 422);
@@ -96,7 +96,7 @@ final class PlatformAdministrationService
         if (strlen($data['password']) > 72) {
             throw ValidationException::withMessages(['password' => __('Passwort darf höchstens 72 UTF-8-Bytes enthalten.')]);
         }
-        DB::connection('clubunio')->transaction(function () use ($actor, $data) {
+        DB::connection('clubunio')->transaction(function () use ($actor, $data, $platform) {
             $this->authorize($actor, true);
             $username = mb_strtolower(trim($data['username']));
             DB::connection('clubunio')->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-account:'.$username]);
@@ -107,6 +107,44 @@ final class PlatformAdministrationService
             $account->forceFill(['username' => $username, 'display_name' => trim($data['display_name']),
                 'password' => Hash::make($data['password']), 'active' => true, 'api_only' => false])->save();
             $this->audit($actor, null, 'account.create', ['account_id' => $account->id, 'username' => $username, 'reason' => $data['reason']]);
+            if ($platform) {
+                DB::connection('clubunio')->table('clubunio.platform_admins')->insert(['account_id' => $account->id]);
+                $this->audit($actor, null, 'platform.grant', ['account_id' => $account->id, 'reason' => $data['reason']]);
+            }
+        });
+    }
+
+    public function updatePlatformAccount(Account $actor, int $id, array $input): void
+    {
+        $this->authorize($actor);
+        $data = Validator::make($input, ['operation' => 'required|in:rename,revoke,remove',
+            'display_name' => 'required_if:operation,rename|prohibited_if:operation,revoke,remove|string|max:255',
+            'reason' => 'required|string|min:10|max:500'])->validate();
+        $db = DB::connection('clubunio');
+        $db->transaction(function () use ($db, $actor, $id, $data) {
+            // Serialise access revocations, including concurrent mutual revocations.
+            $db->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['clubunio-platform-access']);
+            $this->authorize($actor, true);
+            $target = Account::whereKey($id)->where('api_only', false)->lockForUpdate()->firstOrFail();
+            $grant = $db->table('clubunio.platform_admins')->where('account_id', $id);
+            $existing = (clone $grant)->lockForUpdate()->first();
+            $operation = $data['operation'];
+            if ($operation === 'remove') {
+                abort_if((int) $actor->id === $id, 409);
+                if (! $existing) {
+                    return;
+                }
+                $grant->delete();
+            } else {
+                abort_unless($existing && $existing->active, 404);
+                if ($operation === 'revoke') {
+                    abort_if((int) $actor->id === $id, 409);
+                    $grant->update(['active' => false]);
+                } else {
+                    $target->forceFill(['display_name' => trim($data['display_name'])])->save();
+                }
+            }
+            $this->audit($actor, null, 'platform.'.$operation, ['account_id' => $id, 'reason' => $data['reason']]);
         });
     }
 

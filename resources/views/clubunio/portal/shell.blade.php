@@ -62,11 +62,9 @@
         <div class="cu-portal-topbar-actions">
             @include('clubunio.language-switcher')
             @if($portalSession)
-                @if(config('clubunio-verein-oidc.only') && !request()->attributes->has('clubunio_impersonation'))
-                    <a class="icon-button" href="{{ config('clubunio-verein-oidc.issuer').'/account/' }}" title="{{ trans('account-security.setup') }}" aria-label="{{ trans('account-security.setup') }}">@svg('heroicon-o-shield-check')</a>
-                @elseif(app(\App\ClubUnio\Services\AccountSecurity::class)->enabled() && !request()->attributes->has('clubunio_impersonation'))
-                    <a class="icon-button" href="{{ route('clubunio.security.show', ['mode' => 'portal']) }}" title="{{ trans('account-security.setup') }}" aria-label="{{ trans('account-security.setup') }}">@svg('heroicon-o-shield-check')</a>
-                @endif
+                @unless(request()->attributes->has('clubunio_impersonation'))
+                    <a class="icon-button" href="{{ route('clubunio.portal.profile', ['club' => $club]) }}" title="{{ trans('account-security.profile_title') }}" aria-label="{{ trans('account-security.profile_title') }}" @if(request()->routeIs('clubunio.portal.profile')) aria-current="page" @endif>@svg('heroicon-o-user-circle')</a>
+                @endunless
                 <a class="icon-button" href="{{ route('clubunio.portal.notifications', $club) }}" title="{{ __('Benachrichtigungen') }}" aria-label="{{ __('Benachrichtigungen') }}" @if(request()->routeIs('clubunio.portal.notifications')) aria-current="page" @endif>@svg('heroicon-o-bell')</a>
                 <form method="post" action="{{ route('clubunio.portal.logout') }}">@csrf
                     <button class="icon-button" type="submit" title="{{ __('Abmelden') }}" aria-label="{{ __('Abmelden') }}">@svg('heroicon-o-arrow-right-on-rectangle')</button>

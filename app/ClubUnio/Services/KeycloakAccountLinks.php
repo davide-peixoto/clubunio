@@ -30,11 +30,11 @@ final class KeycloakAccountLinks
         return $secret;
     }
 
-    public function accept(string $digest, \stdClass $claims): Account
+    public function accept(string $digest, \stdClass $claims, bool $freshMfa = false): Account
     {
         abort_unless(config('clubunio-verein-oidc.invites_enabled'), 404);
 
-        return DB::connection('clubunio')->transaction(function () use ($digest, $claims) {
+        return DB::connection('clubunio')->transaction(function () use ($digest, $claims, $freshMfa) {
             $invite = $this->invitations()->where('token_hash', $digest)->whereNull('accepted_at')
                 ->where('expires_at', '>', now())->lockForUpdate()->first();
             abort_unless($invite && self::matches($invite, $claims), 403);
@@ -51,8 +51,7 @@ final class KeycloakAccountLinks
             }
             $backoffice = app(ModulePermissionService::class)->canEnter($account, $tenant);
             if (! $backoffice) {
-                // Do not use this pilot as an alternative to enrolled local factors.
-                abort_if(app(AccountSecurity::class)->requiresStrongLogin($account), 403);
+                abort_if(!$freshMfa && app(AccountSecurity::class)->requiresStrongLogin($account), 403);
                 abort_unless(app(MemberAccessService::class)->canEnter($account, $tenant), 403);
             }
             $inserted = $this->links()->insertOrIgnore([

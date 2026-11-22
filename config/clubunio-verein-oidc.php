@@ -1,17 +1,22 @@
 <?php
 
 return [
-    'only' => (bool) env('CLUBUNIO_KEYCLOAK_ONLY', false),
     'enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_ENABLED', false),
+    'only' => (bool) env('CLUBUNIO_KEYCLOAK_ONLY', false),
     'invites_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_INVITES_ENABLED', false),
     'mobile_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_MOBILE_ENABLED', false),
     'mobile_mfa_acr' => env('CLUBUNIO_VEREIN_OIDC_MOBILE_MFA_ACR'),
     'legacy_allowed' => (bool) env('CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED', true),
-    'web_mfa_acr' => env('CLUBUNIO_VEREIN_OIDC_WEB_MFA_ACR'),
+    'emergency' => [
+        'accounts' => env('CLUBUNIO_EMERGENCY_PASSWORD_ACCOUNTS', ''),
+        'from' => env('CLUBUNIO_EMERGENCY_PASSWORD_FROM'),
+        'until' => env('CLUBUNIO_EMERGENCY_PASSWORD_UNTIL'),
+        'incident' => env('CLUBUNIO_EMERGENCY_PASSWORD_INCIDENT'),
+    ],
     'issuer' => 'https://auth.clubunio.com/realms/clubunio',
-    'web_domains' => (array) json_decode((string) env('CLUBUNIO_VEREIN_OIDC_WEB_DOMAINS', '{}'), true),
     'origin' => env('CLUBUNIO_VEREIN_OIDC_ORIGIN'),
     'client' => env('CLUBUNIO_VEREIN_OIDC_CLIENT'),
     'secret' => env('CLUBUNIO_VEREIN_OIDC_SECRET'),
     'subjects' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_SUBJECTS', '{}'), true),
+    'domains' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_DOMAINS', '{}'), true),
 ];

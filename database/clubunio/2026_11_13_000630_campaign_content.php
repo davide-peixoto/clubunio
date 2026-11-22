@@ -10,7 +10,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if (! StageMigrationTarget::allows($db)) throw new LogicException('Unexpected migration target');
+        if (! \App\ClubUnio\Services\CampaignMigrationTarget::allows($db)) throw new LogicException('Unexpected migration target');
         $db->statement('ALTER TABLE clubunio.campaigns ADD COLUMN content jsonb');
         $db->statement("ALTER TABLE clubunio.campaign_recipients
             ADD COLUMN guardian_account_id bigint, ADD COLUMN guardian_email_hash text,

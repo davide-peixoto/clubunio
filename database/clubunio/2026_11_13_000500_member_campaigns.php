@@ -9,7 +9,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if (! \App\ClubUnio\Services\StageMigrationTarget::allows($db)) {
+        if (! \App\ClubUnio\Services\CampaignMigrationTarget::allows($db)) {
             throw new LogicException('Unexpected campaign migration target');
         }
         $db->unprepared(<<<'SQL'

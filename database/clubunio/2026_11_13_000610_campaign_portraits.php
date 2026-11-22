@@ -10,7 +10,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if (! StageMigrationTarget::allows($db)) throw new LogicException('Unexpected migration target');
+        if (! \App\ClubUnio\Services\CampaignMigrationTarget::allows($db)) throw new LogicException('Unexpected migration target');
         $db->statement('ALTER TABLE clubunio.member_change_requests ADD COLUMN portrait_encrypted text');
     }
 

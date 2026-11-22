@@ -36,7 +36,7 @@ final class SeasonReferenceAudit
 SELECT cols.table_name, cols.column_name
 FROM information_schema.columns cols
 JOIN information_schema.tables t ON t.table_schema=cols.table_schema AND t.table_name=cols.table_name AND t.table_type='BASE TABLE'
-WHERE cols.table_schema='clubunio' AND cols.column_name LIKE '%season%id'
+WHERE cols.table_schema='clubora' AND cols.column_name LIKE '%season%id'
 ORDER BY cols.table_name, cols.column_name
 SQL);
         $constraints = $db->select(<<<'SQL'
@@ -104,7 +104,7 @@ SQL);
         $configured = app(\App\ClubUnio\Mobile\MobileSeasonScope::class)->current(\App\ClubUnio\Models\Tenant::findOrFail($tenant));
         $result['configured_lookup'] = $configured ? ['internal_id' => (int) $configured->id, 'legacy_id' => $configured->legacy_id,
             'name' => $configured->name] : null;
-        foreach ($db->select("SELECT table_name,view_definition FROM information_schema.views WHERE table_schema='clubunio' ORDER BY table_name") as $view) {
+        foreach ($db->select("SELECT table_name,view_definition FROM information_schema.views WHERE table_schema='clubora' ORDER BY table_name") as $view) {
             $result['views'][] = ['name' => $view->table_name, 'legacy_dependency' => str_contains(strtolower($view->view_definition ?? ''), 'legacy_prod'),
                 'season_related' => str_contains(strtolower($view->view_definition ?? ''), 'season')];
         }

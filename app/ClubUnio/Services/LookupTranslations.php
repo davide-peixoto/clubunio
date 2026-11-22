@@ -32,7 +32,7 @@ final class LookupTranslations
         if (! is_string($table)) {
             return null;
         }
-        $name = str_starts_with($table, 'clubunio.') ? substr($table, strlen('clubunio.')) : $table;
+        $name = str_starts_with($table, 'clubunio.') ? substr($table, 8) : $table;
 
         return array_key_exists($name, $this->tables()) ? $name : null;
     }
@@ -114,7 +114,7 @@ final class LookupTranslations
         // Complex projections keep native pluck semantics rather than guessing row identity.
         if ($query->getConnection()->getName() !== 'clubunio' || ! $table
             || ! in_array($column, ['name', $table.'.name', 'clubunio.'.$table.'.name'], true)
-            || ($key !== null && (! is_string($key) || ! preg_match('/^(?:clubunio\.)?(?:'.$table.'\.)?[a-z_][a-z0-9_]*$/D', $key)))
+            || ($key !== null && (! is_string($key) || ! preg_match('/^(?:(?:clubora|clubunio)\.)?(?:'.$table.'\.)?[a-z_][a-z0-9_]*$/D', $key)))
             || $query->joins || $query->groups || $query->havings || $query->unions || $query->distinct) {
             return $builder->pluck($column, $key);
         }

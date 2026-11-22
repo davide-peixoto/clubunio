@@ -11,7 +11,15 @@ return new class extends Migration
     public function up(): void
     {
         $db = DB::connection('clubunio');
-        if ($db->getDriverName() !== 'pgsql' || ! StageMigrationTarget::allows($db)) {
+        $piDev = PHP_SAPI === 'cli' && $db->getDatabaseName() === 'clubunio_dev'
+            && $db->getConfig('host') === 'clubunio.com;hostaddr=127.0.0.1'
+            && (string) $db->getConfig('port') === '15432' && $db->getConfig('sslmode') === 'verify-full'
+            && config('app.url') === 'https://dev.clubunio.ch';
+        if ($piDev) {
+            $identity = $db->selectOne('SELECT current_database() AS db, current_user AS role, current_schema() AS schema');
+            $piDev = $identity->db === 'clubunio_dev' && $identity->role === 'clubunio_dev_app' && $identity->schema === 'clubunio';
+        }
+        if ($db->getDriverName() !== 'pgsql' || (! $piDev && ! StageMigrationTarget::allows($db))) {
             throw new LogicException('Reviewed ClubUnio PostgreSQL required');
         }
         $db->statement("SET LOCAL lock_timeout = '15s'");

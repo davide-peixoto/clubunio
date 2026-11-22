@@ -108,3 +108,4 @@ class SettingResource extends Resource
         return ['index' => SettingResource\Pages\ListSettings::route('/')];
     }
 }
+

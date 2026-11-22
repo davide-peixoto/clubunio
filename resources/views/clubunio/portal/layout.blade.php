@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="{{ asset('css/clubunio-portal-shell.css').'?v=3' }}">
         <script src="{{ asset('js/clubunio-portal-shell.js').'?v=1' }}" defer></script>
     @endisset
+    @stack('head')
 @include('clubunio.brand.head')</head>
 <body>
     @isset($tenant)
@@ -21,7 +22,10 @@
         <main>@yield('content')</main>
     @endisset
     @if(config('clubunio-support.enabled') && !isset($portalModule))
-        <script src="{{ asset('js/clubunio-help-widget.js') }}"></script>
+        <script src="{{ asset('js/clubunio-help-widget.js').'?v=3' }}"
+            data-close-label="{{ trans('support.close_panel') }}"
+            data-support-url="{{ isset($tenant) ? route('clubunio.support.center', ['club' => $tenant->id]) : url('/help') }}"
+            data-support-label="{{ trans('support.title') }}"></script>
     @endif
 </body>
 </html>
