@@ -1243,3 +1243,75 @@ Die Vorbereitung enthält genau eine neue additive Migration für die beiden
 Veo-Konfigurationstabellen. Arbeitskorb und SFV verwenden das bestehende
 Schema. Zielprüfung, Ablauf, Rückweg und Fachabnahme stehen in
 [Arbeitskorb und SFV](/deploy/CLUBUNIO-WORK-INBOX-SFV.md#für-stage-vorbereitet).
+
+## 19.11.2026 – Platzanfragen aus Kalenderslots
+
+App und Web öffnen in der Tagesansicht eine Anfrage aus einem 30-Minuten-Slot
+mit Platz, Datum und Beginn. Die lokale Appvalidierung erlaubt ausstehende
+Anfragen bei aktuell gesperrten Plätzen entsprechend dem vorhandenen
+Serverablauf. Ein neutraler Hinweis erklärt die Prüfung bei der Freigabe.
+DE/EN-Kataloge geprüft. DEV und Stage aktualisiert, Stagecommit 8c45b1e.
+Abnahme und Rückweg sind in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md) dokumentiert.
+
+
+## 19.11.2026 – Zeitraum im Platzkalender aufziehen
+
+App und Web übernehmen Beginn und Dauer eines aufgezogenen Bereichs. Die
+App nutzt Gedrückthalten und Ziehen, das Web Maus- oder Stiftziehen. Vorschau
+und 30-Minuten-Raster funktionieren vorwärts und rückwärts. Der Server prüft
+die übergebene Dauer. DEV und Stage aktualisiert, Stagecommit ce5f4fd.
+Prüfung und Rückweg stehen in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## 19.11.2026 – Randscrollen während der Kalendermarkierung
+
+Die Tageskalender scrollen bei der Bereichsauswahl automatisch an beiden
+Rändern. Markierung und Dauer folgen dem Scrollen, auch bei stillstehendem
+Zeiger. Abbruch, Ansichtswechsel und Hintergrundwechsel beenden die
+Frame-Schleife. DEV und Stage aktualisiert, Stagecommit caa3e20. Prüfung und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+## Laravel-E-Mail-Themes auf DEV und Stage (19.11.2026)
+
+ClubUnio- und Custom-Domain-Vereinsdesign für App-Kontomails und Kampagnen
+aktiviert. DE/EN, HTML/Klartext, Identity-Proofs und die jeweils aktiven
+Kampagnenabläufe geprüft. Kein Schemawechsel und kein externer Testversand.
+Release, Abnahme und Rückweg stehen in CLUBUNIO-EMAIL-THEME.md.
+
+
+## 19.11.2026 – Randscrollen beim Verschieben von Belegungen
+
+Bestehende Belegungskarten nutzen in App und Web dieselbe Scrollsteuerung
+wie die Bereichsauswahl. Die Zielzeit wird beim Ablegen aus der gescrollten
+Spalte berechnet. Dauer, Teilfläche und bisherige Raster werden übernommen.
+Abgebrochene Drags räumen die Scrollschleife auf. Auf DEV und Stage
+eingespielt, Stage-Fachdelta bc2faab mit Git-Abgleich 99ba847. Tests und
+Rückweg in [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 19.11.2026: Spielfeldwechsel mit horizontalem Randscrollen
+
+Flutter und Web scrollen beim Verschieben bestehender Belegungen auch links/rechts. Frische Zielgeometrie verhindert Ablage auf veralteten Spielfeldern. DEV und Stage gezielt aktualisiert (Stage `3ac81c0`), keine Schemaänderung. 63 Fluttertests, 18 JS-Fälle, 25 PHP-Webtests und Sprachcheck grün. Native iPhone-Abnahme ausstehend. Details und Rückweg: [Kalenderslots](CLUBUNIO-PITCH-SLOTS.md).
+
+
+### 22.11.2026: App-Designmigration
+
+Bestehende Flutter-App verwendet das neue gemeinsame Designsystem in allen Modulen; Home, Chat, Navigation und isolierte Banner gezielt angepasst. Markenfarbe bleibt #164B8A für ClubUnio und konfiguriert für Custom Builds. Keine API-/Berechtigungs-/Datenbankänderung, kein DEV-/Stage-Backenddelta. Figma-Quelle: https://www.figma.com/design/0uFRj7qf4SmdSPB54cafto. Details: https://github.com/davide-peixoto/clubunio_mobile/blob/main/docs/APP-REDESIGN.md. Tests 945 erfolgreich; native iPhone-Sichtabnahme und Store-Veröffentlichung damit nicht ersetzt. Mobile-Commit: `e001eb8` (main synchronisiert).
+
+
+## 22.11.2026 - Mobile: iPhone-Rueckmeldungen korrigiert
+
+Profil-/Login-/Sprachkarten und Mitgliederdossier vereinheitlicht; Teamplanung
+mit korrigierten Tab-Symbolen, Markenfarben und Teilnehmerdarstellung.
+Mobile-Quellcommit `9c4ffb4` baut auf dem erhaltenen iOS-Buildcommit `e842ff9` auf.
+Pruefung und native Grenzen im Mobile-Repo docs/PROFILE-MEMBERS-PLANNING-FIXES.md.
+
+Serverursachen behoben: Stage-Ausweisfreigabe war deaktiviert, jetzt aktiviert;
+DEV bereits aktiv. Bestehende Mitgliederdokument-PDFs verwenden reine Vorschau
+statt strenger Quittungsnormalisierung. Upload-/Scan-/Signaturregeln erhalten.
+Zwei-Dateien-Delta auf DEV/Stage nach Baselineabgleich, kein Schemawechsel,
+keine neuen Testdateien oder Konten und kein PROD-Eingriff. Acht Stage-Dateien
+inklusive zweier bisheriger422-Faelle jetzt200 mit passendem Hash; Ausweis auch
+fuer Elternprofil bestaetigt. Sechs PDFtests/31 Assertions und DE/EN-Pruefung gruen.
+Bereitstellung/Rueckweg: CLUBUNIO-MOBILE-DOCUMENT-PREVIEW.md.
