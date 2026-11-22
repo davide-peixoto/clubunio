@@ -274,3 +274,40 @@ Noch offen: aktuellen nativen Build auf Benutzer-Mac erstellen, echten Ausweis
 auf physischem iPhone zu Wallet hinzufügen, Geräteanmeldung und Statusänderung/
 Widerruf samt APNs-Update testen. Simulator/TLS-Test ersetzen keine Geräteabnahme.
 Google Wallet ist ein separater nächster Einrichtungsschritt.
+
+
+## iPhone-Signierung und Associated Domains, 22.11.2026
+
+Apple-Portal unter Team XP7296D478 geprueft. Core com.my.clubunio.core hat
+Associated Domains, Push Notifications und Wallet bereits aktiv. Die bislang
+fehlende Test-App-ID com.my.sportvereinSissach.test als My SV Sissach Test mit
+diesen drei Capabilities registriert und im gespeicherten Stand bestaetigt.
+Produktive alte SVS-App und bestehende Zertifikate nicht veraendert.
+
+Portal zeigt ein gueltiges Development- und ein Distribution-Managed-Zertifikat
+bis20.07.2027. Manuelle Altprofile APP_DEV/APP_PRD zeigen Invalid und wurden
+nicht ersetzt. Sichtbare Geraeteliste enthaelt nur aeltere Geraete sowie den
+Hinweis zur jaehrlichen Geraetepruefung. Keine UDIDs in die Doku uebernommen.
+
+Benutzer hat ausdruecklich Registrierung des aktuellen iPhones und Profile
+ueber automatische Xcode-Signierung auf dem Mac gewaehlt. Deshalb kein
+manuelles Testprofil fuer falsche Altgeraete erzeugt und keine Geraete geloescht.
+Auf dem Mac muss Xcode das Teamkonto, einen gueltigen privaten Signierschluessel
+und das registrierte aktuelle iPhone verwenden; lokale Profilerzeugung und
+Installation konnten von diesem Windows-Arbeitsplatz nicht ausgefuehrt werden.
+
+Die gemeinsame Appquelle setzt jetzt CODE_SIGN_STYLE=Automatic als ueberschreibbaren
+Default. Das Markenwerkzeug prueft bei signierten Geraetebuilds die wirklichen
+Associated Domains exakt gegen das Core-/Vereinsprofil (neben App-ID/APNs/Signatur).
+15 Markenbuildtests erfolgreich,1 bestehender plattformbedingter Skip, inklusive
+fehlender/falscher/zusaetzlicher signierter Domains.
+
+Parallel eingegangener Mac-Nachweis 27a7579: Core-Build15 erfolgreich als IPA aus
+dem bestehenden Archiv a0596e9 exportiert, Distributionsblocker behoben. Dieses
+Archiv enthaelt DEV-Standard und vier Domains; fuer den aktuellen PROD-Stand
+mit fuenf Core-Domains weiterhin nativ neu bauen. Keine Storeveroeffentlichung.
+
+Die genaue Mac-Einrichtung und beide Buildbefehle stehen in
+[IOS-DEVICE-SIGNING.md](https://github.com/davide-peixoto/clubunio_mobile/blob/main/docs/IOS-DEVICE-SIGNING.md).
+Apple Wallet und Event-QR weiterhin auf physischem iPhone abnehmen; Portal-
+Capabilities und Buildnachweise sind keine bestaetigte Ende-zu-Ende-Abnahme.

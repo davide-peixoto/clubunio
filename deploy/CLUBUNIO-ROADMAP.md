@@ -2190,3 +2190,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 22.11.2026: Google-Wallet-Publishingantrag nach Benutzerbestaetigung ueber offiziellen Google-Support eingereicht (Request-Button ohne Wirkung). Submitted bestaetigt, Rueckmeldung laut Dialog bis36 Stunden per E-Mail; Publishingfreigabe noch ausstehend. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
+
+
+22.11.2026: iOS-Signierung geprueft: Core Associated Domains/Push/Wallet vorhanden; fehlende SVS-Test-App-ID mit diesen Capabilities registriert. Benutzer waehlt aktuelle Geraete-/Entwicklungsprofile durch automatische Xcode-Signierung am Mac. Strikter Nachweis der signierten Domains im Markenwerkzeug; Anleitung und offener Geraetest siehe deploy/CLUBUNIO-APPLE-WALLET.md und mobile/docs/IOS-DEVICE-SIGNING.md. Parallel bestaetigter IPA-Export des alten Core-Build15 ersetzt keinen aktuellen PROD-Neubau.
