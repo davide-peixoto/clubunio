@@ -115,13 +115,21 @@ final class CampaignMailQueue
         try {
             $service = app(MemberCampaignService::class);
             $copy = $service->copy($service->openCampaign($tenant, $row->campaign_id));
+            $url = $service->url($tenant, $row);
+            $locale = app()->getLocale();
+            $html = app(ClubUnioMailTheme::class)->render(
+                $tenant, $copy['subject'], $copy['body'], $url, trans('mail_theme.open', [], $locale), $locale,
+            );
             if (! $row->token_encrypted || $this->address($tenant, $row) !== $row->mail_address_hash || $this->suppressed($tenant, $row->mail_address_hash)) {
                 $state = 'failed';
             } else {
                 $sent = Mail::mailer('clubunio_test')->send(
                     ['raw' => $copy['body']."\n\n".$service->url($tenant, $row)],
                     ['clubunio_reply_to_tenant_id' => (int) $tenant->id],
-                    fn ($message) => $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject($copy['subject']),
+                    function ($message) use ($copy, $html) {
+                        $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject($copy['subject']);
+                        $message->getSymfonyMessage()->html($html);
+                    },
                 );
                 $state = $sent ? 'accepted' : 'attention';
             }

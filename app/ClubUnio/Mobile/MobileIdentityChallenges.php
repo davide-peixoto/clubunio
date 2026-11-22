@@ -21,7 +21,7 @@ final class MobileIdentityChallenges
     {
         $data = Validator::make($input, ['password' => 'required|string|min:12|max:72'.($confirmation ? '|confirmed' : ''),
             'password_confirmation' => $confirmation ? 'required|string|max:72' : 'prohibited'])->validate();
-        if (strlen($data['password']) > 72) { throw ValidationException::withMessages(['password' => 'Bitte ein kürzeres Passwort wählen.']); }
+        if (strlen($data['password']) > 72) { throw ValidationException::withMessages(['password' => 'Bitte ein kÃ¼rzeres Passwort wÃ¤hlen.']); }
         return $data['password'];
     }
     public function request(Request $request, string $purpose, ?int $registrationId = null): array
@@ -41,7 +41,7 @@ final class MobileIdentityChallenges
         $fingerprint = hash_hmac('sha256', json_encode($identity, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), (string) config('app.key'));
         $this->rate('identity-ip:'.hash('sha256', $request->ip().'|'.$tenant->id), 10, 60);
         $password = $purpose === 'register' ? Hash::make($d['password']) : null;
-        $created = DB::connection('clubunio')->transaction(function () use ($tenant, $origin, $purpose, $d, $fingerprint, $password, $registrationId) {
+        $created = DB::connection('clubunio')->transaction(function () use ($tenant, $origin, $purpose, $d, $fingerprint, $password, $registrationId, $request) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(MobilePublicIdentityPolicy::class)->authorize($tenant, $purpose === 'register' ? 'registration' : 'password_reset');
             $old = $this->table()->where('tenant_id', $tenant->id)->where('purpose', $purpose)->where('request_key', $d['request_key'])->first();
@@ -58,7 +58,7 @@ final class MobileIdentityChallenges
             if ($purpose === 'register') { $payload += ['first_name' => $d['first_name'], 'last_name' => $d['last_name'], 'password_hash' => $password]; }
             else { $payload += ['candidates'=>$candidates]; }
             $id = (string) Str::uuid(); $secret = bin2hex(random_bytes(32));
-            $delivery = ['email' => $d['email'], 'origin' => $origin, 'purpose' => $purpose, 'tenant_name' => $tenant->name, 'token' => $id.'.'.$secret];
+            $delivery = ['email' => $d['email'], 'origin' => $origin, 'purpose' => $purpose, 'tenant_name' => $tenant->name, 'locale' => $this->mailLocale($request), 'token' => $id.'.'.$secret];
             if ($purpose==='reset') { $delivery['account_names']=array_column($candidates,'username'); }
             $this->table()->insert(['id' => $id, 'tenant_id' => $tenant->id, 'purpose' => $purpose, 'request_key' => $d['request_key'],
                 'request_fingerprint' => $fingerprint, 'email_hash' => $this->emailHash($d['email']), 'secret_hash' => hash('sha256', $secret),
@@ -75,7 +75,7 @@ final class MobileIdentityChallenges
                 if (config('clubunio-mobile.public_identity.dispatch_after_response', true)) { app()->terminating(fn () => $this->dispatch($created)); }
             });
         }
-        return ['accepted' => true, 'message' => 'Falls dieser Vorgang für deine Angaben möglich ist, erhältst du einen zeitlich begrenzten Link per E-Mail.'];
+        return ['accepted' => true, 'message' => 'Falls dieser Vorgang fÃ¼r deine Angaben mÃ¶glich ist, erhÃ¤ltst du einen zeitlich begrenzten Link per E-Mail.'];
     }
 
     public function applications(Account $actor, ?Tenant $bound): array
@@ -144,7 +144,7 @@ final class MobileIdentityChallenges
         $d['email']=mb_strtolower(trim($d['email'])); $actor=$actor->fresh();
         abort_unless($actor?->active&&!$actor->api_only,403);
         $this->rate('identity-enroll:'.$actor->id,5,60);
-        if (!Hash::check($d['current_password'],$actor->password)) { throw ValidationException::withMessages(['current_password'=>'Aktuelles Passwort ungültig.']); }
+        if (!Hash::check($d['current_password'],$actor->password)) { throw ValidationException::withMessages(['current_password'=>'Aktuelles Passwort ungÃ¼ltig.']); }
         $current=$this->emails()->where('account_id',$actor->id)->first();
         abort_unless((int)($current?->revision??0)===(int)$d['email_revision'],409);
         $payload=['email'=>$d['email'],'origin'=>$request->attributes->get('mobile.public.origin'),'account_revision'=>(int)$actor->revision,
@@ -154,7 +154,7 @@ final class MobileIdentityChallenges
         if ($old) { abort_unless((int)$old->account_id===(int)$actor->id&&hash_equals($old->request_fingerprint,$fingerprint),409); return ['accepted'=>true]; }
         $this->rate('identity-email:'.$tenant->id.':enroll:'.$this->emailHash($d['email']),3,3600);
         $id=(string)Str::uuid(); $secret=bin2hex(random_bytes(32));
-        $delivery=['email'=>$d['email'],'origin'=>$payload['origin'],'purpose'=>'enroll','tenant_name'=>$tenant->name,'token'=>$id.'.'.$secret,'account_names'=>[$actor->username]];
+        $delivery=['email'=>$d['email'],'origin'=>$payload['origin'],'purpose'=>'enroll','tenant_name'=>$tenant->name,'locale'=>$this->mailLocale($request),'token'=>$id.'.'.$secret,'account_names'=>[$actor->username]];
         $this->table()->insert(['id'=>$id,'tenant_id'=>$tenant->id,'account_id'=>$actor->id,'purpose'=>'enroll','request_key'=>$d['request_key'],'request_fingerprint'=>$fingerprint,
             'email_hash'=>$this->emailHash($d['email']),'secret_hash'=>hash('sha256',$secret),'payload_encrypted'=>Crypt::encryptString(json_encode($payload,JSON_THROW_ON_ERROR)),
             'delivery_encrypted'=>Crypt::encryptString(MobileIdentityMail::canonical($delivery)),'expires_at'=>now()->addMinutes(30)->toIso8601String()]);
@@ -234,6 +234,12 @@ final class MobileIdentityChallenges
         } catch (\Throwable) { /* Never log SMTP exceptions, addresses, passwords or proof secrets. */ }
         $this->table()->where('id', $id)->where('delivery_state','sending')->update(['delivery_state' => $state,'delivery_encrypted' => null]);
     }
+    private function mailLocale(Request $request): string
+    {
+        return $request->getPreferredLanguage(array_keys(config('clubunio-languages.enabled')))
+            ?? config('clubunio-languages.default', 'de');
+    }
+
     private function proof(Request $request, string $purpose): array
     {
         $tenant = $request->attributes->get('mobile.public.tenant');

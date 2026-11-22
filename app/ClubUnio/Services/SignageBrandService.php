@@ -18,6 +18,13 @@ class SignageBrandService
 
     public function read(Tenant $tenant): array
     {
+        return array_replace($this->design($tenant), [
+            'period_id' => app(ActiveTrainingPlan::class)->period($tenant)?->id ?? 0,
+        ]);
+    }
+
+    public function design(Tenant $tenant): array
+    {
         $fallback = $tenant->slug === 'sv-sissach' ? '#cf1032' : '#164b8a';
         $data = ['color' => $fallback, 'logo' => $tenant->slug === 'sv-sissach' ? '/images/svs-logo.png' : '/brand/blue-v1/clubunio-symbol.svg', 'title' => $tenant->name, 'period_id' => 0];
         foreach (Setting::where('tenant_id', $tenant->id)->where('area', 'signage')->where('enabled', true)->whereIn('key', self::KEYS)->get() as $row) {
@@ -33,7 +40,6 @@ class SignageBrandService
         $data['ink'] = $rgb[0] * .2126 + $rgb[1] * .7152 + $rgb[2] * .0722 > .179 ? '#16191e' : '#ffffff';
         $data['logo'] = $this->safeLogo($data['logo'], $tenant) ? $data['logo'] : '/brand/blue-v1/clubunio-symbol.svg';
         $data['title'] = mb_substr(trim($data['title']), 0, 100) ?: $tenant->name;
-        $data['period_id'] = app(ActiveTrainingPlan::class)->period($tenant)?->id ?? 0;
 
         return $data;
     }
