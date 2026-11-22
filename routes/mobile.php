@@ -34,6 +34,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         \App\ClubUnio\Mobile\MobileKeyboxRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberIdCardRoutes::register();
+        \App\ClubUnio\Wallet\MemberWalletRoutes::mobile();
         \App\ClubUnio\Mobile\MobilePenaltyRoutes::register();
         \App\ClubUnio\Mobile\MobileTrainingRoutes::register();
         \App\ClubUnio\Mobile\MobileSponsorRoutes::register();
