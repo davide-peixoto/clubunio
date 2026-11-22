@@ -12,6 +12,7 @@ final class MobilePushReady
             || ! in_array('personal-push-v1', explode(',', $request->header('X-ClubUnio-Mobile-Features', '')), true)) return false;
         foreach (config('clubunio-mobile-push.apps', []) as $id => $app) {
             if (! is_array($app) || ($app['origin'] ?? null) !== $request->getSchemeAndHttpHost()) continue;
+            if (str_contains($id, ':')) [, $id] = explode(':', $id, 2);
             try {
                 app(MobilePushRegistry::class)->request($request, $id, $app['platform'] ?? '');
                 $path = $app['credentials_file'] ?? '';

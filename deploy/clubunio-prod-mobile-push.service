@@ -1,0 +1,25 @@
+[Unit]
+Description=ClubUnio PROD personal mobile push worker
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=runcloud
+Group=runcloud
+WorkingDirectory=/home/runcloud/webapps/ClubUnioProd
+RuntimeDirectory=clubunio-prod-mobile-push
+RuntimeDirectoryMode=0700
+ExecStart=/usr/bin/flock -n /run/clubunio-prod-mobile-push/worker.lock /usr/bin/php artisan clubunio:deliver-mobile-push --dispatch --limit=100 --watch=300
+Restart=always
+RestartSec=1
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/runcloud/webapps/ClubUnioProd/storage /home/runcloud/webapps/ClubUnioProd/bootstrap/cache
+
+[Install]
+WantedBy=multi-user.target

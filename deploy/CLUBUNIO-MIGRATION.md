@@ -1351,3 +1351,17 @@ in Chrome erstellt. Wallet- und FCM-API bereits aktiviert. Keine Schlüssel
 erzeugt und kein Serverbetrieb aktiviert. FCM-Rollenspeicherung wartet auf
 explizite Bestätigung, Wallet-Developerzuordnung und Integration noch offen.
 [Einrichtung und nächste Schritte](CLUBUNIO-GOOGLE-WALLET.md).
+
+
+## Google-Wallet-Zugänge und PROD-Push eingerichtet (22.11.2026)
+
+FCM-Rolle nach Benutzerbestätigung erteilt, drei Walletkonten als Developer
+im Aussteller3388000000023233410 bestätigt. Vier getrennte Schlüssel privat
+erzeugt/abgelegt; Wallet-OAuth und Lesezugriff auf DEV/Stage/PRODHTTP200,
+FCM-PROD-Prüfung nur validate_onlyHTTP200, keine Zustellung. Core-PROD-Push
+für iOS/Android sowie erforderlicher authentifizierter Mobile-Zugang aktiviert;
+residenter runcloud-Worker eingerichtet und geprüft. Vorher0 Geräte/0 Outbox.
+Bestehende produktive Plattformpräfixe erhalten, gezielt im Source nachgeführt
+und gegen interne Präfixe als Clientkennung abgesichert.14Tests/35Assertions.
+Google-Wallet-Fachintegration/Publishing und echte Gerätezustellung noch offen.
+[Betrieb, private Ablage und Rückwege](CLUBUNIO-GOOGLE-WALLET.md).
