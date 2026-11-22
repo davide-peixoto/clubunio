@@ -2510,3 +2510,14 @@ Wartungsmodus auf ausdrueckliche Freigabe aufgehoben. Echter Keycloak-
 Browserlogin mit info@clubunio.com bis /platform erfolgreich, Plattform-
 verwaltung und Aktion Verein erstellen sichtbar. Vereinsbestand leer;
 keine Migration oder neue Fachdatensaetze. [Nachweis](keycloak/clients/PRODUCTION.md).
+
+
+## SV Sissach: PROD-Migrationsvorbereitung (22.11.2026)
+
+Aktuellen ClubUnio-PROD-Dump erstellt und isoliert wiederhergestellt.
+Aktueller PHPMaker-PROD-SNAPSHOT: 100 Tabellen, 55588 Zeilen; private
+Dateien und alle Pruefsummen unabhaengig geprueft. Source-Exporter,
+Delta-Planer und Dreiwege-Konfliktregeln vorbereitet; sechs Tests gruen.
+Kein Fachimport ausgefuehrt. Ziel aktuell 143 Migrationen samt fremden
+Walletaenderungen; fachlicher Apply-Runner/Mapping noch umzusetzen.
+[Plan und Nachweise](CLUBUNIO-PROD-SV-SISSACH-MIGRATION.md).
