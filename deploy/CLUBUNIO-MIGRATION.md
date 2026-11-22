@@ -1337,3 +1337,19 @@ eine explizit auf isolierte Datenbanken begrenzte Zusatzmigration (147).
 Details, Grenzen und Nachweise: [Fachzuordnungen v2](CLUBUNIO-SVS-HISTORY-MAPPING.md).
 Arbeit nur im Branch codex/svs-history-mappings-20261122. Kein Release und
 kein Import auf PROD; produktive Freigabe und Dateiuebernahme stehen aus.
+## SV Sissach auf PROD importiert (23.11.2026)
+
+Auf expliziten Betreiberauftrag SV Sissach angelegt und 37'911 native
+Datensaetze aus PHPMaker PROD importiert: 2'448 Mitglieder, 6'799 Rechnungen,
+487 Spesenbelege/3'865 Positionen. 14 gepruefte Team-/Saisonzuordnungen,
+keine verbleibenden Spesen-/Saisonabweichungen. Dauerhafte Feldbaseline auf PROD.
+Keine Quellschreibzugriffe, keine Schluessel-/Tokenuebernahme, keine importierten
+Benutzer aktiviert, keine Einladungen oder Push-Outboxeintraege erzeugt.
+Lokale Vereinsadministration durch die bestehende Plattformadministration.
+
+Jeder Delta-Lauf sichert PROD, erstellt einen frischen konsistenten Quelddump,
+probt auf wiederhergestellter Kopie und verlangt eine Wiederholung ohne
+Fachwrites. Live-Merge nur mit kurzlebiger, root-eigener Lauf-Freigabedatei;
+Konflikte oder Schemaaenderungen brechen ab. Aktiv: Codex-Agent alle12Stunden,
+ausschliesslich PHPMaker PROD nach ClubUnio PROD, keine bidirektionale Sync.
+[Betrieb, Grenzen und Nachweise](CLUBUNIO-SVS-PRODUCTION-IMPORT.md).

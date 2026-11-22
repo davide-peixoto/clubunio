@@ -3,11 +3,13 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli')exit(1);
 $root=dirname(__DIR__);require __DIR__.'/svs-lab-autoload.php';
 try{
+    $productionPermit=getenv('CLUBUNIO_SVS_PRODUCTION_PERMIT')?:null;
+    $production=$productionPermit&&($argv[3]??'')==='clubunio_prod';
     $upgradeV1=in_array('--upgrade-v1',$argv,true);
     $argv=array_values(array_filter($argv,fn($v)=>$v!=='--upgrade-v1'));
     if(count($argv)!==5||!in_array($argv[1],['--rehearse','--apply'],true)
         ||!preg_match('/\Aclubunio_stage_svs_candidate_[a-f0-9]{8}\z/',$argv[2])
-        ||!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$argv[3]))throw new LogicException('Use --rehearse|--apply <candidate DB> <isolated rehearsal DB> <snapshot manifest SHA256>; live PROD is forbidden');
+        ||(!$production&&!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$argv[3])))throw new LogicException('Use --rehearse|--apply <candidate DB> <isolated rehearsal DB> <snapshot manifest SHA256>; live PROD is forbidden');
     $private=Dotenv\Dotenv::parse(file_get_contents($root.'/.env.import-target.local'));
     $manifestPath=(getenv('CLUBUNIO_SVS_SNAPSHOT_DIR')?:($private['SOURCE_SNAPSHOT_DIR']??'')).'/manifest.json';
     if(!is_file($manifestPath)||!hash_equals($argv[4],hash_file('sha256',$manifestPath)))throw new LogicException('Private source manifest does not match selected snapshot');
@@ -21,6 +23,11 @@ try{
     $base=config('database.connections.clubunio');
     foreach(['projection'=>$argv[2],'rehearsal'=>$argv[3]] as $key=>$name){$c=$base;$c['database']=$name;config(['database.connections.'.$key=>$c]);}
     $source=Illuminate\Support\Facades\DB::connection('projection');$target=Illuminate\Support\Facades\DB::connection('rehearsal');
+    if($production){
+        App\ClubUnio\Services\SvsProductionTarget::authorize($target,$productionPermit,$argv[4]);
+        foreach($source->table('clubunio.tenant_settings')->where('is_secret',true)->get() as $setting)if($setting->enabled||Illuminate\Support\Facades\Crypt::decryptString($setting->encrypted_value)!=='')throw new LogicException('Secret import is forbidden');
+        if($source->table('clubunio.accounts')->where('active',true)->orWhere('password','<>','')->exists()||$source->table('clubunio.tenant_accounts')->where('portal_enabled',true)->exists())throw new LogicException('Imported accounts must remain inactive');
+    }
     $targetContract=json_decode(file_get_contents($root.'/deploy/svs-target-schema-v2.json'),true,512,JSON_THROW_ON_ERROR);
     // regclass defaults are rendered relative to search_path; pin it for hashing.
     $target->statement('SET search_path TO public');

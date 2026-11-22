@@ -46,7 +46,8 @@ final class SvsDeltaImporter
 
     public function run(bool $commit,string $snapshot,string $expectedTarget,bool $upgradeV1=false): array
     {
-        if(PHP_SAPI!=='cli'||!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$expectedTarget)
+        if(PHP_SAPI!=='cli'||(!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$expectedTarget)
+                &&!($expectedTarget==='clubunio_prod'&&SvsProductionTarget::allows($this->target)))
             ||!preg_match('/\Aclubunio_stage_svs_candidate_[a-f0-9]{8}\z/',$this->source->getDatabaseName())
             ||$this->source->getDriverName()!=='pgsql'||$this->target->getDriverName()!=='pgsql'
             ||$this->source->selectOne('select current_database() as n')->n!==$this->source->getDatabaseName()

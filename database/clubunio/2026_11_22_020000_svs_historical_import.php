@@ -6,7 +6,7 @@ return new class extends Migration {
     public function up(): void
     {
         $db=DB::connection('clubunio');
-        if(!\App\ClubUnio\Services\StageMigrationTarget::allows($db)&&!\App\ClubUnio\Services\SvsRehearsalTarget::allows($db))throw new LogicException('Isolated SVS projection/rehearsal only');
+        if(!\App\ClubUnio\Services\StageMigrationTarget::allows($db)&&!\App\ClubUnio\Services\SvsRehearsalTarget::allows($db)&&!\App\ClubUnio\Services\SvsProductionTarget::allows($db))throw new LogicException('Authorized SVS projection/rehearsal/PROD run only');
         foreach(['mobile_app_announcements','document_series_templates','document_series','document_series_recipients','member_change_requests','legacy_material_receipts','legacy_training_plans','team_guests','sfv_schedule'] as $table){
             $db->unprepared("ALTER TABLE clubunio.$table ADD legacy_source_table text, ADD legacy_source_id bigint, ADD legacy_source_hash char(64), ADD legacy_payload_encrypted text, ADD legacy_read_only boolean NOT NULL DEFAULT false; CREATE UNIQUE INDEX {$table}_svs_source_version ON clubunio.$table(tenant_id,legacy_source_table,legacy_source_id,legacy_source_hash); ALTER TABLE clubunio.$table ADD CHECK ((legacy_source_table IS NULL AND legacy_source_id IS NULL AND legacy_source_hash IS NULL AND legacy_payload_encrypted IS NULL AND NOT legacy_read_only) OR (legacy_source_table IS NOT NULL AND legacy_source_id IS NOT NULL AND legacy_source_hash IS NOT NULL AND legacy_payload_encrypted IS NOT NULL))");
         }

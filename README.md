@@ -1,5 +1,8 @@
 # ClubUnio
 
+SV Sissach PROD: [Einseitiger Erstimport und Delta-Agent](deploy/CLUBUNIO-SVS-PRODUCTION-IMPORT.md).
+PHPMaker PROD → ClubUnio PROD; keine Schluesseluebernahme oder Ruecksynchronisation.
+
 SV-Sissach-Migrationsvorbereitung: [Fachzuordnungen v2 und Spesenpruefung](deploy/CLUBUNIO-SVS-HISTORY-MAPPING.md).
 Nur auf isolierten PROD-Kopien getestet, kein PROD-Import oder Release.
 
