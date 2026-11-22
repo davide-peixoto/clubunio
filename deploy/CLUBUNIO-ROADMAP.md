@@ -2075,3 +2075,19 @@ Reviewkorrekturen 40 gezielte Tests grün; Analyse und i18n (2124 Texte) grün.
 13 zusätzliche bearbeitbare Figma-Referenzen, 19 echte Flutter-Prüfbilder.
 Aktuelle Matrix/Prüfgrenzen im Mobile-Repo docs/APP-MODULE-REDESIGN.md. Native
 iPhone-/Providerabnahme bleibt offen. Reines Appdelta, kein Backenddeployment.
+
+
+## 22.11.2026 - Mobile: Ausweiskarte und Kalender abgeschlossen
+
+Mobile main `53f17c3` (synchronisiert): tatsächliche Mitgliederausweiskarte
+mit lokalem Markenlogo und abgesichertem PNG-Export neu gestaltet;
+Platzstatuskarten nutzen volle Breite. Echte Monatsraster für Teamplanung
+(kompakte Agenda bleibt Standard) und Bus, neues Platz-Tagesraster inklusive
+Auswahl/Verschieben. Zivile Datumsberechnung gegen DST-Lücken/Duplikate geprüft.
+Profil im bestehenden neuen Design zusätzlich geprüft. Lokale Monats-/Tageswahl
+verursacht keine zusätzlichen API-Abfragen; Rollen-/Mandantenschutz bleibt.
+1011/1011 Flutter-Tests bestanden, Analyse ohne Befund, 2129 vollständige lokale
+Meldungen; zentrale Backend-Sprachfreigabe unverändert. Figma nun 28 Prüfansichten.
+Details und visuelle Nachweise: mobile/docs/REDESIGN-CARD-CALENDARS.md.
+Native iPhone-/Android-Abnahme auf Benutzergerät bleibt offen. Kein Backenddelta
+und kein Backenddeployment für diese Darstellungsänderung erforderlich.
