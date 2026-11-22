@@ -36,11 +36,11 @@ try {
         $a=new App\ClubUnio\Models\Account;
         $a->forceFill(['username'=>'event-qa-'.$kind.'-'.bin2hex(random_bytes(6)), 'display_name'=>'Synthetic '.$kind,
             'password'=>password_hash(bin2hex(random_bytes(16)),PASSWORD_BCRYPT,['cost'=>4]),'active'=>true,'api_only'=>false])->save();
-        $db->table('clubora.tenant_accounts')->insert(['tenant_id'=>$tenant->id,'account_id'=>$a->id,'role'=>$kind==='admin'?'admin':'member','portal_enabled'=>true]);
+        $db->table('clubunio.tenant_accounts')->insert(['tenant_id'=>$tenant->id,'account_id'=>$a->id,'role'=>$kind==='admin'?'admin':'member','portal_enabled'=>true]);
         $accounts[$kind]=$a;
     }
     foreach(['member'=>'self','parent'=>'parent']as$kind=>$linkKind){
-        $db->table('clubora.account_member_links')->insert(['tenant_id'=>$tenant->id,'account_id'=>$accounts[$kind]->id,
+        $db->table('clubunio.account_member_links')->insert(['tenant_id'=>$tenant->id,'account_id'=>$accounts[$kind]->id,
             'member_id'=>$member->id,'kind'=>$linkKind,'state'=>'approved','source'=>'synthetic_check']);
     }
     $event=new App\ClubUnio\Models\ClubEvent;
@@ -53,7 +53,7 @@ try {
     $expect($qr['Url']===$service->qr($accounts['admin'],$tenant,$event->id)['Url']);
     $shown=$service->show($accounts['member'],$tenant,$token);
     $expect($shown['Event']['IsOpen']===true && count($shown['Members'])===1 && $shown['Members'][0]['Present']===false);
-    $expect($db->table('clubora.event_checkins')->where('tenant_id',$tenant->id)->count()===0);
+    $expect($db->table('clubunio.event_checkins')->where('tenant_id',$tenant->id)->count()===0);
     $guest=new App\ClubUnio\Models\EventGuest;
     $guest->forceFill(['tenant_id'=>$tenant->id,'club_event_id'=>$event->id,'member_id'=>$member->id,'active'=>false])->save();
     $input=['MemberID'=>(int)$member->id,'TokenRevision'=>$shown['TokenRevision'],'EventRevision'=>$shown['Event']['Revision'],'Confirmation'=>true];
@@ -65,7 +65,7 @@ try {
     $again=$service->confirm($accounts['member'],$tenant,$token,$input);
     $expect($first['Confirmed']===true && $first['AlreadyPresent']===false && $again['AlreadyPresent']===true);
     $expect($first['CheckedInAt']===$again['CheckedInAt']);
-    $expect($db->table('clubora.event_checkins')->where('tenant_id',$tenant->id)->count()===1);
+    $expect($db->table('clubunio.event_checkins')->where('tenant_id',$tenant->id)->count()===1);
     $expect($guest->fresh()->active===false);
     $expect($service->show($accounts['member'],$tenant,$token)['Members'][0]['Present']===true);
     $service->close($accounts['admin'],$tenant,$event->id,$qr['Revision']);

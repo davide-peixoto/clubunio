@@ -9,18 +9,18 @@ return new class extends Migration {
     public function sql(): string
     {
         return <<<'SQL'
-ALTER TABLE clubora.member_statuses ADD COLUMN member_card_eligible boolean NOT NULL DEFAULT false;
-UPDATE clubora.member_statuses SET member_card_eligible=true
+ALTER TABLE clubunio.member_statuses ADD COLUMN member_card_eligible boolean NOT NULL DEFAULT false;
+UPDATE clubunio.member_statuses SET member_card_eligible=true
  WHERE active=true AND restores_membership=true AND ends_membership=false;
-CREATE TABLE clubora.member_cards (
+CREATE TABLE clubunio.member_cards (
  id uuid PRIMARY KEY, tenant_id bigint NOT NULL, member_id bigint NOT NULL,
  token_hash char(64) NOT NULL UNIQUE, token_encrypted text NOT NULL,
  revoked_at timestamptz, revision integer NOT NULL DEFAULT 1 CHECK(revision > 0),
  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
  UNIQUE(tenant_id,member_id), UNIQUE(tenant_id,id),
- FOREIGN KEY(tenant_id,member_id) REFERENCES clubora.members(tenant_id,id)
+ FOREIGN KEY(tenant_id,member_id) REFERENCES clubunio.members(tenant_id,id)
 );
-REVOKE ALL ON clubora.member_cards FROM PUBLIC;
+REVOKE ALL ON clubunio.member_cards FROM PUBLIC;
 SQL;
     }
 

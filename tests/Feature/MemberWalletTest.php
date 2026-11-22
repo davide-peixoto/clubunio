@@ -15,7 +15,7 @@ class WalletCardFixture extends MemberCardService
     public bool $valid = true;
     public string $name = 'Synthetic member';
     public string $version = 'initial';
-    public function ensureCard(Tenant $tenant, int $memberId): object { return DB::connection('clubunio')->table('clubora.member_cards')->firstOrFail(); }
+    public function ensureCard(Tenant $tenant, int $memberId): object { return DB::connection('clubunio')->table('clubunio.member_cards')->firstOrFail(); }
     public function snapshot(Tenant $tenant, int $memberId): array
     {
         return ['Name' => $this->name, 'TenantName' => $tenant->name, 'Valid' => $this->valid,
@@ -60,21 +60,21 @@ class MemberWalletTest extends TestCase
             'clubunio-wallet.pass_type_identifier' => 'pass.com.example.member', 'clubunio-wallet.team_identifier' => 'TEAM000001',
             'database.connections.clubunio' => ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']]);
         DB::purge('clubunio');
-        $db = DB::connection('clubunio'); $db->statement("ATTACH DATABASE ':memory:' AS clubora");
+        $db = DB::connection('clubunio'); $db->statement("ATTACH DATABASE ':memory:' AS clubunio");
         $db->unprepared(<<<'SQL'
-CREATE TABLE clubora.tenants(id integer primary key,name text,slug text,created_at text,updated_at text);
-CREATE TABLE clubora.member_cards(id text primary key,tenant_id integer,member_id integer,revoked_at text);
-CREATE TABLE clubora.member_wallet_passes(serial text primary key,card_id text unique,tenant_id integer,member_id integer,
+CREATE TABLE clubunio.tenants(id integer primary key,name text,slug text,created_at text,updated_at text);
+CREATE TABLE clubunio.member_cards(id text primary key,tenant_id integer,member_id integer,revoked_at text);
+CREATE TABLE clubunio.member_wallet_passes(serial text primary key,card_id text unique,tenant_id integer,member_id integer,
 pass_type text,auth_hash text,auth_encrypted text,snapshot_encrypted text,artwork_encrypted text,fingerprint text,
 revision integer default 1,update_tag integer default 0,package_encrypted text,scanned_at text,
 created_at text default CURRENT_TIMESTAMP,updated_at text default CURRENT_TIMESTAMP);
-CREATE TABLE clubora.member_wallet_changes(id integer primary key autoincrement,serial text,created_at text default CURRENT_TIMESTAMP);
-CREATE TABLE clubora.member_wallet_registrations(id integer primary key autoincrement,serial text,device_hash text,push_encrypted text,
+CREATE TABLE clubunio.member_wallet_changes(id integer primary key autoincrement,serial text,created_at text default CURRENT_TIMESTAMP);
+CREATE TABLE clubunio.member_wallet_registrations(id integer primary key autoincrement,serial text,device_hash text,push_encrypted text,
 notified_revision integer default 0,attempts integer default 0,next_attempt_at text,
 created_at text default CURRENT_TIMESTAMP,updated_at text default CURRENT_TIMESTAMP,unique(serial,device_hash));
 SQL);
-        $db->table('clubora.tenants')->insert(['id' => 1, 'name' => 'Synthetic club', 'slug' => 'synthetic']);
-        $db->table('clubora.member_cards')->insert(['id' => (string) Str::uuid(), 'tenant_id' => 1, 'member_id' => 44]);
+        $db->table('clubunio.tenants')->insert(['id' => 1, 'name' => 'Synthetic club', 'slug' => 'synthetic']);
+        $db->table('clubunio.member_cards')->insert(['id' => (string) Str::uuid(), 'tenant_id' => 1, 'member_id' => 44]);
         $this->tenant = Tenant::findOrFail(1);
         $this->cards = new WalletCardFixture;
         $this->app->instance(MemberCardService::class, $this->cards);

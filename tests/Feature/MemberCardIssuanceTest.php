@@ -21,8 +21,8 @@ class MemberCardIssuanceTest extends TestCase
         if (getenv('CLUBUNIO_TEST_DB') !== '1') $this->markTestSkipped('Opt-in rolled-back PostgreSQL card fixture required');
         $this->db = DB::connection('clubunio');
         $this->assertSame('pgsql', $this->db->getDriverName());
-        $this->assertContains($this->db->getDatabaseName(), ['db_acdf8d_dclubora', 'clubunio_dev', 'clubunio_stage']);
-        if (! Schema::connection('clubunio')->hasTable('clubora.member_cards')) $this->markTestSkipped('Apply the additive card migration first');
+        $this->assertContains($this->db->getDatabaseName(), ['db_acdf8d_dclubunio', 'clubunio_dev', 'clubunio_stage']);
+        if (! Schema::connection('clubunio')->hasTable('clubunio.member_cards')) $this->markTestSkipped('Apply the additive card migration first');
         config(['database.default' => 'unconfigured-legacy', 'clubunio-member-cards.verification_enabled' => true, 'clubunio-member-cards.public_origin' => 'https://stage.synthetic.invalid']);
         $this->db->beginTransaction();
         $this->db->statement("SET LOCAL application_name='member-card-synthetic-rollback'");
@@ -48,7 +48,7 @@ class MemberCardIssuanceTest extends TestCase
         $this->assertSame($first['Url'], $again['Url']);
         $this->assertMatchesRegularExpression('~^https://stage\.synthetic\.invalid/member-card/[a-f0-9]{64}$~D', $first['Url']);
         $token = basename(parse_url($first['Url'], PHP_URL_PATH));
-        $row = $this->db->table('clubora.member_cards')->where('tenant_id', $this->tenant->id)->first();
+        $row = $this->db->table('clubunio.member_cards')->where('tenant_id', $this->tenant->id)->first();
         $this->assertSame(hash('sha256', $token), $row->token_hash);
         $this->assertNotSame($token, $row->token_encrypted);
         $public = $this->cards->resolve($token);
@@ -62,7 +62,7 @@ class MemberCardIssuanceTest extends TestCase
         $this->assertNotSame($first['Url'], $second['Url']);
         $this->assertFalse($this->cards->resolve($token)['Valid']);
         $this->assertNotSame($version, $this->cards->snapshot($this->tenant, $this->member->id)['SourceVersion']);
-        $this->assertSame(1, $this->db->table('clubora.member_cards')->where('tenant_id', $this->tenant->id)->count());
+        $this->assertSame(1, $this->db->table('clubunio.member_cards')->where('tenant_id', $this->tenant->id)->count());
     }
 
     public function test_revocation_and_current_member_status_take_effect_without_reissuing_the_card(): void
@@ -70,10 +70,10 @@ class MemberCardIssuanceTest extends TestCase
         $verification = $this->cards->verification($this->tenant, $this->member->id);
         $token = basename(parse_url($verification['Url'], PHP_URL_PATH));
         $id = $this->cards->ensureCard($this->tenant, $this->member->id)->id;
-        $this->db->table('clubora.member_statuses')->where('id', $this->member->status_id)->update(['member_card_eligible' => false]);
+        $this->db->table('clubunio.member_statuses')->where('id', $this->member->status_id)->update(['member_card_eligible' => false]);
         $this->assertFalse($this->cards->resolve($token)['Valid']);
         $this->assertNull($this->cards->resolve($token)['Name']);
-        $this->db->table('clubora.member_statuses')->where('id', $this->member->status_id)->update(['member_card_eligible' => true]);
+        $this->db->table('clubunio.member_statuses')->where('id', $this->member->status_id)->update(['member_card_eligible' => true]);
         $this->assertTrue($this->cards->resolve($token)['Valid']);
         $this->cards->revoke($this->tenant, $this->member->id);
         $this->assertSame($id, $this->cards->ensureCard($this->tenant, $this->member->id)->id);

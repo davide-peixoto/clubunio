@@ -26,7 +26,7 @@ class MemberCardService
 
     private function cards()
     {
-        return DB::connection('clubunio')->table('clubora.member_cards');
+        return DB::connection('clubunio')->table('clubunio.member_cards');
     }
 
     public function member(Tenant $tenant, int $id): Member

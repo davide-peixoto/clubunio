@@ -40,7 +40,7 @@ $db->beginTransaction();
 try {
     $db->statement("SET LOCAL application_name='member-card-wallet-synthetic-rollback'");
     // Fresh PROD may have no catalogs yet; seed only this rollback fixture.
-    $db->table('clubora.account_roles')->insertOrIgnore(['code' => 'admin', 'name' => 'Synthetic admin',
+    $db->table('clubunio.account_roles')->insertOrIgnore(['code' => 'admin', 'name' => 'Synthetic admin',
         'description' => 'Synthetic rollback only', 'sort_order' => 0, 'active' => true]);
     $tenant = App\ClubUnio\Models\Tenant::create(['slug' => 'wallet-qa-'.bin2hex(random_bytes(6)), 'name' => 'Synthetic Card Club']);
     $other = App\ClubUnio\Models\Tenant::create(['slug' => 'wallet-other-'.bin2hex(random_bytes(6)), 'name' => 'Other Synthetic Club']);
@@ -54,7 +54,7 @@ try {
     $actor = new App\ClubUnio\Models\Account;
     $actor->forceFill(['username' => 'wallet-qa-'.bin2hex(random_bytes(8)), 'display_name' => 'Synthetic wallet check',
         'password' => password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT, ['cost' => 4]), 'active' => true, 'api_only' => false])->save();
-    $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
+    $db->table('clubunio.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin', 'portal_enabled' => true]);
     $dto = app(App\ClubUnio\Mobile\MobileMemberIdCardData::class)->show($actor, $tenant, $member->id);
     $expect($dto['Wallet']['AppleAvailable'] === true && $dto['Brand']['LogoData'] !== null);
     $cards = app(App\ClubUnio\Services\MemberCardService::class);
@@ -80,7 +80,7 @@ try {
     $expect($payload['barcodes'][0]['message'] === $qr['Url'] && $payload['voided'] === false);
     $auth = 'ApplePass '.Illuminate\Support\Facades\Crypt::decryptString($pass->auth_encrypted);
     $expect($wallet->authorizedPass($pass->pass_type, $pass->serial, $auth)->serial === $pass->serial);
-    $db->table('clubora.member_statuses')->where('id', $status->id)->update(['member_card_eligible' => false]);
+    $db->table('clubunio.member_statuses')->where('id', $status->id)->update(['member_card_eligible' => false]);
     $expect($cards->resolve($token)['Valid'] === false && $cards->resolve($token)['Name'] === null);
     $invalid = $kernel->handle(Illuminate\Http\Request::create($qr['Url'].'?lang=en', 'GET'));
     $expect($invalid->getStatusCode() === 200 && ! str_contains($invalid->getContent(), 'Synthetic Card Holder'));
@@ -88,7 +88,7 @@ try {
     $changed = $wallet->refresh($pass);
     $expect($changed->revision > $pass->revision && $changed->update_tag > $pass->update_tag);
     $expect($wallet->payload($changed)['voided'] === true);
-    $db->table('clubora.member_statuses')->where('id', $status->id)->update(['member_card_eligible' => true]);
+    $db->table('clubunio.member_statuses')->where('id', $status->id)->update(['member_card_eligible' => true]);
     $cards->revoke($tenant, $member->id);
     $expect($cards->resolve($token)['Valid'] === false);
     $expect($cards->verification($tenant, $member->id)['Url'] === $qr['Url']);

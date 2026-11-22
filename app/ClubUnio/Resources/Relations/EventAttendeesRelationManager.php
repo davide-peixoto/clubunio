@@ -36,9 +36,9 @@ class EventAttendeesRelationManager extends DossierRelationManager
         return $table->modifyQueryUsing(function ($query) {
             $query->where('tenant_id', Filament::getTenant()->id);
             if (config('clubunio-event-checkin.enabled', false)) {
-                $query->select('clubora.event_guests.*')->selectSub(DB::connection('clubunio')->table('clubora.event_checkins as event_presence')
-                    ->select('checked_in_at')->whereColumn('event_presence.tenant_id', 'clubora.event_guests.tenant_id')
-                    ->whereColumn('event_presence.member_id', 'clubora.event_guests.member_id')
+                $query->select('clubunio.event_guests.*')->selectSub(DB::connection('clubunio')->table('clubunio.event_checkins as event_presence')
+                    ->select('checked_in_at')->whereColumn('event_presence.tenant_id', 'clubunio.event_guests.tenant_id')
+                    ->whereColumn('event_presence.member_id', 'clubunio.event_guests.member_id')
                     ->where('event_id', $this->getOwnerRecord()->id)->limit(1), 'event_checked_in_at');
             }
         })->columns([TextColumn::make('member.display_name')->label('Mitglied')->searchable(query: fn ($query, $search) => $query->whereHas('member', fn ($q) => $q->where(fn ($q) => $q->where('last_name', 'ilike', '%'.$search.'%')->orWhere('first_name', 'ilike', '%'.$search.'%')))), IconColumn::make('active')->label('Aktiv')->boolean(),
