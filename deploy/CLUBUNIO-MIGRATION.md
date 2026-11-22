@@ -1341,3 +1341,13 @@ Testdaten zurückgerollt. Minutenupdates eingerichtet und Lauf nachgewiesen.
 Zertifikatsablauf22.12.2027. Physische iPhone-Abnahme und echte APNs-Zustellung
 noch offen; Google Wallet folgt separat.
 [Betrieb und Rückweg](CLUBUNIO-APPLE-WALLET.md).
+
+
+## Google-Wallet-/PROD-Push-Konten (22.11.2026)
+
+Bestehendes Cloud-Projekt clubunio-e8d01 und Aussteller3388000000023233410.
+Wallet DEV als vorhanden bestätigt, Wallet Stage/PROD und eigenes PROD-Push-Konto
+in Chrome erstellt. Wallet- und FCM-API bereits aktiviert. Keine Schlüssel
+erzeugt und kein Serverbetrieb aktiviert. FCM-Rollenspeicherung wartet auf
+explizite Bestätigung, Wallet-Developerzuordnung und Integration noch offen.
+[Einrichtung und nächste Schritte](CLUBUNIO-GOOGLE-WALLET.md).
