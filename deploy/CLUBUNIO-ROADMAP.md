@@ -2128,3 +2128,17 @@ Keine Kontorechte geaendert, kein Datenimport, kein PROD-/Store-Eingriff.
 Betrieb, Sicherungen und Rueckweg: CLUBUNIO-MEMBER-CARD-VERIFICATION.md.
 Ausstehende Zertifikatseinrichtung mit Anleitung: CLUBUNIO-APPLE-WALLET.md.
 Native iPhone-/Swift-/Wallet-Updateabnahme nach Einrichtung auf Benutzer-Mac.
+
+
+## Event-QR-Check-in (22.11.2026)
+
+Event-Zeitfenster, druckbarer QR-Aushang und ausdrückliche eigene
+Anwesenheitsbestätigung in der App auf DEV/Stage bereitgestellt. RSVP bleibt
+getrennt; Wiederholungen/Timeout-Abgleich ohne doppelte Anwesenheit. Additive
+Migration `2026_11_22_000120_event_checkin` nach privater Sicherung gezielt auf
+beiden Instanzen angewandt; synthetische PostgreSQL-Abnahme zurückgerollt.
+Backend 28 Tests/162 Assertions, Mobile 1061 Tests erfolgreich, Analyse sauber.
+Mobile-Commit `a0596e9` auf main synchronisiert. Öffentliche Association-Dateien
+auf allen vier Hosts geprüft. Neuer nativer Build und Geräteabnahme erforderlich;
+Android-Signierfingerabdruck laut Benutzer noch nicht vorhanden.
+[Bedienung, Deployment, Rückweg und native Einrichtung](CLUBUNIO-EVENT-CHECKIN-RELEASE.md).

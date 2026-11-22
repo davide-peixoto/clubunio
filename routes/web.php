@@ -1,5 +1,7 @@
 <?php
 
+\App\ClubUnio\Http\EventCheckinWebRoutes::board();
+
 \Illuminate\Support\Facades\Route::post('/language', \App\ClubUnio\Http\LanguageController::class)
     ->middleware('throttle:30,1')->name('clubunio.language');
 
