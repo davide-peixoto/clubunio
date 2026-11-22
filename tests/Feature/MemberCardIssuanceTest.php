@@ -89,4 +89,19 @@ class MemberCardIssuanceTest extends TestCase
         $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         $this->cards->ensureCard($other, $this->member->id);
     }
+
+    public function test_rotation_during_public_lookup_cannot_validate_the_old_bearer(): void
+    {
+        $qr = $this->cards->verification($this->tenant, $this->member->id);
+        $racing = new class extends MemberCardService {
+            public function snapshot(Tenant $tenant, int $memberId): array {
+                $snapshot = parent::snapshot($tenant, $memberId);
+                parent::rotate($tenant, $memberId);
+                return $snapshot;
+            }
+        };
+        $result = $racing->resolve(basename(parse_url($qr['Url'], PHP_URL_PATH)));
+        $this->assertFalse($result['Valid']);
+        $this->assertNull($result['Name']);
+    }
 }

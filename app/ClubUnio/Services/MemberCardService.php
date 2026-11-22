@@ -154,6 +154,12 @@ class MemberCardService
         $member = Member::withoutGlobalScopes()->where('tenant_id', $tenant->id)->whereKey($row->member_id)->first();
         if (! $member) return $unknown;
         $snapshot = $this->snapshot($tenant, (int) $row->member_id);
+        // Rotation/revocation may commit while branding/status is being read.
+        // Never confirm the old bearer just because the newly issued card is valid.
+        if ($snapshot['Valid'] && ! $this->cards()->where('id', $row->id)
+            ->where('token_hash', hash('sha256', $token))->whereNull('revoked_at')->exists()) {
+            $snapshot['Valid'] = false;
+        }
         // Invalid/revoked records disclose no personal name. The bearer is no longer useful.
         return ['Known' => true, 'Valid' => $snapshot['Valid'], 'CheckedAt' => $snapshot['CheckedAt'],
             'Name' => $snapshot['Valid'] ? $snapshot['Name'] : null, 'TenantName' => $tenant->name,

@@ -116,7 +116,7 @@ Ausdrücke explizit an die ClubUnio-Verbindung gebunden.
 
 Externes HTTPS auf beiden Instanzen: unbekannter QR ohne Login erreichbar,
 korrekte DE/EN-Antwort, no-store/noindex und eindeutiger Ungültigstatus.
-21 Backendtests/154 Assertions bestanden; drei opt-in PostgreSQL-PHPUnitfälle
+21 Backendtests/154 Assertions bestanden; vier opt-in PostgreSQL-PHPUnitfälle
 standardmässig übersprungen, deren Kernabläufe durch obige Live-Rückrollprüfung
 abgedeckt. DE/EN 3015 Schlüssel vollständig. Mobiler Gesamtlauf 1046 bestanden,
 eine nur separat ausführbare Bildaufnahme übersprungen, separat erfolgreich;
@@ -134,3 +134,9 @@ Vereinsrot und PNG-Logo, gültiger Status, stabile Version bei zwei frischen
 Aufrufen. Sein QR-Ziel extern per HTTPS ohne Login in DE/EN erfolgreich geprüft;
 keine Geburts-/Kontaktfelder in der öffentlichen Antwort. Keine Kontorechte
 geändert.
+
+Letzte Nebenläufigkeitsprüfung: Wird ein QR während der öffentlichen Abfrage
+neu ausgegeben oder gesperrt, bestätigt der alte Link keinen neuen gültigen
+Ausweis. Tokenhash/Sperre werden vor dem Ergebnis erneut geprüft. Isolierter
+PostgreSQL-Rückrollfall auf DEV und Stage erfolgreich; 25 PHP-Testfälle, davon
+21 bestanden und vier opt-in Fälle übersprungen (154 Assertions).
