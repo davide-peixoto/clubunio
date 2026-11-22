@@ -2225,3 +2225,18 @@ festgehalten. DEV-Journal nach Strukturpruefung 147 (zwei DEV-Piloten),
 Stage/PROD je145 identisch. Social und Event-Check-in auf Stage fachlich
 geprueft und nach PROD uebernommen; Meta-Livezugriff bleibt gesperrt.
 [Nachweise, Sicherungen und Rueckweg](CLUBUNIO-ENVIRONMENT-CONSOLIDATION.md).
+
+
+## SV Sissach PROD: Erstimport und einseitige Deltas (23.11.2026)
+
+Auf expliziten Betreiberauftrag SV Sissach auf PROD angelegt, 37'911 native
+Datensaetze importiert (2'448 Mitglieder, 6'799 Rechnungen, 487 Spesenbelege).
+Danach erster echter Delta-Lauf mit 181 Updates ohne Konflikte. 147 Migrationen,
+dauerhafte Feldbasis, Kopienprobe vor jedem Apply; Wiederholung ohne Fachwrites.
+Alle 14 Spesen-/Saisonabweichungen geprueft, keine verbleibende Abweichung.
+Keine Schluessel/Tokens importiert, keine importierten Konten/Portale aktiviert,
+keine Einladungen oder Push-Outboxeintraege. Bestehende Plattformadministration
+lokal als Vereinsadmin zugeordnet. Codex-Agent alle12Stunden ACTIVE, nur
+PHPMaker PROD -> ClubUnio PROD; keine bidirektionale Sync oder Providerjobs.
+[Betrieb und Nachweis](CLUBUNIO-SVS-PRODUCTION-IMPORT.md). Parallel vorhandene
+Wallet-/Push-Aenderungen auf dem VPS unveraendert erhalten.

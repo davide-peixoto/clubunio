@@ -1,5 +1,8 @@
 # ClubUnio
 
+SV Sissach PROD: [Einseitiger Import und Delta-Agent alle 12 Stunden](deploy/CLUBUNIO-SVS-PRODUCTION-IMPORT.md).
+Keine Schluesseluebernahme oder Ruecksynchronisation.
+
 Installation und Releases: [Statische Livewire-Dateien veroeffentlichen und pruefen](deploy/CLUBUNIO-INSTALL-ASSETS.md).
 
 Kommunikationsmodul fuer die Flutter-App: [API und Entwicklungsstand](deploy/CLUBUNIO-COMMUNICATION-API.md),
