@@ -2712,3 +2712,20 @@ Meldungen; zentrale Backend-Sprachfreigabe unverändert. Figma nun 28 Prüfansic
 Details und visuelle Nachweise: mobile/docs/REDESIGN-CARD-CALENDARS.md.
 Native iPhone-/Android-Abnahme auf Benutzergerät bleibt offen. Kein Backenddelta
 und kein Backenddeployment für diese Darstellungsänderung erforderlich.
+
+
+## 22.11.2026 - Mobile: iPhone-Rueckmeldungen korrigiert
+
+Profil-/Login-/Sprachkarten und Mitgliederdossier vereinheitlicht; Teamplanung
+mit korrigierten Tab-Symbolen, Markenfarben und Teilnehmerdarstellung.
+Mobile-Quellcommit `9c4ffb4` baut auf dem erhaltenen iOS-Buildcommit `e842ff9` auf.
+Pruefung und native Grenzen im Mobile-Repo docs/PROFILE-MEMBERS-PLANNING-FIXES.md.
+
+Serverursachen behoben: Stage-Ausweisfreigabe war deaktiviert, jetzt aktiviert;
+DEV bereits aktiv. Bestehende Mitgliederdokument-PDFs verwenden reine Vorschau
+statt strenger Quittungsnormalisierung. Upload-/Scan-/Signaturregeln erhalten.
+Zwei-Dateien-Delta auf DEV/Stage nach Baselineabgleich, kein Schemawechsel,
+keine neuen Testdateien oder Konten und kein PROD-Eingriff. Acht Stage-Dateien
+inklusive zweier bisheriger422-Faelle jetzt200 mit passendem Hash; Ausweis auch
+fuer Elternprofil bestaetigt. Sechs PDFtests/31 Assertions und DE/EN-Pruefung gruen.
+Bereitstellung/Rueckweg: CLUBUNIO-MOBILE-DOCUMENT-PREVIEW.md.

@@ -14,6 +14,21 @@ final class MobileMemberDocumentPdf
     public const MAX_ORIGINAL = 10_485_760;
     public const MAX_SIGNED = 20_971_520;
 
+    /** Read-only files retain their original bytes; receipt signing uses normalize(). */
+    public function preview(string $bytes): string
+    {
+        if ((new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) !== 'application/pdf') {
+            return $this->normalize($bytes)['bytes'];
+        }
+        // Do not import existing documents into FPDI: modern compressed PDFs and
+        // ordinary link annotations are supported by the native PDF viewer.
+        if (strlen($bytes) > self::MAX_SIGNED || ! str_starts_with($bytes, '%PDF-')
+            || ! str_contains(substr($bytes, -2048), '%%EOF')) {
+            throw new InvalidArgumentException(__('Dokument nicht verfügbar. Referenz: :value1', ['value1' => 'invalid_preview']));
+        }
+        return $bytes;
+    }
+
     private function import(string $bytes): array
     {
         if (strlen($bytes) < 8 || strlen($bytes) > self::MAX_ORIGINAL || ! str_starts_with($bytes, '%PDF-') || ! str_contains(substr($bytes, -2048), '%%EOF')) {

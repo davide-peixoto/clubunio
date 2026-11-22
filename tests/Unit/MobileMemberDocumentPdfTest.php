@@ -10,6 +10,23 @@ use setasign\Fpdi\PdfParser\StreamReader;
 
 class MobileMemberDocumentPdfTest extends TestCase
 {
+    public function test_read_only_preview_preserves_link_annotations_but_signing_still_rejects_them(): void
+    {
+        $pdf = new \FPDF; $pdf->AddPage(); $pdf->SetFont('Helvetica', '', 12);
+        $pdf->Cell(50, 10, 'Existing linked document', 0, 0, '', false, 'https://example.invalid');
+        $bytes = $pdf->Output('S');
+        $service = new MobileMemberDocumentPdf;
+        $this->assertSame($bytes, $service->preview($bytes));
+        $this->expectException(InvalidArgumentException::class);
+        $service->normalize($bytes);
+    }
+
+    public function test_read_only_preview_does_not_apply_receipt_page_limit(): void
+    {
+        $bytes = $this->original(51);
+        $this->assertSame($bytes, (new MobileMemberDocumentPdf)->preview($bytes));
+    }
+
     private function original(int $pages = 2): string
     {
         $pdf = new \FPDF;
