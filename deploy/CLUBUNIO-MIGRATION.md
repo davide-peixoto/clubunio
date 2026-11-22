@@ -1374,3 +1374,6 @@ QR-Livepruefung. 33 Backendtests/200 Assertions, 20 Mobiletests (1 Capture-Skip)
 echte PG-Rollback- und synthetische Google-Providerpruefungen alle drei Umgebungen
 erfolgreich. Publishing access in Google-Konsole weiterhin1/2; Freigabe und
 Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
+
+
+22.11.2026: Google-Wallet-Publishingantrag nach Benutzerbestaetigung ueber offiziellen Google-Support eingereicht (Request-Button ohne Wirkung). Submitted bestaetigt, Rueckmeldung laut Dialog bis36 Stunden per E-Mail; Publishingfreigabe noch ausstehend. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.

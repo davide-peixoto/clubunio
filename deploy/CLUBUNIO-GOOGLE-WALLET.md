@@ -3,8 +3,9 @@
 Stand22.11.2026: Google Wallet ist im Backend und in Flutter implementiert und
 auf DEV, Stage und PROD serverseitig aktiviert. Core und Vereinsbuilds nutzen
 denselben autorisierten Vereinsausweis. Apple Wallet bleibt separat eingerichtet.
-Die Google-Konsole zeigt weiterhin Publishing access 1/2; der Request wurde noch
-nicht eingereicht. Reguläre Google-Konten sind damit noch nicht allgemein freigegeben.
+Die Google-Konsole zeigt weiterhin Publishing access 1/2. Der Publishingantrag wurde
+am22.11.2026 ueber das Google-Supportformular eingereicht, weil der regulaere Request-
+Button nicht reagiert. Eingang als Submitted bestaetigt; Freigabe noch ausstehend.
 
 ## Aussteller und bestehendes Cloud-Projekt
 
@@ -41,7 +42,7 @@ und Vereinsfarben, keine eigene Codekopie oder pauschale Fremdvereinsfreigabe.
 
 ## Nächste Schritte
 
-1. Google-Publishingfreigabe beantragen; die Konsole zeigt 1/2, Request noch offen.
+1. Google-Antwort auf den eingereichten Publishingantrag abwarten; Konsole noch1/2.
    Ohne Publishing nur berechtigte Demo-Testkonten verwenden.
 2. Echte Android-Geräteabnahme mit einem autorisierten eigenen/Kinderausweis in
    Core und SV-Sissach-Testbuild: Speichern, Statusänderung, QR mit anderem Handy.
@@ -248,10 +249,32 @@ Installierte Ausweise vor einer bewussten dauerhaften Stilllegung auf INACTIVE
 setzen; Tabelle/Schlüssel nicht blind entfernen. QR-Prüfung unabhängig erhalten.
 
 Google-Konsole aktuell ausdrücklich geprüft: Businessprofile abgeschlossen,
-Publishing access1/2, Request noch nicht eingereicht. Google-Freigabe und reales
+Publishing access1/2. Publishingantrag inzwischen ueber Support eingereicht (siehe unten). Google-Freigabe und reales
 Speichern auf Android bleiben offen. Eine API200 ist keine Publishingfreigabe.
 
 Referenzen: [GenericObject](https://developers.google.com/wallet/reference/rest/v1/genericobject),
 [GenericClass](https://developers.google.com/wallet/reference/rest/v1/genericclass),
 [Save-JWT](https://developers.google.com/wallet/generic/use-cases/jwt),
 [Pass-Updates](https://developers.google.com/wallet/generic/use-cases/updates).
+
+
+## Publishingantrag eingereicht am22.11.2026
+
+Nach ausdruecklicher Benutzerbestaetigung den Publishingzugang fuer Issuer
+3388000000023233410 beantragt. Der regulaere Request-Button blieb ohne Dialog,
+Statusaenderung oder Bestaetigung, auch nach Reload und in einem frischen Tab.
+Keine erfolgreiche Einreichung ueber diesen Button behauptet.
+
+Stattdessen den freigegebenen Antrag im offiziellen Contact-support-Formular
+unter Google Wallet API Integration / Integration troubleshooting abgeschickt.
+Beschreibung: Publishingfreigabe fuer ClubUnio, Issuer/Businesskennung,
+Mitgliederausweise/QR-Livepruefung, funktionierende synthetische API-Tests,
+PROD-URL https://app.clubunio.com und der nicht reagierende Request-Button.
+Keine Schluessel, Tokens oder echten Mitgliederdaten uebermittelt.
+
+Die Konsole bestaetigte Submitted und nennt bis zu36 Stunden fuer eine Rueckmeldung
+per E-Mail durch einen Spezialisten. Das ist die Eingangs-/Supportbestaetigung,
+keine Publishingfreigabe und kein Nachweis eines formalen Pending-Status im
+Publishing-Assistenten. Dort zuletzt weiterhin1/2. Keine Fallnummer angezeigt.
+Keine zweite Supportanfrage erzeugt. Android-Speichertest und Google-Freigabe
+bleiben offen; naechster Schritt ist die Antwort des Google-Spezialisten.
