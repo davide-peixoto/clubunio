@@ -1,4 +1,9 @@
 {
+  "svs.integrity": "File verification",
+  "svs.metadata_only": "Source metadata only – file unverified",
+  "svs.file_verified": "File verified",
+  "svs.history_read_only": "Historical source version. Changes and processing are blocked.",
+  "svs.receipt_unverified": "Historical file reference. The file has not yet been transferred and verified.",
   "campaign.pdf": "Download all QR letters as PDF",
   "campaign.pdf_limit": "The PDF export requires between 1 and 1,000 outstanding letters.",
   "campaign.delete": "Delete draft",

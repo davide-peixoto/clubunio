@@ -1,4 +1,9 @@
 {
+  "svs.integrity": "Dateiprüfung",
+  "svs.metadata_only": "Nur Quelldaten – Datei ungeprüft",
+  "svs.file_verified": "Datei geprüft",
+  "svs.history_read_only": "Historischer Quellstand. Änderungen und Verarbeitung sind gesperrt.",
+  "svs.receipt_unverified": "Historische Dateireferenz. Die Datei wurde noch nicht übernommen und geprüft.",
   "campaign.pdf": "Alle QR-Briefe als PDF",
   "campaign.pdf_limit": "Für den PDF-Export sind 1 bis 1’000 offene Briefe erforderlich.",
   "campaign.delete": "Entwurf löschen",

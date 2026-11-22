@@ -67,7 +67,7 @@ class LegacyTrainingPlanResource extends CatalogResource
                 })])->recordActions([
                     Action::make('inspect')->label('Inhalt ansehen')->icon('heroicon-o-eye')->iconButton()->tooltip(__('Inhalt ansehen'))->slideOver()->modalSubmitAction(false)
                         ->modalCancelActionLabel(__('Schliessen'))->modalContent(fn ($record) => view('clubunio.training.legacy-preview', ['row' => $record])),
-                    Action::make('import')->label('Zuordnen und übernehmen')->icon('heroicon-o-arrow-down-tray')->visible(fn ($record) => $record->state === 'review')
+                    Action::make('import')->label('Zuordnen und übernehmen')->icon('heroicon-o-arrow-down-tray')->visible(fn ($record) => $record->state === 'review' && ! $record->legacy_read_only)
                         ->fillForm(fn ($record) => ['revision' => $record->revision, 'owner_id' => $record->suggested_owner_id, 'team_season_id' => $record->suggested_team_season_id])
                         ->schema([TextInput::make('revision')->label('Version')->readOnly()->required(), Select::make('owner_id')->label('Besitzer')->required()->searchable()->live()->options(fn () => $service()->owners($actor(), $tenant())),
                             Select::make('team_season_id')->label('Mannschaft / Saison')->required()->searchable()->options(fn (Get $get) => $service()->teams($actor(), $tenant(), $get('owner_id') ? (int) $get('owner_id') : null)),
