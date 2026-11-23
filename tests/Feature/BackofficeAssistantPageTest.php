@@ -508,6 +508,17 @@ class BackofficeAssistantPageTest extends TestCase
             $xpath = new \DOMXPath($document);
             $this->assertCount(6, $xpath->query('//*[@data-overview-list]'));
             $this->assertCount(0, $xpath->query('//*[@data-overview-list and @open]'));
+            if (getenv('CLUBUNIO_ASSISTANT_PREVIEW') === '1') {
+                $directory = storage_path('app/assistant-dashboard-preview');
+                \Illuminate\Support\Facades\File::ensureDirectoryExists($directory);
+                file_put_contents($directory.'/'.$locale.'.html',
+                    '<!doctype html><html lang="'.$locale.'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+                    .'<title>ClubUnio dashboard preview</title><style>'
+                    .file_get_contents(public_path('css/filament/filament/app.css'))
+                    .file_get_contents(public_path('css/clubunio-assistant.css'))
+                    .'body{padding:24px;background:#f7f8fa;color:#18181b;font-family:Arial,sans-serif} [wire\\:loading]{display:none} .fi-btn-icon{width:1.25rem;height:1.25rem}</style></head><body>'
+                    .$html.'</body></html>');
+            }
         }
     }
 

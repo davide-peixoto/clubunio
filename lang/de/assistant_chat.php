@@ -16,6 +16,8 @@ return [
     'typing' => 'Antwort wird vorbereitet',
     'current_work' => 'Offene Aufgaben im Blick. Reservierungen separat für den gewählten Tag.',
     'key_figures' => 'Kennzahlen',
+    'heading_bus' => 'Bus',
+    'heading_pitch' => 'Anlagen',
     'kpi_registrations' => 'Anmeldungen in Bearbeitung',
     'kpi_expenses' => 'Freigabe oder Zahlung ausstehend',
     'kpi_invoices' => 'Offene Rechnungen',

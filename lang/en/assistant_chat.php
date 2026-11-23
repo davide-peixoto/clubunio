@@ -16,6 +16,8 @@ return [
     'typing' => 'Preparing a response',
     'current_work' => 'Pending work at a glance. Reservations are shown separately for the selected day.',
     'key_figures' => 'Key figures',
+    'heading_bus' => 'Bus',
+    'heading_pitch' => 'Facilities',
     'kpi_registrations' => 'Registrations being processed',
     'kpi_expenses' => 'Approval or payment pending',
     'kpi_invoices' => 'Outstanding invoices',

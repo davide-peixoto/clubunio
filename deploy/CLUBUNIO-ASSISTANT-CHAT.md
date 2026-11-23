@@ -18,9 +18,20 @@ unter Datengrundlage. Keine zusaetzlichen Datenbank- oder Provideraufrufe.
 Migration: Page, Hauptview, neues Dashboard-Partial, versioniertes CSS und
 beide Sprachkataloge gemeinsam bereitstellen; releasebezogenen View-Cache
 erneuern. Keine Schema-, Rechte-, KI-Freigabe- oder Datenmigration.
-Rueckweg: DEV-Release `20261123-clubunio-assistant-chat-v2`.
+Rueckweg: DEV-Release `20261123-clubunio-tenant-ai`; dessen parallel
+bereitgestellte KI-Konfiguration bleibt im Dashboard-Release erhalten.
 48 lokale Tests / 726 Assertions, Pint und DE/EN-Katalogpruefung erfolgreich.
-DEV-Browserabnahme folgt nach Bereitstellung; Stage und PROD unveraendert.
+DEV-Datenlesetest in zurueckgerollter Transaktion: sechs Bereiche korrekt
+projiziert (14 Anmeldungen, 19 Spesen, 162 Rechnungen, 0 Bus-/Platzanfragen,
+988 aktive Mitglieder). Kein Provideraufruf oder dauerhaftes Testgespraech.
+
+Browserabnahme mit synthetischen Daten in DE/EN: Desktop mit drei und
+Mobilbreite 390 px mit zwei Kennzahlenspalten, kein horizontaler Ueberlauf.
+Rechnungsliste aufklappbar, CHF 380.00 statt langer Nachkommastellen,
+HTML im Datensatznamen weiterhin escaped. Angemeldete Sichtpruefung auf
+DEV noch offen: bestehende Chrome-Sitzung abgelaufen, Neuanmeldung erfragt.
+DEV-Release `20261123-clubunio-assistant-daily-dashboard-v2`.
+Stage und PROD unveraendert.
 
 ## Ursache und Freigabe
 

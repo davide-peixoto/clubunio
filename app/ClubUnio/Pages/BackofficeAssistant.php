@@ -375,6 +375,7 @@ class BackofficeAssistant extends Page
             $key = in_array($module, ['bus', 'pitch'], true) ? $module.'_pending_all_dates' : 'matching';
             $rows = array_values(array_filter($result['rows'] ?? [], fn ($row) => is_array($row) && ($row['module'] ?? null) === $module));
             $tiles[] = $group + ['icon' => $icon, 'count' => $metrics[$key] ?? __('Not available'),
+                'heading' => in_array($module, ['bus', 'pitch'], true) ? trans('assistant_chat.heading_'.$module) : $group['title'],
                 'caption' => trans('assistant_chat.kpi_'.$module), 'rows' => $rows,
                 'day_count' => $metrics[$module.'_on_date'] ?? __('Not available'),
                 'matching' => $metrics['matching'] ?? __('Not available')];

@@ -7,7 +7,7 @@
     <div class="cu-assistant-kpis" role="group" aria-label="{{ trans('assistant_chat.key_figures') }}">
         @foreach ($dashboard['tiles'] as $tile)
             <section class="cu-assistant-kpi" data-module="{{ $tile['module'] }}">
-                <div>@svg($tile['icon']) <h4>{{ $tile['title'] }}</h4></div>
+                <div>@svg($tile['icon']) <h4>{{ $tile['heading'] }}</h4></div>
                 <strong>{{ $tile['count'] }}</strong>
                 <p>{{ $tile['caption'] }}</p>
             </section>
