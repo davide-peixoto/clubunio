@@ -220,3 +220,5 @@ Erster Verein und Administration folgen. [Nachweis und Rueckweg](deploy/CLUBUNIO
 
 
 23.11.2026: PROD-Appmodule nach Benutzerauftrag aktiviert; alle elf vorhandenen Bereiche im Kontomenue nativ verfuegbar. 14 lesende Einstiegspruefungen im PROD-FPM erfolgreich; Uploads mit vorhandenem ClamAV geprueft. Keine Schema-/Datenmigration, KI-/Providerabrechnung und physische Schluesselausgabe separat gesperrt. Betrieb/Rueckweg: deploy/CLUBUNIO-PROD-MOBILE-MODULES.md.
+
+23.11.2026: Aktiven SV-Sissach-Trainingsplan auf PROD von0 auf vorhandene Winterperiode gesetzt, ueber SettingsService auditiert. Standard-Platzkalender liefert49 Trainings/2 Spiele fuer23.-29.11.; keine Slot-/Schema-/Importaenderung. Details: deploy/CLUBUNIO-PROD-TRAINING-PERIOD.md.
