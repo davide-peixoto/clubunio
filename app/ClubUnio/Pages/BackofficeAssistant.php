@@ -148,7 +148,11 @@ class BackofficeAssistant extends Page
         ]);
 
         if (! $this->stateReady || ! ($this->assistantState['provider_enabled'] ?? false)) {
-            $this->addError('assistant', __('AI is disabled. The daily overview remains available locally.'));
+            if ($this->stateReady && ($local = $this->localQuestion()) !== null) {
+                $this->localQuery($local);
+            } else {
+                $this->addError('assistant', trans('assistant_chat.local_only'));
+            }
 
             return;
         }
@@ -185,7 +189,10 @@ class BackofficeAssistant extends Page
             'question.max' => __('Assistant questions may contain at most :max characters.', ['max' => 4000]),
         ]);
         if (! $this->stateReady || ! ($this->assistantState['provider_enabled'] ?? false)) {
-            $this->addError('assistant', __('AI is disabled. The daily overview remains available locally.'));
+            if ($this->stateReady && $this->localQuestion() !== null) {
+                return true;
+            }
+            $this->addError('assistant', trans('assistant_chat.local_only'));
 
             return false;
         }
@@ -212,6 +219,36 @@ class BackofficeAssistant extends Page
         }
 
         $this->run(fn () => app(BackofficeAssistantService::class)->briefing(...[...$context, $this->conversationId]));
+    }
+
+    public function localQuery(string $query): void
+    {
+        if (! ($context = $this->context()) || $this->contextChanged || ! $this->stateReady) {
+            return;
+        }
+        abort_unless(in_array($query, ['daily', 'reservations', 'invoices'], true), 422);
+        if ($this->run(fn () => app(BackofficeAssistantService::class)->localQuery(...[...$context, $this->conversationId, $query]))) {
+            $this->question = '';
+            $this->clearRequest();
+        }
+    }
+
+    private function localQuestion(): ?string
+    {
+        $normalize = fn ($text) => mb_strtolower(trim($text, " \n\r\t?!."));
+        foreach ([
+            'daily' => [trans('assistant_chat.daily_question'), __('Daily overview')],
+            'reservations' => [__('Which reservation requests are pending?')],
+            'invoices' => [__('Which invoices are still outstanding?')],
+        ] as $query => $labels) {
+            foreach ($labels as $label) {
+                if ($normalize($this->question) === $normalize($label)) {
+                    return $query;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function confirmAction(int $id): void
@@ -396,6 +433,7 @@ class BackofficeAssistant extends Page
             $this->assistantState = $state;
             $this->conversationId = $state['conversation_id'] ?? null;
             $this->stateReady = true;
+            $this->dispatch('assistant-updated');
 
             return true;
         } catch (ValidationException $error) {

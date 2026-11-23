@@ -109,6 +109,34 @@ class BackofficeAssistantPageTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_local_examples_work_without_enabling_the_provider(): void
+    {
+        $this->service->shouldNotReceive('ask');
+        $this->service->shouldReceive('localQuery')->once()->with($this->actor, $this->tenant, null, 'invoices')
+            ->andReturn($this->conversationState());
+        $page = Livewire::test(BackofficeAssistant::class)
+            ->assertSee('Local queries')->assertSee('wire:click="localQuery(\'reservations\')"', false)
+            ->assertSee('wire:click="localQuery(\'invoices\')"', false)
+            ->set('question', 'Which invoices are still outstanding?')->call('prepareQuestion')->assertHasNoErrors()
+            ->call('send')->assertHasNoErrors()->assertSet('question', '')->assertSee('Synthetic answer')
+            ->assertDispatched('assistant-updated');
+        $this->assertStringContainsString('data-role="assistant"', $page->html());
+        $this->assertStringContainsString('x-ref="log"', $page->html());
+        $this->assertStringContainsString('x-on:keydown.enter', $page->html());
+        Http::assertNothingSent();
+    }
+
+    public function test_local_query_rejects_unknown_tools_and_ignores_ai_budget(): void
+    {
+        $this->state['budget'] = ['limit_usd' => 10, 'used_usd' => 10];
+        $this->service->shouldNotReceive('ask');
+        $this->service->shouldReceive('localQuery')->once()->with($this->actor, $this->tenant, null, 'reservations')
+            ->andReturn($this->conversationState());
+        Livewire::test(BackofficeAssistant::class)->call('localQuery', 'reservations')->assertHasNoErrors()
+            ->call('localQuery', 'delete_members')->assertStatus(422);
+        Http::assertNothingSent();
+    }
+
     public function test_messages_multiple_tools_previews_and_internal_links_are_escaped(): void
     {
         $this->state = $this->conversationState();
