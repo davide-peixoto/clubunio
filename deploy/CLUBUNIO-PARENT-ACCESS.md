@@ -79,3 +79,21 @@ Rollout abgeschlossen: DEV, Stage und PROD migriert und aktiviert; jeweils 39
 synthetische PG-Pruefungen erfolgreich und zurueckgerollt. HTTP /up jeweils 200.
 Stage-Zielkonto liefert weiterhin drei vertretene Mitglieder (eigener Eintrag
 und beide bestaetigten Kinder). App-Profilseite benoetigt den aktuellen Neubau.
+
+## Korrektur des Vereinsdomain-Logins (23.11.2026)
+
+Der OIDC-Callback pruefte fuer fest gebundene Vereinsdomains bislang
+Account::canAccessTenant (Backoffice-/Modulzugang). Berechtigte Eltern und
+Trainer wurden dadurch vor dem Mobile-Return mit HTTP403 abgewiesen. Der
+Callback verwendet jetzt MemberAccessService::canEnter fuer genau den
+Domain-Mandanten. Aktives Konto, api_only-Sperre, Subjectbindung, State/PKCE,
+MFA und die anschliessenden Mobile-Pruefungen bleiben erhalten. Keine
+Rollenaufwertung und keine Erweiterung auf fremde Vereine.
+
+Regression: kompletter nativer Callback mit berechtigtem Member ohne
+Backofficezugang erreicht den App-Return; verweigerter Zielmandant bleibt403.
+Zusammen mit PlatformOidcTest:7 Tests/36 Assertions bestanden. Enge
+Serverkorrektur auf Stage, DEV und PROD mit privatem Dateibackup; bestehende
+abweichende Web-MFA-Implementierungen erhalten. Stage-Zielkonto besteht die
+Loginpruefung fuer beide zugeordneten Mandanten. Echter erneuter Login durch
+den Benutzer bleibt abschliessende Geraeteabnahme. Kein App-Neubau erforderlich.

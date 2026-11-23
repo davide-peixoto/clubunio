@@ -2820,3 +2820,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Elternlogins altersabhaengig umgesetzt, dokumentiert und DEV/Stage/PROD aktiviert. 39 synthetische PG-Pruefungen je Instanz, 13 lokale Backendtests/108 Assertions, 25 fokussierte Fluttertests. Stage-Kinderverknuepfungen ausdruecklich bestaetigt und auditiert freigegeben. Profilseite nach App-Neubau am Mac testen.
+
+
+23.11.2026: Stage-Gmail403 auf falsche Backofficepruefung im Vereinsdomain-Callback eingegrenzt und durch mandantengenauen Mitgliederzugang ersetzt. Berechtigter nativer Member-Callback und verweigerter Mandant getestet,7Tests/36Assertions. Korrektur Stage/DEV/PROD mit gezielten Dateibackups bereitgestellt; erneuter Geraetelogin offen.

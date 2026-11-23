@@ -152,7 +152,7 @@ final class PlatformOidcController
             app(\App\ClubUnio\Services\ParentAccessService::class)->verifiedLogin($actor, $claims, $config['tenant'] ?? null);
         }
         if (isset($config['tenant'])) {
-            abort_unless($actor?->active && ! $actor->api_only && $actor->canAccessTenant($config['tenant']), 403);
+            abort_unless($actor?->active && ! $actor->api_only && app(MemberAccessService::class)->canEnter($actor, $config['tenant']), 403);
         }
         if ($club && is_array($pending['pair'] ?? null)) {
             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active

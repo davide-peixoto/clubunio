@@ -2199,3 +2199,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Elternzugriff fuer unter18 nach verifiziertem Login und offizieller Elternadresse automatisiert; ab18 explizite Spieler-/Office-Freigabe. Profilverwaltung in Mobile, zentrale Berechtigungspruefung und Audit, Rollout DEV/Stage/PROD. iPhone-Abnahme neuer Profilseite bleibt offen. Details: CLUBUNIO-PARENT-ACCESS.md.
+
+
+23.11.2026: HTTP403 beim Eltern-/Trainerlogin auf Vereinsdomains korrigiert: OIDC-Callback prueft konkreten MemberAccess statt Backoffice-Modulzugang. Stage/DEV/PROD gezielt aktualisiert,7 Login-Regressionspruefungen/36 Assertions gruen. Keine Rechteaufwertung; Benutzer kann ohne App-Neubau erneut anmelden. Details: CLUBUNIO-PARENT-ACCESS.md.

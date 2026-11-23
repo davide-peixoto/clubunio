@@ -1386,3 +1386,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Migration 2026_11_23_000010_parent_access auf DEV/Stage/PROD mit privaten gezielten Backups ausgefuehrt; Consentfelder, private E-Mailproofs und Suchindizes angelegt. Gate erst danach aktiviert. Automatik vertraut keinen Snapshot-Benutzernamen und veraendert keine manuellen Sperren. Zielkonto Stage liefert eigenen Eintrag plus beide freigegebenen Kinder. Details: CLUBUNIO-PARENT-ACCESS.md.
+
+
+23.11.2026: Nachkorrektur Elternlogins: Vereinsdomain-OIDC-Callback verwendet MemberAccessService::canEnter statt Account::canAccessTenant. Keine DB-Migration oder Kontorollenveraenderung. Stage/DEV/PROD genau eine Zugriffsmethode mit privatem Dateibackup ersetzt, Laufzeitabweichungen erhalten; Rueckweg gesicherte Controllerdatei.
