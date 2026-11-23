@@ -26,8 +26,8 @@ final class SupportKnowledge
                 'notes' => $guide['notes'] ?? [],
             ];
             $prefix = 'support-media/'.$locale.'/'.$surface.'/'.$key;
-            // Never advertise missing videos or images. Only immutable public help media.
-            foreach (['image_url' => 'png', 'video_url' => 'mp4', 'captions_url' => 'vtt', 'player_url' => 'html'] as $field => $extension) {
+            // Current release contains illustrated instructions only; video publishing is paused.
+            foreach (['image_url' => 'png'] as $field => $extension) {
                 if (is_file(public_path($prefix.'.'.$extension))) {
                     $article[$field] = rtrim(config('app.url'), '/').'/'.$prefix.'.'.$extension;
                 }
@@ -35,10 +35,6 @@ final class SupportKnowledge
             if (is_file(public_path($prefix.'-screen.png'))) {
                 $article['screenshot_url'] = rtrim(config('app.url'), '/').'/'.$prefix.'-screen.png';
                 $article['screenshot_caption'] = trans('support-wiki.example', locale: $locale);
-            }
-            if (is_file(public_path($prefix.'-screenrecord.mp4'))) {
-                $article['recording_url'] = rtrim(config('app.url'), '/').'/'.$prefix.'-screenrecord.mp4';
-                $article['recording_caption'] = trans('support-wiki.recording', locale: $locale);
             }
             $articles[$key] = $article;
         }

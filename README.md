@@ -234,3 +234,11 @@ Details: [Supportartikel und App-Wissensbasis](deploy/CLUBUNIO-SUPPORT-HELP-APP.
 Schrittvideos mit Untertiteln; zusätzlich echte Android-Beispiele für vier Module.
 DEV/Stage/PROD mit87 Live-Prüfungen je Umgebung aktualisiert. Native Anzeige
 erfordert neuen App-Build. [Inhalt, Medien, Pflege und Abnahme](deploy/CLUBUNIO-WIKI.md).
+
+
+## Wiki ohne Videos – 23.11.2026
+
+DEV und Stage: Anleitungen, Schritte und 146 Bilder/Screenshots bleiben aktiv;
+Videos/Player/Untertitel privat archiviert und nicht mehr verlinkt. Je 91 Live-
+Prüfungen erfolgreich. PROD auf ausdrücklichen Wunsch unverändert.
+[Freigabestand und Rückweg](deploy/CLUBUNIO-WIKI.md).

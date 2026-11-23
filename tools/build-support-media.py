@@ -1,6 +1,7 @@
 """Build reusable illustrated, narrated step guides from authored DE/EN catalogs.
 
-Windows offline speech, Pillow and ffmpeg. Never reads account data or contacts an AI.
+Images are the default; --with-video explicitly opts into offline generation.
+Video publication is currently paused. Windows offline speech, Pillow and ffmpeg. Never reads account data or contacts an AI.
 Output is an instructional slide video, not a recording of product interaction.
 """
 import argparse
@@ -85,9 +86,11 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('--php', default=r'C:\xampp\php\php.exe')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--images-only', action='store_true')
+    parser.add_argument('--images-only', action='store_true', help='Compatibility option; images are the default')
+    parser.add_argument('--with-video', action='store_true', help='Explicit offline video generation; not part of the current release')
     parser.add_argument('--workers', type=int, default=3)
     args = parser.parse_args()
+    args.images_only = args.images_only or not args.with_video
     catalogs = json.loads(subprocess.check_output([args.php, str(ROOT / 'tools/export-support-guides.php')]))
     work = Path(tempfile.mkdtemp(prefix='clubunio-wiki-render-'))
     tasks = []
@@ -108,7 +111,7 @@ def main():
                 folder = work / locale / surface / key
                 folder.mkdir(parents=True)
                 slide(out / (key + '.png'), locale, surface, article)
-                for index, step in enumerate(article['steps']):
+                for index, step in enumerate([] if args.images_only else article['steps']):
                     slide(folder / f'{index}.png', locale, surface, article, (index, step))
                     text = (article['title'] + '. ' if index == 0 else '') + step['title'] + '. ' + step['body']
                     speech.append({'locale': locale, 'text': text, 'path': str(folder / f'{index}.wav')})

@@ -74,6 +74,7 @@ function clubunioSupportHelpChecks($app,$db,callable $expect):void
         foreach(['de','en'] as $language){
             $guides=$knowledge->articles($language,$surface);
             $expect(count($guides)>=$minimum,'all contextual guide topics available');
+            $expect(array_reduce($guides,fn($ok,$guide)=>$ok&&!array_intersect(['video_url','recording_url','captions_url','player_url'],array_keys($guide)),true),'video publication paused for all guide surfaces');
             $expect(array_reduce($guides,fn($ok,$guide)=>$ok&&count($guide['steps']??[])>=3&&($guide['surface']??null)===$surface,true),'contextual instructions have actionable steps');
         }
     }
