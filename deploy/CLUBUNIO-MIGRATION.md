@@ -1395,3 +1395,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Anonymer App-Einstieg Neue Mitgliedschaft nur noch in fest mandantengebundenen Custom Builds und bei ausdruecklicher Backendfreigabe sichtbar. Core blendet ihn aus; Anmeldung weiterer Kinder im angemeldeten Vereinskontext bleibt erhalten. Zwei Widgettests und gezielte Analyse erfolgreich; Mobile-Commit f9c278e synchronisiert, iPhone-Neubau erforderlich.
+
+
+23.11.2026: AdditiveMigration2026_11_23_000160_mobile_keybox_emergency aufDEV/Stage/PROD: verschluesselterNotfallcode, Fehler-/Offenlegungsmetadaten, failedTerminalstatus, partielleScopeUnique. PrivateDatei/Env/PG-Sicherungen vorAenderung, engerSourcepatch erhaelt Laufzeitabweichungen. Notfallflag nachMigration aktiviert; echteProvider-/PIN-Ausgabe bleibt geschlossen.50RollbackChecks jeInstanz, keineechtenProvider-/Hardwareaufrufe. Bericht/Rueckweg: CLUBUNIO-IGLOOHOME-APP.md.

@@ -9,5 +9,7 @@ final class MobileKeyboxRoutes {
         Route::get('keyboxes/{keybox}/codes/{command}',[MobileKeyboxController::class,'command'])->whereNumber('keybox')->whereUuid('command');
         Route::get('bus/reservations/{reservation}/keybox-codes',[MobileKeyboxController::class,'bus'])->whereNumber('reservation');
         Route::post('bus/reservations/{reservation}/keybox-codes',[MobileKeyboxController::class,'issueBus'])->whereNumber('reservation');
+        Route::post('keyboxes/{keybox}/emergency-code',[MobileKeyboxController::class,'emergency'])->whereNumber('keybox');
+        Route::post('bus/reservations/{reservation}/emergency-code',[MobileKeyboxController::class,'emergencyBus'])->whereNumber('reservation');
     }
 }

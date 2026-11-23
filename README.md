@@ -211,3 +211,6 @@ read-only; no migrations or production deployment.
 
 
 Elternlogins: [Altersabhaengige Freigabe und Profilverwaltung](deploy/CLUBUNIO-PARENT-ACCESS.md).
+
+
+Igloohome-App: [SVS-Abgleich, Notfallfunktion und Betriebsstand](deploy/CLUBUNIO-IGLOOHOME-APP.md).

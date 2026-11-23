@@ -142,3 +142,6 @@ Servicehook und entfernt lokale Ausgabe, ohne physischen Widerruf zu behaupten.
 5 neue persoenliche Flutterfaelle, mit Bus-/Legacy-/AuthApp-/Kontowechsel-
 regressionen29/29 gruen. Geschlossenes6Routen-/Flag-/Allowlistgate und PHP-Lint
 bestanden. Keine permanenten Schema-/Provider-/Hardware-/PINaktionen.
+
+
+Aktualisierung23.11.2026: NativeAnsicht/Verwaltung und sicherer Notfall-Unterbau auf DEV/Stage/PROD bereitgestellt. Original-SVS-Ablaufe Garderobe/Ballhaus/Bus abgeglichen. Je50PG-Pruefungen mitRollback+Fakeprovider gruen,21AppTests. RealeCredentials/Geraete-/Notfallzuordnung und Hardwarefreigabe bleiben offen. Historische Gateangaben oben sind durch den aktuellen Bericht ersetzt: CLUBUNIO-IGLOOHOME-APP.md.

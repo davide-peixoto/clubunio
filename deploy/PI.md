@@ -2829,3 +2829,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Anonymer App-Einstieg Neue Mitgliedschaft nur noch in fest mandantengebundenen Custom Builds und bei ausdruecklicher Backendfreigabe sichtbar. Core blendet ihn aus; Anmeldung weiterer Kinder im angemeldeten Vereinskontext bleibt erhalten. Zwei Widgettests und gezielte Analyse erfolgreich; Mobile-Commit f9c278e synchronisiert, iPhone-Neubau erforderlich.
+
+
+23.11.2026: Igloohome-Backendvollstaendigkeit und Authentifizierung geprueft; Notfallfunktion ergaenzt, beideAuditluecken behoben. Garderobe/Ballhaus7Tage, BusReservationsfenster+4h. Max60sOffenlegung nach3bestaetigten prePIN-Ausfaellen. DEV/Stage/PROD Migration160+Ansicht/Admin/Notfall bereit, Provider/Ausgabe weitergeschlossen bisrealeKonfiguration.50PGChecks jeInstanz,21FlutterTests,3051DEENSchluessel,2172MobileTexte/5Sprachen. NativeNeubau und echteBoxabnahme offen.

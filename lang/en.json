@@ -3044,5 +3044,10 @@
     "Event check-in is currently closed.": "Event check-in is currently closed.",
     "Complete event name and location before enabling check-in.": "Complete event name and location before enabling check-in.",
     "parent_access.verified_login_required": "The parent account must first sign in with a verified email. Access can then be granted.",
-    "parent_access.active_membership_required": "An active membership and a valid date of birth are required."
+    "parent_access.active_membership_required": "An active membership and a valid date of birth are required.",
+    "keybox.emergency_secret": "Emergency code (optional)",
+    "keybox.emergency_secret_help": "Leave blank to retain the encrypted code. Visible for at most 60 seconds after three confirmed provider outages. Hiding the code does not revoke the physical code.",
+    "keybox.emergency_rotation_confirmed": "I have changed the emergency code on the physical box",
+    "keybox.emergency_rotation_help": "Confirm only after changing the code on the physical box. Resolves physical revocation of old emergency codes; normal PINs must be reviewed separately.",
+    "keybox.emergency_rotation_requires_change": "Enter the new emergency code already changed on the physical box."
 }

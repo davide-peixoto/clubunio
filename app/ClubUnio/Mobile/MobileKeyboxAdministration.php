@@ -18,9 +18,13 @@ final class MobileKeyboxAdministration {
     }
     public function saveBox(Account $actor,Tenant $tenant,?int $id,array $input): MobileKeybox {
         $this->authorize($actor,$tenant);
-        abort_if(array_diff(array_keys($input),['name','provider_device_id','bus_id','active','revision','reason']),422);
+        abort_if(array_diff(array_keys($input),['name','provider_device_id','emergency_code','emergency_rotated','bus_id','active','revision','reason']),422);
         $d=Validator::make($input,['name'=>'required|string|max:160','provider_device_id'=>'nullable|string|max:120|regex:/^[a-zA-Z0-9_-]+$/D',
+            'emergency_code'=>'nullable|string|regex:/^[0-9]{4,16}$/D',
+            'emergency_rotated'=>'sometimes|boolean',
             'bus_id'=>'nullable|integer|min:1','active'=>'required|boolean','revision'=>'required|integer|min:0','reason'=>'required|string|min:10|max:500'])->validate();
+        abort_if(!empty($d['emergency_code'])&&!config('clubunio-mobile.keybox.emergency_enabled',false),503);
+        abort_if(!empty($d['emergency_rotated'])&&!config('clubunio-mobile.keybox.emergency_enabled',false),503);
         if(!$id&&empty($d['provider_device_id'])) throw ValidationException::withMessages(['provider_device_id'=>'Provider-Gerätezuordnung erforderlich.']);
         return DB::connection('clubunio')->transaction(function () use ($actor,$tenant,$id,$d) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail(); Account::whereKey($actor->id)->sharedLock()->firstOrFail(); $this->authorize($actor,$tenant);
@@ -35,10 +39,28 @@ final class MobileKeyboxAdministration {
             foreach(MobileKeybox::where('tenant_id',$tenant->id)->when($id,fn ($q)=>$q->where('id','<>',$id))->get() as $other) {
                 abort_if(hash_equals(Crypt::decryptString($other->provider_device_cipher),$device),409,'Dieses Providergerät hat bereits eine persönliche Boxzuordnung.');
             }
+            $rotated=!empty($d['emergency_rotated']);
+            if($rotated) {
+                $old=$id&&$row->emergency_code_cipher?Crypt::decryptString($row->emergency_code_cipher):null;
+                if(!$id||empty($d['emergency_code'])||$old===null||hash_equals($old,$d['emergency_code'])
+                    ||!hash_equals(Crypt::decryptString($row->provider_device_cipher),$device)) {
+                    throw ValidationException::withMessages(['emergency_rotated'=>__('keybox.emergency_rotation_requires_change')]);
+                }
+            }
             if($id) app(MobileKeyboxService::class)->invalidateBox($tenant,$id);
+            $emergency=[];
+            if(config('clubunio-mobile.keybox.emergency_enabled',false)) $emergency=['emergency_code_cipher'=>empty($d['emergency_code'])?$row->emergency_code_cipher:Crypt::encryptString($d['emergency_code'])];
             $row->forceFill(['tenant_id'=>$tenant->id,'name'=>trim($d['name']),'bus_id'=>$d['bus_id']??null,'active'=>$d['active'],
                 'provider_device_cipher'=>empty($d['provider_device_id'])?$row->provider_device_cipher:Crypt::encryptString($device),
-                'revision'=>$id?$row->revision+1:1])->save();
+                'revision'=>$id?$row->revision+1:1]+$emergency)->save();
+            if($rotated) {
+                // Operator explicitly confirms rotation on this unchanged physical device.
+                // This acknowledgement never clears uncertain/issued normal PIN evidence.
+                $confirmed=$this->table('mobile_keybox_commands')->where('tenant_id',$tenant->id)->where('keybox_id',$id)
+                    ->where('state','failed')->whereNotNull('emergency_exposed_at')->where('remote_revocation_state','required')
+                    ->update(['remote_revocation_state'=>'confirmed']);
+                $this->audit($actor,$tenant,(int)$id,'emergency_physical_rotation_confirmed',['revision'=>$row->revision,'confirmed_evidence'=>$confirmed,'reason'=>$d['reason']]);
+            }
             $this->audit($actor,$tenant,(int)$row->id,$id?'box_revised':'box_created',['revision'=>$row->revision,'active'=>$row->active,'reason'=>$d['reason']]);
             return $row->refresh();
         });

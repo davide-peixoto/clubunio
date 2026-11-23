@@ -12,6 +12,7 @@ foreach($approved as $slug=>$ids) {
 }
 return [
     'administration_enabled'=>$flag('CLUBUNIO_KEYBOX_ADMINISTRATION_ENABLED'),
+    'emergency_enabled'=>$flag('CLUBUNIO_KEYBOX_EMERGENCY_ENABLED'),
     'issuance_enabled'=>$flag('CLUBUNIO_KEYBOX_ISSUANCE_ENABLED'),
     'provider_enabled'=>$flag('CLUBUNIO_KEYBOX_PROVIDER_ENABLED'),
     'operations_reviewed'=>$flag('CLUBUNIO_KEYBOX_OPERATIONS_REVIEWED'),

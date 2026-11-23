@@ -27,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'operator_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation']);
+        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'operator_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation', 'emergency_code']);
         $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*'));
         $exceptions->render(function (\Throwable $error, Request $request) {
             if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*')) {

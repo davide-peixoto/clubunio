@@ -11,4 +11,6 @@ final class MobileKeyboxController implements \Illuminate\Routing\Controllers\Ha
     public function bus(Request $r) { return response()->json(['data'=>$this->service()->bus(...[...$this->args($r),(int)$r->route('reservation')])]); }
     public function issue(Request $r) { return response()->json(['data'=>$this->service()->prepare($r,(int)$r->route('keybox'),null)],202); }
     public function issueBus(Request $r) { return response()->json(['data'=>$this->service()->prepare($r,null,(int)$r->route('reservation'))],202); }
+    public function emergency(Request $r) { return response()->json(['data'=>$this->service()->emergency($r,(int)$r->route('keybox'),null)])->header('Cache-Control','private, no-store')->header('Pragma','no-cache'); }
+    public function emergencyBus(Request $r) { return response()->json(['data'=>$this->service()->emergency($r,null,(int)$r->route('reservation'))])->header('Cache-Control','private, no-store')->header('Pragma','no-cache'); }
 }

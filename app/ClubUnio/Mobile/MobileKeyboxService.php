@@ -31,11 +31,41 @@ final class MobileKeyboxService
             ||!config('clubunio-mobile.keybox.operations_reviewed',false)||!config('clubunio-mobile.keybox.offline_revocation_acknowledged',false)
             ||!in_array((int)$box->id,config('clubunio-mobile.keybox.approved_keybox_ids.'.$tenant->slug,[]),true)) return false;
         // A known offline PIN cannot be made invalid by deleting a database row.
-        if ($this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where(fn ($q)=>$q->where('remote_revocation_state','required')->orWhere('state','attention'))
-            ->where('valid_until','>',now()->toIso8601String())->exists()) return false;
+        if ($this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where(function($q) {
+            $q->where(fn($q)=>$q->where(fn($q)=>$q->where('remote_revocation_state','required')->orWhere('state','attention'))
+                ->where('valid_until','>',now()->toIso8601String()));
+            // A disclosed static emergency secret has no provider expiry. Local window expiry cannot revoke it.
+            if(config('clubunio-mobile.keybox.emergency_enabled',false)) $q->orWhere(fn($q)=>$q->where('remote_revocation_state','required')->whereNotNull('emergency_exposed_at'));
+        })->exists()) return false;
         try {
             app(MobileKeyboxProvider::class)->credentials($tenant);
             if ($checkStale) {
+                if(config('clubunio-mobile.keybox.emergency_enabled',false)) {
+                    $exposed=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)
+                        ->where('state','failed')->whereNotNull('emergency_exposed_at')->where('remote_revocation_state','<>','confirmed')->limit(1001)->get();
+                    if($exposed->count()>1000) return false;
+                    foreach($exposed as $row) {
+                        // Static physical authority is independent of login sessions and cosmetic profile revisions.
+                        $owner=Account::whereKey($row->account_id)->where('active',true)->where('api_only',false)->first();
+                        $authorized=false;
+                        try {
+                            if($owner) {
+                                if($row->reservation_id) {
+                                    app(MobileAccess::class)->enter($owner,$tenant);
+                                    [$reservation,$inspection,$freshBox]=$this->reservation($owner,$tenant,(int)$row->reservation_id);
+                                    $authorized=$inspection['inWindow']&&$freshBox&&(int)$freshBox->id===(int)$box->id;
+                                } else $authorized=$this->allowed($owner,$tenant,$box);
+                            }
+                        } catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $error) {
+                            if(!in_array($error->getStatusCode(),[403,404],true)) throw $error;
+                            $authorized=false;
+                        } catch(\Illuminate\Database\Eloquent\ModelNotFoundException) { $authorized=false; }
+                        if(!$authorized) {
+                            $this->table('commands')->where('id',$row->id)->update(['invalidated_at'=>now()->toIso8601String(),'remote_revocation_state'=>'required']);
+                            return false;
+                        }
+                    }
+                }
                 $issued=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('state','issued')
                     ->where('valid_until','>',now()->toIso8601String())->limit(1001)->get();
                 if ($issued->count()>1000) return false;
@@ -99,7 +129,7 @@ final class MobileKeyboxService
         if (!$box) return $data;
         $data['keyboxId']=(int)$box->id; $data['keyboxRevision']=(int)$box->revision;
         $row=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('reservation_id',$id)->where('account_id',$actor->id)
-            ->whereIn('state',['held','issuing','issued','attention'])->orderByDesc('created_at')->first();
+            ->whereIn('state',config('clubunio-mobile.keybox.emergency_enabled',false)?['held','issuing','issued','attention','failed']:['held','issuing','issued','attention'])->orderByDesc('created_at')->first();
         if ($row) $data=array_replace($data,$this->result($actor,$tenant,$box,$row,$reservation));
         return $data;
     }
@@ -131,7 +161,7 @@ final class MobileKeyboxService
             abort_unless((int)$box->revision===(int)$d['keybox_revision'],409);
             abort_unless($until->diffInHours($from,true)<=672&&$this->operational($tenant,$box),503);
             $snapshot=$this->snapshot($actor,$tenant,$box,$reservation,$from,$until);
-            $fingerprint=hash('sha256',json_encode([$box->id,$snapshot['box_revision'],$snapshot['device_sha256'],$reservationId,
+            $fingerprint=hash('sha256',json_encode([$actor->id,$box->id,$snapshot['box_revision'],$snapshot['device_sha256'],$reservationId,
                 $snapshot['reservation_revision'],$snapshot['from'],$snapshot['until']],JSON_THROW_ON_ERROR));
             $old=$this->table('commands')->where('tenant_id',$tenant->id)->where('account_id',$actor->id)->where('request_key',$d['request_key'])->first();
             if ($old) { abort_unless((int)$old->keybox_id===(int)$box->id&&(int)$old->keybox_revision===(int)$d['keybox_revision']
@@ -139,7 +169,8 @@ final class MobileKeyboxService
                 &&($reservationId===null||(int)$old->reservation_revision===(int)$d['reservation_revision']),409); return $this->result($actor,$tenant,$box,$old,$reservation); }
             $rate='mobile-keybox:'.$tenant->id.':'.$actor->id; abort_if(RateLimiter::tooManyAttempts($rate,5),429); RateLimiter::hit($rate,3600);
             // Do not create another physical code for an uncertain or current same window.
-            $old=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('scope_key',$fingerprint)->first();
+            $old=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('scope_key',$fingerprint)
+                ->when(config('clubunio-mobile.keybox.emergency_enabled',false),fn($q)=>$q->where('state','<>','failed'))->first();
             if ($old) { abort_unless((int)$old->account_id===(int)$actor->id,409); return $this->result($actor,$tenant,$box,$old,$reservation); }
             abort_if($this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->whereIn('state',['held','issuing'])
                 ->where('valid_until','>',now()->toIso8601String())->exists(),409);
@@ -159,6 +190,7 @@ final class MobileKeyboxService
     private function current(Account $actor,Tenant $tenant,object $box,object $row,?object $reservation=null): bool
     {
         try {
+            if($row->invalidated_at!==null) return false;
             if (!config('clubunio-mobile.native_keybox_enabled',false)||!$this->operational($tenant,$box,false)) return false;
             if ($row->reservation_id) { [$reservation,$inspection,$freshBox]=$this->reservation($actor,$tenant,(int)$row->reservation_id); if (!$inspection['inWindow']||!$freshBox||(int)$freshBox->id!==(int)$box->id) return false; }
             elseif (!$this->allowed($actor,$tenant,$box)) return false;
@@ -175,6 +207,10 @@ final class MobileKeyboxService
         if ($row->state==='issued'&&Time::parse($row->valid_until)->isFuture()&&$this->current($actor,$tenant,$box,$row,$reservation)) {
             $pin=json_decode(Crypt::decryptString($row->pin_encrypted),true,8,JSON_THROW_ON_ERROR); $data+=['pin'=>$pin['pin'],'pinId'=>$pin['pinId']];
         } elseif ($row->state==='issued') { $data['state']='invalidated'; }
+        if($row->state==='failed'&&config('clubunio-mobile.keybox.emergency_enabled',false)) {
+            $data['providerFailure']=($row->failure_kind??null)==='oauth_unavailable';
+            $data['emergencyAvailable']=$data['providerFailure']&&$this->emergencyReady($actor,$tenant,$box,$row,$reservation);
+        }
         return $data;
     }
     public function command(Account $actor,Tenant $tenant,int $boxId,string $id): array
@@ -207,6 +243,17 @@ final class MobileKeyboxService
                 if ($fresh->state!=='issuing'||!$this->operational($tenant,$box)||!$this->current($actor,$tenant,$box,$fresh)) { $this->invalidateRows([$row->id],true); return; }
                 $this->table('commands')->where('id',$row->id)->update(['state'=>'issued','pin_encrypted'=>Crypt::encryptString(json_encode($pin,JSON_THROW_ON_ERROR))]);
             });
+        } catch (MobileKeyboxPrePinFailure $error) {
+            // The provider guarantees that no PIN endpoint has been called.
+            // Retain the failed request UUID permanently; only a new explicit UUID may retry.
+            try {
+                $saved=json_decode(Crypt::decryptString($row->snapshot_encrypted),true,32,JSON_THROW_ON_ERROR);
+                $scope=hash('sha256',json_encode([$row->tenant_id,$row->keybox_id,$row->account_id,$row->reservation_id,$saved],JSON_THROW_ON_ERROR));
+                $this->table('commands')->where('id',$id)->where('state','issuing')->update(['state'=>'failed','pin_encrypted'=>null,
+                    'failure_kind'=>$error->availabilityFailure?'oauth_unavailable':'oauth_rejected','failure_scope'=>$scope,'failed_at'=>now()->toIso8601String()]);
+            } catch (\Throwable) {
+                $this->table('commands')->where('id',$id)->where('state','issuing')->update(['state'=>'attention','pin_encrypted'=>null]);
+            }
         } catch (\Throwable) {
             $this->table('commands')->where('id',$id)->where('state','issuing')->update(['state'=>'attention','pin_encrypted'=>null]);
             // No exception/response/credential/PIN logging and no automatic retry.
@@ -214,8 +261,67 @@ final class MobileKeyboxService
     }
     private function invalidateRows(array $ids,bool $physical): void
     {
-        $this->table('commands')->whereIn('id',$ids)->update(['state'=>'invalidated','pin_encrypted'=>null,'invalidated_at'=>now()->toIso8601String(),
+        if(config('clubunio-mobile.keybox.emergency_enabled',false)) {
+            $failed=$this->table('commands')->whereIn('id',$ids)->where('state','failed')->where('remote_revocation_state','<>','confirmed');
+            (clone $failed)->whereNull('emergency_exposed_at')->update(['invalidated_at'=>now()->toIso8601String(),'remote_revocation_state'=>'not_available']);
+            (clone $failed)->whereNotNull('emergency_exposed_at')->update(['invalidated_at'=>now()->toIso8601String(),'remote_revocation_state'=>'required']);
+        }
+        $this->table('commands')->whereIn('id',$ids)->where('state','<>','failed')->update(['state'=>'invalidated','pin_encrypted'=>null,'invalidated_at'=>now()->toIso8601String(),
             'remote_revocation_state'=>$physical?'required':'not_available']);
+    }
+
+    private function emergencyReady(Account $actor,Tenant $tenant,object $box,object $row,?object $reservation=null): bool
+    {
+        if(!config('clubunio-mobile.keybox.emergency_enabled',false)||empty($box->emergency_code_cipher)
+            ||$row->state!=='failed'||($row->failure_kind??null)!=='oauth_unavailable'||empty($row->failure_scope)
+            ||!Time::parse($row->valid_until)->isFuture()||!$this->current($actor,$tenant,$box,$row,$reservation)) return false;
+        $failed=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('account_id',$actor->id)
+            ->where('failure_scope',$row->failure_scope)->where('state','failed')->where('failure_kind','oauth_unavailable')->whereNull('invalidated_at')->get();
+        if($failed->count()<3) return false;
+        $exposed=$failed->whereNotNull('emergency_exposed_at')->min('emergency_exposed_at');
+        return !$exposed||Time::parse($exposed)->addSeconds(60)->isFuture();
+    }
+
+    /** Explicit transient disclosure; no GET or normal command ever contains the emergency secret. */
+    public function emergency(Request $request,?int $boxId,?int $reservationId): array
+    {
+        abort_unless(config('clubunio-mobile.keybox.emergency_enabled',false),503);
+        abort_if(array_diff(array_keys($request->all()),['keybox_revision','reservation_revision']),422);
+        $d=$request->validate(['keybox_revision'=>'required|integer|min:1','reservation_revision'=>$reservationId?'required|integer|min:1':'prohibited']);
+        $tenant=$request->attributes->get('mobile.tenant'); $session=$request->attributes->get('mobile.session');
+        return DB::connection('clubunio')->transaction(function() use($request,$tenant,$session,$d,$boxId,$reservationId) {
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$session->id)->sharedLock()->firstOrFail();
+            $actor=app(MobileSessions::class)->authenticate($request); app(MobileAccess::class)->enter($actor,$tenant);
+            $reservation=null; $windowEnd=null;
+            if($reservationId) {
+                [$reservation,$inspection,$box]=$this->reservation($actor,$tenant,$reservationId);
+                abort_unless($box&&$inspection['inWindow'],409);
+                abort_unless((int)$reservation->revision===(int)$d['reservation_revision'],409); $windowEnd=$inspection['until'];
+            } else $box=$this->box($actor,$tenant,$boxId);
+            abort_unless((int)$box->revision===(int)$d['keybox_revision'],409);
+            $rate='mobile-keybox-emergency:'.$tenant->id.':'.$actor->id;
+            abort_if(RateLimiter::tooManyAttempts($rate,10),429); RateLimiter::hit($rate,60);
+            $row=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('account_id',$actor->id)
+                ->when($reservationId!==null,fn($q)=>$q->where('reservation_id',$reservationId),fn($q)=>$q->whereNull('reservation_id'))
+                ->where('state','failed')->where('failure_kind','oauth_unavailable')->whereNull('invalidated_at')->orderByDesc('failed_at')->lockForUpdate()->first();
+            abort_unless($row&&$this->emergencyReady($actor,$tenant,$box,$row,$reservation),409);
+            $group=$this->table('commands')->where('tenant_id',$tenant->id)->where('keybox_id',$box->id)->where('account_id',$actor->id)
+                ->where('failure_scope',$row->failure_scope)->where('state','failed');
+            $first=(clone $group)->whereNotNull('emergency_exposed_at')->min('emergency_exposed_at');
+            $exposed=$first?Time::parse($first):Time::now();
+            $until=$exposed->addSeconds(60)->min(Time::parse($row->valid_until));
+            if($windowEnd) $until=$until->min($windowEnd);
+            $seconds=(int)floor(Time::now()->diffInSeconds($until,false)); abort_unless($seconds>0&&$seconds<=60,409);
+            try { $code=Crypt::decryptString($box->emergency_code_cipher); } catch(\Throwable) { abort(503); }
+            abort_unless(preg_match('/^[0-9]{4,16}$/D',$code),503);
+            if(!$first) {
+                $group->update(['emergency_exposed_at'=>$exposed->toIso8601String()]);
+                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,
+                    'object_type'=>'mobile_keybox','object_id'=>$box->id,'after_value'=>json_encode(['action'=>'emergency_disclosed','reservation_id'=>$reservationId,'expires_at'=>$until->toIso8601String()],JSON_THROW_ON_ERROR)]);
+            }
+            return ['emergencyCode'=>$code,'emergencySeconds'=>$seconds,'emergencyExpiresAt'=>$until->toIso8601String()];
+        });
     }
     /** Administrative box/grant changes run inside the same tenant-locked transaction. */
     public function invalidateBox(Tenant $tenant,int $keybox,?int $account=null): void
