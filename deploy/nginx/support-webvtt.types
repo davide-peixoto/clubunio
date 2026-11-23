@@ -1,0 +1,2 @@
+# Merge inside the existing nginx types block; do not replace other mappings.
+text/vtt vtt;

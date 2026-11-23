@@ -28,3 +28,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Generated public training media; rebuild from authored catalogs.
+/public/support-media/

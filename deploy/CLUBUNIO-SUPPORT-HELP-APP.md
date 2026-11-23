@@ -54,3 +54,11 @@ Bestehender Gmail-Zugang liefert auf Stage und PROD jeweils 18 Hilfethemen.
 /up jeweils HTTP200, Support-API ohne Anmeldung jeweils HTTP401.
 15 Fluttertests erfolgreich; gezielte Analyse sauber; 2172 Texte in fünf
 lokalen App-Katalogen vollständig. Echter Geräte-Smoke-Test nach App-Neubau offen.
+
+
+## Wiki für App und Web – 23.11.2026
+
+25 App- und44 Web-Anleitungen jeweils DE/EN, Schritte/Bilder,138 vertonte
+Schrittvideos mit Untertiteln; zusätzlich echte Android-Beispiele für vier Module.
+DEV/Stage/PROD mit87 Live-Prüfungen je Umgebung aktualisiert. Native Anzeige
+erfordert neuen App-Build. [Inhalt, Medien, Pflege und Abnahme](CLUBUNIO-WIKI.md).

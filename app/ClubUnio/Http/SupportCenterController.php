@@ -176,7 +176,7 @@ final class SupportCenterController
             return $request->expectsJson() ? response()->json(['data' => ['id' => $id]], 201)
                 : redirect()->to($request->url().($id ? '?ticket='.$id : ''));
         }
-        $d = $request->validate(['ticket' => 'nullable|uuid', 'q' => 'nullable|string|max:120']
+        $d = $request->validate(['ticket' => 'nullable|uuid', 'q' => 'nullable|string|max:120', 'surface' => 'nullable|in:app,web']
             + ($platformWeb ? ['tab' => 'nullable|in:tickets,knowledge,assistant'] : []));
         $tab = $platformWeb ? ($d['tab'] ?? 'tickets') : null;
         $filters = $tab === 'tickets' ? $this->inboxFilters($request) : [];
@@ -185,7 +185,8 @@ final class SupportCenterController
                 ->when(filled($d['q'] ?? null), fn ($q) => $q->where(fn($match)=>$match->whereLike('title', '%'.$d['q'].'%')->orWhereLike('body', '%'.$d['q'].'%')))
                 ->orderBy('title')->limit(40)->get(['id','title','body','video_url'])
             : collect();
-        $faq = app(\App\ClubUnio\Services\SupportGuide::class)->faq($locale,$d['q']??null);
+        $surface = $d['surface'] ?? ($request->attributes->has('mobile.actor') ? 'app' : 'web');
+        $faq = app(\App\ClubUnio\Services\SupportKnowledge::class)->articles($locale, $surface, $d['q'] ?? null);
         $rows = collect();
         $posts = collect();
         $updates = collect();
@@ -216,7 +217,7 @@ final class SupportCenterController
                 }
             }
         }
-        $data = compact('articles','rows','posts','selected','staff','platform','club','updates','faq');
+        $data = compact('articles','rows','posts','selected','staff','platform','club','updates','faq','surface');
         if ($staff || $platform) {
             $data['triage'] = $selected && config('clubunio-support.triage_enabled')
                 ? $db->table('clubora.support_triage')->where('ticket_id', $selected->id)->first(['topic','draft','provider_generated']) : null;

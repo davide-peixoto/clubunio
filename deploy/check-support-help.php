@@ -25,13 +25,14 @@ function clubunioSupportHelpChecks($app,$db,callable $expect):void
     $db->table('clubora.account_member_links')->insert(['tenant_id'=>$tenant->id,'account_id'=>$member->id,'member_id'=>$person->id,'kind'=>'self','state'=>'approved','source'=>'synthetic_support']);
     $controller=app(App\ClubUnio\Http\SupportCenterController::class);
     $call=function(string $method,array $data=[],?object $actor=null,?int $club=null,bool $mobile=true)use($app,$controller){
+        $data += ['surface'=>'app'];
         $r=Illuminate\Http\Request::create(config('app.url').'/api/mobile/v1/support',$method,$data,[],[],['HTTP_ACCEPT'=>'application/json']);
         if($mobile&&$actor)$r->attributes->set('mobile.actor',$actor);
         $app->instance('request',$r);$r->setUserResolver(fn($guard=null)=>$actor);
         return json_decode($controller($r,$club)->getContent(),true,512,JSON_THROW_ON_ERROR)['data'];
     };
     $app->setLocale('en');$empty=$call('GET');
-    $expect(count($empty['faq'])===18,'curated public FAQ available without tenant or seeded DB articles');
+    $expect(count($empty['faq'])>=18,'curated public help available without tenant or seeded DB articles');
     $expect(!isset($empty['editableArticles'])&&!isset($empty['assignees']),'anonymous help exposes no editor or account options');
     $rows=[];
     foreach([['public',null,true,'en'],['club',$tenant->id,true,'en'],['club_staff',$tenant->id,true,'en'],
@@ -44,9 +45,9 @@ function clubunioSupportHelpChecks($app,$db,callable $expect):void
     $expected=[$rows[0],$rows[1]];sort($expected);$expect($visible===$expected,'member body search never leaks staff foreign draft or platform articles');
     $office=$call('GET',['q'=>$needle],$staff,$tenant->id);$visible=array_column($office['articles'],'id');sort($visible);
     $expected=[$rows[0],$rows[1],$rows[2]];sort($expected);$expect($visible===$expected,'staff body search remains within allowed audience and tenant');
-    $mobile=$call('GET',[],$staff,$tenant->id);$expect($mobile['faq']['profile']['title']===$guide->faq('en')['profile']['title'],'mobile help uses current app locale over web account preference');
+    $mobile=$call('GET',[],$staff,$tenant->id);$expect($mobile['faq']['profile']['title']===app(App\ClubUnio\Services\SupportKnowledge::class)->articles('en','app')['profile']['title'],'mobile help uses current app locale over web account preference');
     $web=$call('GET',['q'=>$needle],$staff,$tenant->id,false);$expect(array_column($web['articles'],'id')===[$rows[6]],'web help retains preferred account locale');
-    $webFaq=$call('GET',[],$staff,$tenant->id,false);$expect($webFaq['faq']['profile']['title']===$guide->faq('de')['profile']['title'],'web FAQ uses same locale as web DB articles');
+    $webFaq=$call('GET',[],$staff,$tenant->id,false);$expect($webFaq['faq']['profile']['title']===app(App\ClubUnio\Services\SupportKnowledge::class)->articles('de','app')['profile']['title'],'web FAQ uses same locale as web DB articles');
     $searched=$call('GET',['q'=>'recovery code'],$member,$tenant->id);$expect(isset($searched['faq']['login'])&&!isset($searched['faq']['profile']),'API FAQ search filters body consistently');
     $missing=$call('GET',['q'=>'unmatched-'.$suffix],$member,$tenant->id);$expect($missing['articles']===[]&&$missing['faq']===[],'unmatched search returns a genuine empty result');
     $denied=function(callable $action,int $status)use($expect){
@@ -68,6 +69,19 @@ function clubunioSupportHelpChecks($app,$db,callable $expect):void
     $expect($triage->topic==='wallet'&&$triage->draft===$guide->faq('en')['wallet']['body']&&!(bool)$triage->provider_generated,'triage uses actual new topic instead of expense fallback');
     $expect(Illuminate\Support\Facades\Http::recorded()->count()===1,'new help and triage add no provider costs');
     foreach(Illuminate\Support\Facades\Http::recorded() as [$request])$expect(!str_contains($request->body(),'private-marker')&&!str_contains($request->body(),$needle)&&$request['store']===false,'provider receives only curated public article');
+    $knowledge=app(App\ClubUnio\Services\SupportKnowledge::class);
+    foreach(['app'=>25,'web'=>44] as $surface=>$minimum){
+        foreach(['de','en'] as $language){
+            $guides=$knowledge->articles($language,$surface);
+            $expect(count($guides)>=$minimum,'all contextual guide topics available');
+            $expect(array_reduce($guides,fn($ok,$guide)=>$ok&&count($guide['steps']??[])>=3&&($guide['surface']??null)===$surface,true),'contextual instructions have actionable steps');
+        }
+    }
+    $mobileDefault=$call('GET',['surface'=>null],$staff,$tenant->id);
+    $webDefault=$call('GET',['surface'=>null],$staff,$tenant->id,false);
+    $expect($mobileDefault['surface']==='app'&&count($mobileDefault['faq'])>=25,'mobile defaults to app instructions');
+    $expect($webDefault['surface']==='web'&&count($webDefault['faq'])>=44,'web defaults to administration instructions');
+    $denied(fn()=> $call('GET',['surface'=>'../../private'],$member,$tenant->id),422);
     $expect(Illuminate\Support\Facades\Mail::sent(Illuminate\Mail\Mailable::class)->isEmpty()&&Illuminate\Support\Facades\Mail::queued(Illuminate\Mail\Mailable::class)->isEmpty(),'no outgoing mail');
     $expect(Illuminate\Support\Facades\Queue::pushedJobs()===[],'no queued delivery');
 }

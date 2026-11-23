@@ -1,0 +1,1345 @@
+{
+  "format": 1,
+  "guides": [
+    {
+      "source_sha256": "a1c96093ef771c202867a74b0b2d60d41f6ba9b5e3ee730b09ed70d259730daa",
+      "locale": "de",
+      "surface": "app",
+      "topic": "login",
+      "seconds": 59.88,
+      "kind": "narrated_step_slides",
+      "sha256": "0596a85a1895afb92adade442ae2f4c181ff7780e4ec987e8ebb48a8efd4da3a"
+    },
+    {
+      "source_sha256": "0e2e75d9b755322c28556e20a45038974749f3b4ebc9c951e2b54c6b3301700e",
+      "locale": "de",
+      "surface": "app",
+      "topic": "expense",
+      "seconds": 60.9,
+      "kind": "narrated_step_slides",
+      "sha256": "9f7fd4ce789e91cd7d9d17934d84b64fb2b61b7e31f8d051718a91994d4a55d3"
+    },
+    {
+      "source_sha256": "1636876a6f452d3b935a3caa63502a9a704b1ee26d29bc7d791d846880a01574",
+      "locale": "de",
+      "surface": "app",
+      "topic": "profile",
+      "seconds": 55.54,
+      "kind": "narrated_step_slides",
+      "sha256": "5d1967a700b78341cf42cba00cab706f4e68e8fba4fdd03e1ce12db6778ff79e"
+    },
+    {
+      "source_sha256": "83719d95a5ae374f52d83da7a588d29590af7d05115b0614b03903b8c38bcaa5",
+      "locale": "de",
+      "surface": "app",
+      "topic": "tenants",
+      "seconds": 50.89,
+      "kind": "narrated_step_slides",
+      "sha256": "21c6439dd526ee2d0765edede5faa9e334a415201697573777485493c6c2eac2"
+    },
+    {
+      "source_sha256": "7cd3b7de473dc286c3f136130ebb086a5378705744dae11776077d48a0b5e5e8",
+      "locale": "de",
+      "surface": "app",
+      "topic": "chat",
+      "seconds": 88.46,
+      "kind": "narrated_step_slides",
+      "sha256": "5607c49fe1dc0417854a6b07b4b343b572d7b9c42a36186fd06b5b6149f47daf"
+    },
+    {
+      "source_sha256": "d718cb574273a2f914c46b5b643cb36bcea8e40a5fe32c0ec8cab1dde1e72be3",
+      "locale": "de",
+      "surface": "app",
+      "topic": "translation",
+      "seconds": 57.98,
+      "kind": "narrated_step_slides",
+      "sha256": "60730f2b04062addb4497b246883c01487d79258c0865d704e999ec56521f92d"
+    },
+    {
+      "source_sha256": "71ec7564442c2be1f59d8d26b0ebe1bd12c0775a138bb6bc8d5e1399cc67b1bf",
+      "locale": "de",
+      "surface": "app",
+      "topic": "planning",
+      "seconds": 55.35,
+      "kind": "narrated_step_slides",
+      "sha256": "81e206f83825e3effc7476c3b1128f33ffe0b719b9a2a89418b151ab40429281"
+    },
+    {
+      "source_sha256": "19e0e6b0dfd2a635ada2919d86395668c1ba4b7548d41daf491334b21f7d21e0",
+      "locale": "de",
+      "surface": "app",
+      "topic": "teams",
+      "seconds": 54.26,
+      "kind": "narrated_step_slides",
+      "sha256": "7303392f70b9a118801c0d1f950ac325863bbfec57f429a077d27ba903cee316"
+    },
+    {
+      "source_sha256": "feb8e95efab360f33f42f76032ba4548c48249abf7b514fd80c13a24cfab6aa3",
+      "locale": "de",
+      "surface": "app",
+      "topic": "members",
+      "seconds": 60.55,
+      "kind": "narrated_step_slides",
+      "sha256": "46fd81d166401daddd92914aced3d2e5a83c973cb4222fd1be65e5b2f8dd203d"
+    },
+    {
+      "source_sha256": "f2de4d182a3f93b804ddb27d3d764be75559f5c96b3a7d7cbc01563d9fda6ae5",
+      "locale": "de",
+      "surface": "app",
+      "topic": "membership",
+      "seconds": 74.0,
+      "kind": "narrated_step_slides",
+      "sha256": "4d962c761451b38a92b9067ac5637266ff1881615300d81661e0d6c7d634a144"
+    },
+    {
+      "source_sha256": "b5f1ae922b3b178a5e0e4c3ae1392016d11f8e5369aa1140b4b16f90a6400b68",
+      "locale": "de",
+      "surface": "app",
+      "topic": "wallet",
+      "seconds": 56.42,
+      "kind": "narrated_step_slides",
+      "sha256": "7281a1dcbcf5cf1ffdb857daeb11105f3df3103e26e14ab38791b7b59da69db8"
+    },
+    {
+      "source_sha256": "3d5b835b8f06435f334e8a5200cc10bf4df80588a65531dc3612efc432d4dfec",
+      "locale": "de",
+      "surface": "app",
+      "topic": "events",
+      "seconds": 50.26,
+      "kind": "narrated_step_slides",
+      "sha256": "05115ee7bf750a4a5d4ad3cc5d5a2c44c3755d20b5cd2d3c631e14a822f72990"
+    },
+    {
+      "source_sha256": "68cfa9cb8c324d8830950f099c7c65fe2c937fcd5d71972a332a5ce63f176853",
+      "locale": "de",
+      "surface": "app",
+      "topic": "reservations",
+      "seconds": 58.55,
+      "kind": "narrated_step_slides",
+      "sha256": "6402a62573e5cae7b1f1cc47a9e748d9f75d23c5697937bd470702b1e885af5d"
+    },
+    {
+      "source_sha256": "f1dd283bc682770bde9c8504e9ed0aafbe8213c587dd1d4ae3f0de88c9f2bc49",
+      "locale": "de",
+      "surface": "app",
+      "topic": "documents",
+      "seconds": 47.84,
+      "kind": "narrated_step_slides",
+      "sha256": "8b7bb6acc457804ac96b23f69a88c4d4ad45edc542f82b468347ebe5e65382a5"
+    },
+    {
+      "source_sha256": "854fb4e08317cc71e97269b6b62fe8b638c6f794769ccdb91f452e1c39198c9e",
+      "locale": "de",
+      "surface": "app",
+      "topic": "keyboxes",
+      "seconds": 60.8,
+      "kind": "narrated_step_slides",
+      "sha256": "74dae22ae73dcf495defd3a743a554169734b12cfec1e90c03e1702aced05610"
+    },
+    {
+      "source_sha256": "082bc87d5325d9958df74928472a18ecc39700108d932a94c6cb7a17a01a7e86",
+      "locale": "de",
+      "surface": "app",
+      "topic": "notifications",
+      "seconds": 48.83,
+      "kind": "narrated_step_slides",
+      "sha256": "83939fb120b90a3adb233b63877d370782ca8a9256c7fd6862e5375c13316cf4"
+    },
+    {
+      "source_sha256": "8586bb574fdd1fcd01b743d3f81f7ecd5ac16fc5c0a5536ffbd86d36b3bf97f2",
+      "locale": "de",
+      "surface": "app",
+      "topic": "push",
+      "seconds": 53.55,
+      "kind": "narrated_step_slides",
+      "sha256": "42c7021c4e5039800f3ab1c143443ea331d6c15f271a62a41726163be3d72595"
+    },
+    {
+      "source_sha256": "471ef7d9af87c025056df4e5d681be5a9cbd609712e324378e14aef25407d11b",
+      "locale": "de",
+      "surface": "app",
+      "topic": "diagnostics",
+      "seconds": 61.52,
+      "kind": "narrated_step_slides",
+      "sha256": "ffc36c26f7b0def8c7fa7891c5a3c1bf4e7ca4d534ea30cee6169a2a12301426"
+    },
+    {
+      "source_sha256": "d6331a7d8833aedd6eed281941f6692f26ea1a3242aa3ef5950e71561509af74",
+      "locale": "de",
+      "surface": "web",
+      "topic": "login",
+      "seconds": 47.92,
+      "kind": "narrated_step_slides",
+      "sha256": "8357f70c406d1894e8a650d5a7892dc4f37e7377c44abb6d7b0f396fdd5fe122"
+    },
+    {
+      "source_sha256": "5d2011d2ac38528bfc4523e18f2ca5b53ed1354d90634da5f41085b5d9247157",
+      "locale": "de",
+      "surface": "web",
+      "topic": "expense",
+      "seconds": 54.44,
+      "kind": "narrated_step_slides",
+      "sha256": "a4e13dc217d948f147232c8183d21a29e42aa06747ace3fb1bb1e07feb80ed28"
+    },
+    {
+      "source_sha256": "7fb6423866dda96f1f3cec154e33b99a17f839f531d79f3760739216520c8b9c",
+      "locale": "de",
+      "surface": "web",
+      "topic": "profile",
+      "seconds": 50.18,
+      "kind": "narrated_step_slides",
+      "sha256": "a3a340aedc1cab8da1c29f6afffd40dd13126f260cca58ac96a2695b505ab192"
+    },
+    {
+      "source_sha256": "5f00d769d2257cb57514e5a2713ff9da122440e5939db6536fcff861b2837635",
+      "locale": "de",
+      "surface": "web",
+      "topic": "tenants",
+      "seconds": 47.13,
+      "kind": "narrated_step_slides",
+      "sha256": "f43ceb4ba4e5b6f49c29fd3101e4de50656ed588ca8cde98ff80132f8731e6b3"
+    },
+    {
+      "source_sha256": "7fd2a516075c6ce590f46be8f7ad89b5c064b85d28a50402876bfba185d900b0",
+      "locale": "de",
+      "surface": "web",
+      "topic": "chat",
+      "seconds": 54.66,
+      "kind": "narrated_step_slides",
+      "sha256": "5e8c6583a3afc580c013ccd9b0006ea81af2f88369d61313bdcbba2be7ca3368"
+    },
+    {
+      "source_sha256": "349ebf5faa1be3702ae15b82408f800415fbeba3e4d216378170c2ae7bb1f653",
+      "locale": "de",
+      "surface": "web",
+      "topic": "translation",
+      "seconds": 49.18,
+      "kind": "narrated_step_slides",
+      "sha256": "1e9ce682e168beace074c0d2c6e2fe6ee9dc52d2c1a7d58fcb2dd30074e0b4a0"
+    },
+    {
+      "source_sha256": "3b72ab66275876f8e118e335eb165dc388ab5c451a2acdc722523f88309db696",
+      "locale": "de",
+      "surface": "web",
+      "topic": "planning",
+      "seconds": 49.38,
+      "kind": "narrated_step_slides",
+      "sha256": "d290e9b28ca978be31f38a77cad66724cca97765e390122306f36975ef7fffa8"
+    },
+    {
+      "source_sha256": "7681261dc09b136a1d2541b1593530e0ab4386a623fc8caf14b82e38d7fd1846",
+      "locale": "de",
+      "surface": "web",
+      "topic": "teams",
+      "seconds": 46.18,
+      "kind": "narrated_step_slides",
+      "sha256": "8f2d4785a5b18d7c2fc4a7ce6efa84aa8631f33924af90121f1127bfdd901d01"
+    },
+    {
+      "source_sha256": "d3e06c56d1703eded59b3e0905e8e89ecf9fb804b9a35080033a58fa8dd3ce79",
+      "locale": "de",
+      "surface": "web",
+      "topic": "members",
+      "seconds": 54.01,
+      "kind": "narrated_step_slides",
+      "sha256": "a25e815a941e49d57b8c637fa6e50a6437ff58dc9909fedbeabf205d0ffe0854"
+    },
+    {
+      "source_sha256": "64e4aa4dfedcdf5d7a2e381e325536ee262def9afbbcedd996465a3149d81881",
+      "locale": "de",
+      "surface": "web",
+      "topic": "membership",
+      "seconds": 50.84,
+      "kind": "narrated_step_slides",
+      "sha256": "a1a1f4549bfdc2f3f66e0bc03acc310ec89159cf41745f67d437ff6966c27d92"
+    },
+    {
+      "source_sha256": "c0d27edc59cecc16fa9bb5a88ec4ebe7c04b53cbe0881a809d3d4728b1acb087",
+      "locale": "de",
+      "surface": "web",
+      "topic": "wallet",
+      "seconds": 50.68,
+      "kind": "narrated_step_slides",
+      "sha256": "3e7a93788479ccdc3cebc5c872edf26e324e8aab8a9b50972c6b4282bc88b002"
+    },
+    {
+      "source_sha256": "9497293a3061630454c03a78f3207c509a9926ad4125029c58c76dd97bbd7426",
+      "locale": "de",
+      "surface": "web",
+      "topic": "events",
+      "seconds": 50.76,
+      "kind": "narrated_step_slides",
+      "sha256": "0a50a221dec92ef8db49c28b8ad4c56cefdbba26eb0b435da70d06bfa1135a7f"
+    },
+    {
+      "source_sha256": "c3e4a6b8af8daddcb647e3bab3ec3720e7a46be62cdd8ba2091a8ed444fbe4ab",
+      "locale": "de",
+      "surface": "web",
+      "topic": "reservations",
+      "seconds": 55.65,
+      "kind": "narrated_step_slides",
+      "sha256": "9eb86c18b46d3df12c1925bfabc92d97e42269b4fbfe34a9ce56c5018f92f393"
+    },
+    {
+      "source_sha256": "fe3e408155a8a31b16414ef54b94cba8625fd458c1efcb97d164ea6b20f32263",
+      "locale": "de",
+      "surface": "web",
+      "topic": "documents",
+      "seconds": 50.32,
+      "kind": "narrated_step_slides",
+      "sha256": "406047b17a9c7e94e58bdabfd0b1bcfb62a22756d5a230cd0b2117ba697ea960"
+    },
+    {
+      "source_sha256": "a4637b8f9dff0b7bb47ba6de658ef58abe1cb49473510d54e88eb494d86bf41a",
+      "locale": "de",
+      "surface": "web",
+      "topic": "notifications",
+      "seconds": 44.36,
+      "kind": "narrated_step_slides",
+      "sha256": "80e0311a982f63ba327062435eb851bcaed1badc1dd3ee9f6dbf261c7e8f149e"
+    },
+    {
+      "source_sha256": "74ca6b188d850c0e358f276cd001c32a96b64da37afc3a4b10e0aa9b0d0d9fc5",
+      "locale": "de",
+      "surface": "web",
+      "topic": "push",
+      "seconds": 55.26,
+      "kind": "narrated_step_slides",
+      "sha256": "8d2e50066e21aee803257a3626a76dd2d6b11d9bcd0b60958508b69ac7942f5d"
+    },
+    {
+      "source_sha256": "7ef7889a71874d518fb0912dada254e83ce56fb72d39c26d287125269b4ad4ea",
+      "locale": "de",
+      "surface": "web",
+      "topic": "diagnostics",
+      "seconds": 51.48,
+      "kind": "narrated_step_slides",
+      "sha256": "685dd93bf63faed3ad2440a50aa3b19cc2601a742db3d9360be8c528f05f2472"
+    },
+    {
+      "source_sha256": "8d5226345c53f8a2d77c4469e90f2f9f24c064b657978d90903197a3dd359d07",
+      "locale": "en",
+      "surface": "app",
+      "topic": "login",
+      "seconds": 51.88,
+      "kind": "narrated_step_slides",
+      "sha256": "1ffcdc5630db4fad158b19862dd865b9611e99bcf7011e35fe15c96b30d68614"
+    },
+    {
+      "source_sha256": "11ead0ef0ce75ff4976a321e2d1722a536020cfb40ae93389091f7f2dec89653",
+      "locale": "en",
+      "surface": "app",
+      "topic": "expense",
+      "seconds": 51.31,
+      "kind": "narrated_step_slides",
+      "sha256": "2c3a6594cbb0f1f27fc97a8c0049920a797d8b6f28c50eb3a2d10a13c1897f7a"
+    },
+    {
+      "source_sha256": "92e59748bd8573b36d6e4e32253b2fe7132abab938c17d3912e163606f73fd70",
+      "locale": "en",
+      "surface": "app",
+      "topic": "profile",
+      "seconds": 49.94,
+      "kind": "narrated_step_slides",
+      "sha256": "2c60112e1442a2f6bafb5e9f7b5b296c9d0c334b176c9792283dfb0cf00bd861"
+    },
+    {
+      "source_sha256": "a6b527bffb2eb489aa08e9c0e648f9a5bfaba78db1e3f7e88191a15354213062",
+      "locale": "en",
+      "surface": "app",
+      "topic": "tenants",
+      "seconds": 46.75,
+      "kind": "narrated_step_slides",
+      "sha256": "a6eda4d82c2aca2fb6092b84c92a277b76f5419f3535e1dc356096f8f27ff8a1"
+    },
+    {
+      "source_sha256": "9bf5923cd58192693fe1d0565b75dbfeac889dcd91197f2430082e037da49bc1",
+      "locale": "en",
+      "surface": "app",
+      "topic": "chat",
+      "seconds": 70.04,
+      "kind": "narrated_step_slides",
+      "sha256": "96441cca2330bdbc76e49d37de5401d33b9b3edbfd2f909939beb7f2035459b8"
+    },
+    {
+      "source_sha256": "051d2c34002c6e592caa3881c83f50bfd9ab676584cb1125b9470fbaf3b12f33",
+      "locale": "en",
+      "surface": "app",
+      "topic": "translation",
+      "seconds": 47.94,
+      "kind": "narrated_step_slides",
+      "sha256": "8281c63f8304535bb2dd782feccb3f8cf1fd3b2545686fe5c1df0db455d1ce61"
+    },
+    {
+      "source_sha256": "d4c6bb85d0b2f8591121d6f8c9ad764c1188c660d48b53439ae8b8e0b6549c91",
+      "locale": "en",
+      "surface": "app",
+      "topic": "planning",
+      "seconds": 46.88,
+      "kind": "narrated_step_slides",
+      "sha256": "6a0610d6d68764a2fdf77789963e880d8ef9e27c688176f31f6e11dc6fc25aa0"
+    },
+    {
+      "source_sha256": "643bd861c9e7e0540a9dc85311c9c979310f4049f805f8ec446c22260c79f263",
+      "locale": "en",
+      "surface": "app",
+      "topic": "teams",
+      "seconds": 46.45,
+      "kind": "narrated_step_slides",
+      "sha256": "fc508c0cdf4c59235a23304abec59058fee202808bea62e84a193ce17b70bc4f"
+    },
+    {
+      "source_sha256": "9ad4bca667147dfd708a370b623992dbd1b0a33c06817e2e48f6499c33691f04",
+      "locale": "en",
+      "surface": "app",
+      "topic": "members",
+      "seconds": 51.48,
+      "kind": "narrated_step_slides",
+      "sha256": "02e1537f485eb1279f58dd5817b6f72fb99653c0d915c15934af68a70a309b99"
+    },
+    {
+      "source_sha256": "0c363afd802e2c01036f571a88e003414878edcf413b117712e7f7108cb42a5b",
+      "locale": "en",
+      "surface": "app",
+      "topic": "membership",
+      "seconds": 64.59,
+      "kind": "narrated_step_slides",
+      "sha256": "000f24c88ce265889918c7ab5006888cc302b03384480e7a02fd1c07522d1a3e"
+    },
+    {
+      "source_sha256": "5349f3b494f84932dd03b9f9ef289305fcc1ae47206a53a967e7b43c61d0e7eb",
+      "locale": "en",
+      "surface": "app",
+      "topic": "wallet",
+      "seconds": 45.26,
+      "kind": "narrated_step_slides",
+      "sha256": "4a8a09b5c854cfb382dd840bd0a73225533573b4970c238a0ad88f4b94de4388"
+    },
+    {
+      "source_sha256": "33d9bfba6c997d090462b334e7421914a43a5e17c58f26480eb01057f4d1fcaa",
+      "locale": "en",
+      "surface": "app",
+      "topic": "events",
+      "seconds": 44.65,
+      "kind": "narrated_step_slides",
+      "sha256": "3e8c4a6aeb87f8b1dcea0535f94668bdddb078af66a83a419a3f9972c42c7bcf"
+    },
+    {
+      "source_sha256": "c2a79c4d0ce46968effaa65ab869a84462f5c0bc359b81d800e1ef5b1846addb",
+      "locale": "en",
+      "surface": "app",
+      "topic": "reservations",
+      "seconds": 50.85,
+      "kind": "narrated_step_slides",
+      "sha256": "78c283544724ada7ecc972cfa85f7b300a59113b1b7c07d9195069d32f6aea2d"
+    },
+    {
+      "source_sha256": "662903a8dfdd70f2c5543ffde3982a9a8e2424842b9f6998e78b2cbcd12452ba",
+      "locale": "en",
+      "surface": "app",
+      "topic": "documents",
+      "seconds": 40.69,
+      "kind": "narrated_step_slides",
+      "sha256": "49f7b2989197bb9582af9b3af701993f9282de5e0659f39cb836d16b5222f752"
+    },
+    {
+      "source_sha256": "c9851d6e34b0477143b4ac4ae37344f1168acf1c2669fdda3675b3dc5736cd44",
+      "locale": "en",
+      "surface": "app",
+      "topic": "keyboxes",
+      "seconds": 53.3,
+      "kind": "narrated_step_slides",
+      "sha256": "9a32dbbd5478ef53d999cc9a3678ed67fbb51a09afbf3cf339d59b4f6218058c"
+    },
+    {
+      "source_sha256": "b9cb020468a621231dd00aa7df3ec428a33bc2e8b52ac2a27a7c47a15416c168",
+      "locale": "en",
+      "surface": "app",
+      "topic": "notifications",
+      "seconds": 41.86,
+      "kind": "narrated_step_slides",
+      "sha256": "29a8b27935cf7ac784f4604c8298ed7533fc2a7e497276131728f9598fc4cf18"
+    },
+    {
+      "source_sha256": "7dc8ebb62faa8d290333b6a7ddb3d3d4959bb6119139654df10f20b675818d06",
+      "locale": "en",
+      "surface": "app",
+      "topic": "push",
+      "seconds": 45.54,
+      "kind": "narrated_step_slides",
+      "sha256": "7f9a9cde48d2324d489cc1520c9b87b7e0eb34e60f249cafd45dc54f318fc69e"
+    },
+    {
+      "source_sha256": "e91b895179db7b8683a51ae64ec282bbe65dcdd9755cb9d0f239384ac244b576",
+      "locale": "en",
+      "surface": "app",
+      "topic": "diagnostics",
+      "seconds": 52.07,
+      "kind": "narrated_step_slides",
+      "sha256": "57630364acee31abcd62922dc06f72e25cfffd163c75010cc7f8b830e30fb370"
+    },
+    {
+      "source_sha256": "c03960e69e6e7721f09364c238839f27a2bc30977b458a19c241e36b971275fd",
+      "locale": "en",
+      "surface": "web",
+      "topic": "login",
+      "seconds": 42.57,
+      "kind": "narrated_step_slides",
+      "sha256": "e978a067eb42d028004176507191ffca9037855b912933b2debb4b9c0a8acb77"
+    },
+    {
+      "source_sha256": "83cb3c41d4ee820abace2e60d7b6a9efd60e7caf8d4232da42e1e73007990f58",
+      "locale": "en",
+      "surface": "web",
+      "topic": "expense",
+      "seconds": 43.36,
+      "kind": "narrated_step_slides",
+      "sha256": "cbe895f575d6bd495e85bbb7df2a35795bf7b9b821aab89def89cc730fef0185"
+    },
+    {
+      "source_sha256": "2012dfe14ab55faa622672942346f925701fc8cd7f78c8ea3ef4e7e2a35e98c9",
+      "locale": "en",
+      "surface": "web",
+      "topic": "profile",
+      "seconds": 40.2,
+      "kind": "narrated_step_slides",
+      "sha256": "68323df32372c332ec89f6430f4556312d9920b719ed0fa61d2809217c48b67e"
+    },
+    {
+      "source_sha256": "ceb0e132d224a5ebb59fc64a4e92ea8381ecf5d8bb52732827e3879b85267971",
+      "locale": "en",
+      "surface": "web",
+      "topic": "tenants",
+      "seconds": 37.77,
+      "kind": "narrated_step_slides",
+      "sha256": "9062f222bd0776157493757f941489daab8c091451af5c5180aaa5829c773f55"
+    },
+    {
+      "source_sha256": "da05ea12d51092cce4e3eddead35a9501342f135c8f82adef4ef699c3bb99680",
+      "locale": "en",
+      "surface": "web",
+      "topic": "chat",
+      "seconds": 44.6,
+      "kind": "narrated_step_slides",
+      "sha256": "58c12416a568bda8ad5cd1bd8515d12ebf74d47ab204514883e2deefe4ecb824"
+    },
+    {
+      "source_sha256": "da36b13caa3683eef13ab9f0f7d5d87a49505df25746842c5e819dd48b2804d9",
+      "locale": "en",
+      "surface": "web",
+      "topic": "translation",
+      "seconds": 41.2,
+      "kind": "narrated_step_slides",
+      "sha256": "2a4d2962d7c235299e10e159f317c76a96be4dc76fc70b4e82063defd9f20072"
+    },
+    {
+      "source_sha256": "a29abcfb1a6096f9db46ed80e22ade532632b3d41c92c965366c95ffd17c5fc8",
+      "locale": "en",
+      "surface": "web",
+      "topic": "planning",
+      "seconds": 40.72,
+      "kind": "narrated_step_slides",
+      "sha256": "a1c6d22b4bb1e14a802ddcbec55f89f68e65ae1cfdf4929c734aad8de3847e6e"
+    },
+    {
+      "source_sha256": "d89d845112badec920c13a0ecc1ecb2d6c64540cf30c9cd930d2cb807e92b06c",
+      "locale": "en",
+      "surface": "web",
+      "topic": "teams",
+      "seconds": 39.02,
+      "kind": "narrated_step_slides",
+      "sha256": "b81fcef1bf6e56963467d7b66473088f1e8df39727d92696f879cb86458913be"
+    },
+    {
+      "source_sha256": "2a46431e3c9ac24fbb2439189c185b4d0cbf02d26e2c383cb1e36c36b2c5ea2c",
+      "locale": "en",
+      "surface": "web",
+      "topic": "members",
+      "seconds": 45.88,
+      "kind": "narrated_step_slides",
+      "sha256": "53caa2c711881ed2f2b7cf334ab6a9bd3abd7c0e0f065d69ef273c840dff3fbe"
+    },
+    {
+      "source_sha256": "d26eb84903ae5cb0b073c61e6283d288f375bcafe858f6f6c5d5b5e4d3e4cf3f",
+      "locale": "en",
+      "surface": "web",
+      "topic": "membership",
+      "seconds": 43.35,
+      "kind": "narrated_step_slides",
+      "sha256": "99af649142e1462eb8b7d1952a02a82a9ecfab4f226a89aafbe89899791bd8a2"
+    },
+    {
+      "source_sha256": "09759ca319c75fd1490bd9207afd74fb382093f0811cd67e2c69c76b732ed4c3",
+      "locale": "en",
+      "surface": "web",
+      "topic": "wallet",
+      "seconds": 41.62,
+      "kind": "narrated_step_slides",
+      "sha256": "209b0605910d2eefde07b67271c16b3d02848d2f541492d08ef8b3cbf4facbbd"
+    },
+    {
+      "source_sha256": "134fb75441668933a68d7c519aa43fb7f59392fcfcc2959f87a28fd60af2baa0",
+      "locale": "en",
+      "surface": "web",
+      "topic": "events",
+      "seconds": 40.29,
+      "kind": "narrated_step_slides",
+      "sha256": "af4f1d38ace4553c6e6ce474bd5433b2fcad73e6384ac2c88aed2fd3fb1cceeb"
+    },
+    {
+      "source_sha256": "eb8a70782ea9c6b26492cded917a611ed0f5d9a6ce933f188a9ececd7e58cf3f",
+      "locale": "en",
+      "surface": "web",
+      "topic": "reservations",
+      "seconds": 45.15,
+      "kind": "narrated_step_slides",
+      "sha256": "a249b5cceef1f0b0dc02717723521860c5ec3d61027f097d71f56a77f690b8bd"
+    },
+    {
+      "source_sha256": "63b3afb67b3d24c8e25934f4b2ce051da1084e1b43ccdccfbf23870473e604ed",
+      "locale": "en",
+      "surface": "web",
+      "topic": "documents",
+      "seconds": 40.94,
+      "kind": "narrated_step_slides",
+      "sha256": "07cad3684940927eb5fd6343d3af704f63e5079bdfba15ac1f370de2a4231b16"
+    },
+    {
+      "source_sha256": "0ed2919cf3fd05b1bac1fa1cd262be93d4f9b55adb10c35a84f0b169c67d3067",
+      "locale": "en",
+      "surface": "web",
+      "topic": "notifications",
+      "seconds": 37.27,
+      "kind": "narrated_step_slides",
+      "sha256": "59fa3c54f0438d0d3acefa568d61535db4307a018100e005231ade54af578d80"
+    },
+    {
+      "source_sha256": "a8c50d3eb71359fc78bf67737ac837c243b033c9287b16ec30d5aa47c0198988",
+      "locale": "en",
+      "surface": "web",
+      "topic": "push",
+      "seconds": 45.78,
+      "kind": "narrated_step_slides",
+      "sha256": "698103d5a963f5714dfe1565cada10419393ead68b9ea04fe4991909cf1a34b1"
+    },
+    {
+      "source_sha256": "993b8ed0e071d77c62e502f4ba39b867f12f02dd31482dfdd122f7d30a919d58",
+      "locale": "en",
+      "surface": "web",
+      "topic": "diagnostics",
+      "seconds": 42.41,
+      "kind": "narrated_step_slides",
+      "sha256": "7cd6b25df1bf4a522d0c459355878d7a3393b5a3c2ddafecad81e9eeddb5c396"
+    },
+    {
+      "source_sha256": "4d243266105d391798f349097206a2d8a4d78b61ee395e6189e43e129a309fa6",
+      "locale": "de",
+      "surface": "app",
+      "topic": "training",
+      "seconds": 61.42,
+      "kind": "narrated_step_slides",
+      "sha256": "4420e089863b4410283db93f203eb8d3d41830327c9ea9cd85f45b896788e73c"
+    },
+    {
+      "source_sha256": "425076f7fe9a79fd75df51bca82abe3d71f03a6841cfff6cd6e43bc163824e77",
+      "locale": "de",
+      "surface": "app",
+      "topic": "facilities",
+      "seconds": 57.27,
+      "kind": "narrated_step_slides",
+      "sha256": "bead50848430fd444b15bdf2a31b8d388cae74def3f595367c13563e9020c165"
+    },
+    {
+      "source_sha256": "f546580470d678a457999116ab7b2abaf461eb2232919728dbbbd8e9ec15806c",
+      "locale": "de",
+      "surface": "app",
+      "topic": "challenge",
+      "seconds": 57.98,
+      "kind": "narrated_step_slides",
+      "sha256": "5472a4f3515ee25b4037a935ff730562b457d6231c149418b201c4fc154d4264"
+    },
+    {
+      "source_sha256": "de5e1ad12560e28a922d66a367a29ae7d253be982c672b1794813def1d2c912f",
+      "locale": "de",
+      "surface": "app",
+      "topic": "sponsor_run",
+      "seconds": 60.89,
+      "kind": "narrated_step_slides",
+      "sha256": "ab82e4f0c48cd1dad07c4b6056fd21fcbe70322c5b046e9a3d8f2e226696d803"
+    },
+    {
+      "source_sha256": "727917c896e5898747a68271cafb466e4448bd766d767cb2216bb2a8d7b6e892",
+      "locale": "de",
+      "surface": "app",
+      "topic": "registrations",
+      "seconds": 57.7,
+      "kind": "narrated_step_slides",
+      "sha256": "ae52d528915b6dafbd148c99d6fcfef87aa5f739f284db434a807d7c7539dd25"
+    },
+    {
+      "source_sha256": "c1f3cd0cd79f0ade3c082308401799d856a73be2eca456b21b1755a115925464",
+      "locale": "de",
+      "surface": "app",
+      "topic": "approvals",
+      "seconds": 60.97,
+      "kind": "narrated_step_slides",
+      "sha256": "8d4f567fcdb35f3f3a4db7e0b9054f2621df716675318969011166fe5d79498d"
+    },
+    {
+      "source_sha256": "1456ac2f613aaf984ab5295ef2cc38515fd0e76914b386114fa9a7e919b7521e",
+      "locale": "de",
+      "surface": "app",
+      "topic": "getting_started",
+      "seconds": 52.38,
+      "kind": "narrated_step_slides",
+      "sha256": "37b1ce8a79b20bab1ed2d7e949e2aa47cfadb26cf90779926f2aecc835e00665"
+    },
+    {
+      "source_sha256": "5c04ebaeb15430ab1475dc6dda3dc35ef9362dd49590a78778a52565726de52b",
+      "locale": "de",
+      "surface": "web",
+      "topic": "keyboxes",
+      "seconds": 58.81,
+      "kind": "narrated_step_slides",
+      "sha256": "f6817f627284b840e108058b9fd86516e4d50afd75a8978f1aacdc5ada8e325a"
+    },
+    {
+      "source_sha256": "07d442b6b0a666cd27ba81c51bd810c3a183aca3b27f23397994754c3101d5b3",
+      "locale": "de",
+      "surface": "web",
+      "topic": "access",
+      "seconds": 54.41,
+      "kind": "narrated_step_slides",
+      "sha256": "925aa0cfd10b0fb0ae2d7b948d81c00f412debec84c33ff48ab67ae12f671c49"
+    },
+    {
+      "source_sha256": "a75510c92a80c5229fd38b012efee9e9e52957117e1c8d172826372913943529",
+      "locale": "de",
+      "surface": "web",
+      "topic": "season",
+      "seconds": 53.03,
+      "kind": "narrated_step_slides",
+      "sha256": "7526a6b473fbc1823b96888e6ce794abb577b46686a6362d122e7b9a0294bece"
+    },
+    {
+      "source_sha256": "100d79fd10c3a28a324c9c1b0ce2a2ab40f9cb0d671230570e32121debb4db93",
+      "locale": "de",
+      "surface": "web",
+      "topic": "training",
+      "seconds": 50.99,
+      "kind": "narrated_step_slides",
+      "sha256": "dbe5d29c7f6df3c7e0c788fd8465ddef8b04176a1ea9cce13864e354f42aa977"
+    },
+    {
+      "source_sha256": "58011f130618300504e1c2a68b42a19eed21cb44ffb2ca5e5dee81fcd65c47da",
+      "locale": "de",
+      "surface": "web",
+      "topic": "contributions",
+      "seconds": 52.63,
+      "kind": "narrated_step_slides",
+      "sha256": "eed6f1a28e01eab2bb911709708ef95d6efe7e1711d0df4901863c6f53bd4de5"
+    },
+    {
+      "source_sha256": "fed62f76cd0d0cdb7ff884db540a5ee4a8d9fffa09dd45cae90a0d8834f51ff5",
+      "locale": "de",
+      "surface": "web",
+      "topic": "billing",
+      "seconds": 49.75,
+      "kind": "narrated_step_slides",
+      "sha256": "822f07fe2fa83669d7dca6516d31f6d94cf1ff6d4cb3441864f4d091597bdf27"
+    },
+    {
+      "source_sha256": "ece75b757b429913e1b43fc01393c1cc7e2b5b15ba20dfc8f3ba0349723a1e84",
+      "locale": "de",
+      "surface": "web",
+      "topic": "announcements",
+      "seconds": 50.57,
+      "kind": "narrated_step_slides",
+      "sha256": "2e179a76adbcca5cc89ccc3e42ab3145d49acecefb01eeed5b1ab89b9547932f"
+    },
+    {
+      "source_sha256": "fabe0a466fbb72a5a430787ece5f84755399be1d3f9797f067acce6a5dd625c8",
+      "locale": "de",
+      "surface": "web",
+      "topic": "document_series",
+      "seconds": 47.63,
+      "kind": "narrated_step_slides",
+      "sha256": "b99c38162fb1b4707c78cd39bc51086aecfa60d92ed54e70f3c0fba2bc904e81"
+    },
+    {
+      "source_sha256": "e5be33031b7cc8351555d9ba09427561731fa236555efa310f90ea53c89530ea",
+      "locale": "de",
+      "surface": "web",
+      "topic": "social",
+      "seconds": 54.74,
+      "kind": "narrated_step_slides",
+      "sha256": "e0b2c52ae7563e6208d0cede4bfc04c55ee6a522e7f4c447a6a5326079675bd6"
+    },
+    {
+      "source_sha256": "68c3606f6baa37b3429904aea2b09acf6ab6177f660ea630672f47a9f20f3c74",
+      "locale": "de",
+      "surface": "web",
+      "topic": "campaigns",
+      "seconds": 51.51,
+      "kind": "narrated_step_slides",
+      "sha256": "4adc48e63cf93ad67aa63b1a16ec86edaf5bb592fcebc46b066aa4561ffb46c9"
+    },
+    {
+      "source_sha256": "792df648b8107d44740b374b836a448ca000e2c6279630f2a62eee722fc1f0e9",
+      "locale": "de",
+      "surface": "web",
+      "topic": "integrations",
+      "seconds": 54.45,
+      "kind": "narrated_step_slides",
+      "sha256": "be9a7e6b5ada05b95d423bee8b73897161b254f479bc3ec9d18f8dd11bf8b39f"
+    },
+    {
+      "source_sha256": "c4f19f319c6185ec0efef06f021c620c514ef2690bdd553517a60c47864000cd",
+      "locale": "de",
+      "surface": "web",
+      "topic": "facilities",
+      "seconds": 52.73,
+      "kind": "narrated_step_slides",
+      "sha256": "fae6c5b499eddedc455cabd4a828549ae5f666e80a39ebd02899832cb82d53f2"
+    },
+    {
+      "source_sha256": "8d34b708cc7956da108b8ba34fbf4488410b235f163721fef9273a7f04969cc6",
+      "locale": "de",
+      "surface": "web",
+      "topic": "material_returns",
+      "seconds": 48.73,
+      "kind": "narrated_step_slides",
+      "sha256": "13399b2d166fb6c09fd823747bc7d421193121d038bcec9887d02785232d5f0a"
+    },
+    {
+      "source_sha256": "cb6dec1464808d6b934e8917f8c9664fda1cbfa13d4c7ceee2a74070959fa56f",
+      "locale": "de",
+      "surface": "web",
+      "topic": "sponsor_runs",
+      "seconds": 50.74,
+      "kind": "narrated_step_slides",
+      "sha256": "d51770d204e6f093ea88caa78cbf3becf3b1f1e9362dbf7fa0a2a1a22ec5acec"
+    },
+    {
+      "source_sha256": "e92b6c1dbca90ac2f6d41ac2409080c724772b98d72e0e2a84bf3a92401ee950",
+      "locale": "de",
+      "surface": "web",
+      "topic": "veo",
+      "seconds": 46.94,
+      "kind": "narrated_step_slides",
+      "sha256": "3addf7810969ad3a60ec70f0a61b08e73ff012b14c5a5f25e763b9a790a1a8e3"
+    },
+    {
+      "source_sha256": "a531217f8fb1e8ed7f3b3b9efc7d914757e227b00511b84ed4032465b60ed971",
+      "locale": "de",
+      "surface": "web",
+      "topic": "challenge",
+      "seconds": 50.45,
+      "kind": "narrated_step_slides",
+      "sha256": "25ca8516f76866be1bb72349479171e07ea848f83887453ddcec0b59452023b9"
+    },
+    {
+      "source_sha256": "fe72378ffbdd41df5887ab2292af028b1ce6289330591408a902465ff288b985",
+      "locale": "de",
+      "surface": "web",
+      "topic": "staff_functions",
+      "seconds": 52.65,
+      "kind": "narrated_step_slides",
+      "sha256": "743ed3644e2420af25b21247a7418b8bab10a42f4d0ccb01cd3e414937bed3d7"
+    },
+    {
+      "source_sha256": "0281932dc13e7705c2515abab18be00bb7ef9710d7425bcb2579fde3d65ed9d1",
+      "locale": "de",
+      "surface": "web",
+      "topic": "website",
+      "seconds": 53.59,
+      "kind": "narrated_step_slides",
+      "sha256": "2b660e45441370dd9ac80130650ac07ed6d51755774919db1e0a28e08b4c2be0"
+    },
+    {
+      "source_sha256": "8dbd7efc57e694b6f4bb9d89effdbf84265d53e054d35454dfb39ed6df180237",
+      "locale": "de",
+      "surface": "web",
+      "topic": "reports",
+      "seconds": 49.28,
+      "kind": "narrated_step_slides",
+      "sha256": "20d233cca2cf0bd1119dd71db518af4627e2498044f298568b4a7e663e853322"
+    },
+    {
+      "source_sha256": "6fe22e7266932c2a331fcb3fee71e233ad4ef0252c3f9dd9e9c0cff5072d603f",
+      "locale": "de",
+      "surface": "web",
+      "topic": "families",
+      "seconds": 48.22,
+      "kind": "narrated_step_slides",
+      "sha256": "7be413af3b604c742559f0a5110d1ebc6e182e13e1033889c3f5a1652f388965"
+    },
+    {
+      "source_sha256": "7cc1ae64707ad82feeec22401548a8d6bbe80d212268999ec639a586808c1168",
+      "locale": "de",
+      "surface": "web",
+      "topic": "competitions",
+      "seconds": 49.59,
+      "kind": "narrated_step_slides",
+      "sha256": "0666dedbf3413f842a0e1c8e1759d5627e84cfa085cf450079049e4d49b9c19d"
+    },
+    {
+      "source_sha256": "ba48755472fb47c71f39353d5e77cce9c0d8d0010ee45704ea58c45e5a017578",
+      "locale": "de",
+      "surface": "web",
+      "topic": "signage",
+      "seconds": 45.18,
+      "kind": "narrated_step_slides",
+      "sha256": "6aa783c52858e5cb13fd921278a0d06dff538e3f6aaa5ba0d029e684b94b6511"
+    },
+    {
+      "source_sha256": "cfb1a5df83955ae4a6be4b6a783a86ba1e1b4a2b499e7dbf902ba233c3672aaf",
+      "locale": "de",
+      "surface": "web",
+      "topic": "sponsors",
+      "seconds": 48.91,
+      "kind": "narrated_step_slides",
+      "sha256": "8ee2d523b07d4f6a6f6d1969f6634d07af64d616c33843e9b16d953955120805"
+    },
+    {
+      "source_sha256": "c0b67844dfbeab00deb7989b11cc948986df5320f0ec69a20d012badcd1d7ef7",
+      "locale": "de",
+      "surface": "web",
+      "topic": "synchronisation",
+      "seconds": 53.82,
+      "kind": "narrated_step_slides",
+      "sha256": "5a83ffecd1798fb38d7d01ae854bfa1951210ad55df4391e68dd265c09c0cc40"
+    },
+    {
+      "source_sha256": "3472ec41464397ebbb338ab12a9860f3de760b45a2f76b3f2d28f4d48c46620a",
+      "locale": "de",
+      "surface": "web",
+      "topic": "work_inbox",
+      "seconds": 46.74,
+      "kind": "narrated_step_slides",
+      "sha256": "041aa553d20c9633b79c201b21e3f2cc2e57de424e0627341f217b63817e3079"
+    },
+    {
+      "source_sha256": "d473d02574617e102354760b7051d5b115d14c92538aad368975b6826da95117",
+      "locale": "de",
+      "surface": "web",
+      "topic": "catalogs",
+      "seconds": 49.42,
+      "kind": "narrated_step_slides",
+      "sha256": "d8e16c648c1f65799b5b3675a2d4035db810b6e3c2153c27979c7ee78e1e9f11"
+    },
+    {
+      "source_sha256": "16cd98e21b039ca125aa8a8d3e65902d936db8399c9d1d69739e3ec8ed6a2993",
+      "locale": "de",
+      "surface": "web",
+      "topic": "message_templates",
+      "seconds": 52.66,
+      "kind": "narrated_step_slides",
+      "sha256": "73f619130e270edcaff01310897daf4085dd7eda8c8b84331fbf858e4c7adb34"
+    },
+    {
+      "source_sha256": "13ff7451b541c3a216511a1e690674af4a739d1a8f3a4245458e9134ebed79f2",
+      "locale": "en",
+      "surface": "app",
+      "topic": "training",
+      "seconds": 49.77,
+      "kind": "narrated_step_slides",
+      "sha256": "386d3233a0efbf2e727d26db69b4f8366365c610fb9b051103e3ea50b21b3237"
+    },
+    {
+      "source_sha256": "4050631e519a60b7144ada7ea52b863e9003a02590bcad48d7adb1019259a4a3",
+      "locale": "en",
+      "surface": "app",
+      "topic": "facilities",
+      "seconds": 47.32,
+      "kind": "narrated_step_slides",
+      "sha256": "b34d49eb42eee0f105effc875a05bd46774ac6460570e50e824108af1e3de8cb"
+    },
+    {
+      "source_sha256": "27e920fdf9e87c053d51d1276d99952389793fc59e28ef6be7819902b4b7686d",
+      "locale": "en",
+      "surface": "app",
+      "topic": "challenge",
+      "seconds": 47.94,
+      "kind": "narrated_step_slides",
+      "sha256": "5be2b9d6f18dc2d6856a2a59fd681e67d2c0f395d75bf99698332120f052555a"
+    },
+    {
+      "source_sha256": "c391609ac3352234c71215bcf178c04f7a78386b8b7bd9930f2adca9b3c06038",
+      "locale": "en",
+      "surface": "app",
+      "topic": "sponsor_run",
+      "seconds": 51.74,
+      "kind": "narrated_step_slides",
+      "sha256": "5c91a03adb87440787f0a84e488964bbdd6ed60e6b1317e21cf9d69326809aaa"
+    },
+    {
+      "source_sha256": "420d64698e29150453825e6893bc5e2794b17c19ad14483b28afbf18919dd83a",
+      "locale": "en",
+      "surface": "app",
+      "topic": "registrations",
+      "seconds": 46.98,
+      "kind": "narrated_step_slides",
+      "sha256": "3ce2602be2eb787b8b68b6ef0ccd1cde6aa13913a3d8007b136f172ed92e0fc2"
+    },
+    {
+      "source_sha256": "fe43dbbd70bdd03086d647844beee0ec285e5fe0d706fe8c9967f4542046b59c",
+      "locale": "en",
+      "surface": "app",
+      "topic": "approvals",
+      "seconds": 50.05,
+      "kind": "narrated_step_slides",
+      "sha256": "b59863851f312b7ab8b1ec6d7fc5c5ccb935551be5311fa8301027babe73bc99"
+    },
+    {
+      "source_sha256": "567965471ea82d1581ef28c58f5ebf18c8aea378dc697d1093d249a38b99acad",
+      "locale": "en",
+      "surface": "app",
+      "topic": "getting_started",
+      "seconds": 44.07,
+      "kind": "narrated_step_slides",
+      "sha256": "19517436b491f7bc70d83a4638fc1d1c6b1b61d132f80e750879952e9a295e05"
+    },
+    {
+      "source_sha256": "dd09fca9067a1726ae1784cfcabbf221d62143e64b0dff35272dfbac44d6685f",
+      "locale": "en",
+      "surface": "web",
+      "topic": "keyboxes",
+      "seconds": 51.57,
+      "kind": "narrated_step_slides",
+      "sha256": "14862bbe0191c9ff47affa94d99d4f49d4e59fef3b38a024b64a759ac5f9730a"
+    },
+    {
+      "source_sha256": "057ea5d1020c8d94f0fb68bf15ed9564144c81930af555cf0fbc8b6b62a8105d",
+      "locale": "en",
+      "surface": "web",
+      "topic": "access",
+      "seconds": 44.27,
+      "kind": "narrated_step_slides",
+      "sha256": "750988712f8795fd8d71b0499b55dffa5177058e74a025abac6f326526a3c381"
+    },
+    {
+      "source_sha256": "4bfe0224b54ae0524330da43c96ad26bf831521c732f5abbe201b3fbf4ea98d0",
+      "locale": "en",
+      "surface": "web",
+      "topic": "season",
+      "seconds": 43.4,
+      "kind": "narrated_step_slides",
+      "sha256": "dc59062d9e4635b1a321cd253bf1f8cab84ab26300b2f43492f9336dfce2cc8b"
+    },
+    {
+      "source_sha256": "eabf889288c9ab6786f302f3d617f3bd44918e69a8588a0b71b6e5994c36059c",
+      "locale": "en",
+      "surface": "web",
+      "topic": "training",
+      "seconds": 39.81,
+      "kind": "narrated_step_slides",
+      "sha256": "c58d40476e6cb61f476965a087b58e3771ccbb6e1214e23f6a74b16d1a2ee365"
+    },
+    {
+      "source_sha256": "5e2d4092956154a22081f73c228f84033ae24cd920394c229a68e3a252bcf954",
+      "locale": "en",
+      "surface": "web",
+      "topic": "contributions",
+      "seconds": 44.39,
+      "kind": "narrated_step_slides",
+      "sha256": "294f5a9b3b00016611b35e3be348f4dadf6155a39518d4ecf1bba8162708aebe"
+    },
+    {
+      "source_sha256": "93804e1c6d49373e4681aff872b5986b7ca870b36f794750d2689011b30d0160",
+      "locale": "en",
+      "surface": "web",
+      "topic": "billing",
+      "seconds": 41.63,
+      "kind": "narrated_step_slides",
+      "sha256": "b6bf01bc40789e562e6b023d6e688d7f1dd811be2041a35c7f02325352e8e88d"
+    },
+    {
+      "source_sha256": "eb6e2e90837714d2111ac0db13cfe8697cb33c27328cc870581db6581c9675f3",
+      "locale": "en",
+      "surface": "web",
+      "topic": "announcements",
+      "seconds": 41.84,
+      "kind": "narrated_step_slides",
+      "sha256": "f997a65d7ac37075c36cfc0389e2fa292a65c8b6bddbdaa32b4f21e13bf17f79"
+    },
+    {
+      "source_sha256": "13fa8e8c6808cf85b0d8d08f2acb9b2eb6182db84c55ac49463e9d9e83379917",
+      "locale": "en",
+      "surface": "web",
+      "topic": "document_series",
+      "seconds": 38.06,
+      "kind": "narrated_step_slides",
+      "sha256": "312bacd03320f7f5e56c64e8bbd13adedffd5213a70df0b84ee662153630b9af"
+    },
+    {
+      "source_sha256": "f3c5832476b91e88bbdbcea4adeff4f0b9223352e77169d96285d25e340bb2a4",
+      "locale": "en",
+      "surface": "web",
+      "topic": "social",
+      "seconds": 46.93,
+      "kind": "narrated_step_slides",
+      "sha256": "4135461915850f397d063c47b1fb9bb776f27611e5eb84de05b47a93b349359e"
+    },
+    {
+      "source_sha256": "dc30f8d359843fb4191e4882470230cf3854fbc610aae1aaa7d710fa5823d49c",
+      "locale": "en",
+      "surface": "web",
+      "topic": "campaigns",
+      "seconds": 44.74,
+      "kind": "narrated_step_slides",
+      "sha256": "8d10f347977f7e26dd5781044cf695904c07b38979cc8d900234ecedb83d4fdd"
+    },
+    {
+      "source_sha256": "251625bc9af428e695291b09f42e1f7fd8517f0409fdc52c030164f1ce8b4c30",
+      "locale": "en",
+      "surface": "web",
+      "topic": "integrations",
+      "seconds": 46.44,
+      "kind": "narrated_step_slides",
+      "sha256": "dbefae7e2f0c3a94f602ec2acad9f97047d0e3f7cb505de46c8a7cadd75c6385"
+    },
+    {
+      "source_sha256": "953e7c6cddb969ce64b72201038a882a925e27cc227fc377eca89ef4fc4feee7",
+      "locale": "en",
+      "surface": "web",
+      "topic": "facilities",
+      "seconds": 42.32,
+      "kind": "narrated_step_slides",
+      "sha256": "efc1ca3b794016cbe506e2fd97f3a81e6cbb2b6127b5cc1b9f6f5fa1006b1f12"
+    },
+    {
+      "source_sha256": "e39fd9fbcfbe860909d892aa1c164f502ef7173675545c4fcc0aafcf43a57230",
+      "locale": "en",
+      "surface": "web",
+      "topic": "material_returns",
+      "seconds": 39.5,
+      "kind": "narrated_step_slides",
+      "sha256": "e95b700c573631860ff1ffa8e351f6eabab17c0e5f19de9478ea42d3d728927b"
+    },
+    {
+      "source_sha256": "ca3cc5dae392b0af08095bbc17228541560b490af4fbb336bc36d0a349ac38c1",
+      "locale": "en",
+      "surface": "web",
+      "topic": "sponsor_runs",
+      "seconds": 41.0,
+      "kind": "narrated_step_slides",
+      "sha256": "5383830cb5c351dec9d118ade530285941ce82253992dcbf32ef02e2152ee827"
+    },
+    {
+      "source_sha256": "052ef132cab11736ebc9623b20f039478b83affc6a4be1d7661bf69769dcf2d6",
+      "locale": "en",
+      "surface": "web",
+      "topic": "veo",
+      "seconds": 38.38,
+      "kind": "narrated_step_slides",
+      "sha256": "f6ffbb1dec66e212b37a8e31dd525f01cce5f3debfe9e4647ce3613c5842d8d3"
+    },
+    {
+      "source_sha256": "05b1af838158feacb193823f0091ecc28f4a0193609f9936089d7de5739ebca6",
+      "locale": "en",
+      "surface": "web",
+      "topic": "challenge",
+      "seconds": 40.38,
+      "kind": "narrated_step_slides",
+      "sha256": "e0bf6a6e197f2776918a5f29443edc3fb201ee46f2a264eb9b92f45d8faf133d"
+    },
+    {
+      "source_sha256": "0d72653ae4d67f9cc8dff3ecae4f59860fdd175a186538d71889b69b811c2814",
+      "locale": "en",
+      "surface": "web",
+      "topic": "staff_functions",
+      "seconds": 42.79,
+      "kind": "narrated_step_slides",
+      "sha256": "6fe4cacbe64d6ebfb7fb9f8c17c7f0a24e6fea1cc27b4d9a990bf0e8620df214"
+    },
+    {
+      "source_sha256": "0bb85a93170b59dc53a1ededf9effc1a68a73ac763ce6d5e43fdba20c52ea605",
+      "locale": "en",
+      "surface": "web",
+      "topic": "website",
+      "seconds": 44.23,
+      "kind": "narrated_step_slides",
+      "sha256": "2e1d3dcc4401e685881d1bcd325499d8158e75ece84ec501675e6cbe267d5f14"
+    },
+    {
+      "source_sha256": "85e75c6ce5bbc0d28a1074e6afbb56df83436109adb3c21b4f7bb17a16d40512",
+      "locale": "en",
+      "surface": "web",
+      "topic": "reports",
+      "seconds": 39.97,
+      "kind": "narrated_step_slides",
+      "sha256": "7b60782fbbc52bd048fc29aa6f518d6b6f3b41f0d517451ea4f75d2180a604f3"
+    },
+    {
+      "source_sha256": "d16c5f6515dd9b0ea6f0de2b48f3ecf7b99bc1944d647c2993c83c41a125ce84",
+      "locale": "en",
+      "surface": "web",
+      "topic": "families",
+      "seconds": 36.95,
+      "kind": "narrated_step_slides",
+      "sha256": "b07444cac70a2307334f3b9969a9e715d56e91a351850c47f78bada37720b247"
+    },
+    {
+      "source_sha256": "f3e5ad13d1e9005f2501f1b6616d67b974daf20b69846d99e878fc6089ea6f23",
+      "locale": "en",
+      "surface": "web",
+      "topic": "competitions",
+      "seconds": 39.41,
+      "kind": "narrated_step_slides",
+      "sha256": "edd47d997e9e3d1f091903273c87b48170a65ea9e19da7c94dab5aaab865a436"
+    },
+    {
+      "source_sha256": "df7df4c29ed3ab645e833672f42c62cdee119e4fdec82e5b469f46afdc02cdcc",
+      "locale": "en",
+      "surface": "web",
+      "topic": "signage",
+      "seconds": 35.15,
+      "kind": "narrated_step_slides",
+      "sha256": "5aa9425f56477c9273b4c5b0a5942b7586545c4596c2663616046d3992b7db11"
+    },
+    {
+      "source_sha256": "6f94eba12b05d77f1b4dcd28f10d228aa0b6a9e2ca7a6217b670fe915bb5ba97",
+      "locale": "en",
+      "surface": "web",
+      "topic": "sponsors",
+      "seconds": 38.89,
+      "kind": "narrated_step_slides",
+      "sha256": "95427222d883290f2a64a43f0ab9ace6545070873d3e95966859835cb54662e8"
+    },
+    {
+      "source_sha256": "05113c293a9ba24c683a26d0ba08417643f7609fbe08a2bc188c872bc9bac060",
+      "locale": "en",
+      "surface": "web",
+      "topic": "synchronisation",
+      "seconds": 43.62,
+      "kind": "narrated_step_slides",
+      "sha256": "4d3301412df36bbe96a75ca4ec091613d0d26eb8de05b4b30a024dc7cf5379e9"
+    },
+    {
+      "source_sha256": "46d233a210f951843b1b0b6e74b143e809a42549b6bf2ac00b2772cf765ca8ab",
+      "locale": "en",
+      "surface": "web",
+      "topic": "work_inbox",
+      "seconds": 39.72,
+      "kind": "narrated_step_slides",
+      "sha256": "625223999717191f9bf39c02da895ef0b8cfce17ccfee6b84a0743c46c816070"
+    },
+    {
+      "source_sha256": "e4970134938e5f3580b2634c7314d66ee7522bc9b10504d6eff796f92d9178ff",
+      "locale": "en",
+      "surface": "web",
+      "topic": "catalogs",
+      "seconds": 41.52,
+      "kind": "narrated_step_slides",
+      "sha256": "cba0bca87a66dd1120c4c4419b5d73685144560f7fe3bf23e634bba730bd2d98"
+    },
+    {
+      "source_sha256": "f1ba874035dce61d6835f8afbf6e154a47f85a8b55f76f496d4ed159f7cf73ff",
+      "locale": "en",
+      "surface": "web",
+      "topic": "message_templates",
+      "seconds": 43.02,
+      "kind": "narrated_step_slides",
+      "sha256": "d4e13f3732f9157d2812bb742a62fa10c1a6646d1e74425c0cdb6f824d15f4d3"
+    }
+  ],
+  "examples": [
+    {
+      "path": "de/app/chat-screen.png",
+      "bytes": 93292,
+      "sha256": "758eb81d95eed0f26c3f0370864d6039d179aef62f3f6d863e72634f6d4a80d4",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/chat-screenrecord.mp4",
+      "bytes": 184986,
+      "sha256": "5d7d4d790a79eddce4dbf42891c5d0b252469da7d1a3ad47bd2dab42db9f0556",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/expense-screen.png",
+      "bytes": 93247,
+      "sha256": "0cd385d695e58877c3f6c57d087a1f0e8940f9034e9e5db1069669d21c8099ea",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/expense-screenrecord.mp4",
+      "bytes": 198627,
+      "sha256": "8ca629df52a1561178b5bf90b51a3bb6f298aa6ee3423ee1fbb9b77323c57297",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/planning-screen.png",
+      "bytes": 138389,
+      "sha256": "a1d05101de96ea4b8ec2c8dfbff52f464786fcf1763e8d5352c7c0fa1a872eb8",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/planning-screenrecord.mp4",
+      "bytes": 161241,
+      "sha256": "915bd47ecb174dfd588b2294b3595ae877b2023831740e517a1eab6c7e21e012",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/profile-screen.png",
+      "bytes": 182028,
+      "sha256": "a0f68601c74842d14777a603c2f83f3fd9833288f7876137a584842c1c349032",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "de/app/profile-screenrecord.mp4",
+      "bytes": 182543,
+      "sha256": "76d5aed210db2130d71e4fa501ddb0de639674ddde6399025d9edcd10c88da69",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/chat-screen.png",
+      "bytes": 95313,
+      "sha256": "14d8f7118f9e3f14856816f3a1f0028939e9611e9dff77c30575fdb4d791a822",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/chat-screenrecord.mp4",
+      "bytes": 210366,
+      "sha256": "7a626711712b6f36033c83ae38e1d7430cfd00bbf571d6c7625a8995b2f3fe7e",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/expense-screen.png",
+      "bytes": 94485,
+      "sha256": "3fb653471bfbaae0810890a2c278a1333d971628435b80652d8ab48dc4f4804f",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/expense-screenrecord.mp4",
+      "bytes": 211882,
+      "sha256": "57619efbbe703be42c8f328ff416fae86c8860481bd14c224dc10e060ed1c387",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/planning-screen.png",
+      "bytes": 135104,
+      "sha256": "3af689ffa88bd1b423cc28d6f398bda318e91c945a3954a17d174234dbea1c22",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/planning-screenrecord.mp4",
+      "bytes": 158589,
+      "sha256": "5793b21227ad97ee5f8c97d8dac8af89d6f726531ab975d5cbc6cc6230aca44f",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/profile-screen.png",
+      "bytes": 174709,
+      "sha256": "992ead2d6000243550c14cb204303951425c76951f645b7f0e94bf234f8cf771",
+      "kind": "android_synthetic_capture"
+    },
+    {
+      "path": "en/app/profile-screenrecord.mp4",
+      "bytes": 198455,
+      "sha256": "ea3fb3b96e47a2b1a0e73bb225ba16cb4cadbe14a93c01db0adb00cdc7dbc7e7",
+      "kind": "android_synthetic_capture"
+    }
+  ]
+}

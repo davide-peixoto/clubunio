@@ -18,9 +18,9 @@
     <a href="{{ $platform ? route('clubunio.support.platform-intake') : route('clubunio.support.club-intake', $club) }}">{{ trans('support-intake.title') }}</a>
 @endif
 <section>
-    <form method="get">@if($embedded)<input type="hidden" name="embed" value="1">@endif<label>{{ trans('support.search') }}<input name="q" maxlength="120" value="{{ request('q') }}"></label><button>{{ trans('support.search') }}</button></form>
+    <form method="get">@if($embedded)<input type="hidden" name="embed" value="1">@endif<label>{{ trans('support-wiki.surface') }}<select name="surface" onchange="this.form.submit()"><option value="web" @selected($surface === 'web')>{{ trans('support-wiki.web') }}</option><option value="app" @selected($surface === 'app')>{{ trans('support-wiki.app') }}</option></select></label><label>{{ trans('support.search') }}<input name="q" maxlength="120" value="{{ request('q') }}"></label><button>{{ trans('support.search') }}</button></form>
     @foreach($faq as $key => $item)
-        <details id="faq-{{ $key }}"><summary>{{ $item['title'] }}</summary><p>{{ $item['body'] }}</p></details>
+        <details id="faq-{{ $key }}"><summary>{{ $item['title'] }}</summary>@include('clubunio.support.guide', ['item' => $item])</details>
     @endforeach
     @foreach($articles as $item)
         <details id="article-{{ $item->id }}"><summary>{{ $item->title }}</summary><p>{{ $item->body }}</p>

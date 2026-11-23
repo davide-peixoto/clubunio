@@ -2223,3 +2223,11 @@ Titel-/Inhaltssuche mit bestehenden Zugriffsgrenzen. App öffnet Hilfe zuerst,
 mit Leerzustand und Wiederholen; neuer App-Build erforderlich.
 76 Live-Prüfungen je Umgebung, 6 Backendtests/120 Assertions und 15 Fluttertests grün.
 Details: [Supportartikel und App-Wissensbasis](CLUBUNIO-SUPPORT-HELP-APP.md).
+
+
+## Wiki für App und Web – 23.11.2026
+
+25 App- und44 Web-Anleitungen jeweils DE/EN, Schritte/Bilder,138 vertonte
+Schrittvideos mit Untertiteln; zusätzlich echte Android-Beispiele für vier Module.
+DEV/Stage/PROD mit87 Live-Prüfungen je Umgebung aktualisiert. Native Anzeige
+erfordert neuen App-Build. [Inhalt, Medien, Pflege und Abnahme](CLUBUNIO-WIKI.md).
