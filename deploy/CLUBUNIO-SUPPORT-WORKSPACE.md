@@ -1,6 +1,6 @@
 # Support-Arbeitsbereich
 
-Stand: 23.11.2026. Nur ClubUnio DEV; Stage unveraendert.
+Stand: 23.11.2026. Auf ClubUnio DEV, Stage und PROD bereitgestellt.
 
 ## Bedienung
 
@@ -72,3 +72,33 @@ Controller, um nicht die unterschiedlichen anonymen und angemeldeten
 Throttle-Budgets desselben Testprozesses zu vermischen. Der echte
 HTTPS-Aufruf und Browserlink werden separat geprueft. Exceptions im
 Smoke-Test liefern explizit Exitcode 1 und verhindern die Freigabe.
+
+## Stage und PROD
+
+Am 23.11.2026 nach ausdruecklicher Freigabe das gepruefte Supportdelta
+aus Commit d2227b1 auf stage.clubunio.com und app.clubunio.com uebernommen.
+Kein gesamter Branch-/DEV-Abgleich und keine fremden lokalen KI-Entwicklungen.
+Die Zielinstanzen verwenden ihr eigenes Schema clubunio, ihre jeweiligen
+Konfigurationen, Benutzer und Vereins-IDs.
+
+RunCloud-Webroots bleiben unveraendert. Fehlende Panelassets und die
+Vereinsverwaltungs-Einbindung wurden gezielt ergaenzt; bestehende
+Portal- und Plattformlayouts nicht pauschal ersetzt. Plattform-Support
+bleibt wegen seines Einbettungsschutzes eine normale Navigationsseite.
+Blade-Cache erneuert und PHP-FPM sanft neu geladen. Kein ENV-/DB-/Rechte-
+oder Schedulerwechsel und kein Mail-, Push- oder OpenAI-Testversand.
+
+Private Dateisicherungen vor dem Update:
+- Stage: /root/clubunio-releases/support-stage-20261123-214936
+- PROD: /root/clubunio-releases/support-prod-20261123-214956
+
+Rueckweg: gesicherte Quelldateien wiederherstellen, im Manifest als neu
+markierte Dateien entfernen, Blade-Cache erneuern und PHP-FPM neu laden.
+Es gibt keine Datenbankmigration zurueckzunehmen.
+
+Pruefung je Zielinstanz: fuenf Vereinsansichten und drei Plattformansichten
+mit berechtigtem Konto rein lesend gerendert, alle HTTP 200. Anmeldehilfe,
+oeffentlicher Chat-/Wissenseinstieg und CSS/JS ueber HTTPS geprueft.
+Keine Tickets oder echten Anmeldeanfragen angelegt. Browser-Sichtpruefung
+dieses Layouts ist auf DEV belegt; Stage/PROD wurden per HTTP und
+angemeldetem Rendering-Smoke-Test geprueft.
