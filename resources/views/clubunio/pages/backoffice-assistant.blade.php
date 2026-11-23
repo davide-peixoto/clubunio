@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-assistant.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-assistant.css') }}?v=2">
     @php
         $providerEnabled = $stateReady && ($assistantState['provider_enabled'] ?? false);
         $canAsk = $stateReady && (! $providerEnabled || ! $this->budgetExhausted() || ($requestKey && $requestText === trim($question)));
@@ -18,7 +18,10 @@
         </div>
         @error('assistant') <p class="cu-assistant-error" role="alert">{{ $message }}</p> @enderror
         @if ($stateReady && ! $providerEnabled)
-            <p class="cu-assistant-notice" role="status">{{ __('AI is disabled. The daily overview remains available locally.') }} {{ trans('assistant_chat.local_only') }}</p>
+            <details class="cu-assistant-connection">
+                <summary>{{ __('AI is disabled. The daily overview remains available locally.') }}</summary>
+                <p class="cu-assistant-notice">{{ trans('assistant_chat.local_only') }}</p>
+            </details>
         @elseif ($stateReady && $this->budgetExhausted())
             <p class="cu-assistant-notice" role="status">{{ __('AI cost limit reached. The daily overview remains available locally.') }}</p>
         @endif

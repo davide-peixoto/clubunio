@@ -44,3 +44,10 @@ vorherigen Release behaelt bereits gespeicherte Gespraeche.
 anderem Provider-aus, lokale Abfragen trotz KI-Kostenlimit, unbekannte
 Abfragen, verschluesselten Verlauf, Rechtewechsel und bezahlte Wiederholungen.
 Tests verwenden synthetische Daten und verhindern echte Provideraufrufe.
+
+Auf DEV lokal mit der bestehenden Vereinsdatenbank in einer zurueckgerollten
+Transaktion geprueft: alle drei Abfragen, sechs verschluesselte Nachrichten,
+keine Provider-Run- oder Fachmutation. Im angemeldeten Chrome-Browser:
+Reservierungsbutton, Tagesfrage per Enter, Antwortstatus und Verlauf
+erfolgreich; Mobilbreite 390 px ohne horizontalen Seitenueberlauf.
+Externe KI blieb deaktiviert. Stage und PROD unveraendert.
