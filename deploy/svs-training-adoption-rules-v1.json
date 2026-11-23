@@ -1,0 +1,14 @@
+{
+  "version": "sv-sissach-training-v1",
+  "tenant_slug": "sv-sissach",
+  "category_teams": {
+    "B-Junioren": "Ba-Junioren",
+    "C-Junioren": "Ca-Junioren"
+  },
+  "source_overrides": {
+    "41": {
+      "source_hash": "3b3a5b7d1fb9452fd4948300602773e65d703d7b0a189dfc43d04c82268a6a8f",
+      "team_name": "1te Mannschaft"
+    }
+  }
+}

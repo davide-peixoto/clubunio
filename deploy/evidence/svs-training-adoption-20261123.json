@@ -1,0 +1,86 @@
+{
+  "date": "2026-11-23",
+  "tenant": "sv-sissach",
+  "first_apply": {
+    "eligible": 34,
+    "imported": 34,
+    "already_imported": 0,
+    "excluded": 13,
+    "unresolved": 0,
+    "inactive_owners_preserved": 31,
+    "quality_pending": 19,
+    "assignments": {
+      "operator_category_rule": 24,
+      "unique_owner_staff_category_season": 8,
+      "unique_category_season": 1,
+      "operator_source_rule": 1
+    }
+  },
+  "repeat": {
+    "eligible": 0,
+    "imported": 0,
+    "already_imported": 34,
+    "excluded": 13,
+    "unresolved": 0,
+    "inactive_owners_preserved": 0,
+    "quality_pending": 0,
+    "assignments": []
+  },
+  "isolated_copy_tests": {
+    "status": "passed",
+    "preview": {
+      "eligible": 34,
+      "imported": 0,
+      "already_imported": 0,
+      "excluded": 13,
+      "unresolved": 0,
+      "inactive_owners_preserved": 31,
+      "quality_pending": 19,
+      "assignments": {
+        "operator_category_rule": 24,
+        "unique_owner_staff_category_season": 8,
+        "unique_category_season": 1,
+        "operator_source_rule": 1
+      }
+    },
+    "first": {
+      "eligible": 34,
+      "imported": 34,
+      "already_imported": 0,
+      "excluded": 13,
+      "unresolved": 0,
+      "inactive_owners_preserved": 31,
+      "quality_pending": 19,
+      "assignments": {
+        "operator_category_rule": 24,
+        "unique_owner_staff_category_season": 8,
+        "unique_category_season": 1,
+        "operator_source_rule": 1
+      }
+    },
+    "repeat": {
+      "eligible": 0,
+      "imported": 0,
+      "already_imported": 34,
+      "excluded": 13,
+      "unresolved": 0,
+      "inactive_owners_preserved": 0,
+      "quality_pending": 0,
+      "assignments": []
+    },
+    "source_and_baseline_unchanged": true,
+    "accounts_unchanged": true,
+    "rules_validated": true,
+    "resource_markers_and_filters": true,
+    "late_failure_rollback": true
+  },
+  "source_and_delta_baseline_unchanged_on_prod": true,
+  "backup_sha256": "a4852e6b56f2d5f0e7ea20ee676d4a18a78d3a8370c0f73f1edaca32429744b1",
+  "source_writes": false,
+  "provider_calls": false,
+  "accounts_activated": false,
+  "schema_changes": false,
+  "web_check": "Authenticated PROD page shows adopted state and native archive links",
+  "translations_local_keys": 3069,
+  "translations_prod_keys": 3071
+}

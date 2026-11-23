@@ -1,4 +1,8 @@
 {
+  "training.history_auto": "Import historical plans automatically",
+  "training.history_done": "Historical plans checked and imported",
+  "training.history_counts": ":imported newly archived, :existing already imported, :unresolved unresolved, :excluded excluded.",
+  "training.history_open": "Open archived plan",
   "svs.integrity": "File verification",
   "svs.metadata_only": "Source metadata only – file unverified",
   "svs.file_verified": "File verified",

@@ -1,4 +1,8 @@
 {
+  "training.history_auto": "Altpläne automatisch übernehmen",
+  "training.history_done": "Altpläne geprüft und übernommen",
+  "training.history_counts": ":imported neu archiviert, :existing bereits übernommen, :unresolved unklar, :excluded ausgeschlossen.",
+  "training.history_open": "Archivplan öffnen",
   "svs.integrity": "Dateiprüfung",
   "svs.metadata_only": "Nur Quelldaten – Datei ungeprüft",
   "svs.file_verified": "Datei geprüft",

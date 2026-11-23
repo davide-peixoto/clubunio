@@ -50,7 +50,9 @@ foreach ($config['enabled'] as $locale => $label) {
     foreach ($source as $key => $english) {
         $value = $catalog[$key] ?? null;
         if (! is_string($value) || trim($value) === '') { $errors[] = "$locale: missing $key"; continue; }
-        preg_match_all('/:[a-zA-Z_][a-zA-Z0-9_]*/', $key, $expected);
+        // Symbolic keys carry no source text; their placeholders belong to the English catalogue.
+        $placeholderSource = preg_match('/\A[a-z][a-z0-9_-]*(?:\.[a-z0-9_-]+)+\z/', $key) ? $english : $key;
+        preg_match_all('/:[a-zA-Z_][a-zA-Z0-9_]*/', $placeholderSource, $expected);
         preg_match_all('/:[a-zA-Z_][a-zA-Z0-9_]*/', $value, $actual);
         sort($expected[0]); sort($actual[0]);
         if ($expected[0] !== $actual[0]) { $errors[] = "$locale: placeholder mismatch $key"; }

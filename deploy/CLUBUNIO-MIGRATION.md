@@ -1446,3 +1446,15 @@ lokal als Vereinsadmin zugeordnet. Codex-Agent alle12Stunden ACTIVE, nur
 PHPMaker PROD -> ClubUnio PROD; keine bidirektionale Sync oder Providerjobs.
 [Betrieb und Nachweis](CLUBUNIO-SVS-PRODUCTION-IMPORT.md). Parallel vorhandene
 Wallet-/Push-Aenderungen auf dem VPS unveraendert erhalten.
+
+## Altplaene automatisch uebernommen (23.11.2026)
+
+Auf Betreiberauftrag34 gueltige Altplaene als private native Archivplaene
+auf PROD uebernommen,13 unvollstaendige/fehlerhafte Staende ausgeschlossen.
+B-Junioren -> Ba, C-Junioren -> Ca, verbleibender Herrenplan ->1te Mannschaft;
+jeweils historische Saison.31 inaktive Originalbesitzer und19 bestehende
+Qualitaetshinweise unveraendert. Wiederholung0 Inserts, Herkunft und Delta-
+Feldbasis unveraendert. Kopien-/Fehler-/DE-/EN-Tests erfolgreich, angemeldete
+PROD-Anzeige mit Archivlinks geprueft. Keine Kontoaktivierung, Provideraufrufe,
+Quellschreibzugriffe oder neuen Hintergrundjobs. Keine Schemaaenderung.
+[Betrieb und Abnahme](CLUBUNIO-HISTORICAL-TRAINING-ADOPTION.md).
