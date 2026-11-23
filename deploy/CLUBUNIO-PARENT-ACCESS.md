@@ -97,3 +97,38 @@ Serverkorrektur auf Stage, DEV und PROD mit privatem Dateibackup; bestehende
 abweichende Web-MFA-Implementierungen erhalten. Stage-Zielkonto besteht die
 Loginpruefung fuer beide zugeordneten Mandanten. Echter erneuter Login durch
 den Benutzer bleibt abschliessende Geraeteabnahme. Kein App-Neubau erforderlich.
+
+## Gezielte PROD-Kontoaktivierung (23.11.2026)
+
+Nach ausdruecklicher Benutzerfreigabe wurde das bisher deaktivierte PROD-Konto105
+im bestehenden Mandanten12 aktiviert und portal_enabled eingeschaltet. Rolle
+trainer und bestehende Mitgliedszuordnungen bleiben erhalten. Die Identitaet
+wurde anhand der bereits explizit auf Stage gebundenen Subject-ID und durch
+eine unabhaengige Nur-Lesen-Pruefung im Keycloak-Realm bestaetigt: Subject,
+E-Mail, enabled und email_verified muessen exakt passen. Kein neues Keycloak-
+Konto, kein Passwortreset und keine E-Mail versendet.
+
+Transaktional wurde genau ein keycloak_account_links-Datensatz angelegt und
+die Aktivierung mit berechtigtem PROD-Auditakteur protokolliert. Vorher wurde
+derselbe Ablauf mit Rollback geprueft. Die bestehende PROD-Subject-Allowlist
+wurde nur um dieses Konto ergaenzt, sodass der bisher begrenzte Loginbetrieb
+erhalten bleibt; globale Einladungen weiterhin deaktiviert. Nach config:cache
+frisch geprueft: Konto aktiv, explizites Mapping und DB-Verknuepfung korrekt,
+MemberAccess fuer den Zielmandanten true, bestehende Trainerrolle und eigener
+Mitgliedseintrag vorhanden. Minderjaehrige Kinder werden beim naechsten echten
+verifizierten Login nach der zentralen Elternregel synchronisiert.
+
+Private Sicherung: /var/backups/clubunio-prod-gmail-20261123 (urspruengliche
+Umgebungskonfiguration und gezielter PG-Dump der betroffenen Kontotabellen).
+Rueckweg ist gezielt: neu hinzugefuegtes Subject-Mapping und exakt diese
+DB-Identitaetsverknuepfung entfernen, Konto105 und dessen Vereinszugang wieder
+sperren und Konfigurationscache neu erzeugen. Kein pauschaler DB-Restore.
+Keine Secrets, Subjects oder Umgebungskonfiguration im Repository.
+
+Loginregressionen:10Tests/54Assertions bestanden. Der echte iPhone-Login
+bleibt abschliessende Benutzerabnahme. Fuer die Fehlerdiagnose beachten:
+RunCloud-Zugriffslogs sind mit16k gepuffert und ohne flush-Intervall. Fehlende
+neue Logzeilen beweisen keinen fehlenden Request; USR1 an den NGINX-Master
+oeffnet die Logs neu und leert den Puffer ohne Dienstunterbrechung. Damit war
+der PROD-Callback403 zeitlich eindeutig nachgewiesen; Stage hatte zuvor einen
+erfolgreichen Callback und Tokenaustausch.

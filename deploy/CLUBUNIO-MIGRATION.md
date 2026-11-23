@@ -1389,3 +1389,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Nachkorrektur Elternlogins: Vereinsdomain-OIDC-Callback verwendet MemberAccessService::canEnter statt Account::canAccessTenant. Keine DB-Migration oder Kontorollenveraenderung. Stage/DEV/PROD genau eine Zugriffsmethode mit privatem Dateibackup ersetzt, Laufzeitabweichungen erhalten; Rueckweg gesicherte Controllerdatei.
+
+
+23.11.2026: Explizit autorisierte Einzelkontoaktivierung PROD105/Mandant12: active und portal_enabled aktiviert, vorhandene Keycloak-Identitaet sicher gebunden und bestehende Subject-Allowlist um genau einen Eintrag ergaenzt. Keine Schemaaenderung oder globale Kontomigration. Private Konfigurations-/PG-Sicherung und Audit; gezielter Rueckweg in CLUBUNIO-PARENT-ACCESS.md.

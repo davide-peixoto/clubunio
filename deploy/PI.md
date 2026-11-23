@@ -2823,3 +2823,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Stage-Gmail403 auf falsche Backofficepruefung im Vereinsdomain-Callback eingegrenzt und durch mandantengenauen Mitgliederzugang ersetzt. Berechtigter nativer Member-Callback und verweigerter Mandant getestet,7Tests/36Assertions. Korrektur Stage/DEV/PROD mit gezielten Dateibackups bereitgestellt; erneuter Geraetelogin offen.
+
+
+23.11.2026: Autorisierte PROD-Kontoaktivierung abgeschlossen: Konto105 aktiv, Portalzugang fuer bestehenden Mandanten12, Trainerrolle unveraendert, bestehende Keycloak-Identitaet autoritativ geprueft und eindeutig gebunden. Gezieltes Subject-Mapping statt globaler Freischaltung; private Sicherungen und Audit vorhanden.10Tests/54Assertions; echter iPhone-Login durch Benutzer noch ausstehend.

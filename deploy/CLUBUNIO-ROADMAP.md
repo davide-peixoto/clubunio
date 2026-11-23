@@ -2202,3 +2202,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: HTTP403 beim Eltern-/Trainerlogin auf Vereinsdomains korrigiert: OIDC-Callback prueft konkreten MemberAccess statt Backoffice-Modulzugang. Stage/DEV/PROD gezielt aktualisiert,7 Login-Regressionspruefungen/36 Assertions gruen. Keine Rechteaufwertung; Benutzer kann ohne App-Neubau erneut anmelden. Details: CLUBUNIO-PARENT-ACCESS.md.
+
+
+23.11.2026: Nach expliziter Freigabe PROD-Gmailkonto105/Mandant12 gezielt aktiviert, bestehende Trainerrolle erhalten, verifizierte vorhandene Keycloak-Identitaet verknuepft und nur dieses Subject zur bestehenden PROD-Allowlist hinzugefuegt. Globale Einladungen bleiben aus. Dry-run/Rollback und frische Zugangspruefung erfolgreich,10Loginregressionen/54Assertions; iPhone-Neuanmeldung offen. Details: CLUBUNIO-PARENT-ACCESS.md.
