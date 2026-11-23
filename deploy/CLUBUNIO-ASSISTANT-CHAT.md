@@ -1,5 +1,27 @@
 # Assistent als Chat
 
+## Tagesuebersicht als Dashboard (23.11.2026)
+
+Sechs kompakte Kennzahlen ersetzen die technischen Kennzahlentabellen:
+Anmeldungen in Bearbeitung, Spesen mit ausstehender Freigabe/Zahlung,
+offene Rechnungen, offene Bus-/Platzanfragen ueber alle Tage und der
+aktive Mitgliederbestand. Mitgliederzahlen sind keine offenen Aufgaben.
+Reservierungen am gewaehlten Tag stehen getrennt darunter.
+
+Die Arbeitslisten sind standardmaessig geschlossen. Pro Bereich bleibt
+die begrenzte Vorschau mit sicheren Fachlinks, Status und formatiertem
+Betrag erhalten. Reservierungslisten enthalten nur den gewaehlten Tag,
+nicht saemtliche offenen Anfragen. Technische Zaehler, unbekannte
+Ueberfaelligkeit und die Abgrenzung zu Trainings/Spielen/Sperren stehen
+unter Datengrundlage. Keine zusaetzlichen Datenbank- oder Provideraufrufe.
+
+Migration: Page, Hauptview, neues Dashboard-Partial, versioniertes CSS und
+beide Sprachkataloge gemeinsam bereitstellen; releasebezogenen View-Cache
+erneuern. Keine Schema-, Rechte-, KI-Freigabe- oder Datenmigration.
+Rueckweg: DEV-Release `20261123-clubunio-assistant-chat-v2`.
+48 lokale Tests / 726 Assertions, Pint und DE/EN-Katalogpruefung erfolgreich.
+DEV-Browserabnahme folgt nach Bereitstellung; Stage und PROD unveraendert.
+
 ## Ursache und Freigabe
 
 Am 23.11.2026 war auf DEV der Assistent freigeschaltet, aber der externe

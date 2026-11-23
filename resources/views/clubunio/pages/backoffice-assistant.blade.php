@@ -1,11 +1,11 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clubunio-assistant.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('css/clubunio-assistant.css') }}?v=3">
     @php
         $providerEnabled = $stateReady && ($assistantState['provider_enabled'] ?? false);
         $canAsk = $stateReady && (! $providerEnabled || ! $this->budgetExhausted() || ($requestKey && $requestText === trim($question)));
         $budget = $assistantState['budget'] ?? [];
     @endphp
-    <div class="cu-assistant" x-data="{ submitting: false, pendingText: '', scrollToLatest() { this.$nextTick(() => { this.$refs.log.scrollTop = this.$refs.log.scrollHeight; }); } }" x-on:assistant-updated.window="scrollToLatest()" x-bind:aria-busy="submitting" aria-label="{{ __('ClubUnio Assistant') }}">
+    <div class="cu-assistant" x-data="{ submitting: false, pendingText: '', scrollToLatest() { this.$nextTick(() => { const log = this.$refs.log; const last = Array.from(log.querySelectorAll('article[data-message-index]')).at(-1); log.scrollTop = !this.submitting && last?.querySelector('.cu-assistant-overview') ? last.offsetTop - log.offsetTop : log.scrollHeight; }); } }" x-on:assistant-updated.window="scrollToLatest()" x-bind:aria-busy="submitting" aria-label="{{ __('ClubUnio Assistant') }}">
         <fieldset x-bind:disabled="submitting" class="cu-assistant-shell">
         <div class="cu-assistant-toolbar">
             <x-filament::button color="gray" icon="heroicon-o-plus" wire:click="newConversation" wire:loading.attr="disabled">{{ __('New conversation') }}</x-filament::button>
@@ -43,10 +43,13 @@
             <div class="cu-assistant-main">
                 <div class="cu-assistant-log" x-ref="log" role="log" aria-label="{{ __('Assistant conversation') }}" aria-live="polite" aria-relevant="additions text" tabindex="0">
                     @forelse ($assistantState['messages'] ?? [] as $index => $message)
-                        <article class="cu-assistant-message" data-role="{{ ($message['role'] ?? '') === 'user' ? 'user' : 'assistant' }}" wire:key="assistant-message-{{ $conversationId ?? 'new' }}-{{ $index }}">
+                        <article class="cu-assistant-message" data-message-index="{{ $index }}" data-role="{{ ($message['role'] ?? '') === 'user' ? 'user' : 'assistant' }}" wire:key="assistant-message-{{ $conversationId ?? 'new' }}-{{ $index }}">
                             <p class="cu-assistant-role">@svg(($message['role'] ?? '') === 'user' ? 'heroicon-o-user-circle' : 'heroicon-o-sparkles') {{ ($message['role'] ?? '') === 'user' ? __('You') : __('Assistant') }}</p>
                             <p class="cu-assistant-text">{{ $message['content'] ?? '' }}</p>
                             @foreach ($this->resultGroups($message) as $result)
+                                @if ($dashboard = $this->dailyDashboard($result))
+                                    @include('clubunio.pages.partials.assistant-daily-dashboard', ['dashboard' => $dashboard, 'result' => $result])
+                                @else
                                 <section class="cu-assistant-results">
                                     <h3>{{ $result['title'] ?? '' }}</h3>
                                     <p class="cu-assistant-text">{{ $result['summary'] ?? '' }}</p>
@@ -94,6 +97,7 @@
                                     </details>
                                     @endif
                                 </section>
+                                @endif
                             @endforeach
                         </article>
                     @empty

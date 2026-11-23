@@ -473,4 +473,55 @@ class BackofficeAssistantPageTest extends TestCase
         $this->assertSame([['key' => 'matching', 'label' => 'Matching records', 'value' => 0]], $groups[0]['metrics']);
         $this->assertSame([['key' => 'matching', 'label' => 'Matching records', 'value' => 'Not available']], $groups[1]['metrics']);
     }
+
+    public function test_daily_dashboard_separates_work_from_day_reservations_and_membership(): void
+    {
+        foreach (['de', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $counts = [];
+            foreach (['members', 'registrations', 'expenses', 'invoices', 'bus', 'pitch'] as $module) {
+                $counts[$module] = ['matching' => 31, 'returned' => 3];
+            }
+            $counts['bus'] += ['bus_pending_all_dates' => 9, 'bus_on_date' => 2];
+            $counts['pitch'] += ['pitch_pending_all_dates' => 0, 'pitch_on_date' => 0];
+            $result = ['counts' => $counts, 'coverage' => ['date' => '2026-11-23'], 'rows' => [
+                ['module' => 'invoices', 'label' => '<b>Synthetic invoice</b>', 'url' => '/invoices/7',
+                    'open_amount' => '380.000000000000000000', 'currency' => 'CHF', 'status_label' => 'Synthetic status'],
+                ['module' => 'untrusted', 'label' => 'Unexpected row'],
+            ]];
+            $dashboard = (new BackofficeAssistant)->dailyDashboard($result);
+            $tiles = collect($dashboard['tiles'])->keyBy('module');
+            $this->assertSame('23.11.2026', $dashboard['date']);
+            $this->assertSame(9, $tiles['bus']['count']);
+            $this->assertSame(2, $tiles['bus']['day_count']);
+            $this->assertSame(0, $tiles['pitch']['count']);
+            $this->assertSame(31, $tiles['members']['count']);
+            $this->assertCount(1, $tiles['invoices']['rows']);
+            $this->state['messages'] = [['role' => 'assistant', 'content' => 'Local overview', 'results' => [$result]]];
+            $html = Livewire::test(BackofficeAssistant::class)
+                ->assertSee(trans('assistant_chat.key_figures'))->assertSee(trans('assistant_chat.kpi_members'))
+                ->assertSee(trans('assistant_chat.coverage_note'))->assertSee('CHF 380.00')
+                ->assertDontSee('380.000000000')->assertDontSee('Unexpected row')
+                ->assertDontSee('<b>Synthetic invoice</b>', false)->html();
+            $document = new \DOMDocument;
+            $document->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($document);
+            $this->assertCount(6, $xpath->query('//*[@data-overview-list]'));
+            $this->assertCount(0, $xpath->query('//*[@data-overview-list and @open]'));
+        }
+    }
+
+    public function test_overview_numbers_and_partial_results_have_safe_fallbacks(): void
+    {
+        $page = new BackofficeAssistant;
+        $this->assertNull($page->dailyDashboard([]));
+        $this->assertNull($page->dailyDashboard(['counts' => ['invoices' => ['matching' => 4]]]));
+        app()->setLocale('en');
+        $this->assertSame('CHF 1,234.50', $page->overviewAmount('1234.50000', 'CHF'));
+        app()->setLocale('de');
+        $this->assertSame("CHF 1'234.50", $page->overviewAmount('1234.50000', 'CHF'));
+        $this->assertSame('-', $page->overviewAmount(null, 'CHF'));
+        $this->assertSame('-', $page->overviewAmount(INF, 'CHF'));
+        $this->assertSame('1.00', $page->overviewAmount('1', '<script>'));
+    }
 }

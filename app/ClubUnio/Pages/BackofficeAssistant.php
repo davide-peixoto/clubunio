@@ -292,7 +292,11 @@ class BackofficeAssistant extends Page
         $fields = [];
         foreach ($labels as $key => $label) {
             if (array_key_exists($key, $row)) {
-                $fields[] = ['label' => $label, 'value' => $row[$key]];
+                $value = $row[$key];
+                if (in_array($key, ['amount', 'open_amount'], true) && is_numeric($value)) {
+                    $value = $this->overviewAmount($value, '');
+                }
+                $fields[] = ['label' => $label, 'value' => $value];
             }
         }
 
@@ -352,6 +356,44 @@ class BackofficeAssistant extends Page
         }
 
         return $groups;
+    }
+
+    public function dailyDashboard(array $result): ?array
+    {
+        $groups = collect($this->resultCountGroups($result))->keyBy('module');
+        if ($groups->count() !== 6) {
+            return null;
+        }
+
+        $icons = ['registrations' => 'heroicon-o-user-plus', 'expenses' => 'heroicon-o-receipt-percent',
+            'invoices' => 'heroicon-o-document-currency-dollar', 'bus' => 'heroicon-o-truck',
+            'pitch' => 'heroicon-o-calendar-days', 'members' => 'heroicon-o-users'];
+        $tiles = [];
+        foreach ($icons as $module => $icon) {
+            $group = $groups[$module];
+            $metrics = collect($group['metrics'])->pluck('value', 'key');
+            $key = in_array($module, ['bus', 'pitch'], true) ? $module.'_pending_all_dates' : 'matching';
+            $rows = array_values(array_filter($result['rows'] ?? [], fn ($row) => is_array($row) && ($row['module'] ?? null) === $module));
+            $tiles[] = $group + ['icon' => $icon, 'count' => $metrics[$key] ?? __('Not available'),
+                'caption' => trans('assistant_chat.kpi_'.$module), 'rows' => $rows,
+                'day_count' => $metrics[$module.'_on_date'] ?? __('Not available'),
+                'matching' => $metrics['matching'] ?? __('Not available')];
+        }
+
+        $date = $result['coverage']['date'] ?? null;
+
+        return ['tiles' => $tiles, 'date' => is_string($date) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)
+            ? substr($date, 8, 2).'.'.substr($date, 5, 2).'.'.substr($date, 0, 4) : null];
+    }
+
+    public function overviewAmount(mixed $amount, mixed $currency): string
+    {
+        if (! is_numeric($amount) || ! is_finite((float) $amount)) {
+            return '-';
+        }
+        $formatted = number_format((float) $amount, 2, '.', app()->getLocale() === 'de' ? "'" : ',');
+
+        return (is_string($currency) && preg_match('/^[A-Z]{3}$/D', $currency) ? $currency.' ' : '').$formatted;
     }
 
     public function resultUrl(mixed $url): ?string
