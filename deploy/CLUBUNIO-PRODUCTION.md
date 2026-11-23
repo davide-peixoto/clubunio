@@ -135,3 +135,15 @@ Delta-Planer und Dreiwege-Konfliktregeln vorbereitet; sechs Tests gruen.
 Kein Fachimport ausgefuehrt. Ziel aktuell 143 Migrationen samt fremden
 Walletaenderungen; fachlicher Apply-Runner/Mapping noch umzusetzen.
 [Plan und Nachweise](CLUBUNIO-PROD-SV-SISSACH-MIGRATION.md).
+
+## PROD-App-Bootstrap freigeschaltet (23.11.2026)
+
+iPhone-Verbindungsfehler auf fehlende Runtimefreigaben eingegrenzt: Bootstrap
+war deaktiviert, Origin-Allowlist leer; HTTP503 vor jeder Anmeldung. Exakt
+app.clubunio.com fuer Bootstrap und bestehenden nativen Keycloak-MFA-Einstieg
+konfiguriert, Cache/FPM erneuert. HTTP200/Fluttervertrag und nativer Pair->OIDC-
+Redirect mit PKCE/MFA nachgewiesen. Anonyme Vereinsdaten401, Zusatzquery422,
+fremder Origin503. Passwortfallback/Einladungen/Registrierung bleiben aus.
+Keine Schluessel-, Rollen-, Schema- oder Providerjob-Aenderungen. Echter
+MFA-/App-Abschluss auf dem iPhone noch durch Benutzer zu pruefen.
+[Betrieb und Rueckweg](CLUBUNIO-PROD-MOBILE-BOOTSTRAP.md).

@@ -1458,3 +1458,14 @@ Feldbasis unveraendert. Kopien-/Fehler-/DE-/EN-Tests erfolgreich, angemeldete
 PROD-Anzeige mit Archivlinks geprueft. Keine Kontoaktivierung, Provideraufrufe,
 Quellschreibzugriffe oder neuen Hintergrundjobs. Keine Schemaaenderung.
 [Betrieb und Abnahme](CLUBUNIO-HISTORICAL-TRAINING-ADOPTION.md).
+## PROD-App-Bootstrap freigeschaltet (23.11.2026)
+
+iPhone-Verbindungsfehler auf fehlende Runtimefreigaben eingegrenzt: Bootstrap
+war deaktiviert, Origin-Allowlist leer; HTTP503 vor jeder Anmeldung. Exakt
+app.clubunio.com fuer Bootstrap und bestehenden nativen Keycloak-MFA-Einstieg
+konfiguriert, Cache/FPM erneuert. HTTP200/Fluttervertrag und nativer Pair->OIDC-
+Redirect mit PKCE/MFA nachgewiesen. Anonyme Vereinsdaten401, Zusatzquery422,
+fremder Origin503. Passwortfallback/Einladungen/Registrierung bleiben aus.
+Keine Schluessel-, Rollen-, Schema- oder Providerjob-Aenderungen. Echter
+MFA-/App-Abschluss auf dem iPhone noch durch Benutzer zu pruefen.
+[Betrieb und Rueckweg](CLUBUNIO-PROD-MOBILE-BOOTSTRAP.md).
