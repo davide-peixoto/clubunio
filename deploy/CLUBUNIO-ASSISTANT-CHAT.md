@@ -51,3 +51,8 @@ keine Provider-Run- oder Fachmutation. Im angemeldeten Chrome-Browser:
 Reservierungsbutton, Tagesfrage per Enter, Antwortstatus und Verlauf
 erfolgreich; Mobilbreite 390 px ohne horizontalen Seitenueberlauf.
 Externe KI blieb deaktiviert. Stage und PROD unveraendert.
+
+DEV-Release: `20261123-clubunio-assistant-chat-v2`, funktionaler Rueckweg
+`20261123-clubunio-support-workspace`. Eigener Paketbranch:
+`codex/assistant-chat-ui`, um parallele KI-Konfigurationsarbeiten nicht
+mitzunehmen. 46 lokale Tests / 689 Assertions und DE/EN-Check erfolgreich.
