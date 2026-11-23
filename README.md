@@ -214,3 +214,6 @@ Elternlogins: [Altersabhaengige Freigabe und Profilverwaltung](deploy/CLUBUNIO-P
 
 
 Igloohome-App: [SVS-Abgleich, Notfallfunktion und Betriebsstand](deploy/CLUBUNIO-IGLOOHOME-APP.md).
+
+
+[Chatuebersetzung: eigene24-Sprachen-Freigabe](deploy/CLUBUNIO-CHAT-TRANSLATION-LANGUAGES.md), unabhaengig von der DE/EN-Oberflaeche.

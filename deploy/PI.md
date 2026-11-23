@@ -2832,3 +2832,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Igloohome-Backendvollstaendigkeit und Authentifizierung geprueft; Notfallfunktion ergaenzt, beideAuditluecken behoben. Garderobe/Ballhaus7Tage, BusReservationsfenster+4h. Max60sOffenlegung nach3bestaetigten prePIN-Ausfaellen. DEV/Stage/PROD Migration160+Ansicht/Admin/Notfall bereit, Provider/Ausgabe weitergeschlossen bisrealeKonfiguration.50PGChecks jeInstanz,21FlutterTests,3051DEENSchluessel,2172MobileTexte/5Sprachen. NativeNeubau und echteBoxabnahme offen.
+
+
+23.11.2026: SeparateChatTranslationLanguages/configFreigabe fuer24OpenAI-Ziele; UI bleibt2Sprachen. EigenerFlutterPolicytyp ohneUI-Katalogschnittmenge, lokalisierteAnzeigenamen, Arabic/PersianRTL. Migration170 erweitertbisherigeEnumconstraint; je47PGChecks/rollback,10Backendtests132Assertions,41Fluttertests. DEEN3075Schluessel undmobile2172/5Kataloge geprueft. Doku/neuerAppBuild-Hinweis nachgefuehrt.

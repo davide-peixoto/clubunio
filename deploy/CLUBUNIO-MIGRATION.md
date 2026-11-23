@@ -1398,3 +1398,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: AdditiveMigration2026_11_23_000160_mobile_keybox_emergency aufDEV/Stage/PROD: verschluesselterNotfallcode, Fehler-/Offenlegungsmetadaten, failedTerminalstatus, partielleScopeUnique. PrivateDatei/Env/PG-Sicherungen vorAenderung, engerSourcepatch erhaelt Laufzeitabweichungen. Notfallflag nachMigration aktiviert; echteProvider-/PIN-Ausgabe bleibt geschlossen.50RollbackChecks jeInstanz, keineechtenProvider-/Hardwareaufrufe. Bericht/Rueckweg: CLUBUNIO-IGLOOHOME-APP.md.
+
+
+23.11.2026: Migration2026_11_23_000170_chat_translation_languages vorCode aufDEV/Stage/PROD ausgefuehrt. Chat-Zielsprachevarchar20+Formatconstraint stattfixem5erEnum; Backendfreigabebleibtzentral24, UI unveraendertDE/EN. GezielteprivatePreferences-/Migrationsbackups undDateisicherungen, no paidproviderrequests, bestehendeBenutzerpraeferenzenunveraendert. Je47PGChecks/rollback. Rueckweg:Katalogverkleinern, neuegespeicherteCodes/Schemaerweiterungerhalten; Bericht CLUBUNIO-CHAT-TRANSLATION-LANGUAGES.md.

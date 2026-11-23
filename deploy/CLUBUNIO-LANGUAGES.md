@@ -87,3 +87,6 @@ visuell auf1280x720 und390x844 ohne Ueberlappung; zurueck auf Deutsch gewechselt
 Screenshots lokal storage/app/languages-login-en.png und
 languages-login-en-mobile.png, nicht versioniert. Angemeldete Fachmasken bleiben
 als visuelle Restabnahme offen; keine pauschale Vollstaendigkeitsbehauptung.
+
+
+23.11.2026: App-/Web-Oberflaechen bleibenzentralDE/EN. Chatuebersetzung hat einen eigenenFreigabekatalog config/clubunio-chat-translation.php mit24Zielen fuerOpenAI/AzureOpenAI; AzureTranslator bleibtbei5bisherigenZielen. KeineUI-UebersetzungsAPI. Namenlokalisiert, Zustimmungen/Budgets erhalten, SprachenentzugvorCacheundProviderfrischgeprueft. Migration170 vorCode aufDEV/Stage/PROD; je47PGChecks/rollback,10BackendTests132Assertions,41AppTests. VollstaendigeAuswahl brauchtApp-Neubau. Bericht: CLUBUNIO-CHAT-TRANSLATION-LANGUAGES.md.

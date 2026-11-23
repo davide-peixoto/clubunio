@@ -11,7 +11,7 @@ final class ChatPreferences
     {
         app(ChatAccess::class)->enter($actor, $tenant);
         $row = app(ChatService::class)->table($tenant, 'chat_preferences')->where('account_id', $actor->id)->first();
-        $language = app(MobileLanguages::class)->effective($row->target_language ?? null);
+        $language = app(ChatTranslationLanguages::class)->effective($row->target_language ?? null);
         return ['revision' => (int) ($row->revision ?? 0),
             'translation_enabled' => (bool)($row->translation_enabled ?? false) && !$language['language_fallback'] && $language['language'] !== null,
             'target_language' => $language['language'], 'language_policy' => $language['language_policy'], 'language_fallback' => $language['language_fallback']];
@@ -22,8 +22,8 @@ final class ChatPreferences
     {
         app(ChatAccess::class)->authorize($actor, $tenant, 'send');
         $data = Validator::make($input, ['revision' => 'required|integer|min:0', 'translation_enabled' => 'required|boolean',
-            'target_language' => app(MobileLanguages::class)->rules()])->validate();
-        $data['target_language'] = app(MobileLanguages::class)->normalize($data['target_language']);
+            'target_language' => app(ChatTranslationLanguages::class)->rules()])->validate();
+        $data['target_language'] = app(ChatTranslationLanguages::class)->normalize($data['target_language']);
         $old = $this->get($actor, $tenant);
         abort_unless($old['revision'] === (int) $data['revision'], 409);
         app(ChatService::class)->table($tenant, 'chat_preferences')->updateOrInsert(['tenant_id' => $tenant->id, 'account_id' => $actor->id],
@@ -34,7 +34,7 @@ final class ChatPreferences
 
     public function allowTranslation(Account $actor, Tenant $tenant, string $language): void
     {
-        $language = app(MobileLanguages::class)->validateLanguage($language);
+        $language = app(ChatTranslationLanguages::class)->validateLanguage($language);
         $preference = $this->get($actor, $tenant);
         abort_unless($preference['translation_enabled'], 403);
         abort_unless($preference['target_language'] === $language, 409);

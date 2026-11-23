@@ -2211,3 +2211,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Igloohome App/Backend inklNotfallfunktion nachSVS-Ablaufen umgesetzt und DEV/Stage/PROD bereitgestellt.50PGChecks jeUmgebung,21AppTests; Auth/Rechte/Scopes/Idempotenz geprueft. Mehrbenutzerkonflikt und statischer Widerruf nachKontosperre behoben; bestaetigte physischeCodeaenderung inVerwaltung. EchteOAuthzugangsdaten, GeraeteIDs,3Boxzuordnungen/Notfallcodes und Hardwareabnahme offen. Details: CLUBUNIO-IGLOOHOME-APP.md.
+
+
+23.11.2026: Chatuebersetzung vonUI-Sprachfreigabe getrennt:24Ziele fuerOpenAI mitlokalisiertenNamen undRTL-Ausgabe. App-OberflaecheweiterDE/EN, ausdruecklicheZustimmung/Datenschutz/Kostenkontrolle erhalten. DEV/Stage/PROD je47synthetischePGChecks,41AppTests; Migration170 undCodebereitgestellt. KeinebezahltenTestanfragen, App-Neubauoffen. Bericht: CLUBUNIO-CHAT-TRANSLATION-LANGUAGES.md.

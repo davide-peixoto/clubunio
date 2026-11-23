@@ -26,6 +26,9 @@ final class MobileLanguagePolicyProbe
         if ($db->getDriverName()!=='pgsql' || $db->getDatabaseName()!=='db_acdf8d_dclubora' || $db->transactionLevel()!==0) throw new \LogicException('Standalone reviewed PostgreSQL required');
         $policy=app(MobileLanguages::class)->policy();
         $this->expect($policy===['enabled'=>['de','en'],'default'=>'de'],'Actual central DE/EN release policy');
+        // This legacy probe intentionally exercises revocation in both independent catalogs.
+        config(['clubunio-chat-translation.enabled'=>['de','en'],'clubunio-chat-translation.default'=>'de']);
+        $chatPolicy=app(\App\ClubUnio\Mobile\ChatTranslationLanguages::class)->policy();
         Http::preventStrayRequests(); Mail::fake(); Queue::fake();
         $kernel=$app->make(Kernel::class);
         $call=function(string $method,string $path,string $token,array $body=[],int $expected=200) use($kernel): array {
@@ -68,7 +71,7 @@ final class MobileLanguagePolicyProbe
             }
             $chat=$call('GET',$preferences,$tokens[0])['data'];
             $this->expect($chat['target_language']==='de' && !$chat['translation_enabled'] && $chat['language_fallback']
-                && $chat['revision']===7 && $chat['language_policy']===$policy,'Disabled chat target never inherits opt-in');
+                && $chat['revision']===7 && $chat['language_policy']===$chatPolicy,'Disabled chat target never inherits opt-in');
             $service=app(ChatService::class); $conversation=$service->ensure($tenant,'direct',null,null,'language-'.bin2hex(random_bytes(10)));
             foreach($actors as $actor) $service->table($tenant,'chat_memberships')->insert(['tenant_id'=>$tenantId,'conversation_id'=>$conversation->id,'account_id'=>$actor->id]);
             $dto=$call('GET',$base.'chats/'.$conversation->id,$tokens[0])['data'];
@@ -90,7 +93,7 @@ final class MobileLanguagePolicyProbe
             $other=$call('GET','context',$tokens[1])['data']; $this->expect($other['language']==='de','Account language isolation');
             $saved=$call('POST',$preferences,$tokens[0],['revision'=>7,'translation_enabled'=>false,'target_language'=>'en'])['data'];
             $this->expect($saved['target_language']==='en' && !$saved['translation_enabled'] && !$saved['language_fallback']
-                && $saved['revision']===8 && $saved['language_policy']===$policy,'Explicit allowed chat save without automatic consent');
+                && $saved['revision']===8 && $saved['language_policy']===$chatPolicy,'Explicit allowed chat save without automatic consent');
             $this->expect(Http::recorded()->isEmpty() && Mail::sent(Mailable::class)->isEmpty() && Mail::queued(Mailable::class)->isEmpty(),'No provider or mail');
         } finally { $db->rollBack(); config(['clubunio-mobile.ai.enabled'=>$originalAi]); }
         $this->expect($db->transactionLevel()===0 && !$db->table('clubora.tenants')->where('id',$tenantId)->exists()

@@ -51,7 +51,7 @@ final class MobileLanguagesTest extends TestCase
     }
     public function test_disabled_ai_language_is_rejected_before_any_provider_or_database_work(): void
     {
-        config(['clubunio-mobile.ai.enabled'=>true,'clubunio-languages.enabled'=>['de'=>'Deutsch','en'=>'English']]);
+        config(['clubunio-mobile.ai.enabled'=>true,'clubunio-languages.enabled'=>['de'=>'Deutsch','en'=>'English'],'clubunio-chat-translation.enabled'=>['de','en']]);
         Http::preventStrayRequests();
         try {
             app(MobileAiService::class)->execute(new Account,new Tenant,['request_key'=>(string)\Illuminate\Support\Str::uuid(),
