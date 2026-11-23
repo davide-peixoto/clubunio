@@ -6,7 +6,7 @@ function clubunioSupportHelpChecks($app,$db,callable $expect):void
     Illuminate\Support\Facades\Http::preventStrayRequests();Illuminate\Support\Facades\Mail::fake();Illuminate\Support\Facades\Queue::fake();
     Illuminate\Support\Facades\Http::fake(['https://api.openai.com/v1/responses'=>Illuminate\Support\Facades\Http::response(['status'=>'completed','output'=>[['content'=>[['type'=>'output_text','text'=>'Synthetic public summary']]]]])]);
     config(['clubunio-support.enabled'=>true,'clubunio-support.triage_enabled'=>true,'clubunio-support.openai_key'=>'synthetic',
-        'clubunio-support.openai_project'=>'proj_synthetic','clubunio-support.model'=>'synthetic','clubunio-verein-oidc.invites_enabled'=>false]);
+        'clubunio-support.openai_project'=>'proj_synthetic','clubunio-support.model'=>'gpt-6-luna','clubunio-verein-oidc.invites_enabled'=>false]);
     $guide=app(App\ClubUnio\Services\SupportGuide::class);
     $expect(count($guide->faq('de'))===18&&array_keys($guide->faq('de'))===array_keys($guide->faq('en')),'eighteen matching public topics inDEEN');
     foreach(['de','en'] as $locale)foreach($guide->faq($locale) as $topic=>$article)$expect(is_string($article['title'])&&trim($article['title'])!==''&&is_string($article['body'])&&trim($article['body'])!=='','complete public help article');

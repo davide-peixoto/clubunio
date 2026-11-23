@@ -16,7 +16,7 @@ class AssistantBenchmarkTest extends TestCase
         Http::preventStrayRequests();
         config(['clubunio-assistant.provider_enabled' => true, 'clubunio-assistant.privacy_reviewed' => true,
             'clubunio-assistant.key' => 'synthetic-unit-key', 'clubunio-assistant.max_output_tokens' => 2000,
-            'clubunio-assistant.max_payload_bytes' => 60000, 'clubunio-assistant.model' => 'gpt-5.4-mini']);
+            'clubunio-assistant.max_payload_bytes' => 60000, 'clubunio-assistant.model' => 'gpt-6.1-terra']);
         Http::fake(['api.openai.com/*' => Http::response(['status' => 'completed', 'usage' => ['input_tokens' => 1, 'output_tokens' => 1], 'output' => []])]);
         foreach (['de', 'en'] as $locale) {
             $tools = array_merge((new \App\ClubUnio\Assistant\AssistantReadTools)->definitions(), (new \App\ClubUnio\Assistant\AssistantActionTools)->definitions());

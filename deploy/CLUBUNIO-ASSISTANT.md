@@ -1,5 +1,9 @@
 # Backoffice Assistant
 
+Current task model, cost limits and migration:
+[OpenAI models](CLUBUNIO-OPENAI-MODELS.md). Default GPT-6.1 Terra;
+explicit Sol override uses supported low reasoning. Activation gates below remain.
+
 ## Scope and Release Gate
 
 Web route: `/backoffice-assistant`, integrated in the ClubUnio shell, DE/EN.

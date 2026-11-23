@@ -22,9 +22,14 @@ class TrainingPlanAi
                 throw new \RuntimeException('Training configuration missing', 503);
             }
         }
+        $config['OPENAI_TRAINING_MODEL'] = OpenAiModels::upgrade($config['OPENAI_TRAINING_MODEL'], OpenAiModels::TRAINING);
+        if (!OpenAiModels::supports($config['OPENAI_TRAINING_MODEL'])) {
+            throw new \RuntimeException('Training model not supported', 503);
+        }
         $response = Http::withToken($config['OPENAI_API_KEY'])->acceptJson()->connectTimeout(5)->timeout(85)->withoutRedirecting()
             ->post('https://api.openai.com/v1/responses', array_merge([
                 'model' => $config['OPENAI_TRAINING_MODEL'], 'store' => false,
+                'reasoning' => OpenAiModels::reasoning($config['OPENAI_TRAINING_MODEL']),
                 'tools' => [['type' => 'file_search', 'vector_store_ids' => [$config['OPENAI_TRAINING_VECTOR_STORE_ID']], 'max_num_results' => 8]],
                 'tool_choice' => 'required',
                 'input' => [

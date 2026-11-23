@@ -67,12 +67,13 @@ final class SupportGuide
         // but add no provider calls or costs for the new curated topics.
         if(!in_array($topic,['login','expense'],true))return $fallback;
         $config = config('clubunio-support');
-        if (!$config['openai_key'] || !$config['openai_project'] || !$config['model']) return $fallback;
+        if (!$config['openai_key'] || !$config['openai_project'] || !OpenAiModels::supports($config['model'])) return $fallback;
         try {
             // Only curated public text and an allowlisted topic leave ClubUnio.
             $result = Http::withToken($config['openai_key'])->withHeaders(['OpenAI-Project' => $config['openai_project']])
                 ->withoutRedirecting()->connectTimeout(3)->timeout(10)->post('https://api.openai.com/v1/responses', [
                     'model' => $config['model'], 'store' => false, 'max_output_tokens' => 300,
+                    'reasoning' => OpenAiModels::reasoning($config['model']),
                     'instructions' => 'Summarize the provided public support article in its own language. Do not invent steps or request personal data. You cannot take any action.',
                     'input' => $article['title']."\n".$article['body'],
                 ]);

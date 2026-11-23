@@ -26,13 +26,14 @@ Keine automatische Wiederaufnahme unbekannter Auftraege. Manuelle neue Aktion
 mit neuer ID kann erneut kosten; im Betrieb zuerst Journal pruefen.
 
 Gemeinsamer Cache nur fuer aktuell berechtigte Nachrichtenuebersetzungen,
-niemals fuer fremde private Entwuerfe. Providerunabhaengiger Fingerprint erhaelt
-passende bestehende Uebersetzungen beim Wechsel. Kein Export von Chatverlaeufen
+niemals fuer fremde private Entwuerfe. Fingerprints enthalten Anbieter und Modell;
+ein Wechsel verwendet keine Ergebnisse des alten Modells. Kein Export von Chatverlaeufen
 zu OpenAI/Azure und kein Verlust der eigenen IDs, Stimmen oder Planung.
 
 Monatslimit20 USD je Verein in Micro-USD, vor Provideraufruf unter Vereinssperre
-reserviert. OpenAI nur konfiguriertes gpt-5.4-mini zugelassen,25'000 Micro-USD
-Reserve pro Anfrage, Usage mit0.75/4.50 Micro-USD pro Ein-/Ausgabetoken bewertet.
+reserviert. OpenAI verwendet standardmaessig gpt-6-luna; unterstuetzte Modelle,
+modellbezogene Kosten und mindestens25'000 Micro-USD Reserve pro Anfrage
+sind zentral in OpenAiModels definiert. [Modellwechsel und Abnahme](CLUBUNIO-OPENAI-MODELS.md).
 Das ist eine lokale Kostenkontrolle, keine Abrechnung/Faktura. Preise vor
 Aktivierung anhand https://openai.com/api/pricing/ erneut bestaetigen.
 Azure braucht zuerst explizit gepruefte Worst-Case-Reserve

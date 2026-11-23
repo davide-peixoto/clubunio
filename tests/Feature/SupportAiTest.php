@@ -14,7 +14,7 @@ final class SupportAiTest extends TestCase
         parent::setUp();
         config(['clubunio-support.enabled' => true, 'clubunio-support.triage_enabled' => true,
             'clubunio-support.openai_key' => 'synthetic', 'clubunio-support.openai_project' => 'proj_synthetic',
-            'clubunio-support.model' => 'synthetic']);
+            'clubunio-support.model' => 'gpt-6-luna']);
         Http::preventStrayRequests();
     }
 

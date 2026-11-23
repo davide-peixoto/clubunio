@@ -310,7 +310,7 @@ class TrainingPlanTest extends TestCase
 
     public function test_openai_uses_file_search_strict_schema_and_no_storage(): void
     {
-        foreach (['OPENAI_API_KEY' => 'fixture-key', 'OPENAI_TRAINING_VECTOR_STORE_ID' => 'vs_fixture', 'OPENAI_TRAINING_MODEL' => 'fixture-model'] as $key => $value) {
+        foreach (['OPENAI_API_KEY' => 'fixture-key', 'OPENAI_TRAINING_VECTOR_STORE_ID' => 'vs_fixture', 'OPENAI_TRAINING_MODEL' => 'gpt-6.1-terra'] as $key => $value) {
             $this->db->table('tenant_settings')->insert(['tenant_id' => $this->tenant->id, 'area' => 'openai', 'key' => $key, 'label' => $key, 'encrypted_value' => Crypt::encryptString($value), 'value_type' => 'string', 'is_secret' => true]);
         }
         Http::fake(['https://api.openai.com/v1/responses' => Http::response(['status' => 'completed', 'output' => [
@@ -319,7 +319,7 @@ class TrainingPlanTest extends TestCase
         ]])]);
         $result = app(TrainingPlanAi::class)->generate($this->tenant, $this->input());
         $this->assertSame('Testtraining', $result['title']);
-        Http::assertSent(fn ($r) => $r['store'] === false && $r['tool_choice'] === 'required' && $r['text']['format']['strict'] === true && $r['model'] === 'fixture-model');
+        Http::assertSent(fn ($r) => $r['store'] === false && $r['tool_choice'] === 'required' && $r['text']['format']['strict'] === true && $r['model'] === 'gpt-6.1-terra' && $r['reasoning']['effort'] === 'none');
     }
 
     public function test_provider_failure_keeps_reference_without_creating_plan(): void

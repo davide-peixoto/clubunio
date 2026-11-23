@@ -9,6 +9,9 @@ class Benchmark
     public const MODELS = [
         'gpt-5.4-mini' => ['input' => .75, 'cached' => .075, 'write' => .75, 'output' => 4.5],
         'gpt-6.1-sol' => ['input' => 2., 'cached' => .10, 'write' => 2.50, 'output' => 10.],
+        'gpt-6-luna' => ['input' => .10, 'cached' => .01, 'write' => .125, 'output' => .50],
+        'gpt-6.1-terra' => ['input' => 1., 'cached' => .05, 'write' => 1.25, 'output' => 5.],
+        'gpt-6.2-sol' => ['input' => 2., 'cached' => .10, 'write' => 2.50, 'output' => 10.],
     ];
 
     public static function instructions(string $locale): string

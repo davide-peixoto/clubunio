@@ -4,6 +4,7 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Models\Tenant;
+use App\ClubUnio\Services\OpenAiModels;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -46,7 +47,8 @@ final class MobileAiService
         $provider = config('clubunio-mobile.ai.'.($data['operation'] === 'translate' ? 'translation_provider' : 'writing_provider'));
         abort_unless(in_array($provider, ['openai', 'azure_openai', 'azure_translator'], true), 503);
         abort_if($provider === 'azure_translator' && $data['operation'] !== 'translate', 422);
-        $fingerprint = hash('sha256', json_encode([$data['operation'], $text, $revision, $data['language'], $data['message_id'] ?? null, 'prompt-v1'], JSON_THROW_ON_ERROR));
+        $model = $provider === 'openai' ? config('clubunio-mobile.ai.openai.model') : null;
+        $fingerprint = hash('sha256', json_encode([$data['operation'], $text, $revision, $data['language'], $data['message_id'] ?? null, 'prompt-v2', $provider, $model], JSON_THROW_ON_ERROR));
         $db = DB::connection('clubunio');
         $work = $db->transaction(function () use ($db, $tenant, $actor, $data, $fingerprint, $provider, $revision, $text) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -70,8 +72,8 @@ final class MobileAiService
             $spent = (clone $query)->where('created_at', '>=', now()->startOfMonth()->toIso8601String())->get()
                 ->sum(fn ($r) => $r->actual_microusd ?? $r->reserved_microusd);
             if ($provider === 'openai') {
-                abort_unless(config('clubunio-mobile.ai.openai.model') === 'gpt-5.4-mini', 503);
-                $reserve = 25_000; // 4000 characters + prompt, at most 1000 output tokens.
+                abort_unless(OpenAiModels::supports(config('clubunio-mobile.ai.openai.model')), 503);
+                $reserve = max(25_000, OpenAiModels::cost(config('clubunio-mobile.ai.openai.model'), 60000, 1000));
             } else {
                 $reserve = (int) config('clubunio-mobile.ai.azure_reservation_microusd');
                 abort_unless($reserve > 0, 503); // Deployment-specific price must be reviewed first.
@@ -99,8 +101,8 @@ final class MobileAiService
             $result = $adapter->transform($data['operation'], $text, $data['language']);
             [$freshText, $freshRevision] = $this->source($actor, $tenant, $data);
             abort_unless($freshRevision === $revision && hash_equals($freshText, $text), 409);
-            $actual = $work->provider === 'openai' && config('clubunio-mobile.ai.openai.model') === 'gpt-5.4-mini'
-                ? (int) ceil($result['input_tokens'] * 0.75 + $result['output_tokens'] * 4.5) : $work->reserved_microusd;
+            $actual = $work->provider === 'openai'
+                ? OpenAiModels::cost($result['model'], $result['input_tokens'], $result['output_tokens']) : $work->reserved_microusd;
             $db->table('clubora.mobile_ai_work')->where('id', $work->id)->update(['state' => 'succeeded', 'result_encrypted' => Crypt::encryptString($result['text']),
                 'actual_microusd' => $actual, 'input_tokens' => $result['input_tokens'], 'output_tokens' => $result['output_tokens'], 'model' => $result['model']]);
             return ['text' => $result['text'], 'language' => $data['language'], 'cached' => false];

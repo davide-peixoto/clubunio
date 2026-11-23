@@ -19,7 +19,7 @@ class AssistantProviderTest extends TestCase
         parent::setUp();
         Http::preventStrayRequests();
         config(['clubunio-assistant.provider_enabled' => true, 'clubunio-assistant.privacy_reviewed' => true,
-            'clubunio-assistant.key' => 'synthetic-assistant-key', 'clubunio-assistant.model' => 'gpt-5.4-mini',
+            'clubunio-assistant.key' => 'synthetic-assistant-key', 'clubunio-assistant.model' => 'gpt-6.1-terra',
             'clubunio-assistant.max_payload_bytes' => 60000, 'clubunio-assistant.max_output_tokens' => 2000]);
     }
 
@@ -94,7 +94,7 @@ class AssistantProviderTest extends TestCase
             $this->assertFalse($request['store']);
             $this->assertFalse($request['parallel_tool_calls']);
             $this->assertSame(2000, $request['max_output_tokens']);
-            $this->assertSame('gpt-5.4-mini', $request['model']);
+            $this->assertSame('gpt-6.1-terra', $request['model']);
             $this->assertSame($this->tools(), $request['tools']);
             $this->assertStringContainsString('Reply in '.$language, $request['instructions']);
             $this->assertArrayNotHasKey('previous_response_id', $request->data());
@@ -130,7 +130,7 @@ class AssistantProviderTest extends TestCase
         ]]))]);
         $this->assertSame(['text' => 'First second', 'calls' => [['name' => 'read_members',
             'arguments' => ['query' => 'Synthetic', 'limit' => 2], 'call_id' => 'call-synthetic']],
-            'input_tokens' => 11, 'output_tokens' => 3, 'cost_microusd' => 22], $this->respond());
+            'input_tokens' => 11, 'output_tokens' => 3, 'cost_microusd' => 26], $this->respond());
         Http::assertSentCount(1);
     }
 
@@ -165,8 +165,8 @@ class AssistantProviderTest extends TestCase
     {
         Http::fake([self::ENDPOINT => Http::response($this->response(['usage' => ['input_tokens' => 100000, 'output_tokens' => 2000]]))]);
         $cost = $this->respond()['cost_microusd'];
-        $this->assertSame(84000, $cost);
-        $this->assertLessThanOrEqual(400000, 4 * $cost);
+        $this->assertSame(110000, $cost);
+        $this->assertLessThanOrEqual(config('clubunio-assistant.request_reservation_microusd'), 4 * $cost);
     }
 
     public static function failedResponses(): array

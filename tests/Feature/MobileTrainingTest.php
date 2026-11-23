@@ -89,9 +89,9 @@ class MobileTrainingTest extends TestCase
     private function draft(): array { return ['title' => 'Edited draft', 'focus' => 'Passen', 'playerCount' => 16, 'exercises' => array_map(fn ($e) => array_intersect_key($e, array_flip(['title','durationMinutes','setup','flow'])), $this->plan()['exercises'])]; }
     private function ai(): void {
         config(['clubunio-mobile.training_ai.enabled' => true, 'clubunio-mobile.training_ai.cost_reviewed' => true, 'clubunio-mobile.training_ai.tenant_slugs' => [$this->tenant->slug],
-            'clubunio-mobile.training_ai.models' => ['fixture-model'], 'clubunio-mobile.training_ai.reservation_microusd' => 100000,
+            'clubunio-mobile.training_ai.models' => ['gpt-6.1-terra'], 'clubunio-mobile.training_ai.reservation_microusd' => 100000,
             'clubunio-mobile.training_ai.monthly_limit_microusd' => 1000000, 'clubunio-mobile.training_ai.max_output_tokens' => 8000, 'clubunio-mobile.training_ai.max_input_bytes' => 65536]);
-        foreach (['OPENAI_API_KEY' => 'fake-key','OPENAI_TRAINING_MODEL' => 'fixture-model','OPENAI_TRAINING_VECTOR_STORE_ID' => 'fixture-vector'] as $key => $value) {
+        foreach (['OPENAI_API_KEY' => 'fake-key','OPENAI_TRAINING_MODEL' => 'gpt-6.1-terra','OPENAI_TRAINING_VECTOR_STORE_ID' => 'fixture-vector'] as $key => $value) {
             $this->insert('tenant_settings', ['area' => 'training', 'key' => $key, 'label' => 'Synthetic config', 'value_type' => 'string', 'encrypted_value' => Crypt::encryptString($value), 'enabled' => true, 'is_secret' => true]);
         }
         Http::fake(['https://api.openai.com/v1/responses' => Http::response(['status' => 'completed', 'output' => [

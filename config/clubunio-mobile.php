@@ -23,7 +23,7 @@ return [
     'native_training_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_TRAINING_ENABLED', false),
     'native_sponsor_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_SPONSOR_ENABLED', false),
     'native_sponsor_billing_enabled' => (bool) env('CLUBUNIO_MOBILE_NATIVE_SPONSOR_BILLING_ENABLED', false),
-    'training_ai' => ['enabled' => false, 'cost_reviewed' => false, 'tenant_slugs' => [], 'models' => [],
+    'training_ai' => ['enabled' => false, 'cost_reviewed' => false, 'tenant_slugs' => [], 'models' => [\App\ClubUnio\Services\OpenAiModels::TRAINING],
         'reservation_microusd' => 0, 'monthly_limit_microusd' => 0, 'max_output_tokens' => 0,
         'max_input_bytes' => 0, 'dispatch_after_response' => true],
     'public_identity' => require __DIR__.'/clubunio-public-identity.php',
@@ -38,7 +38,7 @@ return [
         'max_output_tokens' => 1000,
         // Set a reviewed worst-case cost per request before enabling an Azure provider.
         'azure_reservation_microusd' => (int) env('CLUBUNIO_MOBILE_AZURE_RESERVATION_MICROUSD', 0),
-        'openai' => ['key' => env('OPENAI_API_KEY'), 'model' => 'gpt-5.4-mini'],
+        'openai' => ['key' => env('OPENAI_API_KEY'), 'model' => \App\ClubUnio\Services\OpenAiModels::upgrade(env('CLUBUNIO_MOBILE_OPENAI_MODEL'), \App\ClubUnio\Services\OpenAiModels::TEXT)],
         'azure_openai' => ['key' => env('AZURE_OPENAI_API_KEY'), 'endpoint' => env('AZURE_OPENAI_ENDPOINT'), 'deployment' => env('AZURE_OPENAI_DEPLOYMENT')],
         'azure_translator' => ['key' => env('AZURE_TRANSLATOR_KEY'), 'region' => env('AZURE_TRANSLATOR_REGION'), 'endpoint' => 'https://api.cognitive.microsofttranslator.com'],
     ],
