@@ -1,5 +1,13 @@
 # ClubUnio
 
+## Umschaltbares DEV-Dashboard – 23.11.2026
+
+Glasdesign mit jederzeit erreichbarem bisherigen Design auf DEV aktiviert.
+React-Begrüssung, bestehende Filament-Kennzahlen und Rechte, DE/EN; keine
+Migration. Stage/PROD unverändert. 13 Tests/53 Assertions sowie beide Designs
+serverseitig geprüft; visuelle Browserabnahme offen.
+[Umfang, Abnahme und Rückweg](deploy/CLUBUNIO-DASHBOARD-DESIGN.md).
+
 Vereins-KI: [Mandantenbezogene OpenAI-Zugaenge, Wissensspeicher und Migrationsplan](deploy/CLUBUNIO-TENANT-AI.md).
 
 Identitätsdienst: [Keycloak-Betrieb, Realms und Login-Theme](deploy/CLUBUNIO-KEYCLOAK.md).

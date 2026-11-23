@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Umschaltbares DEV-Dashboard – 23.11.2026
+
+Glasdesign mit jederzeit erreichbarem bisherigen Design auf DEV aktiviert.
+React-Begrüssung, bestehende Filament-Kennzahlen und Rechte, DE/EN; keine
+Migration. Stage/PROD unverändert. 13 Tests/53 Assertions sowie beide Designs
+serverseitig geprüft; visuelle Browserabnahme offen.
+[Umfang, Abnahme und Rückweg](CLUBUNIO-DASHBOARD-DESIGN.md).
+
 ## Veo-Aufnahmeplanung
 
 ClubUnio erstellt einen Wochenplan für fest montierte Kameras anhand von SFV-Spielen und bestätigten Platzzuteilungen. Kameras werden je Platz und Aufnahmen je Saisonmannschaft konfiguriert. [Bedienung und Abnahme](CLUBUNIO-VEO.md).

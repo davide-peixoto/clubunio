@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Umschaltbares DEV-Dashboard – 23.11.2026
+
+Glasdesign mit jederzeit erreichbarem bisherigen Design auf DEV aktiviert.
+React-Begrüssung, bestehende Filament-Kennzahlen und Rechte, DE/EN; keine
+Migration. Stage/PROD unverändert. 13 Tests/53 Assertions sowie beide Designs
+serverseitig geprüft; visuelle Browserabnahme offen.
+[Umfang, Abnahme und Rückweg](CLUBUNIO-DASHBOARD-DESIGN.md).
+
 ## Kampagnen: Versandcockpit und Ruecklauf (19.11.2026)
 
 Aktiv: `20261119-clubunio-campaign-operations-v3`; Rueckweg:
