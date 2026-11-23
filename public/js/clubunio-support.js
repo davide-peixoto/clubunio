@@ -18,6 +18,10 @@ function appendSupportEmphasis(container, text) {
 document.querySelector('[data-support-guide]')?.addEventListener('submit', async event => {
     event.preventDefault();
     const form = event.currentTarget;
+    if (form.dataset.supportChat !== undefined) {
+        await sendSupportChat(form);
+        return;
+    }
     const output = form.querySelector('output');
     const button = form.querySelector('button');
     button.disabled = true;
@@ -66,3 +70,76 @@ document.querySelector('[data-support-guide]')?.addEventListener('submit', async
         button.disabled = false;
     }
 });
+
+async function sendSupportChat(form) {
+    if (form.dataset.sending === '1') return;
+    const input = form.elements.body;
+    const question = input.value.trim();
+    if (!question) return;
+    const log = form.querySelector('output');
+    const button = form.querySelector('button');
+    const message = (kind, author, text) => {
+        const bubble = document.createElement('div');
+        bubble.className = 'cs-chat-message cs-chat-' + kind;
+        const heading = document.createElement('strong');
+        heading.textContent = author;
+        const content = document.createElement('p');
+        content.textContent = text;
+        bubble.append(heading, content);
+        log.append(bubble);
+        log.scrollTop = log.scrollHeight;
+        return {bubble, content};
+    };
+    const dataToSend = new FormData(form);
+    if (form.dataset.topic) dataToSend.set('previous_topic', form.dataset.topic);
+    message('user', form.dataset.you, question);
+    const pending = message('pending', form.dataset.assistant, form.dataset.pending);
+    form.dataset.sending = '1';
+    button.disabled = true;
+    input.value = '';
+    const abort = new AbortController();
+    const timeout = setTimeout(() => abort.abort(), 60000);
+    try {
+        const reply = await fetch(location.pathname, {
+            method: 'POST', body: dataToSend, credentials: 'same-origin',
+            headers: {Accept: 'application/json'}, signal: abort.signal,
+        });
+        if (!reply.ok) throw new Error();
+        const {data} = await reply.json();
+        pending.content.textContent = '';
+        if (data.ai) appendSupportEmphasis(pending.content, data.text);
+        else pending.content.textContent = data.text;
+        pending.bubble.className = 'cs-chat-message cs-chat-assistant';
+        form.dataset.topic = data.source || '';
+        if (data.article || data.source) {
+            const target = new URL(form.dataset.knowledge, location.href);
+            if (target.origin === location.origin) {
+                target.hash = data.article ? 'article-' + data.article.id : 'faq-' + data.source;
+                const source = document.createElement('a');
+                source.href = target.href;
+                source.textContent = form.dataset.source + (data.article ? ': ' + data.article.title : '');
+                pending.bubble.append(source);
+            }
+        }
+    } catch {
+        pending.content.textContent = form.dataset.error;
+        pending.bubble.className = 'cs-chat-message cs-chat-error';
+        if (!input.value) input.value = question;
+    } finally {
+        clearTimeout(timeout);
+        delete form.dataset.sending;
+        button.disabled = false;
+        log.scrollTop = log.scrollHeight;
+        input.focus();
+    }
+}
+
+const chatForm = document.querySelector('[data-support-chat]');
+if (chatForm?.dataset.supportChat !== undefined) {
+    chatForm.elements.body.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            chatForm.requestSubmit();
+        }
+    });
+}

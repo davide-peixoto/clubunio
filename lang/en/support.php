@@ -2,6 +2,12 @@
 
 return [
     'workspace' => [
+        'you' => 'You',
+        'answering' => 'Preparing an answer …',
+        'welcome' => 'Hello! How can I help you?',
+        'question_placeholder' => 'Ask your question …',
+        'chat_requires_js' => 'Please enable JavaScript to chat with the assistant.',
+        'no_club_tickets' => 'No tickets for this selection.',
         'platform' => 'Platform administration',
         'tickets' => 'Tickets',
         'knowledge' => 'Knowledge base',

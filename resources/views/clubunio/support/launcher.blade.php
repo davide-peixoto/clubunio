@@ -6,7 +6,7 @@
             : ($supportTenant ? route('clubunio.support.center', ['club' => $supportTenant->id]) : null);
     @endphp
     @if($supportTarget)
-        <script src="{{ asset('js/clubunio-help-widget.js').'?v=3' }}"
+        <script src="{{ asset('js/clubunio-help-widget.js').'?v=workspace-1' }}"
             data-close-label="{{ trans('support.close_panel') }}"
             data-support-url="{{ $supportTarget }}"
             data-support-label="{{ trans('support.title') }}"></script>

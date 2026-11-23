@@ -1,0 +1,78 @@
+.cu-support-workspace {
+    --cs-ink: #202c3b;
+    --cs-muted: #536373;
+    --cs-line: #dce4ec;
+    --cs-blue: #164b8a;
+    --cs-tint: #eaf2fc;
+    max-width: 76rem;
+    padding: 0 20px 24px;
+    color: var(--cs-ink);
+}
+.cs-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-block: 20px 12px; }
+.cs-heading h1 { margin: 0; font-size: 22px; }
+.cs-text-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.cu-support-workspace svg, .cs-chat svg { width: 18px; height: 18px; flex: 0 0 18px; }
+.cu-support-workspace .cs-tabs {
+    position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: nowrap;
+    gap: 4px; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: thin;
+    background: #f5f8fc; border-bottom: 1px solid var(--cs-line);
+}
+.cs-tabs a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 8px 10px; border-bottom: 3px solid transparent; color: #536373; white-space: nowrap; text-decoration: none; font-weight: 600; font-size: 14px; }
+.cs-tabs a:hover { background: #eaf2fc; }
+.cs-tabs a[aria-current] { color: #164b8a; border-color: #164b8a; }
+.cu-support-workspace > section { border: 0; padding: 18px 0 0; }
+.cu-support-workspace .cs-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 0 0 16px; }
+.cs-filters label { flex: 1 1 150px; min-width: 0; margin: 0; }
+.cu-support-workspace .cs-filters :is(input,select) { width: 100%; max-width: none; margin-bottom: 0; }
+.cs-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.cs-section-heading h2 { margin: 0; font-size: 18px; }
+.cu-support-workspace :is(button,.cs-button) { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 9px 12px; background: #164b8a; border: 1px solid #164b8a; border-radius: 6px; color: #fff; font-weight: 600; text-decoration: none; font-size: 14px; }
+.cu-support-workspace .cs-icon-button { padding: 0; width: 42px; height: 42px; flex: 0 0 42px; }
+.cu-support-workspace a.cs-button svg { color: inherit; }
+.cs-ticket-list { list-style: none; margin: 0; padding: 0; border: 1px solid #dce4ec; border-radius: 8px; background: #fff; overflow: hidden; }
+.cs-ticket-list li + li { border-top: 1px solid #dce4ec; }
+.cs-ticket-list a { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 6px 12px; padding: 14px; text-decoration: none; color: #202c3b; border-left: 3px solid transparent; }
+.cs-ticket-list a:hover,.cs-ticket-list a[aria-current] { background: #eaf2fc; border-left-color: #164b8a; }
+.cs-ticket-list strong { overflow-wrap: anywhere; font-size: 14px; }
+.cs-ticket-list time { color: #536373; font-size: 12px; }
+.cs-status { display: inline-block; align-self: start; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.cs-status-open { background: #eaf3ff; color: #164b8a; }
+.cs-status-waiting { background: #fff0c2; color: #714500; }
+.cs-status-closed { background: #d9f4e3; color: #155d36; }
+.cs-empty { padding: 24px 14px; color: #536373; text-align: center; }
+.cs-pagination { display: flex; justify-content: space-between; gap: 8px; margin: 12px 0 0; }
+.cs-ticket-detail { border-top: 1px solid #dce4ec; margin-top: 16px; padding-top: 16px; scroll-margin-top: 62px; }
+.cs-ticket-detail article p { white-space: pre-wrap; }
+.cs-ticket-detail article { background: #fff; padding: 12px; margin-block: 10px; border: 1px solid #dce4ec; border-radius: 6px; }
+.cs-knowledge > details { margin: 0; border-bottom: 1px solid #dce4ec; padding: 0 2px; }
+.cs-knowledge > details > summary { padding-block: 14px; }
+.cs-error { padding: 12px; color: #922a32; background: #fff0ee; border-radius: 6px; }
+.cs-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+form.cs-chat {
+    display: flex; flex-direction: column; gap: 0; margin: 16px 0 0;
+    height: min(650px, calc(100dvh - 190px)); min-height: 300px;
+    background: #fff; border: 1px solid #dce4ec; border-radius: 8px; overflow: hidden;
+}
+.cs-chat-title { display: flex; align-items: center; gap: 8px; padding: 12px 16px; color: #164b8a; border-bottom: 1px solid #dce4ec; }
+.cs-chat-title h2 { margin: 0; font-size: 16px; }
+.cs-chat .cs-chat-log, .cu-support .cs-chat .cs-chat-log { display: flex; flex-direction: column; align-items: start; flex: 1; min-height: 0; padding: 16px; gap: 14px; overflow-y: auto; border: 0; border-radius: 0; background: #f7f9fc; white-space: normal; }
+.cs-chat-message { max-width: 92%; padding: 10px 12px; border-radius: 8px; background: #fff; border: 1px solid #dce4ec; color: #202c3b; overflow-wrap: anywhere; }
+.cs-chat-message > strong { display: block; font-size: 12px; margin-bottom: 4px; color: #536373; }
+.cs-chat-message p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+.cs-chat-message a { display: inline-block; margin-top: 8px; color: #164b8a; }
+.cs-chat-user { align-self: end; background: #eaf2fc; border-color: #c7dcef; }
+.cs-chat-pending { color: #536373; }
+.cs-chat-error { color: #922a32; border-color: #f1b7b7; }
+.cs-chat-compose { display: flex; align-items: end; gap: 10px; padding: 12px; border-top: 1px solid #dce4ec; }
+.cs-chat .cs-chat-compose textarea { display: block; flex: 1; width: 100%; max-width: none; min-height: 48px; max-height: 160px; margin: 0; padding: 10px 12px; border: 1px solid #bccbd8; border-radius: 6px; font: inherit; resize: vertical; }
+.cs-chat .cs-chat-compose button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid #164b8a; border-radius: 6px; background: #164b8a; color: white; cursor: pointer; }
+.cs-chat button:disabled { opacity: .6; cursor: wait; }
+.cs-chat :is(button,textarea,a):focus-visible { outline: 2px solid #48a9e8; outline-offset: 2px; }
+@media (max-width: 540px) {
+    .cu-support-workspace { padding-inline: 12px; }
+    .cs-tabs a { padding-inline: 8px; font-size: 13px; }
+    .cs-tabs svg { width: 16px; height: 16px; flex-basis: 16px; }
+    .cs-heading h1 { font-size: 20px; }
+    .cs-heading .cs-text-link { font-size: 12px; }
+    .cs-chat-message { max-width: 96%; }
+}

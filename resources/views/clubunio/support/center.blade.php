@@ -5,20 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ trans('support.title') }} · ClubUnio</title>
 <link rel="stylesheet" href="{{ asset('css/clubunio-portal.css') }}">
-<link rel="stylesheet" href="{{ asset('css/clubunio-support.css') }}?v=panel-1">
+<link rel="stylesheet" href="{{ asset('css/clubunio-support.css') }}?v=workspace-1">
+<link rel="stylesheet" href="{{ asset('css/clubunio-support-workspace.css') }}?v=1">
 </head>
 <body>
-<main class="cu-support">
-<h1>{{ trans('support.title') }}</h1>
-@php($embedded = !$club && !$platform && request()->query('embed') === '1')
-@if(!$club && !$platform)
-    <p><a href="{{ route('clubunio.support.login-help') }}" @if($embedded) target="_blank" rel="noopener noreferrer" @endif>{{ trans('support-intake.title') }}</a></p>
-@endif
-@if($platform || $staff)
-    <a href="{{ $platform ? route('clubunio.support.platform-intake') : route('clubunio.support.club-intake', $club) }}">{{ trans('support-intake.title') }}</a>
-@endif
-<section>
-    <form method="get">@if($embedded)<input type="hidden" name="embed" value="1">@endif<label>{{ trans('support-wiki.surface') }}<select name="surface" onchange="this.form.submit()"><option value="web" @selected($surface === 'web')>{{ trans('support-wiki.web') }}</option><option value="app" @selected($surface === 'app')>{{ trans('support-wiki.app') }}</option></select></label><label>{{ trans('support.search') }}<input name="q" maxlength="120" value="{{ request('q') }}"></label><button>{{ trans('support.search') }}</button></form>
+<main class="cu-support cu-support-workspace">
+@php
+    $embedded = request()->query('embed') === '1';
+@endphp
+<header class="cs-heading"><h1 @class(['cs-sr-only' => $embedded])>{{ trans('support.title') }}</h1>
+<a class="cs-text-link" href="{{ route('clubunio.support.login-help') }}" target="_blank" rel="noopener noreferrer">@svg('heroicon-o-key') {{ trans('support-intake.title') }} @svg('heroicon-o-arrow-top-right-on-square')</a>
+</header>
+@php
+    $base = request()->url();
+    $tabs = ($club ? ['tickets' => 'inbox-stack'] : []) + ['knowledge' => 'book-open', 'assistant' => 'chat-bubble-left-right'];
+    if ($staff) $tabs['editorial'] = 'pencil-square';
+    $context = array_filter(['surface' => $surface, 'embed' => $embedded ? '1' : null]);
+    $tabUrl = fn ($value, $extra = []) => $base.'?'.http_build_query($extra + ['tab' => $value] + $context);
+@endphp
+<nav class="cs-tabs" aria-label="{{ trans('support.title') }}">
+    @foreach($tabs as $key => $icon)
+    <a href="{{ $tabUrl($key) }}" @if($tab === $key || ($key === 'tickets' && $tab === 'create')) aria-current="page" @endif>@svg('heroicon-o-'.$icon) {{ trans('support.workspace.'.$key) }}</a>
+    @endforeach
+</nav>
+@if($errors->any())<div role="alert" class="cs-error"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+@if($tab === 'knowledge')
+<section class="cs-knowledge">
+    <form class="cs-filters" method="get"><input type="hidden" name="tab" value="knowledge">@if($embedded)<input type="hidden" name="embed" value="1">@endif<label>{{ trans('support-wiki.surface') }}<select name="surface" onchange="this.form.submit()"><option value="web" @selected($surface === 'web')>{{ trans('support-wiki.web') }}</option><option value="app" @selected($surface === 'app')>{{ trans('support-wiki.app') }}</option></select></label><label>{{ trans('support.search') }}<input type="search" name="q" maxlength="120" value="{{ request('q') }}"></label><button class="cs-icon-button" title="{{ trans('support.search') }}" aria-label="{{ trans('support.search') }}">@svg('heroicon-o-magnifying-glass')</button></form>
     @foreach($faq as $key => $item)
         <details id="faq-{{ $key }}"><summary>{{ $item['title'] }}</summary>@include('clubunio.support.guide', ['item' => $item])</details>
     @endforeach
@@ -27,23 +40,37 @@
             @if($item->video_url)<a href="{{ $item->video_url }}" target="_blank" rel="noreferrer noopener">{{ trans('support.video') }}</a>@endif
         </details>
     @endforeach
-    @if(!$embedded)
-    <form method="post" data-support-guide data-error="{{ trans('support.failed') }}" data-ai="{{ trans('support.ai') }}" data-source="{{ trans('support.source') }}">
-        @csrf
-        <input type="hidden" name="operation" value="ask">
-        <label>{{ trans('support.ask') }}<input name="body" required maxlength="500"></label>
-        <button>{{ trans('support.ask') }}</button>
-        <output aria-live="polite"></output>
-    </form>
-    @endif
+    @if(!$faq && $articles->isEmpty())<p class="cs-empty">{{ trans('support.workspace.no_articles') }}</p>@endif
 </section>
-@if($club || $platform)
-<section>
-    @foreach($rows as $row)
-        <p><a href="?ticket={{ $row->id }}">{{ $row->subject }}</a> · {{ trans('support.'.$row->status) }}</p>
-    @endforeach
+@elseif($tab === 'assistant')
+    @include('clubunio.support.assistant', ['knowledgeUrl' => $tabUrl('knowledge')])
+@elseif($tab === 'tickets' && $club)
+<section class="cs-tickets">
+    <div class="cs-section-heading"><h2>{{ trans('support.workspace.tickets') }}</h2><a class="cs-button cs-primary" href="{{ $tabUrl('create') }}">@svg('heroicon-o-plus') {{ trans('support.create') }}</a></div>
+    <form class="cs-filters" method="get">
+        <input type="hidden" name="tab" value="tickets"><input type="hidden" name="surface" value="{{ $surface }}">@if($embedded)<input type="hidden" name="embed" value="1">@endif
+        <label>{{ trans('support.subject') }}<input type="search" name="q" maxlength="120" value="{{ $filters['q'] ?? '' }}"></label>
+        <label>{{ trans('support.workspace.status') }}<select name="status"><option value="">{{ trans('support.workspace.all_statuses') }}</option>@foreach(['open','waiting','closed'] as $status)<option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ trans('support.'.$status) }}</option>@endforeach</select></label>
+        <button class="cs-icon-button" title="{{ trans('support.workspace.apply_filters') }}" aria-label="{{ trans('support.workspace.apply_filters') }}">@svg('heroicon-o-magnifying-glass')</button>
+    </form>
+    <ul class="cs-ticket-list">
+    @forelse($rows as $row)
+        <li><a href="{{ $tabUrl('tickets', $filters + ['ticket' => $row->id]) }}#ticket-detail" @if($selected?->id === $row->id) aria-current="true" @endif>
+            <strong>{{ $row->subject }}</strong><span class="cs-status cs-status-{{ $row->status }}">{{ trans('support.'.$row->status) }}</span>
+            <time datetime="{{ \Illuminate\Support\Carbon::parse($row->created_at)->toIso8601String() }}">{{ \Illuminate\Support\Carbon::parse($row->created_at)->timezone('Europe/Zurich')->locale(app()->getLocale())->isoFormat('L LT') }}</time>
+        </a></li>
+    @empty
+        <li class="cs-empty">{{ trans('support.workspace.no_club_tickets') }}</li>
+    @endforelse
+    </ul>
+    <nav class="cs-pagination" aria-label="{{ trans('support.workspace.tickets') }}">
+        @if($rows->previousPageUrl())<a class="cs-button" href="{{ $rows->previousPageUrl() }}">@svg('heroicon-o-chevron-left') {{ trans('support.workspace.previous') }}</a>@endif
+        @if($rows->nextPageUrl())<a class="cs-button" href="{{ $rows->nextPageUrl() }}">{{ trans('support.workspace.next') }} @svg('heroicon-o-chevron-right')</a>@endif
+    </nav>
     @if($selected)
+    <div id="ticket-detail" class="cs-ticket-detail">
         <h2>{{ $selected->subject }}</h2>
+        <span class="cs-status cs-status-{{ $selected->status }}">{{ trans('support.'.$selected->status) }}</span>
         @if(!empty($triage?->draft))<aside><strong>{{ trans('support.triage') }}</strong><p>{{ $triage->draft }}</p></aside>@endif
         @if(($staff || $platform) && $selected->status !== 'closed')
             <form method="post">@csrf
@@ -93,18 +120,23 @@
                 </form>
             @endif
         @endif
+    </div>
     @endif
-    @unless($platform)
-        <details><summary>{{ trans('support.create') }}</summary>
+</section>
+@elseif($tab === 'create' && $club)
+    <section>
+        <div class="cs-section-heading"><h2>{{ trans('support.create') }}</h2><a class="cs-text-link" href="{{ $tabUrl('tickets') }}">@svg('heroicon-o-arrow-left') {{ trans('support.workspace.tickets') }}</a></div>
             <form method="post" enctype="multipart/form-data">@csrf
-                <label>{{ trans('support.subject') }}<input name="subject" maxlength="160" required></label>
-                <label>{{ trans('support.body') }}<textarea name="body" maxlength="10000" required></textarea></label>
+                <label>{{ trans('support.subject') }}<input name="subject" maxlength="160" value="{{ old('subject') }}" required></label>
+                <label>{{ trans('support.body') }}<textarea name="body" maxlength="10000" required>{{ old('body') }}</textarea></label>
                 <label>{{ trans('support.attachment') }}<input type="file" name="attachment" accept="image/png,image/jpeg,application/pdf"></label>
-                <button name="operation" value="create">{{ trans('support.create') }}</button>
+                <button name="operation" value="create">@svg('heroicon-o-plus') {{ trans('support.create') }}</button>
             </form>
-        </details>
-    @endunless
-    @if($staff || $platform)
+    </section>
+@elseif($tab === 'editorial' && $staff)
+<section>
+    <div class="cs-section-heading"><h2>{{ trans('support.workspace.editorial') }}</h2>
+    <a class="cs-text-link" href="{{ route('clubunio.support.club-intake', $club) }}" target="_blank" rel="noopener noreferrer">@svg('heroicon-o-inbox-arrow-down') {{ trans('support.workspace.sign_in_requests') }} @svg('heroicon-o-arrow-top-right-on-square')</a></div>
         @foreach(collect([null])->concat($editableArticles) as $edit)
         <details><summary>{{ $edit?->title ?? trans('support.article') }}</summary>
             <form method="post">@csrf
@@ -124,10 +156,9 @@
             </form>
         </details>
         @endforeach
-    @endif
 </section>
 @endif
 </main>
-<script src="{{ asset('js/clubunio-support.js') }}?v=3" defer></script>
+<script src="{{ asset('js/clubunio-support.js') }}?v=workspace-1" defer></script>
 </body>
 </html>

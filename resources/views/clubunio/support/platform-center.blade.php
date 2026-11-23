@@ -2,6 +2,7 @@
 @section('title', trans('support.title').' · ClubUnio')
 @push('head')
 <link rel="stylesheet" href="{{ asset('css/clubunio-support-platform.css') }}?v=2">
+<link rel="stylesheet" href="{{ asset('css/clubunio-support-workspace.css') }}?v=1">
 @endpush
 @section('content')
 @php($inbox = route('clubunio.platform.support'))
@@ -69,17 +70,7 @@
 @elseif($tab === 'knowledge')
     @include('clubunio.support.platform-knowledge')
 @else
-    <section class="sp-reading" aria-labelledby="sp-assistant-title">
-        <h2 id="sp-assistant-title">{{ trans('support.workspace.assistant') }}</h2>
-        <form method="post" action="{{ $inbox }}" class="sp-composer" data-support-guide data-error="{{ trans('support.failed') }}" data-ai="{{ trans('support.ai') }}" data-source="{{ trans('support.source') }}"
-            data-knowledge="{{ route('clubunio.platform.support', ['tab' => 'knowledge']) }}">
-            @csrf
-            <input type="hidden" name="operation" value="ask">
-            <label>{{ trans('support.ask') }}<input name="body" required maxlength="500"></label>
-            <button class="primary">@svg('heroicon-o-paper-airplane') {{ trans('support.workspace.send_question') }}</button>
-            <output aria-live="polite"></output>
-        </form>
-    </section>
+    @include('clubunio.support.assistant', ['knowledgeUrl' => route('clubunio.platform.support', ['tab' => 'knowledge'])])
 @endif
-<script src="{{ asset('js/clubunio-support.js') }}?v=3" defer></script>
+<script src="{{ asset('js/clubunio-support.js') }}?v=workspace-1" defer></script>
 @endsection

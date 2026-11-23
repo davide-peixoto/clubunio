@@ -39,7 +39,7 @@ SQL);
     public function test_provider_never_receives_the_raw_question(): void
     {
         config(['clubunio-support.openai_key' => 'synthetic', 'clubunio-support.openai_project' => 'proj_synthetic',
-            'clubunio-support.model' => 'synthetic']);
+            'clubunio-support.model' => \App\ClubUnio\Services\OpenAiModels::TEXT]);
         Http::preventStrayRequests();
         Http::fake(['https://api.openai.com/v1/responses' => Http::response(['output' => [
             ['content' => [['type' => 'output_text', 'text' => 'Public guide summary']]],

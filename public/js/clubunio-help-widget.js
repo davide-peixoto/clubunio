@@ -6,7 +6,7 @@
     const label = script.dataset.supportLabel || 'Support';
     const style = document.createElement('link');
     style.rel = 'stylesheet';
-    style.href = new URL('../css/clubunio-help-widget.css?v=2', script.src).href;
+    style.href = new URL('../css/clubunio-help-widget.css?v=workspace-1', script.src).href;
     document.head.append(style);
     const link = document.createElement('a');
     link.className = 'cu-help-launcher';
@@ -41,7 +41,11 @@
     link.addEventListener('click', (event) => {
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         event.preventDefault();
-        if (!frame.hasAttribute('src')) frame.src = url.href;
+        if (!frame.hasAttribute('src')) {
+            const embedded = new URL(url.href);
+            embedded.searchParams.set('embed', '1');
+            frame.src = embedded.href;
+        }
         dialog.showModal();
         close.focus();
     });
