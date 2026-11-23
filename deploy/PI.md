@@ -2826,3 +2826,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Autorisierte PROD-Kontoaktivierung abgeschlossen: Konto105 aktiv, Portalzugang fuer bestehenden Mandanten12, Trainerrolle unveraendert, bestehende Keycloak-Identitaet autoritativ geprueft und eindeutig gebunden. Gezieltes Subject-Mapping statt globaler Freischaltung; private Sicherungen und Audit vorhanden.10Tests/54Assertions; echter iPhone-Login durch Benutzer noch ausstehend.
+
+
+23.11.2026: Anonymer App-Einstieg Neue Mitgliedschaft nur noch in fest mandantengebundenen Custom Builds und bei ausdruecklicher Backendfreigabe sichtbar. Core blendet ihn aus; Anmeldung weiterer Kinder im angemeldeten Vereinskontext bleibt erhalten. Zwei Widgettests und gezielte Analyse erfolgreich; Mobile-Commit f9c278e synchronisiert, iPhone-Neubau erforderlich.

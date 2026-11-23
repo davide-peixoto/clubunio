@@ -2205,3 +2205,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Nach expliziter Freigabe PROD-Gmailkonto105/Mandant12 gezielt aktiviert, bestehende Trainerrolle erhalten, verifizierte vorhandene Keycloak-Identitaet verknuepft und nur dieses Subject zur bestehenden PROD-Allowlist hinzugefuegt. Globale Einladungen bleiben aus. Dry-run/Rollback und frische Zugangspruefung erfolgreich,10Loginregressionen/54Assertions; iPhone-Neuanmeldung offen. Details: CLUBUNIO-PARENT-ACCESS.md.
+
+
+23.11.2026: Anonymer App-Einstieg Neue Mitgliedschaft nur noch in fest mandantengebundenen Custom Builds und bei ausdruecklicher Backendfreigabe sichtbar. Core blendet ihn aus; Anmeldung weiterer Kinder im angemeldeten Vereinskontext bleibt erhalten. Zwei Widgettests und gezielte Analyse erfolgreich; Mobile-Commit f9c278e synchronisiert, iPhone-Neubau erforderlich.

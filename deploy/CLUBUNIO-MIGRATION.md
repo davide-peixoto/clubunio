@@ -1392,3 +1392,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: Explizit autorisierte Einzelkontoaktivierung PROD105/Mandant12: active und portal_enabled aktiviert, vorhandene Keycloak-Identitaet sicher gebunden und bestehende Subject-Allowlist um genau einen Eintrag ergaenzt. Keine Schemaaenderung oder globale Kontomigration. Private Konfigurations-/PG-Sicherung und Audit; gezielter Rueckweg in CLUBUNIO-PARENT-ACCESS.md.
+
+
+23.11.2026: Anonymer App-Einstieg Neue Mitgliedschaft nur noch in fest mandantengebundenen Custom Builds und bei ausdruecklicher Backendfreigabe sichtbar. Core blendet ihn aus; Anmeldung weiterer Kinder im angemeldeten Vereinskontext bleibt erhalten. Zwei Widgettests und gezielte Analyse erfolgreich; Mobile-Commit f9c278e synchronisiert, iPhone-Neubau erforderlich.
