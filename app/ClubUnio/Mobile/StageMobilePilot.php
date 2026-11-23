@@ -16,6 +16,9 @@ final class StageMobilePilot
 
     public static function allowsTenant(string $username, string $slug): bool
     {
+        // Pilot tenant restrictions apply only to the Stage instance.
+        if (config('app.url') !== 'https://stage.clubunio.com') return true;
+
         return $slug === match ($username) {
             self::REVIEW_ACCOUNT => 'sv-sissach-refresh',
             self::TRAINER_ACCOUNT => 'sv-sissach',
