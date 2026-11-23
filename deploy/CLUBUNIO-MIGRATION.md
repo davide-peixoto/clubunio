@@ -1383,3 +1383,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 22.11.2026: Stage-Walletfehler auf FPM-open_basedir eingegrenzt; CLI hatte private Dateien lesen koennen, Webprozess nicht. Nur umgebungseigene Apple-/Google-Wallet-Ordner in Stage-/PROD-Pools ergaenzt, Konfiguration geprueft/graceful reloaded. FPM-Freigaben true und synthetischer PKPass in beiden Pools erfolgreich; Doku: deploy/CLUBUNIO-WALLET-RUNTIME.md.
+
+
+23.11.2026: Migration 2026_11_23_000010_parent_access auf DEV/Stage/PROD mit privaten gezielten Backups ausgefuehrt; Consentfelder, private E-Mailproofs und Suchindizes angelegt. Gate erst danach aktiviert. Automatik vertraut keinen Snapshot-Benutzernamen und veraendert keine manuellen Sperren. Zielkonto Stage liefert eigenen Eintrag plus beide freigegebenen Kinder. Details: CLUBUNIO-PARENT-ACCESS.md.

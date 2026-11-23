@@ -134,31 +134,35 @@ final class MobileAccess
             if ($role === 'trainer') $q->orWhereIn('clubora.members.id', $this->contactRoster($tenant, 'team_staff', $this->contactTeams($tenant)));
         })->pluck('clubora.members.id')->all();
         $parentTargets = $role === 'trainer' && $trainerTeams
-            ? $this->parentMembers($tenant)->whereIn('clubora.members.id', $this->contactRoster($tenant, 'team_players', $trainerTeams))->pluck('clubora.members.id')->all() : [];
+            ? $access->activeMembers($tenant)->whereIn('clubora.members.id', $this->contactRoster($tenant, 'team_players', $trainerTeams))->pluck('clubora.members.id')->all() : [];
         return $query->whereExists(function ($q) use ($tenant, $role, $targets, $parentTargets) {
             $q->selectRaw('1')->from('clubora.account_member_links as target_link')->where('target_link.tenant_id', $tenant->id)
                 ->whereColumn('target_link.account_id', 'candidate.id')->where('target_link.state', 'approved')
-                ->where(function ($q) use ($role, $targets, $parentTargets) {
+                ->where(function ($q) use ($tenant, $role, $targets, $parentTargets) {
                     $q->where(fn ($q) => $q->where('target_link.kind', 'self')->whereIn('target_link.member_id', $targets));
-                    if ($role === 'trainer') $q->orWhere(fn ($q) => $q->where('target_link.kind', 'parent')->whereIn('target_link.member_id', $parentTargets));
+                    if ($role === 'trainer') $q->orWhere(function ($q) use ($tenant, $parentTargets) {
+                        $q->whereIn('target_link.member_id', $parentTargets);
+                        $this->parentLinkScope($q, $tenant, 'target_link');
+                    });
                 });
         });
     }
 
-    /** SQL equivalent of represented(): approved self, or approved parent of an active minor. */
+    /** SQL equivalent of represented(): approved self or effective personal parent authority. */
     private function accountLinks(Tenant $tenant, string $accountColumn)
     {
         return DB::connection('clubunio')->query()->selectRaw('1')->from('clubora.account_member_links as entry_link')
             ->where('entry_link.tenant_id', $tenant->id)->whereColumn('entry_link.account_id', $accountColumn)->where('entry_link.state', 'approved')
             ->whereIn('entry_link.member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('clubora.members.id'))
-            ->where(fn ($q) => $q->where('entry_link.kind', 'self')->orWhere(fn ($q) => $q->where('entry_link.kind', 'parent')->whereIn('entry_link.member_id', $this->parentMembers($tenant))));
+            ->where(fn ($q) => $q->where('entry_link.kind', 'self')->orWhere(fn ($q) => $this->parentLinkScope($q, $tenant, 'entry_link')));
     }
 
-    private function parentMembers(Tenant $tenant)
+    private function parentLinkScope($query, Tenant $tenant, string $link): void
     {
-        $today = now('Europe/Zurich')->toDateString();
-        return app(MemberAccessService::class)->activeMembers($tenant)->where('birth_date', '<=', $today)
-            ->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today])->select('clubora.members.id');
+        $members = app(MemberAccessService::class)->activeMembers($tenant)->selectRaw('1')
+            ->whereColumn('clubora.members.id', $link.'.member_id');
+        app(\App\ClubUnio\Services\ParentAccessPolicy::class)->scope($members, $link, 'clubora.members');
+        $query->whereExists($members->toBase());
     }
 
     private function contactTeams(Tenant $tenant, $members = null, array $tables = [])

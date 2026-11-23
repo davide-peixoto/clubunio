@@ -210,10 +210,10 @@ class AnnouncementService
     {
         $db = DB::connection('clubunio');
         $today = now('Europe/Zurich')->toDateString();
-        // Reuse active membership semantics; only approved self/minor-parent links count.
+        // Reuse active membership and effective personal representation semantics.
         $links = $db->table('clubora.account_member_links as l')->selectRaw('1')->where('l.tenant_id', $tenant->id)
             ->whereColumn('l.member_id', 'clubora.members.id')->whereColumn('l.account_id', 'clubora.accounts.id')->where('l.state', 'approved')
-            ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => $q->where('l.kind', 'parent')->where('birth_date', '<=', $today)->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today])));
+            ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => app(ParentAccessPolicy::class)->scope($q, 'l', 'clubora.members')));
         $linked = app(MemberAccessService::class)->activeMembers($tenant)->selectRaw('1')->whereExists($links);
         $memberships = $db->table('clubora.tenant_accounts as ta')->selectRaw('1')->where('ta.tenant_id', $tenant->id)->whereColumn('ta.account_id', 'clubora.accounts.id')
             ->where(fn ($q) => $q->whereIn('ta.role', ['admin', 'office'])->orWhere(fn ($q) => $q->where('ta.portal_enabled', true)->whereExists($linked->toBase())));

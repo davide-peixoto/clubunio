@@ -44,8 +44,7 @@ class MemberPersonalAccessService
             return __('Mitgliedschaft nicht aktiv');
         }
         $today = now('Europe/Zurich')->toDateString();
-        if ($link->kind === 'parent' && (! $member->birth_date || $member->birth_date->toDateString() > $today
-            || $member->birth_date->copy()->addYearsNoOverflow(18)->toDateString() <= $today)) {
+        if ($link->kind === 'parent' && ! app(ParentAccessPolicy::class)->effective($link, $member)) {
             return __('Elternvertretung nicht wirksam');
         }
 

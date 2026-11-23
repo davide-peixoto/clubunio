@@ -46,22 +46,33 @@ class AccountLinkService
                 $today = now('Europe/Zurich')->toDateString();
                 $minor = $member?->birth_date && $member->birth_date->toDateString() <= $today
                     && $member->birth_date->copy()->addYearsNoOverflow(18)->toDateString() > $today;
-                if (! $member || ($data['kind'] === 'parent' && ! $minor)) {
-                    throw ValidationException::withMessages(['member_id' => __('Aktive Mitgliedschaft erforderlich; Elternzugriff nur für Minderjährige mit Geburtsdatum.')]);
+                if (! $member || ($data['kind'] === 'parent' && ! $minor
+                    && (! config('clubunio-parent-access.enabled', false) || ! $member->birth_date
+                        || $member->birth_date->toDateString() > $today))) {
+                    throw ValidationException::withMessages(['member_id' => __(config('clubunio-parent-access.enabled', false)
+                        ? 'parent_access.active_membership_required' : 'Aktive Mitgliedschaft erforderlich; Elternzugriff nur für Minderjährige mit Geburtsdatum.')]);
                 }
                 if ($data['kind'] === 'self' && AccountMemberLink::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('account_id', $data['account_id'])
                     ->where('kind', 'self')->where('state', 'approved')->when($id, fn ($q) => $q->whereKeyNot($id))->exists()) {
                     throw ValidationException::withMessages(['member_id' => __('Der Benutzer hat bereits eine eigene Mitgliedszuordnung.')]);
                 }
             }
-            $before = $record->exists ? $record->only(['account_id', 'member_id', 'kind', 'state', 'revision']) : null;
+            $fields = ['account_id', 'member_id', 'kind', 'state', 'revision'];
+            $consent = [];
+            if (config('clubunio-parent-access.enabled', false)) {
+                $fields = array_merge($fields, ['adult_consent_at', 'adult_consent_by', 'adult_consent_source']);
+                $adult = $data['kind'] === 'parent' && $data['state'] === 'approved' && ! $minor;
+                $consent = ['adult_consent_at' => $adult ? now() : null, 'adult_consent_by' => $adult ? $actor->id : null,
+                    'adult_consent_source' => $adult ? 'office' : null];
+            }
+            $before = $record->exists ? $record->only($fields) : null;
             $record->forceFill(array_intersect_key($data, array_flip(['account_id', 'member_id', 'kind', 'state'])) + [
-                'tenant_id' => $tenant->id, 'source' => $record->source ?? 'backoffice_review', 'revision' => $id ? $record->revision + 1 : 1,
+                'tenant_id' => $tenant->id, 'source' => config('clubunio-parent-access.enabled', false) && $data['kind'] === 'parent' ? 'backoffice_review' : ($record->source ?? 'backoffice_review'), 'revision' => $id ? $record->revision + 1 : 1,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(),
-            ])->save();
+            ] + $consent)->save();
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'account_member_links', 'object_id' => $record->id, 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
-                'after_value' => json_encode($record->only(['account_id', 'member_id', 'kind', 'state', 'revision']) + ['reason' => $data['reason']], JSON_THROW_ON_ERROR)]);
+                'after_value' => json_encode($record->only($fields) + ['reason' => $data['reason']], JSON_THROW_ON_ERROR)]);
 
             return $record;
         });

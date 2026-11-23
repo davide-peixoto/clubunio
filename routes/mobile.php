@@ -21,6 +21,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
     Route::delete('session', [Mobile::class, 'revoke'])->name('logout');
     Route::delete('sessions/{session}', [Mobile::class, 'revoke'])->whereUuid('session')->name('revoke');
     Route::prefix('clubs/{tenant}')->whereNumber('tenant')->group(function () {
+        \App\ClubUnio\Mobile\MobileParentAccessRoutes::register();
         \App\ClubUnio\Mobile\MobileEventCheckinRoutes::tenant();
         Route::get('modules', [\App\ClubUnio\Mobile\MobileAccountController::class, 'modules'])->name('modules');
         \App\ClubUnio\Mobile\MobileBootstrapRoutes::personalRoutes();

@@ -22,7 +22,8 @@ final class MobilePushSquad
         $players = array_values(array_filter($roster, fn ($member) => ! in_array($member, $staff)
             && ($byMember->get($member)->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN')) === 'DABEI'));
         $ids = $planning->table($tenant, 'account_member_links')->whereIn('member_id', $players)->where('state', 'approved')
-            ->whereIn('kind', ['self', 'parent'])->distinct()->pluck('account_id');
+            ->where(fn ($q) => app(\App\ClubUnio\Services\ParentAccessPolicy::class)->scopePersonalLinks($q, $tenant, 'clubora.account_member_links'))
+            ->distinct()->pluck('account_id');
         $recipients = [];
         foreach (Account::whereIn('id', $ids)->where('active', true)->where('api_only', false)->orderBy('id')->get() as $candidate) {
             if (! app(MemberAccessService::class)->represented($candidate, $tenant)->whereIn('clubora.members.id', $players)->exists()

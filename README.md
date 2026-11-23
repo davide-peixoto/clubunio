@@ -208,3 +208,6 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 Read [PILOT.md](PILOT.md) before running commands. Shared DEV database,
 read-only; no migrations or production deployment.
+
+
+Elternlogins: [Altersabhaengige Freigabe und Profilverwaltung](deploy/CLUBUNIO-PARENT-ACCESS.md).

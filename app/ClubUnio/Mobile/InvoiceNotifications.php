@@ -43,7 +43,8 @@ final class InvoiceNotifications
                 return;
             }
             $ids = $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $invoice->member_id)
-                ->where('state', 'approved')->whereIn('kind', ['self', 'parent'])->distinct()->pluck('account_id');
+                ->where(fn ($q) => app(\App\ClubUnio\Services\ParentAccessPolicy::class)->scopePersonalLinks($q, $tenant, 'clubora.account_member_links'))
+                ->distinct()->pluck('account_id');
             foreach (Account::whereIn('id', $ids)->where('active', true)->where('api_only', false)->get() as $actor) {
                 if (! app(MemberAccessService::class)->canEnter($actor, $tenant)
                     || ! app(MemberAccessService::class)->represented($actor, $tenant)->whereKey($invoice->member_id)->exists()) {

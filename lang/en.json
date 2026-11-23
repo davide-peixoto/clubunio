@@ -3042,5 +3042,7 @@
     "Anwesend": "Present",
     "Choose a check-in end after its start.": "Choose a check-in end after its start.",
     "Event check-in is currently closed.": "Event check-in is currently closed.",
-    "Complete event name and location before enabling check-in.": "Complete event name and location before enabling check-in."
+    "Complete event name and location before enabling check-in.": "Complete event name and location before enabling check-in.",
+    "parent_access.verified_login_required": "The parent account must first sign in with a verified email. Access can then be granted.",
+    "parent_access.active_membership_required": "An active membership and a valid date of birth are required."
 }

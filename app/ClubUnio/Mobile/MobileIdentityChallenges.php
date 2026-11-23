@@ -128,6 +128,8 @@ final class MobileIdentityChallenges
         $old=$this->emails()->where('account_id',$account->id)->lockForUpdate()->first();
         $this->emails()->updateOrInsert(['account_id'=>$account->id],['email_hash'=>$this->emailHash($email),'email_encrypted'=>Crypt::encryptString($email),
             'revision'=>(int)($old?->revision??0)+1,'verified_at'=>now(),'source'=>$source,'proof_challenge_id'=>$challenge->id]);
+        $tenant = Tenant::find($challenge->tenant_id);
+        if ($tenant) app(\App\ClubUnio\Services\ParentAccessService::class)->verifiedEmailChallenge($account, $email, $tenant);
     }
     public function emailSummary(Account $account,Tenant $tenant): array
     {
@@ -271,13 +273,13 @@ final class MobileIdentityChallenges
             $account=new Account; $account->forceFill(['username'=>$payload['email'],'display_name'=>mb_substr(trim($payload['first_name'].' '.$payload['last_name']),0,255),
                 'password'=>$payload['password_hash'],'active'=>true,'api_only'=>false])->save();
             DB::connection('clubunio')->table('clubora.tenant_accounts')->insert(['tenant_id'=>$tenant->id,'account_id'=>$account->id,'role'=>'member','portal_enabled'=>true]);
-            // Email proof grants no member/parent/trainer links. Existing account-link administration reviews these explicitly.
+            // Verified email may approve matching minor-parent links; self/trainer links still require review.
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$account->id,'object_type'=>'tenant_accounts',
                 'object_id'=>DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id',$tenant->id)->where('account_id',$account->id)->value('id'),
                 'after_value'=>json_encode(['event'=>'self_registration_email_verified','role'=>'member','access'=>'pending_member_link_review'],JSON_THROW_ON_ERROR)]);
             $this->finish($row,(int)$account->id);
             $this->bindEmail($account,$payload['email'],$row,'self_registration');
-            return ['confirmed'=>true,'access_pending'=>true];
+            return ['confirmed'=>true,'access_pending'=>! app(\App\ClubUnio\Services\MemberAccessService::class)->canEnter($account,$tenant)];
         });
     }
     public function reset(Request $request): array

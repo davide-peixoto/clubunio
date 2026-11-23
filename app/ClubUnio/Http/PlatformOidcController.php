@@ -146,6 +146,11 @@ final class PlatformOidcController
             }
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
+        if ($club && $actor?->active && ! $actor->api_only
+            && (($config['subjects'][$claims->sub] ?? null) === (int) $actor->id
+                || $links->accountId($claims->iss, $claims->sub) === (int) $actor->id)) {
+            app(\App\ClubUnio\Services\ParentAccessService::class)->verifiedLogin($actor, $claims, $config['tenant'] ?? null);
+        }
         if (isset($config['tenant'])) {
             abort_unless($actor?->active && ! $actor->api_only && $actor->canAccessTenant($config['tenant']), 403);
         }

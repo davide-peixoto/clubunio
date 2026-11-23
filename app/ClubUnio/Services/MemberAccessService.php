@@ -52,8 +52,7 @@ class MemberAccessService
                 ->where(function ($q) use ($ownOnly, $today) {
                     $q->where('access_link.kind', 'self');
                     if (! $ownOnly) {
-                        $q->orWhere(fn ($q) => $q->where('access_link.kind', 'parent')->where('birth_date', '<=', $today)
-                            ->whereRaw("birth_date + interval '18 years' > CAST(? AS date)", [$today]));
+                        $q->orWhere(fn ($q) => app(ParentAccessPolicy::class)->scope($q, 'access_link', 'clubora.members'));
                     }
                 });
         });

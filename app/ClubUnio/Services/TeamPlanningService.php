@@ -533,7 +533,7 @@ class TeamPlanningService
             ->join('clubora.members as m', fn ($j) => $j->on('m.id', '=', 'l.member_id')->on('m.tenant_id', '=', 'l.tenant_id'))
             ->where('l.tenant_id', $tenant->id)->where('l.state', 'approved')->where('a.active', true)
             ->whereIn('l.member_id', $members)->whereIn('a.id', $accounts)
-            ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => $q->where('l.kind', 'parent')->where('m.birth_date', '<=', $today)->whereRaw("m.birth_date + interval '18 years' > CAST(? AS date)", [$today])))
+            ->where(fn ($q) => $q->where('l.kind', 'self')->orWhere(fn ($q) => app(ParentAccessPolicy::class)->scope($q, 'l', 'm')))
             ->distinct()->pluck('a.id');
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, $key, 'push', $values, $recipients->all());
         foreach ($messages as $account => $message) {

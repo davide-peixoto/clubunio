@@ -86,7 +86,8 @@ class MemberDocumentMaintenanceService
     private function notify(Tenant $tenant, MemberDocument $document): void
     {
         $db = DB::connection('clubunio');
-        $accounts = Account::where('active', true)->whereIn('id', $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $document->member_id)->where('state', 'approved')->select('account_id'))->get();
+        $accounts = Account::where('active', true)->whereIn('id', $db->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('member_id', $document->member_id)
+            ->where(fn ($q) => app(ParentAccessPolicy::class)->scopePersonalLinks($q, $tenant, 'clubora.account_member_links'))->select('account_id'))->get();
         $messages = app(MessageTemplateService::class)->renderForAccounts($tenant, 'member.document.available', 'push', ['verein' => $tenant->name], $accounts->modelKeys());
         foreach ($accounts as $account) {
             $message = $messages[$account->id];

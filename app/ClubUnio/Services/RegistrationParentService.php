@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class RegistrationParentService
 {
-    /** Proposals confer no access; existing approved/revoked decisions are preserved. */
+    /** Proposals require verified-email synchronization; manual decisions are preserved. */
     public function propose(Account $actor, Tenant $tenant, Registration $registration, Member $member): array
     {
         $db = DB::connection('clubunio');
@@ -39,6 +39,8 @@ class RegistrationParentService
                 'object_type' => 'account_member_links', 'object_id' => $id,
                 'after_value' => json_encode(['registration_id' => $registration->id, 'operation' => 'parent_proposed', 'state' => 'pending'], JSON_THROW_ON_ERROR)]);
             $ids[] = $id;
+            // Only an independently verified login proof can approve this proposal.
+            app(ParentAccessService::class)->synchronize(Account::findOrFail($account), $tenant);
         }
 
         return $ids;

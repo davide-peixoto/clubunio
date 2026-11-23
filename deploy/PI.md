@@ -2817,3 +2817,6 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 22.11.2026: Stage-Walletfehler auf FPM-open_basedir eingegrenzt; CLI hatte private Dateien lesen koennen, Webprozess nicht. Nur umgebungseigene Apple-/Google-Wallet-Ordner in Stage-/PROD-Pools ergaenzt, Konfiguration geprueft/graceful reloaded. FPM-Freigaben true und synthetischer PKPass in beiden Pools erfolgreich; Doku: deploy/CLUBUNIO-WALLET-RUNTIME.md.
+
+
+23.11.2026: Elternlogins altersabhaengig umgesetzt, dokumentiert und DEV/Stage/PROD aktiviert. 39 synthetische PG-Pruefungen je Instanz, 13 lokale Backendtests/108 Assertions, 25 fokussierte Fluttertests. Stage-Kinderverknuepfungen ausdruecklich bestaetigt und auditiert freigegeben. Profilseite nach App-Neubau am Mac testen.

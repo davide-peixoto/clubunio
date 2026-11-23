@@ -3042,5 +3042,7 @@
     "Anwesend": "Anwesend",
     "Choose a check-in end after its start.": "Wähle ein Check-in-Ende nach dem Beginn.",
     "Event check-in is currently closed.": "Der Event-Check-in ist derzeit geschlossen.",
-    "Complete event name and location before enabling check-in.": "Ergänze Veranstaltungsname und Ort, bevor du den Check-in aktivierst."
+    "Complete event name and location before enabling check-in.": "Ergänze Veranstaltungsname und Ort, bevor du den Check-in aktivierst.",
+    "parent_access.verified_login_required": "Das Elternkonto muss zuerst mit bestätigter E-Mail angemeldet sein. Danach kann der Zugriff freigegeben werden.",
+    "parent_access.active_membership_required": "Eine aktive Mitgliedschaft und ein gültiges Geburtsdatum sind erforderlich."
 }
