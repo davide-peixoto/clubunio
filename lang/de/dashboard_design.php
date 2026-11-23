@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'empty' => 'Keine Daten vorhanden.',
+    'details' => 'Daten anzeigen',
+    'total' => 'Gesamt',
     'selector' => 'Dashboard-Design',
     'glass' => 'Glasdesign',
     'classic' => 'Bisheriges Design',

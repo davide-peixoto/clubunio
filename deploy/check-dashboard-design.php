@@ -25,6 +25,15 @@ try {
         if (! str_contains($html, 'data-cu-dashboard-hero') || ! str_contains($html, e(trans('dashboard_design.classic')))) {
             throw new LogicException('Glass render failed');
         }
+        foreach ($widgets as $widget) {
+            if (! is_string($widget) || ! is_subclass_of($widget, Filament\Widgets\ChartWidget::class) || ! $widget::canView()) {
+                continue;
+            }
+            $chartHtml = Livewire\Livewire::mount($widget);
+            if (! str_contains($chartHtml, 'data-cu-dashboard-chart') || ! str_contains($chartHtml, 'cu-chart-fallback')) {
+                throw new LogicException('Template chart render failed: '.$widget);
+            }
+        }
         $app['session']->put('clubunio.dashboard.design.'.$actor->id, 'classic');
         $classic = Livewire\Livewire::mount(App\ClubUnio\Pages\Dashboard::class);
         if (str_contains($classic, 'data-cu-dashboard-hero') || ! str_contains($classic, e(trans('dashboard_design.glass')))) {

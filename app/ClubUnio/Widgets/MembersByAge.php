@@ -8,6 +8,8 @@ use Filament\Widgets\ChartWidget;
 
 class MembersByAge extends ChartWidget
 {
+    use UsesGlassChart;
+
     public static function canView(): bool
     {
         return \App\ClubUnio\Resources\ProfileUi::allows('members');

@@ -9,6 +9,8 @@ use Filament\Widgets\ChartWidget;
 
 class InvoicesBySeason extends ChartWidget
 {
+    use UsesGlassChart;
+
     public static function canView(): bool
     {
         return \App\ClubUnio\Resources\ProfileUi::allows('invoices');

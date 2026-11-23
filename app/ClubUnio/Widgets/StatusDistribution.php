@@ -10,6 +10,8 @@ use Filament\Widgets\ChartWidget;
 
 abstract class StatusDistribution extends ChartWidget
 {
+    use UsesGlassChart;
+
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '280px';

@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV-Dashboard: CI und V42-Grafiken – 23.11.2026
+
+ClubUnio-Blau/Hellblau und neue React-Balken-/Donutdiagramme auf DEV aktiv.
+Echte Daten und bestehende Rechte, Datentabellen als Fallback; klassisches
+Design jederzeit auswählbar. 16 Tests/66 Assertions und 9 Diagrammszenarien
+erfolgreich. [Stand und Rückweg](CLUBUNIO-DASHBOARD-DESIGN.md).
+
 ## Umschaltbares DEV-Dashboard – 23.11.2026
 
 Glasdesign mit jederzeit erreichbarem bisherigen Design auf DEV aktiviert.
