@@ -3,21 +3,29 @@
 namespace App\ClubUnio\Assistant;
 
 use App\ClubUnio\Services\OpenAiModels;
+use App\ClubUnio\Services\{TenantAiConfiguration, TenantAiGateway};
+use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 class AssistantProvider
 {
-    public function enabled(): bool
+    public function enabled(?Tenant $tenant = null): bool
     {
+        if (config('clubunio-tenant-ai.enabled')) {
+            if (!$tenant || config('clubunio-assistant.provider_enabled') !== true
+                || config('clubunio-assistant.privacy_reviewed') !== true) return false;
+            try { app(TenantAiConfiguration::class)->credentials($tenant); return true; }
+            catch (\Throwable) { return false; }
+        }
         return config('clubunio-assistant.provider_enabled') === true
             && config('clubunio-assistant.privacy_reviewed') === true
             && is_string(config('clubunio-assistant.key')) && config('clubunio-assistant.key') !== '';
     }
 
-    public function respond(array $input, array $tools, string $locale): array
+    public function respond(array $input, array $tools, string $locale, ?Tenant $tenant = null): array
     {
-        if (! $this->enabled()) {
+        if (! $this->enabled($tenant)) {
             throw ValidationException::withMessages(['assistant' => __('assistant.provider_disabled')]);
         }
         $model = config('clubunio-assistant.model');
@@ -42,8 +50,10 @@ class AssistantProvider
         ];
         // UTF-8 bytes conservatively bound input token costs, including schemas/history.
         abort_if(strlen(json_encode($payload, JSON_THROW_ON_ERROR)) > min(60000, (int) config('clubunio-assistant.max_payload_bytes')), 413);
-        $response = Http::acceptJson()->withToken(config('clubunio-assistant.key'))->connectTimeout(5)->timeout(25)
-            ->withoutRedirecting()->post('https://api.openai.com/v1/responses', $payload);
+        $response = config('clubunio-tenant-ai.enabled')
+            ? app(TenantAiGateway::class)->respond($tenant,'assistant',$payload)
+            : Http::acceptJson()->withToken(config('clubunio-assistant.key'))->connectTimeout(5)->timeout(25)
+                ->withoutRedirecting()->post('https://api.openai.com/v1/responses', $payload);
         // Never retry a timed-out paid call, log its body, or enable remote/network tools.
         abort_unless($response->successful() && $response->json('status') === 'completed', 502);
         $inputTokens = $response->json('usage.input_tokens');

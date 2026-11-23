@@ -271,6 +271,13 @@ Route::get('/clubora-expense-documents/{tenant:slug}/{line}', function (Request 
 
     return app(MemberDocumentService::class)->openExpense($request->user('clubunio'), $tenant, $line, $request->boolean('download'), (int) ($data['index'] ?? 0));
 })->middleware('auth:clubunio')->whereNumber('line')->name('clubunio.expenses.document');
+Route::match(['get','post'],'/platform/clubs/{tenant}/ai',\App\ClubUnio\Http\PlatformAiController::class)
+    ->whereNumber('tenant')->middleware([\App\ClubUnio\Http\RequirePlatformAdministrator::class,'throttle:20,1'])->name('clubunio.platform.ai');
+
+Route::get('/ai-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {
+    return app(\App\ClubUnio\Services\TenantAiKnowledge::class)->download($request->user('clubunio'), $tenant, $document);
+})->middleware('auth:clubunio')->whereNumber('document')->name('clubunio.ai.documents.download');
+
 Route::get('/admin/{path?}', fn () => redirect('/'))->where('path', '.*');
 
 Route::get('/clubora-documents/{tenant:slug}/{document}', function (Request $request, Tenant $tenant, int $document) {

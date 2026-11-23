@@ -81,7 +81,7 @@ class BackofficeAssistantService
 
         return ['conversation_id' => $conversation ? (int) $conversation->id : null,
             'messages' => $conversation ? $this->decode($conversation->transcript_encrypted) : [], 'actions' => $actions,
-            'provider_enabled' => $this->provider->enabled(),
+            'provider_enabled' => $this->provider->enabled($tenant),
             'budget' => ['limit_usd' => config('clubunio-assistant.monthly_limit_microusd') / 1_000_000, 'used_usd' => $this->budget($tenant) / 1_000_000],
             'conversations' => $this->table('conversations', $actor, $tenant)->where('updated_at', '>=', now()->subDays((int) config('clubunio-assistant.retention_days', 30))->toIso8601String())
                 ->orderByDesc('updated_at')->limit(20)->get(['id', 'created_at'])->map(fn ($r) => [
@@ -125,7 +125,7 @@ class BackofficeAssistantService
     public function ask(Account $actor, Tenant $tenant, ?int $conversationId, string $text, ?string $requestKey = null): array
     {
         $this->authorize($actor, $tenant);
-        if (! $this->provider->enabled()) {
+        if (! $this->provider->enabled($tenant)) {
             throw ValidationException::withMessages(['assistant' => __('assistant.provider_disabled')]);
         }
         $requestKey ??= (string) Str::uuid();
@@ -180,7 +180,7 @@ class BackofficeAssistantService
             $prepared = [];
             for ($round = 0; $round < min(4, (int) config('clubunio-assistant.max_rounds')); $round++) {
                 $this->authorize($actor, $tenant);
-                $response = $this->provider->respond($input, $tools, app()->getLocale());
+                $response = $this->provider->respond($input, $tools, app()->getLocale(), $tenant);
                 $cost += $response['cost_microusd'];
                 $inputTokens += $response['input_tokens'];
                 $outputTokens += $response['output_tokens'];

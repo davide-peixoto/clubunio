@@ -9,7 +9,8 @@ class ManagedDocumentDisk
 {
     private function path(string $key): string
     {
-        if (! TenantDocumentStorage::parse(dirname($key).'/') || ! TenantDocumentStorage::filename(basename($key))) {
+        $path = TenantDocumentStorage::parse(dirname($key).'/');
+        if (!$path || ! TenantDocumentStorage::filename(basename($key),$path['namespace']==='ai')) {
             throw new RuntimeException('Invalid storage reference', 404);
         }
 

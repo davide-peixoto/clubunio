@@ -33,7 +33,8 @@ class SettingResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()->where('tenant_id', Filament::getTenant()?->id ?? 0)->whereNotIn('area', ['mail', 'erpnext']);
+        return parent::getEloquentQuery()->where('tenant_id', Filament::getTenant()?->id ?? 0)->whereNotIn('area', ['mail', 'erpnext'])
+            ->when(config('clubunio-tenant-ai.enabled'),fn ($q)=>$q->whereNotIn('key',['OPENAI_API_KEY','OPENAI_TRAINING_MODEL','OPENAI_TRAINING_VECTOR_STORE_ID']));
     }
 
     public static function getNavigationIcon(): string

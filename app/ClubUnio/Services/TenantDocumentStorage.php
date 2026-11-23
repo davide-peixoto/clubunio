@@ -188,7 +188,7 @@ class TenantDocumentStorage
 
     public static function parse(string $folder): ?array
     {
-        if (! preg_match('~^clubunio/storage/('.self::PROFILE.')/(registrations|members|expenses)/([1-9][0-9]*)/([1-9][0-9]*)/$~D', $folder, $m)) {
+        if (! preg_match('~^clubunio/storage/('.self::PROFILE.')/(registrations|members|expenses|ai)/([1-9][0-9]*)/([1-9][0-9]*)/$~D', $folder, $m)) {
             return null;
         }
 
@@ -240,9 +240,9 @@ class TenantDocumentStorage
         return $this->read($tenant, ...$this->expensePath($tenant, $reference));
     }
 
-    public static function filename(string $filename): bool
+    public static function filename(string $filename, bool $ai = false): bool
     {
-        return (bool) preg_match('/^'.self::PROFILE.'\.(pdf|png|jpg|webp)$/D', $filename);
+        return (bool) preg_match('/^'.self::PROFILE.'\.('.($ai ? 'pdf|txt|md|docx' : 'pdf|png|jpg|webp').')$/D', $filename);
     }
 
     public function read(Tenant $tenant, string $folder, string $filename): string
@@ -254,7 +254,7 @@ class TenantDocumentStorage
 
             return app(AzureDocumentReader::class)->read($folder, $filename);
         }
-        abort_unless(self::filename($filename), 404);
+        abort_unless(self::filename($filename,$path['namespace']==='ai'), 404);
         $profile = $this->profile($tenant, $path);
         if ($profile->provider === 'azure') {
             return app(AzureDocumentReader::class)->readAt($folder, $filename, $this->azure($profile));
@@ -281,7 +281,7 @@ class TenantDocumentStorage
 
             return;
         }
-        abort_unless(self::filename($filename), 422);
+        abort_unless(self::filename($filename,$path['namespace']==='ai'), 422);
         $profile = $this->profile($tenant, $path);
         abort_unless(self::enabled($profile->provider), 403);
         if ($profile->provider === 'azure') {

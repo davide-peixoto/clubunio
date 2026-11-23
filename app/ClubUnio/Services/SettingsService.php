@@ -37,6 +37,8 @@ class SettingsService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $setting = Setting::where('tenant_id', $tenant->id)->whereKey($id)->lockForUpdate()->firstOrFail();
             abort_if(in_array($setting->area, ['mail', 'erpnext'], true), 403);
+            abort_if(config('clubunio-tenant-ai.enabled') && in_array($setting->key,
+                ['OPENAI_API_KEY','OPENAI_TRAINING_MODEL','OPENAI_TRAINING_VECTOR_STORE_ID'],true),403);
             app(SettingOptions::class)->validate($setting, $value);
             if (in_array($setting->area, ['public', 'signage'], true) || $setting->key === ActiveTrainingPlan::KEY) {
                 abort_unless(BexioConnectionService::canManage($actor->fresh(), $tenant), 403);

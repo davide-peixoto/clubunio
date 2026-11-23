@@ -221,6 +221,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])->authMiddleware([Authenticate::class])
+            ->pages([\App\ClubUnio\Pages\TenantAiSettings::class])
             ->pages([\App\ClubUnio\Pages\PersonalProfile::class])
             ->userMenuItems([
                 'personal-profile' => \Filament\Actions\Action::make('personal-profile')

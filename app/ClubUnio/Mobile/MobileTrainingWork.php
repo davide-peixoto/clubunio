@@ -20,6 +20,12 @@ final class MobileTrainingWork
         abort_unless(config('clubunio-mobile.training_ai.enabled', false) && config('clubunio-mobile.training_ai.cost_reviewed', false)
             && in_array($tenant->slug, config('clubunio-mobile.training_ai.tenant_slugs', []), true), 503, 'Trainings-KI noch nicht freigeschaltet.');
         $settings = [];
+        if (config('clubunio-tenant-ai.enabled')) {
+            $credentials = app(\App\ClubUnio\Services\TenantAiConfiguration::class)->credentials($tenant);
+            $settings = ['OPENAI_TRAINING_MODEL'=>\App\ClubUnio\Services\OpenAiModels::TRAINING,
+                'tenant_ai_revision'=>(string)$credentials['revision'], 'tenant_ai_fingerprint'=>$credentials['fingerprint'],
+                'tenant_ai_stores'=>implode(',',app(\App\ClubUnio\Services\TenantAiKnowledge::class)->trainingStores($tenant))];
+        } else {
         $rows = Setting::where('tenant_id', $tenant->id)->whereIn('key', ['OPENAI_API_KEY','OPENAI_TRAINING_MODEL','OPENAI_TRAINING_VECTOR_STORE_ID'])->get();
         abort_unless($rows->count() === 3 && $rows->every(fn ($row) => $row->enabled), 503, 'Trainings-KI unvollständig konfiguriert.');
         foreach ($rows as $row) {
@@ -27,6 +33,7 @@ final class MobileTrainingWork
             catch (\Illuminate\Contracts\Encryption\DecryptException) { abort(503, 'Trainings-KI unvollständig konfiguriert.'); }
         }
         abort_unless(count(array_filter($settings)) === 3 && in_array($settings['OPENAI_TRAINING_MODEL'] ?? '', config('clubunio-mobile.training_ai.models', []), true), 503, 'Trainings-KI unvollständig konfiguriert.');
+        }
         ksort($settings, SORT_STRING);
         $reserve = (int) config('clubunio-mobile.training_ai.reservation_microusd', 0);
         $limit = min((int) config('clubunio-mobile.training_ai.monthly_limit_microusd', 0), (int) config('clubunio-mobile.ai.monthly_limit_microusd', 20_000_000));

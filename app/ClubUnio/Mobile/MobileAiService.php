@@ -48,7 +48,9 @@ final class MobileAiService
         abort_unless(in_array($provider, ['openai', 'azure_openai', 'azure_translator'], true), 503);
         abort_if($provider === 'azure_translator' && $data['operation'] !== 'translate', 422);
         $model = $provider === 'openai' ? config('clubunio-mobile.ai.openai.model') : null;
-        $fingerprint = hash('sha256', json_encode([$data['operation'], $text, $revision, $data['language'], $data['message_id'] ?? null, 'prompt-v2', $provider, $model], JSON_THROW_ON_ERROR));
+        $aiContext = $provider === 'openai' && config('clubunio-tenant-ai.enabled')
+            ? app(\App\ClubUnio\Services\TenantAiConfiguration::class)->credentials($tenant)['revision'] : null;
+        $fingerprint = hash('sha256', json_encode([$data['operation'], $text, $revision, $data['language'], $data['message_id'] ?? null, 'prompt-v3', $provider, $model, $aiContext], JSON_THROW_ON_ERROR));
         $db = DB::connection('clubunio');
         $work = $db->transaction(function () use ($db, $tenant, $actor, $data, $fingerprint, $provider, $revision, $text) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
@@ -94,7 +96,7 @@ final class MobileAiService
             [$dispatchText, $dispatchRevision] = $this->source($actor, $tenant, $data);
             abort_unless($dispatchRevision === $revision && hash_equals($text, $dispatchText), 409);
             $adapter = match ($work->provider) {
-                'openai' => new OpenAiTextProvider,
+                'openai' => new OpenAiTextProvider(tenant: $tenant),
                 'azure_openai' => new OpenAiTextProvider(true),
                 'azure_translator' => new AzureTranslatorProvider,
             };

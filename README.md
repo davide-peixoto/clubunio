@@ -1,5 +1,7 @@
 # ClubUnio
 
+Vereins-KI: [Mandantenbezogene OpenAI-Zugaenge, Wissensspeicher und Migrationsplan](deploy/CLUBUNIO-TENANT-AI.md).
+
 Identitätsdienst: [Keycloak-Betrieb, Realms und Login-Theme](deploy/CLUBUNIO-KEYCLOAK.md).
 
 Installation und Releases: [Statische Livewire-Dateien veroeffentlichen und pruefen](deploy/CLUBUNIO-INSTALL-ASSETS.md).
