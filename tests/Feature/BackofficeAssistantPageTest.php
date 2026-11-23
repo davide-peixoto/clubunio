@@ -9,6 +9,7 @@ use App\ClubUnio\Pages\BackofficeAssistant;
 use App\ClubUnio\Services\BackofficeReadContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -510,7 +511,7 @@ class BackofficeAssistantPageTest extends TestCase
             $this->assertCount(0, $xpath->query('//*[@data-overview-list and @open]'));
             if (getenv('CLUBUNIO_ASSISTANT_PREVIEW') === '1') {
                 $directory = storage_path('app/assistant-dashboard-preview');
-                \Illuminate\Support\Facades\File::ensureDirectoryExists($directory);
+                File::ensureDirectoryExists($directory);
                 file_put_contents($directory.'/'.$locale.'.html',
                     '<!doctype html><html lang="'.$locale.'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
                     .'<title>ClubUnio dashboard preview</title><style>'
