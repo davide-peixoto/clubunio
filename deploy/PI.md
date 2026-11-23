@@ -2717,3 +2717,5 @@ fremder Origin503. Passwortfallback/Einladungen/Registrierung bleiben aus.
 Keine Schluessel-, Rollen-, Schema- oder Providerjob-Aenderungen. Echter
 MFA-/App-Abschluss auf dem iPhone noch durch Benutzer zu pruefen.
 [Betrieb und Rueckweg](CLUBUNIO-PROD-MOBILE-BOOTSTRAP.md).
+
+23.11.2026: PROD-Appmodule nach Benutzerauftrag aktiviert; alle elf vorhandenen Bereiche im Kontomenue nativ verfuegbar. 14 lesende Einstiegspruefungen im PROD-FPM erfolgreich; Uploads mit vorhandenem ClamAV geprueft. Keine Schema-/Datenmigration, KI-/Providerabrechnung und physische Schluesselausgabe separat gesperrt. Betrieb/Rueckweg: deploy/CLUBUNIO-PROD-MOBILE-MODULES.md.

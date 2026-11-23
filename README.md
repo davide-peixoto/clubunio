@@ -217,3 +217,6 @@ Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
 141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
 App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
 Erster Verein und Administration folgen. [Nachweis und Rueckweg](deploy/CLUBUNIO-PRODUCTION.md).
+
+
+23.11.2026: PROD-Appmodule nach Benutzerauftrag aktiviert; alle elf vorhandenen Bereiche im Kontomenue nativ verfuegbar. 14 lesende Einstiegspruefungen im PROD-FPM erfolgreich; Uploads mit vorhandenem ClamAV geprueft. Keine Schema-/Datenmigration, KI-/Providerabrechnung und physische Schluesselausgabe separat gesperrt. Betrieb/Rueckweg: deploy/CLUBUNIO-PROD-MOBILE-MODULES.md.

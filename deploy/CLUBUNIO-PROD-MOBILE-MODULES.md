@@ -1,0 +1,11 @@
+# PROD app modules, 23.11.2026
+
+User authorized all app modules on PROD. All eleven existing SV Sissach menu options were already active; most native runtime flags were false. Activated native planning, expenses, my teams, facilities, pitch planning, bus, keybox views/administration, penalty, members, member card, documents, registrations, training, sponsor, role guide and push administration. Existing Office membership and module permissions unchanged.
+
+Uploads enabled with the existing ClamAV socket /run/clamav/clamd.ctl. Added only /run/clamav to the PROD FPM realpath_turbo.open_basedir list after reproducing its access restriction. FPM configuration validated and gracefully reloaded. Configuration cache rebuilt as runcloud with umask077. Synthetic scan returned clean from the real PROD FPM pool; tenant document storage accepts uploads.
+
+Validation: 24 existing module schema prerequisites, pitch projection readiness, account106/tenant12 menu returns all11 native modules plus profile. Fourteen read entry calls returned200 in CLI and the PROD FPM pool: expense options, my teams, facilities, pitch options, bus options, member documents, members, registrations, training plans, sponsor events, penalty options, keyboxes, role guide and personal bootstrap. Reads ran in read-only transactions, rolled back. No synthetic account/session, document, notification or provider operation created. Device menu refresh remains to be confirmed by user.
+
+Operational boundaries retained: sponsor billing provider flag false; training AI and general AI remain false; physical keybox issuance/provider/operations flags remain closed. No Bexio/SFV/social job activation, credential import, bank payment or automatic notification. Existing push transport configuration retained; enabling push administration allows the separately authorized UI workflow, no test message sent.
+
+Migration plan: configuration-only release, no schema migration/data import or delta baseline changes. No visible UI text added. Private rollback materials: /root/clubunio-prod-fixes/20261123-all-mobile-modules/env-before, fpm-before.conf and changed-keys.txt. To roll back, restore the changed keys from env-before while retaining later unrelated settings, restore only the added scanner path in FPM, rebuild cache and gracefully reload FPM.
