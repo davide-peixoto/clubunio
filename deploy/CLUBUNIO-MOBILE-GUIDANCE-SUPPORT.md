@@ -26,3 +26,12 @@ auf iPhone/Android bleibt als Geräteabnahme offen; Tests senden keine echten
 Mails. Detaillierte Abnahme/Migrationsdoku im Apprepo docs/GETTING-STARTED-SUPPORT.md.
 
 53gezielteFlutterfälle grün, Analyse/i18n2020/5 ohne Befund.
+
+
+## Support-Wissensbasis – 23.11.2026
+
+Support auf DEV, Stage und PROD aktiviert; 18 kuratierte Hilfethemen DE/EN,
+Titel-/Inhaltssuche mit bestehenden Zugriffsgrenzen. App öffnet Hilfe zuerst,
+mit Leerzustand und Wiederholen; neuer App-Build erforderlich.
+76 Live-Prüfungen je Umgebung, 6 Backendtests/120 Assertions und 15 Fluttertests grün.
+Details: [Supportartikel und App-Wissensbasis](CLUBUNIO-SUPPORT-HELP-APP.md).

@@ -48,10 +48,7 @@ final class TriageSupportTicket implements ShouldQueue
 
         // Never follow source_id or read posts, notes or attachments.
         $topic = $guide->topic($ticket->subject);
-        $suggestion = $topic === null ? null : $guide->answer(
-            $topic === 'login' ? 'Passkey' : 'Expense',
-            $this->locale,
-        );
+        $suggestion = $topic === null ? null : $guide->answerForTopic($topic,$this->locale);
         $results->insertOrIgnore([
             'ticket_id' => $this->ticketId,
             'topic' => $topic ?? 'manual_review',

@@ -2835,3 +2835,12 @@ Android-Geraeteabnahme offen. Details: deploy/CLUBUNIO-GOOGLE-WALLET.md.
 
 
 23.11.2026: SeparateChatTranslationLanguages/configFreigabe fuer24OpenAI-Ziele; UI bleibt2Sprachen. EigenerFlutterPolicytyp ohneUI-Katalogschnittmenge, lokalisierteAnzeigenamen, Arabic/PersianRTL. Migration170 erweitertbisherigeEnumconstraint; je47PGChecks/rollback,10Backendtests132Assertions,41Fluttertests. DEEN3075Schluessel undmobile2172/5Kataloge geprueft. Doku/neuerAppBuild-Hinweis nachgefuehrt.
+
+
+## Support-Wissensbasis – 23.11.2026
+
+Support auf DEV, Stage und PROD aktiviert; 18 kuratierte Hilfethemen DE/EN,
+Titel-/Inhaltssuche mit bestehenden Zugriffsgrenzen. App öffnet Hilfe zuerst,
+mit Leerzustand und Wiederholen; neuer App-Build erforderlich.
+76 Live-Prüfungen je Umgebung, 6 Backendtests/120 Assertions und 15 Fluttertests grün.
+Details: [Supportartikel und App-Wissensbasis](CLUBUNIO-SUPPORT-HELP-APP.md).

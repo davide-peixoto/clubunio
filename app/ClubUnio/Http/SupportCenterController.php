@@ -8,6 +8,7 @@ use App\ClubUnio\Services\{LanguagePreferences, SupportAccess, ZammadSupport};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Crypt, DB};
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 final class SupportCenterController
 {
@@ -32,7 +33,7 @@ final class SupportCenterController
         $platformWeb = $platform && !$request->expectsJson();
         $tickets = fn () => $platform ? $db->table('clubora.support_tickets')->where('audience', 'platform')
             : $this->access->tickets($club, $actor->id, $staff);
-        $locale = app(LanguagePreferences::class)->resolve($actor?->preferred_locale, app()->getLocale());
+        $locale = app(LanguagePreferences::class)->resolve($request->attributes->has('mobile.actor')?app()->getLocale():$actor?->preferred_locale, app()->getLocale());
         $assignees = fn () => $db->table($platform ? 'clubora.platform_admins as access' : 'clubora.tenant_accounts as access')
             ->join('clubora.accounts as account', 'account.id', '=', 'access.account_id')
             ->where('account.active', true)->where('account.api_only', false)
@@ -66,7 +67,7 @@ final class SupportCenterController
                 ->with('zammad_result', $ok ? 'linked' : 'attention');
         }
         if ($request->isMethod('POST') && $request->input('operation') === 'ask') {
-            $input = $request->validate(['body' => 'required|string|max:500', 'previous_topic' => 'nullable|in:login,expense']);
+            $input = $request->validate(['body' => 'required|string|max:500', 'previous_topic' => ['nullable','string',Rule::in(\App\ClubUnio\Services\SupportGuide::TOPICS)]]);
             $article = $this->access->findArticle($input['body'], $club, $staff, $platform, $locale);
             $answer = $article
                 ? ['text' => $article->body, 'source' => null, 'article' => ['id' => $article->id, 'title' => $article->title], 'ai' => false]
@@ -181,13 +182,10 @@ final class SupportCenterController
         $filters = $tab === 'tickets' ? $this->inboxFilters($request) : [];
         $articles = !$platformWeb || $tab === 'knowledge'
             ? $this->access->articles($club, $staff, $platform, $locale)
-                ->when(filled($d['q'] ?? null), fn ($q) => $q->whereLike('title', '%'.$d['q'].'%'))
+                ->when(filled($d['q'] ?? null), fn ($q) => $q->where(fn($match)=>$match->whereLike('title', '%'.$d['q'].'%')->orWhereLike('body', '%'.$d['q'].'%')))
                 ->orderBy('title')->limit(40)->get(['id','title','body','video_url'])
             : collect();
-        $faq = trans('support.faq');
-        if ($tab === 'knowledge' && filled($d['q'] ?? null)) {
-            $faq = array_filter($faq, fn ($item) => mb_stripos($item['title'], $d['q']) !== false);
-        }
+        $faq = app(\App\ClubUnio\Services\SupportGuide::class)->faq($locale,$d['q']??null);
         $rows = collect();
         $posts = collect();
         $updates = collect();

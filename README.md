@@ -217,3 +217,12 @@ Igloohome-App: [SVS-Abgleich, Notfallfunktion und Betriebsstand](deploy/CLUBUNIO
 
 
 [Chatuebersetzung: eigene24-Sprachen-Freigabe](deploy/CLUBUNIO-CHAT-TRANSLATION-LANGUAGES.md), unabhaengig von der DE/EN-Oberflaeche.
+
+
+## Support-Wissensbasis – 23.11.2026
+
+Support auf DEV, Stage und PROD aktiviert; 18 kuratierte Hilfethemen DE/EN,
+Titel-/Inhaltssuche mit bestehenden Zugriffsgrenzen. App öffnet Hilfe zuerst,
+mit Leerzustand und Wiederholen; neuer App-Build erforderlich.
+76 Live-Prüfungen je Umgebung, 6 Backendtests/120 Assertions und 15 Fluttertests grün.
+Details: [Supportartikel und App-Wissensbasis](deploy/CLUBUNIO-SUPPORT-HELP-APP.md).
