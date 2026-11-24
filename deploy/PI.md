@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Backend-Theme und Mandantenfarben – 24.11.2026
+
+Aktiv: `20261124-clubunio-backend-theme-v5`. Gemeinsame Oberflächen und
+Vereinsdesign aus bestehenden Einstellungen; keine Schema-Migration oder
+dauerhafte Farbänderung. Dark Mode, Mitglieder-/Trainingsformulare und
+Mandantenwechsel geprüft. Stage/PROD unverändert.
+[Bedienung, Abnahme und Rückweg](CLUBUNIO-BACKEND-THEME.md).
+
 ## V35-Navigationsbewegung – 24.11.2026
 
 Aktiv: `20261124-clubunio-navigation-motion-v3`. Schwebende blaue Icon-Leiste,

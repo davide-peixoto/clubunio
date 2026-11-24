@@ -1,5 +1,12 @@
 # ClubUnio
 
+## Einheitliches Backend mit Vereinsdesign – 24.11.2026
+
+Gemeinsame Tabellen, Formulare, Dialoge, Tabs und Arbeitsbereiche auf DEV;
+Dashboard, Navigation und Planung verwenden Farben und Logo des ausgewählten
+Vereins. Dark Mode und kontrastabhängige Schriftfarben, zentraler React-Rückweg.
+[Designquelle, Umfang und Abnahme](deploy/CLUBUNIO-BACKEND-THEME.md).
+
 ## Zentraler React-Parameter und Menü – 24.11.2026
 
 Ein Vereinsparameter **React Ja/Nein** steuert Dashboard, Menü, Team- und

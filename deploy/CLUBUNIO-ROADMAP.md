@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Konsistentes Backend und Mandantenfarben – 24.11.2026
+
+Gemeinsame Theme-Schicht für die passenden Vereinsbackend-Komponenten auf DEV
+abgeschlossen. Vorhandenes Vereinsdesign als einzige Quelle für Farben und
+Logo; zentrale Domain und Mandantenwechsel berücksichtigt. 23 Tests/332
+Assertions, 14 DEV-Renderprüfungen und Browserabnahme erfolgreich.
+[Umfang und Folgebetrieb](CLUBUNIO-BACKEND-THEME.md).
+
 ## V35-inspirierte Navigation – 24.11.2026
 
 Chrome-Videoreferenz angesehen und Bewegungsprinzip auf DEV übernommen:

@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=4">
     @php($teamDesignAvailable = $module === 'planning' && \App\ClubUnio\Services\PlanningUi::available(request()))
     @php($teamModern = $teamDesignAvailable && \App\ClubUnio\Services\PlanningUi::modern(request(), (int) $tenant->id))
-    @if($teamDesignAvailable)<link rel="stylesheet" href="{{ asset('css/clubunio-team-planning.css') }}?v=1">@endif
+    @if($teamDesignAvailable)<link rel="stylesheet" href="{{ asset('css/clubunio-team-planning.css') }}?v=tenant-1">@endif
     <div class="club-workspace {{ $teamModern ? 'cu-team-modern' : '' }}">
         <x-filament::tabs class="workspace-navigation" :label="match($module) { 'bus' => __('Busverwaltung'), 'bexio' => __('Integrationen'), default => __('Teamplanung') }">
             @if($module === 'bexio')

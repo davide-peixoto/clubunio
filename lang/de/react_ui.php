@@ -4,7 +4,7 @@ return [
     'setting' => 'React',
     'yes' => 'Ja',
     'no' => 'Nein',
-    'hint' => 'Gilt für alle Benutzer dieses Vereins: Dashboard, Menü, Team- und Anlagenplanung. Änderungen werden beim nächsten Seitenaufruf wirksam.',
+    'hint' => 'Gilt für alle Benutzer dieses Vereins und das gesamte Backend. Vereinsfarben und Logo werden übernommen. Änderungen werden beim nächsten Seitenaufruf wirksam.',
     'open' => 'Menü durchsuchen',
     'title' => 'Wohin möchtest du?',
     'search' => 'Menüpunkt suchen …',

@@ -1,5 +1,8 @@
 # Zentraler React-Parameter und Menü
 
+Aktuell: Einheitliche Backend-Komponenten und flexible Vereinsfarben verwenden
+das bestehende Mandantendesign. [Umfang, Farben und Abnahme](CLUBUNIO-BACKEND-THEME.md).
+
 Stand: 24.11.2026. Der Vereinsparameter `general / REACT_ENABLED` ersetzt
 die drei unabhängigen Designentscheidungen für Dashboard, Team- und
 Anlagenplanung. Die alten Sitzungswerte und URL-Parameter werden ignoriert;

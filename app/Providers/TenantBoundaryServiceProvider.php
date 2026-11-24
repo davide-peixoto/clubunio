@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\ClubUnio\Http\BindTenantDomain;
 use App\ClubUnio\Http\BindApiTenantDomain;
 use App\ClubUnio\Services\TenantDomainService;
+use App\ClubUnio\Services\BackendTheme;
 use Filament\Facades\Filament;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\ServiceProvider;
@@ -29,12 +30,13 @@ class TenantBoundaryServiceProvider extends ServiceProvider
                 }
             }
             // Closures read request-local branding; never mutate a panel per tenant request.
+            $branding = fn () => app(BackendTheme::class)->brand() ?? app(TenantDomainService::class)->brand();
             $panel = Filament::getPanel('clubunio');
-            $panel->brandName(fn () => app(TenantDomainService::class)->brand()['name'] ?? 'ClubUnio')
-                ->brandLogo(fn () => app(TenantDomainService::class)->brand()['logo'] ?? asset('brand/blue-v1/clubunio-logo-horizontal.svg'))
-                ->darkModeBrandLogo(fn () => app(TenantDomainService::class)->brand()['logo'] ?? asset('brand/blue-v1/clubunio-logo-horizontal-white.svg'))
-                ->favicon(fn () => app(TenantDomainService::class)->brand()['logo'] ?? asset('brand/blue-v1/clubunio-symbol.svg'))
-                ->colors(fn () => ['primary' => ($brand = app(TenantDomainService::class)->brand()) ? Color::hex($brand['color'])
+            $panel->brandName(fn () => $branding()['name'] ?? 'ClubUnio')
+                ->brandLogo(fn () => $branding()['logo'] ?? asset('brand/blue-v1/clubunio-logo-horizontal.svg'))
+                ->darkModeBrandLogo(fn () => $branding()['logo'] ?? asset('brand/blue-v1/clubunio-logo-horizontal-white.svg'))
+                ->favicon(fn () => $branding()['logo'] ?? asset('brand/blue-v1/clubunio-symbol.svg'))
+                ->colors(fn () => ['primary' => ($brand = $branding()) ? Color::hex($brand['color'])
                     : array_replace(Color::hex('#164B8A'), [400 => Color::convertToOklch('#48A9E8'), 600 => Color::convertToOklch('#164B8A')])]);
         });
     }

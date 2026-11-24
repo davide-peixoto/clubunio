@@ -1,0 +1,85 @@
+/* Shared presentation only, loaded by the authenticated club panel when React is enabled. */
+:root{--cu-surface:#ffffffed;--cu-canvas:#f5f7fb;--cu-border:#dfe5ed;--cu-text:#192b40;--cu-muted:#53647a;--cu-shadow:0 7px 28px #142c4c08;--cu-radius:18px}
+.dark{--cu-surface:#172436f5;--cu-canvas:#101927;--cu-border:#334256;--cu-text:#e3ecf8;--cu-muted:#acbdd2;--cu-shadow:0 7px 28px #00000020}
+.fi-body{background:radial-gradient(ellipse at 95% 0,rgb(var(--cu-brand-rgb)/.065),transparent 48%),var(--cu-canvas);color:var(--cu-text)}
+.fi-topbar{border-bottom:1px solid var(--cu-border);background:var(--cu-surface);backdrop-filter:blur(18px)}
+.fi-topbar .fi-logo{border-radius:8px}.fi-logo img{object-fit:contain}
+.fi-main .fi-header{padding-block:8px 16px;border-bottom:1px solid var(--cu-brand-edge);gap:16px}
+.fi-main .fi-header-heading{font-size:clamp(1.4rem,2vw,1.9rem);font-weight:700;letter-spacing:-.035em;color:var(--cu-text)}
+.fi-main .fi-header-subheading{color:var(--cu-muted)}
+.fi-main :is(.fi-section,.fi-ta,.fi-wi-stats-overview-stat,.cu-admin-journal){background:var(--cu-surface);border:1px solid var(--cu-border);border-radius:var(--cu-radius);box-shadow:var(--cu-shadow)}
+.fi-main .fi-section-header{padding:20px 24px;border-color:var(--cu-border)}
+.fi-main .fi-section-header-heading{font-weight:650;color:var(--cu-text)}
+.fi-main .fi-ta{overflow:hidden}.fi-main :is(.fi-ta-header,.fi-ta-header-toolbar,.fi-ta-selection-indicator,.fi-ta-content){background:transparent}
+.fi-main .fi-ta :is(thead,.fi-ta-header-cell){background:color-mix(in srgb,var(--cu-brand-soft) 48%,var(--cu-surface));color:var(--cu-muted)}
+.fi-main .fi-ta-row{transition:background-color var(--cu-nav-duration,180ms)}
+.fi-main .fi-ta-row:hover{background:rgb(var(--cu-brand-rgb)/.045)}
+.fi-main .fi-ta-cell{border-color:var(--cu-border)}
+.fi-main .fi-ta-pagination{background:transparent;border-color:var(--cu-border)}
+.fi-main :is(.fi-input-wrp,.fi-select-input-ctn){border-radius:11px;background:var(--cu-surface)}
+.fi-main :is(input,textarea,select){scroll-margin-top:100px}
+.fi-main :is(input,textarea,select):focus-visible{outline-color:var(--cu-brand-text)}
+.fi-main .fi-btn,.fi-modal .fi-btn{border-radius:11px;transition:background var(--cu-nav-duration,180ms),box-shadow var(--cu-nav-duration,180ms)}
+.fi-btn.fi-color-primary:not(.fi-outlined){--bg:var(--cu-brand-color);--text:var(--cu-brand-ink);--hover-bg:var(--cu-brand-hero);--hover-text:var(--cu-brand-ink);--dark-bg:var(--cu-brand-color);--dark-text:var(--cu-brand-ink);--dark-hover-bg:var(--cu-brand-hero);--dark-hover-text:var(--cu-brand-ink)}
+.fi-btn.fi-color-primary.fi-outlined,.fi-link.fi-color-primary,.fi-icon-btn.fi-color-primary{--text:var(--cu-brand-text);--dark-text:var(--cu-brand-light);color:var(--cu-brand-text)}
+.dark :is(.fi-link.fi-color-primary,.fi-icon-btn.fi-color-primary){color:var(--cu-brand-light)}
+.fi-main .fi-tabs{border:1px solid var(--cu-border);background:var(--cu-surface);border-radius:14px;padding:5px;box-shadow:var(--cu-shadow);max-width:100%}
+.fi-main .fi-tabs-item{border-radius:10px;min-height:38px}
+.fi-main .fi-tabs-item.fi-active{background:var(--cu-brand-soft);color:var(--cu-brand-text)}
+.fi-main .fi-tabs-item.fi-active :is(.fi-tabs-item-label,.fi-icon){color:var(--cu-brand-text)}
+.fi-dropdown-panel,.fi-modal-window{border:1px solid var(--cu-border);border-radius:20px;background:var(--cu-surface);color:var(--cu-text);box-shadow:0 24px 80px #10253d28}
+.fi-modal-header,.fi-modal-footer{border-color:var(--cu-border)}
+.fi-modal-heading{color:var(--cu-text);letter-spacing:-.02em}
+.fi-main :is(.cu-settings-section,.cu-admin-facts){border-color:var(--cu-border)}
+.fi-main .cu-settings-section{border:1px solid var(--cu-border);padding:22px 24px;margin-block:16px;border-radius:var(--cu-radius);background:var(--cu-surface);box-shadow:var(--cu-shadow)}
+.fi-main .cu-settings-section a:hover{background:var(--cu-brand-soft);outline-color:var(--cu-brand-text)}
+.fi-main .cu-admin-journal th{background:var(--cu-brand-soft);color:var(--cu-muted)}
+.fi-main .cu-admin-journal a,.fi-main .workspace-content a:not(.fi-btn):not(.planning-badge):not(.fi-tabs-item){color:var(--cu-brand-text)}
+.fi-main .workspace-content{--ws-border:var(--cu-border)!important;--ws-surface:var(--cu-surface)!important;--ws-muted:var(--cu-muted)!important;--ws-soft:var(--cu-brand-soft)!important;color:var(--cu-text)}
+.fi-main .workspace-content :is(.toolbar,.table-scroll,.cu-portal-list){border-radius:14px}
+.fi-main .cu-admin-facts{padding:18px 20px;background:var(--cu-surface);border:1px solid var(--cu-border);border-radius:14px}
+.fi-main .cu-admin-facts dt{color:var(--cu-muted)}
+.fi-main .cu-admin-disclosure{padding:14px 4px;border-color:var(--cu-border)}
+.fi-main .fi-wi-stats-overview-stat-value{color:var(--cu-text);font-weight:700;letter-spacing:-.035em}
+/* Component aliases allow the earlier UI packages to use the same tenant palette. */
+.cu-glass-dashboard{--cu-ink:var(--cu-text)!important;--cu-brand:var(--cu-brand-text)!important;--cu-sky:var(--cu-brand-accent)!important;--cu-chart-grid:rgb(var(--cu-brand-rgb)/.12)!important;--cu-chart-muted:var(--cu-muted)!important;--cu-panel:var(--cu-surface)!important;--cu-edge:var(--cu-border)!important;--cu-chart-surface:var(--cu-brand-soft)!important}
+.pitch-modern{--fp-brand:var(--cu-brand-text)!important;--fp-sky:var(--cu-brand-accent)!important;--fp-ink:var(--cu-text)!important;--fp-muted:var(--cu-muted)!important;--fp-line:var(--cu-border)!important;--fp-surface:var(--cu-surface)!important;--fp-soft:var(--cu-brand-soft)!important}
+.cu-team-modern{--team-blue:var(--cu-brand-text)!important;--team-sky:var(--cu-brand-accent)!important;--team-border:var(--cu-border)!important;--team-panel:var(--cu-surface)!important;--team-text:var(--cu-text)!important;--team-soft:var(--cu-brand-soft)!important}
+.cu-team-hero{background:linear-gradient(115deg,var(--cu-brand-hero),var(--cu-brand-color))!important;color:var(--cu-brand-ink)!important}
+.cu-team-hero :is(small,p,a){color:var(--cu-brand-ink)!important}.cu-team-hero a{border-color:currentColor}
+.cu-team-art{color:var(--cu-brand-ink)!important}
+.fi-sidebar{background:linear-gradient(165deg,var(--cu-nav-top),var(--cu-nav-bottom))!important}
+.fi-body .fi-sidebar .fi-sidebar-item-btn.cu-orbit-target .fi-icon{color:var(--cu-nav-symbol)!important}
+.cu-nav-orbit{background:var(--cu-nav-marker)!important;box-shadow:0 0 0 5px #ffffff0b,0 5px 24px rgb(var(--cu-brand-rgb)/.3)!important}
+.cu-command-trigger{background:var(--cu-brand-soft);color:var(--cu-brand-text);border-color:var(--cu-brand-edge)}
+.cu-command-dialog{background:var(--cu-surface);color:var(--cu-text);border-color:var(--cu-border)}
+.cu-command-dialog input{background:var(--cu-canvas);border-color:var(--cu-border);color:var(--cu-text)}
+.cu-command-dialog li a[aria-selected=true],.cu-motion-toggle[aria-pressed=true]{background:var(--cu-brand-soft);color:var(--cu-brand-text)}
+.dark{--cu-brand-soft:var(--cu-brand-dark-soft);--cu-brand-edge:color-mix(in srgb,var(--cu-brand-color) 28%,#334256)}
+.dark .cu-glass-dashboard{--cu-brand:var(--cu-brand-light)!important}
+.dark .pitch-modern{--fp-brand:var(--cu-brand-light)!important}.dark .cu-team-modern{--team-blue:var(--cu-brand-light)!important}
+.dark .fi-main :is(.cu-admin-journal a,.workspace-content a:not(.fi-btn):not(.fi-tabs-item)){color:var(--cu-brand-light)}
+.dark .fi-main .fi-tabs-item.fi-active :is(.fi-tabs-item-label,.fi-icon){color:var(--cu-brand-light)}
+.dark .cu-command-trigger,.dark .cu-command-dialog li a[aria-selected=true]{color:var(--cu-brand-light);background:var(--cu-brand-soft)}
+@media(max-width:767px){.fi-main .fi-section-header{padding:16px}.fi-main .fi-header{padding-block:4px 12px}.fi-main .cu-settings-section{padding:18px 16px}.fi-main .fi-ta{border-radius:14px}.fi-modal-window{border-radius:18px}.fi-main .cu-admin-facts{padding:16px}}
+@media print{.fi-sidebar,.fi-topbar,[data-cu-react-navigation]{display:none!important}.fi-main-ctn{padding-inline-start:0!important}.fi-body,.fi-main .fi-section,.fi-main .fi-ta{background:#fff!important;box-shadow:none!important;color:#000!important}}
+
+.fi-btn.fi-color-primary:not(.fi-outlined){background:var(--cu-brand-color);color:var(--cu-brand-ink)}.fi-btn.fi-color-primary:not(.fi-outlined):hover{background:var(--cu-brand-hero)}.fi-btn.fi-color-primary:not(.fi-outlined)>.fi-icon{color:var(--cu-brand-ink)}
+
+.fi-sidebar .fi-sidebar-header img,.fi-topbar .fi-logo{filter:none;background:#ffffffed;border-radius:9px;padding:4px}
+/* Domain-specific workspaces share surfaces without altering their layout or status meanings. */
+.fi-main .season-planner{--sp-line:var(--cu-border);--sp-muted:var(--cu-muted);--sp-surface:var(--cu-surface);--sp-subtle:var(--cu-brand-soft);--sp-accent:var(--cu-brand-text)}
+.fi-main :is(.sp-team,.sp-pool,.sp-editor,.cu-profile-section,.cu-campaign-metrics>div,.cu-insights-metrics>div,.cu-chat-list,.cu-chat-conversation,.cu-support-workspace .cs-chat,.cu-support-workspace .cs-ticket-detail){border:1px solid var(--cu-border);border-radius:var(--cu-radius);background:var(--cu-surface);box-shadow:var(--cu-shadow)}
+.fi-main .sp-person{border-color:var(--cu-border);border-radius:10px;background:var(--cu-surface)}
+.fi-main .cu-profile-icon{background:var(--cu-brand-soft);color:var(--cu-brand-text)}
+.fi-main .cu-profile-section{padding:24px}.fi-main .cu-profile-action{border-color:var(--cu-brand-edge);color:var(--cu-brand-text)}
+.fi-main .cu-chat{color:var(--cu-text)}.fi-main .cu-chat-thread[aria-current=true]{background:var(--cu-brand-soft);border-left-color:var(--cu-brand-text)}
+.fi-main .cu-chat-message{border-radius:14px;border-color:var(--cu-border);background:var(--cu-surface)}
+.fi-main .cu-chat-message.own{background:var(--cu-brand-soft);border-color:var(--cu-brand-edge)}
+.fi-main .cu-chat-message header,.fi-main .cu-chat-thread small{color:var(--cu-muted)}
+.fi-main .cu-chat .cu-chat-primary,.fi-main .cu-support-workspace .cs-button{background:var(--cu-brand-color);color:var(--cu-brand-ink);border-radius:11px}
+.fi-main .cu-support-workspace :is(.cs-text-link,.cs-tabs a[aria-current=page]){color:var(--cu-brand-text)}
+.dark .fi-main .season-planner{--sp-accent:var(--cu-brand-light)}
+@media(max-width:767px){.fi-main .cu-profile-section{padding:18px 16px}}
+
+.fi-main .cu-profile .cu-profile-section{border-color:var(--cu-border);border-radius:var(--cu-radius);background:var(--cu-surface);box-shadow:var(--cu-shadow)}

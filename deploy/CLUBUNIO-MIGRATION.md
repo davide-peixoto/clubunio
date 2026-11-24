@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Gemeinsames Backend-Theme – 24.11.2026
+
+DEV v5 bindet das bestehende Vereinsdesign an Backend-Komponenten, Dashboard,
+Navigation und Planung. Keine neue Konfiguration oder Schema-Migration;
+Prüf-Farbwerte zurückgerollt. Stage/PROD unverändert. Spätere Übernahme mit
+Design-/Logo-/Rechteprüfung im Zielverein. Rückweg React Nein oder vorige
+DEV-Basis `20261124-clubunio-navigation-motion-v3`.
+[Umfang und Abnahme](CLUBUNIO-BACKEND-THEME.md).
+
 ## Navigationsbewegung – 24.11.2026
 
 DEV: migrationsfreies CSS-/React-Delta auf `20261124-clubunio-navigation-motion-v3`.
