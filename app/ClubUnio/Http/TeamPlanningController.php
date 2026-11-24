@@ -220,7 +220,9 @@ class TeamPlanningController
     {
         $count = app(SfvPlanningService::class)->refresh($request->user(), $tenant, $request->all());
 
-        return redirect()->route('clubunio.planning.sfv', [$tenant->slug] + $request->only('from', 'to'))->with('notice', __(':count SFV-Spiele abgerufen.', ['count' => $count]));
+        $result=$request->attributes->get(\App\ClubUnio\Services\SfvReconcileService::class.':'.$tenant->id);
+        $notice=$result?trans('daily.sfv_summary',['fetched'=>$count,'new'=>$result['new'],'updated'=>$result['updated'],'unchanged'=>$result['unchanged'],'review'=>count($result['issues'])]):__(':count SFV-Spiele abgerufen.', ['count'=>$count]);
+        return redirect()->route('clubunio.planning.sfv', [$tenant->slug] + $request->only('from', 'to'))->with('notice',$notice)->with('sfv_reconcile',$result);
     }
 
     public function sfvForm(Request $request, Tenant $tenant, int $match)

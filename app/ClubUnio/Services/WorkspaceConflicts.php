@@ -24,7 +24,7 @@ class WorkspaceConflicts
                     $pair = [min($id,$other->id),max($id,$other->id)]; $key = implode(':',$pair);
                     if (isset($seen[$key])) continue; $seen[$key] = true;
                     $rows[] = ['kind'=>'team','date'=>Time::parse($event->starts_at)->tz('Europe/Zurich')->format('d.m.Y H:i'),
-                        'title'=>$event->title.' · '.$other->title, 'reason'=>trans('workspace.overlap_team'), 'url'=>route('clubunio.planning.show',[$tenant->slug,$id])];
+                        'source_key'=>'team:'.$id,'source_date'=>Time::parse($event->starts_at)->tz('Europe/Zurich')->toDateString(),'can_solve'=>!$event->sfv_match_id&&$event->deadline_at!==null&&Time::parse($event->starts_at)->isFuture()&&app(ModulePermissionService::class)->allows($actor,$tenant,'planning','update'),'title'=>$event->title.' · '.$other->title, 'reason'=>trans('workspace.overlap_team'), 'url'=>route('clubunio.planning.show',[$tenant->slug,$id])];
                 }
             }
         }
@@ -34,7 +34,7 @@ class WorkspaceConflicts
                 ->where('starts_at','<',$until->toIso8601String())->where('ends_at','>',$from->toIso8601String())->orderBy('starts_at')->limit(501)->get();
             if ($buses->count()>500) throw \Illuminate\Validation\ValidationException::withMessages(['date'=>trans('workspace.too_many')]);
             foreach ($this->busPairs($buses->all()) as [$left,$right]) $rows[] = ['kind'=>'bus','date'=>Time::parse($left->starts_at)->tz('Europe/Zurich')->format('d.m.Y H:i'),
-                'title'=>trans('workspace.bus_pair',['left'=>$left->id,'right'=>$right->id]), 'reason'=>trans('workspace.overlap_bus'), 'url'=>route('clubunio.bus.show',[$tenant->slug,$left->id])];
+                'source_key'=>'bus:'.$left->id,'source_date'=>Time::parse($left->starts_at)->tz('Europe/Zurich')->toDateString(),'can_solve'=>app(BusReservationService::class)->canReschedule($actor,$tenant,$left),'title'=>trans('workspace.bus_pair',['left'=>$left->id,'right'=>$right->id]), 'reason'=>trans('workspace.overlap_bus'), 'url'=>route('clubunio.bus.show',[$tenant->slug,$left->id])];
         }
         if (PitchPlanning::canAccess()) {
             $sources[] = trans('workspace.facilities');

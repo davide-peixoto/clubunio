@@ -212,6 +212,7 @@ class SfvCompetitionService
             DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'competitions', 'object_id' => $record->id,
                 'before_value' => $fresh['before'] ? json_encode($fresh['before']) : null, 'after_value' => json_encode($data + ['action' => ($fresh['kind'] ?? '') === 'withdrawal' ? 'sfv_withdrawal' : 'sfv_import', 'reason' => $fresh['reason'] ?? null])]);
 
+            app(PlanningChangeSignal::class)->changed($tenant);
             return $record->id;
         });
     }

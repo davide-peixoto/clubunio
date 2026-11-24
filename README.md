@@ -8,14 +8,14 @@ Live-MFA-Abnahme noch offen. Social Login wartet auf Anbieterregistrierungen;
 SSO-Ursachen und getrennte Authentifizierungsumstellung dokumentiert.
 [Betrieb, Rückweg und offene Schritte](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
-## Nächster Ausbau: einfache Alltagsabläufe (24.11.2026)
+## DEV: einfache Alltagsabläufe (24.11.2026)
 
-SFV-Abgleich einschließlich sichtbarer Kalenderübernahme als gemeinsamer
-nächster Umfang mit Tagescockpit, Aufgabenboard, erweiterten Planungsalternativen,
-gebündelten Benachrichtigungen und mobiler Belegerfassung aufgenommen.
-Leitlinie: wenige Schritte, klare Ergebnisse, Prüfung bei echten Konflikten.
-Status: geplant; DEV Work Hub v3 bleibt unverändert.
-[Umfang, Reihenfolge und Abnahmekriterien](deploy/CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+SFV-Abgleich mit eindeutiger Kalender-/Platzübernahme, Tagescockpit, Aufgabenboard,
+Team-/Busalternativen, gruppierte Meldungen und Spesenentwurf mit privatem Beleg
+auf DEV aktiviert. 69 lokale Tests / 874 Assertions und 39 isolierte DEV-Prüfungen.
+Chrome Desktop/Mobil, DE/EN und getrennte Mandantendesigns geprüft; Browser-Belegupload
+und physische Kamera als offene Prüfgrenze dokumentiert. Keine Schemaänderung.
+[Verhalten, Abnahme und Rückweg](deploy/CLUBUNIO-DAILY-WORKFLOWS.md).
 
 ## DEV: sechs Alltagspakete (24.11.2026)
 

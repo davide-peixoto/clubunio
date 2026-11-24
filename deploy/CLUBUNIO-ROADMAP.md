@@ -12,25 +12,21 @@
 
 [Konfiguration, SSO-Befund und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
-## Nächster Arbeitsumfang: sechs einfache Alltagsabläufe (24.11.2026)
+## DEV: sechs einfache Alltagsabläufe (24.11.2026)
 
-SFV-Abgleich als vorrangige Optimierung zu den fünf weiteren Benutzerwünschen
-aufgenommen. Status: geplant, noch nicht umgesetzt oder als Release aktiviert.
+- [x] SFV: interaktiver Abgleich mit atomarer eindeutiger Übernahme und Prüffällen.
+- [x] Mein Verein: eigene fällige Aufgaben, bestehende Freigaben und Wochenkonflikte.
+- [x] Aufgabenboard: Drag-and-drop, mobile Statusauswahl und Revisionsschutz.
+- [x] Planung: freie Alternativen für einzelne Mannschaftstermine und Busse.
+- [x] Meldungen: berechtigter Gruppenzähler, Details, Lesestatus und Direktlinks.
+- [x] Mobile Spesen: optionaler geprüfter Beleg gemeinsam mit Entwurf gespeichert.
+- [ ] Browser-Belegvorschau nach Freigabe lokaler Dateien in Chrome und Kamera
+  auf physischem Handy abnehmen; native Scanner-/Ablageprüfungen bestanden.
 
-- [ ] SFV: gemeinsamer Abgleich, eindeutige Übernahme, klare Prüffälle und
-  Aktualisierung von Plantafel/Mannschaftskalender; lokale Ausnahmen schützen.
-- [ ] Mein Verein: eigene fällige Aufgaben, offene Freigaben und aktuelle Konflikte.
-- [ ] Aufgabenboard: drei Statusspalten, Drag-and-drop und gleichwertige
-  Bedienung per Tastatur/Handy, Revisionsschutz bei parallelen Änderungen.
-- [ ] Planung: freie Alternativen auch für Mannschaftstermine und Busreservierungen.
-- [ ] Benachrichtigungen: berechtigter Ungelesen-Zähler, Objektbündel und Direktlinks.
-- [ ] Mobile Spesen: Foto/Datei, Vorschau, notwendige Angaben und verknüpfter Entwurf.
-
-Reihenfolge: SFV zuerst, danach Tagescockpit/Benachrichtigungen, Aufgabenboard,
-Planung und mobile Belege. Vorhandene Fachservices weiterverwenden; keine
-parallelen Ablagen. DE/EN, Mandantendesign, bisherige Ansicht und Zugriffsrechte
-gehören zu jeder Abnahme. Keine Zahlung oder neue externe Zustellung.
-[Bedienungsregeln und konkrete Abnahmekriterien](CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+Release `20261124-clubunio-daily-v1`; keine weitere Migration. 69 lokale Tests,
+874 Assertions, 39 native DEV-Prüfungen. Browser Desktop/390 × 844, DE/EN,
+dunkles Design und getrennte React-/bisherige Mandantenansichten geprüft.
+[Fachverhalten, Grenzen und Rückweg](CLUBUNIO-DAILY-WORKFLOWS.md).
 
 ## Sechs Alltagspakete: Work Hub (24.11.2026)
 

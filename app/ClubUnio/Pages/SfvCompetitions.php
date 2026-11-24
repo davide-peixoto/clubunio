@@ -29,6 +29,9 @@ class SfvCompetitions extends Page implements HasTable
 
     protected static ?string $title = 'SFV-Wettkämpfe';
 
+    #[Locked] public ?array $reconcileResult = null;
+    public int $reconcilePage=1;
+
     public string $from = '';
 
     public string $to = '';
@@ -76,6 +79,7 @@ class SfvCompetitions extends Page implements HasTable
         $this->batchPreview = null;
         $this->resetValidation();
         if (in_array($property, ['from', 'to'], true)) {
+            $this->reconcileResult=null;
             $this->resetPage();
         }
     }
@@ -137,9 +141,18 @@ class SfvCompetitions extends Page implements HasTable
         $this->preview = null;
         $this->batchPreview = null;
         $count = app(SfvPlanningService::class)->refresh(Filament::auth()->user(), Filament::getTenant(), ['from' => $this->from, 'to' => $this->to]);
-        Notification::make()->title(__(':count SFV-Spiele aktualisiert', ['count' => $count]))->success()->send();
+        $this->reconcilePage=1;
+        $this->reconcileResult = request()->attributes->get(\App\ClubUnio\Services\SfvReconcileService::class.':'.Filament::getTenant()->id)
+            ?? app(\App\ClubUnio\Services\SfvReconcileService::class)->reconcile(Filament::auth()->user(), Filament::getTenant(), $this->from, $this->to);
+        $this->reconcileResult['fetched']=$count;
+        Notification::make()->title(trans('daily.sfv_done'))->success()->send();
     }
 
+    public function reviewIssue(int $id):void
+    {
+        abort_unless(isset($this->reconcileResult)&&collect($this->reconcileResult['issues'])->contains('id',$id),403);
+        $this->match=(string)$id;$this->updated('match');$this->inspect();
+    }
     public function inspect(): void
     {
         abort_unless(static::canAccess(), 403);

@@ -1,7 +1,8 @@
 # ClubUnio: übersichtliche Alltagsabläufe
 
 Stand: 24.11.2026. Vom Benutzer in den nächsten Arbeitsumfang aufgenommen.
-Status: geplant; diese Ergänzung ändert keine DEV-Funktion und keine Daten.
+Status: auf DEV umgesetzt; Browser-Dateiupload und echte Kamera noch offen.
+Release, Fachverhalten und Abnahme: [Alltagsabläufe v1](CLUBUNIO-DAILY-WORKFLOWS.md).
 Basis ist der abgenommene Work Hub v3. Die sechs Pakete erweitern vorhandene
 Fachabläufe und werden nicht als parallele Datenhaltung aufgebaut.
 
@@ -153,5 +154,5 @@ Jedes Paket erhält gezielte Fachtests, Prüfung von DE/EN und Mandantenrechten,
 Chrome-Abnahme auf Desktop und in responsiver Handyansicht sowie dokumentierte
 Prüfgrenzen für Kamera und echte Geräte. Rückweg und gegebenenfalls additive
 Migrationen vor der DEV-Aktivierung festlegen. Nach Releases Dokumentation und
-Migrationsplan nachführen, Commit & Sync. Diese Planung ist noch kein Release;
+Migrationsplan nachführen, Commit & Sync. Umsetzung auf DEV am 24.11.2026;
 Stage, PROD, Store-Veröffentlichung und Betriebsumstellungen gehören nicht dazu.

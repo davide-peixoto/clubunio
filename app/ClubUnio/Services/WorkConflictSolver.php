@@ -10,6 +10,7 @@ class WorkConflictSolver
     {
         abort_unless(app(WorkspaceAccess::class)->allowed($actor,$tenant),403);
         validator(compact('date','key'),['date'=>'required|date_format:Y-m-d','key'=>'required|string|max:120'])->validate();
+        if(preg_match('/^(team|bus):([1-9][0-9]*)$/D',$key,$parts))return app(DailyPlanningAlternatives::class)->suggestions($actor,$tenant,$parts[1],(int)$parts[2],$date);
         $data=app(PitchPlanningService::class)->calendar($actor,$tenant,['from'=>$date,'to'=>$date]);
         $source=collect($data['entries'])->firstWhere('key',$key);abort_unless($source,404);
         abort_unless(in_array($source['source'],['training','request'],true)&&!in_array($source['status'],['rejected','cancelled'],true),422);
@@ -47,7 +48,8 @@ class WorkConflictSolver
         if($fresh['source']['revision']!==$source['revision'])throw \Illuminate\Validation\ValidationException::withMessages(['revision'=>trans('workspace.stale')]);
         if(!in_array($proposal,$fresh['items'],true))throw \Illuminate\Validation\ValidationException::withMessages(['proposal'=>trans('work_hub.proposal_stale')]);
         $input=$proposal;unset($input['label']);$input['revision']=$source['revision'];
-        app(PitchPlanningService::class)->move($actor,$tenant,$source['key'],$input);
+        if(isset($source['work_kind']))app(DailyPlanningAlternatives::class)->apply($actor,$tenant,$source,$proposal);
+        else app(PitchPlanningService::class)->move($actor,$tenant,$source['key'],$input);
         });
     }
 }

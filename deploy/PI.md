@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: Alltagsabläufe v1 (24.11.2026)
+
+Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-daily-v1`.
+Rückweg: `20261124-clubunio-work-hub-v3`. 37 Runtime-Dateien per SHA-256,
+Konfiguration/Composer-Lock unverändert, keine Migration. 39 isolierte native
+DEV-Prüfungen und 69 lokale Tests / 874 Assertions erfolgreich. Chrome Desktop
+und responsive 390 × 844 einschließlich Mandanten-/Designwechsel geprüft;
+Browser-Belegupload durch Erweiterungsfreigabe blockiert, echte Kamera offen.
+[Bedienung, Testdaten, Prüfgrenzen und Rückweg](CLUBUNIO-DAILY-WORKFLOWS.md).
+
 ## DEV: Keycloak-Glasdesign (24.11.2026)
 
 Die drei DEV-Loginclients verwenden die neuen ClubUnio-/SV-Sissach-Glas-Themes

@@ -1,6 +1,7 @@
 <x-filament-panels::page>
 <div class="cu-workflow">
     <p class="cu-module-note">{{ trans('workspace.intro') }}</p>
+    @include('clubunio.work-hub.cockpit')
     <section class="cu-workflow-section"><h2>{{ trans('workspace.quick') }}</h2><div class="cu-workflow-cards">
         @foreach($quick as $item)<a class="cu-workflow-card" href="{{ $item['url'] }}"><x-filament::icon :icon="$item['icon']" /><span>{{ $item['label'] }}</span></a>@endforeach
     </div></section>

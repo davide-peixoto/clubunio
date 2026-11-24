@@ -9,15 +9,16 @@ Authentifizierungsregeln unverändert. Social Login benötigt Registrierungen;
 SSO benötigt gesonderten Flow-/Backend-Release, nicht bloß Tokenweitergabe.
 [Abnahme, offene Schritte und Client-Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
-## Geplant: vereinfachte Alltagsabläufe einschließlich SFV (24.11.2026)
+## DEV: vereinfachte Alltagsabläufe einschließlich SFV (24.11.2026)
 
-Die sechs nächsten Pakete sind mit Bedienungs- und Abnahmekriterien aufgenommen:
-SFV-Abgleich, Tagescockpit, Aufgabenboard, Planungsalternativen, Meldungsbündelung
-und mobile Belegerfassung. Vorhandene Modelle und Dienste bevorzugen; ein
-zusätzlicher Schemabedarf wird vor der jeweiligen Implementierung geprüft.
-Diese Planergänzung führt keine Migration aus und aktiviert keinen neuen Release.
-SFV-Vorschau/Revisionsschutz und geschützte lokale Änderungen bleiben Grundlage.
-[Arbeitsumfang und Reihenfolge](CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+Release `20261124-clubunio-daily-v1` nutzt die vorhandenen Work-Hub- und
+Fachtabellen. Keine Schemaänderung, keine Datenübernahme, kein Owner-Eingriff.
+37 Runtime-Dateien per Hash geprüft; atomarer Releasewechsel mit unveränderter
+Konfiguration und gemeinsamer privater Ablage. Rückweg auf Work Hub v3 ohne
+Datenrücksetzung. Neue Aufgaben und Entwürfe bleiben dort zugänglich.
+SFV-API-/Hintergrundabrufvertrag erhalten; automatische Übernahme nur im Backend.
+69 lokale Tests / 874 Assertions und 39 isolierte native DEV-Prüfungen bestanden.
+[Browserabnahme, offene Kameraprüfung und Betrieb](CLUBUNIO-DAILY-WORKFLOWS.md).
 
 ## DEV: additive Alltagspakete (24.11.2026)
 

@@ -5,11 +5,17 @@
 <div class="cu-admin-toolbar">
 <div class="cu-admin-field"><label for="sfv-from">{{ __('Von') }}</label><x-filament::input.wrapper :valid="! $errors->has('from')"><x-filament::input id="sfv-from" type="date" wire:model.live="from" /></x-filament::input.wrapper></div>
 <div class="cu-admin-field"><label for="sfv-to">{{ __('Bis') }}</label><x-filament::input.wrapper :valid="! $errors->has('to')"><x-filament::input id="sfv-to" type="date" wire:model.live="to" /></x-filament::input.wrapper></div>
-@if($canSync)<x-filament::button wire:click="refreshSchedule" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">{{ __('SFV abrufen') }}</x-filament::button>@endif
+@if($canSync)<x-filament::button wire:click="refreshSchedule" wire:loading.attr="disabled" icon="heroicon-o-arrow-path">{{ trans('daily.sfv_sync') }}</x-filament::button>@endif
 <x-filament::button wire:click="inspectBatch" wire:loading.attr="disabled" icon="heroicon-o-queue-list">{{ __('Zeitraum prüfen') }}</x-filament::button>
 <x-filament::button tag="a" :href="\App\ClubUnio\Resources\CompetitionResource::getUrl()" color="gray" icon="heroicon-o-list-bullet">{{ __('Wettkämpfe') }}</x-filament::button>
 </div>
 </x-filament::section>
+@if($reconcileResult)
+<x-filament::section :heading="trans('daily.sfv_done')"><div role="status"><p>{{ trans('daily.sfv_summary',['fetched'=>$reconcileResult['fetched'],'new'=>$reconcileResult['new'],'updated'=>$reconcileResult['updated'],'unchanged'=>$reconcileResult['unchanged'],'review'=>count($reconcileResult['issues'])]) }}</p></div>
+@if($reconcileResult['issues'])<details open><summary>{{ trans('daily.needs_review') }} ({{ count($reconcileResult['issues']) }})</summary>@foreach(array_slice($reconcileResult['issues'],(max(1,$reconcilePage)-1)*10,10) as $issue)<article class="cu-workflow-section"><strong>{{ $issue['title'] }}</strong><p>{{ $issue['message'] }}</p><x-filament::button color="gray" wire:click="reviewIssue({{ $issue['id'] }})" wire:loading.attr="disabled">{{ trans('daily.review_game') }}</x-filament::button></article>@endforeach
+@if(count($reconcileResult['issues'])>10)<div class="cu-workflow-pagination"><x-filament::button color="gray" :disabled="$reconcilePage<=1" wire:click="$set('reconcilePage',{{ max(1,$reconcilePage-1) }})">{{ trans('workspace.previous') }}</x-filament::button><span>{{ trans('workspace.page',['page'=>$reconcilePage]) }}</span><x-filament::button color="gray" :disabled="$reconcilePage*10>=count($reconcileResult['issues'])" wire:click="$set('reconcilePage',{{ $reconcilePage+1 }})">{{ trans('workspace.next') }}</x-filament::button></div>@endif
+</details>@endif
+</x-filament::section>@endif
 @if($errors->any())<div class="text-danger-600 dark:text-danger-400" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 @if($batchPreview)
 <x-filament::section heading="{{ __('Sammelübernahme') }}">

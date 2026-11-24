@@ -196,7 +196,7 @@ class SyncWorkService
             'invoice_status', 'expense_status' => app(BexioReconciliationService::class)->previewNow($actor, $tenant, $row->operation === 'invoice_status' ? 'invoice' : 'expense', $row->object_id),
             'invoice_sync', 'expense_sync' => $this->syncDocument($actor, $tenant, $row->operation === 'invoice_sync' ? 'invoice' : 'expense', $row->object_id),
             'catalog' => app(BexioCatalogService::class)->syncNow($actor, $tenant),
-            'sfv_schedule' => app(SfvPlanningService::class)->refreshNow($actor, $tenant, $payload),
+            'sfv_schedule' => $this->sfvSchedule($actor, $tenant, $payload),
             'dispatch_result' => $this->dispatchResult($actor, $tenant, $row->object_id),
             'invoice_result' => app(BexioInvoiceActionService::class)->reconcile($actor, $tenant, $row->object_id),
             'finance_result' => app(BexioFinancialActionService::class)->reconcile($actor, $tenant, $payload['kind'], $row->object_id),
@@ -205,6 +205,17 @@ class SyncWorkService
         };
     }
 
+    private function sfvSchedule(Account $actor,Tenant $tenant,array $payload):int
+    {
+        $count=app(SfvPlanningService::class)->refreshNow($actor,$tenant,$payload);
+        if(!request()->is('api/*') && (int)request()->user('clubunio')?->id===(int)$actor->id
+            && (int)\Filament\Facades\Filament::getTenant()?->id===(int)$tenant->id
+            && app(ModulePermissionService::class)->allows($actor,$tenant,'competitions','sync')){
+            $result=app(SfvReconcileService::class)->reconcile($actor,$tenant,$payload['from'],$payload['to']);$result['fetched']=$count;
+            request()->attributes->set(SfvReconcileService::class.':'.$tenant->id,$result);
+        }
+        return $count;
+    }
     private function syncDocument(Account $actor, Tenant $tenant, string $kind, int $id): int
     {
         $service = app(BexioReconciliationService::class);

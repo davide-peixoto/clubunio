@@ -16,7 +16,7 @@
 </form>
 @if($profileAllows('sync') || \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'competitions', 'sync'))<form class="cu-portal-list-bar" method="post" action="{{ route('clubunio.planning.sfv.refresh',$tenant->slug) }}">@csrf @include('clubunio.workspace.context')
 <input type="hidden" name="from" value="{{ $filters['from'] }}"><input type="hidden" name="to" value="{{ $filters['to'] }}">
-<button type="submit" class="primary">@svg('heroicon-o-arrow-path') {{ __('Vom SFV aktualisieren') }}</button></form>@endif
+<button type="submit" class="primary">@svg('heroicon-o-arrow-path') {{ trans(\App\ClubUnio\Resources\ProfileUi::allows('competitions','sync')?'daily.sfv_sync':'daily.sfv_fetch') }}</button></form>@endif
 <div class="table-scroll"><table class="cu-admin-journal"><thead><tr><th>{{ __('Datum') }}</th><th>{{ __('Spiel') }}</th><th>{{ __('Ort') }}</th><th>{{ __('Heim/Auswärts') }}</th><th>{{ __('Verbandstatus') }}</th><th>{{ __('Übernahme') }}</th></tr></thead><tbody>
 @forelse($matches as $match)<tr><td>{{ \Carbon\Carbon::parse($match->starts_at)->tz('Europe/Zurich')->format('d.m.Y H:i') }}</td><td>{{ $match->title }}</td><td>{{ $match->location }}</td><td>{{ $match->home?__('Heim'):__('Auswärts') }}</td><td>{{ $match->state }}</td><td>
 @if($profileAllows('sync') && $profileAllows(isset($imported[$match->match_id]) ? 'update' : 'create'))<a href="{{ route('clubunio.planning.sfv.form',[$tenant->slug,$match->id]) }}">{{ isset($imported[$match->match_id])?__('Änderungen prüfen'):__('Übernehmen') }}</a>@endif

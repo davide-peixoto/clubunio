@@ -225,6 +225,7 @@ class TeamPlanningService
             $this->reconcile($tenant, $event);
             $this->audit($actor, $tenant, 'team_events', $id, $old?->revision, $data['revision']);
             $this->message($tenant, $event, $data['status'] === 'ABGESAGT' ? 'team.cancelled' : ($old ? 'team.changed' : 'team.created'));
+            app(PlanningChangeSignal::class)->changed($tenant);
 
             return $id;
         });

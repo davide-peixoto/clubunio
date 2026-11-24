@@ -89,4 +89,35 @@ class WorkHubTest extends TestCase
         $solver->apply($this->actor,$this->tenant,$source,$proposal);$this->addToAssertionCount(1);
     }
 
+    public function test_notification_groups_count_only_currently_accessible_owned_objects():void
+    {
+        $id=$this->task();$db=DB::connection('clubunio');$hub=app(WorkNotificationHub::class);
+        $old=$db->table('clubora.notifications')->insertGetId(['tenant_id'=>4,'account_id'=>1,'object_type'=>'workspace_task','object_id'=>$id,'title'=>'Old','body'=>'']);
+        $latest=$db->table('clubora.notifications')->insertGetId(['tenant_id'=>4,'account_id'=>1,'object_type'=>'workspace_task','object_id'=>$id,'title'=>'Latest','body'=>'','read_at'=>'2026-11-24']);
+        $foreign=$db->table('clubora.notifications')->insertGetId(['tenant_id'=>4,'account_id'=>2,'object_type'=>'workspace_task','object_id'=>$id,'title'=>'Foreign','body'=>'']);
+        $db->table('clubora.notifications')->insert(['tenant_id'=>4,'account_id'=>1,'object_type'=>'unknown','object_id'=>99,'title'=>'Hidden','body'=>'']);
+        $this->assertSame(1,$hub->unreadCount($this->actor,$this->tenant));
+        $group=$hub->page($this->actor,$this->tenant,1,true)['rows'][0];$this->assertSame($latest,$group['id']);$this->assertSame(2,$group['count']);$this->assertTrue($group['unread']);
+        $this->assertCount(2,$hub->details($this->actor,$this->tenant,$latest));
+        $new=$db->table('clubora.notifications')->insertGetId(['tenant_id'=>4,'account_id'=>1,'object_type'=>'workspace_task','object_id'=>$id,'title'=>'New arrival','body'=>'']);
+        $hub->readGroup($this->actor,$this->tenant,$latest);
+        $this->assertNotNull($db->table('clubora.notifications')->where('id',$old)->value('read_at'));
+        $this->assertNull($db->table('clubora.notifications')->where('id',$foreign)->value('read_at'));
+        $this->assertNull($db->table('clubora.notifications')->where('id',$new)->value('read_at'));
+        $this->permissions=[];$this->assertSame(0,$hub->unreadCount($this->actor,$this->tenant));
+    }
+    public function test_planning_signal_is_published_only_after_commit():void
+    {
+        $signal=app(\App\ClubUnio\Services\PlanningChangeSignal::class);$db=DB::connection('clubunio');
+        $before=$signal->version($this->tenant);$db->beginTransaction();$signal->changed($this->tenant);
+        $this->assertSame($before,$signal->version($this->tenant));$db->rollBack();$this->assertSame($before,$signal->version($this->tenant));
+        $db->beginTransaction();$signal->changed($this->tenant);$db->commit();$this->assertNotSame($before,$signal->version($this->tenant));
+        $this->assertSame('initial',$signal->version((new Tenant)->forceFill(['id'=>5])));
+    }
+    public function test_daily_catalogues_match_and_are_valid_utf8():void
+    {
+        $de=require lang_path('de/daily.php');$en=require lang_path('en/daily.php');$this->assertSame(array_keys($de),array_keys($en));json_encode([$de,$en],JSON_THROW_ON_ERROR);
+        foreach($de as $key=>$value){preg_match_all('/:\w+/',$value,$a);preg_match_all('/:\w+/',$en[$key],$b);$this->assertSame($a[0],$b[0],$key);}
+    }
+
 }

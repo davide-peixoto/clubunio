@@ -27,15 +27,43 @@ class WorkNotificationHub
         }catch(\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface|\Illuminate\Database\Eloquent\ModelNotFoundException|\Illuminate\Database\RecordNotFoundException){return null;}
         return null;
     }
+    /** Group metadata is streamed; only the current page loads message bodies. */
+    private function groups(Account $actor,Tenant $tenant,bool $unread): \Generator
+    {
+        $query=$this->query($actor,$tenant)->selectRaw('object_type, object_id, MAX(id) AS latest_id, COUNT(*) AS message_count, SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) AS unread_count')
+            ->groupBy('object_type','object_id')->when($unread,fn($q)=>$q->havingRaw('SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END)>0'))->orderByDesc('latest_id');
+        foreach($query->cursor() as $group){
+            $notice=(object)['object_type'=>$group->object_type,'object_id'=>$group->object_id];
+            if($target=$this->target($actor,$tenant,$notice))yield ['id'=>(int)$group->latest_id,'count'=>(int)$group->message_count,'unread'=>(int)$group->unread_count>0]+$target;
+        }
+    }
+    public function unreadCount(Account $actor,Tenant $tenant):int
+    {
+        $count=0;foreach($this->groups($actor,$tenant,true) as $group)$count++;return $count;
+    }
     public function page(Account $actor,Tenant $tenant,int $page,bool $unread): array
     {
-        $query=$this->query($actor,$tenant)->when($unread,fn($q)=>$q->whereNull('read_at'));
-        $count=(clone $query)->count();$page=max(1,min($page,max(1,(int)ceil($count/20))));$rows=[];
-        foreach($query->orderByDesc('id')->offset(($page-1)*20)->limit(20)->get() as $notice){
-            if(!$target=$this->target($actor,$tenant,$notice))continue;
-            $rows[]=['id'=>$notice->id,'title'=>$notice->title,'body'=>$notice->body,'created_at'=>$notice->created_at,'unread'=>$notice->read_at===null]+$target;
+        $groups=iterator_to_array($this->groups($actor,$tenant,$unread),false);$count=count($groups);
+        $page=max(1,min($page,max(1,(int)ceil($count/20))));$rows=[];
+        foreach(array_slice($groups,($page-1)*20,20) as $group){
+            $notice=$this->query($actor,$tenant)->where('id',$group['id'])->first();
+            if($notice)$rows[]=$group+['title'=>$notice->title,'body'=>$notice->body,'created_at'=>$notice->created_at];
         }
-        return ['rows'=>$rows,'page'=>$page,'has_more'=>$page*20<$count];
+        return ['rows'=>$rows,'page'=>$page,'has_more'=>$page*20<$count,'count'=>$count];
+    }
+    public function details(Account $actor,Tenant $tenant,int $id):array
+    {
+        $row=$this->query($actor,$tenant)->where('id',$id)->first();abort_unless($row&&$this->target($actor,$tenant,$row),404);
+        return $this->query($actor,$tenant)->where('object_type',$row->object_type)->where('object_id',$row->object_id)->where('id','<=',$id)
+            ->orderByDesc('id')->limit(10)->get(['id','title','body','created_at'])->map(fn($entry)=>(array)$entry)->all();
+    }
+    public function readGroup(Account $actor,Tenant $tenant,int $id):void
+    {
+        DB::connection('clubunio')->transaction(function()use($actor,$tenant,$id){
+            Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
+            $row=$this->query($actor,$tenant)->where('id',$id)->first();abort_unless($row&&$this->target($actor,$tenant,$row),404);
+            $this->query($actor,$tenant)->where('object_type',$row->object_type)->where('object_id',$row->object_id)->where('id','<=',$id)->whereNull('read_at')->update(['read_at'=>now()]);
+        });
     }
     public function read(Account $actor,Tenant $tenant,int $id): void
     {

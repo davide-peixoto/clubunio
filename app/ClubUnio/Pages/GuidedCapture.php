@@ -46,6 +46,7 @@ class GuidedCapture extends WorkspacePage
         }elseif($this->kind==='expense'){
             $first=ExpenseFields::header();array_shift($first);
             foreach($first as $field)$field->label(__($field->getLabel()));
+            if(\App\ClubUnio\Resources\ProfileUi::allows('expenses','upload')&&app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant))array_unshift($first,\Filament\Forms\Components\FileUpload::make('receipt')->disk('local')->label(trans('daily.receipt'))->helperText(trans('daily.receipt_hint'))->acceptedFileTypes(['image/jpeg','image/png','application/pdf'])->maxSize(10240)->storeFiles(false)->extraInputAttributes(['capture'=>'environment']));
             $second=[Select::make('expense_type_id')->label(trans('work_hub.expense_type'))->options(fn()=>\App\ClubUnio\Models\ExpenseType::where('tenant_id',$tenant->id)->where('active',true)->localizedPluck('name','id'))->required()->searchable(),
                 TextInput::make('amount')->label(trans('workspace.amount'))->prefix('CHF')->numeric()->minValue(.01)->maxValue(999999999)->required()];
         }else{
@@ -54,7 +55,7 @@ class GuidedCapture extends WorkspacePage
                 DateTimePicker::make('deadline_at')->label(trans('work_hub.deadline'))->format('Y-m-d\TH:i')->seconds(false)->required()->beforeOrEqual('starts_at'),TextInput::make('location')->label(trans('work_hub.location'))->maxLength(255)];
         }
         return $schema->statePath('data')->components([Wizard::make([
-            Step::make(trans('work_hub.identity'))->schema($first),Step::make(trans('workspace.details'))->schema($second),
+            Step::make(trans($this->kind==='expense'?'daily.receipt_step':'work_hub.identity'))->schema($first),Step::make(trans('workspace.details'))->schema($second),
             Step::make(trans('work_hub.review'))->schema([View::make('clubunio.work-hub.capture-review')]),
         ])->key('capture-'.$this->kind)->submitAction(view('clubunio.work-hub.capture-submit'))]);
     }
@@ -87,13 +88,17 @@ class GuidedCapture extends WorkspacePage
             }
             $facts[]=['label'=>trans('work_hub.bank'),'value'=>ExpenseFields::bankOptions($this->data['member_id']??null)[$this->data['bank_account_id']??0]??''];
             $facts[]=['label'=>trans('work_hub.description'),'value'=>$this->data['notes']??''];
+            if(!empty($this->data['receipt']))$facts[]=['label'=>trans('daily.receipt'),'value'=>trans('daily.receipt_ready')];
         }
         return $facts;
     }
     public function save():void
     {
         [$actor,$tenant]=$this->workspaceContext();$state=$this->form->getState();
-        $url=app(WorkGuidedCapture::class)->save($actor,$tenant,$this->kind,$state,$this->captureCommand);$this->redirect($url);
+        $receipt=$state['receipt']??null;unset($state['receipt']);
+        $url=app(WorkGuidedCapture::class)->save($actor,$tenant,$this->kind,$state,$this->captureCommand,$receipt);
+        if($receipt){$notice=\Filament\Notifications\Notification::make()->title(trans(str_contains($url,'receipt_pending=1')?'daily.receipt_pending':'daily.receipt_saved'));if(str_contains($url,'receipt_pending=1'))$notice->body(trans('daily.receipt_pending_note'))->warning();else $notice->success();$notice->send();}
+        $this->redirect($url);
     }
-    protected function getViewData():array{$this->workspaceContext();return ['kinds'=>app(WorkGuidedCapture::class)->kinds()];}
+    protected function getViewData():array{$this->workspaceContext();return ['kinds'=>app(WorkGuidedCapture::class)->kinds(),'receiptAvailable'=>app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload(Filament::getTenant())];}
 }

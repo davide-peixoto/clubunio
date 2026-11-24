@@ -43,7 +43,7 @@ class MyClub extends WorkspacePage
         $upcoming = collect();
         if (TeamPlanning::canAccess()) $upcoming = app(PlanningCalendarService::class)->visible($actor, $tenant)
             ->where('status', 'AKTIV')->where('starts_at', '>=', now()->toIso8601String())->where('starts_at', '<', now()->addDays(7)->toIso8601String())->orderBy('starts_at')->limit(8)->get(['id','title','starts_at']);
-        return ['links' => $links, 'favorites' => $state['favorites'], 'recent' => $preferences->recent($actor, $tenant), 'views' => $views, 'viewsCount'=>$viewsCount,
+        return ['daily'=>app(\App\ClubUnio\Services\DailyCockpit::class)->data($actor,$tenant),'links' => $links, 'favorites' => $state['favorites'], 'recent' => $preferences->recent($actor, $tenant), 'views' => $views, 'viewsCount'=>$viewsCount,
             'quick' => app(WorkspaceLinks::class)->quickActions(), 'queues' => app(ApprovalQueue::class)->counts($actor, $tenant), 'upcoming' => $upcoming, 'tenant' => $tenant];
     }
 }

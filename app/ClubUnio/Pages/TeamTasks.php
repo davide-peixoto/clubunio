@@ -9,7 +9,16 @@ class TeamTasks extends WorkspacePage
 {
     protected string $view='clubunio.work-hub.tasks';protected static ?string $slug='team-tasks';
     #[Url]public ?int $task=null;
-    public string $state='open';public bool $mineOnly=false;public int $taskPage=1;
+    #[Url]public bool $board=true;
+    public function mount():void{parent::mount();if($this->task)$this->board=false;}
+    public function updatedBoard():void{$this->taskPage=1;}
+    public function moveTask(int $id,int $revision,string $state):void
+    {
+        [$actor,$tenant]=$this->workspaceContext();abort_unless(in_array($state,['open','doing','done'],true),422);
+        app(WorkTaskService::class)->transition($actor,$tenant,$id,$revision,$state);
+        \Filament\Notifications\Notification::make()->title(trans('workspace.saved'))->success()->send();
+    }
+    public string $state='open';#[Url]public bool $mineOnly=false;public int $taskPage=1;
     public static function getNavigationLabel():string{return trans('work_hub.tasks');}
     public function getTitle():string{return static::getNavigationLabel();}
     public static function getNavigationIcon():string{return 'heroicon-o-clipboard-document-check';}
@@ -57,11 +66,19 @@ class TeamTasks extends WorkspacePage
     {
         [$actor,$tenant]=$this->workspaceContext();$this->validate(['state'=>'in:open,doing,done,archived,all','task'=>'nullable|integer|min:1']);
         $service=app(WorkTaskService::class);$query=$service->visible($actor,$tenant)->when($this->task,fn($q)=>$q->where('id',$this->task))
-            ->when(!$this->task&&$this->state!=='all',fn($q)=>$q->where('state',$this->state))->when($this->mineOnly,fn($q)=>$q->where('assigned_to',$actor->id));
-        $count=(clone $query)->count();$this->taskPage=max(1,min($this->taskPage,max(1,(int)ceil($count/20))));
-        $rows=$query->orderByRaw('due_on IS NULL')->orderBy('due_on')->orderByDesc('id')->offset(($this->taskPage-1)*20)->limit(20)->get();
+            ->when($this->board,fn($q)=>$q->whereIn('state',['open','doing','done']))
+            ->when(!$this->board&&!$this->task&&$this->state!=='all',fn($q)=>$q->where('state',$this->state))->when($this->mineOnly,fn($q)=>$q->where('assigned_to',$actor->id));
+        $count=(clone $query)->count();
+        $totals=$this->board?(clone $query)->selectRaw('state, COUNT(*) AS amount')->groupBy('state')->pluck('amount','state')->all():[];
+        $pages=max(1,(int)ceil(($this->board?max([0,...array_values($totals)]):$count)/20));
+        $this->taskPage=max(1,min($this->taskPage,$pages));$rows=collect();
+        foreach($this->board?['open','doing','done']:[null] as $column){
+            $part=(clone $query)->when($column,fn($q)=>$q->where('state',$column))->orderByRaw('due_on IS NULL')->orderBy('due_on')->orderByDesc('id')->offset(($this->taskPage-1)*20)->limit(20)->get();
+            $rows=$rows->concat($part);
+        }
         $names=\App\ClubUnio\Models\Account::whereIn('id',$rows->pluck('assigned_to'))->pluck('display_name','id');
         foreach($rows as $row){$row->title=\Illuminate\Support\Facades\Crypt::decryptString($row->title_encrypted);$row->body=\Illuminate\Support\Facades\Crypt::decryptString($row->body_encrypted);$row->assignee=$names[$row->assigned_to]??'–';}
-        return compact('rows','count');
+        $canMove=$service->allows($actor,$tenant,'complete');
+        return compact('rows','count','canMove','pages','totals');
     }
 }
