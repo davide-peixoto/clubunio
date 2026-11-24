@@ -93,3 +93,37 @@ DEV-Schemapräfix in ExpensesBySeason wurde beim Paketbau explizit erhalten.
 ENV, Composer, Datenbank, Stage und PROD unverändert. Voriges DEV-Release
 bleibt erhalten. Die Angaben zu acht Dateien und ENV-Ergänzung oben
 beschreiben die ursprüngliche Einführung, nicht dieses Folgedelta.
+
+## Browserabnahme – 24.11.2026
+
+### Desktop
+
+Angemeldet auf https://dev.clubunio.ch/ mit bestehendem Konto und Mandant
+SV Sissach geprüft. Glasdesign in ClubUnio-Blau sichtbar; alle sieben
+React-Diagramme nach dem Lazy-Nachladen vorhanden. Balkenauswahl zeigt den
+zugehörigen Wert, Datentabelle lässt sich öffnen und schliessen. Bei 1440
+Pixel und ursprünglicher Browserbreite kein horizontaler Seitenüberlauf.
+
+### Handybreiten
+
+390 × 844 und 320 × 812 CSS-Pixel im verbundenen Chrome geprüft. Beide
+Designs passen in die Seitenbreite (scrollWidth jeweils kleiner als
+innerWidth). Karten und Diagramme werden untereinander angeordnet,
+Beschriftungen der Balken auf schmalen Ansichten gedreht. Donutlegenden
+und Diagrammwerte bedienbar; lange Listen bleiben scrollbar. Die üblichen
+Lazy-Platzhalter verschwinden nach dem Nachladen. Kein physischer
+Android-/iPhone-Test und keine Safari-Abnahme daraus abgeleitet.
+
+### Designwechsel
+
+Glas → bisheriges Design auf Desktop erfolgreich; Auswahl nach Neuladen
+weiterhin gespeichert, React-Diagramme entfernt und Original-Canvasdiagramme
+vorhanden. Bei Handybreite zurück auf Glas gewechselt, anschliessend auch
+bei 320 Pixel erneut beide Richtungen geprüft. Kennzahlen blieben gleich.
+Am Ende Glasdesign und ursprüngliche Browsergrösse wiederhergestellt.
+
+Keine Produktänderung oder neues Deployment für diese Abnahme nötig.
+Die zuvor offene Browser-Sichtprüfung ist damit für Chrome/Desktop und
+simulierte Handybreiten abgeschlossen; physische Geräte bleiben separat.
+Prüfbilder liegen ausserhalb des Repositorys im chatbezogenen
+`dashboard-browser-check`-Verzeichnis (Desktop, Diagramme, Handyansicht).
