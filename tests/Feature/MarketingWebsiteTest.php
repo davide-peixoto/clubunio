@@ -17,8 +17,10 @@ final class MarketingWebsiteTest extends TestCase
                 ->assertSee('mailto:info@clubunio.com', false)->assertSee('bexio')->assertSee('SFV / ASF')
                 ->assertDontSee('CHF')
                 ->assertDontSee('data-price=', false)
-                ->assertSee('/images/marketing/'.$locale.'/members.png', false)
-                ->assertSee('/images/marketing/'.$locale.'/planning.png', false);
+                ->assertSee('id="app"', false)
+                ->assertSee('/images/marketing/2026-11-24/'.$locale.'/app-chat.png', false)
+                ->assertSee('/images/marketing/2026-11-24/'.$locale.'/members.jpg', false)
+                ->assertSee('/images/marketing/2026-11-24/'.$locale.'/planning.jpg', false);
             foreach (config('clubunio-marketing.plans') as $plan) {
                 $response->assertSee('data-inquiry-plan="'.$plan['key'].'"', false);
             }

@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $t('privacy_title') }} · ClubUnio</title>
     <link rel="icon" type="image/svg+xml" href="/brand/blue-v1/clubunio-symbol.svg?v=3">
-    <link rel="stylesheet" href="/css/clubunio-marketing.css">
+    <link rel="stylesheet" href="/css/clubunio-marketing.css?v=20261124">
     @foreach($languages as $code => $name)
         <link rel="alternate" hreflang="{{ $code }}" href="{{ route('clubunio.marketing.privacy', ['locale' => $code]) }}">
     @endforeach
@@ -24,10 +24,10 @@
     </nav>
 </header>
 <main class="wrap section privacy-page">
-    <h2>{{ $t('privacy_title') }}</h2>
+    <h1>{{ $t('privacy_title') }}</h1>
     <p>{{ $privacy('updated') }}</p>
     <p>{{ $privacy('privacy_intro') }}</p>
-    @foreach(['controller', 'website', 'appdata', 'permissions', 'hosting', 'retention', 'rights', 'stores'] as $section)
+    @foreach(['controller', 'website', 'appdata', 'ai', 'wallet', 'permissions', 'hosting', 'retention', 'rights', 'stores'] as $section)
         <section id="{{ $section }}">
             <h3>{{ $privacy($section.'_title') }}</h3>
             <p>{{ $privacy($section.'_text') }}</p>

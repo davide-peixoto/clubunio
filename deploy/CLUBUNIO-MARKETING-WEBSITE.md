@@ -198,3 +198,58 @@ zeigen die echte Spieluebersicht und vier berechnete Aufnahmefenster.
 Kein Schemawechsel. Statischer Rueckweg auf dem VPS unter
 /root/clubunio-actual-screens-*; vorherige Bilder bleiben versioniert.
 Sprachpruefung und MarketingWebsiteTest erfolgreich.
+
+## Vollstaendige Marketingaktualisierung 24.11.2026
+
+DE/EN-Inhalte mit README, Roadmap, DEV-Releases und dem eigenen
+App-Repository abgeglichen. Neuer App-Bereich und aktualisierte Backend-
+Funktionskarten fuer persoenlichen Arbeitsbereich, Aufgabenboard,
+Freigabezentrale, Mitglieder-Zeitleiste, Planung/Alternativen, Spesen,
+Benachrichtigungen, Social Media, Veo und Vereins-KI. App beschreibt
+Teilnahme, Chat/optionale Uebersetzung, Spesen, Profil/Elternzugriff,
+Vereinsausweis/konfigurationsabhaengige Wallets und Wiki.
+Verfuegbarkeit als Pilot/auf Anfrage, keine behauptete Store-Freigabe.
+Datenschutzhinweise um die tatsaechlichen Datenarten sowie optionale
+KI-/Wallet-Verarbeitung ergaenzt. Pakete/Extras weiterhin auf Anfrage.
+
+### Aufnahmen
+
+28 aktuelle Assets unter public/images/marketing/2026-11-24/{de,en}:
+je zehn frisch im angemeldeten FC-Horizon-Demomandanten aufgenommene
+Backendseiten (dashboard, workspace, members, planning, facilities,
+expenses, tasks, social, veo, signage) und vier Android-App-Aufnahmen
+(app-planning, app-chat, app-expense, app-profile).
+Backendbilder enthalten die vollstaendige echte Oberflaeche. Signage wurde
+ueber die oeffentliche Displayroute aufgenommen. Die nur fuer die Aufnahme
+aktivierte oeffentliche Freigabe des fiktiven Demovereins danach geschlossen.
+Fiktive Termine/Spielzeiten auf die aktuelle Woche gesetzt und drei
+synthetische Teamaufgaben ueber WorkTaskService angelegt. Fuer die Aufgaben-
+aufnahme an das bestehende Demokonto zugeordnet. Keine externen Nachrichten.
+
+Appbilder stammen aus den am 23.11.2026 erstellten echten Android-Emulator-
+Aufnahmen der Produktionsmasken mit lokalem Fixture-Adapter und DEMO-Banner
+(siehe mobile/docs/WIKI-CAPTURE.md). Sie belegen die aktuelle Oberflaeche;
+sie sind keine angemeldete Backend- oder physische Geraeteabnahme.
+Keine Bildgenerierung, Retusche oder vereinfachte Backend-Seitenschale.
+Die vorherige lokale Trainer-Fixtureaufnahme und das generierte Telefonbild
+werden auf der Marketingseite nicht mehr verwendet.
+
+### Auslieferung und Rueckweg
+
+35 Marketingdateien per SHA-256 geprueft und nach
+/home/runcloud/webapps/unio veroeffentlicht. Zuerst Assets, danach HTML.
+Sicherung: /root/clubunio-website-20261124-backup-byi08w85.
+Marketing-Blade plus wiederverwendete Screenshot-Teilansicht und Sprach-
+kataloge sind die lokale Quelle. Kein Schemawechsel oder App-/Backend-
+Runtime-Release durch das Webseitenpaket. Rueckweg durch Wiederherstellung
+der gesicherten HTML-/CSS-/JS-Dateien; neue versionierte Bilder koennen bleiben.
+inquiry.php, inquiry-options.php und site-integrations.js per Hash erhalten.
+
+### Abnahme
+
+3075 DE/EN-Schluessel geprueft, MarketingWebsiteTest 3 Tests / 43 Assertions.
+Chrome: beide Sprachen, Desktop und 390/320px, interne Sprungziele,
+Backend-/App-Lightbox und Schliessen geprueft. Mobile Navigation umbricht,
+Bildverhaeltnis des Hero korrigiert. Nach Deployment Startseite, DE/EN,
+beide Datenschutzseiten und alle jeweils 15 eindeutigen Bild-URLs HTTP 200.
+Live-Appbilder geladen und Lightbox im Browser erfolgreich.
