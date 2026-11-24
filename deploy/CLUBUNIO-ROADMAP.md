@@ -3,8 +3,9 @@
 ## DEV: Keycloak-Design und Social-/SSO-Vorbereitung (24.11.2026)
 
 - [x] Eigene Glas-Themes für ClubUnio und SV Sissach auf drei DEV-Clients aktiviert.
-- [x] DE/EN, native Fehler, Desktop/Mobil und isolierten OTP-Formularversand geprüft.
-- [ ] Echte MFA-Seite und Anmeldung bis Vereinsportal mit Benutzer abnehmen.
+- [x] v4: Videoanimationen, Bewegungsschalter DE/EN und sichtbare native OTP-Eingabe.
+- [x] Desktop/Mobil, Paste und Tool-Füllung mit/ohne Input-Ereignis geprüft.
+- [x] Betreiber bestätigt Paste und Anmeldung; angemeldetes Vereinsportal beobachtet.
 - [ ] Google/Microsoft/Facebook registrieren, Apple-Broker prüfen und Social Login
   mit sicherem Account-Linking sowie erhaltenem MFA-Niveau abnehmen.
 - [ ] Eigenen Step-up-/Cookie-Flow und abgestimmte Web-SSO-Frist zuerst auf DEV

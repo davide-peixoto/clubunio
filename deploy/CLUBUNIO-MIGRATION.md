@@ -4,8 +4,9 @@
 
 Zwei neue geerbte Login-Themes und ein lokaler React-Build auf dem
 Identitätsdienst installiert, drei DEV-Client-Theme-Felder angepasst.
-Keine Datenübernahme und keine Schemaänderung. Stage-/PROD-Themes und
-Authentifizierungsregeln unverändert. Social Login benötigt Registrierungen;
+v4 korrigiert Videoanimationen und natives OTP-Paste/Autofill; erfolgreicher
+DEV-Login bestätigt. Keine Datenübernahme und keine Schemaänderung.
+Stage-/PROD-Themes und Authentifizierungsregeln unverändert. Social Login benötigt Registrierungen;
 SSO benötigt gesonderten Flow-/Backend-Release, nicht bloß Tokenweitergabe.
 [Abnahme, offene Schritte und Client-Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 

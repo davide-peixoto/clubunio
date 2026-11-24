@@ -13,9 +13,10 @@ Browser-Belegupload durch Erweiterungsfreigabe blockiert, echte Kamera offen.
 ## DEV: Keycloak-Glasdesign (24.11.2026)
 
 Die drei DEV-Loginclients verwenden die neuen ClubUnio-/SV-Sissach-Glas-Themes
-auf dem gemeinsamen VPS-Identitätsdienst. Der Pi-Anwendungsrelease bleibt
-`20261124-clubunio-work-hub-v3`; keine Laravel-/Datenbankänderung hierfür nötig.
-DE/EN, Assets und Browserlayout geprüft, echte MFA-Abnahme noch offen.
+auf dem gemeinsamen VPS-Identitätsdienst. Dieser Theme-Release ändert keinen
+Pi-Anwendungsrelease und benötigt keine Laravel-/Datenbankänderung.
+v4 mit Videoanimationen und nativ sichtbarer OTP-Eingabe aktiviert. DE/EN,
+Assets und Mobil geprüft; Betreiber bestätigt Paste und erfolgreiche Anmeldung.
 [Rückweg und Social-/SSO-Abhängigkeiten](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
 ## DEV: Work Hub v3 (24.11.2026)

@@ -2,7 +2,71 @@
 
 Stand: 24.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
 
-## Gestaltung
+## Korrektur v4: Videoanimationen und native OTP-Eingabe
+
+Der Betreiber wies die erste gestalterische Abnahme zurück: Die typischen
+Videoanimationen fehlten, und das unsichtbare OTP-Feld störte Paste/OTP-Tools.
+Die damalige Sichtprüfung und der einfache POST-Test waren dafür unzureichend.
+
+v4 übernimmt die abgeschrägte Karte und großen Glasecken der Vorlagen. Die
+Ecken treffen sich in der Mitte und federn zurück; Licht läuft um die Kontur,
+Reflexe ziehen über die Karte. OTP-Paneele zeigen Scan/Zusammenführung beim
+Absenden. CI-Farben bleiben je Client erhalten. Der Metallhintergrund ist lokales
+SVG. Die Perspektivbewegung stoppt beim Fokussieren eines Formularfelds.
+
+Das native OTP-Feld ist jetzt wirklich sichtbar: `opacity:1`, native Ziffern
+und Cursor. Es gibt keine nachgezeichneten Ziffern. Glasflächen liegen nur
+dekorativ dahinter; Platz für OTP-/Passwortmanager-Badges ist reserviert.
+`type=text`, `name=otp`, `autocomplete=one-time-code`, `inputmode=numeric`,
+Beschriftung, Auswahl und native POST-Felder bleiben erhalten. Normales Paste
+bleibt nativ; Leerzeichen/Bindestriche in rein numerisch kopierten Codes werden
+normalisiert. Längere Codes werden nicht abgeschnitten. Ein Tool, das `.value`
+ohne Ereignis setzt, macht den Code sofort nativ sichtbar. Ein 180-ms-Abgleich
+aktualisiert lediglich Umrandung/Fortschritt.
+
+Die OTP-Animation beginnt erst beim ausdrücklichen Absenden. Nach maximal
+880 ms setzt `requestSubmit()` den ursprünglichen POST samt Keycloak-Handler
+fort. Doppelklicks erzeugen keine zweite geplante Übermittlung. Die Animation
+behauptet keinen grünen Erfolg: Nur Keycloak validiert den Code. Bei reduzierter
+Bewegung wird ohne Verzögerung nativ übermittelt.
+
+Chrome meldete auf dem Betreiberrechner `prefers-reduced-motion:reduce`.
+Standardmäßig wird diese Vorgabe respektiert. Ein sichtbarer DE/EN-Schalter
+erlaubt das ausdrückliche Ein- und Ausschalten. Nur diese Darstellungspräferenz
+wird unter `clubunio-auth-motion` im lokalen Browser-Speicher je Origin gehalten;
+keine Konten, Codes oder Tokens. Für die Videoabnahme muss Bewegung auf
+`auth.clubunio.com` ausdrücklich eingeschaltet werden. Texte stehen in
+`resources/js/keycloak-glass-messages.js`; DE/EN-Schlüssel/Werte prüft der Build.
+
+Reproduzierbarer synthetischer Test: `python tools/keycloak-glass-preview.py`
+bindet nur 127.0.0.1:8766 und liefert eine native Formular-Fixture sowie explizit
+erlaubte Theme-Dateien aus. Kein Keycloak-/DB-Zugriff. Der Empfänger hält nur
+Länge und Vergleichsergebnis bekannter Testcodes, keine Codewerte.
+Geprüft: echtes Zwischenablage-Paste mit Leerzeichen, Tool-Füllung ohne Ereignis,
+Tool-Füllung mit Input-Ereignis, sechs/acht Ziffern, unveränderter nativer POST
+und Erhalt von `selectedCredentialId`. Desktop/390×844 und Bewegungsschalter
+ebenfalls geprüft. Zwischenablage anschließend zurückgesetzt. Das ersetzt
+keinen E2E-Test eines bestimmten installierten OTP-Produkts.
+
+Aktive Ressourcen: `clubunio-glass-v4.css` und `clubunio-glass-v4.js`.
+v3-Ressourcen bleiben erhalten. Sicherung vor Austausch:
+`/root/clubunio-releases/keycloak-motion-20261124/themes-before-v4.tar.gz`,
+SHA-256 `d37863ddc53dee2385e5346910c1963578bb5c21b2ddeb9e49b7a61c78652e56`.
+Rückweg: nur die zwei gesicherten DEV-Theme-Verzeichnisse wiederherstellen,
+Theme-Cache durch kontrollierten Dienstneustart erneuern. Keine Flow-,
+Benutzer-, DB- oder Stage-/PROD-Clientänderung.
+
+Live-Abnahme v4 am 24.11.2026: Der Betreiber bestätigte „Paste und Anmeldung
+funktionieren“. Anschließend im Browser das angemeldete Vereinsportal unter
+`https://dev-clubunio.svsissach.ch/` mit SV-Sissach-Navigation beobachtet.
+Ein bestimmtes OTP-Produkt wurde dabei nicht benannt. Der generische silent-
+write-/Input-Ereignis-Pfad ist durch die oben genannten synthetischen Tests
+abgedeckt. HTTP-Prüfung DE/EN auf beiden DEV-Domains: alle Assets HTTP 200,
+v4-CSS/JS bytegleich mit dem lokalen Build. Übersetzungsprüfung erfolgreich.
+[v4-Prüfprotokoll](evidence/keycloak-motion-20261124/checks.json) und
+[synthetische OTP-Sichtprüfung ohne Kontodaten](evidence/keycloak-motion-20261124/otp-native-desktop.jpg).
+
+## Ursprüngliche Gestaltung (v3)
 
 Die vom Betreiber bereitgestellten Vorlagen `Glassy login v3.zip` und
 `Glassy otp v20.zip` sowie beide Code-XR-Facebook-Reels wurden geprüft.
@@ -134,7 +198,7 @@ Siehe [Keycloak Step-up](https://www.keycloak.org/docs/latest/server_admin/#_ste
 Es wurde keine vollständige DEV→Stage-SSO-Abnahme behauptet oder die MFA
 zur Umgehung der erneuten Anmeldung abgeschwächt.
 
-## Abnahme und verbleibende Schritte
+## Historische erste Abnahme (v3)
 
 Die drei DEV-Client-Theme-Felder wurden über die angemeldete Admin-Konsole
 gespeichert. Neue Theme-Dateien auf dem VPS installiert; Keycloak nach
@@ -152,8 +216,9 @@ Codes. Dieser Test ersetzt keine erfolgreiche Keycloak-MFA-Anmeldung.
 
 Die echte OTP-Seite wurde nach Benutzeranmeldung ebenfalls aufgerufen: sechs
 Paneele, ein natives POST-Eingabefeld, Autocomplete und Tastatur-Sprachwechsel
-best�tigt. Der deutsche OTP-Text wurde dabei ausdr�cklich als `Einmalcode`
-erg�nzt. Die erfolgreiche Codepr�fung bis ins Vereinsportal bleibt offen. Social-Login-E2E hängt von den Anbieterregistrierungen
+bestätigt. Der deutsche OTP-Text wurde dabei ausdrücklich als `Einmalcode`
+ergänzt. Die erfolgreiche Codeprüfung bis ins Vereinsportal wurde bei der
+v4-Abnahme nachgeholt (siehe oben). Social-Login-E2E hängt von den Anbieterregistrierungen
 und dem geprüften Broker-/MFA-Pfad ab. Die SSO-Umstellung ist als eigener
 Authentifizierungsrelease offen. Stage-/PROD-Client-Theme und Authentifizierungs-
 regeln wurden nicht geändert. Kein DB-Schema und keine Fachmigration erforderlich.

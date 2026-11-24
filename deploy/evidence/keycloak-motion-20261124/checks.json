@@ -1,0 +1,75 @@
+{
+  "http": [
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "de",
+      "theme": "clubunio-glass-dev",
+      "status": 200,
+      "all_assets_200": true,
+      "css_js_match": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "en",
+      "theme": "clubunio-glass-dev",
+      "status": 200,
+      "all_assets_200": true,
+      "css_js_match": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "de",
+      "theme": "sv-sissach-glass-dev",
+      "status": 200,
+      "all_assets_200": true,
+      "css_js_match": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "en",
+      "theme": "sv-sissach-glass-dev",
+      "status": 200,
+      "all_assets_200": true,
+      "css_js_match": true,
+      "native_password_autocomplete": true
+    }
+  ],
+  "otp_fixture_posts": [
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 8,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 8,
+      "credential_preserved": true
+    }
+  ],
+  "cases_in_order": [
+    "clipboard_with_spaces_reduced_motion",
+    "silent_extension_write",
+    "extension_input_event_eight_digits_mobile",
+    "eight_digits_with_scan_merge_animation"
+  ],
+  "browser_system_reduced_motion": true,
+  "explicit_auth_origin_motion_enabled": true,
+  "live_mfa_with_otp_tool": "Operator confirms paste and successful login; authenticated SV Sissach portal observed. Specific OTP product not identified."
+}
