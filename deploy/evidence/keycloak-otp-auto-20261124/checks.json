@@ -1,0 +1,87 @@
+{
+  "native_posts": [
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 8,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    }
+  ],
+  "cases": [
+    "last_typed_digit",
+    "paste_with_spaces",
+    "silent_extension_fill",
+    "eight_digit_policy_reduced_motion",
+    "correction_after_rejected_code"
+  ],
+  "partial_five_digits_no_post": true,
+  "eight_digit_policy_six_digits_no_post": true,
+  "silent_refill_on_error_page_no_post": true,
+  "auto_manual_race": {
+    "scheduled_auto_plus_two_manual_requests": true,
+    "received_posts": 1,
+    "native_post": {
+      "native_post": true,
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    }
+  },
+  "deployed_dev": [
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "de",
+      "login_status": 200,
+      "v5_script_status": 200,
+      "script_matches_build": true
+    },
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "en",
+      "login_status": 200,
+      "v5_script_status": 200,
+      "script_matches_build": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "de",
+      "login_status": 200,
+      "v5_script_status": 200,
+      "script_matches_build": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "en",
+      "login_status": 200,
+      "v5_script_status": 200,
+      "script_matches_build": true
+    }
+  ],
+  "realm_otp_digits": 6,
+  "js_sha256": "f306148d698fcd985c1f621165d8aa49186b7f84627a0e345b76f8c6a02b2c14",
+  "scope": "DEV only; real authenticated auto-submit not independently repeated"
+}

@@ -10,8 +10,8 @@ bleiben erhalten. Release `20261124-clubunio-daily-v2`, keine Migration.
 
 ## DEV: Keycloak-Glasdesign (24.11.2026)
 
-Login v4 mit Videoanimationen, abgeschrägter Glaskarte und sichtbarer nativer
-OTP-Eingabe auf DEV aktiviert. Paste und erfolgreiche Anmeldung vom Betreiber
+Login v5 mit Videoanimationen und sichtbarer nativer OTP-Eingabe auf DEV:
+Nach der letzten Ziffer wird automatisch bestätigt, auch bei Paste/Autofill. Paste und erfolgreiche Anmeldung vom Betreiber
 bestätigt; generische OTP-Tools mit/ohne Input-Ereignis synthetisch geprüft.
 DE/EN und Mobil geprüft. Social-Registrierungen und SSO-Umstellung bleiben offen.
 [Betrieb, Rückweg und offene Schritte](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).

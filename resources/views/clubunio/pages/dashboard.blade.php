@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     @if ($this->glassSelected())
-        <link rel="stylesheet" href="{{ asset('css/clubunio-dashboard.css') }}?v={{ filemtime(public_path('css/clubunio-dashboard.css')) }}">
+        <link rel="stylesheet" href="{{ asset('css/clubunio-dashboard.css') }}?v={{ filemtime(public_path('css/clubunio-dashboard.css')) }}-spacing1">
         <section class="cu-glass-dashboard">
             <div data-cu-dashboard-hero wire:ignore data-props="{{ json_encode([
                 'eyebrow' => trans('dashboard_design.eyebrow'),

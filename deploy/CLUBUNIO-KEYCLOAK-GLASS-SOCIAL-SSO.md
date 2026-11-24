@@ -2,6 +2,43 @@
 
 Stand: 24.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
 
+## v5: OTP automatisch bestätigen
+
+Nach Vervollständigung des Codes wird das native Formular automatisch bestätigt:
+Tastatur, Paste und OTP-Tools mit/ohne Input-Ereignis werden unterstützt.
+Die aktuelle Realm-Policy wurde vor Release lesend geprüft: sechs Ziffern.
+Nur exakt sechs ASCII-Ziffern lösen die automatische Übermittlung aus; keine
+verkürzte Übermittlung der ersten sechs Zeichen eines längeren eingefügten Codes.
+Eine abweichende UI-Policy kann über `data-otp-length` gesetzt werden (4–10).
+Bei Änderung der Realm-Policy muss die UI-Länge entsprechend nachgeführt werden.
+
+Nach 120 ms stabiler vollständiger Eingabe ruft die Ergänzung `requestSubmit()`
+auf. Der bestehende Scan-/Zusammenführungsablauf und der native Keycloak-POST
+bleiben erhalten. Mit reduzierter Bewegung folgt die Übermittlung direkt.
+Unvollständige oder nicht numerische Eingaben sowie laufende Texteingabe-
+Komposition werden nicht automatisch gesendet. Automatik, Enter und Button
+verwenden dieselbe Sperre gegen doppelte Übermittlung.
+
+Eine Seite mit serverseitig abgelehntem Code wird nicht durch eine stille
+Tool-Wiederbefüllung automatisch erneut gesendet. Bewusstes Klicken/Tippen/Paste
+im Codefeld aktiviert die Automatik erneut; manuelles Absenden bleibt möglich.
+Die Ergänzung speichert und protokolliert keine Codes.
+
+Browser-Fixture bestanden: fünf Ziffern ohne POST, sechste getippte Ziffer mit
+genau einem POST, Paste mit Leerzeichen, stille Tool-Füllung, achtstellige
+Testpolicy (keine Übermittlung nach sechs Zeichen), reduzierte Bewegung,
+Schutz nach Fehler und erneute bewusste Korrektur. Gleichzeitige Automatik plus
+zwei manuelle Submit-Aufrufe erzeugten genau einen nativen POST.
+Alle Tests verwendeten synthetische Codes; selectedCredentialId blieb erhalten.
+[Prüfprotokoll](evidence/keycloak-otp-auto-20261124/checks.json).
+
+DEV verwendet `clubunio-glass-v5.js` mit unverändertem v4-CSS. Sicherung:
+`/root/clubunio-releases/keycloak-otp-auto-20261124/themes-before-v5.tar.gz`,
+SHA-256 `421e22c0d4f698ceac786a198b0b1d3ad4669eebe4b7c0d272ae7f61aa583d42`.
+Rückweg: gesicherte DEV-Themes wiederherstellen und Theme-Cache durch
+kontrollierten Dienstneustart erneuern. Keine Authentifizierungsflow-,
+Benutzer-, DB- oder Stage-/PROD-Änderung.
+
 ## Korrektur v4: Videoanimationen und native OTP-Eingabe
 
 Der Betreiber wies die erste gestalterische Abnahme zurück: Die typischen

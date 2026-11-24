@@ -1543,3 +1543,11 @@ DEV und Stage: Anleitungen, Schritte und 146 Bilder/Screenshots bleiben aktiv;
 Videos/Player/Untertitel privat archiviert und nicht mehr verlinkt. Je 91 Live-
 Prüfungen erfolgreich. PROD auf ausdrücklichen Wunsch unverändert.
 [Freigabestand und Rückweg](CLUBUNIO-WIKI.md).
+
+
+## 24.11.2026: Dashboard-Innenabstand auf DEV
+
+Kleines CSS-/View-Delta auf `20261124-clubunio-daily-v2`: Kennzahlenpanel
+mit 12 bis 20 px Innenabstand und erneuerter Asset-Cacheversion. Keine Migration.
+Chrome Desktop/Mobil gemessen; Mandantenfarben und bisheriges Design erhalten.
+[Abnahme und Rueckweg](CLUBUNIO-DASHBOARD-DESIGN.md).

@@ -84,7 +84,12 @@ function GlassLight({ card }) {
     </>;
 }
 
-function OtpPanes({ input, wrapper }) {
+const otpDigits = input => {
+    const length = Number(input.dataset.otpLength || 6);
+    return Number.isInteger(length) && length >= 4 && length <= 10 ? length : 6;
+};
+
+function OtpPanes({ input, wrapper, autoSubmit }) {
     // No cloned digits: text, selection, paste and autofill belong to the native input.
     const [state, setState] = useState({ length: input.value.length, selection: input.selectionStart || 0, focus: document.activeElement === input });
     useLayoutEffect(() => {
@@ -95,7 +100,7 @@ function OtpPanes({ input, wrapper }) {
                 const next = { length: input.value.length, selection: input.selectionStart || 0, focus: document.activeElement === input };
                 return Object.keys(next).every(key => previous[key] === next[key]) ? previous : next;
             });
-            const count = Math.max(6, Math.min(10, input.value.length));
+            const count = Math.max(otpDigits(input), Math.min(10, input.value.length));
             const width = wrapper.clientWidth, font = getComputedStyle(input);
             context.font = `${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
             const glyph = context.measureText('0').width;
@@ -107,12 +112,12 @@ function OtpPanes({ input, wrapper }) {
             wrapper.style.setProperty('--cu-otp-spacing', `${step - glyph}px`);
             wrapper.style.setProperty('--cu-otp-padding', `${Math.max(0, (step - gap - glyph) / 2)}px`);
             wrapper.classList.toggle('cu-otp-long', input.value.length > 10);
-            input.form?.style.setProperty('--cu-otp-progress', `${Math.min(100, input.value.length / 6 * 100)}%`);
+            input.form?.style.setProperty('--cu-otp-progress', `${Math.min(100, input.value.length / otpDigits(input) * 100)}%`);
+            autoSubmit();
         };
         const events = ['input', 'change', 'focus', 'blur', 'select', 'keyup', 'click'];
         events.forEach(event => input.addEventListener(event, sync));
-        // Silent extension .value writes are already natively visible. Poll only
-        // updates decorative rings/progress, never the value or selection.
+        // Also detect extension .value writes that do not emit input/change.
         const poll = setInterval(() => { if (!document.hidden) sync(); }, 180);
         const observer = new ResizeObserver(sync); observer.observe(wrapper); sync();
         return () => {
@@ -120,8 +125,8 @@ function OtpPanes({ input, wrapper }) {
             events.forEach(event => input.removeEventListener(event, sync));
             input.classList.remove('cu-otp-native');
         };
-    }, [input, wrapper]);
-    const length = Math.max(6, Math.min(10, state.length));
+    }, [input, wrapper, autoSubmit]);
+    const length = Math.max(otpDigits(input), Math.min(10, state.length));
     return <div className="cu-otp-panes">{Array.from({ length }, (_, index) => <span key={index}
         style={{ '--cu-otp-index': index, '--cu-merge-x': `${(length - 1) / 2 - index}` }}
         className={`cu-otp-pane ${index < state.length ? 'is-filled' : ''} ${state.focus && index === Math.min(state.selection, length - 1) ? 'is-current' : ''}`}><span className="cu-otp-sweep"/></span>)}</div>;
@@ -132,8 +137,35 @@ function enhanceOtp(input) {
     const wrapper = document.createElement('div'); wrapper.className = 'cu-otp-field';
     input.before(wrapper); wrapper.append(input);
     const panes = document.createElement('div'); panes.className = 'cu-otp-visual'; panes.setAttribute('aria-hidden', 'true');
-    wrapper.append(panes); createRoot(panes).render(<OtpPanes input={input} wrapper={wrapper}/>);
+    wrapper.append(panes);
+    const form = input.form;
+    if (!form) return;
+    const wasReadOnly = input.readOnly;
+    let timer, autoTimer, pending = false, resuming = false, submitted = false, composing = false;
+    let observed = input.value;
+    // A rejected code must not cause an extension-driven retry loop. Typing,
+    // pasting or clicking the input rearms auto-confirm on an error page.
+    let armed = input.getAttribute('aria-invalid') !== 'true';
+    const validCode = value => new RegExp(`^[0-9]{${otpDigits(input)}}$`).test(value);
+    const autoSubmit = () => {
+        if (input.value === observed) return;
+        observed = input.value;
+        clearTimeout(autoTimer);
+        if (!armed || composing || pending || submitted || input.readOnly || !validCode(observed)) return;
+        const candidate = observed;
+        autoTimer = setTimeout(() => {
+            if (composing || pending || submitted || input.readOnly || input.value !== candidate || !validCode(candidate) || !form.checkValidity()) return;
+            const button = form.querySelector('[type="submit"]:not(:disabled)');
+            if (button) form.requestSubmit(button); else form.requestSubmit();
+        }, 120);
+    };
+    input.addEventListener('input', event => { if (event.isTrusted) { armed = true; observed = ''; } autoSubmit(); });
+    input.addEventListener('change', autoSubmit);
+    ['pointerdown', 'keydown', 'paste'].forEach(event => input.addEventListener(event, e => { if (e.isTrusted) armed = true; }));
+    input.addEventListener('compositionstart', () => { composing = true; clearTimeout(autoTimer); });
+    input.addEventListener('compositionend', () => { composing = false; observed = ''; autoSubmit(); });
     input.addEventListener('paste', event => {
+        if (event.isTrusted) { armed = true; observed = ''; }
         const text = event.clipboardData?.getData('text');
         // Plain codes use native paste. Normalize only numeric code separators.
         if (text && /^[\d\s\-\u200b]+$/.test(text) && /[\s\-\u200b]/.test(text)) {
@@ -142,17 +174,19 @@ function enhanceOtp(input) {
             input.dispatchEvent(new Event('input', { bubbles: true }));
         }
     });
-    const form = input.form;
-    if (!form) return;
-    const wasReadOnly = input.readOnly;
-    let timer, pending = false, resuming = false;
     const restore = () => {
-        clearTimeout(timer); pending = false; resuming = false; input.readOnly = wasReadOnly;
+        clearTimeout(timer); clearTimeout(autoTimer); pending = false; resuming = false; submitted = false;
+        observed = input.value; input.readOnly = wasReadOnly;
         form.classList.remove('cu-otp-scanning', 'cu-otp-merging', 'cu-auth-submitting');
     };
-    window.addEventListener('pageshow', restore); window.addEventListener('pagehide', restore);
+    window.addEventListener('pageshow', event => { if (event.persisted) restore(); });
+    window.addEventListener('pagehide', restore);
     form.addEventListener('submit', event => {
-        if (resuming || reducedMotion() || input.value.length < 6 || !form.checkValidity()) return;
+        if (resuming) { submitted = true; return; }
+        if (pending || submitted) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+        if (!form.checkValidity()) return;
+        clearTimeout(autoTimer);
+        if (reducedMotion() || input.value.length < otpDigits(input)) { submitted = true; return; }
         event.preventDefault(); event.stopImmediatePropagation();
         if (pending) return;
         pending = true; input.readOnly = true;
@@ -169,12 +203,13 @@ function enhanceOtp(input) {
             }, 340);
         }, 540);
     }, true);
+    createRoot(panes).render(<OtpPanes input={input} wrapper={wrapper} autoSubmit={autoSubmit}/>);
 }
 
 function enhance() {
     const card = document.querySelector('.card-pf');
     if (!card || card.dataset.cuGlass) return;
-    card.dataset.cuGlass = 'motion-v4';
+    card.dataset.cuGlass = 'motion-v5';
     document.documentElement.dataset.cuMotion = motionPreference();
     const stage = document.createElement('div'); stage.className = 'cu-auth-stage'; card.before(stage); stage.append(card);
     const background = document.createElement('div'); background.className = 'cu-auth-background'; background.setAttribute('aria-hidden', 'true');

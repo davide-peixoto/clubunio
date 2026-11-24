@@ -167,3 +167,16 @@ Kennzahlüberlagerungen beobachtet. Ausgeschaltet war animationName=none,
 nach Einschalten cu-word-enter. Wahl bleibt beim Neuladen gespeichert.
 390-Pixel-Ansicht ohne horizontalen Überlauf geprüft; Browsergrösse am Ende
 zurückgesetzt. Handy-Prüfbild mobile-motion.jpg ausserhalb des Repositorys.
+
+## 24.11.2026: Innenabstand der Kennzahlen
+
+Auf DEV erhaelt der gerundete Kennzahlencontainer im Glasdashboard rundum
+12 bis 20 px Innenabstand (responsiv), damit die Karten vom Aussenrand abruecken.
+Nur CSS im Glasdashboard; Mandantenfarben, Werte und bisheriges Design bleiben
+unveraendert. Keine Migration und keine neuen UI-Texte. DE/EN-Katalogpruefung
+mit 3075 Schluesseln bestanden. Chrome: 20 px Desktop, 12 px bei 390 px Breite, ohne horizontalen Ueberlauf.
+Rueckweg: vorherige CSS-Datei unter
+`shared/dashboard-spacing-v2-before-20261124.css` wiederherstellen;
+Cacheversion im Dashboard-View bei Bedarf zuruecksetzen.
+Aktiv als CSS-/View-Delta auf `20261124-clubunio-daily-v2`; ein paralleler
+Releasewechsel waehrend der Umsetzung wurde beruecksichtigt.

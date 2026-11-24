@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / 'deploy/keycloak/themes/clubunio-glass-dev/login/resources'
 ASSETS = {
     '/css/clubunio-glass-v4.css': (RESOURCES / 'css/clubunio-glass-v4.css', 'text/css'),
-    '/js/clubunio-glass-v4.js': (RESOURCES / 'js/clubunio-glass-v4.js', 'text/javascript'),
+    '/js/clubunio-glass-v5.js': (RESOURCES / 'js/clubunio-glass-v5.js', 'text/javascript'),
     '/img/clubunio-logo-light.svg': (RESOURCES / 'img/clubunio-logo-light.svg', 'image/svg+xml'),
     '/img/svs-logo.png': (ROOT / 'deploy/keycloak/themes/sv-sissach/login/resources/img/svs-logo.png', 'image/png'),
     '/css/sv-sissach-glass.css': (ROOT / 'deploy/keycloak/themes/sv-sissach-glass-dev/login/resources/css/sv-sissach-glass.css', 'text/css'),
@@ -41,22 +41,25 @@ class Fixture(BaseHTTPRequestHandler):
         otp = query.get('view', ['otp'])[0] == 'otp'
         club = query.get('brand', ['clubunio'])[0] == 'sv-sissach'
         en = query.get('lang', ['de'])[0] == 'en'
+        digits = 8 if query.get('digits', ['6'])[0] == '8' else 6
+        invalid = query.get('invalid', ['0'])[0] == '1'
         title = ('One-time code' if en else 'Einmalcode') if otp else ('Sign in' if en else 'Anmelden')
         brand = '<link rel="stylesheet" href="/css/sv-sissach-glass.css">' if club else ''
         fields = '''<input type="hidden" name="selectedCredentialId" value="synthetic-credential">
-            <label for="otp">%s</label><div class="form-group"><input id="otp" name="otp" type="text" class="pf-c-form-control" autocomplete="one-time-code" autofocus></div>''' % title if otp else '''
+            <label for="otp">%s</label><div class="form-group"><input id="otp" name="otp" type="text" class="pf-c-form-control" autocomplete="one-time-code" data-otp-length="%d" aria-invalid="%s" autofocus></div>''' % (title, digits, 'true' if invalid else 'false') if otp else '''
             <label for="username">Email</label><div class="form-group"><input id="username" name="username" class="pf-c-form-control" autocomplete="username"></div>
             <label for="password">Password</label><div class="form-group"><input type="password" id="password" name="password" class="pf-c-form-control" autocomplete="current-password"></div>'''
         controls = '''<aside class="fixture-controls" aria-label="Synthetic test controls">
             <button onclick="document.getElementById('otp').value='654321'">Silent extension fill</button>
             <button onclick="const e=document.getElementById('otp');e.value='12345678';e.dispatchEvent(new Event('input',{bubbles:true}))">Extension input event</button>
+            <button onclick="const e=document.getElementById('otp');e.value='123456';e.dispatchEvent(new Event('input',{bubbles:true}));e.form.requestSubmit();e.form.requestSubmit()">Race auto and manual</button>
             <a href="/?view=otp&brand=sv-sissach&lang=de">SV Sissach OTP</a>
             <a href="/?view=login&brand=clubunio&lang=en">ClubUnio login</a>
             </aside>''' if otp else ''
         self.send('''<!doctype html><html class="login-pf" lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
             <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v4.css">%s
             <style>*{box-sizing:border-box}body{margin:0}#kc-header-wrapper{width:240px;background-size:contain;background-position:center;background-repeat:no-repeat;color:transparent}.form-group{margin:8px 0 24px}label{display:block;font-size:14px}input{font:inherit;width:100%%}#kc-page-title{margin:0}h1{text-align:center}.fixture-controls{position:relative;z-index:5;display:flex;gap:12px;flex-wrap:wrap;padding:16px;color:#fff}.fixture-controls button,.fixture-controls a{font:14px system-ui;padding:12px;background:#142b44;color:#fff;border:1px solid #8ac1e0;border-radius:8px}</style>
-            <script src="/js/clubunio-glass-v4.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls))
+            <script src="/js/clubunio-glass-v5.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls))
 
     def do_POST(self):
         if int(self.headers.get('Content-Length', '0')) > 4096:
