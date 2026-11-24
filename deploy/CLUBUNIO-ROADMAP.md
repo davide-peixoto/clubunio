@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV: Keycloak-Design und Social-/SSO-Vorbereitung (24.11.2026)
+
+- [x] Eigene Glas-Themes für ClubUnio und SV Sissach auf drei DEV-Clients aktiviert.
+- [x] DE/EN, native Fehler, Desktop/Mobil und isolierten OTP-Formularversand geprüft.
+- [ ] Echte MFA-Seite und Anmeldung bis Vereinsportal mit Benutzer abnehmen.
+- [ ] Google/Microsoft/Facebook registrieren, Apple-Broker prüfen und Social Login
+  mit sicherem Account-Linking sowie erhaltenem MFA-Niveau abnehmen.
+- [ ] Eigenen Step-up-/Cookie-Flow und abgestimmte Web-SSO-Frist zuerst auf DEV
+  abnehmen; gemeinsamen bisherigen Flow und mobile Frischeanforderung erhalten.
+
+[Konfiguration, SSO-Befund und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Nächster Arbeitsumfang: sechs einfache Alltagsabläufe (24.11.2026)
 
 SFV-Abgleich als vorrangige Optimierung zu den fünf weiteren Benutzerwünschen

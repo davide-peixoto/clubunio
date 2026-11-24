@@ -1,0 +1,44 @@
+{
+  "checks": [
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "de",
+      "status": 200,
+      "theme": "clubunio-glass-dev",
+      "all_assets_200": true,
+      "css_js_match_source": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "en",
+      "status": 200,
+      "theme": "clubunio-glass-dev",
+      "all_assets_200": true,
+      "css_js_match_source": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "de",
+      "status": 200,
+      "theme": "sv-sissach-glass-dev",
+      "all_assets_200": true,
+      "css_js_match_source": true,
+      "native_password_autocomplete": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "en",
+      "status": 200,
+      "theme": "sv-sissach-glass-dev",
+      "all_assets_200": true,
+      "css_js_match_source": true,
+      "native_password_autocomplete": true
+    }
+  ],
+  "otp_fixture_native_post": "12345678 submitted unchanged",
+  "live_otp_authentication": "pending user login",
+  "social_login": "not activated; provider registrations missing",
+  "sso": "diagnosed; authentication policy unchanged"
+}

@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: Keycloak-Glasdesign (24.11.2026)
+
+Die drei DEV-Loginclients verwenden die neuen ClubUnio-/SV-Sissach-Glas-Themes
+auf dem gemeinsamen VPS-Identitätsdienst. Der Pi-Anwendungsrelease bleibt
+`20261124-clubunio-work-hub-v3`; keine Laravel-/Datenbankänderung hierfür nötig.
+DE/EN, Assets und Browserlayout geprüft, echte MFA-Abnahme noch offen.
+[Rückweg und Social-/SSO-Abhängigkeiten](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Work Hub v3 (24.11.2026)
 
 Release `/var/www/svs-laravel/releases/20261124-clubunio-work-hub-v3`,

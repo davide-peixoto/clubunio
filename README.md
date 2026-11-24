@@ -1,5 +1,13 @@
 # ClubUnio
 
+## DEV: Keycloak-Glasdesign (24.11.2026)
+
+ClubUnio- und SV-Sissach-Login mit React-Ergänzung als eigene DEV-Themes aktiviert.
+DE/EN, echte Login-Fehlermeldung und isolierter OTP-Formularversand geprüft.
+Live-MFA-Abnahme noch offen. Social Login wartet auf Anbieterregistrierungen;
+SSO-Ursachen und getrennte Authentifizierungsumstellung dokumentiert.
+[Betrieb, Rückweg und offene Schritte](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Nächster Ausbau: einfache Alltagsabläufe (24.11.2026)
 
 SFV-Abgleich einschließlich sichtbarer Kalenderübernahme als gemeinsamer

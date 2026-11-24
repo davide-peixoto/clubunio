@@ -1,0 +1,9 @@
+:root {
+    --cu-auth-brand: #b51c38;
+    --cu-auth-brand-hover: #92152c;
+    --cu-auth-accent: #ffafbd;
+    --cu-auth-rgb: 181 28 56;
+    --cu-auth-panel-top: #42243b;
+    --cu-auth-panel-bottom: #231d31;
+}
+#kc-header-wrapper { background-image: url('../img/svs-logo.png'); }

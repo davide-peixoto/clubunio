@@ -1,0 +1,35 @@
+[
+  {
+    "alias": "google",
+    "displayName": "Google",
+    "providerId": "google",
+    "enabled": false,
+    "trustEmail": false,
+    "storeToken": false,
+    "linkOnly": false,
+    "firstBrokerLoginFlowAlias": "first broker login",
+    "config": { "clientId": "", "clientSecret": "", "defaultScope": "openid profile email", "syncMode": "IMPORT" }
+  },
+  {
+    "alias": "microsoft",
+    "displayName": "Microsoft",
+    "providerId": "microsoft",
+    "enabled": false,
+    "trustEmail": false,
+    "storeToken": false,
+    "linkOnly": false,
+    "firstBrokerLoginFlowAlias": "first broker login",
+    "config": { "clientId": "", "clientSecret": "", "defaultScope": "openid profile email", "syncMode": "IMPORT" }
+  },
+  {
+    "alias": "facebook",
+    "displayName": "Facebook",
+    "providerId": "facebook",
+    "enabled": false,
+    "trustEmail": false,
+    "storeToken": false,
+    "linkOnly": false,
+    "firstBrokerLoginFlowAlias": "first broker login",
+    "config": { "clientId": "", "clientSecret": "", "defaultScope": "email", "syncMode": "IMPORT" }
+  }
+]

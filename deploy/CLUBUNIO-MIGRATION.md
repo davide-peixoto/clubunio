@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## DEV: Keycloak-Glasdesign ohne Fachmigration (24.11.2026)
+
+Zwei neue geerbte Login-Themes und ein lokaler React-Build auf dem
+Identitätsdienst installiert, drei DEV-Client-Theme-Felder angepasst.
+Keine Datenübernahme und keine Schemaänderung. Stage-/PROD-Themes und
+Authentifizierungsregeln unverändert. Social Login benötigt Registrierungen;
+SSO benötigt gesonderten Flow-/Backend-Release, nicht bloß Tokenweitergabe.
+[Abnahme, offene Schritte und Client-Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Geplant: vereinfachte Alltagsabläufe einschließlich SFV (24.11.2026)
 
 Die sechs nächsten Pakete sind mit Bedienungs- und Abnahmekriterien aufgenommen:

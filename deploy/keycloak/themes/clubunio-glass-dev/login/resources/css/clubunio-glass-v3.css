@@ -1,0 +1,103 @@
+:root {
+    color-scheme: light;
+    --cu-auth-brand: #164b8a;
+    --cu-auth-brand-hover: #103864;
+    --cu-auth-accent: #78c8fb;
+    --cu-auth-rgb: 22 75 138;
+    --cu-auth-panel-top: #173f70;
+    --cu-auth-panel-bottom: #0c2343;
+}
+.login-pf body {
+    background: radial-gradient(ellipse at 18% 20%, rgb(var(--cu-auth-rgb) / .12), transparent 48%),
+        radial-gradient(ellipse at 85% 85%, #78c8fb24, transparent 48%), #f3f7fc;
+    color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+.login-pf body .login-pf-page {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    min-height: 100svh; padding: 2.5rem 1.25rem; gap: 1.5rem;
+}
+.login-pf-page #kc-header { margin: 0; align-self: center; }
+#kc-header-wrapper { min-height: 3.75rem; }
+.login-pf-page .card-pf {
+    position: relative; isolation: isolate; width: min(100%, 32rem); margin: 0;
+    padding: clamp(1.5rem, 5vw, 2.75rem); border: 1px solid #cde5ff65;
+    border-radius: 1.75rem; color: #fff;
+    background: linear-gradient(150deg, var(--cu-auth-panel-top), var(--cu-auth-panel-bottom));
+    box-shadow: inset 0 1px 0 #ffffff40, 0 24px 70px rgb(var(--cu-auth-rgb) / .22);
+}
+@supports (backdrop-filter: blur(20px)) {
+    .login-pf-page .card-pf {
+        background: linear-gradient(150deg, color-mix(in srgb, var(--cu-auth-panel-top) 94%, transparent), color-mix(in srgb, var(--cu-auth-panel-bottom) 97%, transparent));
+        backdrop-filter: blur(20px);
+    }
+}
+#kc-page-title { color: #fff; font-size: clamp(1.45rem, 4vw, 1.8rem); line-height: 1.3; font-weight: 650; }
+.login-pf-page .login-pf-header { margin-bottom: 1.75rem; }
+#kc-content, #kc-content label, #kc-content .subtitle { color: #e1edfb; }
+#kc-content a, #kc-locale a { color: #d8efff; }
+#kc-locale button { color: #d8efff; }
+#kc-locale { margin-bottom: .75rem; }
+#kc-locale button { min-height: 2.75rem; display: inline-flex; align-items: center; }
+#kc-content a:hover, #kc-locale a:hover { color: #fff; text-decoration: underline; }
+#kc-locale ul { background: var(--cu-auth-panel-bottom); border: 1px solid #ffffff55; border-radius: .75rem; }
+#kc-locale ul li a:hover { background: #ffffff20; }
+#kc-content input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=hidden]),
+#kc-content select, #kc-content textarea {
+    min-height: 3rem; border: 1px solid #91afd080; border-radius: .75rem;
+    background: #ffffff0d; color: #fff; box-shadow: inset 0 2px 6px #00000018;
+    font-size: 1rem; padding: .65rem .85rem;
+}
+#kc-content input::placeholder { color: #bcd0e6; opacity: 1; }
+#kc-content input:autofill { color: #172c44; }
+#kc-content .pf-c-input-group { background: transparent; }
+#kc-content .pf-c-input-group > input { border-start-end-radius: 0!important; border-end-end-radius: 0!important; }
+#kc-content .pf-c-input-group > button {
+    min-height: 3rem; min-width: 3rem; background: #ffffff14; color: #e1edfb;
+    border: 1px solid #91afd080; border-inline-start: 0; border-radius: 0 .75rem .75rem 0;
+}
+#kc-content .pf-c-input-group > button::after { border-radius: 0 .75rem .75rem 0; }
+#kc-content .pf-m-primary, #kc-content .btn-primary {
+    width: 100%; min-height: 3rem; border-radius: .75rem; border: 1px solid #ffffff35;
+    background: var(--cu-auth-brand); color: #fff; font-weight: 650;
+    box-shadow: inset 0 1px 0 #ffffff35, 0 6px 20px #0000001c;
+    transition: background .18s, box-shadow .18s;
+}
+#kc-content .pf-m-primary:hover, #kc-content .btn-primary:hover { background: var(--cu-auth-brand-hover); }
+#kc-content :focus-visible, #kc-locale :focus-visible { outline: 3px solid var(--cu-auth-accent); outline-offset: 3px; }
+#kc-content .alert-error, #kc-content .pf-m-danger { background: #fff0f2; color: #8f132b; border-radius: .75rem; padding: .8rem; }
+#kc-content .kc-feedback-text, #kc-content .pf-c-form__helper-text.pf-m-error { color: #ffd0d9; }
+#kc-content #input-error { display: block; color: #ffd0d9; font-size: .875rem; line-height: 1.4; margin-top: .5rem; }
+#kc-info-wrapper { background: #ffffff0c; border-radius: .75rem; padding: 1rem; }
+#kc-social-providers ul { display: grid; grid-template-columns: repeat(auto-fit,minmax(9rem,1fr)); gap: .75rem; }
+#kc-social-providers li { margin: 0; }
+#kc-social-providers a { display: flex; justify-content: center; align-items: center; gap: .5rem; min-height: 3rem; padding: .75rem; border: 1px solid #ffffff45; border-radius: .75rem; background: #ffffff0d; }
+.cu-glass-decoration { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.cu-glass-chip { position: absolute; width: 2.75rem; height: 2.75rem; border: 1px solid #d8efff88; background: linear-gradient(140deg,#ffffff40,#ffffff05); backdrop-filter: blur(10px); border-radius: .9rem; }
+.cu-glass-chip-start { inset: -.55rem auto auto -.55rem; clip-path: polygon(0 0,100% 0,0 100%); }
+.cu-glass-chip-end { inset: auto -.55rem -.55rem auto; clip-path: polygon(100% 0,100% 100%,0 100%); }
+.cu-glass-rim { position: absolute; inset: 0; border-radius: 1.75rem; box-shadow: inset 0 1px 0 #ffffff60; }
+.cu-otp-field { position: relative; min-height: 3.5rem; }
+.cu-otp-field:focus-within { outline: 3px solid var(--cu-auth-accent); outline-offset: 3px; border-radius: .75rem; }
+.cu-otp-visual { pointer-events: none; position: absolute; inset: 0; }
+.cu-otp-panes { display: grid; grid-template-columns: repeat(var(--cu-otp-count), minmax(0,1fr)); gap: .5rem; height: 100%; }
+.cu-otp-pane { display: grid; place-items: center; border: 1px solid #91afd080; border-radius: .75rem; background: #ffffff0d; color: #fff; font-size: 1.5rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.cu-otp-pane.is-filled { background: #ffffff1a; border-color: var(--cu-auth-accent); }
+.cu-otp-pane.is-current { box-shadow: 0 0 0 2px var(--cu-auth-accent); }
+#kc-content input.cu-otp-enhanced {
+    position: relative; z-index: 1; width: 100%; height: 3.5rem; opacity: 0;
+    background: transparent; border-color: transparent; color: transparent;
+    caret-color: transparent; box-shadow: none; letter-spacing: .5em;
+}
+#kc-content input.cu-otp-enhanced:autofill { -webkit-text-fill-color: transparent; }
+.cu-auth-submitting [type=submit] { cursor: progress; filter: saturate(.6); }
+@media (prefers-reduced-motion: no-preference) {
+    .card-pf[data-cu-glass] { animation: cu-auth-arrive .35s ease-out; }
+    @keyframes cu-auth-arrive { from { transform: translateY(8px); } to { transform: translateY(0); } }
+}
+@media (max-width: 360px) { .cu-otp-panes { gap: .3rem; } .cu-otp-pane { font-size: 1.25rem; } }
+@media (forced-colors: active) {
+    .cu-glass-decoration, .cu-otp-visual { display: none; }
+    #kc-content input.cu-otp-enhanced { opacity: 1; color: CanvasText; caret-color: auto; border: 1px solid CanvasText; }
+    .login-pf-page .card-pf { background: Canvas; color: CanvasText; border-color: CanvasText; }
+}
