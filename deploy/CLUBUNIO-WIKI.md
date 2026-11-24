@@ -1,5 +1,17 @@
 # ClubUnio-Wiki für App und Webverwaltung
 
+## Aktuelle Freigabe einschließlich PROD – 24.11.2026
+
+Nach ausdrücklichem Benutzerauftrag wurde der Bild-only-Stand jetzt auch auf
+PROD übernommen. Alle drei Umgebungen liefern25 App-/44 Web-Anleitungen je DE/EN
+mit Schritten, Bildern und Screenshots. Videos bleiben auf allen drei Umgebungen
+pausiert. Auf PROD423 verbliebene Medien-/Playerdateien privat archiviert, die
+146 PNG-Dateien bleiben erreichbar.91 PROD-Wiki-Prüfungen erfolgreich; alte Video-
+und Playerlinks liefern404. Sicherung und Laufnachweis:
+[App-Korrekturen und Winterbetrieb](CLUBUNIO-MOBILE-TODAY-TEAM-TRAININGS.md).
+Der nachfolgende auf DEV/Stage begrenzte Stand vom23.11.2026 ist historische Doku.
+
+
 ## Aktueller Freigabestand: Videos pausiert, 23.11.2026
 
 Benutzerentscheid nach dem Erstrollout: Videos vorerst weglassen; neue Releases

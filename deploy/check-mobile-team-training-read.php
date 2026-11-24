@@ -2,12 +2,12 @@
 
 // Native PostgreSQL projection regression. Every synthetic row rolls back.
 if (PHP_SAPI !== 'cli' || ($argv[1] ?? '') !== '--synthetic-rollback'
-    || !in_array($argv[2] ?? '', ['clubunio_dev', 'clubunio_stage'], true)) throw new LogicException('Explicit DEV/Stage target required');
+    || !in_array($argv[2] ?? '', ['clubunio_dev', 'clubunio_stage', 'clubunio_prod'], true)) throw new LogicException('Explicit environment target required');
 require dirname(__DIR__).'/vendor/autoload.php';
 $app = require dirname(__DIR__).'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 $db = Illuminate\Support\Facades\DB::connection('clubunio');
-$origins = ['clubunio_dev'=>'https://dev.clubunio.ch', 'clubunio_stage'=>'https://stage.clubunio.com'];
+$origins = ['clubunio_dev'=>'https://dev.clubunio.ch', 'clubunio_stage'=>'https://stage.clubunio.com', 'clubunio_prod'=>'https://app.clubunio.com'];
 if ($db->getDriverName() !== 'pgsql' || $db->getDatabaseName() !== $argv[2]
     || $db->selectOne('select current_database() as name')->name !== $argv[2]
     || config('app.url') !== $origins[$argv[2]]) throw new LogicException('Unexpected target');

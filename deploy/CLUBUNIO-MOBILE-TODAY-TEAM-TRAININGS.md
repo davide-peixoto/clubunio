@@ -1,6 +1,6 @@
 # Mobile: nächste Termine und reguläre Trainingszeiten
 
-Stand: 24.11.2026. Backend-Fix auf DEV und Stage; PROD unverändert.
+Stand: 24.11.2026. Backend-Fix auf DEV, Stage und PROD freigegeben und geprüft.
 
 ## Verhalten
 
@@ -22,13 +22,20 @@ Nur die zentral gewählte Sommer-/Winterperiode erscheint weiterhin.
 
 ## Separate Konfiguration auf Stage
 
-Beim ursprünglichen SV Sissach (Tenant1) ist SIGNAGE_PERIOD_ID unter Allgemein
-auf 0 gesetzt. Es wurde deshalb KEIN Sommer-/Winterplan willkürlich gewählt.
-Die Rückfrage zur Aktivierung des Winterplans ist noch offen. Ohne aktive Periode
-bleibt die Ausgabe absichtlich leer, statt Sommer und Winter zu vermischen.
-Beim separaten Stage-Refresh-Verein (Tenant3) ist Winter gültig gewählt. Mit dem
-bestehenden Gmail-Zugang liefern seine zwei berechtigten Teams 2 bzw.1 Trainings-
-zeiten. Konfigurationen und Benutzerdaten wurden nicht verändert.
+Beim ursprünglichen SV Sissach auf Stage (Tenant1) war SIGNAGE_PERIOD_ID unter
+Allgemein auf0 gesetzt. Nach ausdrücklicher Benutzerfreigabe am24.11.2026 wurde
+Winter (nativer Periodenwert2) über SettingsService aktiviert. Verwendet wurde
+das bestehende eigene Backoffice-Konto20; die Änderung ist in setting_changes
+protokolliert. Gmail-Zugangsrechte wurden nicht erweitert. Privater Rückweg für
+den bisherigen verschlüsselten Wert: /var/backups/clubunio-stage-winter-20261124T175741Z/.
+Ein frischer Read mit Gmail liefert nun einen Wintertermin im berechtigten Team;
+Teams ohne hinterlegte Winterzeit bleiben leer. Der separate Stage-Refresh-Verein
+(Tenant3) bleibt beim bereits gewählten Winterplan.
+
+Auf PROD war Winter schon korrekt gesetzt (Tenant12, native Periode24); keine
+Änderung dieses Parameters. Der bestehende Gmail-Zugang erhält nach dem Filterfix
+zwei Wintertrainings für sein Ba-Team816. Das Verwaltungsteam844 hat keine
+Trainingszeiten. Sommer wird nicht zusätzlich angezeigt.
 
 ## Prüfung und Release
 
@@ -55,3 +62,22 @@ zurückspielen, nur den eigenen neuen Prüfer entfernen, keine Daten zurücksetz
 Die Trainingskorrektur gilt serverseitig nach erneutem Laden. Die Datumskachel
 benötigt einen aktualisierten App-Build auf dem Mac/Android; kein signierter
 Store-/TestFlight-Release in dieser Sitzung erstellt.
+
+
+## Freigabe PROD und Abschluss – 24.11.2026
+
+Der Benutzer hat den zuvor begrenzten Rollout nun ausdrücklich für PROD freigegeben.
+Übernommen wurden der Trainingsfilter und der noch ausstehende Bild-only-Wiki-Stand.
+Aktuelle übrige Live-Arbeiten bleiben erhalten; kein pauschaler Git-/Dateibaum-Abgleich.
+Fünf gezielte Quelldateien vorab gegen Live-Hashes geprüft, gesichert und installiert.
+423 alte öffentliche Video-/Player-/Untertitel-/Manifestdateien privat archiviert;
+146 Bilder bleiben erreichbar. Keine DB-Migration, keine Provider-/Mail-/Pushänderung.
+Backups: /var/backups/clubunio-prod-app-fixes-20261124T175929Z/.
+
+PROD:91 Support-/Wiki-Prüfungen und5 Trainingsprojektionstests im vollständigen
+PG-Rollback erfolgreich. Insgesamt12 lokale Backendtests/3608 Assertions sowie
+3075 DE-/EN-Schlüssel geprüft. Bestehender Gmail-Zugang und Winterfilter bestätigt.
+HTTP200 für /up, Hilfe und Bilder; Videos/Player HTTP404, geschützte API ohne
+Anmeldung HTTP401. Native Datumskacheln bleiben im App-Repository main enthalten;
+für sie muss ein aktualisierter App-Build erstellt werden. Kein neuer IPA-/Store-
+oder TestFlight-Upload durch diese Backend-Freigabe.

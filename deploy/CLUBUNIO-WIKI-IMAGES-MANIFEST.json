@@ -2,9 +2,10 @@
   "format": 1,
   "targets": [
     "dev",
-    "stage"
+    "stage",
+    "prod"
   ],
-  "prod_unchanged": true,
+  "prod_unchanged": false,
   "videos_published": false,
   "assets": [
     {
@@ -737,5 +738,6 @@
       "bytes": 36888,
       "sha256": "842e9fbb1e09110585978d9c27d865d588067d98b0620b3130e09ef6ef0eb05b"
     }
-  ]
+  ],
+  "prod_promotion_date": "2026-11-24"
 }

@@ -2406,3 +2406,12 @@ auch reguläre/Hallenzeiten ohne Sperrflags innerhalb des aktiven Plans. Backend
 auf DEV/Stage geprüft; PROD unverändert. Stage Tenant1: Planwahl 0, Winterfreigabe
 noch offen. Neuer App-Build für Kacheln erforderlich.
 [Ursachen, Konfiguration und Abnahme](CLUBUNIO-MOBILE-TODAY-TEAM-TRAININGS.md).
+
+
+## Winter Stage und App-Fixes auf PROD – 24.11.2026
+
+Stage SV Sissach: Winterplan mit Audit aktiviert. PROD: Trainingsfilter und
+Bild-only-Wiki gezielt nachgezogen, Videos privat archiviert. Bestehender Gmail-
+Zugang zeigt zwei Wintertrainings beim Ba-Team.91 Wiki- und5 Trainingsprüfungen
+auf PROD grün; kein neuer nativer Build.
+[Freigabe, Prüfungen und Rückweg](CLUBUNIO-MOBILE-TODAY-TEAM-TRAININGS.md).
