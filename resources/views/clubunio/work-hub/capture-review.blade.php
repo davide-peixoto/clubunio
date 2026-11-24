@@ -1,0 +1,1 @@
+<div><p>{{ trans('work_hub.capture_review') }}</p><dl class="cu-workflow-facts">@foreach($this->captureFacts() as $fact)<div><dt>{{ $fact['label'] }}</dt><dd>{{ $fact['value'] }}</dd></div>@endforeach</dl></div>

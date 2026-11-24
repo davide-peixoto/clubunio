@@ -1,5 +1,15 @@
 # ClubUnio
 
+## DEV: sechs Alltagspakete (24.11.2026)
+
+Benachrichtigungen mit Chaterwähnungen, berechtigte Objektsuche, freie
+Planungsalternativen, geführte Erfassung, Teamaufgaben sowie Bedienungs- und
+Ladeverbesserungen implementiert. Release `20261124-clubunio-work-hub-v2`;
+vier additive Tabellen, Owner-Migration nach verschlüsselter DEV-Sicherung.
+DE/EN, beide Designs, Fach- und isolierte Chrome-Tests erfolgreich;
+angemeldete Browserabnahme wartet auf erneute Anmeldung.
+[Umfang, Tests und Rückweg](deploy/CLUBUNIO-WORK-HUB.md).
+
 ## DEV: Desktop- und Mobilabnahme abgeschlossen (24.11.2026)
 
 Persönliche Arbeitsabläufe in Chrome und responsiver Handyansicht geprüft.

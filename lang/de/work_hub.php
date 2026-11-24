@@ -1,0 +1,23 @@
+<?php
+return [
+ 'member_status'=>'Status','member_type'=>'Mitgliederart','billing_recipient'=>'Rechnung an','mother_email'=>'E-Mail Mutter','father_email'=>'E-Mail Vater',
+ 'round'=>'Runde','bank'=>'Bankkonto',
+ 'search'=>'Objektsuche','search_hint'=>'Mitglieder, Rechnungen, Dokumente und Termine suchen. Mindestens zwei Zeichen; bis zu sechs Treffer je Bereich.',
+ 'term'=>'Suchbegriff','search_submit'=>'Suchen','no_results'=>'Keine passenden Treffer in deinen freigegebenen Bereichen.',
+ 'members'=>'Mitglieder','member'=>'Mitglied','invoices'=>'Rechnungen','documents'=>'Dokumente','events'=>'Termine','event'=>'Termin','registration'=>'Anmeldung',
+ 'notifications'=>'Benachrichtigungen','unread'=>'Nur ungelesene','read'=>'Als gelesen markieren','notices_hint'=>'Persönliche Meldungen mit aktuell zugänglichem Ziel. Ältere Meldungen findest du auf den weiteren Seiten.',
+ 'empty_notices'=>'Keine anzeigbaren Meldungen auf dieser Seite.','tasks'=>'Teamaufgaben','new_task'=>'Aufgabe erstellen','title'=>'Titel','description'=>'Beschreibung',
+ 'assignee'=>'Zuständig','due'=>'Fällig am','state'=>'Bearbeitungsstand','state_open'=>'Offen','state_doing'=>'In Bearbeitung','state_done'=>'Erledigt','state_archived'=>'Archiviert',
+ 'all'=>'Alle','mine'=>'Mir zugewiesen','edit'=>'Bearbeiten','change_state'=>'Stand ändern','archive'=>'Archivieren','restore'=>'Wiederherstellen','overdue'=>'Überfällig',
+ 'task_notice'=>'Dir wurde eine Aufgabe zugewiesen.','invalid_assignee'=>'Diese Person kann die Aufgabe in diesem Verein nicht bearbeiten.','narrow_assignees'=>'Zu viele mögliche Zuständige. Bitte die Benutzerverwaltung prüfen.',
+ 'assign_right'=>'Aufgaben im Team zuweisen','complete_right'=>'Aufgabenstand ändern','capture'=>'Geführte Erfassung','expense_draft'=>'Spesenentwurf','kind'=>'Was möchtest du erfassen?',
+ 'identity'=>'Zuordnung','review'=>'Prüfen und abschliessen','finish'=>'Erfassung abschliessen','capture_hint'=>'Drei Schritte bis zum vollständigen Eintrag. Spesen werden als Entwurf angelegt; Belege ergänzt du danach im Dossier.',
+ 'first_name'=>'Vorname','last_name'=>'Nachname','email'=>'E-Mail','birth_date'=>'Geburtsdatum','city'=>'Ort','team'=>'Mannschaft / Saison','expense_type'=>'Spesentyp',
+ 'end'=>'Ende','deadline'=>'Anmeldefrist','location'=>'Ort','event_kind'=>'Terminart','participation'=>'Teilnahme','defaults'=>'Vorgaben prüfen','capture_review'=>'Prüfe die Angaben vor dem Anlegen. Zurück führt zu den Eingaben.',
+ 'solve'=>'Alternativen suchen','alternatives'=>'Mögliche Alternativen','proposal'=>'Vorschlag','apply_proposal'=>'Vorschlag übernehmen','proposal_confirm'=>'Diese Belegung verschieben?',
+ 'proposal_hint'=>'Bis zu fünf freie Alternativen am selben Tag. Andere Mannschaftstermine, Sperren und belegte Flächen werden berücksichtigt. Beim Übernehmen erfolgt die verbindliche Fachprüfung.',
+ 'no_proposals'=>'Keine freie Alternative innerhalb von zwei Stunden gefunden. Bitte die Fachplanung öffnen.','proposal_stale'=>'Der Vorschlag ist nicht mehr frei. Bitte neue Alternativen suchen.',
+ 'moved'=>'Belegung verschoben','mention'=>'Person erwähnen','mention_hint'=>'Aktuelle Chatteilnehmer auswählen; höchstens zehn Personen.','mention_clear'=>'Erwähnungen entfernen','search_people'=>'Personen suchen','no_people'=>'Keine passenden Chatteilnehmer.',
+ 'invalid_mention'=>'Eine ausgewählte Person hat keinen aktuellen Zugriff auf diesen Chat.','mention_notice'=>'Du wurdest in einem Chat erwähnt.','mentions_selected'=>'Erwähnungen',
+ 'loading'=>'Wird geladen …','accessibility'=>'Schnell zum Inhalt','close'=>'Schliessen','task_help'=>'Zuständigkeit, Fälligkeit und Bearbeitungsstand im Team verfolgen. Archivierte Aufgaben lassen sich wiederherstellen.',
+];

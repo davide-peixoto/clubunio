@@ -18,7 +18,7 @@ final class PermissionCatalog
         'announcements' => 'Ankündigungen', 'chat' => 'Chats', 'events' => 'Veranstaltungen',
         'sponsor_runs' => 'Sponsorenlauf',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
-        'templates' => 'Nachrichtenvorlagen', 'social_media' => 'Social Media',
+        'templates' => 'Nachrichtenvorlagen', 'social_media' => 'Social Media', 'tasks' => 'work_hub.tasks',
     ];
 
     public const FUNCTIONS = [
@@ -31,11 +31,12 @@ final class PermissionCatalog
         'transfer' => 'Saisonübernahme',
         'poll' => 'Umfragen erstellen', 'announce' => 'Vereinsnachrichten veröffentlichen',
         'moderate' => 'Gruppenmeldungen moderieren', 'groups' => 'Alle Mannschafts- und Staffchats anzeigen',
-        'schedule' => 'Automatische Beiträge planen',
+        'schedule' => 'Automatische Beiträge planen', 'assign' => 'work_hub.assign_right', 'complete' => 'work_hub.complete_right',
     ];
 
     public static function functions(string $module): array
     {
+        if ($module === 'tasks') return array_intersect_key(self::FUNCTIONS, array_flip(['view','create','update','assign','complete','deactivate','restore']));
         if ($module === 'chat') {
             return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'send', 'upload', 'download', 'poll', 'announce', 'moderate', 'groups']));
         }

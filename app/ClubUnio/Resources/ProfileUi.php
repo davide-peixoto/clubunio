@@ -59,6 +59,7 @@ final class ProfileUi
     public static function actionFunction(string $name): ?string
     {
         return match ($name) {
+            'complete' => 'complete',
             'view', 'member', 'family', 'details', 'inspect', 'compare', 'dossierHistory', 'timeline', 'history', 'positions', 'viewCustomerCredit',
             'loadView', 'saveView', 'manageView', 'deleteView', 'calculate', 'seasonRun', 'publicDisplay', 'publicForm',
             'duplicates', 'messages', 'notificationPreview', 'openFilters', 'applyFilters', 'resetFilters',
@@ -109,6 +110,7 @@ final class ProfileUi
         if ($component instanceof \App\ClubUnio\Pages\ApprovalCenter && $action->getName() === 'decide') {
             return $component::canAccess() && isset(app(\App\ClubUnio\Services\ApprovalQueue::class)->kinds($actor, $tenant)[$component->selectedKind]);
         }
+        if ($component instanceof \App\ClubUnio\Pages\PlanningConflicts && $action->getName() === 'applyProposal') return $component::canAccess();
         $function = self::actionFunction($action->getName());
         if ($function === null) {
             return false;
@@ -140,7 +142,7 @@ final class ProfileUi
         }
         $module = match (class_basename($component)) {
             'SponsorRuns', 'SponsorRunBilling', 'SponsorRunTable' => 'sponsor_runs',
-            'ContributionPreview' => 'contributions', 'SfvCompetitions' => 'competitions',
+            'TeamTasks' => 'tasks', 'ContributionPreview' => 'contributions', 'SfvCompetitions' => 'competitions',
             'SignagePreview' => 'signage', 'BexioReconciliation' => 'bexio',
             default => null,
         };

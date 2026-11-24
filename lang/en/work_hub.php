@@ -1,0 +1,23 @@
+<?php
+return [
+ 'member_status'=>'Status','member_type'=>'Member type','billing_recipient'=>'Invoice recipient','mother_email'=>"Mother's email",'father_email'=>"Father's email",
+ 'round'=>'Round','bank'=>'Bank account',
+ 'search'=>'Object search','search_hint'=>'Search members, invoices, documents and events. At least two characters; up to six results per area.',
+ 'term'=>'Search term','search_submit'=>'Search','no_results'=>'No matching results in your permitted areas.',
+ 'members'=>'Members','member'=>'Member','invoices'=>'Invoices','documents'=>'Documents','events'=>'Events','event'=>'Event','registration'=>'Registration',
+ 'notifications'=>'Notifications','unread'=>'Unread only','read'=>'Mark as read','notices_hint'=>'Personal notices with a currently accessible target. Use the next pages for older notices.',
+ 'empty_notices'=>'No displayable notices on this page.','tasks'=>'Team tasks','new_task'=>'Create task','title'=>'Title','description'=>'Description',
+ 'assignee'=>'Assigned to','due'=>'Due date','state'=>'Progress','state_open'=>'Open','state_doing'=>'In progress','state_done'=>'Done','state_archived'=>'Archived',
+ 'all'=>'All','mine'=>'Assigned to me','edit'=>'Edit','change_state'=>'Change progress','archive'=>'Archive','restore'=>'Restore','overdue'=>'Overdue',
+ 'task_notice'=>'A task has been assigned to you.','invalid_assignee'=>'This person cannot work on the task in this club.','narrow_assignees'=>'Too many possible assignees. Please check user administration.',
+ 'assign_right'=>'Assign tasks within the team','complete_right'=>'Change task progress','capture'=>'Guided capture','expense_draft'=>'Expense draft','kind'=>'What would you like to create?',
+ 'identity'=>'Assignment','review'=>'Review and finish','finish'=>'Complete entry','capture_hint'=>'Three steps to a complete entry. Expenses are created as drafts; add receipts in the dossier afterwards.',
+ 'first_name'=>'First name','last_name'=>'Last name','email'=>'Email','birth_date'=>'Date of birth','city'=>'City','team'=>'Team / season','expense_type'=>'Expense type',
+ 'end'=>'End','deadline'=>'Registration deadline','location'=>'Location','event_kind'=>'Event type','participation'=>'Participation','defaults'=>'Check defaults','capture_review'=>'Check the details before creating the entry. Go back to change your inputs.',
+ 'solve'=>'Find alternatives','alternatives'=>'Possible alternatives','proposal'=>'Proposal','apply_proposal'=>'Apply proposal','proposal_confirm'=>'Move this booking?',
+ 'proposal_hint'=>'Up to five free alternatives on the same day. Other team events, blocked periods and occupied areas are considered. Applying a proposal runs the authoritative domain checks.',
+ 'no_proposals'=>'No free alternative within two hours. Please open the planning module.','proposal_stale'=>'This proposal is no longer free. Please find alternatives again.',
+ 'moved'=>'Booking moved','mention'=>'Mention a person','mention_hint'=>'Select current chat participants; up to ten people.','mention_clear'=>'Remove mentions','search_people'=>'Search people','no_people'=>'No matching chat participants.',
+ 'invalid_mention'=>'A selected person no longer has access to this chat.','mention_notice'=>'You were mentioned in a chat.','mentions_selected'=>'Mentions',
+ 'loading'=>'Loading …','accessibility'=>'Skip to content','close'=>'Close','task_help'=>'Track responsibility, due dates and progress within the team. Archived tasks can be restored.',
+];

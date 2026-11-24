@@ -1,5 +1,16 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Sechs Alltagspakete: Work Hub (24.11.2026)
+
+Benachrichtigungszentrale/Erwähnungen, Objektsuche, Vorschläge bei
+Anlagenkonflikten, drei Erfassungsassistenten und Teamaufgaben auf DEV.
+Zentrale Mandantenfarben, DE/EN, Tastatur, reduzierte Bewegung und begrenzte
+Ladelisten. Vier additive Tabellen als DEV-Owner migriert; Bestandsdaten und
+Profile erhalten. 27 lokale Tests / 513 Assertions, 15 isolierte Chrome-Tests,
+45 DEV-Prüfungen und 15 bestehende Fachchecks erfolgreich. Angemeldete
+Desktop-/Handyabnahme wartet auf erneute Anmeldung.
+[Stand und Grenzen](CLUBUNIO-WORK-HUB.md).
+
 ## Browserabnahme: persönliche Arbeitsabläufe (24.11.2026)
 
 Chrome/Desktop und responsive 390 × 844 erfolgreich: alle sechs Bereiche,

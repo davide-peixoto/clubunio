@@ -1,8 +1,8 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/clubunio-chat.css') }}?v=2">
-    <script type="module" src="{{ asset('js/clubunio-chat.js') }}?v=modules-1"></script>
+    <script type="module" src="{{ asset('js/clubunio-chat.js') }}?v=hub-1"></script>
     @php
-        $labels = [];
+        $labels = []; foreach (['mention','mention_hint','mention_clear','search_people','no_people','mentions_selected'] as $key) $labels['work_hub.'.$key]=trans('work_hub.'.$key);
         foreach (['Anhang ansehen', 'Keine Reaktionen', 'Text übernehmen', 'Kamera'] as $label) $labels[$label] = __($label);
         foreach (['Chats', 'Unterhaltungen suchen', 'Neue Direktnachricht', 'Nachricht', 'Senden', 'Erneut versuchen', 'Abbrechen', 'Schliessen', 'Laden', 'Keine Unterhaltungen', 'Unterhaltung auswählen', 'Ältere Nachrichten', 'Stummschalten', 'Stummschaltung aufheben', 'Anhängen', 'Umfrage', 'Termin', 'Einstellungen', 'Moderation', 'Bearbeiten', 'Entfernen', 'Melden', 'Reaktionen', 'Abstimmen', 'Speichern', 'Kontakt suchen', 'Keine Kontakte gefunden', 'Vereinsankündigungen', 'Mannschaft', 'Trainer', 'Terminbesprechung', 'Direktnachricht', 'Nur Lesen', 'Zurück', 'Datei auswählen', 'Anhang wird geprüft', 'Anhang nicht verfügbar', 'Nachricht entfernt', 'Nachricht entfernen?', 'Entwurf verwerfen?', 'Neue Nachricht', 'Frage', 'Antwortmöglichkeiten', 'Eine Antwort pro Zeile', 'Mehrfachauswahl', 'Abstimmungsende', 'Termin auswählen', 'Empfängervorschau', 'Empfänger: :count', 'Veröffentlichen', 'Grund', 'Erledigen', 'Keine offenen Meldungen', 'Personen', 'Mehr anzeigen', 'Blockieren', 'Blockierung aufheben', 'Blockierte Kontakte', 'Übersetzung aktivieren', 'Zielsprache', 'Deutsch', 'Englisch', 'KI-Textassistenz', 'Korrigieren', 'Freundlicher formulieren', 'Kürzen', 'Prüfen', 'Übersetzen', 'Text zur Verarbeitung an den KI-Anbieter senden', 'Übernehmen', 'Verbindung unterbrochen. Ihr Entwurf bleibt erhalten.', 'Der Zugriff hat sich geändert. Bitte die Seite neu laden.', 'Die Daten wurden geändert. Bitte aktualisieren und erneut prüfen.', 'Die Funktion ist derzeit nicht verfügbar.', 'Bitte prüfen Sie Ihre Eingaben.', 'Nachricht konnte nicht gesendet werden. Erneut versuchen verwendet dieselbe Nachrichten-ID.', 'Anhang abgelehnt', 'Anhang herunterladen', 'Umfrage beendet', 'Antworten: :count', 'Aktualisieren', 'Vorschau abgelaufen. Bitte Empfänger erneut prüfen.', 'Nachricht erfolgreich gesendet', 'Keine Termine gefunden', 'Auswahl entfernen', 'Bitte zuerst den ausstehenden Versand klären.'] as $label) $labels[$label] = __($label);
     @endphp
@@ -41,6 +41,7 @@
                 <div class="cu-chat-toolbar">
                     <button type="button" data-action="attachment" title="{{ __('Anhängen') }}" aria-label="{{ __('Anhängen') }}"><x-filament::icon icon="heroicon-o-paper-clip" /></button>
                     <button type="button" data-action="camera" title="{{ __('Kamera') }}" aria-label="{{ __('Kamera') }}"><x-filament::icon icon="heroicon-o-camera" /></button>
+                    <button type="button" data-action="mention" title="{{ trans('work_hub.mention') }}" aria-label="{{ trans('work_hub.mention') }}"><span aria-hidden="true">@</span></button>
                     <button type="button" data-action="poll" title="{{ __('Umfrage') }}" aria-label="{{ __('Umfrage') }}"><x-filament::icon icon="heroicon-o-chart-bar" /></button>
                     <button type="button" data-action="event" title="{{ __('Termin') }}" aria-label="{{ __('Termin') }}"><x-filament::icon icon="heroicon-o-calendar-days" /></button>
                     <button type="button" data-action="ai" title="{{ __('KI-Textassistenz') }}" aria-label="{{ __('KI-Textassistenz') }}"><x-filament::icon icon="heroicon-o-sparkles" /></button>

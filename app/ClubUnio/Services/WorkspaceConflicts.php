@@ -46,7 +46,7 @@ class WorkspaceConflicts
                     $pair = [$entry['key'],$conflict['key'] ?? 'unavailable']; sort($pair); $key = implode('|',$pair);
                     if (isset($seen[$key])) continue; $seen[$key]=true;
                     $rows[] = ['kind'=>'pitch','date'=>Time::parse($entry['starts_at_iso'])->tz('Europe/Zurich')->format('d.m.Y H:i'),
-                        'title'=>$entry['title'], 'reason'=>trans('workspace.conflict_'.$conflict['type']), 'url'=>PitchPlanning::getUrl(['date'=>$entry['date']])];
+                        'source_key'=>$entry['key'], 'source_date'=>$entry['date'], 'can_solve'=>in_array($entry['source'],['training','request'],true)&&$data['capabilities']['manage']&&app(ModulePermissionService::class)->allows($actor,$tenant,$entry['source']==='training'?'training_slots':'competitions','update'), 'title'=>$entry['title'], 'reason'=>trans('workspace.conflict_'.$conflict['type']), 'url'=>PitchPlanning::getUrl(['date'=>$entry['date']])];
                 }
             }
         }

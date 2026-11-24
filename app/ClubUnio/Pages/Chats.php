@@ -31,7 +31,7 @@ class Chats extends Page
     public function chatConfig(): array
     {
         abort_unless(static::canAccess(), 403);
-        return ['base' => url('/chat-data'),
+        return ['base' => url('/chat-data'), 'initialChatId'=>(int)(request()->validate(['conversation'=>'nullable|integer|min:1'])['conversation']??0),
             'context' => session()->get(app(ActiveTenant::class)->key(request())),
             'actorId' => (int)Filament::auth()->id(), 'locale' => app()->getLocale(),
             'languages' => app(\App\ClubUnio\Services\LanguagePreferences::class)->enabled(),

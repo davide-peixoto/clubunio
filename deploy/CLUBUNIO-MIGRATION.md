@@ -1,5 +1,17 @@
 # ClubUnio migration work packages
 
+## DEV: additive Alltagspakete (24.11.2026)
+
+`2026_11_24_010000_work_hub` als Owner atomar mit Ledger nur in
+`clubunio_dev` angewendet: `workspace_tasks`, `workspace_task_events`,
+`chat_mentions`, `workspace_capture_commands`. Zusammengesetzte Mandanten-
+Fremdschlüssel, verschlüsselte Aufgabeninhalte und begrenzte App-Rechte.
+Keine bestehenden Daten/Profile verändert. Verschlüsselter vollständiger
+Owner-Dump zuvor vollständig gelesen. Release `20261124-clubunio-work-hub-v2`;
+Rückweg auf persönliche Arbeitsabläufe v4, neue Tabellen/Daten dabei erhalten.
+Angemeldete Browserabnahme nach erneutem Login offen.
+[Details und Nachweise](CLUBUNIO-WORK-HUB.md).
+
 ## DEV-Browserkorrekturen: persönliche Arbeitsabläufe v4 (24.11.2026)
 
 Aktiv `20261124-clubunio-personal-workflows-v4`, keine zusätzliche Migration.

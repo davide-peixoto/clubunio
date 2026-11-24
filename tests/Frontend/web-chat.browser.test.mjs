@@ -7,12 +7,18 @@ import {createServer} from 'node:http';
 import {pathToFileURL} from 'node:url';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+import {execFileSync} from 'node:child_process';
 
 const root = new URL('../../', import.meta.url);
 const read = file => readFile(new URL(file, root), 'utf8');
 const blade = await read('resources/views/clubunio/chat/page.blade.php');
 const keys = [...blade.matchAll(/foreach \(\[([^\]]+)\]/g)].flatMap(m => [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]));
-const catalogs = Object.fromEntries(await Promise.all(['de', 'en'].map(async lang => [lang, JSON.parse(await read(`lang/${lang}.json`))])));
+const catalogs = Object.fromEntries(await Promise.all(['de', 'en'].map(async lang => {
+    const hub = JSON.parse(execFileSync(process.env.PHP_BINARY || 'php', ['-r', `echo json_encode(require 'lang/${lang}/work_hub.php', JSON_THROW_ON_ERROR);`], {cwd: new URL('../../',import.meta.url), encoding:'utf8'}));
+    return [lang, {...JSON.parse(await read(`lang/${lang}.json`)), ...Object.fromEntries(Object.entries(hub).map(([key,value])=>['work_hub.'+key,value]))}];
+})));
+// The new PHP catalogue keys are namespaced when passed to the chat client.
+for(let i=0;i<keys.length;i++)if(Object.hasOwn(catalogs.en,'work_hub.'+keys[i]))keys[i]='work_hub.'+keys[i];
 const capabilities = {view: true, send: true, upload: true, download: true, poll: true, announce: true, moderate: true, groups: true, uploads_enabled: true, ai_enabled: true};
 const context = {tenant: 1, revision: '00000000-0000-4000-8000-000000000001'};
 const preference = {revision: 0, translation_enabled: true, target_language: 'en', language_policy: {enabled: ['de', 'en'], default: 'de'}};
@@ -25,11 +31,12 @@ const screenshots = path.join(tmpdir(), 'clubunio-web-chat-frontend');
 async function fixtureHtml(locale = 'en') {
     const labels = Object.fromEntries(keys.map(k => [k, catalogs[locale][k]]));
     const config = {base: '/chat-data', context, actorId: 7, locale, languages: {de: 'Deutsch', en: 'English'}, capabilities};
-    let html = blade.slice(blade.indexOf('<section'), blade.lastIndexOf('</section>') + 10);
+    let html = blade.slice(blade.indexOf('<section'), blade.lastIndexOf('</section>') + 10).replace(/@if\(app\([\s\S]*?@endif\s*/, '');
+    html=html.replace(/<x-filament::input\s+([^]*?)\/>/g,'<input $1>');
     const escape = text => text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
     html = html.replace(/data-config="\{\{.*?\}\}"/, `data-config="${escape(JSON.stringify(config))}"`)
         .replace(/data-labels="\{\{.*?\}\}"/, `data-labels="${escape(JSON.stringify(labels))}"`)
-        .replace(/\{\{ __\('([^']+)'\) \}\}/g, (_, key) => escape(catalogs[locale][key] || key));
+        .replace(/\{\{ (?:__|trans)\('([^']+)'\) \}\}/g, (_, key) => escape(catalogs[locale][key] || key));
     for (const match of [...html.matchAll(/<x-filament::icon icon="heroicon-([^"]+)" \/>/g)]) {
         html = html.replace(match[0], await read(`vendor/blade-ui-kit/blade-heroicons/resources/svg/${match[1]}.svg`));
     }
@@ -80,7 +87,7 @@ async function setup(t, handlers = {}, options = {}) {
         } catch (error) { errors.push(error.message); await route.fulfill({status: 500, body: '{}'}); }
     });
     await page.goto(base + (options.locale === 'de' ? '/de' : '/'));
-    await page.waitForFunction(() => document.querySelector('[data-cu-chat]')?.clubunioChat?.chats.length > 0);
+    try { await page.waitForFunction(() => document.querySelector('[data-cu-chat]')?.clubunioChat?.chats.length > 0); } catch(error) { throw new Error(errors.join(' | ') || error.message); }
     t.after(() => assert.deepEqual(errors, [], 'No runtime or unexpected API errors'));
     const select = async (id = 1) => { await page.evaluate(id => document.querySelector('[data-cu-chat]').clubunioChat.select(id), id); };
     return {page, calls, select};
@@ -243,4 +250,18 @@ for (const width of [320, 390, 1280]) test(`native Chrome layout ${width}px, Ger
     }
     await page.screenshot({path: path.join(screenshots, `chat-${width}.png`), fullPage: true});
     if (width < 760) { await page.locator('[data-action=back]').click(); assert.equal(await page.locator('.cu-chat-list').isVisible(), true); await select(); assert.equal(await page.locator('[data-text]').inputValue(), 'Ein langer Entwurf bleibt im selben Chat.'); }
+});
+
+
+test('explicit mentions stay in the immutable retry payload and clear after send', async t => {
+    let attempt=0;
+    const {page,calls,select}=await setup(t,{'mention-candidates':()=>({data:[{id:9,name:'Fixture recipient'}]}),send:input=>++attempt===1?{abort:true}:{data:{...message(20),...input}}});
+    await select();await page.locator('[data-action=mention]').click();
+    await page.getByRole('button',{name:'Fixture recipient',exact:true}).click();
+    assert.match(await page.locator('[data-selection]').innerText(),/Fixture recipient/);
+    await page.locator('[data-send]').click();
+    await page.waitForFunction(()=>document.querySelector('[data-cu-chat]').clubunioChat.draft().uncertain);
+    await page.locator('[data-send]').click();await page.waitForFunction(()=>document.querySelector('[data-text]').value==='');
+    const sends=calls.filter(c=>c.op==='send');assert.equal(sends.length,2);assert.deepEqual(sends[0].input,sends[1].input);assert.deepEqual(sends[0].input.mentions,[9]);
+    assert.equal(await page.locator('[data-selection]').isVisible(),false);
 });

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 /** Session adapter, not a second chat store or an internal mobile login. */
 final class WebChatController
 {
-    private const READS = ['list', 'conversation', 'messages', 'changes', 'contacts', 'events', 'preview', 'reports', 'reactions', 'preferences', 'blocks', 'download'];
+    private const READS = ['mention-candidates', 'list', 'conversation', 'messages', 'changes', 'contacts', 'events', 'preview', 'reports', 'reactions', 'preferences', 'blocks', 'download'];
     private const WRITES = ['direct', 'send', 'read', 'mute', 'vote', 'react', 'edit', 'delete', 'report', 'resolve', 'preferences-save', 'block', 'upload', 'scan', 'attachment-remove', 'ai', 'event-chat'];
 
     public function __invoke(Request $request, string $operation)
@@ -51,7 +51,7 @@ final class WebChatController
         };
         // Conversation reads can provision membership. Serialize them like mobile;
         // downloads and deltas stay on the bounded read path.
-        $locks = !$request->isMethod('GET') || in_array($operation, ['list', 'conversation'], true);
+        $locks = !$request->isMethod('GET') || in_array($operation, ['mention-candidates', 'list', 'conversation'], true);
         $result = $locks ? DB::connection('clubunio')->transaction(function () use ($tenant, $run) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             return $run();
@@ -78,11 +78,14 @@ final class WebChatController
             case 'changes':
                 $d = $r->validate(['after' => 'required|integer|min:0']);
                 return $c->changes($a, $t, $id('chat_id'), (int)$d['after']);
+            case 'mention-candidates':
+                $d=$r->validate(['q'=>'nullable|string|max:100']);
+                return $data(app(\App\ClubUnio\Services\WorkChatMentions::class)->candidates($a,$t,$id('chat_id'),$d['q']??''));
             case 'contacts':
                 $d = $r->validate(['q' => 'nullable|string|max:120']);
                 return $data($p->contacts($a, $t, $d['q'] ?? ''));
             case 'direct': return $data(['id' => (int)$s->direct($a, $t, $id('account_id'))->id]);
-            case 'send': return $data($s->messageDto($a, $t, $s->send($a, $t, $id('chat_id'), $r->all())));
+            case 'send': return $data($s->messageDto($a, $t, app(\App\ClubUnio\Services\WorkChatMentions::class)->send($a, $t, $id('chat_id'), $r->all())));
             case 'read':
                 $d = $r->validate(['message_id' => 'required|integer|min:0']);
                 $s->read($a, $t, $id('chat_id'), (int)$d['message_id']);

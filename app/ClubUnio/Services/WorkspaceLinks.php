@@ -24,7 +24,7 @@ class WorkspaceLinks
             if ($resource::canViewAny()) $links[$key] = ['label' => $resource::getPluralModelLabel(), 'url' => $resource::getUrl(), 'icon' => 'heroicon-o-rectangle-stack'];
         }
         foreach (['planning' => TeamPlanning::class, 'bus' => BusReservations::class, 'pitch' => PitchPlanning::class,
-            'chats' => Chats::class, 'social' => SocialStudio::class, 'approvals' => ApprovalCenter::class, 'conflicts' => PlanningConflicts::class] as $key => $page) {
+            'notifications'=>\App\ClubUnio\Pages\NotificationCenter::class, 'search'=>\App\ClubUnio\Pages\ObjectSearch::class, 'tasks'=>\App\ClubUnio\Pages\TeamTasks::class, 'capture'=>\App\ClubUnio\Pages\GuidedCapture::class, 'chats' => Chats::class, 'social' => SocialStudio::class, 'approvals' => ApprovalCenter::class, 'conflicts' => PlanningConflicts::class] as $key => $page) {
             if ($page::canAccess()) $links[$key] = ['label' => $page::getNavigationLabel(), 'url' => $page::getUrl(), 'icon' => $page::getNavigationIcon()];
         }
         return $links;

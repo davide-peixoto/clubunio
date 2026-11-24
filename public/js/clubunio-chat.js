@@ -34,11 +34,11 @@ export class ClubUnioChat {
         window.addEventListener('beforeunload', this.onUnload);
         this.onNavigate = event => { if ([...this.drafts.values()].some(d => d.text || d.pending || d.attachment || d.upload || d.event || d.poll) && !window.confirm(this.t('Entwurf verwerfen?'))) event.preventDefault(); };
         document.addEventListener('livewire:navigate', this.onNavigate);
-        this.guard(async () => { try { await this.refreshList(); } finally { this.schedule(); } });
+        this.guard(async () => { try { await this.refreshList(); if (this.config.initialChatId) await this.select(this.config.initialChatId); } finally { this.schedule(); } });
     }
     t(key, params = {}) { let value = this.labels[key] || key; for (const [k, v] of Object.entries(params)) value = value.replaceAll(':' + k, String(v)); return value; }
     draft() {
-        if (!this.drafts.has(this.chat.id)) this.drafts.set(this.chat.id, {text: '', kind: 'text', attachment: null, poll: null, event: null, pending: null});
+        if (!this.drafts.has(this.chat.id)) this.drafts.set(this.chat.id, {text: '', kind: 'text', attachment: null, poll: null, event: null, mentions: [], pending: null});
         return this.drafts.get(this.chat.id);
     }
     destroy() {
@@ -274,6 +274,10 @@ export class ClubUnioChat {
             if (!this.busy && !draft.pending) selection.append(this.iconButton('delete', 'Auswahl entfernen', () => this.removeSelection()));
         } else if (draft?.event) selection.append(make('span', `${draft.event.title} · ${new Date(draft.event.starts_at).toLocaleString(this.config.locale)}`));
         else if (draft?.poll) selection.append(make('span', this.t('Umfrage')));
+        if (draft?.mentions?.length) {
+            selection.append(make('span', this.t('work_hub.mentions_selected') + ': ' + draft.mentions.map(p => p.name).join(', ')));
+            if (!this.busy && !draft.pending) { const clear = make('button', this.t('work_hub.mention_clear')); clear.type='button'; clear.addEventListener('click', () => { draft.mentions=[]; this.toolbar(); }); selection.append(clear); }
+        }
         selection.hidden = !selection.childNodes.length;
         this.status.textContent = this.loading ? this.t('Laden') : chat && !chat.can_write ? this.t('Nur Lesen') : draft?.pending ? this.t('Nachricht konnte nicht gesendet werden. Erneut versuchen verwendet dieselbe Nachrichten-ID.')
             : attachment && attachment.state !== 'clean' ? this.t(attachment.state === 'quarantine' ? 'Anhang wird geprüft' : 'Anhang abgelehnt') : '';
@@ -287,7 +291,7 @@ export class ClubUnioChat {
         if (action === 'settings') return this.settings();
         if (action === 'refresh') { await this.refreshList(); if (this.chat) await this.select(this.chat.id); return; }
         if (!this.chat || this.loading) return;
-        if (['attachment', 'camera', 'poll', 'event', 'ai', 'discard'].includes(action) && this.draft().pending) {
+        if (['mention', 'attachment', 'camera', 'poll', 'event', 'ai', 'discard'].includes(action) && this.draft().pending) {
             this.error.textContent = this.t('Bitte zuerst den ausstehenden Versand klären.'); this.error.hidden = false; return;
         }
         if (action === 'older') {
@@ -303,6 +307,7 @@ export class ClubUnioChat {
             await this.exclusive(async () => { const r = await this.api('mute', {chat_id: this.chat.id, muted: !this.chat.muted}, true); if (!this.stopped) { this.chat.muted = r.data.muted; this.toolbar(); await this.refreshList(); } });
         } else if (action === 'attachment') this.root.querySelector('[data-file]').click();
         else if (action === 'camera') this.root.querySelector('[data-camera]').click();
+        else if (action === 'mention') await this.mentionPicker();
         else if (action === 'poll') this.pollEditor();
         else if (action === 'event') await this.events();
         else if (action === 'reports') await this.reports();
@@ -323,6 +328,24 @@ export class ClubUnioChat {
     }
     submit(label = 'Speichern') { const b = make('button', this.t(label), 'cu-chat-primary'); b.type = 'submit'; return b; }
     confirm(label, callback) { const body = this.open(label); const form = make('form'); form.append(this.submit()); this.bindForm(form, async () => { await callback(); this.dialog.close(); }); body.append(form); }
+    async mentionPicker() {
+        const draft=this.draft(), chatId=this.chat.id, body=this.open('work_hub.mention'), form=make('form');
+        body.append(make('p',this.t('work_hub.mention_hint')));
+        const search=this.field(form,'work_hub.search_people','search'); search.maxLength=100;
+        form.append(this.submit('work_hub.search_people')); const results=make('ul'); body.append(form,results);
+        const version=this.dialogVersion; let sequence=0;
+        const find=async()=>{ const request=++sequence, r=await this.api('mention-candidates',{chat_id:chatId,q:search.value});
+            if(!this.dialogCurrent(version)||request!==sequence||this.chat?.id!==chatId)return; results.replaceChildren();
+            for(const person of r.data){const li=make('li'), button=make('button',person.name);button.type='button';
+                button.disabled=(draft.mentions?.length||0)>=10||draft.mentions?.some(p=>p.id===person.id);
+                button.addEventListener('click',()=>{if(!this.dialogCurrent(version)||this.chat?.id!==chatId||draft.pending)return;
+                    draft.mentions ||= []; if(draft.mentions.length>=10||draft.mentions.some(p=>p.id===person.id))return;
+                    draft.mentions.push(person); draft.text=this.text.value+(this.text.value?' ':'')+'@'+person.name+' ';this.text.value=draft.text;
+                    this.dialog.close();this.toolbar();this.text.focus();});li.append(button);results.append(li);}
+            if(!r.data.length)results.append(make('li',this.t('work_hub.no_people')));
+        };
+        form.addEventListener('submit',e=>{e.preventDefault();this.guard(find);}); await find();search.focus();
+    }
     async contacts() {
         const body = this.open('Neue Direktnachricht'); const form = make('form'); const search = this.field(form, 'Kontakt suchen', 'search'); search.maxLength = 120;
         form.append(this.submit('Kontakt suchen')); const results = make('ul'); body.append(form, results);
@@ -357,6 +380,7 @@ export class ClubUnioChat {
         }
         if (!draft.pending) {
             draft.pending = {chat_id: chat.id, client_id: uuid(), text: this.text.value, kind: chat.kind === 'announcements' ? 'announcement' : draft.kind};
+            if (draft.mentions?.length) draft.pending.mentions = draft.mentions.map(p => p.id);
             if (draft.poll) draft.pending.poll = draft.poll;
             if (draft.event) draft.pending.event_id = draft.event.id;
             if (draft.attachment) draft.pending.attachment_id = draft.attachment.id;
