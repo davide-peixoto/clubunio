@@ -42,6 +42,25 @@ class BexioSandboxDispatchService
         return app(BexioSandboxClient::class);
     }
 
+    private function reference(object $row, array $payload): string
+    {
+        $value = $payload[$row->kind === 'invoice' ? 'api_reference' : 'vendor_ref'] ?? null;
+        // Schema renaming must never change an already persisted provider marker.
+        abort_unless(is_string($value) && in_array($value, [
+            'clubora-sandbox:'.$row->reference, 'clubunio-sandbox:'.$row->reference,
+        ], true), 409, __('Sandbox-Identitaet stimmt nicht ueberein.'));
+
+        return $value;
+    }
+
+    private function fixtureRemark(array $contact, string $label): bool
+    {
+        return in_array($contact['remarks'] ?? null, [
+            'clubora-sandbox-fixture:v1:'.strtolower($label),
+            'clubunio-sandbox-fixture:v1:'.strtolower($label),
+        ], true);
+    }
+
     public function prepareTrial(Account $actor, Tenant $tenant, int $trialId): int
     {
         $this->authorize($actor, $tenant);
@@ -111,7 +130,7 @@ class BexioSandboxDispatchService
         $data = $this->client()->get($token, ($kind === 'invoice' ? '/2.0/kb_invoice/' : '/4.0/purchase/bills/').$row->remote_id);
         $payload = json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR);
         $key = $kind === 'invoice' ? 'contact_id' : 'supplier_id';
-        abort_unless(($data[$kind === 'invoice' ? 'api_reference' : 'vendor_ref'] ?? '') === 'clubora-sandbox:'.$row->reference
+        abort_unless(($data[$kind === 'invoice' ? 'api_reference' : 'vendor_ref'] ?? '') === $this->reference($row, $payload)
             && (int) ($data[$key] ?? 0) === (int) $payload[$key], 409, __('Sandbox-Identitaet stimmt nicht ueberein.'));
 
         return $data;
@@ -148,7 +167,7 @@ class BexioSandboxDispatchService
                 $data = $this->client()->get($token, ($row->kind === 'invoice' ? '/2.0/kb_invoice/' : '/4.0/purchase/bills/').$row->remote_id);
                 $payload = json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR);
                 $contactKey = $row->kind === 'invoice' ? 'contact_id' : 'supplier_id';
-                abort_unless(($data[$row->kind === 'invoice' ? 'api_reference' : 'vendor_ref'] ?? '') === 'clubora-sandbox:'.$row->reference
+                abort_unless(($data[$row->kind === 'invoice' ? 'api_reference' : 'vendor_ref'] ?? '') === $this->reference($row, $payload)
                     && (int) ($data[$contactKey] ?? 0) === (int) $payload[$contactKey], 409);
             }
         }
@@ -202,7 +221,7 @@ class BexioSandboxDispatchService
         abort_if($member->legacy_id || $member->archived_at, 409);
         $contact = $this->client()->get($token, '/2.0/contact/'.$member->bexio_contact_id);
         $label = $kind === 'invoice' ? 'Member' : 'Supplier';
-        abort_unless(($contact['remarks'] ?? '') === 'clubora-sandbox-fixture:v1:'.strtolower($label)
+        abort_unless($this->fixtureRemark($contact, $label)
             && ($contact['name_1'] ?? '') === 'Clubora Sandbox '.$label.' v1', 409, __('Kein synthetischer Sandbox-Kontakt.'));
         $reference = (string) Str::uuid();
         $payload = $this->payload($token, $kind, (int) $member->bexio_contact_id, $reference);
@@ -339,7 +358,7 @@ class BexioSandboxDispatchService
             app(BexioSandboxRecipientService::class)->assertContact(app(BexioSandboxRecipientService::class)->resolve($tenant, $this->document($row), (int) $recipient, (int) $payload['contact_id']), $contact);
         } else {
             $label = $row->kind === 'invoice' ? $this->invoiceContactLabel($tenant, (int) $payload['contact_id']) : 'Supplier';
-            abort_unless(($contact['remarks'] ?? '') === 'clubora-sandbox-fixture:v1:'.strtolower($label)
+            abort_unless($this->fixtureRemark($contact, $label)
                 && ($contact['name_1'] ?? '') === 'Clubora Sandbox '.$label.' v1', 409, __('Sandbox-Kontakt wurde geändert.'));
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id) {
@@ -445,7 +464,7 @@ class BexioSandboxDispatchService
         $this->client()->verify($token);
         $remoteId = $row->remote_id;
         if (! $remoteId) {
-            $marker = 'clubora-sandbox:'.$row->reference;
+            $marker = $this->reference($row, json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR));
             $result = $this->client()->get($token, $row->kind === 'invoice' ? '/2.0/kb_invoice' : '/4.0/purchase/bills',
                 $row->kind === 'invoice' ? ['limit' => 500] : ['limit' => 500, 'vendor_ref' => $marker]);
             $items = $row->kind === 'invoice' ? $result : ($result['data'] ?? []);
@@ -465,7 +484,7 @@ class BexioSandboxDispatchService
         $payload = json_decode($row->payload, true, 512, JSON_THROW_ON_ERROR);
         $invoice = $row->kind === 'invoice';
         abort_unless((string) ($remote['id'] ?? '') === $remoteId
-            && ($remote[$invoice ? 'api_reference' : 'vendor_ref'] ?? '') === 'clubora-sandbox:'.$row->reference
+            && ($remote[$invoice ? 'api_reference' : 'vendor_ref'] ?? '') === $this->reference($row, $payload)
             && (int) ($remote[$invoice ? 'contact_id' : 'supplier_id'] ?? 0) === (int) $payload[$invoice ? 'contact_id' : 'supplier_id']
             && (float) ($remote[$invoice ? 'total' : 'amount_calc'] ?? -1) === ($row->expected_cents !== null ? (float) ($row->expected_cents / 100) : ($invoice ? 25.0 : 15.0))
             && (string) ($remote[$invoice ? 'kb_item_status_id' : 'status'] ?? '') === ($invoice ? '7' : 'DRAFT'), 409, __('Remote-Testbeleg stimmt nicht überein.'));

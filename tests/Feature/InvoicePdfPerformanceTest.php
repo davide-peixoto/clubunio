@@ -65,7 +65,13 @@ class InvoicePdfPerformanceTest extends TestCase
         foreach (['members', 'seasons', 'invoice_lines', 'invoice_workflow_statuses'] as $table) {
             $this->assertStringNotContainsString('from "clubora"."'.$table.'"', $sql);
         }
-        $this->assertLessThanOrEqual(2, count($this->db->getQueryLog()));
+        // Module access and profile download policy each re-read membership, never display relations.
+        $queries = $this->db->getQueryLog();
+        $this->assertLessThanOrEqual(3, count($queries));
+        $authorization = array_filter($queries, fn ($query) => ! str_contains($query['query'], 'from "clubora"."invoices"'));
+        foreach ($authorization as $query) {
+            $this->assertStringContainsString('"tenant_accounts"', $query['query']);
+        }
         $this->db->flushQueryLog();
         $download = $service->open($this->actor, $this->tenant, $this->invoice->id, true, true);
         $this->assertSame($response->getContent(), $download->getContent());

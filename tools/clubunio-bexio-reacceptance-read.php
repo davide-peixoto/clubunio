@@ -87,7 +87,11 @@ try {
             $failures[] = ['phase' => $phase, 'exception' => get_class($error), 'code' => (int) $error->getCode()];
         }
     }
-    foreach ($rows->where('kind', 'expense') as $row) {
+    $expenseCases = $rows->where('kind', 'expense')->whereIn('remote_id', [
+        '7b605483-9abb-4e9f-a5d8-86b7348886aa', 'ebb98b7c-ac67-4ce0-bda4-b0e598c8a708',
+    ]);
+    if ($expenseCases->count() !== 2) { throw new LogicException('Historical expense fixtures missing'); }
+    foreach ($expenseCases as $row) {
         $phase = 'expense_'.$row->expense_id;
         try {
             $remote = app(BexioSandboxDispatchService::class)->readStatus($actor, $tenant, 'expense', $row->expense_id);

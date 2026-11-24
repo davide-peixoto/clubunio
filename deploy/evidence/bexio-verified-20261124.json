@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-24",
+  "scope": "ClubUnio Bexio sandbox and guarded runtime rollout",
+  "postgresql_qa": {
+    "version": "16.15",
+    "feature_tests": 223,
+    "assertions": 1344,
+    "passed": true,
+    "remaining_synthetic_tenants": 0,
+    "private_connection_removed": true
+  },
+  "local_mail_tax_reference_tests": {"tests": 21, "assertions": 167, "passed": true},
+  "live_dev_sandbox": {
+    "company": "SVS Api Test",
+    "profile": 1,
+    "paid_invoice": {"local_id": 11175, "provider_id": 18, "amount_cents": 1235, "remaining_cents": 0},
+    "cancelled_invoice": {"local_id": 11176, "provider_id": 19, "status": 19},
+    "expense": {"local_id": 2448, "amount_cents": 1235, "provider_status": "PAID", "local_status": "B", "paid_events": 1},
+    "outgoing_payment_type": "MANUAL",
+    "banking_payment_created": false,
+    "repeated_transfer_kept_ids": true,
+    "historical_credit_and_balance_checks_passed": true,
+    "historical_business_fingerprints_unchanged": true,
+    "new_invoice_pdfs_passed": true
+  },
+  "runtime_guards": {"dev": 18, "stage": 18, "prod": 18, "provider": "fake", "rollback": true},
+  "stage_login_http": 302,
+  "prod_login_http": 302,
+  "stage_prod_dispatch_sha256": "f0489e0e4d8411a7864091594907f70621bd650e838045e4092bc5a2610787e8",
+  "stage_bexio_configuration": "missing_client_configuration_401",
+  "prod_bexio_configuration": "missing_client_configuration_401",
+  "workflow_mail_rollout": "DEV only; awaiting user confirmation of corrected UTF-8 mail",
+  "real_member_mail": false,
+  "real_bank_payments": false,
+  "new_scheduler_enabled": false
+}

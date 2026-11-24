@@ -1,5 +1,9 @@
 # Bexio/Finanzen: aktueller Abnahmestand
 
+Neuere Vollregression und neue Sandbox-Fachablaeufe samt Stage-/PROD-Code-Rollout:
+[Bexio-Abnahme24.11.2026](CLUBUNIO-BEXIO-VERIFIED-20261124.md).
+Echte Stage-/PROD-Providerabnahme benoetigt weiterhin deren eigene Clientkonfiguration.
+
 ## Wiederaufnahme24.11.2026 nach Sandbox-Verlaengerung
 
 Sandbox SVS Api Test erneut im Browser und aus aktuellem ClubUnio DEV geprueft.

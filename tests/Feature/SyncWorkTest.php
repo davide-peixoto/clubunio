@@ -256,7 +256,7 @@ class SyncWorkTest extends TestCase
     {
         $service = app(SyncWorkService::class);
         $id = $service->remember($this->actor, $this->tenant, 'catalog', 1, []);
-        $other = Tenant::create(['slug' => 'history-other-'.Str::random(10), 'name' => 'Synthetic']);
+        $other = Tenant::create(['accounting_provider' => 'bexio', 'slug' => 'history-other-'.Str::random(10), 'name' => 'Synthetic']);
         $this->db->table('clubora.tenant_accounts')->insert(['tenant_id' => $other->id, 'account_id' => $this->actor->id, 'role' => 'admin']);
         $foreign = $service->remember($this->actor, $other, 'catalog', 2, []);
         Livewire::test(Synchronisation::class)->call('showHistory', $foreign)->assertNotFound();
