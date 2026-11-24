@@ -128,7 +128,7 @@ export default function FacilityPlanner({ data, invoke }) {
         </button>;
     };
     return <div className="cu-facility" aria-busy={busy}>
-        <div className="cu-facility-overview">{[[t.bookings, unique.length], [t.pending, unique.filter(e => e.status === 'pending').length], [t.conflicts, unique.filter(e => e.conflicts > 0).length]].map(([label, value]) => <div key={label}><small>{label}</small><strong>{value}</strong></div>)}</div>
+        <div className="cu-facility-overview">{(data.overview || [[t.bookings, unique.length], [t.pending, unique.filter(e => e.status === 'pending').length], [t.conflicts, unique.filter(e => e.conflicts > 0).length]]).map(([label, value]) => <div key={label}><small>{label}</small><strong>{value}</strong></div>)}</div>
         <div className="cu-facility-filters">
             <label>{t.facility}<select value={effectiveField} onChange={e => { cancel(); setField(e.target.value); }}>{mode !== 'week' && <option value="all">{t.all_facilities}</option>}{fields.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
             <label>{t.source}<select value={source} onChange={e => { cancel(); setSource(e.target.value); }}><option value="all">{t.all_sources}</option>{Object.entries(sources).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>

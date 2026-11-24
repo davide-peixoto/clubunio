@@ -55,7 +55,7 @@ final class VeoRecordingPlan
         $setting->insertOrIgnore(['tenant_id' => $tenant->id, 'team_season_id' => $teamSeasonId]);
     }
 
-    /** Read-only plan, recalculated from current SFV and pitch data without sending camera commands. */
+    /** Projection only: recording adjustments never change fixtures or send camera commands. */
     public function entries(Tenant $tenant, string $from, string $to): array
     {
         Validator::make(compact('from', 'to'), [
@@ -65,9 +65,12 @@ final class VeoRecordingPlan
         $toDate = Time::createFromFormat('!Y-m-d', $to, self::TIMEZONE);
         abort_if($fromDate->diffInDays($toDate) > 31, 422);
 
-        $matches = $this->projection->table('sfv_schedule', $tenant)->whereBetween('starts_at', [
+        $adjustedIds = $this->projection->table('veo_recording_adjustments', $tenant)
+            ->where('starts_at', '<', $toDate->addDay()->toIso8601String())
+            ->where('ends_at', '>', $fromDate->toIso8601String())->pluck('match_id');
+        $matches = $this->projection->table('sfv_schedule', $tenant)->where(fn ($query) => $query->whereBetween('starts_at', [
             $fromDate->subDays(2)->toIso8601String(), $toDate->addDays(3)->toIso8601String(),
-        ])->orderBy('starts_at')->orderBy('match_id')->get();
+        ])->orWhereIn('match_id', $adjustedIds))->orderBy('starts_at')->orderBy('match_id')->get();
         $enabled = $this->enabledTeams($tenant);
         if ($matches->isEmpty() || $enabled->isEmpty()) {
             return [];
@@ -84,6 +87,8 @@ final class VeoRecordingPlan
         $fields = $this->projection->table('training_options', $tenant)
             ->where('category', 'field')->where('active', true)->pluck('id')->flip();
         $cameras = $this->cameras($tenant);
+        $adjustments = $this->projection->table('veo_recording_adjustments', $tenant)
+            ->whereIn('match_id', $matches->pluck('match_id'))->get()->keyBy('match_id');
 
         $entries = [];
         foreach ($matches as $match) {
@@ -112,7 +117,7 @@ final class VeoRecordingPlan
                 && substr((string) $competition->starts_at, 0, 8) === $startsAt->format('H:i:s')
                 && $fields->has($competition->field_id) ? (int) $competition->field_id : null;
             $camera = $cameras->get($fieldId);
-            $entries[] = [
+            $entry = [
                 'match_id' => (int) $match->match_id,
                 'title' => $match->title,
                 'starts_at' => $startsAt,
@@ -125,13 +130,31 @@ final class VeoRecordingPlan
                     default => 'planned',
                 },
             ];
+            $entry['fixture_starts_at'] = $startsAt;
+            $entry['basis_hash'] = hash('sha256', json_encode([
+                $match->starts_at, $match->state, $competition?->id, $competition?->plays_on,
+                $competition?->starts_at, $fieldId, $setting?->duration_minutes, $camera?->name,
+            ], JSON_THROW_ON_ERROR));
+            $adjustment = $adjustments->get($match->match_id);
+            $entry['revision'] = hash('sha256', $entry['basis_hash'].'|'.json_encode($adjustment, JSON_THROW_ON_ERROR));
+            $entry['adjusted'] = $adjustment !== null;
+            if ($adjustment && hash_equals($entry['basis_hash'], $adjustment->basis_hash)) {
+                $entry['starts_at'] = Time::parse($adjustment->starts_at)->tz(self::TIMEZONE);
+                $entry['ends_at'] = Time::parse($adjustment->ends_at)->tz(self::TIMEZONE);
+                $entry['field_id'] = (int) $adjustment->field_id;
+                $entry['camera'] = $fields->has($adjustment->field_id) ? $cameras->get($adjustment->field_id)?->name : null;
+                $entry['status'] = $entry['camera'] === null ? 'no_camera' : 'planned';
+            } elseif ($adjustment) {
+                $entry['status'] = 'needs_review';
+            }
+            $entries[] = $entry;
         }
 
         usort($entries, fn ($a, $b) => [$a['starts_at'], $a['match_id']] <=> [$b['starts_at'], $b['match_id']]);
         $conflicts = $this->conflicts($entries);
 
-        return collect($entries)->filter(fn ($entry) => $entry['starts_at']->toDateString() >= $from
-            && $entry['starts_at']->toDateString() <= $to)
+        return collect($entries)->filter(fn ($entry) => $entry['ends_at']->gt($fromDate)
+            && $entry['starts_at']->lt($toDate->addDay()))
             ->map(fn ($entry) => isset($conflicts[$entry['match_id']])
                 ? array_replace($entry, ['status' => 'conflict']) : $entry)->values()->all();
     }

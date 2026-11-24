@@ -1,5 +1,62 @@
 # Veo-Aufnahmeplanung
 
+## Kalender und Vereinsdesign – 24.11.2026
+
+DEV verwendet die gemeinsame Kalenderoberfläche der Platzplanung: Tag/Woche/Monat,
+Zeitraster/Agenda, Platz-/Kamera- und Statusfilter, Drag-and-drop mit Vorschau im
+Bestätigungsdialog. Mobil öffnet die Agenda; Zeiten, Dauer und Kamera lassen sich
+ohne Ziehen ändern. Kamera- und Mannschaftseinstellungen sind einklappbar.
+Die bisherige Zugriffsprüfung bleibt erhalten: Admin/Geschäftsstelle mit
+Wettkampf-Änderungsrecht, keine Schreibaktionen während einer Simulation.
+
+**Fachliche Abgrenzung:** Verschoben wird ausschliesslich das Aufnahmefenster.
+SFV-Spiel, Mannschaftskalender und Platzbelegung bleiben unverändert. Keine
+Kamerasteuerung, kein Versand und keine zusätzlichen externen API-Aufrufe.
+Aufnahmen sind maximal sieben Tage vom Spieltermin entfernt und 15–360 Minuten
+lang. Überschneidungen auf derselben Kamera sowie fremde/inaktive Plätze werden
+beim Speichern serverseitig abgewiesen. Die bestehende feste Kamera-je-Platz-
+Zuordnung bleibt massgeblich; dies ist keine Verwaltung frei beweglicher Kameras.
+
+Zwischenzeitliche Änderungen werden über einen Fingerabdruck der SFV-/Platzbasis
+und der Aufnahmeversion erkannt. Geänderte Basisdaten setzen manuelle Planung auf
+„Erneut prüfen“; sie werden nicht still weiterverwendet. Rücksetzen auf den
+automatischen Plan ist ebenfalls protokolliert. Audit unter `veo_recording`.
+
+### Migration und Rückweg
+
+Additive Migration `2026_11_24_020000_veo_recording_adjustments`: eigene Tabelle
+`veo_recording_adjustments`, Primärschlüssel `(tenant_id,match_id)`, zusammengesetzte
+Fremdschlüssel für Spiel/Platz/Benutzer, Zeitfensterindex und kein PUBLIC-Zugriff.
+Bestehende Spiele und Einstellungen werden nicht umgeschrieben. Bei späteren
+Mandantenimporten zuerst SFV-Spiele, Plätze und Benutzer über ihre Legacy-Zuordnung
+migrieren; manuelle Aufnahmeplanung nur anhand dieser aufgelösten Verknüpfungen
+übernehmen, niemals numerische IDs zwischen Mandanten kopieren. Der Basis-Hash ist
+zielabhängig und muss nach Import neu bestätigt werden.
+
+Nur `clubunio_dev` aktualisiert, Stage/PROD unverändert. Vorab verschlüsselte
+Vollsicherung auf dem VPS, vollständig lesbar geprüft (SQL nur nach `/dev/null`,
+keine Wiederherstellung ausgeführt):
+`/root/clubunio-releases/veo-calendar-20261124/dev.dump.enc`.
+Schlüssel bleibt separat im selben privaten Verzeichnis, niemals im Git.
+`deploy/emit-veo-calendar-migration.php` erzeugt ausschliesslich DEV-SQL mit
+Datenbank-/Owner-Prüfung; die Anwendung erhält nur DML für die neue Tabelle.
+
+DEV-Release `20261124-clubunio-veo-calendar-v4`, auf Basis des aktiven Releases.
+Die Schema-Abbildung `clubora` → `clubunio` erfolgt vor Aktivierung; Konfiguration,
+Composer und privater Storage bleiben erhalten. Fachlicher Rückweg auf
+`20261124-clubunio-daily-v2` über den atomaren `current`-Symlink und FPM-Reload.
+Die additive Tabelle und ihr Audit dabei erhalten, keine Datenrücksetzung.
+Der alte Plan ignoriert manuelle Aufnahmefenster, daher Rückweg fachlich abstimmen.
+
+### Prüfstand
+
+49 lokale PHP-Tests / 277 Assertions erfolgreich; ein separater externer DB-Test
+ohne Opt-in übersprungen. Drei JavaScript-Layouttests erfolgreich. DE/EN-Kataloge
+geprüft. Native PostgreSQL-Prüfung auf DEV: Speichern, Revisionsschutz, Rücksetzen,
+unveränderte Spielzeit und Audit sowie DE/EN-Seitenrendering erfolgreich; alle
+synthetischen Daten in einer Transaktion zurückgerollt.
+Angemeldete Desktop-/Mobile-Sichtprüfung noch offen: Browser-Sitzung abgelaufen.
+
 Die Filament-Seite **Veo-Aufnahmeplanung** ist unter **Anlagen & Kommunikation** für Vereinsadmins und die Geschäftsstelle mit Änderungsrecht für Wettkämpfe verfügbar. Benutzer wechseln in den gewünschten Verein, hinterlegen je Platz den Namen der fest montierten Kamera und aktivieren Aufnahmen je Mannschaft der aktuellen Saison. Die Einstellungen gelten für den gewählten Verein.
 
 ClubUnio berechnet den Wochenplan bei jedem Aufruf aus den vorhandenen SFV-Spielen und der ClubUnio-Platzzuteilung. Bei einer neuen Anspielzeit bleibt die Aufnahme offen, bis eine passende Platzzuteilung vorliegt. Ein bestätigter Platzwechsel führt zur Kamera des neuen Platzes. Fehlende Kameras und überlappende Aufnahmefenster erscheinen im Plan. Absagen entfallen. Die Mannschaftsfreigabe gilt je Saisonzuordnung.

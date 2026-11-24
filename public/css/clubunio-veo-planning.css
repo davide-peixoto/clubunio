@@ -1,0 +1,15 @@
+.cu-veo-planner .cu-facility-entry.status-planned { border-inline-start-color:#15803d; }
+.cu-veo-planner .cu-facility-entry.status-unplaced,
+.cu-veo-planner .cu-facility-entry.status-no_camera,
+.cu-veo-planner .cu-facility-entry.status-needs_review { border-inline-start-color:#b45309; }
+.cu-veo-planner .cu-facility-entry.status-conflict { border-inline-start-color:#be123c; }
+.cu-veo-fallback { display:grid; gap:8px; }
+.cu-veo-fallback button { display:grid; gap:4px; padding:12px; text-align:start; border:1px solid var(--cu-border,#dfe5ed); border-radius:8px; background:var(--cu-surface,#fff); color:inherit; }
+.cu-veo-fallback time,.cu-veo-fallback span { font-size:14px; }
+.cu-veo-settings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.cu-veo-settings h2 { margin-bottom:12px; font-size:16px; font-weight:600; }
+.cu-veo-settings form { display:grid; grid-template-columns:minmax(80px,1fr) minmax(100px,2fr) 36px; align-items:center; gap:8px; padding-block:8px; border-bottom:1px solid var(--cu-border,#dfe5ed); }
+.cu-veo-settings label { overflow-wrap:anywhere; }
+.cu-veo-team { display:flex; align-items:center; gap:12px; min-height:44px; border-bottom:1px solid var(--cu-border,#dfe5ed); }
+.cu-veo-team input { accent-color:var(--cu-brand-color,#164b8a); }
+@media(max-width:640px) { .cu-veo-settings { grid-template-columns:minmax(0,1fr); } .cu-veo-settings form { grid-template-columns:minmax(70px,1fr) minmax(80px,2fr) 32px; } }
