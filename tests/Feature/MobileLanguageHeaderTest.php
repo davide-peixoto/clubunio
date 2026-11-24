@@ -13,7 +13,13 @@ class MobileLanguageHeaderTest extends TestCase
         foreach (config('clubunio-languages.enabled') as $locale => $name) {
             app()->setLocale($locale);
             $dom = new DOMDocument;
-            $dom->loadHTML('<?xml encoding="UTF-8">'.view('clubunio.language-switcher')->render());
+            $previous = libxml_use_internal_errors(true);
+            try {
+                $dom->loadHTML('<?xml encoding="UTF-8">'.view('clubunio.language-switcher')->render());
+            } finally {
+                libxml_clear_errors();
+                libxml_use_internal_errors($previous);
+            }
             $xpath = new DOMXPath($dom);
             $form = $xpath->query('//form')->item(0);
             $select = $xpath->query('//select')->item(0);
@@ -36,6 +42,9 @@ class MobileLanguageHeaderTest extends TestCase
             }
             $this->assertSame(config('clubunio-languages.enabled'), $options);
             $this->assertSame(0, $xpath->query('//button')->length);
+            $this->assertSame(1, $xpath->query('//span[@class="cu-language-switcher-control"]/select')->length);
+            $this->assertSame(2, $xpath->query('//*[local-name()="svg" and @aria-hidden="true"]')->length);
+            $this->assertSame(1, $xpath->query('//link[contains(@href, "/css/clubunio-language-switcher.css?v=1")]')->length);
         }
     }
 
@@ -45,7 +54,7 @@ class MobileLanguageHeaderTest extends TestCase
             $this->withSession(['clubunio.locale' => $locale])->get('/login')
                 ->assertOk()->assertHeader('Content-Language', $locale)
                 ->assertSee('class="cu-language-switcher"', false)
-                ->assertSee('/css/svs.css?v=language-header-v3', false)
+                ->assertSee('/css/svs.css?v=language-header-v4', false)
                 ->assertSee('onchange="this.form.requestSubmit()"', false);
         }
     }

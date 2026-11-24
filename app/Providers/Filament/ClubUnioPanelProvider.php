@@ -132,7 +132,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.react-navigation'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
-            ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=language-header-v3" rel="stylesheet" data-navigate-track />')])
+            ->assets([Css::make('clubunio', public_path('css/svs.css'))->html('<link href="/css/svs.css?v=language-header-v4" rel="stylesheet" data-navigate-track />')])
             ->tenant(Tenant::class, slugAttribute: 'slug', ownershipRelationship: 'tenant')
             ->tenantMenu(false)
             ->tenantMiddleware([UseActiveTenant::class], isPersistent: true)
