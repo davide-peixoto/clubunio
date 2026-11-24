@@ -127,3 +127,39 @@ Die zuvor offene Browser-Sichtprüfung ist damit für Chrome/Desktop und
 simulierte Handybreiten abgeschlossen; physische Geräte bleiben separat.
 Prüfbilder liegen ausserhalb des Repositorys im chatbezogenen
 `dashboard-browser-check`-Verzeichnis (Desktop, Diagramme, Handyansicht).
+
+## Einzelne Begrüssung und Animationen – 24.11.2026
+
+Im Glasdesign entfällt der zusätzliche Filament-Seitenkopf. Der Hero enthält
+jetzt genau eine h1-Begrüssung; der klassische Seitenkopf bleibt erhalten.
+
+Animationen: wortweiser Titelaufbau, Einblenden der Glasfläche, gestaffeltes
+Einblenden sichtbarer Karten, hochzählende Kennzahlen als rein visuelle
+Überlagerung, aufbauende Balken und Ringgrafiken sowie Hoverreaktionen.
+Datenattribute und Originalwerte bleiben unverändert. Kein Dauerloop.
+
+Der vorhandene Browser meldete prefers-reduced-motion: reduce. Deshalb
+bleiben Effekte beim ersten Aufruf in diesem Browser zunächst aus. Der
+neue DE/EN-Schalter Animationen/Animations erlaubt eine explizite lokale
+Entscheidung, unabhängig von der Systemeinstellung. Die Wahl wird im Browser
+unter clubunio.dashboard.motion gespeichert. Für den Benutzer wurden die
+Animationen über diesen Schalter ausdrücklich eingeschaltet. Das Ausschalten
+unterdrückt CSS-Effekte und beendet laufende Webanimationen; ohne React-Bundle
+bleiben Begrüssung, Daten und klassischer Designwechsel verfügbar.
+
+DEV aktuell: 20261124-clubunio-dashboard-motion-v2; Einführung in zwei
+begrenzten Schritten über 20261124-clubunio-dashboard-motion. Vollständiger
+Rückweg auf 20261123-clubunio-dashboard-ci-v42 möglich. ENV, Composer,
+Datenbank, Fachlogik, Stage und PROD unverändert.
+
+17 Dashboardtests/69 Assertions grün, inklusive genau einer h1-Begrüssung,
+klassischem Header und bisherigen Rechtechecks. Neun React-Diagramm-
+SSR-Szenarien und DE/EN-Sprachprüfung erfolgreich. DEV rendert beide Designs
+und alle berechtigten Diagramme in DE/EN in einer Nur-Lesen-Transaktion.
+
+Browserprüfung: genau eine h1, CSS-Titelanimation und transformierter
+Wortaufbau nach dem Einschalten nachgewiesen; sieben gleichzeitig zählende
+Kennzahlüberlagerungen beobachtet. Ausgeschaltet war animationName=none,
+nach Einschalten cu-word-enter. Wahl bleibt beim Neuladen gespeichert.
+390-Pixel-Ansicht ohne horizontalen Überlauf geprüft; Browsergrösse am Ende
+zurückgesetzt. Handy-Prüfbild mobile-motion.jpg ausserhalb des Repositorys.

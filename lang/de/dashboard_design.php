@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'motion' => 'Animationen',
     'empty' => 'Keine Daten vorhanden.',
     'details' => 'Daten anzeigen',
     'total' => 'Gesamt',

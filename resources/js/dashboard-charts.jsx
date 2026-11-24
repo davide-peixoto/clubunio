@@ -1,4 +1,5 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useState, useEffect, useRef } from 'react';
+import { enterChart } from './dashboard-motion';
 
 const color = (i, count) => `color-mix(in srgb, var(--cu-brand) ${Math.round(100 - (i / Math.max(1, count - 1)) * 68)}%, var(--cu-chart-surface))`;
 const valueOf = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
@@ -6,6 +7,8 @@ const valueOf = (v) => Number.isFinite(Number(v)) ? Number(v) : 0;
 export default function TemplateChart({ heading, type, data, locale, empty, total }) {
     const [active, select] = useState(null);
     const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+    const chart = useRef(null);
+    useEffect(() => enterChart(chart.current), [data]);
     const labels = data.labels || [];
     const datasets = data.datasets || [];
     const format = (n) => new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(n);
@@ -21,7 +24,7 @@ export default function TemplateChart({ heading, type, data, locale, empty, tota
     const selected = active === null ? null : labels[active];
     const detail = selected === null ? heading : `${selected}: ${datasets.map(s => `${s.label} ${format(valueOf(s.data[active]))}`).join(' · ')}`;
     let offset = 0;
-    return <div className={`cu-v42-chart ${donut ? 'cu-v42-donut' : ''}`}>
+    return <div ref={chart} className={`cu-v42-chart ${donut ? 'cu-v42-donut' : ''}`}>
         {donut ? <div className="cu-v42-ring" role="img" aria-label={detail}>
             <svg viewBox="0 0 200 200" aria-hidden="true">
                 <circle cx="100" cy="100" r="76" fill="none" stroke="var(--cu-chart-grid)" strokeWidth="17" />

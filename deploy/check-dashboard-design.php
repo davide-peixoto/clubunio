@@ -25,6 +25,7 @@ try {
         if (! str_contains($html, 'data-cu-dashboard-hero') || ! str_contains($html, e(trans('dashboard_design.classic')))) {
             throw new LogicException('Glass render failed');
         }
+        if (substr_count($html, '<h1') !== 1) { throw new LogicException('Expected a single greeting heading'); }
         foreach ($widgets as $widget) {
             if (! is_string($widget) || ! is_subclass_of($widget, Filament\Widgets\ChartWidget::class) || ! $widget::canView()) {
                 continue;

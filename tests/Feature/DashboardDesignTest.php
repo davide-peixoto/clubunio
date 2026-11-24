@@ -40,6 +40,17 @@ class DashboardDesignTest extends TestCase
         $this->assertTrue(app(DashboardDesignHarness::class)->glassSelected());
     }
 
+    public function test_glass_has_one_greeting_heading_and_classic_keeps_original_header(): void
+    {
+        $glass = Livewire::test(DashboardDesignHarness::class)->html();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="UTF-8">'.$glass);
+        $this->assertSame(1, $dom->getElementsByTagName('h1')->length);
+        $this->assertSame('Synthetic heading', trim($dom->getElementsByTagName('h1')->item(0)->textContent));
+        session()->put('clubunio.dashboard.design.701', 'classic');
+        $this->assertNull(app(DashboardDesignHarness::class)->getHeader());
+    }
+
     public function test_preference_is_scoped_to_account(): void
     {
         session()->put('clubunio.dashboard.design.701', 'classic');

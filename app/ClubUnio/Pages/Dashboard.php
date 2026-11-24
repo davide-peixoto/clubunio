@@ -7,6 +7,11 @@ use Illuminate\Support\Str;
 
 class Dashboard extends \Filament\Pages\Dashboard
 {
+    public function getHeader(): ?\Illuminate\Contracts\View\View
+    {
+        return $this->glassSelected() ? view('clubunio.pages.dashboard-header') : parent::getHeader();
+    }
+
     public function glassAvailable(): bool
     {
         return (bool) config('clubunio-dashboard.enabled', false)

@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV-Dashboard: Begrüssung und Animationen – 24.11.2026
+
+Doppelte Begrüssung entfernt; V42-inspirierte Titel-, Karten-, Kennzahl- und
+Diagrammanimationen ergänzt. Eigener DE/EN-Animationsschalter berücksichtigt
+die beim ersten Aufruf geltende Bewegungseinstellung. DEV und Browserprüfung
+erfolgreich; klassischer Rückweg bleibt erhalten.
+[Abnahme und Migrationsstand](CLUBUNIO-DASHBOARD-DESIGN.md).
+
 ## DEV-Dashboard: CI und V42-Grafiken – 23.11.2026
 
 ClubUnio-Blau/Hellblau und neue React-Balken-/Donutdiagramme auf DEV aktiv.
