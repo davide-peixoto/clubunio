@@ -150,8 +150,10 @@ Der isolierte lokale OTP-Oberflächentest prüfte sechs und acht sichtbare Ziffe
 sowie die unveränderte native POST-Übermittlung eines synthetischen achtstelligen
 Codes. Dieser Test ersetzt keine erfolgreiche Keycloak-MFA-Anmeldung.
 
-Die echte OTP-Seite und die Anmeldung bis ins Vereinsportal bleiben bis zur
-Benutzeranmeldung offen. Social-Login-E2E hängt von den Anbieterregistrierungen
+Die echte OTP-Seite wurde nach Benutzeranmeldung ebenfalls aufgerufen: sechs
+Paneele, ein natives POST-Eingabefeld, Autocomplete und Tastatur-Sprachwechsel
+best�tigt. Der deutsche OTP-Text wurde dabei ausdr�cklich als `Einmalcode`
+erg�nzt. Die erfolgreiche Codepr�fung bis ins Vereinsportal bleibt offen. Social-Login-E2E hängt von den Anbieterregistrierungen
 und dem geprüften Broker-/MFA-Pfad ab. Die SSO-Umstellung ist als eigener
 Authentifizierungsrelease offen. Stage-/PROD-Client-Theme und Authentifizierungs-
 regeln wurden nicht geändert. Kein DB-Schema und keine Fachmigration erforderlich.

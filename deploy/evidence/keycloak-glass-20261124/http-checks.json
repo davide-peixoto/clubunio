@@ -38,7 +38,7 @@
     }
   ],
   "otp_fixture_native_post": "12345678 submitted unchanged",
-  "live_otp_authentication": "pending user login",
+  "live_otp_authentication": "live OTP form reached; six panes and native POST/autocomplete verified; successful MFA still pending",
   "social_login": "not activated; provider registrations missing",
   "sso": "diagnosed; authentication policy unchanged"
 }
