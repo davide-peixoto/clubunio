@@ -16,6 +16,8 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInvoices extends ListRecords
 {
+    use \App\ClubUnio\Resources\Concerns\HasModuleOverview;
+
     use HasSavedViews { getHeaderActions as protected savedHeaderActions; }
 
     protected static string $resource = InvoiceResource::class;

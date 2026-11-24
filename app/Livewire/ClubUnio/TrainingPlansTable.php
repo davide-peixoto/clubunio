@@ -33,6 +33,8 @@ class TrainingPlansTable extends PlanningAdminTable
         [$actor, $tenant] = $this->context();
         $teams = app(TrainingPlanService::class)->teams($actor, $tenant);
 
+        $modern = app(\App\ClubUnio\Services\ReactUi::class)->enabled((int) $tenant->id);
+
         return $table
             ->records(function (?string $search, ?array $filters, ?string $sortColumn, ?string $sortDirection, int|string $page, int|string $recordsPerPage) {
                 [$actor, $tenant] = $this->context();
@@ -50,15 +52,8 @@ class TrainingPlansTable extends PlanningAdminTable
 
                 return $this->recordsPage($query, $page, $recordsPerPage);
             })
-            ->columns([
-                TextColumn::make('title')->label('Training')->searchable()->sortable()
-                    ->url(fn (array $record) => route('clubunio.training.show', [$tenant->slug, $record['id']])),
-                TextColumn::make('team_season_id')->label('Mannschaft')->formatStateUsing(fn ($state) => $teams->firstWhere('id', $state)?->label),
-                TextColumn::make('shared')->label('Freigabe')->badge()->sortable()
-                    ->color(fn ($state) => StatusAppearance::palette($state ? 'Teamverantwortliche' : 'Privat'))
-                    ->formatStateUsing(fn ($state) => $state ? __('Teamverantwortliche') : __('Privat')),
-                TextColumn::make('updated_at')->label('Geändert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
-            ])
+            ->contentGrid($modern ? ['md' => 2, 'xl' => 3] : null)
+            ->columns($modern ? [\Filament\Tables\Columns\Layout\Stack::make($this->planColumns($teams, $tenant))->space(3)] : $this->planColumns($teams, $tenant))
             ->filters([
                 SelectFilter::make('team')->label('Mannschaft')->searchable()->options($teams->pluck('label', 'id')->all()),
                 SelectFilter::make('archived')->label('Bestand')->options(['0' => __('Aktuell'), '1' => __('Archiv')])->default('0')->selectablePlaceholder(false),
@@ -74,4 +69,17 @@ class TrainingPlansTable extends PlanningAdminTable
             ->modelLabel(__('Trainingsplan'))->pluralModelLabel(__('Trainingspläne'))
             ->emptyStateHeading(__('Keine Trainingspläne vorhanden.'))->emptyStateDescription(null);
     }
+    private function planColumns($teams, Tenant $tenant): array
+    {
+        return [
+                TextColumn::make('title')->label('Training')->searchable()->sortable()
+                    ->url(fn (array $record) => route('clubunio.training.show', [$tenant->slug, $record['id']])),
+                TextColumn::make('team_season_id')->label('Mannschaft')->formatStateUsing(fn ($state) => $teams->firstWhere('id', $state)?->label),
+                TextColumn::make('shared')->label('Freigabe')->badge()->sortable()
+                    ->color(fn ($state) => StatusAppearance::palette($state ? 'Teamverantwortliche' : 'Privat'))
+                    ->formatStateUsing(fn ($state) => $state ? __('Teamverantwortliche') : __('Privat')),
+                TextColumn::make('updated_at')->label('Geändert')->dateTime('d.m.Y H:i', 'Europe/Zurich')->sortable(),
+        ];
+    }
+
 }

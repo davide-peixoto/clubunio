@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV-Release: sechs Modulpakete (24.11.2026)
+
+Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-module-workspaces-v1`.
+Vorher: `20261124-clubunio-backend-theme-v5`. Bestehende `.env`, Composer-Lock,
+Storage und DEV-Schema `clubunio` erhalten; keine Migration. PHP-FPM aktiv.
+48 serverseitige DE/EN-/React-an/aus-Renders plus zwölf zurückgerollte
+Fixture-Renders, Browser- und lokale Regressionstests geprüft. Social-Streaming-
+Header korrigiert; beide vorhandenen Grafiken laden mit 1080 × 1350.
+Details und Rollback: [Arbeitsansichten](CLUBUNIO-MODULE-WORKSPACES.md).
+
 ## Backend-Theme und Mandantenfarben – 24.11.2026
 
 Aktiv: `20261124-clubunio-backend-theme-v5`. Gemeinsame Oberflächen und

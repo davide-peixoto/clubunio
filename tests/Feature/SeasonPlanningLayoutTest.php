@@ -14,6 +14,7 @@ final class SeasonPlanningLayoutTest extends TestCase
 {
     public function test_all_seven_steps_render_with_native_controls_without_touching_saved_plans(): void
     {
+        $this->mock(\App\ClubUnio\Services\ReactUi::class)->shouldReceive('enabled')->andReturn(true);
         Filament::setCurrentPanel(Filament::getPanel('clubunio'));
         $actor = new class extends Account {
             public function fresh($with = []) { return $this; }

@@ -9,6 +9,8 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListExpenses extends ListRecords
 {
+    use \App\ClubUnio\Resources\Concerns\HasModuleOverview;
+
     use HasSavedViews;
     use HasStatusTabs;
 

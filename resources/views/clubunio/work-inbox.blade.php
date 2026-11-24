@@ -1,4 +1,10 @@
 <x-filament-panels::page>
+    @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+    @php($inboxMetrics = [])
+    @if($expenses !== null)@php($inboxMetrics[] = ['label' => __('work-inbox.expenses'), 'value' => $expenseCount, 'tone' => $expenseCount ? 'attention' : null])@endif
+    @if($bexio !== null)@php($inboxMetrics[] = ['label' => trans('module_ui.attention').' · Bexio', 'value' => $bexio, 'tone' => $bexio ? 'attention' : null])@endif
+    @include('clubunio.modules.stats', ['metrics' => $inboxMetrics])
+    @endif
     @livewire(\App\ClubUnio\Widgets\PendingReservationRequests::class)
 
     @if ($expenses !== null)

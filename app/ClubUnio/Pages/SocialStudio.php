@@ -36,6 +36,8 @@ final class SocialStudio extends Page
             'context' => session()->get(app(ActiveTenant::class)->key(request())),
             'csrf' => csrf_token(),
             'labels' => trans('social'),
+            'module_ui' => app(\App\ClubUnio\Services\ReactUi::class)->enabled() ? trans('module_ui') : null,
+            'locale' => app()->getLocale() === 'en' ? 'en-CH' : 'de-CH',
         ];
     }
 }

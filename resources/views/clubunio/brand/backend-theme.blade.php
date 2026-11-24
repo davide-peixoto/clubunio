@@ -9,4 +9,5 @@
 }
 </style>
 <link rel="stylesheet" href="{{ asset('css/clubunio-backend-theme.css') }}?v=5">
+<link rel="stylesheet" href="{{ asset('css/clubunio-module-workspaces.css') }}?v=2">
 @endif

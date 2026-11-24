@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV umgesetzt: modulspezifische Arbeitsansichten (24.11.2026)
+
+Alle sechs empfohlenen Pakete umgesetzt: Trainingskarten/Saisonfortschritt,
+Mitgliederdossierkopf, Finanzkennzahlen, Kampagnenphasen/Social-Karten und
+Tageskalender, Chatfilter/Arbeitskorb sowie Synchronisationsstatus/Verlauf.
+Zentraler React-Parameter, bestehende Mandantenfarben, DE/EN, mobile Darstellung.
+Abnahme: 18 PHP-Tests (323 Assertions), sechs Node-Tests, 48 DEV-Renders plus
+zwölf Fixture-Renders; Browser Desktop/390px, Dark Mode und Sprachen geprüft.
+Details: [Arbeitsansichten](CLUBUNIO-MODULE-WORKSPACES.md).
+
 ## Konsistentes Backend und Mandantenfarben – 24.11.2026
 
 Gemeinsame Theme-Schicht für die passenden Vereinsbackend-Komponenten auf DEV

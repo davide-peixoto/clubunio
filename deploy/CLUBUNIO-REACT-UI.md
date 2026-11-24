@@ -1,5 +1,9 @@
 # Zentraler React-Parameter und Menü
 
+
+Modulspezifische Arbeitsansichten für Training/Saison, Dossiers, Finanzen,
+Kampagnen/Social, Chat/Arbeitskorb und Synchronisation folgen ebenfalls diesem
+Parameter: [Stand und Abnahme](CLUBUNIO-MODULE-WORKSPACES.md).
 Aktuell: Einheitliche Backend-Komponenten und flexible Vereinsfarben verwenden
 das bestehende Mandantendesign. [Umfang, Farben und Abnahme](CLUBUNIO-BACKEND-THEME.md).
 

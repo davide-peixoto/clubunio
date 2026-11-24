@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+## DEV-Designpaket: sechs Arbeitsansichten (24.11.2026)
+
+Release `20261124-clubunio-module-workspaces-v1`; keine DB-Migration und keine
+neuen Parameter. Alle sechs Pakete folgen React Ja/Nein und vorhandenen
+Mandantenfarben. Serverabnahme in DE/EN und beiden Modi, synthetische
+Trainings-/Kampagnendaten zurückgerollt; keine Fachaktionen ausgelöst.
+Social-Dateiantworten unterstützen wieder gestreamte Grafikvorschauen.
+Rollback: `20261124-clubunio-backend-theme-v5` aktivieren und PHP-FPM neu laden.
+Stage/PROD unverändert. [Umfang/Tests](CLUBUNIO-MODULE-WORKSPACES.md).
+
 ## Gemeinsames Backend-Theme – 24.11.2026
 
 DEV v5 bindet das bestehende Vereinsdesign an Backend-Komponenten, Dashboard,

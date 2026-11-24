@@ -24,6 +24,7 @@
             @endif
         </x-filament::tabs>
         @if($teamDesignAvailable)@include('clubunio.planning.design')@endif
+        @if($module === 'bexio' && app(\App\ClubUnio\Services\ReactUi::class)->enabled() && \App\ClubUnio\Pages\Synchronisation::canAccess())<aside class="cu-integration-context"><span>{{ trans('module_ui.integrations') }}</span><a href="{{ \App\ClubUnio\Pages\Synchronisation::getUrl() }}">{{ __('Synchronisation') }} →</a></aside>@endif
         @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
         @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
         @hasSection('native-content')

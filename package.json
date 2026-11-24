@@ -2,11 +2,12 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && npm run build:dashboard && npm run build:facility && npm run build:menu",
+        "build": "vite build && npm run build:dashboard && npm run build:facility && npm run build:menu && npm run build:social-workspace",
         "dev": "vite",
         "build:dashboard": "node tools/build-dashboard.mjs",
         "build:facility": "node tools/build-facility-planner.mjs",
-        "build:menu": "node tools/build-react-navigation.mjs"
+        "build:menu": "node tools/build-react-navigation.mjs",
+        "build:social-workspace": "node tools/build-social-workspace.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

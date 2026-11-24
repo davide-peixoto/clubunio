@@ -14,6 +14,8 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewMember extends ViewRecord
 {
+    use \App\ClubUnio\Resources\Concerns\HasModuleOverview;
+
     protected static string $resource = MemberResource::class;
 
     public function getTitle(): string

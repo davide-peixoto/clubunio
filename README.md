@@ -1,5 +1,13 @@
 # ClubUnio
 
+## DEV: sechs Modulpakete im Vereinsdesign (24.11.2026)
+
+Training/Saison, Mitgliederdossiers, Rechnungen/Spesen, Kampagnen/Social Media,
+Chat/Arbeitskorb und Synchronisation verwenden modulspezifische Arbeitsansichten.
+Der bestehende React-Parameter steuert alle Ansichten; Mandantenfarben und
+klassische Darstellung bleiben zentral. DEV: `20261124-clubunio-module-workspaces-v1`.
+[Umfang und Abnahme](deploy/CLUBUNIO-MODULE-WORKSPACES.md).
+
 ## Einheitliches Backend mit Vereinsdesign – 24.11.2026
 
 Gemeinsame Tabellen, Formulare, Dialoge, Tabs und Arbeitsbereiche auf DEV;

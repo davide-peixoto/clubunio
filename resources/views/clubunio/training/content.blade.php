@@ -1,5 +1,6 @@
 <h2>{{ $content['title'] }}</h2><p>{{ $content['focus'] }}</p>
 <ul>@foreach($content['principles'] as $value)<li>{{ $value }}</li>@endforeach</ul>
+<div @if(request()->attributes->get('clubunioWorkspace') && app(\App\ClubUnio\Services\ReactUi::class)->enabled()) class="cu-exercise-deck" @endif>
 @foreach($content['exercises'] as $exercise)
 <section class="training-exercise"><h3>{{ $exercise['phase'] }} · {{ $exercise['title'] }} · {{ $exercise['durationMinutes'] }} {{ __('Min.') }}</h3>
 @unless($exercise['diagramStale'] ?? false)
@@ -9,4 +10,5 @@
 <h4>{{ __('Coaching') }}</h4><ul>@foreach($exercise['coachingPoints'] as $value)<li>{{ $value }}</li>@endforeach</ul>
 <p><strong>{{ __('Einfacher:') }}</strong> {{ $exercise['easier'] }}</p><p><strong>{{ __('Schwieriger:') }}</strong> {{ $exercise['harder'] }}</p>@unless($exercise['diagramStale'] ?? false)<p><strong>{{ __('Spielfeldaufteilung:') }}</strong> {{ $exercise['diagramDescription'] }}</p>@endunless</section>
 @endforeach
+</div>
 <h3>{{ __('Qualitätsprüfung') }}</h3><ul>@foreach($content['qualityChecks'] as $value)<li>{{ $value }}</li>@endforeach</ul>

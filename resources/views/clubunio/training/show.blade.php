@@ -12,6 +12,13 @@
 @endphp
 <div class="page-heading"><h1>{{ $row->title }}</h1>@if($trainingAllows('download'))
 @if($workspaceComponents)<x-filament::button href="{{ route('clubunio.training.pdf',[$tenant->slug,$row->id]) }}" target="_blank" rel="noopener" icon="heroicon-o-document-arrow-down" tag="a" color="primary">{{ __('PDF') }}</x-filament::button>@else<a class="primary" href="{{ route('clubunio.training.pdf',[$tenant->slug,$row->id]) }}" target="_blank" rel="noopener">@svg('heroicon-o-document-arrow-down') {{ __('PDF') }}</a>@endif @endif</div>
+@if($workspaceComponents && app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+@include('clubunio.modules.stats', ['metrics' => [
+    ['label' => trans('module_ui.duration'), 'value' => $row->input['durationMinutes']],
+    ['label' => trans('module_ui.players'), 'value' => $row->input['playerCount']],
+    ['label' => trans('module_ui.exercises'), 'value' => count($row->plan['exercises'])],
+]])
+@endif
 <p>{{ $row->input['teamName'] }} · {{ $row->input['durationMinutes'] }} {{ __('Minuten ·') }} {{ $row->input['playerCount'] }} {{ __('Spieler · Revision') }} {{ $row->revision }}</p>
 @if($row->archived_at)<p role="status">{{ __('Archiviert') }}</p>@endif
 @if($row->legacy_source_id ?? false)<p role="status">{{ __('Übernommener Altplan: Die Spielfeldgrafiken sind schematische Darstellungen, keine Originalgrafiken.') }}</p>@endif

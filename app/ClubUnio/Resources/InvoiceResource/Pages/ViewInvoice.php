@@ -26,6 +26,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ViewInvoice extends ViewRecord
 {
+    use \App\ClubUnio\Resources\Concerns\HasModuleOverview;
+
     protected static string $resource = InvoiceResource::class;
 
     protected function getHeaderActions(): array

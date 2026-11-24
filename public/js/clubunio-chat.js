@@ -8,6 +8,8 @@ const uuid = () => crypto.randomUUID();
 
 export class ClubUnioChat {
     constructor(root) {
+        this.moduleUi = root.dataset.moduleUi ? JSON.parse(root.dataset.moduleUi) : null; this.unreadOnly = false;
+        root.querySelector('[data-unread-filter]')?.addEventListener('click', () => { this.unreadOnly = !this.unreadOnly; this.renderList(); });
         this.root = root; this.config = JSON.parse(root.dataset.config); this.labels = JSON.parse(root.dataset.labels);
         this.cap = this.config.capabilities; this.chats = []; this.messages = new Map(); this.drafts = new Map();
         this.chat = null; this.generation = 0; this.cursor = 0; this.older = false; this.busy = false; this.polling = false;
@@ -129,15 +131,21 @@ export class ClubUnioChat {
     renderList() {
         const list = this.root.querySelector('[data-conversations]'); list.replaceChildren();
         const term = this.root.querySelector('[data-search]').value.toLocaleLowerCase();
-        for (const chat of this.chats.filter(c => this.title(c).toLocaleLowerCase().includes(term))) {
+        if (this.moduleUi) {
+            const overview = this.root.querySelector('[data-chat-overview]');
+            overview.replaceChildren(make('span', `${this.moduleUi.conversations}: ${this.chats.length}`), make('strong', `${this.moduleUi.unread}: ${this.chats.reduce((n,c) => n + Number(c.unread || 0), 0)}`));
+            this.root.querySelector('[data-unread-filter]').setAttribute('aria-pressed', String(this.unreadOnly));
+        }
+        for (const chat of this.chats.filter(c => (!this.unreadOnly || Number(c.unread) > 0) && this.title(c).toLocaleLowerCase().includes(term))) {
             const button = make('button', undefined, 'cu-chat-thread'); button.type = 'button'; button.setAttribute('aria-current', String(this.chat?.id === chat.id));
             const name = make('span', this.title(chat), 'cu-chat-thread-name');
             if (chat.last_message) name.append(make('small', chat.last_message.text, 'cu-chat-last-message'));
             if (chat.muted) name.append(make('small', this.t('Stummschalten')));
+            if (this.moduleUi) { const avatar = make('span', this.title(chat).trim().slice(0,2).toLocaleUpperCase(), 'cu-chat-avatar'); avatar.setAttribute('aria-hidden','true'); button.append(avatar); }
             button.append(name); if (chat.unread) button.append(make('span', String(chat.unread), 'cu-chat-count'));
             button.addEventListener('click', () => this.guard(() => this.select(chat.id))); list.append(button);
         }
-        if (!list.children.length) list.append(make('p', this.t('Keine Unterhaltungen'), 'cu-chat-empty'));
+        if (!list.children.length) list.append(make('p', this.moduleUi && this.unreadOnly ? this.moduleUi.empty_unread : this.t('Keine Unterhaltungen'), 'cu-chat-empty'));
         this.root.querySelector('[data-action=contacts]').hidden = !this.cap.send;
     }
     async select(id) {

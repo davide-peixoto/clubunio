@@ -15,6 +15,8 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewExpense extends ViewRecord
 {
+    use \App\ClubUnio\Resources\Concerns\HasModuleOverview;
+
     protected static string $resource = ExpenseResource::class;
 
     protected function getHeaderActions(): array

@@ -31,6 +31,12 @@
     </tbody></table>
     </div>
     @if($campaign)
+        @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+        <section class="cu-campaign-stage" aria-label="{{ trans('module_ui.campaign') }}">
+            <ol>@foreach(['draft','open','ended'] as $stage)<li @if(($draft && $stage === 'draft') || ($open && $stage === 'open') || (!$draft && !$open && $stage === 'ended')) aria-current="step" @endif>{{ trans('module_ui.'.$stage) }}</li>@endforeach</ol>
+            @include('clubunio.modules.stats', ['metrics' => [['label' => trans('module_ui.recipients'), 'value' => $count]]])
+        </section>
+        @endif
         <div class="flex flex-wrap items-center gap-3">
             <h2>{{ $campaign->title }}</h2>
             <span>{{ \App\ClubUnio\Services\MemberCampaignService::kindLabel($campaign->kind) }}</span>

@@ -1,5 +1,10 @@
 <x-filament-panels::page>
-    @vite('resources/js/social-studio.js')
+    @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+        <link rel="stylesheet" href="{{ asset('js/clubunio-social-workspace.css') }}?v=2">
+        <script type="module" src="{{ asset('js/clubunio-social-workspace.js') }}?v=2"></script>
+    @else
+        @vite('resources/js/social-studio.js')
+    @endif
     <section class="cu-social" data-social-studio data-config="{{ json_encode($this->studioConfig(), JSON_THROW_ON_ERROR) }}" wire:ignore>
         <nav class="cu-social-toolbar cu-admin-toolbar" aria-label="{{ trans('social.title') }}">
             <div class="cu-social-tabs">

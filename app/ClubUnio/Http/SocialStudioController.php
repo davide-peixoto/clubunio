@@ -66,7 +66,10 @@ final class SocialStudioController
             };
         }
 
-        return (is_array($response) ? response()->json($response) : $response)->header('Cache-Control', 'private, no-store');
+        $response = is_array($response) ? response()->json($response) : $response;
+        $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
     }
 
     public function testImage(int $tenantId, string $id)

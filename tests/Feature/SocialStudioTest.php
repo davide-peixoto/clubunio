@@ -10,6 +10,34 @@ use Tests\TestCase;
 
 final class SocialStudioTest extends TestCase
 {
+    public function test_private_image_stream_keeps_cache_headers_and_valid_image_bytes(): void
+    {
+        $db = DB::connection('clubunio');
+        $db->statement('CREATE TABLE clubora.social_posts (id TEXT, tenant_id INTEGER, image_path TEXT)');
+        $id = (string) \Illuminate\Support\Str::uuid();
+        $image = UploadedFile::fake()->image('preview.jpg', 32, 45)->get();
+        Storage::disk('local')->put('fixture/preview.jpg', $image);
+        $db->table('clubora.social_posts')->insert(['id' => $id, 'tenant_id' => 7, 'image_path' => 'fixture/preview.jpg']);
+        $tenant = (new \App\ClubUnio\Models\Tenant)->forceFill(['id' => 7]);
+        $actor = new class extends \App\ClubUnio\Models\Account {
+            public function fresh($with = []) { return $this; }
+            public function canAccessTenant(\Illuminate\Database\Eloquent\Model $tenant): bool { return true; }
+        };
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('clubunio'));
+        \Filament\Facades\Filament::setTenant($tenant, isQuiet: true);
+        $this->mock(\App\ClubUnio\Services\ActiveTenant::class)->shouldReceive('assertSnapshot')->once();
+        $this->mock(\App\ClubUnio\Services\BackofficeReadContext::class)->shouldReceive('tenantsFor')->andReturn(collect([$tenant]));
+        $request = \Illuminate\Http\Request::create('/social-data/image', 'GET', ['id' => $id, 'context' => ['tenant' => 7, 'revision' => (string) \Illuminate\Support\Str::uuid()]]);
+        $request->setUserResolver(fn () => $actor);
+        $response = app(\App\ClubUnio\Http\SocialStudioController::class)($request, 'image');
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response);
+        $this->assertSame('no-store, private', $response->headers->get('Cache-Control'));
+        $this->assertSame('image/jpeg', $response->headers->get('Content-Type'));
+        ob_start(); $response->sendContent(); $bytes = ob_get_clean();
+        $this->assertSame($image, $bytes);
+        \Filament\Facades\Filament::setTenant(null, isQuiet: true);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

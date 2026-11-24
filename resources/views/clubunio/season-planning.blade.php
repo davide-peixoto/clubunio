@@ -15,6 +15,17 @@
         $labels = ['player' => __('Spieler'), 'staff' => __('Staff'), 'lead' => __('Technische Leitung')];
     @endphp
     <div class="season-planner" x-data="{ drag: null, newPlanConfirmation: false, discardConfirmation: false, finishConfirmation: false }" wire:loading.class="sp-busy">
+        @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+        <section class="cu-season-overview">
+            <p>{{ trans('module_ui.planning_step', ['current' => $step, 'total' => 7]) }}</p>
+            <div class="cu-step-track" role="progressbar" aria-label="{{ __('Planungsschritte') }}" aria-valuemin="1" aria-valuemax="7" aria-valuenow="{{ $step }}"><span style="width:{{ max(1,min(7,$step))*100/7 }}%"></span></div>
+            @include('clubunio.modules.stats', ['metrics' => [
+                ['label' => trans('module_ui.teams'), 'value' => count($document['teams'] ?? [])],
+                ['label' => trans('module_ui.assignments'), 'value' => count($document['assignments'] ?? [])],
+                ['label' => trans('module_ui.slots'), 'value' => count($document['slots'] ?? [])],
+            ]])
+        </section>
+        @endif
         @if($errors->any())
             <div class="sp-alert sp-error" role="alert"><strong>{{ __('Nicht gespeichert oder abgeschlossen') }}</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
@@ -81,7 +92,7 @@
                     <label class="cu-admin-field">{{ __('Beginn') }}<x-filament::input.wrapper><x-filament::input type="date" wire:model.live="document.season.starts_on" /></x-filament::input.wrapper></label>
                     <label class="cu-admin-field">{{ __('Ende') }}<x-filament::input.wrapper><x-filament::input type="date" wire:model.live="document.season.ends_on" /></x-filament::input.wrapper></label>
                 </div>
-                <p class="sp-note">{{ __('Planungsstand:') }} {{ count($document['teams']) }} {{ __('Mannschaften ·') }} {{ count($document['assignments']) }} {{ __('Zuordnungen ·') }} {{ count($document['slots']) }} {{ __('Trainingszeiten.') }}</p>
+                <p class="sp-note">{{ __('Planungsstand:') }} {{ count($document['teams'] ?? []) }} {{ __('Mannschaften ·') }} {{ count($document['assignments'] ?? []) }} {{ __('Zuordnungen ·') }} {{ count($document['slots'] ?? []) }} {{ __('Trainingszeiten.') }}</p>
                 <p class="sp-note">{{ __('Bestehende Stammdaten bleiben erhalten. Erst der Abschluss erstellt die neue Saison und ihre Verknüpfungen. Die aktuelle Saison wird nicht umgestellt.') }}</p>
                 </section>
             @elseif($step === 2)
@@ -102,7 +113,7 @@
                             </div>
                             <div class="sp-toolbar">
                                 <x-filament::icon-button wire:click="removeRow('teams', '{{ $team['key'] }}')" wire:confirm="{{ __('Mannschaft einschliesslich ihrer geplanten Zuordnungen und Trainingszeiten aus diesem Entwurf entfernen?') }}" icon="heroicon-o-trash" label="{{ __('Mannschaft entfernen') }}" tooltip="{{ __('Mannschaft entfernen') }}" color="danger" wire:loading.attr="disabled" />
-                                @if(count($document['teams']) > 1)
+                                @if(count($document['teams'] ?? []) > 1)
                                     <label class="cu-admin-field">{{ __('Zusammenführen nach') }}<x-filament::input.wrapper><x-filament::input.select aria-label="{{ __('Zielmannschaft für Zusammenführung') }}" wire:change="mergeTeam('{{ $team['key'] }}', $event.target.value)" wire:confirm="{{ __('Zuordnungen und Trainingszeiten verschieben und diese Mannschaft aus dem Entwurf entfernen?') }}"><option value="">{{ __('Auswählen') }}</option>@foreach($document['teams'] as $other)@if($other['key'] !== $team['key'])<option value="{{ $other['key'] }}">{{ $other['name'] ?: __('Neue Mannschaft') }}</option>@endif @endforeach</x-filament::input.select></x-filament::input.wrapper></label>
                                 @endif
                             </div>

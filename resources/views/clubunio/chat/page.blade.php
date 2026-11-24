@@ -1,12 +1,12 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/clubunio-chat.css') }}?v=2">
-    <script type="module" src="{{ asset('js/clubunio-chat.js') }}?v=1"></script>
+    <script type="module" src="{{ asset('js/clubunio-chat.js') }}?v=modules-1"></script>
     @php
         $labels = [];
         foreach (['Anhang ansehen', 'Keine Reaktionen', 'Text übernehmen', 'Kamera'] as $label) $labels[$label] = __($label);
         foreach (['Chats', 'Unterhaltungen suchen', 'Neue Direktnachricht', 'Nachricht', 'Senden', 'Erneut versuchen', 'Abbrechen', 'Schliessen', 'Laden', 'Keine Unterhaltungen', 'Unterhaltung auswählen', 'Ältere Nachrichten', 'Stummschalten', 'Stummschaltung aufheben', 'Anhängen', 'Umfrage', 'Termin', 'Einstellungen', 'Moderation', 'Bearbeiten', 'Entfernen', 'Melden', 'Reaktionen', 'Abstimmen', 'Speichern', 'Kontakt suchen', 'Keine Kontakte gefunden', 'Vereinsankündigungen', 'Mannschaft', 'Trainer', 'Terminbesprechung', 'Direktnachricht', 'Nur Lesen', 'Zurück', 'Datei auswählen', 'Anhang wird geprüft', 'Anhang nicht verfügbar', 'Nachricht entfernt', 'Nachricht entfernen?', 'Entwurf verwerfen?', 'Neue Nachricht', 'Frage', 'Antwortmöglichkeiten', 'Eine Antwort pro Zeile', 'Mehrfachauswahl', 'Abstimmungsende', 'Termin auswählen', 'Empfängervorschau', 'Empfänger: :count', 'Veröffentlichen', 'Grund', 'Erledigen', 'Keine offenen Meldungen', 'Personen', 'Mehr anzeigen', 'Blockieren', 'Blockierung aufheben', 'Blockierte Kontakte', 'Übersetzung aktivieren', 'Zielsprache', 'Deutsch', 'Englisch', 'KI-Textassistenz', 'Korrigieren', 'Freundlicher formulieren', 'Kürzen', 'Prüfen', 'Übersetzen', 'Text zur Verarbeitung an den KI-Anbieter senden', 'Übernehmen', 'Verbindung unterbrochen. Ihr Entwurf bleibt erhalten.', 'Der Zugriff hat sich geändert. Bitte die Seite neu laden.', 'Die Daten wurden geändert. Bitte aktualisieren und erneut prüfen.', 'Die Funktion ist derzeit nicht verfügbar.', 'Bitte prüfen Sie Ihre Eingaben.', 'Nachricht konnte nicht gesendet werden. Erneut versuchen verwendet dieselbe Nachrichten-ID.', 'Anhang abgelehnt', 'Anhang herunterladen', 'Umfrage beendet', 'Antworten: :count', 'Aktualisieren', 'Vorschau abgelaufen. Bitte Empfänger erneut prüfen.', 'Nachricht erfolgreich gesendet', 'Keine Termine gefunden', 'Auswahl entfernen', 'Bitte zuerst den ausstehenden Versand klären.'] as $label) $labels[$label] = __($label);
     @endphp
-    <section class="cu-chat" data-cu-chat data-config="{{ json_encode($this->chatConfig(), JSON_THROW_ON_ERROR) }}" data-labels="{{ json_encode($labels, JSON_THROW_ON_ERROR) }}" aria-label="{{ __('Chats') }}" wire:ignore>
+    <section class="cu-chat" data-cu-chat @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled()) data-module-ui="{{ json_encode(trans('module_ui'), JSON_THROW_ON_ERROR) }}" @endif data-config="{{ json_encode($this->chatConfig(), JSON_THROW_ON_ERROR) }}" data-labels="{{ json_encode($labels, JSON_THROW_ON_ERROR) }}" aria-label="{{ __('Chats') }}" wire:ignore>
         <div class="cu-chat-alert" data-error role="alert" hidden></div>
         <aside class="cu-chat-list">
             <div class="cu-chat-toolbar">
@@ -14,6 +14,10 @@
                 <button type="button" data-action="contacts" title="{{ __('Neue Direktnachricht') }}" aria-label="{{ __('Neue Direktnachricht') }}"><x-filament::icon icon="heroicon-o-plus" /></button>
                 <button type="button" data-action="settings" title="{{ __('Einstellungen') }}" aria-label="{{ __('Einstellungen') }}"><x-filament::icon icon="heroicon-o-cog-6-tooth" /></button>
             </div>
+            @if(app(\App\ClubUnio\Services\ReactUi::class)->enabled())
+            <div class="cu-chat-overview" data-chat-overview aria-live="polite"></div>
+            <button type="button" class="cu-unread-filter" data-unread-filter aria-pressed="false">{{ trans('module_ui.unread_only') }}</button>
+            @endif
             <div class="cu-chat-conversations" data-conversations></div>
         </aside>
         <div class="cu-chat-conversation">

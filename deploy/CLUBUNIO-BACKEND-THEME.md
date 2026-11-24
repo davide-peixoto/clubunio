@@ -1,6 +1,7 @@
 # Einheitliches Vereinsbackend und Mandantenfarben
 
-Stand: 24.11.2026. DEV: `20261124-clubunio-backend-theme-v5`.
+Stand: 24.11.2026. DEV: `20261124-clubunio-module-workspaces-v1`.
+Modulspezifische Erweiterungen: [Arbeitsansichten](CLUBUNIO-MODULE-WORKSPACES.md).
 Voraussetzung ist der bestehende Vereinsparameter **React = Ja**.
 
 ## Gestaltung und Umfang
