@@ -198,7 +198,10 @@ final class MobileTeamsData
             ->where('period_id', $period->id)
             ->when($neutral, fn ($query) => $query->whereIn('field_id',
                 $this->table($tenant, 'training_options')->where('category', 'field')->where('active', true)->select('id')),
-                fn ($query) => $query->where(app(SignageService::class)->trainingVariant($tenant), true))
+                fn ($query) => $query->where(fn ($scenario) => $scenario
+                    ->where(app(SignageService::class)->trainingVariant($tenant), true)
+                    ->orWhere(fn ($regular) => $regular->where('all_fields', false)
+                        ->where('without_main', false)->where('synthetic_only', false))))
             ->orderBy('weekday_id')->orderBy('starts_at')->orderBy('id')->get();
         $areaIds = $slots->pluck('area_id')->filter()->unique();
         $areas = $areaIds->isEmpty() ? collect() : $this->table($tenant, 'pitch_areas')->whereIn('id', $areaIds)->get()->keyBy('id');

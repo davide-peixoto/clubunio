@@ -362,3 +362,12 @@ auf Stage/PROD aktiviert; Login-Themes V6 fuer vier Clients uebernommen.
 Vier additive Work-Hub-Tabellen nach gepruefter verschluesselter Sicherung.
 53 native Stage-/49 PROD-Pruefungen, bestehende Sicherheits-/Integrationskonfiguration
 erhalten. Keine Datenauffrischung. Abnahme, Migrationsplan und Rueckweg: [Releaseprotokoll](deploy/CLUBUNIO-PROMOTION-20261124.md).
+
+
+## App: Datumskacheln und reguläre Trainings – 24.11.2026
+
+Heute: einheitliche Datumskacheln und lokale Datumsformatierung. My Teams zeigt
+auch reguläre/Hallenzeiten ohne Sperrflags innerhalb des aktiven Plans. Backend
+auf DEV/Stage geprüft; PROD unverändert. Stage Tenant1: Planwahl 0, Winterfreigabe
+noch offen. Neuer App-Build für Kacheln erforderlich.
+[Ursachen, Konfiguration und Abnahme](deploy/CLUBUNIO-MOBILE-TODAY-TEAM-TRAININGS.md).
