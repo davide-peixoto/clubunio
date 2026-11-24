@@ -15,6 +15,9 @@
         if ($access->canEnter($portalActor, $tenant) && $allows('documents')) {
             $links[__('Verein')][] = ['clubunio.portal.material.index', 'heroicon-o-cube', __('Material'), 'clubunio.portal.material.*'];
         }
+        if (app(\App\ClubUnio\Services\ClubhouseAccess::class)->allows($portalActor, $tenant, 'view')) {
+            $links[__('Verein')][] = ['clubunio.portal.clubhouse', 'heroicon-o-building-storefront', trans('clubhouse.title'), 'clubunio.portal.clubhouse*'];
+        }
         if (in_array($access->membership($portalActor, $tenant)?->role, ['admin', 'office', 'technical_lead'], true)) {
             $links[__('Verein')][] = ['clubunio.portal.registrations', 'heroicon-o-clipboard-document-list', __('Anmeldungen'), 'clubunio.portal.registration*'];
         }

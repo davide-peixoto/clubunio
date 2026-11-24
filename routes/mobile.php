@@ -34,6 +34,7 @@ Route::prefix('mobile/v1')->middleware(MobileMiddleware::class)->name('clubunio.
         Route::post('members/{member}/change-requests/{change}/decide', [\App\ClubUnio\Mobile\MobileMemberController::class, 'decideChange'])->whereNumber('member')->whereNumber('change');
         \App\ClubUnio\Mobile\MobilePublicIdentityRoutes::registerPersonal();
         \App\ClubUnio\Mobile\MobileExpenseRoutes::register();
+        \App\ClubUnio\Mobile\MobileClubhouseRoutes::register();
         \App\ClubUnio\Mobile\MobileKeyboxRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberDocumentRoutes::register();
         \App\ClubUnio\Mobile\MobileMemberIdCardRoutes::register();

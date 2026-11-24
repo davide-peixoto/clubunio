@@ -87,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
                 ? app(\App\ClubUnio\Policies\ProfilePolicyBridge::class)->check($actor, $ability, $arguments) : null;
         });
         Livewire::component('clubunio.signage-feeds', SignageFeeds::class);
+        Livewire::component('clubunio.clubhouse-workspace', \App\Livewire\ClubUnio\ClubhouseWorkspace::class);
         \Filament\Schemas\Components\Tabs::configureUsing(function ($tabs) {
             $tabs->extraAttributes(fn ($component) => $component->getLivewireProperty() === 'activeRelationManager' ? [
                 'wire:loading.class' => 'cu-dossier-loading',

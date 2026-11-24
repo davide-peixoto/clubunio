@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+## Clubhaus (24.11.2026, nur DEV)
+
+Sieben additive Tabellen, private PDF-Speicherung und zusätzliche Rechte ohne
+bestehende Rollen zu ändern. Owner-Migration nach verschlüsselter Sicherung,
+Website-Ausgabe standardmäßig aus. 17 PostgreSQL-Prüfungen mit Rollback.
+App-Build/Geräteabnahme und Website-Konsum separat erforderlich.
+[Fachregeln und Rückweg](CLUBUNIO-CLUBHOUSE.md).
+
 ## DEV: SFV-Nachführung ohne Garderobenverlust (24.11.2026)
 
 Release `20261124-clubunio-daily-v2` auf Basis von `daily-v1`; keine Migration.

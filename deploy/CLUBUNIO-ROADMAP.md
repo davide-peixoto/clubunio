@@ -1,5 +1,18 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Clubhaus (24.11.2026, DEV)
+
+- [x] Einzel-/Serienöffnungen, Tagesausnahmen und Zeitfenster.
+- [x] Menükarten DE/EN/PDF, Gültigkeit, Entwurf und getrennte Freigabe.
+- [x] Additive Rechte ohne bestehende Profilzuordnungen zu ändern.
+- [x] App-API/Swagger und native Pflege im neuen App-Design.
+- [x] Website-Feed mit ausdrücklicher Freigabe je Verein.
+- [x] DEV-Migration und isolierte PostgreSQL-/lokale Fachtests.
+- [ ] Nativer Neubau: Datei-/PDF-Abnahme auf Geräten.
+- [ ] Feed in Website einbinden; Stage/PROD separat beauftragen.
+
+[Umfang, Migration und Abnahme](CLUBUNIO-CLUBHOUSE.md).
+
 ## DEV: automatische SFV-Verschiebungen mit Garderobenerhalt (24.11.2026)
 
 - [x] Datum, Anspielzeit und zugeordnetes Spielfeld automatisch vom SFV übernehmen.

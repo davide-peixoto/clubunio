@@ -1,5 +1,14 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Clubhaus (24.11.2026)
+
+Release `20261124-clubunio-clubhouse-v2`, Rückweg Clubhaus-v1 bzw. ohne Modul
+`20261124-clubunio-veo-calendar-v5`.
+Sieben additive DEV-Tabellen, verschlüsselte Owner-Sicherung unter
+`/root/clubunio-releases/clubhouse-20261124`; 17 native Prüfungen mit Rollback.
+Benutzerzuordnungen erhalten, öffentliche Freigabe aus, Stage/PROD unverändert.
+[Bedienung und Prüfgrenzen](CLUBUNIO-CLUBHOUSE.md).
+
 ## DEV: automatische SFV-Nachführung v2 (24.11.2026)
 
 Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-daily-v2`.

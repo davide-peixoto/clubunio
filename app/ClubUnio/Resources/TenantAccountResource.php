@@ -117,6 +117,23 @@ class TenantAccountResource extends CatalogResource
                 ->visible(static::canManageAccounts(...))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
             ->recordActions([
+                Action::make('clubhouseRole')->label(trans('clubhouse.additional_role'))->icon('heroicon-o-building-storefront')->iconButton()
+                    ->tooltip(trans('clubhouse.additional_role'))
+                    ->visible(fn () => static::canManageAccounts() && app(\App\ClubUnio\Services\ClubhouseAccess::class)->ready())
+                    ->schema([Toggle::make('hours_write')->label(trans('clubhouse.right_hours'))->required(),
+                        Toggle::make('menus_write')->label(trans('clubhouse.right_menus'))->required(),
+                        Toggle::make('menus_publish')->label(trans('clubhouse.right_publish'))->required(),
+                        Toggle::make('active')->label(trans('clubhouse.active'))->required(), Hidden::make('revision'),
+                        Textarea::make('reason')->label(trans('clubhouse.reason'))->required()->minLength(10)->maxLength(500)])
+                    ->fillForm(function (TenantAccount $record) {
+                        $grant = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.clubhouse_grants')
+                            ->where('tenant_id', Filament::getTenant()->id)->where('account_id', $record->account_id)->first();
+
+                        return ['hours_write' => (bool) ($grant->hours_write ?? false), 'menus_write' => (bool) ($grant->menus_write ?? false),
+                            'menus_publish' => (bool) ($grant->menus_publish ?? false), 'active' => (bool) ($grant->active ?? true), 'revision' => (int) ($grant->revision ?? 0)];
+                    })
+                    ->action(fn (TenantAccount $record, array $data, $livewire) => FormMutation::run($livewire,
+                        fn () => app(\App\ClubUnio\Services\ClubhouseAccess::class)->grant(Filament::auth()->user(), Filament::getTenant(), (int) $record->account_id, $data))),
                 Action::make('appProfile')->label('App-Modulprofil')->icon('heroicon-o-device-phone-mobile')->iconButton()->tooltip(__('App-Modulprofil zuordnen'))
                 ->visible(static::canManageAccounts(...))
                 ->schema([Select::make('mobile_profile_id')->label('App-Modulprofil')->searchable()->placeholder(__('Automatisch nach Berechtigung'))

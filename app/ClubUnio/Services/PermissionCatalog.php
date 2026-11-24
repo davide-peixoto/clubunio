@@ -17,6 +17,7 @@ final class PermissionCatalog
         'field_availability' => 'Platzverfügbarkeit und Bemerkungen', 'signage' => 'Signage',
         'announcements' => 'Ankündigungen', 'chat' => 'Chats', 'events' => 'Veranstaltungen',
         'sponsor_runs' => 'Sponsorenlauf',
+        'clubhouse_hours' => 'clubhouse.hours_permission', 'clubhouse_menus' => 'clubhouse.menus_permission',
         'reports' => 'Listen und Auswertungen', 'catalogs' => 'Stammdaten',
         'templates' => 'Nachrichtenvorlagen', 'social_media' => 'Social Media', 'tasks' => 'work_hub.tasks',
     ];
@@ -36,6 +37,8 @@ final class PermissionCatalog
 
     public static function functions(string $module): array
     {
+        if ($module === 'clubhouse_hours') return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'update']));
+        if ($module === 'clubhouse_menus') return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'update', 'send']));
         if ($module === 'tasks') return array_intersect_key(self::FUNCTIONS, array_flip(['view','create','update','assign','complete','deactivate','restore']));
         if ($module === 'chat') {
             return array_intersect_key(self::FUNCTIONS, array_flip(['view', 'send', 'upload', 'download', 'poll', 'announce', 'moderate', 'groups']));

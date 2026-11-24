@@ -1,5 +1,11 @@
 # ClubUnio
 
+## Clubhaus (24.11.2026)
+
+Öffnungszeiten einzeln/Serie, Ausnahmen, Menükarten Text/PDF und getrennte
+Freigabe mit zusätzlichen Pflegerechten in Backend/App im neuen Vereinsdesign.
+[Umfang, Website-Feed und Abnahme](deploy/CLUBUNIO-CLUBHOUSE.md).
+
 ## DEV: SFV automatisch nachführen, Garderoben erhalten (24.11.2026)
 
 Neue eindeutig zugeordnete SFV-Heimspiele und Verschiebungen werden beim

@@ -158,6 +158,11 @@ final class MobileAccountController
             }
             unset($module);
         }
+        if (app(\App\ClubUnio\Services\ClubhouseAccess::class)->ready()
+            && (in_array('Clubhaus', $visibleKeys, true) || app(\App\ClubUnio\Services\ClubhouseAccess::class)->allows($actor, $tenant, 'view'))) {
+            $modules[] = ['key' => 'Clubhaus', 'available' => true, 'native' => in_array('clubhouse-v1', $supported, true),
+                'work' => app(\App\ClubUnio\Services\ClubhouseAccess::class)->allows($actor, $tenant, 'view')];
+        }
         $modules[] = ['key' => 'Profil', 'available' => true];
         return response()->json(['data' => ['modules' => $modules]]);
     }

@@ -188,7 +188,7 @@ class TenantDocumentStorage
 
     public static function parse(string $folder): ?array
     {
-        if (! preg_match('~^clubunio/storage/('.self::PROFILE.')/(registrations|members|expenses|ai)/([1-9][0-9]*)/([1-9][0-9]*)/$~D', $folder, $m)) {
+        if (! preg_match('~^clubunio/storage/('.self::PROFILE.')/(registrations|members|expenses|ai|clubhouse)/([1-9][0-9]*)/([1-9][0-9]*)/$~D', $folder, $m)) {
             return null;
         }
 

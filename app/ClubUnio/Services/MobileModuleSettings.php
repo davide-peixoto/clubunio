@@ -12,13 +12,14 @@ final class MobileModuleSettings
         'MitgliederAnmeldungen'=>'Mitgliederanmeldungen', 'Teams'=>'Meine Mannschaften',
         'Teamplanung'=>'Teamplanung', 'Trainingsplaner'=>'KI-Trainingsplanung',
         'BusReservationen'=>'Busreservierungen', 'Dokumente'=>'Dokumente', 'Sponsorenlauf'=>'Sponsorenlauf', 'Penalty'=>'Vereinschallenge',
+        'Clubhaus'=>'clubhouse.title',
     ];
 
     public function options(Tenant $tenant): array
     {
         return DB::connection('clubunio')->table('clubora.mobile_module_options')
             ->where('tenant_id',$tenant->id)->where('active',true)->orderBy('sort_order')
-            ->pluck('name','key')->all();
+            ->pluck('name','key')->map(fn ($label, $key) => $key === 'Clubhaus' && $label === 'Clubhaus' ? trans('clubhouse.title') : $label)->all();
     }
 
     public function visibleKeys(Account $actor, Tenant $tenant): array
