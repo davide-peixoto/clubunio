@@ -31,7 +31,7 @@ class VeoRecordingPlanTest extends TestCase
             'training_options' => 'id integer primary key, tenant_id integer, category text, active boolean',
             'veo_cameras' => 'id integer primary key, tenant_id integer, field_id integer, name text, unique(tenant_id,field_id)',
             'veo_recording_teams' => 'tenant_id integer, team_season_id integer, primary key(tenant_id,team_season_id)',
-            'veo_recording_adjustments' => 'tenant_id integer, match_id integer, field_id integer, starts_at text, ends_at text, basis_hash text, revision integer, updated_by integer, updated_at text, primary key(tenant_id,match_id)',
+            'veo_recording_adjustments' => 'tenant_id integer, match_id integer, field_id integer, starts_at text, ends_at text, fixture_starts_at text, basis_hash text, revision integer, updated_by integer, updated_at text, primary key(tenant_id,match_id)',
             'object_changes' => 'id integer primary key, tenant_id integer, actor_id integer, object_type text, object_id integer, before_value text, after_value text',
             'tenants' => 'id integer primary key, name text, slug text',
             'accounts' => 'id integer primary key, active boolean',
@@ -166,7 +166,7 @@ class VeoRecordingPlanTest extends TestCase
         $this->assertSame(1, $this->table('object_changes')->where('object_type', 'veo_recording')->count());
     }
 
-    public function test_stale_recording_write_is_rejected_and_sfv_change_requires_review(): void
+    public function test_stale_recording_write_is_rejected_and_sfv_change_keeps_relative_lead_in(): void
     {
         $this->prepareRecording();
         $revision = $this->entry()['revision'];
@@ -174,8 +174,12 @@ class VeoRecordingPlanTest extends TestCase
         try { $this->adjust(['revision' => $revision]); $this->fail('Stale write accepted'); }
         catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) { $this->assertSame(409, $exception->getStatusCode()); }
         $this->table('sfv_schedule')->where('match_id', 21)->update(['starts_at' => '2026-11-14T15:00:00+01:00']);
-        $this->assertSame('needs_review', $this->entry()['status']);
-        $this->assertSame('15:00', $this->entry()['starts_at']->format('H:i'));
+        $this->assertSame('unplaced', $this->entry()['status']);
+        $this->assertNull($this->entry()['camera']);
+        $this->assertSame('14:30', $this->entry()['starts_at']->format('H:i'));
+        $this->table('competitions')->where('association_match_id', 21)->update(['starts_at' => '15:00:00']);
+        $this->assertSame('planned', $this->entry()['status']);
+        $this->assertSame('Camera A', $this->entry()['camera']);
     }
 
     public function test_camera_overlap_is_rejected_and_reset_returns_to_automatic_plan(): void
@@ -190,6 +194,73 @@ class VeoRecordingPlanTest extends TestCase
         $this->assertSame('14:00', $this->entry()['starts_at']->format('H:i'));
         $this->assertFalse($this->entry()['adjusted']);
         $this->assertSame(2, $this->table('object_changes')->count());
+    }
+
+    public function test_confirmed_pitch_change_automatically_reassigns_an_adjusted_recording_to_new_camera(): void
+    {
+        $this->prepareRecording();
+        $this->plan->saveCamera($this->tenant, 11, 'Camera B');
+        $this->adjust(['time' => '13:30', 'duration' => 150]);
+        $before = (array) $this->table('veo_recording_adjustments')->first();
+        $this->table('competitions')->where('association_match_id', 21)->update(['field_id' => 11]);
+        $entry = $this->entry();
+        $this->assertSame(11, $entry['field_id']);
+        $this->assertSame('Camera B', $entry['camera']);
+        $this->assertSame('planned', $entry['status']);
+        $this->assertSame('13:30', $entry['starts_at']->format('H:i'));
+        $this->assertSame('16:00', $entry['ends_at']->format('H:i'));
+        $this->assertTrue($entry['followed_fixture']);
+        $this->assertSame($before, (array) $this->table('veo_recording_adjustments')->first());
+    }
+
+    public function test_repeated_sfv_date_time_and_pitch_moves_follow_without_old_calendar_ghosts(): void
+    {
+        $this->prepareRecording();
+        $this->plan->saveCamera($this->tenant, 11, 'Camera B');
+        $this->adjust(['time' => '13:30', 'duration' => 150]);
+        foreach (['2026-12-01' => '18:00', '2026-12-08' => '19:00'] as $date => $time) {
+            $this->table('sfv_schedule')->where('match_id', 21)->update(['starts_at' => $date.'T'.$time.':00+01:00', 'state' => 'Neu angesetzt']);
+            $this->table('competitions')->where('association_match_id', 21)->update(['plays_on' => $date, 'starts_at' => $time.':00', 'field_id' => 11]);
+            $entries = $this->plan->entries($this->tenant, $date, $date);
+            $this->assertCount(1, $entries);
+            $expected = \Carbon\CarbonImmutable::parse($date.' '.$time, 'Europe/Zurich')->subMinutes(30);
+            $this->assertSame($expected->toIso8601String(), $entries[0]['starts_at']->toIso8601String());
+            $this->assertSame($expected->addMinutes(150)->toIso8601String(), $entries[0]['ends_at']->toIso8601String());
+            $this->assertSame('Camera B', $entries[0]['camera']);
+            $this->assertSame('planned', $entries[0]['status']);
+            $this->assertCount(0, $this->plan->entries($this->tenant, '2026-11-14', '2026-11-14'));
+            $this->assertSame($date, app(\App\ClubUnio\Services\VeoRecordingAdjustments::class)->current($this->tenant, 21)['starts_at']->toDateString());
+        }
+        $this->assertCount(0, $this->plan->entries($this->tenant, '2026-12-01', '2026-12-01'));
+        $this->table('sfv_schedule')->where('match_id', 21)->update(['state' => 'Abgesagt']);
+        $this->assertCount(0, $this->plan->entries($this->tenant, '2026-12-08', '2026-12-08'));
+    }
+
+    public function test_new_pitch_without_camera_never_keeps_the_old_camera_and_overlap_is_reported(): void
+    {
+        $this->prepareRecording();
+        $this->adjust(['time' => '13:30', 'duration' => 150]);
+        $this->table('competitions')->where('association_match_id', 21)->update(['field_id' => 11]);
+        $this->assertSame('no_camera', $this->entry()['status']);
+        $this->assertNull($this->entry()['camera']);
+        $this->assertSame(11, $this->entry()['field_id']);
+        $this->plan->saveCamera($this->tenant, 11, 'Camera B');
+        $this->match(22, '15:30:00');
+        $this->table('competitions')->where('association_match_id', 22)->update(['field_id' => 11]);
+        $this->assertSame(['conflict', 'conflict'], array_column($this->plan->entries($this->tenant, '2026-11-14', '2026-11-14'), 'status'));
+    }
+
+    public function test_pre_anchor_adjustments_keep_duration_without_guessing_the_old_kickoff(): void
+    {
+        $this->prepareRecording();
+        $this->plan->saveCamera($this->tenant, 11, 'Camera B');
+        $this->adjust(['time' => '13:30', 'duration' => 150]);
+        $this->table('veo_recording_adjustments')->update(['fixture_starts_at' => null]);
+        $this->assertSame('13:30', $this->entry()['starts_at']->format('H:i'));
+        $this->table('competitions')->where('association_match_id', 21)->update(['field_id' => 11]);
+        $this->assertSame('14:00', $this->entry()['starts_at']->format('H:i'));
+        $this->assertSame('16:30', $this->entry()['ends_at']->format('H:i'));
+        $this->assertSame('Camera B', $this->entry()['camera']);
     }
 
     public function test_cross_day_recording_remains_visible_in_new_date_and_overnight_window(): void

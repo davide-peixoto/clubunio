@@ -2,7 +2,11 @@
 set -euo pipefail
 umask 077
 test "$(hostname -f)" = vps.clubunio.com
-root=/root/clubunio-releases/veo-calendar-20261124
+case "${1:-calendar}" in
+    calendar) root=/root/clubunio-releases/veo-calendar-20261124 ;;
+    follow-fixture) root=/root/clubunio-releases/veo-follow-fixture-20261124 ;;
+    *) exit 1 ;;
+esac
 test "$(sudo -u postgres psql -X -At -d clubunio_dev -c 'select current_database()')" = clubunio_dev
 test ! -e "$root/applied"
 if test ! -e "$root/dev.dump.enc"; then

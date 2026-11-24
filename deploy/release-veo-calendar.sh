@@ -4,7 +4,7 @@ umask 027
 test "$(hostname -s)" = svs-pi-server
 base=/var/www/svs-laravel
 old=$(readlink -f "$base/current")
-name=20261124-clubunio-veo-calendar-v4
+name=20261124-clubunio-veo-calendar-v5
 next="$base/releases/$name"
 test ! -e "$next"
 sudo install -d -o admin -g www-data -m 2750 "$next"

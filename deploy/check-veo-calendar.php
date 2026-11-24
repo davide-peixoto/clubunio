@@ -25,8 +25,13 @@ try {
     $season = $insert('seasons', ['name' => 'Acceptance', 'starts_on' => '2029-07-01', 'ends_on' => '2030-06-30', 'active' => true]);
     $team = $insert('teams', ['name' => 'Acceptance team', 'sfv_team_id' => 987651001, 'active' => true]);
     $teamSeason = $insert('team_seasons', ['team_id' => $team, 'season_id' => $season, 'label' => 'Acceptance team', 'active' => true]);
-    $field = $insert('training_options', ['category' => 'field', 'code' => 'VEO', 'name' => 'Acceptance field', 'active' => true]);
+    App\ClubUnio\Services\TeamPlanningService::seedOptions($tenant->id);
+    $field = $insert('training_options', ['category' => 'field', 'code' => 'H', 'name' => 'Acceptance field', 'active' => true]);
+    $field2 = $insert('training_options', ['category' => 'field', 'code' => 'K', 'name' => 'Second field', 'active' => true]);
+    $status = $insert('facility_statuses', ['code' => 'VEO_OPEN', 'name' => 'Open', 'blocks_training' => false, 'active' => true]);
+    foreach ([$field, $field2] as $id) { $insert('field_availabilities', ['field_id' => $id, 'status_id' => $status, 'active' => true]); }
     $insert('sfv_schedule', ['match_id' => 987651002, 'season_id' => 2030, 'team_a_id' => 987651001,
+        'host_name' => 'Acceptance team', 'guest_name' => 'Other team', 'location' => 'Tannenbrunn - 1, Sissach',
         'title' => 'Acceptance recording', 'starts_at' => '2030-01-10T14:00:00+01:00', 'state' => 'Angesetzt', 'home' => true]);
     $competition = $insert('competitions', ['association_match_id' => 987651002, 'plays_on' => '2030-01-10',
         'starts_at' => '14:00:00', 'field_id' => $field, 'host_name' => 'Acceptance team', 'guest_name' => 'Other team', 'active' => true]);
@@ -44,6 +49,24 @@ try {
     if ($db->table('clubora.competitions')->where('id', $competition)->value('starts_at') !== '14:00:00') { throw new LogicException('Fixture changed'); }
     if ($db->table('clubora.object_changes')->where('tenant_id', $tenant->id)->where('object_type', 'veo_recording')->count() !== 2) { throw new LogicException('Audit missing'); }
     echo "PostgreSQL move, stale-write protection, reset, fixture isolation and audit passed\n";
+    $plan->saveCamera($tenant, $field2, 'Second camera');
+    $input['revision'] = $service->current($tenant, 987651002)['revision'];
+    $service->save($actor, $tenant, 987651002, $input);
+    $db->table('clubora.competitions')->where('tenant_id', $tenant->id)->where('id', $competition)->update(['field_id' => $field2]);
+    if ($service->current($tenant, 987651002)['camera'] !== 'Second camera') { throw new LogicException('Confirmed pitch move did not change camera'); }
+    foreach (['2030-01-11' => ['16:00', 2, 'Second camera'], '2030-01-12' => ['19:00', 1, 'Acceptance camera']] as $date => [$time, $pitch, $camera]) {
+        $db->table('clubora.sfv_schedule')->where('tenant_id', $tenant->id)->where('match_id', 987651002)->update([
+            'starts_at' => $date.'T'.$time.':00+01:00', 'location' => 'Tannenbrunn - '.$pitch.', Sissach', 'state' => 'Neu angesetzt', 'revision' => $pitch + 2]);
+        $result = app(App\ClubUnio\Services\SfvReconcileService::class)->reconcile($actor, $tenant, $date, $date);
+        if ($result['issues'] || $result['new'] + $result['updated'] !== 1) { throw new LogicException('SFV reconciliation failed: '.json_encode($result['issues'])); }
+        $entry = $service->current($tenant, 987651002);
+        $expected = Carbon\CarbonImmutable::parse($date.' '.$time, 'Europe/Zurich')->subMinutes(30);
+        if ($entry['camera'] !== $camera || ! $entry['starts_at']->equalTo($expected) || ! $entry['ends_at']->equalTo($expected->addMinutes(150))) {
+            throw new LogicException('SFV recording follow failed');
+        }
+        if ($plan->entries($tenant, '2030-01-10', '2030-01-10')) { throw new LogicException('Old recording remained on calendar'); }
+    }
+    echo "Confirmed pitch change and two actual SFV reconciliations followed automatically, preserving lead-in and duration\n";
     Filament::setCurrentPanel(Filament::getPanel('clubunio'));
     Filament::auth()->setUser($actor); Filament::setTenant($tenant, isQuiet: true);
     $session = $app['session']->driver(); $session->start();

@@ -18,9 +18,14 @@ beim Speichern serverseitig abgewiesen. Die bestehende feste Kamera-je-Platz-
 Zuordnung bleibt massgeblich; dies ist keine Verwaltung frei beweglicher Kameras.
 
 Zwischenzeitliche Änderungen werden über einen Fingerabdruck der SFV-/Platzbasis
-und der Aufnahmeversion erkannt. Geänderte Basisdaten setzen manuelle Planung auf
-„Erneut prüfen“; sie werden nicht still weiterverwendet. Rücksetzen auf den
-automatischen Plan ist ebenfalls protokolliert. Audit unter `veo_recording`.
+und der Aufnahmeversion erkannt. Bei einer bestätigten Spiel-/Platzverschiebung
+folgt auch manuelle Aufnahmeplanung automatisch dem neuen Platz und dessen
+Kamera. Der relative Vorlauf zum Anpfiff und die Aufnahmedauer bleiben erhalten.
+Das gilt ebenso nach automatischer SFV-Übernahme, auch bei wiederholtem Wechsel
+des Datums. Fehlende/mehrdeutige Platzzuteilung bleibt „Nicht zugeteilt“, fehlende
+Zielkamera „Keine Kamera“; niemals die alte Kamera als gültiges Ziel behalten.
+Neue Überschneidungen werden als Konflikt angezeigt, nicht durch stilles Festhalten
+am alten Termin kaschiert. Rücksetzen ist protokolliert, Audit `veo_recording`.
 
 ### Migration und Rückweg
 
@@ -33,6 +38,16 @@ migrieren; manuelle Aufnahmeplanung nur anhand dieser aufgelösten Verknüpfunge
 übernehmen, niemals numerische IDs zwischen Mandanten kopieren. Der Basis-Hash ist
 zielabhängig und muss nach Import neu bestätigt werden.
 
+Zusatzmigration `2026_11_24_021000_veo_fixture_anchor` speichert den verlässlichen
+Spieltermin beim manuellen Planen als nullable `fixture_starts_at`. Bei späterer
+Verschiebung werden Startversatz und Dauer relativ zu diesem Anker berechnet;
+die gespeicherte Originalplanung bleibt für Audit und Revisionsprüfung erhalten.
+Alte Zeilen werden nicht durch erfundene historische Anpfiffzeiten aufgefüllt:
+bis zu einer Verschiebung bleibt ihr bisheriges Fenster, danach beginnt die
+Aufnahme am neuen Anpfiff mit erhaltener Dauer. Für einen besonderen Vorlauf
+diese alten Aufnahmen einmal neu speichern. Bei Importen den tatsächlichen Anker
+mitführen; ist er unbekannt, NULL beibehalten. Kein heuristisches Backfill.
+
 Nur `clubunio_dev` aktualisiert, Stage/PROD unverändert. Vorab verschlüsselte
 Vollsicherung auf dem VPS, vollständig lesbar geprüft (SQL nur nach `/dev/null`,
 keine Wiederherstellung ausgeführt):
@@ -41,7 +56,12 @@ Schlüssel bleibt separat im selben privaten Verzeichnis, niemals im Git.
 `deploy/emit-veo-calendar-migration.php` erzeugt ausschliesslich DEV-SQL mit
 Datenbank-/Owner-Prüfung; die Anwendung erhält nur DML für die neue Tabelle.
 
-DEV-Release `20261124-clubunio-veo-calendar-v4`, auf Basis des aktiven Releases.
+Die Zusatzmigration wurde ausschliesslich auf DEV nach erneuter verschlüsselter
+Vollsicherung unter `/root/clubunio-releases/veo-follow-fixture-20261124` angewandt.
+Emitter: `deploy/emit-veo-follow-fixture-migration.php`. Keine neue Rolle oder
+erweiterte Rechte; Stage/PROD bleiben unverändert.
+
+DEV-Release `20261124-clubunio-veo-calendar-v5`, auf Basis des aktiven Releases.
 Die Schema-Abbildung `clubora` → `clubunio` erfolgt vor Aktivierung; Konfiguration,
 Composer und privater Storage bleiben erhalten. Fachlicher Rückweg auf
 `20261124-clubunio-daily-v2` über den atomaren `current`-Symlink und FPM-Reload.
@@ -50,11 +70,15 @@ Der alte Plan ignoriert manuelle Aufnahmefenster, daher Rückweg fachlich abstim
 
 ### Prüfstand
 
-49 lokale PHP-Tests / 277 Assertions erfolgreich; ein separater externer DB-Test
+53 lokale PHP-Tests / 311 Assertions erfolgreich; ein separater externer DB-Test
 ohne Opt-in übersprungen. Drei JavaScript-Layouttests erfolgreich. DE/EN-Kataloge
 geprüft. Native PostgreSQL-Prüfung auf DEV: Speichern, Revisionsschutz, Rücksetzen,
 unveränderte Spielzeit und Audit sowie DE/EN-Seitenrendering erfolgreich; alle
 synthetischen Daten in einer Transaktion zurückgerollt.
+Zusätzlich nativ auf PostgreSQL: bestätigter Platzwechsel und zwei tatsächliche
+`SfvReconcileService`-Durchläufe auf verschiedene Tage/Plätze. Neue Kamera,
+30 Minuten Vorlauf und 150 Minuten Dauer korrekt; keine alten Kalendereinträge.
+Auch diese Fachprüfung vollständig zurückgerollt, kein echter SFV-Abruf/Versand.
 Angemeldete Desktop-/Mobile-Sichtprüfung noch offen: Browser-Sitzung abgelaufen.
 
 Die Filament-Seite **Veo-Aufnahmeplanung** ist unter **Anlagen & Kommunikation** für Vereinsadmins und die Geschäftsstelle mit Änderungsrecht für Wettkämpfe verfügbar. Benutzer wechseln in den gewünschten Verein, hinterlegen je Platz den Namen der fest montierten Kamera und aktivieren Aufnahmen je Mannschaft der aktuellen Saison. Die Einstellungen gelten für den gewählten Verein.

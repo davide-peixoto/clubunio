@@ -23,7 +23,8 @@ final class VeoRecordingAdjustments
         $match = $this->projection->table('sfv_schedule', $tenant)->where('match_id', $matchId)->first();
         abort_unless($match?->starts_at, 404);
         $date = Time::parse($match->starts_at)->tz('Europe/Zurich')->toDateString();
-        $entry = collect($this->plan->entries($tenant, $date, $date))->firstWhere('match_id', $matchId);
+        $day = Time::parse($date, 'Europe/Zurich');
+        $entry = collect($this->plan->entries($tenant, $day->subDays(8)->toDateString(), $day->addDays(8)->toDateString()))->firstWhere('match_id', $matchId);
         if (! $entry) {
             $adjustment = $this->projection->table('veo_recording_adjustments', $tenant)->where('match_id', $matchId)->first();
             if ($adjustment) {
@@ -75,6 +76,7 @@ final class VeoRecordingAdjustments
                 $after = ['tenant_id' => $tenant->id, 'match_id' => $matchId, 'field_id' => (int) $data['field_id'],
                     'starts_at' => $start->toIso8601String(), 'ends_at' => $end->toIso8601String(),
                     'basis_hash' => $entry['basis_hash'], 'revision' => ($before?->revision ?? 0) + 1,
+                    'fixture_starts_at' => $entry['fixture_starts_at']->toIso8601String(),
                     'updated_by' => $actor->id, 'updated_at' => now()->toIso8601String()];
                 $query->upsert($after, ['tenant_id', 'match_id'], array_diff(array_keys($after), ['tenant_id', 'match_id']));
             }

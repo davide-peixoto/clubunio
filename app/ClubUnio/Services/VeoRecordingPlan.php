@@ -69,7 +69,7 @@ final class VeoRecordingPlan
             ->where('starts_at', '<', $toDate->addDay()->toIso8601String())
             ->where('ends_at', '>', $fromDate->toIso8601String())->pluck('match_id');
         $matches = $this->projection->table('sfv_schedule', $tenant)->where(fn ($query) => $query->whereBetween('starts_at', [
-            $fromDate->subDays(2)->toIso8601String(), $toDate->addDays(3)->toIso8601String(),
+            $fromDate->subDays(8)->toIso8601String(), $toDate->addDays(9)->toIso8601String(),
         ])->orWhereIn('match_id', $adjustedIds))->orderBy('starts_at')->orderBy('match_id')->get();
         $enabled = $this->enabledTeams($tenant);
         if ($matches->isEmpty() || $enabled->isEmpty()) {
@@ -145,7 +145,14 @@ final class VeoRecordingPlan
                 $entry['camera'] = $fields->has($adjustment->field_id) ? $cameras->get($adjustment->field_id)?->name : null;
                 $entry['status'] = $entry['camera'] === null ? 'no_camera' : 'planned';
             } elseif ($adjustment) {
-                $entry['status'] = 'needs_review';
+                // A changed fixture owns the camera again; only relative lead-in and duration follow it.
+                // Older rows have no trustworthy anchor: retain duration, never guess an old kickoff.
+                $leadIn = isset($adjustment->fixture_starts_at)
+                    ? Time::parse($adjustment->fixture_starts_at)->diffInSeconds(Time::parse($adjustment->starts_at)) : 0;
+                $duration = Time::parse($adjustment->starts_at)->diffInSeconds(Time::parse($adjustment->ends_at));
+                $entry['starts_at'] = $startsAt->addSeconds($leadIn);
+                $entry['ends_at'] = $entry['starts_at']->addSeconds($duration);
+                $entry['followed_fixture'] = true;
             }
             $entries[] = $entry;
         }
