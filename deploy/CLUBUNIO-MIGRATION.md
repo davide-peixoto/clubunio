@@ -1,5 +1,15 @@
 # ClubUnio migration work packages
 
+## Geplant: vereinfachte Alltagsabläufe einschließlich SFV (24.11.2026)
+
+Die sechs nächsten Pakete sind mit Bedienungs- und Abnahmekriterien aufgenommen:
+SFV-Abgleich, Tagescockpit, Aufgabenboard, Planungsalternativen, Meldungsbündelung
+und mobile Belegerfassung. Vorhandene Modelle und Dienste bevorzugen; ein
+zusätzlicher Schemabedarf wird vor der jeweiligen Implementierung geprüft.
+Diese Planergänzung führt keine Migration aus und aktiviert keinen neuen Release.
+SFV-Vorschau/Revisionsschutz und geschützte lokale Änderungen bleiben Grundlage.
+[Arbeitsumfang und Reihenfolge](CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+
 ## DEV: additive Alltagspakete (24.11.2026)
 
 `2026_11_24_010000_work_hub` als Owner atomar mit Ledger nur in

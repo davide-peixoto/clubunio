@@ -1,5 +1,14 @@
 # ClubUnio
 
+## Nächster Ausbau: einfache Alltagsabläufe (24.11.2026)
+
+SFV-Abgleich einschließlich sichtbarer Kalenderübernahme als gemeinsamer
+nächster Umfang mit Tagescockpit, Aufgabenboard, erweiterten Planungsalternativen,
+gebündelten Benachrichtigungen und mobiler Belegerfassung aufgenommen.
+Leitlinie: wenige Schritte, klare Ergebnisse, Prüfung bei echten Konflikten.
+Status: geplant; DEV Work Hub v3 bleibt unverändert.
+[Umfang, Reihenfolge und Abnahmekriterien](deploy/CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+
 ## DEV: sechs Alltagspakete (24.11.2026)
 
 Benachrichtigungen mit Chaterwähnungen, berechtigte Objektsuche, freie

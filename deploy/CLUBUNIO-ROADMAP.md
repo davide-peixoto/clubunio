@@ -1,5 +1,25 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Nächster Arbeitsumfang: sechs einfache Alltagsabläufe (24.11.2026)
+
+SFV-Abgleich als vorrangige Optimierung zu den fünf weiteren Benutzerwünschen
+aufgenommen. Status: geplant, noch nicht umgesetzt oder als Release aktiviert.
+
+- [ ] SFV: gemeinsamer Abgleich, eindeutige Übernahme, klare Prüffälle und
+  Aktualisierung von Plantafel/Mannschaftskalender; lokale Ausnahmen schützen.
+- [ ] Mein Verein: eigene fällige Aufgaben, offene Freigaben und aktuelle Konflikte.
+- [ ] Aufgabenboard: drei Statusspalten, Drag-and-drop und gleichwertige
+  Bedienung per Tastatur/Handy, Revisionsschutz bei parallelen Änderungen.
+- [ ] Planung: freie Alternativen auch für Mannschaftstermine und Busreservierungen.
+- [ ] Benachrichtigungen: berechtigter Ungelesen-Zähler, Objektbündel und Direktlinks.
+- [ ] Mobile Spesen: Foto/Datei, Vorschau, notwendige Angaben und verknüpfter Entwurf.
+
+Reihenfolge: SFV zuerst, danach Tagescockpit/Benachrichtigungen, Aufgabenboard,
+Planung und mobile Belege. Vorhandene Fachservices weiterverwenden; keine
+parallelen Ablagen. DE/EN, Mandantendesign, bisherige Ansicht und Zugriffsrechte
+gehören zu jeder Abnahme. Keine Zahlung oder neue externe Zustellung.
+[Bedienungsregeln und konkrete Abnahmekriterien](CLUBUNIO-ALLTAGSOPTIMIERUNGEN.md).
+
 ## Sechs Alltagspakete: Work Hub (24.11.2026)
 
 Benachrichtigungszentrale/Erwähnungen, Objektsuche, Vorschläge bei
