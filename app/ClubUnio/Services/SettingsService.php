@@ -52,6 +52,7 @@ class SettingsService
             };
             Validator::make(['value' => $value], ['value' => ['required', $rule, 'max:65535']])->validate();
             $setting->forceFill(['encrypted_value' => Crypt::encryptString($value)])->save();
+            if ($setting->key === ReactUi::KEY) { app(ReactUi::class)->forget((int) $tenant->id); }
             DB::connection('clubunio')->table('clubora.setting_changes')->insert([
                 'tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id,
             ]);

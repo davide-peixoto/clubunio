@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## React-Parameter und Menü – 24.11.2026
+
+Aktiv: `20261124-clubunio-react-menu-v2`. Allgemeiner Vereinsparameter
+`REACT_ENABLED=1` für SV Sissach, verschlüsselt in tenant_settings; die alten
+drei ENV-Gates werden ignoriert. Keine Schema-Migration. Browserwechsel
+Nein/Ja in allen vier Bereichen erfolgreich, Endwert Ja. Stage/PROD unverändert.
+[Release, Prüfungen und Rückweg](CLUBUNIO-REACT-UI.md).
+
 ## DEV-Teamplanung – 24.11.2026
 
 Aktiv: `20261124-clubunio-team-ui-v1`, Gate `CLUBUNIO_PLANNING_UI_ENABLED=true`.

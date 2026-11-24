@@ -17,7 +17,7 @@ class DashboardGlassChartTest extends TestCase
         $actor = new Account;
         $actor->id = 901;
         Filament::auth()->setUser($actor);
-        config(['clubunio-dashboard.enabled' => true]);
+        app()->instance(\App\ClubUnio\Services\ReactUi::class, new class extends \App\ClubUnio\Services\ReactUi { public function enabled(?int $tenantId = null): bool { return true; } });
     }
 
     public function test_template_charts_preserve_values_and_offer_escaped_server_table_in_both_languages(): void
@@ -32,7 +32,7 @@ class DashboardGlassChartTest extends TestCase
 
     public function test_classic_selection_uses_original_chart_renderer(): void
     {
-        session()->put('clubunio.dashboard.design.901', 'classic');
+        app()->instance(\App\ClubUnio\Services\ReactUi::class, new class extends \App\ClubUnio\Services\ReactUi { public function enabled(?int $tenantId = null): bool { return false; } });
         Livewire::test(GlassChartHarness::class)->assertDontSee('data-cu-dashboard-chart', false)
             ->assertSee('x-data', false);
     }

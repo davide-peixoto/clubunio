@@ -18,6 +18,7 @@ class SettingOptions
     public function options(Setting $setting): ?array
     {
         if ($setting->is_secret || $setting->area !== 'general') { return null; }
+        if ($setting->key === ReactUi::KEY) { return ['1' => trans('react_ui.yes'), '0' => trans('react_ui.no')]; }
         $db = DB::connection('clubunio');
         if ($setting->key === ActiveTrainingPlan::KEY) {
             return [0 => __('Nicht festgelegt')] + $db->table('clubora.training_options')
@@ -62,6 +63,7 @@ class SettingOptions
 
     public function hint(Setting $setting): string
     {
+        if ($setting->area === 'general' && $setting->key === ReactUi::KEY) { return trans('react_ui.hint'); }
         if ($setting->area === 'app' && $this->archived($setting)) {
             return __('Abgelöst durch die App-Modulauswahl in Rollen & Berechtigungen.');
         }

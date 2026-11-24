@@ -38,10 +38,6 @@ class TeamPlanningController
 
     private function view(string $name, array $data)
     {
-        if (\App\ClubUnio\Services\PlanningUi::select(request(), (int) $data['tenant']->id)) {
-            return redirect()->to(request()->fullUrlWithoutQuery('planning_design'));
-        }
-
         return response()->view('clubunio.planning.'.$name, $data)->header('Cache-Control', 'private, no-store');
     }
 

@@ -1,5 +1,12 @@
 # ClubUnio
 
+## Zentraler React-Parameter und Menü – 24.11.2026
+
+Ein Vereinsparameter **React Ja/Nein** steuert Dashboard, Menü, Team- und
+Anlagenplanung. Einzelne Designschalter entfallen. Neues CI-Menü mit
+React-Suchpalette, Ctrl/⌘+K und mobiler Bedienung auf DEV ausgeliefert.
+[Bedienung und Abnahme](deploy/CLUBUNIO-REACT-UI.md).
+
 ## Teamplanung auf DEV – 24.11.2026
 
 Neue CI-Oberfläche für Terminliste und Teamkalender, mobile Agenda und

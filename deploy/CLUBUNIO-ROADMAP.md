@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## React-Steuerung und Menüpaket – 24.11.2026
+
+Zentraler Vereinsparameter ersetzt die einzelnen Designschalter. Menüpaket
+mit CI-Seitenleiste und React-Suchpalette auf DEV abgeschlossen; DE/EN,
+Tastatur, mobile Breiten und globaler Ja/Nein-Wechsel im Browser geprüft.
+21 Tests/111 Assertions und 24 DEV-Renderprüfungen erfolgreich.
+[Stand](CLUBUNIO-REACT-UI.md). Nächstes mögliches Paket: Trainingsplanung.
+
 ## DEV-Teamplanung – 24.11.2026
 
 Terminliste und Kalender im neuen CI-Design mit mobiler Agenda und klassischem

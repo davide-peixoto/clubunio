@@ -1,5 +1,9 @@
 # Umschaltbares DEV-Dashboard – 23.11.2026
 
+Aktuell seit 24.11.2026: Die separaten Designschalter und ENV-Gates sind
+durch den zentralen Vereinsparameter **React Ja/Nein** ersetzt.
+[Bedienung, Menüpaket und Abnahme](CLUBUNIO-REACT-UI.md).
+
 DEV nutzt standardmässig ein Glasdesign, angelehnt an die lokale V42-Vorschau.
 Oberhalb des Dashboards kann jederzeit zwischen **Glasdesign** und
 **Bisheriges Design** gewechselt werden. Die Wahl gilt pro angemeldetem Konto

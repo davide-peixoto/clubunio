@@ -45,21 +45,14 @@ class PitchPlanning extends Page
 
     public function modernAvailable(): bool
     {
-        return (bool) config('clubunio-facility-ui.enabled', false)
+        return app(\App\ClubUnio\Services\ReactUi::class)->enabled()
             && is_file(public_path('js/clubunio-facility-planner.js'))
             && is_file(public_path('css/clubunio-facility-planner.css'));
     }
 
     public function modernSelected(): bool
     {
-        return $this->modernAvailable() && session('clubunio.facility.design.'.Filament::auth()->id(), 'modern') === 'modern';
-    }
-
-    public function selectPlanningDesign(string $design): void
-    {
-        abort_unless(static::canAccess() && $this->modernAvailable() && in_array($design, ['modern', 'classic'], true), 403);
-        session()->put('clubunio.facility.design.'.Filament::auth()->id(), $design);
-        $this->redirect(\App\ClubUnio\Pages\PitchPlanning::getUrl(['date' => $this->date, 'mode' => $this->mode, 'teamId' => $this->teamId]), navigate: false);
+        return $this->modernAvailable();
     }
 
     public static function getNavigationGroup(): ?string { return 'Anlagen & Kommunikation'; }

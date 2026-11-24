@@ -66,7 +66,7 @@ class SettingResource extends Resource
     {
         return $table->columns([
             TextColumn::make('area')->label('Bereich')->badge()->sortable(),
-            TextColumn::make('label')->label('Bezeichnung')->searchable()->wrap(),
+            TextColumn::make('label')->label('Bezeichnung')->formatStateUsing(fn ($state, Setting $record) => $record->key === \App\ClubUnio\Services\ReactUi::KEY ? trans('react_ui.setting') : $state)->searchable()->wrap(),
             TextColumn::make('key')->label('Schlüssel')->searchable()->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('display_value')->label('Wert')->state(fn (Setting $record) => app(SettingOptions::class)->display($record))->description(fn (Setting $record) => $record->area === 'general' ? app(SettingOptions::class)->hint($record) : null)->limit(60)->wrap(),
             TextColumn::make('is_secret')->label('Schutz')->formatStateUsing(fn ($state) => $state ? __('Vertraulich') : __('Standard')),
@@ -97,9 +97,10 @@ class SettingResource extends Resource
                     ->schema(fn (Setting $record) => app(SettingOptions::class)->options($record) !== null
                         ? [Select::make('value')->label('Neuer Wert')->options(app(SettingOptions::class)->options($record))->searchable()->required()->helperText(app(SettingOptions::class)->hint($record))]
                         : [TextInput::make('value')->label('Neuer Wert')->password($record->is_secret)->required()->maxLength(65535)])
-                    ->action(function (Setting $record, array $data) {
+                    ->action(function (Setting $record, array $data, \Livewire\Component $livewire) {
                         app(SettingsService::class)->update(Filament::auth()->user(), Filament::getTenant(), $record->id, $data['value']);
                         Notification::make()->title(__('Einstellung gespeichert'))->success()->send();
+                        if ($record->key === \App\ClubUnio\Services\ReactUi::KEY) { $livewire->redirect(static::getUrl('index'), navigate: false); }
                     }),
             ])->defaultSort('area')->paginated([25, 50, 100]);
     }

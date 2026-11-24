@@ -1,5 +1,14 @@
 # ClubUnio migration work packages
 
+## Zentraler React-Parameter und Menü – 24.11.2026
+
+DEV: vorhandene tenant_settings um `general / REACT_ENABLED` für SV Sissach
+mit Ja ergänzt und auditiert; keine Schema-Migration. Alte Einzelgates und
+Sitzungsschalter abgelöst. Ja/Nein gilt für alle UI-Pakete je Verein; fehlend
+bedeutet Nein. Stage/PROD unverändert. Spätere Übernahme benötigt explizite
+Parameteranlage im jeweiligen Zielverein und erneute Browserabnahme.
+[Bedienung und Rückweg](CLUBUNIO-REACT-UI.md).
+
 ## DEV-Planungsoberfläche – 24.11.2026
 
 Teamplanung: reine Oberflächenauslieferung ohne Schema- oder Datenmigration.

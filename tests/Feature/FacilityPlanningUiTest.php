@@ -18,7 +18,7 @@ class FacilityPlanningUiTest extends TestCase
         $actor = new Account;
         $actor->id = 801;
         Filament::auth()->setUser($actor);
-        config(['clubunio-facility-ui.enabled' => true]);
+        app()->instance(\App\ClubUnio\Services\ReactUi::class, new class extends \App\ClubUnio\Services\ReactUi { public function enabled(?int $tenantId = null): bool { return true; } });
         PitchPlanningHarness::$calls = [];
         PitchPlanningHarness::$failure = null;
         PitchPlanningHarness::$manage = PitchPlanningHarness::$request = true;
@@ -27,23 +27,12 @@ class FacilityPlanningUiTest extends TestCase
 
     public function test_modern_and_server_fallback_render_safely_in_both_languages(): void
     {
-        foreach (['de' => 'Interaktiver Plan', 'en' => 'Interactive planner'] as $locale => $label) {
+        foreach (['de', 'en'] as $locale) {
             app()->setLocale($locale);
-            Livewire::test(FacilityPlanningHarness::class)->assertSee($label)
+            Livewire::test(FacilityPlanningHarness::class)->assertDontSee('wire:click="selectPlanningDesign', false)
                 ->assertSee('data-cu-facility-planner', false)->assertSee('data-cu-facility-fallback', false)
                 ->assertDontSee('<script>unsafe</script>', false);
         }
-    }
-
-    public function test_design_switch_preserves_date_and_mode_and_is_scoped_to_account(): void
-    {
-        Livewire::test(FacilityPlanningHarness::class)->set('mode', 'week')->call('selectPlanningDesign', 'classic')->assertRedirect();
-        $this->assertSame('classic', session('clubunio.facility.design.801'));
-        Livewire::test(FacilityPlanningHarness::class)->assertDontSee('data-cu-facility-planner', false)->assertSee('pitch-board', false);
-        $actor = new Account;
-        $actor->id = 802;
-        Filament::auth()->setUser($actor);
-        $this->assertTrue(app(FacilityPlanningHarness::class)->modernSelected());
     }
 
     public function test_new_projection_does_not_bypass_existing_request_permissions(): void
@@ -58,13 +47,6 @@ class FacilityPlanningUiTest extends TestCase
         Livewire::test(FacilityPlanningHarness::class)->call('proposeMove', PitchPlanningPageTest::entry()['key'], 2, '2026-11-04', '20:00')
             ->assertSet('editor', 'edit')->assertSet('form.field_id', 2)->assertSet('form.starts_at', '20:00');
         $this->assertNotContains('move', array_column(PitchPlanningHarness::$calls, 0));
-    }
-
-    public function test_invalid_design_and_disabled_gate_are_rejected(): void
-    {
-        Livewire::test(FacilityPlanningHarness::class)->call('selectPlanningDesign', 'external')->assertForbidden();
-        config(['clubunio-facility-ui.enabled' => false]);
-        Livewire::test(FacilityPlanningHarness::class)->assertDontSee('data-cu-facility-planner', false)->call('selectPlanningDesign', 'modern')->assertForbidden();
     }
 
     public function test_missing_assets_preserve_previous_view(): void

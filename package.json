@@ -2,10 +2,11 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && npm run build:dashboard && npm run build:facility",
+        "build": "vite build && npm run build:dashboard && npm run build:facility && npm run build:menu",
         "dev": "vite",
         "build:dashboard": "node tools/build-dashboard.mjs",
-        "build:facility": "node tools/build-facility-planner.mjs"
+        "build:facility": "node tools/build-facility-planner.mjs",
+        "build:menu": "node tools/build-react-navigation.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

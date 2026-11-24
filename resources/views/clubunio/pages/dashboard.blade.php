@@ -1,13 +1,4 @@
 <x-filament-panels::page>
-    <div class="cu-dashboard-switch" role="group" aria-label="{{ trans('dashboard_design.selector') }}">
-        <span>{{ trans('dashboard_design.selector') }}</span>
-        <x-filament::button wire:click="selectDesign('glass')" :color="$this->glassSelected() ? 'primary' : 'gray'" :aria-pressed="$this->glassSelected() ? 'true' : 'false'">
-            {{ trans('dashboard_design.glass') }}
-        </x-filament::button>
-        <x-filament::button wire:click="selectDesign('classic')" :color="! $this->glassSelected() ? 'primary' : 'gray'" :aria-pressed="! $this->glassSelected() ? 'true' : 'false'">
-            {{ trans('dashboard_design.classic') }}
-        </x-filament::button>
-    </div>
     @if ($this->glassSelected())
         <link rel="stylesheet" href="{{ asset('css/clubunio-dashboard.css') }}?v={{ filemtime(public_path('css/clubunio-dashboard.css')) }}">
         <section class="cu-glass-dashboard">

@@ -1,8 +1,3 @@
-<nav class="cu-team-design" aria-label="{{ trans('planning_ui.design') }}">
-@foreach(['modern', 'classic'] as $design)
-<a href="{{ request()->fullUrlWithQuery(['planning_design' => $design]) }}" @if($teamModern === ($design === 'modern')) aria-current="true" @endif>{{ trans('planning_ui.'.$design) }}</a>
-@endforeach
-</nav>
 @if($teamModern)
 <header class="cu-team-hero">
     <div><small>{{ trans('planning_ui.eyebrow') }}</small><h2>{{ trans('planning_ui.title') }}</h2><p>{{ trans('planning_ui.description') }}</p></div>

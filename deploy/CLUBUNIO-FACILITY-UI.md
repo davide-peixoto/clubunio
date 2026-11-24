@@ -1,5 +1,9 @@
 # Interaktive Anlagenplanung auf DEV – 24.11.2026
 
+Aktuell seit 24.11.2026: Die separaten Designschalter und ENV-Gates sind
+durch den zentralen Vereinsparameter **React Ja/Nein** ersetzt.
+[Bedienung, Menüpaket und Abnahme](CLUBUNIO-REACT-UI.md).
+
 Unter `/pitch-planning` kann zwischen **Interaktiver Plan** und
 **Bisherige Ansicht** gewechselt werden. Die Wahl gilt pro angemeldetem Konto
 für die Serversitzung. Der neue Plan ist auf DEV Standard. Datum, Tag-/Woche-/

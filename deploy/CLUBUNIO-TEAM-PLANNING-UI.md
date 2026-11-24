@@ -1,5 +1,9 @@
 # Teamplanung: neue DEV-Oberfläche
 
+Aktuell seit 24.11.2026: Die separaten Designschalter und ENV-Gates sind
+durch den zentralen Vereinsparameter **React Ja/Nein** ersetzt.
+[Bedienung, Menüpaket und Abnahme](CLUBUNIO-REACT-UI.md).
+
 Stand: 24.11.2026. Terminliste und Teamkalender erhalten eine umschaltbare
 Oberfläche in ClubUnio-Blau (#164B8A / #48A9E8), mit eigener SVG-Grafik,
 Einblend- und Hoverbewegungen, Kalenderkarten und mobiler Agenda.
