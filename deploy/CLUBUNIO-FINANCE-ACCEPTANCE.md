@@ -1,5 +1,15 @@
 # Bexio/Finanzen: aktueller Abnahmestand
 
+## Wiederaufnahme24.11.2026 nach Sandbox-Verlaengerung
+
+Sandbox SVS Api Test erneut im Browser und aus aktuellem ClubUnio DEV geprueft.
+Sechs Rechnungsfaelle, zwei Kundenguthaben, zwei Spesenbelege und zwei API-PDFs
+ohne Abweichung; RE-00015 auch als gerenderte Web-PDF-Vorschau bestaetigt.
+Keine neue Buchung, Zahlung, Zustellung oder Anwendung eines Statusabgleichs.
+Aktueller Nachweis, Migrationsgrenzen und noch nicht gepruefte Bereiche:
+[Sandbox-Wiederabnahme24.11.2026](CLUBUNIO-BEXIO-REACCEPTANCE-20261124.md).
+Die nachfolgenden Abschnitte sind historische Protokolle, keine aktuelle Aufgabenliste.
+
 Stand26.10.2026. Ersetzt veraltete Offen-Vermerke zu GS-00005/07. Historische
 Protokolle bleiben erhalten. Keine Benutzerzuordnung oder Produktivumstellung.
 
