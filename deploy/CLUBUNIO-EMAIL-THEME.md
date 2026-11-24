@@ -1,5 +1,40 @@
 # Laravel-E-Mail-Themes
 
+## Workflow-Mails auf DEV korrigiert24.11.2026
+
+Der aeltere TestOutboxDispatcher lieferte Spesen-, Anmeldungs- und Platzanfragen
+noch als reinen Klartext aus. Er und der separate Vorlagen-Testversand verwenden
+jetzt ebenfalls ClubUnioMailTheme: Vereinsfarben/-logo, HTML plus Klartext,
+Vorgangslink und Powered by ClubUnio. Inhalte/Vorlagen bleiben editierbar und
+unveraendert; Empfaenger, Test-Sink, Reply-To, Versandgrenzen und Idempotenz bleiben.
+DE-/EN-Vorlagensprachen werden vor dem Layout auf die aktivierte UI-Sprache abgebildet.
+
+Beim ersten SMTP-Nachtest wurde ein bereits beschaedigter deutscher Runtime-
+Sprachkatalog entdeckt (UTF-8 als Windows-Zeichen interpretiert). DE/EN-mail_theme.php
+werden nun bytegetreu ausgeliefert. Der native Pruefer verlangt ausdruecklich
+den korrekten Unicode-Text von mail_theme.open, statt nur vorhandene Keys zu pruefen.
+Keine pauschale Ersetzung von Benutzerdaten oder gespeicherten Mailvorlagen.
+
+DEV-Basis bei Bereitstellung:20261124-clubunio-daily-v2; parallelen Release erhalten.
+Gezielte vier Dateien, keine Migration und keine globalen PHP-/SMTP-Aenderungen.
+Sicherung unter storage/app/private/workflow-mail-releases/dev-20261124-160443.
+Rueckweg: die beiden Service-Dateien und DE-/EN-mail_theme.php aus diesem Ordner
+gemeinsam zuruecknehmen; keine bereits akzeptierte Nachricht erneut einreihen.
+
+Zwoelf lokale Tests/126 Assertions pruefen echte In-Memory-MIME-Nachrichten:
+DE/EN, Umlaute/UTF-8, HTML/Klartext, Vereinsfarben/-logo, Escaping, Reply-To,
+entfernte CC/BCC, feste Testempfaenger und keine doppelte Zustellung. Sechs native
+Layoutchecks plus strikter Umlautcheck auf DEV erfolgreich. Zwei getrennte
+Vorlagen-Testmails an ausschliesslich admin@svsissach.ch von SMTP angenommen;
+die zweite nach der UTF-8-Korrektur. SMTP-Annahme ist keine visuelle Zustellabnahme.
+Ein weiterer Aufruf mit derselben Testkennung versendet nicht erneut.
+
+Lokale HTML-Browserpruefung durch URL-Sicherheitsrichtlinie blockiert, keine
+Umgehung. Benutzer bestaetigte das neue Layout im Screenshot und meldete den
+Umlautfehler; erneute Darstellung der zuletzt korrigierten Mail noch offen.
+Stage/PROD fuer dieses Korrekturpaket vorerst nicht veraendert. Bexio-Vollabnahme
+und deren Stage-/PROD-Rollout bleiben ein getrennter noch laufender Auftrag.
+
 ## Release vom 19.11.2026
 
 ClubUnio verwendet das blaue Standarddesign. Vereine mit freigegebener

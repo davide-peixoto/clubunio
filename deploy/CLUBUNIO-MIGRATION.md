@@ -15,8 +15,8 @@ verändert. Direkter Rückweg auf `daily-v1` ohne Datenrücksetzung.
 
 Zwei neue geerbte Login-Themes und ein lokaler React-Build auf dem
 Identitätsdienst installiert, drei DEV-Client-Theme-Felder angepasst.
-v4 korrigiert Videoanimationen und natives OTP-Paste/Autofill; erfolgreicher
-DEV-Login bestätigt. Keine Datenübernahme und keine Schemaänderung.
+v6 enthält automatische OTP-Bestätigung und hält Login-/OTP-Ladezustände bis
+zur Antwort/Weiterleitung aktiv. Paste/Autofill und Mehrfachschutz erhalten. Keine Datenübernahme und keine Schemaänderung.
 Stage-/PROD-Themes und Authentifizierungsregeln unverändert. Social Login benötigt Registrierungen;
 SSO benötigt gesonderten Flow-/Backend-Release, nicht bloß Tokenweitergabe.
 [Abnahme, offene Schritte und Client-Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).

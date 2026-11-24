@@ -20,6 +20,8 @@ Keine neuen Abrufintervalle, keine Schemaänderung, kein API-Rechteausbau.
 - [x] Betreiber bestätigt Paste und Anmeldung; angemeldetes Vereinsportal beobachtet.
 - [x] v5: OTP nach letzter Ziffer automatisch bestätigen; Paste/Autofill und
   Sperre gegen doppelte Übermittlung mit synthetischen Browsertests geprüft.
+- [x] v6: Login-/OTP-Ladezustand bis zur Antwort; verzögerte native POST-Antworten
+  und fortlaufende Animationen mit synthetischen Browsertests geprüft.
 - [ ] Google/Microsoft/Facebook registrieren, Apple-Broker prüfen und Social Login
   mit sicherem Account-Linking sowie erhaltenem MFA-Niveau abnehmen.
 - [ ] Eigenen Step-up-/Cookie-Flow und abgestimmte Web-SSO-Frist zuerst auf DEV

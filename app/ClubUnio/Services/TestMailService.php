@@ -49,10 +49,15 @@ class TestMailService
         }
         $status = 'failed';
         try {
-            $sent = Mail::mailer('clubunio_test')->send(['raw' => __('Testnachricht aus ClubUnio mit Beispieldaten.', [], $attempt['message']['locale'])."\n\n".$attempt['message']['body']], [
+            $body = __('Testnachricht aus ClubUnio mit Beispieldaten.', [], $attempt['message']['locale'])."\n\n".$attempt['message']['body'];
+            $url = rtrim(config('app.url'), '/').'/message-templates';
+            $html = app(ClubUnioMailTheme::class)->render($tenant, $attempt['message']['title'], $body, $url,
+                trans('mail_theme.open', [], $attempt['message']['locale']), $attempt['message']['locale']);
+            $sent = Mail::mailer('clubunio_test')->send(['raw' => $body."\n\n".$url], [
                 'clubunio_reply_to_tenant_id' => (int) $tenant->id,
-            ], function ($mail) use ($attempt) {
+            ], function ($mail) use ($attempt, $html) {
                 $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($attempt['message']['title']);
+                $mail->getSymfonyMessage()->html($html);
             });
             $status = $sent ? 'accepted' : 'failed';
         } catch (\Throwable) {

@@ -2,6 +2,7 @@
 
 namespace App\ClubUnio\Services;
 
+use App\ClubUnio\Models\Tenant;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -52,11 +53,24 @@ class TestOutboxDispatcher
                     throw new \UnexpectedValueException('Empty delivery snapshot');
                 }
                 $status = 'accepted';
+                $tenant = Tenant::findOrFail($event->tenant_id);
                 foreach ($deliveries as $delivery) {
-                    $sent = Mail::mailer('clubunio_test')->send(['raw' => str_replace('\\n', "\n", $delivery['body'])], [
+                    $body = str_replace('\\n', "\n", $delivery['body']);
+                    $language = isset($delivery['locale']) ? strtolower(explode('-', str_replace('_', '-', $delivery['locale']))[0]) : null;
+                    $locale = app(MessageLanguageService::class)->resolve($tenant, $language);
+                    $path = match ($table) {
+                        'clubora.expense_events' => '/expenses/'.(int) $event->expense_id,
+                        'clubora.registration_events' => '/registrations',
+                        'clubora.pitch_planning_events' => '/pitch-planning',
+                    };
+                    $url = rtrim(config('app.url'), '/').$path;
+                    $html = app(ClubUnioMailTheme::class)->render($tenant, $delivery['title'], $body, $url,
+                        trans('mail_theme.open', [], $locale), $locale);
+                    $sent = Mail::mailer('clubunio_test')->send(['raw' => $body."\n\n".$url], [
                         'clubunio_reply_to_tenant_id' => (int) $event->tenant_id,
-                    ], function ($mail) use ($delivery) {
+                    ], function ($mail) use ($delivery, $html) {
                         $mail->to(TestMailGuard::RECIPIENT)->from(config('clubunio-integrations.from'), 'ClubUnio Test')->subject($delivery['title']);
+                        $mail->getSymfonyMessage()->html($html);
                     });
                     if (! $sent) {
                         $status = 'failed';

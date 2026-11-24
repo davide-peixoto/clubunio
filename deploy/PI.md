@@ -25,8 +25,9 @@ Browser-Belegupload durch Erweiterungsfreigabe blockiert, echte Kamera offen.
 Die drei DEV-Loginclients verwenden die neuen ClubUnio-/SV-Sissach-Glas-Themes
 auf dem gemeinsamen VPS-Identitätsdienst. Dieser Theme-Release ändert keinen
 Pi-Anwendungsrelease und benötigt keine Laravel-/Datenbankänderung.
-v4 mit Videoanimationen und nativ sichtbarer OTP-Eingabe aktiviert. DE/EN,
-Assets und Mobil geprüft; Betreiber bestätigt Paste und erfolgreiche Anmeldung.
+v6 bestätigt vollständige OTP-Codes automatisch und hält Login-/OTP-Prüfstatus
+bis zur Antwort/Weiterleitung sichtbar. Verzögerte native POST-Antworten sowie
+parallele Submit-Auslöser synthetisch geprüft. DE/EN und native Eingabe erhalten.
 [Rückweg und Social-/SSO-Abhängigkeiten](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
 ## DEV: Work Hub v3 (24.11.2026)
