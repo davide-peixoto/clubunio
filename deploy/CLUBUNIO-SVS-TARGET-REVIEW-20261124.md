@@ -27,3 +27,8 @@ Die beiden PROD-Sprachdateien haben gegenueber dem zuletzt freigegebenen Runtime
 Bestehender12-Stunden-Agent und Root-Permitablauf bleiben erhalten. Die Livefreigabe wird erst nach allen isolierten Pruefungen wieder an den neuen Release gebunden. Der anschliessende echte Lauf erstellt erneut eine frische Sicherung, restauriert eine eigene Kopie, prueft Merge und Wiederholung und fuehrt eine Rollback-Vorschau auf PROD aus. Erst dann atomarer Commit.
 
 Rueckweg: Livefreigabe entfernen; bisherige Vertrag-/Release-/Runtime-Dateien aus dem privaten Review wiederherstellen. Niemals Daten oder Feldbaselines manuell zuruecksetzen. Ein alter Vertrag bleibt mit152 Migrationen bewusst gesperrt; Datenbankrollback nur separat geprueft. Lokale Konfiguration, neue Fachrechte und fremde Workspaceaenderungen bleiben erhalten.
+## Erfolgreicher Live-Lauf
+
+24.11.2026 um10:44:43 Uhr Europe/Zurich (09:44:43 UTC): Lauf0824d2aecea74a109355cd022135601b atomar abgeschlossen,7 Inserts/221 Updates/37690 unveraendert/0 missing_review/0 Konflikte. Ledger von3 auf5, Mappingversion weiterhin e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b. Kontostatus/Passwort, Eltern-Einwilligungen, Wintereinstellung und34 native Altplaene vor/nach dem Live-Lauf unveraendert. Eigene vier Reviewdatenbanken werden nach Sicherung der Nachweise entfernt. Agent wieder fuer den unveraenderten12-Stunden-Ablauf bereit; neue unbekannte Aenderungen stoppen weiterhin sicher.
+
+Sanitisierter Nachweis: [svs-target-review-20261124.json](evidence/svs-target-review-20261124.json).
