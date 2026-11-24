@@ -3,17 +3,20 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 import json
+from threading import Event
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / 'deploy/keycloak/themes/clubunio-glass-dev/login/resources'
 ASSETS = {
-    '/css/clubunio-glass-v4.css': (RESOURCES / 'css/clubunio-glass-v4.css', 'text/css'),
-    '/js/clubunio-glass-v5.js': (RESOURCES / 'js/clubunio-glass-v5.js', 'text/javascript'),
+    '/css/clubunio-glass-v6.css': (RESOURCES / 'css/clubunio-glass-v6.css', 'text/css'),
+    '/js/clubunio-glass-v6.js': (RESOURCES / 'js/clubunio-glass-v6.js', 'text/javascript'),
     '/img/clubunio-logo-light.svg': (RESOURCES / 'img/clubunio-logo-light.svg', 'image/svg+xml'),
     '/img/svs-logo.png': (ROOT / 'deploy/keycloak/themes/sv-sissach/login/resources/img/svs-logo.png', 'image/png'),
     '/css/sv-sissach-glass.css': (ROOT / 'deploy/keycloak/themes/sv-sissach-glass-dev/login/resources/css/sv-sissach-glass.css', 'text/css'),
 }
 RESULTS = []
+RELEASE = Event()
+WAITING = Event()
 
 
 class Fixture(BaseHTTPRequestHandler):
@@ -35,6 +38,13 @@ class Fixture(BaseHTTPRequestHandler):
             return self.send(path.read_bytes(), kind)
         if parsed.path == '/results':
             return self.send(json.dumps(RESULTS), 'application/json')
+        if parsed.path == '/pending':
+            return self.send(json.dumps({'waiting': WAITING.is_set()}), 'application/json')
+        if parsed.path == '/release':
+            RELEASE.set()
+            return self.send('{"released":true}', 'application/json')
+        if parsed.path == '/completed':
+            return self.send('<h1>Native POST verified</h1><pre>' + json.dumps(RESULTS[-1] if RESULTS else {}) + '</pre><a href="/">Back to OTP fixture</a>')
         if parsed.path != '/':
             return self.send('Not found', status=404)
         query = parse_qs(parsed.query)
@@ -56,19 +66,34 @@ class Fixture(BaseHTTPRequestHandler):
             <a href="/?view=otp&brand=sv-sissach&lang=de">SV Sissach OTP</a>
             <a href="/?view=login&brand=clubunio&lang=en">ClubUnio login</a>
             </aside>''' if otp else ''
-        self.send('''<!doctype html><html class="login-pf" lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v4.css">%s
+        html = '''<!doctype html><html class="login-pf" lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v6.css">%s
             <style>*{box-sizing:border-box}body{margin:0}#kc-header-wrapper{width:240px;background-size:contain;background-position:center;background-repeat:no-repeat;color:transparent}.form-group{margin:8px 0 24px}label{display:block;font-size:14px}input{font:inherit;width:100%%}#kc-page-title{margin:0}h1{text-align:center}.fixture-controls{position:relative;z-index:5;display:flex;gap:12px;flex-wrap:wrap;padding:16px;color:#fff}.fixture-controls button,.fixture-controls a{font:14px system-ui;padding:12px;background:#142b44;color:#fff;border:1px solid #8ac1e0;border-radius:8px}</style>
-            <script src="/js/clubunio-glass-v5.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls))
+            <script src="/js/clubunio-glass-v6.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls)
+        if query.get('slow') == ['1']:
+            # Keep the top document inspectable while the native POST waits.
+            # The hidden response frame redirects the fixture once it loads.
+            html = html.replace('action="/"', 'action="/?delay=1" target="fixture-result"')
+            html = html.replace('onsubmit="login.disabled=true;', 'onsubmit="document.getElementById(\'fixture-result\').dataset.armed=\'1\';login.disabled=true;')
+            html = html.replace('</body>', '<iframe hidden name="fixture-result" id="fixture-result" onload="if(this.dataset.armed)location.href=\'/completed\'"></iframe></body>')
+        self.send(html)
 
     def do_POST(self):
         if int(self.headers.get('Content-Length', '0')) > 4096:
             return self.send('Too large', status=413)
         body = parse_qs(self.rfile.read(int(self.headers['Content-Length'])).decode())
         code = body.get('otp', [''])[0]
-        result = {'native_post': True, 'synthetic_code_unchanged': code in ('123456', '12345678', '654321'),
-                  'length': len(code), 'credential_preserved': body.get('selectedCredentialId') == ['synthetic-credential']}
+        if 'password' in body:
+            result = {'native_post': True, 'kind': 'login', 'synthetic_credentials_unchanged':
+                      body.get('username') == ['design@example.invalid'] and body.get('password') == ['Synthetic-Only-123']}
+        else:
+            result = {'native_post': True, 'kind': 'otp', 'synthetic_code_unchanged': code in ('123456', '12345678', '654321'),
+                      'length': len(code), 'credential_preserved': body.get('selectedCredentialId') == ['synthetic-credential']}
         RESULTS.append(result)
+        if parse_qs(urlparse(self.path).query).get('delay') == ['1']:
+            RELEASE.clear(); WAITING.set()
+            RELEASE.wait(60)
+            WAITING.clear()
         self.send('<h1>Native POST verified</h1><pre>' + json.dumps(result) + '</pre><a href="/">Back to OTP fixture</a>')
 
 

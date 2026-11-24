@@ -2,7 +2,50 @@
 
 Stand: 24.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
 
-## v5: OTP automatisch bestätigen
+## v6: Ladezustand bis zur Antwort/Weiterleitung
+
+Auch das Passwort-Login besitzt jetzt eine Absendeanimation: Glasecken treffen
+sich in der Mitte, Licht läuft weiter, und ein DE/EN-Status zeigt die laufende
+Prüfung an. Für OTP bleiben Scan/Zusammenführung und Ladeindikator nach dem
+nativen POST aktiv. Es gibt keinen Timer mehr, der den Zustand vor der
+Serverantwort entfernt. Neue Antwortseite/Weiterleitung beendet ihn natürlich;
+Zurücknavigation aus dem Browsercache setzt das Formular zurück. Eine durch
+einen anderen Submit-Handler ausdrücklich abgebrochene Übermittlung wird
+ebenfalls zurückgesetzt. Es wird kein Erfolg simuliert.
+
+Statusmeldungen: `loginPending` und `otpPending` im DE/EN-React-Katalog.
+`role=status` und `aria-busy` vermitteln den Zustand auch ohne Bewegung.
+Mit eingeschalteter Bewegung wird vor dem nativen Passwort-POST 650 ms für die
+Eckbewegung gewartet; OTP verwendet weiterhin 880 ms für Scan/Zusammenführung.
+Danach laufen Spinner/Licht bis zur Antwort weiter. Reduzierte Bewegung
+verzichtet auf diese Verzögerung. Zugangsdatenfelder werden währenddessen
+schreibgeschützt, nicht deaktiviert: Der native POST behält alle Werte.
+Automatische OTP-Bestätigung aus v5 bleibt erhalten.
+
+Synthetische Prüfung mit bewusst angehaltener Antwort: Nach mehr als 2,5 s
+blieben Login- und OTP-Status sichtbar, `aria-busy=true`, und Spinner bzw.
+OTP-Lichtlauf aktiv. Erst nach Freigabe der Antwort erfolgte die Weiterleitung.
+Die native Formular-Fixture nutzt dafür einen versteckten Antwortframe, damit
+das Hauptdokument während des wartenden POST inspizierbar bleibt. Kein echter
+Authentifizierungsnachweis; synthetische Zugangsdaten/Code und native Felder
+blieben am Empfänger unverändert. Achtstellige Auto-Bestätigung bei reduzierter
+Bewegung und Schutz gegen paralleles Absenden erneut bestanden.
+[Prüfprotokoll](evidence/keycloak-pending-20261124/checks.json) und
+[synthetische OTP-Ladeansicht](evidence/keycloak-pending-20261124/otp-pending.jpg).
+
+Nach DEV-Aktivierung liefern beide Domains in DE/EN das bytegleiche v6-CSS/JS.
+Ein echter Keycloak-POST mit ausschließlich synthetischen, nicht existierenden
+Zugangsdaten wurde abgelehnt und lieferte das native Fehlerformular zurück.
+Eine erneute gültige Benutzeranmeldung wurde für diese UI-Korrektur nicht
+angefordert. Die v4-Abnahme mit echtem Konto bleibt separat dokumentiert.
+
+DEV verwendet `clubunio-glass-v6.css` und `clubunio-glass-v6.js`. Sicherung:
+`/root/clubunio-releases/keycloak-pending-20261124/themes-before-v6.tar.gz`,
+SHA-256 `f6e49fff5cfd06d595ccb6114d72cb24437d173480eab3ad1c1a8d57fc5e7921`.
+Rückweg wie oben: nur DEV-Themes wiederherstellen, Theme-Cache kontrolliert
+erneuern. Realm-/MFA-Regeln, Konten und Stage/PROD unverändert.
+
+## v5: OTP automatisch bestätigen (in v6 enthalten)
 
 Nach Vervollständigung des Codes wird das native Formular automatisch bestätigt:
 Tastatur, Paste und OTP-Tools mit/ohne Input-Ereignis werden unterstützt.
@@ -32,7 +75,7 @@ zwei manuelle Submit-Aufrufe erzeugten genau einen nativen POST.
 Alle Tests verwendeten synthetische Codes; selectedCredentialId blieb erhalten.
 [Prüfprotokoll](evidence/keycloak-otp-auto-20261124/checks.json).
 
-DEV verwendet `clubunio-glass-v5.js` mit unverändertem v4-CSS. Sicherung:
+v5 verwendete `clubunio-glass-v5.js` mit unverändertem v4-CSS. Sicherung:
 `/root/clubunio-releases/keycloak-otp-auto-20261124/themes-before-v5.tar.gz`,
 SHA-256 `421e22c0d4f698ceac786a198b0b1d3ad4669eebe4b7c0d272ae7f61aa583d42`.
 Rückweg: gesicherte DEV-Themes wiederherstellen und Theme-Cache durch

@@ -1,0 +1,86 @@
+{
+  "native_posts": [
+    {
+      "native_post": true,
+      "kind": "login",
+      "synthetic_credentials_unchanged": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 8,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    }
+  ],
+  "cases": [
+    "login_held_response",
+    "otp_auto_held_response",
+    "eight_digit_auto_reduced_motion",
+    "auto_manual_race_one_post",
+    "otp_pending_visual_proof"
+  ],
+  "login_pending_observed_after_2500ms": {
+    "aria_busy": true,
+    "card_busy": true,
+    "spinner": "cu-pending-spin"
+  },
+  "otp_pending_observed_after_2500ms": {
+    "aria_busy": true,
+    "merging": true,
+    "spinner": "cu-pending-spin",
+    "sweep": "cu-otp-scan"
+  },
+  "response_release_then_navigation": true,
+  "fixture_limit": "The held native POST targets a hidden response frame to keep the main document inspectable; response-frame load redirects the fixture. No real authentication.",
+  "deployed_dev": [
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "de",
+      "login_status": 200,
+      "v6_css_js_match_build": true
+    },
+    {
+      "origin": "https://dev.clubunio.ch",
+      "language": "en",
+      "login_status": 200,
+      "v6_css_js_match_build": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "de",
+      "login_status": 200,
+      "v6_css_js_match_build": true,
+      "real_keycloak_rejects_synthetic_credentials": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "language": "en",
+      "login_status": 200,
+      "v6_css_js_match_build": true
+    }
+  ],
+  "native_keycloak_error_page_verified": true,
+  "live_valid_credentials_not_repeated": "UI-only changes; no operator credentials requested in this check."
+}

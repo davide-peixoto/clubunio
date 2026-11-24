@@ -75,7 +75,8 @@ function GlassLight({ card }) {
             <path d={path} fill="none" stroke={`url(#${id})`} strokeWidth="1.5"/>
             <path className="cu-glass-comet" d={path} fill="none" stroke="var(--cu-auth-accent)" strokeWidth="2" pathLength="1000" strokeDasharray="100 900"/>
         </svg>
-        {[start, end].map((ref, index) => <div key={index} ref={ref} className={`cu-glass-chip cu-glass-chip-${index ? 'end' : 'start'}`}>
+        {[start, end].map((ref, index) => <div key={index} ref={ref} className={`cu-glass-chip cu-glass-chip-${index ? 'end' : 'start'}`}
+            style={{ '--cu-dock-x': `${(index ? -1 : 1) * (size.w - 88) / 2}px`, '--cu-dock-y': `${(index ? -1 : 1) * (size.h - 88) / 2}px` }}>
             <div className="cu-chip-float"><div className="cu-chip-glass" style={{ clipPath: `path('${chipPath}')` }}/>
                 <svg viewBox="0 0 88 88"><path d={chipPath} fill="none" stroke={`url(#${id})`} strokeWidth="1.5"/></svg>
             </div>
@@ -88,6 +89,58 @@ const otpDigits = input => {
     const length = Number(input.dataset.otpLength || 6);
     return Number.isInteger(length) && length >= 4 && length <= 10 ? length : 6;
 };
+
+function pendingState(form, kind) {
+    const catalog = messages[document.documentElement.lang.split('-')[0]] || messages.en;
+    const status = document.createElement('div');
+    status.className = 'cu-pending-state'; status.hidden = true; status.setAttribute('role', 'status');
+    const spinner = document.createElement('span'); spinner.className = 'cu-pending-spinner'; spinner.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span'); label.textContent = catalog[kind === 'otp' ? 'otpPending' : 'loginPending'];
+    status.append(spinner, label); form.append(status);
+    const fields = [...form.querySelectorAll('input:not([type=hidden]):not([type=submit]):not([type=checkbox]):not([type=radio])')]
+        .map(input => [input, input.readOnly]);
+    const buttons = [...form.querySelectorAll('[type=submit]')].map(button => [button, button.disabled]);
+    const card = form.closest('.card-pf');
+    return {
+        show() {
+            card?.querySelectorAll('.cu-glass-chip').forEach(chip => chip.getAnimations().forEach(animation => animation.cancel()));
+            card?.classList.add('cu-auth-busy'); form.classList.add('cu-auth-submitting');
+            form.setAttribute('aria-busy', 'true'); status.hidden = false;
+            fields.forEach(([input]) => { input.readOnly = true; });
+        },
+        reset() {
+            card?.classList.remove('cu-auth-busy'); form.classList.remove('cu-auth-submitting');
+            form.removeAttribute('aria-busy'); status.hidden = true;
+            fields.forEach(([input, readOnly]) => { input.readOnly = readOnly; });
+            buttons.forEach(([button, disabled]) => { button.disabled = disabled; });
+        },
+    };
+}
+
+function enhanceLogin(form) {
+    const state = pendingState(form, 'login');
+    let timer, pending = false, resuming = false, resumedEvent;
+    const reset = () => { clearTimeout(timer); pending = false; resuming = false; state.reset(); };
+    window.addEventListener('pagehide', reset);
+    window.addEventListener('pageshow', event => { if (event.persisted) reset(); });
+    form.addEventListener('submit', event => {
+        if (resuming) { resumedEvent = event; return; }
+        if (pending) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+        if (!form.checkValidity()) return;
+        pending = true; state.show();
+        if (reducedMotion()) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        const submitter = event.submitter;
+        timer = setTimeout(() => {
+            resuming = true; resumedEvent = null;
+            if (submitter && !submitter.disabled) form.requestSubmit(submitter); else form.requestSubmit();
+            resuming = false;
+            // A deliberately canceled request may be retried. A real request keeps
+            // the visual state until pagehide/new response, regardless of latency.
+            if (resumedEvent?.defaultPrevented) reset();
+        }, 650);
+    }, true);
+}
 
 function OtpPanes({ input, wrapper, autoSubmit }) {
     // No cloned digits: text, selection, paste and autofill belong to the native input.
@@ -140,8 +193,9 @@ function enhanceOtp(input) {
     wrapper.append(panes);
     const form = input.form;
     if (!form) return;
+    const state = pendingState(form, 'otp');
     const wasReadOnly = input.readOnly;
-    let timer, autoTimer, pending = false, resuming = false, submitted = false, composing = false;
+    let timer, autoTimer, pending = false, resuming = false, submitted = false, composing = false, resumedEvent;
     let observed = input.value;
     // A rejected code must not cause an extension-driven retry loop. Typing,
     // pasting or clicking the input rearms auto-confirm on an error page.
@@ -178,14 +232,16 @@ function enhanceOtp(input) {
         clearTimeout(timer); clearTimeout(autoTimer); pending = false; resuming = false; submitted = false;
         observed = input.value; input.readOnly = wasReadOnly;
         form.classList.remove('cu-otp-scanning', 'cu-otp-merging', 'cu-auth-submitting');
+        state.reset();
     };
     window.addEventListener('pageshow', event => { if (event.persisted) restore(); });
     window.addEventListener('pagehide', restore);
     form.addEventListener('submit', event => {
-        if (resuming) { submitted = true; return; }
+        if (resuming) { submitted = true; resumedEvent = event; return; }
         if (pending || submitted) { event.preventDefault(); event.stopImmediatePropagation(); return; }
         if (!form.checkValidity()) return;
         clearTimeout(autoTimer);
+        state.show();
         if (reducedMotion() || input.value.length < otpDigits(input)) { submitted = true; return; }
         event.preventDefault(); event.stopImmediatePropagation();
         if (pending) return;
@@ -196,10 +252,10 @@ function enhanceOtp(input) {
             form.classList.add('cu-otp-merging');
             timer = setTimeout(() => {
                 // Pending animation only. Keycloak alone determines success/failure.
-                input.readOnly = wasReadOnly; resuming = true;
-                form.classList.remove('cu-otp-scanning', 'cu-otp-merging');
+                resuming = true; resumedEvent = null;
                 if (submitter && !submitter.disabled) form.requestSubmit(submitter); else form.requestSubmit();
-                resuming = false; timer = setTimeout(restore, 1500);
+                resuming = false;
+                if (resumedEvent?.defaultPrevented) restore();
             }, 340);
         }, 540);
     }, true);
@@ -209,7 +265,7 @@ function enhanceOtp(input) {
 function enhance() {
     const card = document.querySelector('.card-pf');
     if (!card || card.dataset.cuGlass) return;
-    card.dataset.cuGlass = 'motion-v5';
+    card.dataset.cuGlass = 'motion-v6';
     document.documentElement.dataset.cuMotion = motionPreference();
     const stage = document.createElement('div'); stage.className = 'cu-auth-stage'; card.before(stage); stage.append(card);
     const background = document.createElement('div'); background.className = 'cu-auth-background'; background.setAttribute('aria-hidden', 'true');
@@ -219,6 +275,7 @@ function enhance() {
     const motionControl = document.createElement('div'); motionControl.className = 'cu-motion-control';
     stage.after(motionControl); createRoot(motionControl).render(<MotionToggle/>);
     const otp = document.querySelector('input[name="otp"]'); if (otp) enhanceOtp(otp);
+    const login = document.querySelector('#kc-form-login'); if (login && !otp) enhanceLogin(login);
     let frame;
     stage.addEventListener('pointermove', event => {
         if (reducedMotion() || event.pointerType !== 'mouse' || card.contains(document.activeElement)) return;
