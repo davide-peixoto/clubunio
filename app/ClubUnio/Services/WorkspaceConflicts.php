@@ -50,6 +50,7 @@ class WorkspaceConflicts
                 }
             }
         }
+        $rows=collect($rows)->sortBy(fn($row)=>Time::createFromFormat('!d.m.Y H:i',$row['date'],'Europe/Zurich')->getTimestamp())->values()->all();
         return ['from'=>$from,'until'=>$until->subDay(),'sources'=>$sources,'rows'=>$rows];
     }
 

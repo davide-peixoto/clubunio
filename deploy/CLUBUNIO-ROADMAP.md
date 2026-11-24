@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Browserabnahme: persönliche Arbeitsabläufe (24.11.2026)
+
+Chrome/Desktop und responsive 390 × 844 erfolgreich: alle sechs Bereiche,
+DE/EN, Dark Mode, Tastaturmenü, mobile Navigation und Vorschau. Menüzuordnung,
+Spesenformular-Link, offener Favoritenbereich, Textumbrüche, Vorschaufokus und
+chronologische Konfliktsortierung korrigiert. 30 Tests / 438 Assertions sowie
+15 erneut ausgeführte DEV-Fachchecks erfolgreich. Fachdaten unverändert.
+[Details](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV umgesetzt: sechs persönliche Arbeitsabläufe (24.11.2026)
 
 Rollenabhängiger Arbeitsbereich, Freigabezentrale mit Vorschau/Einzelentscheid,

@@ -33,6 +33,7 @@ class ApprovalCenter extends WorkspacePage
         $data = app(ApprovalQueue::class)->preview($actor,$tenant,$this->kind,$id);
         $this->selectedId = $id; $this->selectedKind = $this->kind; $this->selectedRevision = $data['revision'];
         $this->note = ''; $this->decision = $data['decisions'][0] ?? ''; $this->resetValidation();
+        $this->dispatch('workspace-preview-selected');
     }
     public function decideAction(): Action
     {

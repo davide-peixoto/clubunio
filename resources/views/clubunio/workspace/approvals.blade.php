@@ -10,7 +10,7 @@
             <span>{{ trans('workspace.page',['page'=>$queuePage]) }}</span>
             <x-filament::button color="gray" :disabled="$queuePage*10 >= $list['count']" wire:click="$set('queuePage',{{ $queuePage+1 }})" wire:loading.attr="disabled">{{ trans('workspace.next') }}</x-filament::button>
         </div></section>
-        <section class="cu-workflow-section" aria-live="polite"><h2>{{ trans('workspace.preview') }}</h2>
+        <section class="cu-workflow-section cu-approval-preview" aria-live="polite" x-data @workspace-preview-selected.window="$nextTick(() => { if (window.innerWidth < 768) { $el.scrollIntoView({behavior: 'auto', block: 'start'}); $el.querySelector('h2').focus({preventScroll: true}); } })"><h2 tabindex="-1">{{ trans('workspace.preview') }}</h2>
             @if($preview)
                 <p>{{ $kinds[$kind] }} #{{ $preview['id'] }}</p>
                 <dl class="cu-workflow-facts">@foreach($preview['facts'] as $fact)<div><dt>{{ $fact['label'] }}</dt><dd>{{ $fact['value'] }}</dd></div>@endforeach</dl>

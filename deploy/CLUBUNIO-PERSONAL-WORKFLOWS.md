@@ -1,7 +1,8 @@
 # Persönlicher Arbeitsbereich und zentrale Arbeitsabläufe
 
-Stand: 24.11.2026. DEV-Release: `20261124-clubunio-personal-workflows-v1`.
-Vorgänger/Rollback: `20261124-clubunio-module-workspaces-v1`.
+Stand: 24.11.2026. DEV-Release: `20261124-clubunio-personal-workflows-v4`.
+Direkter Vorgänger: `20261124-clubunio-personal-workflows-v3`.
+Fachlicher Rückweg: `20261124-clubunio-module-workspaces-v1`.
 
 ## Sechs Pakete
 
@@ -77,13 +78,35 @@ Eine synthetische Ablehnung prüft den vollständigen Fachservice und die
 Aktualisierung der Warteschlange. Alle Testdaten werden zurückgerollt;
 externe HTTP-Aufrufe sind blockiert. `--security` wiederholt nur die Fachchecks.
 
-Abnahme: 29 lokale Tests / 430 Assertions und Übersetzungsprüfung erfolgreich;
+Abnahme: 30 lokale Tests / 438 Assertions und Übersetzungsprüfung erfolgreich;
 27 DEV-Prüfungen inklusive DE/EN, beiden Designs und echtem Profilzugriff
-erfolgreich. Die Browserabnahme folgt nach erneuter Anmeldung.
+sowie 15 erneut ausgeführte Fachchecks nach den Browserkorrekturen erfolgreich.
+
+Browserabnahme vom 24.11.2026: Chrome, Desktop und responsive Handyansicht
+390 × 844. Geprüft: primäre Navigation/Ctrl+K, Favoriten einschliesslich
+Neuladen und Rücksetzen, offener Modulbereich nach Änderung, Verlauf nach
+Dossieraufruf, Sandbox-Zeitleiste mit Rechnungs-/Änderungsereignissen,
+Spesenvorschau samt Bestätigungsabbruch, Warteschlangenwechsel, Wochenwechsel
+und Konfliktlinks, Spesen-/Termin-Schnellformulare samt Abbruch, Listen-Speicherdialog sowie
+DE/EN und Dark Mode. Speicherung und direktes Laden von Listenansichten
+sind zusätzlich durch den zurückgerollten DEV-Fachtest belegt.
+Keine bestehende Freigabe, Zahlung oder Fachdatenerfassung ausgeführt.
+Testfavorit entfernt, Testsuche zurückgesetzt; Deutsch/Systemtheme und
+normale Desktopgrösse wiederhergestellt. Der Verlauf darf die besuchten
+Dossiers weiterhin enthalten.
+
+Korrekturen aus der Sichtprüfung: Die drei Seiten stehen nun im primären
+Menü; Spesen-Schnellaktion öffnet das vorhandene Tabellenformular statt
+auf eine nicht vorhandene Create-Seite zu verweisen. Die Modulauswahl bleibt
+beim Favoritenwechsel geöffnet. Lange Kartenbeschriftungen umbrechen, mobile
+Vorschauen scrollen in den sichtbaren Bereich und erhalten den Fokus;
+Konflikthinweise sind chronologisch sortiert. Mobile Schnellziele sind
+mindestens 48 Pixel hoch. Es gibt keine horizontale Seitenüberbreite.
+Die Prüfung verwendete die responsive Chrome-Ansicht, kein physisches Handy.
 
 Neue Filament-Seiten benötigen einen aktualisierten Route-Cache im Release.
 DEV behält sein bestehendes Schema `clubunio`, die private `.env`, Storage
-und Composer-Abhängigkeiten. Rollback durch Aktivieren des Vorgängers und
+und Composer-Abhängigkeiten. Rollback durch Aktivieren des genannten fachlichen Rückwegs und
 Neuladen von PHP-FPM. Persönliche Datensätze dürfen erhalten bleiben;
 der Vorgänger ignoriert den zusätzlichen `workspace`-Schlüssel.
 Stage und PROD bleiben unverändert.

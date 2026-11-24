@@ -1,5 +1,12 @@
 # ClubUnio
 
+## DEV: Desktop- und Mobilabnahme abgeschlossen (24.11.2026)
+
+Persönliche Arbeitsabläufe in Chrome und responsiver Handyansicht geprüft.
+Menüzuordnung, Spesen-Schnellaktion, Favoritenauswahl und mobile Vorschau
+korrigiert; aktiv ist `20261124-clubunio-personal-workflows-v4`.
+[Abnahme und Prüfgrenzen](deploy/CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV: persönlicher Arbeitsbereich und Freigaben (24.11.2026)
 
 „Mein Verein“, Freigabezentrale, Mitglieder-Zeitleiste, Planungskonflikte,

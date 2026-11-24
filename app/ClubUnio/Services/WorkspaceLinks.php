@@ -33,7 +33,7 @@ class WorkspaceLinks
     public function quickActions(): array
     {
         $links = [];
-        if (ExpenseResource::canCreate()) $links['expense'] = ['label' => trans('workspace.new_expense'), 'url' => ExpenseResource::getUrl('create'), 'icon' => 'heroicon-o-receipt-percent'];
+        if (ExpenseResource::canViewAny() && \App\ClubUnio\Resources\ProfileUi::allows('expenses','create')) $links['expense'] = ['label' => trans('workspace.new_expense'), 'url' => ExpenseResource::getUrl('index',['tableAction'=>'newExpense']), 'icon' => 'heroicon-o-receipt-percent'];
         if (TeamPlanning::canAccess() && \App\ClubUnio\Resources\ProfileUi::allows('planning', 'create')) {
             $tenant = \Filament\Facades\Filament::getTenant();
             $links['event'] = ['label' => trans('workspace.new_event'), 'url' => route('clubunio.planning.create', $tenant->slug), 'icon' => 'heroicon-o-calendar-days'];

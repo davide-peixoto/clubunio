@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## DEV-Browserkorrekturen: persönliche Arbeitsabläufe v4 (24.11.2026)
+
+Aktiv `20261124-clubunio-personal-workflows-v4`, keine zusätzliche Migration.
+Neue Seiten im Hauptmenü, Spesen-Schnellaktion auf bestehendes Tabellenformular,
+stabiler Favoritenbereich, mobile Umbrüche/Vorschaufokus und sortierte Konflikte.
+Chrome/Desktop und responsive Handyansicht abgenommen. Testfavorit und Suche
+zurückgesetzt; keine bestehenden Belege, Freigaben, Zahlungen oder Termine
+geändert. Der Verlauf enthält weiterhin erlaubte besuchte Dossiers.
+Fachlicher Rückweg bleibt `20261124-clubunio-module-workspaces-v1`.
+[Abnahme](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV: persönlicher Arbeitsbereich und Freigabezentrale (24.11.2026)
 
 Release `20261124-clubunio-personal-workflows-v1`, Vorgänger/Rollback

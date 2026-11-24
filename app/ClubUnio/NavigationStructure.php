@@ -11,6 +11,7 @@ use Filament\Panel;
 class NavigationStructure
 {
     private const PRIMARY = [
+        'workspace.group' => ['MyClub', 'ApprovalCenter', 'PlanningConflicts'],
         'Mitglieder' => ['MemberResource', 'RegistrationResource', 'MemberChangeRequestResource', 'FamilyResource', 'MemberDocumentResource', 'DocumentSeries', 'FamilyMemberResource'],
         'Sport' => ['TeamPlanning', 'SponsorRuns', 'SeasonResource', 'SfvCompetitions', 'CompetitionResource'],
         'Finanzen' => ['InvoiceResource', 'ExpenseResource', 'BexioReconciliation'],

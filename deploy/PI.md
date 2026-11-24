@@ -1,5 +1,14 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: geprüfte Arbeitsabläufe v4 (24.11.2026)
+
+Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-personal-workflows-v4`.
+Direkter Vorgänger v3; fachlicher Rückweg `20261124-clubunio-module-workspaces-v1`.
+Gezielte UI-Korrekturen mit Vorher-/Nachhermanifest, unveränderter `.env` und
+Composer-Lock; Route-/View-Cache erneuert und PHP-FPM aktiv. Desktop-/Mobil-
+Browserabnahme abgeschlossen; DE/Systemtheme und normale Fenstergrösse erhalten.
+[Prüfprotokoll](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV-Release: persönliche Arbeitsabläufe (24.11.2026)
 
 Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-personal-workflows-v1`.

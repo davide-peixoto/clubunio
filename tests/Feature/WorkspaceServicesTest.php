@@ -114,6 +114,23 @@ class WorkspaceServicesTest extends TestCase
         $this->assertSame($expected,$actual);
     }
 
+    public function test_workspace_pages_stay_in_the_primary_navigation_in_both_languages(): void
+    {
+        $reads=$this->mock(BackofficeReadContext::class);$reads->shouldReceive('tenantsFor')->andReturn(null);$reads->shouldReceive('permissionCache')->andReturn([]);
+        $pages=[\App\ClubUnio\Pages\MyClub::class,\App\ClubUnio\Pages\ApprovalCenter::class,\App\ClubUnio\Pages\PlanningConflicts::class];
+        $panel=\Mockery::mock(\Filament\Panel::class)->makePartial();
+        $panel->shouldReceive('getResources')->andReturn([]);$panel->shouldReceive('getPages')->andReturn($pages);
+        foreach(['de','en'] as $locale) {
+            app()->setLocale($locale);
+            $items=array_map(fn($page)=>\Filament\Navigation\NavigationItem::make($page::getNavigationLabel())->url($page::getNavigationUrl()),$pages);
+            $result=\App\ClubUnio\NavigationStructure::partition($panel,[\Filament\Navigation\NavigationGroup::make()->items($items)]);
+            $this->assertCount(1,$result['navigation']);
+            $this->assertSame(trans('workspace.group'),$result['navigation'][0]->getLabel());
+            $this->assertCount(3,$result['navigation'][0]->getItems());
+            $this->assertSame([],$result['settings']);
+        }
+    }
+
     public function test_inactive_api_and_impersonated_accounts_cannot_enter(): void
     {
         $access=new WorkspaceAccess;

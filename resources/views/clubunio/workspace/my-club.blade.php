@@ -15,7 +15,7 @@
             @forelse(array_intersect_key($links,array_flip($favorites)) as $key=>$link)<li><a href="{{ $link['url'] }}">{{ $link['label'] }}</a></li>@empty<li>{{ trans('workspace.empty') }}</li>@endforelse
         </ul></section>
     </div>
-    <details class="cu-workflow-section"><summary>{{ trans('workspace.modules') }}</summary><div class="cu-workflow-cards">
+    <details class="cu-workflow-section" wire:ignore.self><summary>{{ trans('workspace.modules') }}</summary><div class="cu-workflow-cards">
         @foreach($links as $key=>$link)<div class="cu-workflow-card"><a href="{{ $link['url'] }}">{{ $link['label'] }}</a><button type="button" wire:click="toggleFavorite('{{ $key }}')" wire:loading.attr="disabled" aria-label="{{ trans('workspace.favorite_toggle',['name'=>$link['label']]) }}" aria-pressed="{{ in_array($key,$favorites,true) ? 'true' : 'false' }}"><x-filament::icon :icon="in_array($key,$favorites,true) ? 'heroicon-s-star' : 'heroicon-o-star'" /></button></div>@endforeach
     </div></details>
     <div class="cu-workflow-columns">
