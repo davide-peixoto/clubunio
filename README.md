@@ -1,5 +1,13 @@
 # ClubUnio
 
+## DEV: SFV automatisch nachführen, Garderoben erhalten (24.11.2026)
+
+Neue eindeutig zugeordnete SFV-Heimspiele und Verschiebungen werden beim
+Backend-Abgleich automatisch in Wettkämpfe, Plantafel und Mannschaftskalender
+übernommen. Bestehende Wettkampf-ID, Heim-/Gastgarderoben und lokale Zusatzdaten
+bleiben erhalten. Release `20261124-clubunio-daily-v2`, keine Migration.
+[Verhalten, Fachprüfungen und Rückweg](deploy/CLUBUNIO-DAILY-WORKFLOWS.md).
+
 ## DEV: Keycloak-Glasdesign (24.11.2026)
 
 Login v4 mit Videoanimationen, abgeschrägter Glaskarte und sichtbarer nativer

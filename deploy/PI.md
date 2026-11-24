@@ -1,5 +1,15 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: automatische SFV-Nachführung v2 (24.11.2026)
+
+Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-daily-v2`.
+Direkter Rückweg `20261124-clubunio-daily-v1`. 37 Runtime-Hashes, unveränderte
+Konfiguration/Composer-Lock, keine Migration. SFV-Verschiebungen automatisch,
+Wettkampf-ID und lokale Garderoben erhalten; Kalender gemeinsam aktualisiert.
+17 native DEV-Prüfungen ohne Browser-Sitzung sowie 42 lokale Tests / 561 Assertions
+erfolgreich. HTTP 302 zum geschützten Login, Route-/View-Cache erneuert.
+[Verhalten und Rückweg](CLUBUNIO-DAILY-WORKFLOWS.md).
+
 ## DEV: Alltagsabläufe v1 (24.11.2026)
 
 Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-daily-v1`.

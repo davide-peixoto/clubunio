@@ -3,7 +3,9 @@ set -euo pipefail
 umask 027
 test "$(hostname -s)" = svs-pi-server
 base=/var/www/svs-laravel
-old="$base/releases/20261124-clubunio-work-hub-v3"
+previous=${2:-20261124-clubunio-work-hub-v3}
+[[ "$previous" =~ ^20261124-clubunio-(work-hub-v3|daily-v[0-9]+)$ ]]
+old="$base/releases/$previous"
 name=${1:-20261124-clubunio-daily-v1}
 [[ "$name" =~ ^20261124-clubunio-daily-v[0-9]+$ ]]
 next="$base/releases/$name"

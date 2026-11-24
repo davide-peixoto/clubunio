@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## DEV: SFV-Nachführung ohne Garderobenverlust (24.11.2026)
+
+Release `20261124-clubunio-daily-v2` auf Basis von `daily-v1`; keine Migration.
+SFV-Spiel über stabile Zuordnung aktualisieren statt löschen/neu anlegen.
+Lokale Garderoben, Seiten, Bemerkungen und Sichtbarkeit bleiben unverändert.
+Spiel und Kalenderänderung liegen unter derselben Mandantensperre/Transaktion.
+42 lokale Tests / 561 Assertions und 17 native DEV-Prüfungen bestanden;
+37 Runtime-Dateien per SHA-256 geprüft. Keine echten Spieldaten für die Abnahme
+verändert. Direkter Rückweg auf `daily-v1` ohne Datenrücksetzung.
+[Details und fachliche Abgrenzung](CLUBUNIO-DAILY-WORKFLOWS.md).
+
 ## DEV: Keycloak-Glasdesign ohne Fachmigration (24.11.2026)
 
 Zwei neue geerbte Login-Themes und ein lokaler React-Build auf dem

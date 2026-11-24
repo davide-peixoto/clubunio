@@ -103,7 +103,7 @@ class SfvCompetitionService
         });
     }
 
-    public function preview(Account $actor, Tenant $tenant, int $matchId, ?int $target = null, bool $separate = false): array
+    public function preview(Account $actor, Tenant $tenant, int $matchId, ?int $target = null, bool $separate = false, bool $authoritative = false): array
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'view');
         $db = DB::connection('clubunio');
@@ -144,7 +144,7 @@ class SfvCompetitionService
         if (! $record && ! $separate && (clone $base)->where('active', true)->whereNull('association_match_id')->whereDate('plays_on', $date->toDateString())->exists()) {
             throw ValidationException::withMessages(['target' => __('Es gibt manuelle Wettkämpfe an diesem Tag. Bitte den passenden Eintrag auswählen oder zuerst fachlich prüfen.')]);
         }
-        $this->checkLocalOverride($tenant, $record);
+        if (!$authoritative) $this->checkLocalOverride($tenant, $record);
         $after = ['plays_on' => $date->toDateString(), 'starts_at' => $date->format('H:i:s'), 'host_name' => $match->host_name, 'guest_name' => $match->guest_name, 'field_id' => $field->id,
             'association_match_id' => $match->match_id, 'source' => 'SFV'];
         $before = $record?->only(array_keys($after));
@@ -165,17 +165,17 @@ class SfvCompetitionService
         }
     }
 
-    public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false, bool $requireSingleReview = false): int
+    public function apply(Account $actor, Tenant $tenant, array $preview, bool $reschedule = false, bool $requireSingleReview = false, bool $authoritative = false): int
     {
         app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
 
-        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview, $reschedule, $requireSingleReview) {
+        return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $preview, $reschedule, $requireSingleReview, $authoritative) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'competitions', 'sync');
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'signage', 'send');
             $fresh = ($preview['kind'] ?? '') === 'withdrawal'
                 ? $this->previewWithdrawal($actor, $tenant, (int) $preview['match_id'])
-                : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false);
+                : $this->preview($actor, $tenant, (int) $preview['match_id'], $preview['target_id'], $preview['separate'] ?? false, authoritative: $authoritative);
             if (! hash_equals($fresh['fingerprint'], (string) $preview['fingerprint'])) {
                 throw ValidationException::withMessages(['match' => __('SFV-Daten oder Wettkampf wurden geändert. Bitte eine neue Vorschau erstellen.')]);
             }

@@ -2,7 +2,7 @@
 
 Stand: 24.11.2026. Vom Benutzer in den nächsten Arbeitsumfang aufgenommen.
 Status: auf DEV umgesetzt; Browser-Dateiupload und echte Kamera noch offen.
-Release, Fachverhalten und Abnahme: [Alltagsabläufe v1](CLUBUNIO-DAILY-WORKFLOWS.md).
+Release, Fachverhalten und Abnahme: [Alltagsabläufe v2](CLUBUNIO-DAILY-WORKFLOWS.md).
 Basis ist der abgenommene Work Hub v3. Die sechs Pakete erweitern vorhandene
 Fachabläufe und werden nicht als parallele Datenhaltung aufgebaut.
 
@@ -22,50 +22,37 @@ Fachabläufe und werden nicht als parallele Datenhaltung aufgebaut.
 - Berechtigungen gelten auch für Zähler, Zusammenfassungen, Vorschläge und
   Direktlinks; keine fremden oder inzwischen entzogenen Objekte anzeigen.
 
-## 1. SFV: vom Abruf bis zur sichtbaren Planung
+## 1. SFV: automatische Übernahme und Verschiebungen
 
-### Ziel aus Benutzersicht
+Benutzerpräzisierung vom 24.11.2026: SFV-Wettkämpfe automatisch übernehmen,
+SFV-Verschiebungen ebenfalls automatisch nachführen. Garderoben dürfen dabei
+nicht verloren gehen. Auf DEV mit `20261124-clubunio-daily-v2` umgesetzt.
 
-Eine Hauptaktion **„SFV abgleichen“** für den gewählten Zeitraum. Das Ergebnis
-nennt getrennt: neue übernommene Spiele, aktualisierte Spiele, unveränderte
-Spiele und Fälle zur Prüfung. „Abgerufen“ darf nicht als „eingeplant“ erscheinen.
-Die Liste **„Prüfung nötig“** erklärt jeden offenen Fall und bietet die nächste
-passende Aktion. Erneutes Abgleichen legt keine Dubletten an.
+- Die Hauptaktion „SFV abgleichen“ ruft ab und übernimmt eindeutig zugeordnete
+  zukünftige Heimspiele in Wettkämpfe/Plantafel und Mannschaftskalender.
+  Auswärtsspiele erhalten Mannschaftstermine ohne lokale Platzreservierung.
+- Datum, Uhrzeit und zugeordnetes Spielfeld sind vom SFV maßgebend. Die bisherige
+  Einzelprüfung einer Verschiebung entfällt im automatischen Backend-Abgleich.
+  Auch lokale Überlappungen verhindern die Nachführung nicht; sie bleiben als
+  Konflikt auf der Plantafel erkennbar. Andere Buchungen werden nicht umgeplant.
+- Bestehendes Spiel aktualisieren, niemals für eine Verschiebung löschen und
+  neu anlegen: Wettkampf-ID, Heim-/Gastgarderoben, Garderobenseiten, Bemerkungen
+  und lokale Sichtbarkeit bleiben erhalten. Dauer und Frist des verknüpften
+  Teamtermins verschieben sich gemeinsam; Teilnahme und Beschreibung bleiben.
+- Wiederholung erzeugt keine Dubletten. Wettkampf und Teamtermin werden pro
+  Spiel atomar gespeichert. Ein Fehler rollt beide Änderungen zurück.
+- Unklare Mannschaft-/Saison-/Platzzuordnung, fehlende Daten/Rechte, Dubletten,
+  archivierte Verknüpfungen und Absagen bleiben nachvollziehbare Prüffälle.
+- Gespeicherte Sync-Aufträge funktionieren ohne Browser-Sitzung. Bestehende API-
+  Berechtigungsgrenzen und historische Social-Ergebnisabrufe bleiben erhalten;
+  kein neuer periodischer Abruf wird eingerichtet.
+- Geöffnete Kalender erhalten den vorhandenen Aktualisierungshinweis ohne
+  Überschreiben laufender Eingaben. Ergebnis nennt neu, aktualisiert, unverändert
+  und Prüfung nötig getrennt vom Quellabrufzähler.
 
-### Fachliche Übernahme
-
-- Neue zukünftige Spiele nur bei eindeutigem Spiel, aktivem zugeordnetem Platz,
-  eindeutigem Mannschafts-/Saisonbezug, passenden Rechten und konfliktfreier
-  Belegung automatisch übernehmen. Auswärtsspiele benötigen keine lokale
-  Platzreservierung, können aber bei eindeutiger Zuordnung Teamtermine ergeben.
-- Bereits verbundene Spiele gemeinsam betrachten: SFV-Quelle, Wettkampf,
-  Platzbelegung und verknüpfte Mannschaftstermine dürfen nicht auseinanderlaufen.
-- Die bestehenden Vorschau-, Revisions- und Folgenprüfungen weiterverwenden.
-  Mehrdeutige Mannschaften/Plätze, unvollständige Zeiten, Dubletten, belegte
-  Flächen und widersprüchliche lokale Datensätze bleiben zur Prüfung stehen.
-- Geschützte lokale Ausnahmen und die vorhandene SFV-Spielverschiebungsregel
-  erhalten. Bestehende Termin-/Platzänderungen mit prüfpflichtigen Folgen nicht
-  ungefragt übernehmen; auch Absagen und fehlende Rechte nachvollziehbar behandeln.
-- Auf Folgefehler vorbereitet sein: Ein erfolgreicher Quellabruf mit teilweise
-  offener Übernahme wird ausdrücklich als Teilergebnis angezeigt. Wiederholung
-  darf bereits erfolgreiche Übernahmen weder verdoppeln noch zurücksetzen.
-- Geöffnete Plantafeln und Kalender erhalten nach Abschluss neue Daten oder
-  einen sichtbaren Aktualisierungshinweis, ohne ungespeicherte Eingaben zu verlieren.
-
-### Abnahme
-
-Ein eindeutig zugeordnetes neues Heimspiel erscheint nach einem Abgleich auf
-der Plantafel und im richtigen Mannschaftskalender. Auswärts- und Heimspiele
-werden korrekt unterschieden. Wiederholung erzeugt keinen zweiten Eintrag.
-Unklare Zuordnung und geschützte lokale Änderungen erscheinen mit Erklärung
-unter „Prüfung nötig“. Datum, Anspielzeit, Platz, Absage und fehlende Rechte
-werden einschließlich veralteter Vorschau und paralleler Änderungen getestet.
-Ein bereits offener Kalender zeigt das abgeschlossene Ergebnis korrekt.
-
-Technische Anschlüsse: `SfvPlanningService`, `SfvCompetitionService`,
-`SfvRescheduleImpact`, `SfvLocalOverride`, `PitchPlanningService`,
-`PlanningCalendarService` und der vorhandene Sync-Auftragsdienst.
-Details zum Schutz lokaler Änderungen: [Arbeitskorb/SFV](CLUBUNIO-WORK-INBOX-SFV.md).
+Abnahme: 42 lokale Tests / 561 Assertions und 17 native DEV-Prüfungen bestanden.
+Beide Garderoben, Seiten, Notizen, Identität und Wiederholung sowie Rollback bei
+Kalenderfehler ausdrücklich geprüft. Details: [Releaseprotokoll](CLUBUNIO-DAILY-WORKFLOWS.md).
 
 ## 2. „Mein Verein“ als Tagescockpit
 

@@ -208,9 +208,9 @@ class SyncWorkService
     private function sfvSchedule(Account $actor,Tenant $tenant,array $payload):int
     {
         $count=app(SfvPlanningService::class)->refreshNow($actor,$tenant,$payload);
-        if(!request()->is('api/*') && (int)request()->user('clubunio')?->id===(int)$actor->id
-            && (int)\Filament\Facades\Filament::getTenant()?->id===(int)$tenant->id
-            && app(ModulePermissionService::class)->allows($actor,$tenant,'competitions','sync')){
+        // Stored sync work (including retries/workers) must update planning without a browser session.
+        // API refresh retains its separately scoped source-only contract.
+        if(!request()->is('api/*') && app(ModulePermissionService::class)->allows($actor,$tenant,'competitions','sync')){
             $result=app(SfvReconcileService::class)->reconcile($actor,$tenant,$payload['from'],$payload['to']);$result['fetched']=$count;
             request()->attributes->set(SfvReconcileService::class.':'.$tenant->id,$result);
         }

@@ -69,26 +69,25 @@ class SfvReconcileService
         $location = $match->location;
         $preview = null;
         if ($match->home) {
-            $preview = app(SfvCompetitionService::class)->preview($actor, $tenant, (int)$match->id);
-            if (SfvRescheduleImpact::requiresReview($preview)) $this->review('sfv_changed');
+            $preview = app(SfvCompetitionService::class)->preview($actor, $tenant, (int)$match->id, authoritative: true);
             $location = $preview['field'];
-            $projection = app(PitchPlanningProjection::class);
-            if (!$projection->ready()) $this->review('sfv_review');
-            $record = $preview['target_id'] ? Competition::where('tenant_id',$tenant->id)->findOrFail($preview['target_id']) : new Competition;
-            $record->forceFill($preview['after'] + ['tenant_id'=>$tenant->id]);
-            if (!$record->exists) $record->id = 0;
-            $settings = $preview['target_id'] ? $projection->table('pitch_competition_settings',$tenant)->where('competition_id',$record->id)->first() : null;
-            $entry = $projection->competition($record, $settings, [(int)$team->id]);
-            if (PitchPlanningGeometry::conflicts($entry, $projection->entries($tenant,$entry['date'],Time::parse($entry['ends_at_iso'])->toDateString()), $projection->fields($tenant))) $this->review('sfv_conflict');
         } elseif (Competition::where('tenant_id',$tenant->id)->where('association_match_id',$match->match_id)->exists()) {
             $this->review('sfv_changed');
         }
-        if ($event && (Time::parse($event->starts_at)->timestamp !== $starts->timestamp || $event->location !== $location)) $this->review('sfv_changed');
-        $ends = $event ? Time::parse($event->ends_at) : $starts->addMinutes(120);
-        if ($planning->table($tenant,'team_events')->where('team_season_id',$team->id)->where('status','AKTIV')
-            ->when($event,fn($q)=>$q->where('id','<>',$event->id))->where('starts_at','<',$ends->toIso8601String())->where('ends_at','>',$starts->toIso8601String())->exists()) $this->review('sfv_conflict');
+        $eventChanged=$event && (Time::parse($event->starts_at)->timestamp !== $starts->timestamp || $event->location !== $location);
+        $ends = $event ? $starts->addSeconds(Time::parse($event->ends_at)->timestamp-Time::parse($event->starts_at)->timestamp) : $starts->addMinutes(120);
         $changed = $preview && $preview['before'] != $preview['after'];
-        if ($changed) app(SfvCompetitionService::class)->apply($actor,$tenant,$preview,requireSingleReview:true);
+        // Federation placement is authoritative. Update the existing record, never replace it:
+        // rooms, room sides, notes and other local metadata are outside the SFV field set.
+        if ($changed) app(SfvCompetitionService::class)->apply($actor,$tenant,$preview,authoritative:true);
+        if ($eventChanged) {
+            $input=array_intersect_key((array)$event,array_flip(['team_season_id','title','kind','mode','status','capacity','description','revision']));
+            $delta=$starts->timestamp-Time::parse($event->starts_at)->timestamp;
+            $input+=['starts_at'=>$starts->format('Y-m-d\TH:i'),'ends_at'=>$ends->format('Y-m-d\TH:i'),
+                'deadline_at'=>$event->deadline_at ? Time::parse($event->deadline_at)->addSeconds($delta)->tz('Europe/Zurich')->format('Y-m-d\TH:i') : $starts->subHour()->format('Y-m-d\TH:i'),
+                'location'=>$location];
+            $planning->saveEvent($actor,$tenant,(int)$event->id,$input);
+        }
         if (!$event) {
             // Use the existing import contract, including sync/team scope and revision checks.
             app(SfvPlanningService::class)->import($actor,$tenant,(int)$match->id,[
@@ -99,7 +98,7 @@ class SfvReconcileService
             ]);
             return 'new';
         }
-        return $changed ? 'updated' : 'unchanged';
+        return $changed || $eventChanged ? 'updated' : 'unchanged';
     }
 
     protected function eventKind(?string $type): string

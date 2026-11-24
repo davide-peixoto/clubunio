@@ -40,7 +40,7 @@ try{
     parse_str(parse_url($url,PHP_URL_QUERY)??'',$query);$upload=$db->table('clubora.document_uploads')->where('tenant_id',$tenant->id)->where('id',$query['captureUpload']??0)->first();
     if(!$upload||$upload->state!=='pending'||!$upload->encrypted_bytes)throw new LogicException('Secure staged receipt missing');$checks++;
     $metadata=json_decode(Crypt::decryptString($upload->encrypted_metadata),true);if(($metadata['scanner_version']??'')!=='synthetic-acceptance')throw new LogicException('Scan metadata missing');$checks++;
-    $stage='fixture';$fixture=Tenant::create(['slug'=>'daily-'.Str::lower(Str::random(12)),'name'=>'Daily rollback acceptance']);
+    $stage='fixture';$fixture=Tenant::create(['slug'=>'daily-'.Str::lower(Str::random(12)),'name'=>'Daily rollback acceptance']);$planning=app(TeamPlanningService::class);
     $db->table('clubora.tenant_accounts')->insert(['tenant_id'=>$fixture->id,'account_id'=>$actor->id,'role'=>'admin']);$bind($fixture);
     $insert=fn($table,$data)=>$db->table('clubora.'.$table)->insertGetId(['tenant_id'=>$fixture->id]+$data);
     $season=$insert('seasons',['name'=>'Acceptance season','starts_on'=>'2029-07-01','ends_on'=>'2030-06-30','active'=>true]);
@@ -53,8 +53,17 @@ try{
     $event=app(TeamPlanningService::class)->table($fixture,'team_events')->where('sfv_match_id',987650002)->sole();
     if(!app(PlanningCalendarService::class)->visible($actor,$fixture)->where('id',$event->id)->exists()||count(app(PitchPlanningProjection::class)->entries($fixture,'2030-01-10','2030-01-10'))!==1)throw new LogicException('Planning projections diverged');$checks++;
     $result=$sfv->reconcile($actor,$fixture,'2030-01-10','2030-01-10');if($result['unchanged']!==1)throw new LogicException('SFV retry duplicated');$checks++;
-    $db->table('clubora.sfv_schedule')->where('id',$match)->update(['starts_at'=>'2030-01-10T13:00:00+01:00','revision'=>2]);$result=$sfv->reconcile($actor,$fixture,'2030-01-10','2030-01-10');
-    if(count($result['issues'])!==1||app(TeamPlanningService::class)->table($fixture,'team_events')->where('id',$event->id)->value('revision')!==1)throw new LogicException('Local time protection failed');$checks++;
+    $competition=$db->table('clubora.competitions')->where('tenant_id',$fixture->id)->sole();
+    $room1=$insert('training_options',['category'=>'room','code'=>'1','name'=>'Home room','active'=>true]);$room2=$insert('training_options',['category'=>'room','code'=>'2','name'=>'Guest room','active'=>true]);
+    $side=$insert('training_options',['category'=>'side','code'=>'L','name'=>'Left','active'=>true]);
+    $field2=$insert('training_options',['category'=>'field','code'=>'K','name'=>'Second field','active'=>true]);$insert('field_availabilities',['field_id'=>$field2,'status_id'=>$status,'active'=>true]);
+    $local=['host_room_id'=>$room1,'guest_room_id'=>$room2,'host_side_id'=>$side,'guest_side_id'=>$side,'remarks'=>'Keep local room assignment','show_on_signage'=>false];
+    $db->table('clubora.competitions')->where('id',$competition->id)->update($local);
+    $db->table('clubora.sfv_schedule')->where('id',$match)->update(['starts_at'=>'2030-01-11T15:30:00+01:00','location'=>'Tannenbrunn - 2, Sissach','state'=>'Neu angesetzt','revision'=>2]);$result=$sfv->reconcile($actor,$fixture,'2030-01-11','2030-01-11');
+    $moved=$db->table('clubora.competitions')->where('tenant_id',$fixture->id)->sole();$movedEvent=$planning->table($fixture,'team_events')->where('id',$event->id)->sole();
+    if($result['issues']!==[]||$result['updated']!==1||(int)$moved->id!==(int)$competition->id||(int)$moved->field_id!==$field2||Carbon\CarbonImmutable::parse($movedEvent->starts_at)->tz('Europe/Zurich')->format('Y-m-d H:i')!=='2030-01-11 15:30')throw new LogicException('Automatic SFV reschedule failed');$checks++;
+    foreach($local as $key=>$value)if($moved->$key!=$value)throw new LogicException('Local metadata changed: '.$key);$checks++;
+    if($sfv->reconcile($actor,$fixture,'2030-01-11','2030-01-11')['unchanged']!==1)throw new LogicException('Rescheduled retry duplicated');$checks++;
     $insert('sfv_schedule',['match_id'=>987650004,'season_id'=>2030,'host_name'=>'Other team','guest_name'=>'Acceptance team','team_a_id'=>987650003,'team_b_id'=>987650001,'title'=>'Away acceptance','starts_at'=>'2030-01-11T12:00:00+01:00','location'=>'Away venue','state'=>'Angesetzt','home'=>false,'match_type'=>'Meisterschaft','revision'=>1]);
     if($sfv->reconcile($actor,$fixture,'2030-01-11','2030-01-11')['new']!==1||$db->table('clubora.competitions')->where('tenant_id',$fixture->id)->count()!==1)throw new LogicException('Away game got a local pitch');$checks++;
     $stage='task board/cockpit';$task=app(WorkTaskService::class)->save($actor,$fixture,null,['title'=>'Acceptance task','assigned_to'=>$actor->id,'due_on'=>now()->toDateString()]);
@@ -80,6 +89,8 @@ try{
         if(str_starts_with($request->url(),'https://stg-club-api-services.football.ch/api/club/schedule?'))return Http::response([$providerMatch]);
         throw new LogicException('Unexpected synthetic HTTP destination');
     });
+    // Stored sync work must reconcile even without a logged-in browser or selected Filament tenant.
+    request()->setUserResolver(fn()=>null);Filament::setTenant(null,isQuiet:true);
     $count=app(App\ClubUnio\Services\SfvPlanningService::class)->refresh($actor,$fixture,['from'=>'2030-01-13','to'=>'2030-01-13']);
     $summary=request()->attributes->get(SfvReconcileService::class.':'.$fixture->id);
     if($count!==1||($summary['new']??0)!==1||!$planning->table($fixture,'team_events')->where('sfv_match_id',987650005)->exists())throw new LogicException('Fetch-to-calendar pipeline failed');$checks++;

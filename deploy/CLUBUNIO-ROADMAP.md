@@ -1,5 +1,17 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV: automatische SFV-Verschiebungen mit Garderobenerhalt (24.11.2026)
+
+- [x] Datum, Anspielzeit und zugeordnetes Spielfeld automatisch vom SFV übernehmen.
+- [x] Bestehenden Wettkampf und verknüpften Mannschaftstermin gemeinsam ändern.
+- [x] Garderoben, Garderobenseiten, Bemerkungen und lokale Sichtbarkeit erhalten.
+- [x] Sync-Aufträge ohne Browser-Sitzung, Wiederholung und Fehler-Rollback prüfen.
+
+Release `20261124-clubunio-daily-v2`; 42 lokale Tests / 561 Assertions und
+17 native DEV-Prüfungen bestanden. 36 externe DB-Tests lokal übersprungen.
+Keine neuen Abrufintervalle, keine Schemaänderung, kein API-Rechteausbau.
+[Grenzen, Konfliktverhalten und Rückweg](CLUBUNIO-DAILY-WORKFLOWS.md).
+
 ## DEV: Keycloak-Design und Social-/SSO-Vorbereitung (24.11.2026)
 
 - [x] Eigene Glas-Themes für ClubUnio und SV Sissach auf drei DEV-Clients aktiviert.

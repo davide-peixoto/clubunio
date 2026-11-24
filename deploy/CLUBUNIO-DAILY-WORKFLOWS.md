@@ -1,7 +1,7 @@
 # ClubUnio: Alltagsabläufe auf DEV
 
-Stand: 24.11.2026. Release `20261124-clubunio-daily-v1`, Basis
-`20261124-clubunio-work-hub-v3`. Keine Schemaänderung und keine Migration.
+Stand: 24.11.2026. Release `20261124-clubunio-daily-v2`, Basis
+`20261124-clubunio-daily-v1`. Keine Schemaänderung und keine Migration.
 Die bestehenden Work-Hub-Tabellen, Profile und Fachservices werden verwendet.
 Stage und PROD sind nicht Bestandteil dieses Releases.
 
@@ -10,13 +10,24 @@ Stage und PROD sind nicht Bestandteil dieses Releases.
 - **SFV abgleichen** verbindet den interaktiven Backend-Abruf mit der Übernahme.
   Eindeutig zugeordnete zukünftige Heimspiele werden atomar als Wettkampf und
   Mannschaftstermin gespeichert; Auswärtsspiele erhalten nur einen Teamtermin.
-  Konflikte, lokale Ausnahmen, widersprüchliche Verknüpfungen, fehlende Rechte,
-  verschobene oder abgesagte Spiele bleiben einzeln zur Prüfung stehen.
+  SFV-Verschiebungen von Datum, Uhrzeit und zugeordnetem Spielfeld werden
+  automatisch auf dem bestehenden Wettkampf und dem verknüpften Teamtermin
+  nachgeführt. Wettkampf-ID, Heim-/Gastgarderobe, Garderobenseiten, Bemerkungen
+  und lokale Signage-Sichtbarkeit bleiben erhalten. Dauer und Anmeldefrist des
+  Teamtermins werden um dieselbe Zeitdifferenz verschoben; Modus, Teilnehmer
+  und Beschreibung bleiben erhalten. Kein Löschen und Neuanlegen des Spiels.
+  Die SFV-Platzierung ist maßgebend, auch bei lokalen Belegungskonflikten oder
+  einer befristeten lokalen Verschiebung. Konflikte bleiben auf der Plantafel
+  sichtbar, statt die Quelle mit alten Planungsdaten auseinanderlaufen zu lassen.
+  Widersprüchliche/archivierte Verknüpfungen, unklare Mannschaft-/Platzzuordnung,
+  fehlende Rechte und Absagen bleiben einzeln zur Prüfung stehen.
   Spiele ohne Datum erscheinen unabhängig vom gewählten Zeitraum als Prüffälle.
   Wiederholungen erzeugen keine Dubletten. Maximal 500 Quellspiele pro Abgleich,
   zehn Prüffälle pro Seite. Der Abrufzähler und Übernahmezähler sind getrennt.
-  API- und Hintergrundaufträge behalten ihren bisherigen Quellabrufvertrag;
-  die automatische Übernahme ist auf den angemeldeten Backend-Kontext begrenzt.
+  Gespeicherte Sync-Aufträge führen die Übernahme auch bei Wiederholung ohne
+  Browser-Sitzung aus. Der gesondert berechtigte API-Quellabruf und historische
+  Social-Ergebnisabrufe behalten ihren bisherigen Vertrag. Es wird kein neuer
+  periodischer Abruf eingerichtet; die Übernahme erfolgt beim Backend-Abgleich.
 - **Mein Verein** zeigt maximal sechs eigene heute fällige/überfällige Aufgaben
   und vier aktuelle Konflikte von heute bis Ende Woche, jeweils mit Gesamtzahl.
   Die vorhandenen berechtigten Freigaben bleiben Teil des Cockpits.
@@ -51,6 +62,17 @@ Mandantenfarben und der zentrale React-Parameter bleiben maßgebend. DE/EN werde
 
 ## Prüfung
 
+- v2: 42 gezielte lokale Tests / 561 Assertions bestanden; 36 Tests mit externen
+  Datenbankvoraussetzungen lokal übersprungen. Automatische Heim-/Auswärtsänderung,
+  Datum/Uhrzeit/Spielfeld, feste Wettkampf-ID, beide Garderoben und Seiten,
+  Bemerkungen, Signage-Sichtbarkeit, Teamdauer/-frist, Idempotenz, befristete lokale
+  Ausnahme und vollständiger Rollback bei fehlgeschlagenem Kalender-Update geprüft.
+- v2: 17 native DEV-Fachprüfungen bestanden, einschließlich realer verschlüsselter
+  Fachablage, automatischer SFV-Verschiebung mit Garderobenerhalt und SFV-Abruf
+  ohne Browser-Sitzung. Synthetische Daten vollständig zurückgerollt, HTTP/Mail/
+  Queue isoliert. Keine echten Spiele abgeglichen oder Nachrichten versandt.
+  Blade/Route-Cache und 37 Runtime-Hashes erfolgreich, DEV HTTP 302 zum Login.
+- Folgende Abnahmen betreffen die unveränderten Oberflächen der Basis v1:
 - Lokal: 69 Tests, 874 Assertions bestanden; zwei vorhandene Tests übersprungen.
   Gezielte Fach-, Rechte-, Mandanten-, Übersetzungs- und Präsentationsprüfungen.
   JSON-Übersetzungsprüfung: 3075 Schlüssel DE/EN; PHP-Kataloge separat geprüft.
@@ -93,7 +115,10 @@ erhalten. `deploy/release-daily-workflows.sh` bereitet nur den Kandidaten vor;
 Aktivierung erst nach Fachprüfung über den atomaren `current`-Symlink und
 anschließendes Neuladen von PHP-FPM. Keine Datenbankmigration erforderlich.
 
-Rückweg: `current` atomar auf `20261124-clubunio-work-hub-v3` zurückstellen und
+Direkter Rückweg für v2: `current` atomar auf `20261124-clubunio-daily-v1`
+zurückstellen und PHP-FPM neu laden; damit werden SFV-Verschiebungen wieder zur
+Einzelprüfung angehalten. Der ursprüngliche Work-Hub-Rückweg bleibt verfügbar.
+Vollständiger Rückweg: `current` auf `20261124-clubunio-work-hub-v3` zurückstellen und
 PHP-FPM neu laden. Bereits gespeicherte Aufgaben/Entwürfe bleiben über die
 bestehenden Fachseiten zugänglich. Keine Datenrücksetzung oder Löschung nötig.
 Die neue automatische SFV-Übernahme entfällt nach dem Rückweg; bereits übernommene
