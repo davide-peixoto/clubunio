@@ -1,5 +1,13 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Interaktive DEV-Anlagenplanung – 24.11.2026
+
+Neue Tages-/Wochen-/Monatsplanung in ClubUnio-Farben mit Anlagen-, Status-
+und Konfliktfiltern, Zeitauswahl, Verschiebevorschlägen und mobiler Liste.
+Bisherige Ansicht bleibt umschaltbar. Bestehende Rechte und Bestätigungen,
+keine Migration oder Stage-/PROD-Änderung.
+[Bedienung, Abnahme und Rückweg](CLUBUNIO-FACILITY-UI.md).
+
 ## DEV-Dashboard: Begrüssung und Animationen – 24.11.2026
 
 Doppelte Begrüssung entfernt; V42-inspirierte Titel-, Karten-, Kennzahl- und

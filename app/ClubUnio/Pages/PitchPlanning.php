@@ -43,6 +43,25 @@ class PitchPlanning extends Page
     #[Locked]
     public ?string $friendlyRequestId = null;
 
+    public function modernAvailable(): bool
+    {
+        return (bool) config('clubunio-facility-ui.enabled', false)
+            && is_file(public_path('js/clubunio-facility-planner.js'))
+            && is_file(public_path('css/clubunio-facility-planner.css'));
+    }
+
+    public function modernSelected(): bool
+    {
+        return $this->modernAvailable() && session('clubunio.facility.design.'.Filament::auth()->id(), 'modern') === 'modern';
+    }
+
+    public function selectPlanningDesign(string $design): void
+    {
+        abort_unless(static::canAccess() && $this->modernAvailable() && in_array($design, ['modern', 'classic'], true), 403);
+        session()->put('clubunio.facility.design.'.Filament::auth()->id(), $design);
+        $this->redirect(\App\ClubUnio\Pages\PitchPlanning::getUrl(['date' => $this->date, 'mode' => $this->mode, 'teamId' => $this->teamId]), navigate: false);
+    }
+
     public static function getNavigationGroup(): ?string { return 'Anlagen & Kommunikation'; }
     public static function getNavigationIcon(): string { return 'heroicon-o-calendar-days'; }
     public static function getNavigationLabel(): string
@@ -74,6 +93,10 @@ class PitchPlanning extends Page
     {
         abort_unless(static::canAccess(), 403);
         $this->date = CarbonImmutable::now(PitchPlanningCalendar::TIMEZONE)->toDateString();
+        $view = request()->validate(['date' => ['nullable', 'date_format:Y-m-d'], 'mode' => ['nullable', 'in:day,week,month'], 'teamId' => ['nullable', 'integer', 'min:1']]);
+        $this->date = $view['date'] ?? $this->date;
+        $this->mode = $view['mode'] ?? 'day';
+        $this->teamId = isset($view['teamId']) ? (int) $view['teamId'] : null;
         if (request()->has('booking')) {
             $input = request()->validate(['booking' => ['required', 'integer', 'min:1'], 'date' => ['required', 'date_format:Y-m-d']]);
             $this->date = $input['date'];
