@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## V35-Navigationsbewegung – 24.11.2026
+
+Aktiv: `20261124-clubunio-navigation-motion-v3`. Schwebende blaue Icon-Leiste,
+mitwandernde helle Markierung, Hover-/Fokusaufklappen und Seitenübergänge.
+DE/EN, Tastatur und mobile Breite auf DEV geprüft; React-Parameter bleibt
+massgebend. [Bedienung und Abnahme](CLUBUNIO-REACT-UI.md).
+
 ## Doppelte Menülupe entfernt – 24.11.2026
 
 Aktiv: `20261124-clubunio-react-menu-v3`. Bei React = Ja bleibt nur die neue

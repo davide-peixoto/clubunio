@@ -10,5 +10,6 @@ return [
     'search' => 'Find a menu item …',
     'empty' => 'No matching menu items.',
     'close' => 'Close',
+    'motion' => 'Animations',
     'help' => '↑ ↓ select · Enter open · Esc close',
 ];

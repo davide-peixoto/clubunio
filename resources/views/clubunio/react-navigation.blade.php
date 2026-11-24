@@ -10,7 +10,7 @@
     };
     foreach (\Filament\Facades\Filament::getNavigation() as $group) { $collect($group->getItems(), (string) $group->getLabel()); }
 @endphp
-<link rel="stylesheet" href="{{ asset('css/clubunio-react-navigation.css') }}?v=1">
+<link rel="stylesheet" href="{{ asset('css/clubunio-react-navigation.css') }}?v=6">
 <div data-cu-react-navigation data-props="{{ json_encode(['items' => $items, 'labels' => trans('react_ui')], JSON_THROW_ON_ERROR) }}"></div>
-<script src="{{ asset('js/clubunio-react-navigation.js') }}?v=2" defer></script>
+<script src="{{ asset('js/clubunio-react-navigation.js') }}?v=6" defer></script>
 @endif

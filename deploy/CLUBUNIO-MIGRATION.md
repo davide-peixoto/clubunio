@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Navigationsbewegung – 24.11.2026
+
+DEV: migrationsfreies CSS-/React-Delta auf `20261124-clubunio-navigation-motion-v3`.
+Keine Parameter- oder Fachdatenänderung, Stage/PROD unverändert. Rückweg:
+React Nein oder vorheriges Release `20261124-clubunio-react-menu-v3`.
+[Browserabnahme und Bewegungseinstellung](CLUBUNIO-REACT-UI.md).
+
 ## Menübereinigung – 24.11.2026
 
 DEV v3 entfernt die doppelte Suchlupe bei aktivierter React-Menüsuche.

@@ -10,5 +10,6 @@ return [
     'search' => 'Menüpunkt suchen …',
     'empty' => 'Keine passenden Menüpunkte.',
     'close' => 'Schliessen',
+    'motion' => 'Animationen',
     'help' => '↑ ↓ auswählen · Enter öffnen · Esc schliessen',
 ];

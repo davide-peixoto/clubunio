@@ -44,7 +44,7 @@ Reduzierte Bewegung des Betriebssystems wird berücksichtigt.
 
 ## Auslieferung und Prüfung
 
-DEV-Release: `20261124-clubunio-react-menu-v3`.
+DEV-Release: `20261124-clubunio-navigation-motion-v3`.
 Rückweg: React = Nein; vorheriges Release `20261124-clubunio-team-ui-v1`.
 Stage und PROD unverändert. Keine Schema-Migration oder Fachdatenimporte.
 
@@ -79,3 +79,36 @@ bleibt verfügbar. Bei Nein oder fehlendem React-Menübundle bleibt die bisherig
 Suche erhalten. Die Breitensteuerung bleibt unabhängig von der Suche initialisiert.
 DEV-Browser bestätigt: alte Lupe fehlt, React-Suche und Breitensteuerung vorhanden.
 Vier PHP-Tests / 27 Assertions, drei Navigation-JS-Tests und DE/EN-Prüfung erfolgreich.
+
+## V35-inspirierte Navigationsbewegung
+
+Referenz im angemeldeten Chrome angesehen: Code XR, Beitrag vom 16. November,
+Dashboard V35. ClubUnio verwendet dessen Bewegungsprinzip mit eigener CI:
+dunkelblaue, schwebende Icon-Leiste (76 Pixel), helle kreisförmige Markierung
+und aufklappende Beschriftungen bei Hover oder Tastaturfokus. Die Markierung
+folgt Hover/Fokus und bleibt beim Scrollen am Ziel. Keine Navigationslinks
+oder Modulberechtigungen ersetzt. Mobile Ansicht bleibt eine vollständige
+Seitenleiste mit lesbaren Beschriftungen und normalem Öffnen/Schliessen.
+
+Gleichoriginige Seitenwechsel erhalten progressive CSS View Transitions;
+Browser ohne Unterstützung behalten normale Navigation. Die Umsetzung folgt
+der [Chrome-Dokumentation](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document).
+Keine Verzögerung von Links oder Änderung an Formularaktionen.
+
+„Animationen“ in der Menüpalette steuert die Navigationsbewegung je Browser.
+Standard ist die Systempräferenz; eine bereits ausdrücklich gewählte
+Dashboard-Bewegungseinstellung wird beim ersten Aufruf übernommen.
+`clubunio.ui.motion` speichert die ausdrückliche Wahl. Reduziert: 0 ms und
+View Transitions aus. Aktiviert: 360 ms. Diese Wahl beeinflusst die Navigation;
+bestehende Diagrammanimationen haben weiterhin ihre Dashboard-Einstellung.
+React = Nein schaltet das gesamte Menüpaket weiterhin aus.
+
+DEV v3, vier PHP-Tests/27 Assertions, Übersetzungsprüfung und Produktionsbuild
+erfolgreich. Browser: 76-Pixel-Leiste, Aufklappen auf gespeicherte 318 Pixel,
+Fokusmarker nach automatischem Scrollen ausgerichtet, Link zur Teamplanung
+funktioniert. Bewegungsauswahl auf reduziert (0 ms / navigation:none) geprüft
+und wieder aktiviert. Mobile Breite 390: Seite 375 Pixel, Sidebar x=0 geöffnet;
+Logo und Vereinsauswahl auf dunklem Grund korrigiert. Fensterbreite danach
+zurückgesetzt, Endzustand React Ja / Animationen aktiv. Keine Schema- oder
+Fachdatenänderung, Stage/PROD unverändert. Prüfbilder `navigation-motion-check/`
+liegen ausserhalb des Repositorys im Vorschauverzeichnis dieses Chats.

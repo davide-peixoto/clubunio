@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { menuMatches } from './navigation-search.mjs';
+import { navigationMotion, setNavigationMotion } from './navigation-motion.mjs';
 
 function Navigation({ items, labels }) {
+    const [motion, setMotion] = useState(() => {
+        let mode;
+        try { mode = localStorage.getItem('clubunio.ui.motion') || localStorage.getItem('clubunio.dashboard.motion'); } catch { /* Use system preference. */ }
+        return setNavigationMotion(mode);
+    });
     const [open, setOpen] = useState(false), [query, setQuery] = useState(''), [active, setActive] = useState(0);
     const dialog = useRef(), input = useRef(), trigger = useRef();
     const matches = menuMatches(items, query);
@@ -34,7 +40,7 @@ function Navigation({ items, labels }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>{labels.open}</span><kbd>⌘ / Ctrl K</kbd>
         </button>
         <dialog className="cu-command-dialog" ref={dialog} aria-labelledby="cu-command-title" onCancel={() => setOpen(false)} onClick={event => { if (event.target === dialog.current) setOpen(false); }}>
-            <header><h2 id="cu-command-title">{labels.title}</h2><button type="button" aria-label={labels.close} onClick={() => setOpen(false)}>×</button></header>
+            <header><h2 id="cu-command-title">{labels.title}</h2><button type="button" className="cu-motion-toggle" aria-pressed={motion} onClick={() => { const mode = motion ? 'reduced' : 'full'; setMotion(setNavigationMotion(mode)); try { localStorage.setItem('clubunio.ui.motion', mode); } catch {} }}>{labels.motion}</button><button type="button" aria-label={labels.close} onClick={() => setOpen(false)}>×</button></header>
             <input ref={input} type="search" role="combobox" aria-label={labels.open} aria-controls="cu-command-results" aria-expanded={open} aria-autocomplete="list" aria-activedescendant={matches.length ? `cu-command-${active}` : undefined} placeholder={labels.search} value={query} onChange={event => { setQuery(event.target.value); setActive(0); }} onKeyDown={keyDown}/>
             <ul id="cu-command-results" role="listbox" aria-label={labels.open}>
                 {matches.map((item, index) => <li key={`${item.url}-${index}`} role="presentation"><a role="option" id={`cu-command-${index}`} aria-selected={index === active} tabIndex={-1} href={item.url} onMouseMove={() => setActive(index)}><span><strong>{item.label}</strong><small>{item.group}</small></span><span aria-hidden="true">↗</span></a></li>)}
@@ -47,6 +53,7 @@ function Navigation({ items, labels }) {
 
 const mounted = new WeakSet();
 function init() {
+    navigationMotion();
     document.querySelectorAll('[data-cu-react-navigation]').forEach(node => {
         if (mounted.has(node)) return;
         try { const props = JSON.parse(node.dataset.props); createRoot(node).render(<Navigation {...props}/>); mounted.add(node); }

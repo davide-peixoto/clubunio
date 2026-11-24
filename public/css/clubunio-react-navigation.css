@@ -5,3 +5,41 @@
 @keyframes cu-command-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:767px){.cu-command-trigger{padding:8px;margin-inline:2px}.cu-command-trigger span,.cu-command-trigger kbd{display:none}.cu-command-dialog{inset:7vh 0 auto;max-height:80vh}.cu-command-dialog h2{font-size:18px}.cu-command-dialog header{padding:18px 20px}.cu-command-dialog footer{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.fi-sidebar-item-btn,.cu-command-dialog[open],.cu-command-trigger{animation:none!important;transition:none!important;transform:none!important}}
+
+/* V35-inspired floating navigation. Labels expand on hover or keyboard focus. */
+:root{--cu-nav-duration:360ms}
+@media(prefers-reduced-motion:reduce){:root{--cu-nav-duration:0ms}}
+:root[data-cu-motion=full]{--cu-nav-duration:360ms}
+:root[data-cu-motion=reduced]{--cu-nav-duration:0ms}
+.fi-sidebar .fi-sidebar-item-btn{background:transparent!important;box-shadow:none!important;transform:none!important;position:relative}
+.fi-sidebar .fi-sidebar-item-btn .fi-icon{position:relative;z-index:2;color:#bcd8f8!important;transition:color var(--cu-nav-duration)}
+.fi-sidebar .fi-sidebar-item-label{color:#e1edfb!important}
+.fi-sidebar .fi-sidebar-item-btn.cu-orbit-target .fi-icon{color:#164b8a!important}
+.cu-nav-orbit{position:absolute;top:0;left:0;width:40px;height:40px;border-radius:50%;background:#f0f7ff;box-shadow:0 0 0 5px #ffffff0b,0 5px 24px #48a9e84a;z-index:1;pointer-events:none;opacity:0;transition:transform var(--cu-nav-duration) cubic-bezier(.22,1,.36,1),opacity var(--cu-nav-duration);view-transition-name:cu-nav-orbit}
+.fi-sidebar{background:linear-gradient(165deg,#173f70,#0c2343)!important;border:1px solid #cde5ff20!important;box-shadow:0 16px 40px #0c234326}
+.fi-sidebar .fi-sidebar-group-label{color:#87acd5!important}.fi-sidebar .fi-sidebar-group-collapse-btn{color:#9bc3ef}.fi-sidebar .fi-sidebar-item-btn:hover{background:#ffffff09!important}.fi-sidebar .cu-submenu-toggle{color:#a7c8ed}.fi-sidebar .cu-platform-link{color:#dceeff}
+.fi-sidebar .fi-sidebar-item-btn:focus-visible{outline:2px solid #78c8fb;outline-offset:2px}
+.cu-command-dialog header .cu-motion-toggle{font-size:11px;line-height:1.2;width:auto;min-height:32px;padding:6px 9px;margin-inline-start:auto;margin-inline-end:8px;border:1px solid #cbddeb;border-radius:9px}.cu-motion-toggle[aria-pressed=true]{background:#e4f3ff;color:#164b8a}
+@media(min-width:1024px){
+ .fi-body-has-topbar .fi-sidebar{position:fixed!important;top:84px!important;inset-inline-start:12px!important;width:76px!important;height:calc(100dvh - 100px)!important;border-radius:28px;overflow:hidden;transition:width var(--cu-nav-duration) cubic-bezier(.22,1,.36,1),box-shadow var(--cu-nav-duration)}
+ .fi-main-ctn{padding-inline-start:100px!important}
+ .fi-sidebar:is(:hover,:focus-within){width:var(--sidebar-width)!important;box-shadow:0 20px 65px #0c234350}
+ .fi-sidebar .fi-sidebar-nav{padding:18px 12px;scrollbar-width:none;scrollbar-gutter:auto}.fi-sidebar .fi-sidebar-nav::-webkit-scrollbar{display:none}
+ .fi-sidebar .fi-sidebar-nav-groups{margin-inline:0;gap:18px}.fi-sidebar .fi-sidebar-item-btn{padding:10px 12px;min-height:44px}.fi-sidebar .fi-sidebar-item-btn .fi-icon{width:20px;height:20px;flex-shrink:0}
+ .fi-sidebar:not(:hover):not(:focus-within) .fi-sidebar-item-label{position:absolute;opacity:0;pointer-events:none}
+ .fi-sidebar:not(:hover):not(:focus-within) :is(.fi-sidebar-group-btn,.cu-submenu-toggle,form:has(#active-club),.cu-platform-link,.cu-sidebar-resizer){display:none!important}
+ .fi-sidebar:not(:hover):not(:focus-within) .fi-sidebar-item-grouped-border{display:none}
+ .fi-sidebar:not(:hover):not(:focus-within) .cu-submenu-row>.fi-sidebar-item-btn{flex:none;width:100%}
+ .fi-sidebar:not(:hover):not(:focus-within) .fi-sidebar-item-sub-group{padding-inline-start:0}
+ .fi-sidebar .fi-sidebar-item-label{transition:opacity var(--cu-nav-duration)}
+}
+@media(max-width:1023px){.fi-sidebar{border-radius:0 24px 24px 0}.fi-sidebar .fi-sidebar-nav{position:static;z-index:auto}.cu-nav-orbit{z-index:1}.fi-sidebar .fi-sidebar-item-btn{z-index:2}.fi-sidebar .fi-sidebar-nav{padding-inline:20px}}
+::view-transition-group(cu-nav-orbit){animation-duration:var(--cu-nav-duration);animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-old(root){animation:cu-page-out var(--cu-nav-duration) ease both}
+::view-transition-new(root){animation:cu-page-in var(--cu-nav-duration) ease both}
+@keyframes cu-page-out{to{opacity:0;transform:translateY(-5px)}}
+@keyframes cu-page-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.fi-sidebar .fi-sidebar-item.fi-active>.fi-sidebar-item-btn,.fi-sidebar .fi-sidebar-item.fi-active>.cu-submenu-row>.fi-sidebar-item-btn{background:transparent!important;box-shadow:none!important}
+
+.fi-sidebar{color:#e1edfb}.fi-sidebar-header img{filter:brightness(0) invert(1)}.fi-sidebar #active-club{color:#e1edfb;background:#ffffff12;border-color:#ffffff35}.fi-sidebar #active-club option{color:#18364d;background:#fff}

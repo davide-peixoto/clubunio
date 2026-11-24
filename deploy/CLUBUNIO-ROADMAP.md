@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## V35-inspirierte Navigation – 24.11.2026
+
+Chrome-Videoreferenz angesehen und Bewegungsprinzip auf DEV übernommen:
+schwebende Icon-Leiste, gleitende Markierung, Hover-/Fokusbeschriftungen,
+progressive Seitenwechsel und ausdrückliche Bewegungseinstellung.
+Bisherige Links/Rechte und zentrale React-Steuerung erhalten.
+[Abnahme](CLUBUNIO-REACT-UI.md).
+
 ## React-Steuerung und Menüpaket – 24.11.2026
 
 Zentraler Vereinsparameter ersetzt die einzelnen Designschalter. Menüpaket
