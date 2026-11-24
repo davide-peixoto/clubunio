@@ -1,5 +1,15 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV umgesetzt: sechs persönliche Arbeitsabläufe (24.11.2026)
+
+Rollenabhängiger Arbeitsbereich, Freigabezentrale mit Vorschau/Einzelentscheid,
+Mitglieder-Zeitleiste, Wochen-Konfliktübersicht, mobile Schnellaktionen und
+persönliche Favoriten/Verlauf/Listenansichten umgesetzt. Vorhandene Rechte und
+Fachservices, zentrale Gestaltung und DE/EN. 29 lokale Tests (430 Assertions)
+und 27 DEV-Prüfungen inklusive echter eingeschränkter Profilrechte und einer
+zurückgerollten synthetischen Ablehnung erfolgreich.
+[Stand und Bedienung](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV umgesetzt: modulspezifische Arbeitsansichten (24.11.2026)
 
 Alle sechs empfohlenen Pakete umgesetzt: Trainingskarten/Saisonfortschritt,

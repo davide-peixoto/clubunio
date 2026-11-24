@@ -1,5 +1,14 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV-Release: persönliche Arbeitsabläufe (24.11.2026)
+
+Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-personal-workflows-v1`.
+Vorher: `20261124-clubunio-module-workspaces-v1`. Private `.env`, Storage,
+Composer-Lock und DEV-Schema `clubunio` erhalten, keine Migration. Route-/View-
+Cache aktualisiert; PHP-FPM aktiv. 23 Laufzeitdateien mit Manifest geprüft,
+27 DEV-Fach-/Renderprüfungen und 29 lokale Tests erfolgreich.
+[Bedienung und Rollback](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV-Release: sechs Modulpakete (24.11.2026)
 
 Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-module-workspaces-v1`.

@@ -1,5 +1,16 @@
 # ClubUnio migration work packages
 
+## DEV: persönlicher Arbeitsbereich und Freigabezentrale (24.11.2026)
+
+Release `20261124-clubunio-personal-workflows-v1`, Vorgänger/Rollback
+`20261124-clubunio-module-workspaces-v1`. Keine Migration. Persönliche Ablage
+in bestehender `saved_views`-Tabelle (`workspace/personal`), verschlüsselt,
+getrennt nach Benutzer/Verein. Der Vorgänger ignoriert diese zusätzlichen Zeilen.
+Neue Filament-Seiten mit aktualisiertem Route-Cache. Keine Bankzahlungen,
+Betriebsumstellung oder Stage-/PROD-Änderung. Profil-, Mandanten- und
+Versionsgrenzen sowie synthetischer Einzelentscheid auf DEV geprüft.
+[Umfang und Rückweg](CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV-Designpaket: sechs Arbeitsansichten (24.11.2026)
 
 Release `20261124-clubunio-module-workspaces-v1`; keine DB-Migration und keine

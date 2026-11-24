@@ -128,6 +128,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.backend-theme'))
             ->renderHook('panels::footer', fn () => view('clubunio.brand.panel-attribution'))
             ->renderHook('panels::body.end', fn () => auth('clubunio')->check() ? view('clubunio.support.launcher') : '')
+            ->renderHook('panels::body.end', fn () => view('clubunio.workspace.tools'))
             ->renderHook('panels::auth.login.form.after', fn () => view('clubunio.language-switcher'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.react-navigation'))
             ->renderHook('panels::topbar.end', fn () => view('clubunio.language-switcher'))
@@ -205,7 +206,7 @@ class ClubUnioPanelProvider extends PanelProvider
                 MemberStatusResource::class, MemberTypeResource::class,
                 RegistrationStatusResource::class,
             ])
-            ->pages([Dashboard::class, SettingsOverview::class, \App\ClubUnio\Pages\ErpNextConnection::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class, \App\ClubUnio\Pages\PitchPlanning::class, \App\ClubUnio\Pages\Chats::class, \App\ClubUnio\Pages\BackofficeAssistant::class, \App\ClubUnio\Pages\MemberCampaigns::class, \App\ClubUnio\Pages\SocialStudio::class, \App\ClubUnio\Pages\SocialInsights::class, \App\ClubUnio\Pages\VeoPlanning::class, \App\ClubUnio\Pages\WorkInbox::class, \App\ClubUnio\Pages\MaterialReturns::class])->widgets([ClubOverview::class,
+            ->pages([\App\ClubUnio\Pages\MyClub::class, \App\ClubUnio\Pages\ApprovalCenter::class, \App\ClubUnio\Pages\PlanningConflicts::class, Dashboard::class, SettingsOverview::class, \App\ClubUnio\Pages\ErpNextConnection::class, SignagePreview::class, SfvCompetitions::class, ContributionPreview::class, SeasonPlanning::class, TeamPlanning::class, BusReservations::class, BexioReconciliation::class, BexioDispatchTrials::class, BexioSandbox::class, Synchronisation::class, \App\ClubUnio\Pages\DocumentSeries::class, \App\ClubUnio\Pages\SponsorRuns::class, \App\ClubUnio\Pages\SponsorRunBilling::class, \App\ClubUnio\Pages\ApiIntegrations::class, \App\ClubUnio\Pages\PitchPlanning::class, \App\ClubUnio\Pages\Chats::class, \App\ClubUnio\Pages\BackofficeAssistant::class, \App\ClubUnio\Pages\MemberCampaigns::class, \App\ClubUnio\Pages\SocialStudio::class, \App\ClubUnio\Pages\SocialInsights::class, \App\ClubUnio\Pages\VeoPlanning::class, \App\ClubUnio\Pages\WorkInbox::class, \App\ClubUnio\Pages\MaterialReturns::class])->widgets([ClubOverview::class,
                 MembersByStatus::class, ExpensesByStatus::class, MembersByAge::class,
                 ExpensesBySeason::class, NewMembersMonthly::class,
                 InvoicesByStatus::class, InvoicesBySeason::class,

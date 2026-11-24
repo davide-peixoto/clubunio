@@ -59,7 +59,7 @@ final class ProfileUi
     public static function actionFunction(string $name): ?string
     {
         return match ($name) {
-            'view', 'member', 'family', 'details', 'inspect', 'compare', 'dossierHistory', 'history', 'positions', 'viewCustomerCredit',
+            'view', 'member', 'family', 'details', 'inspect', 'compare', 'dossierHistory', 'timeline', 'history', 'positions', 'viewCustomerCredit',
             'loadView', 'saveView', 'manageView', 'deleteView', 'calculate', 'seasonRun', 'publicDisplay', 'publicForm',
             'duplicates', 'messages', 'notificationPreview', 'openFilters', 'applyFilters', 'resetFilters',
             'removeAllFilters', 'openColumnManager', 'resetColumnManager', 'applyTableColumnManager' => 'view',
@@ -105,6 +105,9 @@ final class ProfileUi
             && in_array($action->getName(), ['add', 'addBetween', 'delete', 'clone', 'moveUp', 'moveDown',
                 'reorder', 'collapse', 'expand', 'collapseAll', 'expandAll'], true)) {
             return true;
+        }
+        if ($component instanceof \App\ClubUnio\Pages\ApprovalCenter && $action->getName() === 'decide') {
+            return $component::canAccess() && isset(app(\App\ClubUnio\Services\ApprovalQueue::class)->kinds($actor, $tenant)[$component->selectedKind]);
         }
         $function = self::actionFunction($action->getName());
         if ($function === null) {

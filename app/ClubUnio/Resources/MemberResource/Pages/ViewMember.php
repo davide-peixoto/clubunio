@@ -35,7 +35,8 @@ class ViewMember extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [BexioBillingRecipientAction::make(), ErpNextMemberAction::make(), EditAction::make()->label('Bearbeiten')->slideOver()
+        return [\Filament\Actions\Action::make('timeline')->label(trans('workspace.timeline'))->icon('heroicon-o-clock')->slideOver()->modalSubmitAction(false)->modalCancelActionLabel(trans('workspace.close'))
+            ->modalContent(fn () => view('clubunio.members.timeline', ['timeline' => app(\App\ClubUnio\Services\MemberTimeline::class)->entries(Filament::auth()->user(), Filament::getTenant(), $this->getRecord()->id)])), BexioBillingRecipientAction::make(), ErpNextMemberAction::make(), EditAction::make()->label('Bearbeiten')->slideOver()
             ->mutateRecordDataUsing(fn (array $data, Member $record) => array_merge($data, ['_version' => MemberService::version($record)]))
             ->using(fn (Member $record, array $data, $livewire) => FormMutation::run($livewire, fn () => app(MemberService::class)->update(Filament::auth()->user(), Filament::getTenant(), $record->id, $data)))];
     }

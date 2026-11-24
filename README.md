@@ -1,5 +1,13 @@
 # ClubUnio
 
+## DEV: persönlicher Arbeitsbereich und Freigaben (24.11.2026)
+
+„Mein Verein“, Freigabezentrale, Mitglieder-Zeitleiste, Planungskonflikte,
+mobile Schnellaktionen sowie persönliche Favoriten/Ansichten auf DEV aktiv.
+Bestehende Fachservices und Rechte; verschlüsselte Ablage je Benutzer und
+Verein, DE/EN und vorhandenes Mandantendesign. Keine Migration.
+[Bedienung und Abnahme](deploy/CLUBUNIO-PERSONAL-WORKFLOWS.md).
+
 ## DEV: sechs Modulpakete im Vereinsdesign (24.11.2026)
 
 Training/Saison, Mitgliederdossiers, Rechnungen/Spesen, Kampagnen/Social Media,

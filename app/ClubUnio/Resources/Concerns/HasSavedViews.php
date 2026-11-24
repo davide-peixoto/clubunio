@@ -59,6 +59,12 @@ trait HasSavedViews
     {
         $initial = $this->shouldMountInteractsWithTable;
         parent::bootedInteractsWithTable();
+        if ($initial && request()->query('savedView') !== null) {
+            $id = request()->validate(['savedView' => 'required|integer|min:1'])['savedView'];
+            $saved = $this->viewQuery()->whereKey($id)->firstOrFail();
+            $this->applyViewState($saved->state_encrypted);
+            return;
+        }
         if (! $initial || request()->hasAny(['filters', 'search', 'sort', 'tab', 'grouping'])) {
             return;
         }
