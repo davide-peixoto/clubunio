@@ -220,3 +220,6 @@ Stage f175b6f nach PROD uebernommen. Schema clubunio: 239 Tabellen,
 141 Migrationen; alle Fachtabellen leer. Probelauf, Strukturvergleich,
 App-DB-Verbindung und DE/EN geprueft. Wartungsmodus bleibt aktiv.
 Erster Verein und Administration folgen. [Nachweis und Rueckweg](deploy/CLUBUNIO-PRODUCTION.md).
+
+
+24.11.2026: SV-Sissach-Importvertrag nach Schemaabgleich147 auf152 Migrationen aktualisiert. Mapping/Baselineversion unveraendert; Probelauf7 Inserts/221 Updates und Wiederholung0 Writes. Lokale Elternfreigaben, Winterplan, Kontostatus/native Tabellen und Konfliktrollback auf Kopie geprueft. Details: deploy/CLUBUNIO-SVS-TARGET-REVIEW-20261124.md.

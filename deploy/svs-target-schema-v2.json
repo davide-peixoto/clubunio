@@ -1,5 +1,5 @@
 {
-    "columns_sha256": "9bffa4d144cd0085644dee2f91ffbad9578cce5175f64a106c6efc081590791f",
+    "columns_sha256": "d546d41f6865398b62573844766878886ba3dc3d43cabe9d391926121cfe5e53",
     "migrations": [
         "2026_10_11_000001_create_foundation",
         "2026_10_11_000002_add_club_objects",
@@ -147,6 +147,11 @@
         "2026_11_22_000110_member_wallet",
         "2026_11_22_000120_event_checkin",
         "2026_11_22_000130_google_wallet",
-        "2026_11_22_020000_svs_historical_import"
+        "2026_11_22_020000_svs_historical_import",
+        "2026_11_23_000010_parent_access",
+        "2026_11_23_000160_mobile_keybox_emergency",
+        "2026_11_23_000170_chat_translation_languages",
+        "2026_11_23_000180_support_help_topics",
+        "2026_11_23_000200_tenant_ai"
     ]
 }

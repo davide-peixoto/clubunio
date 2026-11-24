@@ -102,3 +102,6 @@ zugeordnet, ohne Portalaktivierung oder Einladung.
 
 Automation sv-sissach-prod-delta-alle-12-stunden ist ACTIVE, alle12Stunden,
 Meldungen bei fehlgeschlagenen Laeufen. [Sanitisierter Nachweis](evidence/svs-production-import-20261123.json).
+
+
+24.11.2026: SV-Sissach-Importvertrag nach Schemaabgleich147 auf152 Migrationen aktualisiert. Mapping/Baselineversion unveraendert; Probelauf7 Inserts/221 Updates und Wiederholung0 Writes. Lokale Elternfreigaben, Winterplan, Kontostatus/native Tabellen und Konfliktrollback auf Kopie geprueft. Details: deploy/CLUBUNIO-SVS-TARGET-REVIEW-20261124.md.

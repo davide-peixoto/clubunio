@@ -2576,3 +2576,5 @@ Fachwrites. Live-Merge nur mit kurzlebiger, root-eigener Lauf-Freigabedatei;
 Konflikte oder Schemaaenderungen brechen ab. Aktiv: Codex-Agent alle12Stunden,
 ausschliesslich PHPMaker PROD nach ClubUnio PROD, keine bidirektionale Sync.
 [Betrieb, Grenzen und Nachweise](CLUBUNIO-SVS-PRODUCTION-IMPORT.md).
+
+24.11.2026: SV-Sissach-Importvertrag nach Schemaabgleich147 auf152 Migrationen aktualisiert. Mapping/Baselineversion unveraendert; Probelauf7 Inserts/221 Updates und Wiederholung0 Writes. Lokale Elternfreigaben, Winterplan, Kontostatus/native Tabellen und Konfliktrollback auf Kopie geprueft. Details: deploy/CLUBUNIO-SVS-TARGET-REVIEW-20261124.md.
