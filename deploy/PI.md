@@ -1,5 +1,11 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Doppelte Menülupe entfernt – 24.11.2026
+
+Aktiv: `20261124-clubunio-react-menu-v3`. Bei React = Ja bleibt nur die neue
+Menüsuche. Klassische Suche bei Nein, Breitensteuerung erhalten. DEV im Browser
+bestätigt, gezielte PHP-/JS- und Übersetzungsprüfungen erfolgreich.
+
 ## React-Parameter und Menü – 24.11.2026
 
 Aktiv: `20261124-clubunio-react-menu-v2`. Allgemeiner Vereinsparameter

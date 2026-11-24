@@ -25,6 +25,7 @@
 <a href="{{ route('clubunio.platform.index') }}" class="cu-platform-link">@svg('heroicon-o-building-office-2','cu-platform-link-icon') <span>{{ __('Plattformverwaltung') }}</span></a>
 @endif
 <div class="cu-nav-controls" data-cu-navigation data-user="{{ $actor->id }}">
+    @if(!app(\App\ClubUnio\Services\ReactUi::class)->enabled() || !is_file(public_path('js/clubunio-react-navigation.js')))
     <x-filament::icon-button icon="heroicon-o-magnifying-glass" :label="__('Menü durchsuchen')"
         :title="__('Menü durchsuchen')" data-cu-search-toggle aria-expanded="false" aria-controls="cu-menu-search-panel" />
     <div id="cu-menu-search-panel" hidden>
@@ -34,6 +35,7 @@
     <p class="cu-nav-empty" role="status" hidden>{{ __('Keine Menüpunkte gefunden.') }}</p>
     @if(\App\ClubUnio\Pages\SettingsOverview::canAccess())
     <a class="cu-settings-shortcut" data-settings-url="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" href="{{ \App\ClubUnio\Pages\SettingsOverview::getUrl() }}" hidden>{{ __('In Einstellungen suchen') }}</a>
+    @endif
     @endif
 </div>
 @endif

@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+## Menübereinigung – 24.11.2026
+
+DEV v3 entfernt die doppelte Suchlupe bei aktivierter React-Menüsuche.
+Reines View-/JS-Delta, keine Parameter-, Schema- oder Fachdatenänderung.
+Stage/PROD unverändert; vorheriges DEV-Release React-Menü v2 bleibt Rückweg.
+
 ## Zentraler React-Parameter und Menü – 24.11.2026
 
 DEV: vorhandene tenant_settings um `general / REACT_ENABLED` für SV Sissach

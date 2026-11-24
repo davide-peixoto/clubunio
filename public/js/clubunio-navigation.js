@@ -55,6 +55,7 @@
                 rememberWidth(next);
             });
             resizer?.addEventListener('dblclick', () => rememberWidth(280));
+            if (!search || !searchToggle || !searchPanel) return;
             const toggleSearch = open => {
                 searchPanel.hidden = !open;
                 searchToggle.setAttribute('aria-expanded', String(open));

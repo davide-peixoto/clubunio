@@ -44,7 +44,7 @@ Reduzierte Bewegung des Betriebssystems wird berücksichtigt.
 
 ## Auslieferung und Prüfung
 
-DEV-Release: `20261124-clubunio-react-menu-v2`.
+DEV-Release: `20261124-clubunio-react-menu-v3`.
 Rückweg: React = Nein; vorheriges Release `20261124-clubunio-team-ui-v1`.
 Stage und PROD unverändert. Keine Schema-Migration oder Fachdatenimporte.
 
@@ -71,3 +71,11 @@ Sprache Deutsch und normale Fensterbreite wiederhergestellt.
 Prüfbilder unter `react-menu-check/` im chatbezogenen Vorschauverzeichnis
 liegen ausserhalb des Repositorys. Neue UI-Pakete müssen ebenfalls
 `ReactUi::enabled()` verwenden; keine eigenen ENV- oder Sitzungsschalter.
+
+## Menübereinigung
+
+Die alte Suchlupe im Seitenmenü entfällt bei React = Ja. Die neue Suchpalette
+bleibt verfügbar. Bei Nein oder fehlendem React-Menübundle bleibt die bisherige
+Suche erhalten. Die Breitensteuerung bleibt unabhängig von der Suche initialisiert.
+DEV-Browser bestätigt: alte Lupe fehlt, React-Suche und Breitensteuerung vorhanden.
+Vier PHP-Tests / 27 Assertions, drei Navigation-JS-Tests und DE/EN-Prüfung erfolgreich.
