@@ -1551,3 +1551,12 @@ Kleines CSS-/View-Delta auf `20261124-clubunio-daily-v2`: Kennzahlenpanel
 mit 12 bis 20 px Innenabstand und erneuerter Asset-Cacheversion. Keine Migration.
 Chrome Desktop/Mobil gemessen; Mandantenfarben und bisheriges Design erhalten.
 [Abnahme und Rueckweg](CLUBUNIO-DASHBOARD-DESIGN.md).
+
+
+## 24.11.2026: fertige DEV-Pakete auf Stage und PROD
+
+Dashboard, Navigation, Backend-Arbeitsansichten, Alltagsablaeufe und SFV-Nachfuehrung
+auf Stage/PROD aktiviert; Login-Themes V6 fuer vier Clients uebernommen.
+Vier additive Work-Hub-Tabellen nach gepruefter verschluesselter Sicherung.
+53 native Stage-/49 PROD-Pruefungen, bestehende Sicherheits-/Integrationskonfiguration
+erhalten. Keine Datenauffrischung. Abnahme, Migrationsplan und Rueckweg: [Releaseprotokoll](CLUBUNIO-PROMOTION-20261124.md).

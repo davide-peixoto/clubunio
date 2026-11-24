@@ -2388,3 +2388,12 @@ DEV und Stage: Anleitungen, Schritte und 146 Bilder/Screenshots bleiben aktiv;
 Videos/Player/Untertitel privat archiviert und nicht mehr verlinkt. Je 91 Live-
 Prüfungen erfolgreich. PROD auf ausdrücklichen Wunsch unverändert.
 [Freigabestand und Rückweg](CLUBUNIO-WIKI.md).
+
+
+## 24.11.2026: fertige DEV-Pakete auf Stage und PROD
+
+Dashboard, Navigation, Backend-Arbeitsansichten, Alltagsablaeufe und SFV-Nachfuehrung
+auf Stage/PROD aktiviert; Login-Themes V6 fuer vier Clients uebernommen.
+Vier additive Work-Hub-Tabellen nach gepruefter verschluesselter Sicherung.
+53 native Stage-/49 PROD-Pruefungen, bestehende Sicherheits-/Integrationskonfiguration
+erhalten. Keine Datenauffrischung. Abnahme, Migrationsplan und Rueckweg: [Releaseprotokoll](CLUBUNIO-PROMOTION-20261124.md).
