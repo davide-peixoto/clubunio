@@ -1,5 +1,50 @@
 # Veo-Aufnahmeplanung
 
+## Stage und PROD – 24.11.2026
+
+Das geprüfte Veo-Kalenderpaket einschliesslich automatischer Spiel-/SFV-Nachführung
+ist auf `https://stage.clubunio.com/veo-planning` und
+`https://app.clubunio.com/veo-planning` aktiv. Fachstand `a358eaaa`; nur elf
+Laufzeit-/Migrationsdateien plus Paketmanifest gezielt übernommen, kein pauschaler
+Branchwechsel und keine fremden Arbeitsstände. DEV blieb bei seinem aktiven Release.
+
+Beide Datenbanken hatten bereits Kamera-/Mannschaftseinstellungen, aber noch keine
+Aufnahme-Anpassungstabelle. Beide additiven Migrationen 020000/021000 sind jetzt
+verbucht; Schema `clubunio`, keine Snapshot-/Legacy-Schemas geändert. Vor jeder
+Migration vollständige verschlüsselte Sicherung einschliesslich lesbarer Prüfung:
+`/root/clubunio-releases/veo-stage-20261124` beziehungsweise
+`/root/clubunio-releases/veo-prod-20261124`. Dort liegen auch Quellarchiv,
+Vorher-/Nachherdateien, neue Pfade, Migrations- und Abnahmeprotokolle.
+Konfiguration und Composer-Lock per SHA-256 unverändert bestätigt.
+
+Auf beiden Instanzen nativ geprüft: Speichern, veralteten Schreibversuch abweisen,
+Rücksetzen, Audit, unveränderte Spielzeit bei manuellem Aufnahmeverschieben,
+automatischer Kamerawechsel bei bestätigtem Platzwechsel sowie zwei tatsächliche
+SFV-Abgleiche auf neue Tage/Plätze mit erhaltenem Vorlauf und erhaltener Dauer.
+DE/EN-Rendering erfolgreich, alle synthetischen Daten zurückgerollt; null
+verbliebene `veo-test-*`-Mandanten. HTTP 302 zur geschützten Anmeldung und CSS 200,
+beide Anwendungen ausserhalb des Wartungsmodus. Identische Laufzeithashes der
+Fachservices, Kalenderansicht und gemeinsamen JS-Datei auf Stage/PROD.
+Kein echter Versand, SFV-Netzabruf, Kamerabefehl oder Bankvorgang.
+
+Rollout mit `deploy/promote-veo-calendar.sh`, Zielprüfung/Migrations-SQL über
+`deploy/emit-veo-promotion-migration.php`. Wiederanlauf verwendet die ursprüngliche
+Sicherung, migriert idempotent und bricht nach einem fertigen Lauf ab. Fehler nach
+Codeinstallation stellen die vorherigen Dateien und den Anwendungsstatus wieder
+her; additive Tabellen bleiben erhalten. Für einen manuellen Rückweg zuerst
+anwendungsbezogenen Wartungsmodus setzen, `source.tar.gz` wiederherstellen,
+ausschliesslich in `new-files` gelistete neue Dateien entfernen, Bootstrap-Cache
+zurückspielen und die Veo-View neu kompilieren; Anwendung freigeben/FPM neu laden.
+Keinen vollständigen Datenbankrestore für einen Code-Rückweg durchführen.
+
+Beim ersten Stage-Vorladen aller Views fiel eine bestehende Leseberechtigung für
+`tenant-ai-settings.blade.php` auf. Der Code wurde automatisch zurückgesetzt;
+keine pauschale Rechteänderung. Der endgültige Rollout kompiliert gezielt Veo und
+prüft dessen DE/EN-Rendering. Die fremde Dateiberechtigung ist damit nicht behoben.
+Ebenso blieb der bestehende ungültige PROD-Git-HEAD unberührt: dies war ein
+gezielter Runtime-Release, keine Reparatur der Hosting-Git-Integration.
+Angemeldete visuelle Desktop-/Mobile-Abnahme bleibt separat offen.
+
 ## Kalender und Vereinsdesign – 24.11.2026
 
 DEV verwendet die gemeinsame Kalenderoberfläche der Platzplanung: Tag/Woche/Monat,

@@ -11,14 +11,20 @@ use Illuminate\Support\Facades\{DB, Http, Mail, Queue};
 use Filament\Facades\Filament;
 
 $db = DB::connection('clubunio');
-if (config('app.url') !== 'https://dev.clubunio.ch' || $db->getDatabaseName() !== 'clubunio_dev') {
-    throw new LogicException('DEV only');
+$target = $argv[1] ?? 'dev';
+$targets = ['dev' => ['https://dev.clubunio.ch', 'clubunio_dev'],
+    'stage' => ['https://stage.clubunio.com', 'clubunio_stage'], 'prod' => ['https://app.clubunio.com', 'clubunio_prod']];
+if (! isset($targets[$target]) || [config('app.url'), $db->getDatabaseName()] !== $targets[$target]) {
+    throw new LogicException('Unexpected Veo acceptance target');
 }
+$origin = config('app.url');
 Http::preventStrayRequests(); Mail::fake(); Queue::fake();
+config(['clubunio-mobile-push.enabled' => false, 'clubunio-mobile-push.delivery_enabled' => false]);
 $db->beginTransaction();
 try {
     $db->statement("SET LOCAL statement_timeout='30s'");
-    $actor = Account::where('username', 'davide.peixoto@svsissach.ch')->sole();
+    $actor = Account::where('active', true)->where('api_only', false)
+        ->whereHas('tenants', fn ($query) => $query->whereIn('clubora.tenant_accounts.role', ['admin', 'office']))->orderBy('id')->firstOrFail();
     $tenant = Tenant::create(['slug' => 'veo-test-'.bin2hex(random_bytes(6)), 'name' => 'Veo rollback acceptance']);
     $db->table('clubora.tenant_accounts')->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'admin']);
     $insert = fn ($table, $data) => $db->table('clubora.'.$table)->insertGetId(['tenant_id' => $tenant->id] + $data);
@@ -70,7 +76,7 @@ try {
     Filament::setCurrentPanel(Filament::getPanel('clubunio'));
     Filament::auth()->setUser($actor); Filament::setTenant($tenant, isQuiet: true);
     $session = $app['session']->driver(); $session->start();
-    $request = Illuminate\Http\Request::create('https://dev.clubunio.ch/veo-planning', 'GET');
+    $request = Illuminate\Http\Request::create($origin.'/veo-planning', 'GET');
     $request->setUserResolver(fn () => $actor); $request->setLaravelSession($session);
     $app->instance('request', $request);
     Illuminate\Support\Facades\View::share('errors', new Illuminate\Support\ViewErrorBag);
