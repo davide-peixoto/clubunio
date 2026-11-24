@@ -1,5 +1,11 @@
 # ClubUnio
 
+## Teamplanung auf DEV – 24.11.2026
+
+Neue CI-Oberfläche für Terminliste und Teamkalender, mobile Agenda und
+jederzeit umschaltbare bisherige Ansicht. DE/EN, gezielte Tests und
+Browserabnahme erfolgreich. [Stand und Rückweg](deploy/CLUBUNIO-TEAM-PLANNING-UI.md).
+
 ## Interaktive DEV-Anlagenplanung – 24.11.2026
 
 Neue Tages-/Wochen-/Monatsplanung in ClubUnio-Farben mit Anlagen-, Status-

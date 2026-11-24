@@ -110,11 +110,11 @@ Teilflächenangaben. 320 × 812: Zeitraster intern scrollbar (804 Pixel Inhalt
 bei 238 Pixel Scrollbereich), Seite bleibt ohne horizontalen Überlauf
 (scrollWidth 305 bei innerWidth 320). Kein physischer Handy-/Safari-Test.
 
-Beim letzten mobilen Wechsel zur bisherigen Ansicht lief die existierende
-starke Sitzung ab (401). Normaler Reload führt zur OIDC-Anmeldung. Browser-
-grösse zurückgesetzt, kein Authentifizierungsablauf automatisiert oder
-umgangen. Desktop-Designwechsel ist bestanden; die Wiederholung dieses
-mobilen Wechseltests benötigt eine neue Benutzeranmeldung.
+Nach erneuter Anmeldung am 24.11.2026: mobiler Wechsel zur bisherigen
+Ansicht und zurück erfolgreich bei 390 × 844. Datum 24.11.2026,
+Wochenansicht und Mannschaftsfilter 394 bleiben erhalten. Neue Ansicht
+wieder sichtbar, kein horizontaler Seitenüberlauf. Die zuvor offene mobile
+Abnahme ist damit abgeschlossen. Kein physischer Handy-/Safari-Test.
 
 Prüfbild `facility-browser-check/mobile-list.jpg` liegt ausserhalb des
 Repositorys im chatbezogenen Vorschauverzeichnis.

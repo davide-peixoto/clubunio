@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV-Teamplanung – 24.11.2026
+
+Terminliste und Kalender im neuen CI-Design mit mobiler Agenda und klassischem
+Rückweg auf DEV ausgeliefert. 15 lokale Tests, 12 Read-only-DEV-Renderprüfungen
+und Browserabnahme erfolgreich. Mobile Abnahme der Anlagenplanung abgeschlossen.
+[Details](CLUBUNIO-TEAM-PLANNING-UI.md). Nächste mögliche Objekte: Menü und
+Trainingsplanung; diese Änderung erweitert nur Terminliste und Teamkalender.
+
 ## Interaktive DEV-Anlagenplanung – 24.11.2026
 
 Neue Tages-/Wochen-/Monatsplanung in ClubUnio-Farben mit Anlagen-, Status-

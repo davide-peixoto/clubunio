@@ -1,5 +1,13 @@
 # ClubUnio migration work packages
 
+## DEV-Planungsoberfläche – 24.11.2026
+
+Teamplanung: reine Oberflächenauslieferung ohne Schema- oder Datenmigration.
+DEV-Gate aktiv; Stage/PROD unverändert. Vor einer späteren Übernahme die
+DE/EN-, Berechtigungs- und Browserprüfungen im Zielsystem wiederholen.
+Klassische Darstellung und Gate bleiben als Rückweg erhalten.
+[Release und Abnahme](CLUBUNIO-TEAM-PLANNING-UI.md).
+
 ## Veo-Aufnahmeplanung
 
 Additive Migration `2026_11_13_002100_veo_recording_plan.php` für Kamera- und Mannschaftszuordnungen. Rückweg über den vorigen Web-Release mit Erhalt der Konfiguration. [Migration und Abnahme](CLUBUNIO-VEO.md).

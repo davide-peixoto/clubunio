@@ -49,6 +49,7 @@
 @endif
 </div>
 <p>{{ $events->count() }} {{ __('Termine · Europe/Zurich') }}</p>
+@if(\App\ClubUnio\Services\PlanningUi::modern(request(), (int) $tenant->id))@include('clubunio.planning.overview')@endif
 @if($events->isEmpty())<p class="notice">{{ __('Keine Termine für diese Auswahl.') }}</p>@endif
 @if($filters['view']==='teams')
 <div class="table-scroll"><table class="calendar-team-table"><thead><tr><th>{{ __('Mannschaft') }}</th>@foreach($days as $day)<th>{{ $day['date']->locale(app()->getLocale())->translatedFormat('D d.m.') }}</th>@endforeach</tr></thead><tbody>

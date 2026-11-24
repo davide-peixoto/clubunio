@@ -1,6 +1,9 @@
 <x-filament-panels::layout>
     <link rel="stylesheet" href="{{ asset('css/clubunio-workspace.css') }}?v=4">
-    <div class="club-workspace">
+    @php($teamDesignAvailable = $module === 'planning' && \App\ClubUnio\Services\PlanningUi::available(request()))
+    @php($teamModern = $teamDesignAvailable && \App\ClubUnio\Services\PlanningUi::modern(request(), (int) $tenant->id))
+    @if($teamDesignAvailable)<link rel="stylesheet" href="{{ asset('css/clubunio-team-planning.css') }}?v=1">@endif
+    <div class="club-workspace {{ $teamModern ? 'cu-team-modern' : '' }}">
         <x-filament::tabs class="workspace-navigation" :label="match($module) { 'bus' => __('Busverwaltung'), 'bexio' => __('Integrationen'), default => __('Teamplanung') }">
             @if($module === 'bexio')
                 <x-filament::tabs.item tag="a" :href="url('/settings')">{{ __('Einstellungen') }}</x-filament::tabs.item>
@@ -20,6 +23,7 @@
                 @if((count($managed) || app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'training', 'view')) && \App\ClubUnio\Resources\ProfileUi::profileAllows($actor, $tenant, 'training', 'view'))<x-filament::tabs.item tag="a" :href="route('clubunio.training.index', $tenant->slug)" :active="request()->routeIs('clubunio.workspace.training.*')">{{ __('Trainingspläne') }}</x-filament::tabs.item>@endif
             @endif
         </x-filament::tabs>
+        @if($teamDesignAvailable)@include('clubunio.planning.design')@endif
         @if(session('notice'))<div role="status" class="notice">{{ session('notice') }}</div>@endif
         @if($errors->any())<div role="alert" class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
         @hasSection('native-content')

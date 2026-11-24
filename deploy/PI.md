@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV-Teamplanung – 24.11.2026
+
+Aktiv: `20261124-clubunio-team-ui-v1`, Gate `CLUBUNIO_PLANNING_UI_ENABLED=true`.
+CI-Terminliste, Kalenderkarten und mobile Agenda; bisherige Ansicht umschaltbar.
+Keine Migration oder Stage-/PROD-Änderung. PHP-FPM aktiv, CSS HTTP 200,
+DE/EN und Browserabnahme erfolgreich. [Prüfung und Rückweg](CLUBUNIO-TEAM-PLANNING-UI.md).
+
 ## Interaktive DEV-Anlagenplanung – 24.11.2026
 
 Neue Tages-/Wochen-/Monatsplanung in ClubUnio-Farben mit Anlagen-, Status-
