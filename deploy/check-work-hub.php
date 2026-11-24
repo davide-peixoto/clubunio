@@ -25,12 +25,13 @@ try{
     $mode=new class extends ReactUi{public bool $value=true;public function enabled(?int $tenantId=null):bool{return $this->value;}};$app->instance(ReactUi::class,$mode);
     if(!in_array('--security',$argv,true))foreach(['de','en'] as $locale)foreach([true,false] as $modern){
         $app->setLocale($locale);$mode->value=$modern;$bind($actor,$tenant);
-        foreach([ObjectSearch::class,NotificationCenter::class,TeamTasks::class,PlanningConflicts::class] as $page){
+        foreach((in_array('--conflicts-only',$argv,true)?[PlanningConflicts::class]:[ObjectSearch::class,NotificationCenter::class,TeamTasks::class,PlanningConflicts::class]) as $page){
             $stage='render '.class_basename($page);$html=Livewire\Livewire::mount($page);
             echo $stage.' '.$locale.' '.($modern?'modern':'classic').PHP_EOL;
+            if(str_contains($html,'@js('))throw new LogicException('Uncompiled client action expression');
             if(!str_contains($html,'cu-workflow')||preg_match('/work_hub\.[a-z_]+/',strip_tags($html)))throw new LogicException('Render/translation failure');$checks++;
         }
-        foreach(['member','expense','event'] as $kind){$stage='wizard '.$kind;$bind($actor,$tenant,['kind'=>$kind]);$html=Livewire\Livewire::mount(GuidedCapture::class,['kind'=>$kind]);echo $stage.' '.$locale.PHP_EOL;if(!str_contains($html,'cu-work-hub'))throw new LogicException('Wizard missing');$checks++;}
+        if(!in_array('--conflicts-only',$argv,true))foreach(['member','expense','event'] as $kind){$stage='wizard '.$kind;$bind($actor,$tenant,['kind'=>$kind]);$html=Livewire\Livewire::mount(GuidedCapture::class,['kind'=>$kind]);echo $stage.' '.$locale.PHP_EOL;if(!str_contains($html,'cu-work-hub'))throw new LogicException('Wizard missing');$checks++;}
     }
     $bind($actor,$tenant);$app->setLocale('de');$mode->value=true;
     $stage='search';foreach(['Peixoto','10','%_'] as $term){app(WorkObjectSearch::class)->results($actor,$tenant,$term);$checks++;}

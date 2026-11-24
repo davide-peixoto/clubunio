@@ -7,8 +7,9 @@ Anlagenkonflikten, drei Erfassungsassistenten und Teamaufgaben auf DEV.
 Zentrale Mandantenfarben, DE/EN, Tastatur, reduzierte Bewegung und begrenzte
 Ladelisten. Vier additive Tabellen als DEV-Owner migriert; Bestandsdaten und
 Profile erhalten. 27 lokale Tests / 513 Assertions, 15 isolierte Chrome-Tests,
-45 DEV-Prüfungen und 15 bestehende Fachchecks erfolgreich. Angemeldete
-Desktop-/Handyabnahme wartet auf erneute Anmeldung.
+45 DEV-Prüfungen und 15 bestehende Fachchecks erfolgreich. Chrome/Desktop
+und responsive Handyansicht abgenommen; Livewire-Konfliktbutton korrigiert
+und als `20261124-clubunio-work-hub-v3` veröffentlicht.
 [Stand und Grenzen](CLUBUNIO-WORK-HUB.md).
 
 ## Browserabnahme: persönliche Arbeitsabläufe (24.11.2026)

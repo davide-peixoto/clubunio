@@ -7,9 +7,11 @@
 `chat_mentions`, `workspace_capture_commands`. Zusammengesetzte Mandanten-
 Fremdschlüssel, verschlüsselte Aufgabeninhalte und begrenzte App-Rechte.
 Keine bestehenden Daten/Profile verändert. Verschlüsselter vollständiger
-Owner-Dump zuvor vollständig gelesen. Release `20261124-clubunio-work-hub-v2`;
+Owner-Dump zuvor vollständig gelesen. Release `20261124-clubunio-work-hub-v3`;
 Rückweg auf persönliche Arbeitsabläufe v4, neue Tabellen/Daten dabei erhalten.
-Angemeldete Browserabnahme nach erneutem Login offen.
+Angemeldete Desktop-/Mobilabnahme erfolgt; v3 korrigiert den Konfliktbutton,
+keine weitere Migration. Neue Compilerprüfung verhindert unübersetzte
+Blade-Direktiven in Clientaktionen.
 [Details und Nachweise](CLUBUNIO-WORK-HUB.md).
 
 ## DEV-Browserkorrekturen: persönliche Arbeitsabläufe v4 (24.11.2026)

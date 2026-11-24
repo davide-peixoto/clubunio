@@ -1,6 +1,6 @@
 # ClubUnio: sechs Alltagspakete auf DEV
 
-Stand: 24.11.2026. Zielrelease `20261124-clubunio-work-hub-v2`, fachlicher
+Stand: 24.11.2026. Aktiv `20261124-clubunio-work-hub-v3`, fachlicher
 Rückweg `20261124-clubunio-personal-workflows-v4`. Nur ClubUnio DEV.
 
 ## Funktionen
@@ -125,7 +125,25 @@ Stage/PROD und bestehende Integrationen werden nicht umgestellt.
 - Sämtliche Fachtestdaten wurden zurückgerollt; HTTP-Fremdaufrufe blockiert,
   Mail/Queue im neuen Test abgefangen. Keine echte Nachricht an andere Personen,
   keine Freigabe oder Zahlung ausgeführt.
-- Browserabnahme in der angemeldeten DEV-Oberfläche noch offen: Sitzung nach
-  der Aktivierung abgelaufen; Anmeldung im offenen Testtab angefordert.
-
-Nach Browserabnahme Prüfgrenzen und gegebenenfalls Korrekturen hier nachführen.
+- Browserabnahme vom 24.11.2026: Chrome/Desktop und responsive 390 × 844,
+  kein physisches Handy. Sandbox-Suche, Aufgabendialog samt Abbruch,
+  Mitgliederassistent bis zur Zusammenfassung (ohne Speichern), Wechsel auf
+  Spesen-/Terminassistent, leere Benachrichtigungszentrale und Filter,
+  vorhandene Planungskonflikte und Alternativenprüfung, Chatoberfläche
+  einschließlich Erwähnungsdialog mit berechtigtem Teilnehmer (ohne Versand),
+  DE/EN, Dark Mode sowie beide Tastatursuchen geprüft. Die geprüften
+  Belegungen ergaben keine freie Alternative; keine Verschiebung bestätigt.
+  Speicherung, Lesestatus und Erwähnungsversand sind durch die zurückgerollten
+  Fachtests und isolierten Chrome-Tests belegt.
+- Mandantenwechsel auf FC Horizon (bisheriges Design): keine Sissacher
+  Sandbox-Treffer; Rückkehr auf SV Sissach (React-Design) erfolgreich.
+  Keine neue Mandanteneinstellung gesetzt. Deutsch/Systemtheme und normale
+  Desktopgrösse wiederhergestellt. Keine horizontale Seitenüberbreite.
+- Korrektur aus der Sichtprüfung: `@js` innerhalb des Filament-Buttonattributes
+  blieb als Text stehen und blockierte den Konfliktaufruf. Explizite, HTML-sicher
+  ausgegebene JavaScript-Werte beheben dies in v3. Die DEV-Renderprüfung verwirft
+  jetzt nicht kompilierte `@js(`-Ausdrücke; `--conflicts-only` prüft gezielt die
+  vier Sprach-/Designkombinationen samt Fachchecks.
+- v3 hat keine weitere Migration; 17 Fachchecks sowie anschließend 21 gezielte
+  Render-/Fachchecks erneut erfolgreich. Sieben lokale Fachtests / 124 Assertions
+  und die Übersetzungsprüfung nach der Korrektur erfolgreich.

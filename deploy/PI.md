@@ -1,15 +1,16 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
-## DEV: Work Hub v2 (24.11.2026)
+## DEV: Work Hub v3 (24.11.2026)
 
-Release `/var/www/svs-laravel/releases/20261124-clubunio-work-hub-v2`,
+Release `/var/www/svs-laravel/releases/20261124-clubunio-work-hub-v3`,
 fachlicher Rückweg `20261124-clubunio-personal-workflows-v4`.
 Vier additive Tabellen ausschließlich in `clubunio_dev` als PostgreSQL-Owner;
 Webrolle bleibt ohne Schema-Erstellrecht. Vollständige verschlüsselte und
 lesbar geprüfte Sicherung auf dem VPS unter
 `/root/clubunio-releases/work-hub-20261124`. 39 Runtime-Dateien per Hash geprüft,
 private Konfiguration/Storage/Composer erhalten, Route-/View-Cache erneuert.
-Fachtests erfolgreich; angemeldete Browserabnahme wartet auf Login.
+Fachtests und angemeldete Chrome-Abnahme erfolgreich. Desktop und responsive
+390 × 844 geprüft; v3 korrigiert die Livewire-Parameter des Konfliktbuttons.
 [Betrieb, Migration und Rückweg](CLUBUNIO-WORK-HUB.md).
 
 ## DEV: geprüfte Arbeitsabläufe v4 (24.11.2026)
