@@ -29,7 +29,7 @@ for locale in ('de', 'en'):
             html = response.read().decode('utf-8')
         html = html.replace(origin, 'https://clubunio.com')
         html = html.replace('/js/clubunio-marketing.js"', '/js/clubunio-marketing.js?v=2"')
-        html = html.replace('href="/login"', 'href="https://dev.clubunio.ch/login"')
+        html = html.replace('href="/login"', 'href="https://app.clubunio.com"')
         html = html.replace(f'action="https://clubunio.com/{locale}/inquiry"', 'action="/inquiry.php"')
         html = re.sub(r'<input[^>]*name="_token"[^>]*>', f'<input type="hidden" name="locale" value="{locale}">', html)
         if not subpage:

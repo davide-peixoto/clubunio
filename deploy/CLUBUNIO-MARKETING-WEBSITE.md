@@ -253,3 +253,10 @@ Backend-/App-Lightbox und Schliessen geprueft. Mobile Navigation umbricht,
 Bildverhaeltnis des Hero korrigiert. Nach Deployment Startseite, DE/EN,
 beide Datenschutzseiten und alle jeweils 15 eindeutigen Bild-URLs HTTP 200.
 Live-Appbilder geladen und Lightbox im Browser erfolgreich.
+
+## Login-Ziel 25.11.2026
+
+Der Anmelden-Link der Marketingseite fuehrt auf ausdruecklichen Auftrag
+zu https://app.clubunio.com. Blade-Quelle, statischer Export und die drei
+veroeffentlichten Startseiten (Root, DE, EN) sind angepasst.
+Keine Migration; Rueckweg ueber /root/clubunio-login-20261125-* auf dem VPS.
