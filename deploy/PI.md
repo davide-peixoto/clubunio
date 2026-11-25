@@ -1,5 +1,11 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Keycloak-Promotion auf Stage/PROD (25.11.2026)
+
+Stabile Themes auf dem VPS übernehmen CSS-v7 vom geprüften DEV-Stand.
+DEV bleibt unabhängig; kein Pi-App-Release und keine Datenbankänderung.
+[Dateistand, Tests und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Keycloak-Glasecken (25.11.2026)
 
 Nur DEV-Theme-CSS auf dem VPS-Identitätsdienst aktualisiert. Glasecken

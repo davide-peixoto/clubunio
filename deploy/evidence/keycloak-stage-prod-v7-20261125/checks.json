@@ -1,0 +1,111 @@
+{
+  "stable_manifest_files_verified": 11,
+  "http_checks": [
+    {
+      "origin": "https://stage.clubunio.com",
+      "route": "/platform/oidc/start",
+      "client": "clubunio-platform-stage",
+      "theme": "clubunio-glass",
+      "locale": "de",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://stage.clubunio.com",
+      "route": "/platform/oidc/start",
+      "client": "clubunio-platform-stage",
+      "theme": "clubunio-glass",
+      "locale": "en",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://stage.clubunio.com",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "locale": "de",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://stage.clubunio.com",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "locale": "en",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://stage-clubunio.svsissach.ch",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "locale": "de",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://stage-clubunio.svsissach.ch",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "locale": "en",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://app.clubunio.com",
+      "route": "/platform/oidc/start",
+      "client": "clubunio-platform-prod",
+      "theme": "clubunio-glass",
+      "locale": "de",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://app.clubunio.com",
+      "route": "/platform/oidc/start",
+      "client": "clubunio-platform-prod",
+      "theme": "clubunio-glass",
+      "locale": "en",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://app.clubunio.com",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-prod",
+      "theme": "clubunio-glass",
+      "locale": "de",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    },
+    {
+      "origin": "https://app.clubunio.com",
+      "route": "/vereinslogin/oidc/start",
+      "client": "clubunio-verein-prod",
+      "theme": "clubunio-glass",
+      "locale": "en",
+      "login_status": 200,
+      "css_v7_js_v6_match_dev": true
+    }
+  ],
+  "scope": "Login rendering/assets only; no valid-user MFA session or account changes.",
+  "browser_checks": {
+    "stage": {
+      "brand": "SV Sissach",
+      "theme": "sv-sissach-glass",
+      "css": "v7",
+      "react": "motion-v6"
+    },
+    "prod": {
+      "brand": "ClubUnio",
+      "theme": "clubunio-glass",
+      "css": "v7",
+      "react": "motion-v6"
+    }
+  },
+  "backup_sha256": "77fd83a5e54a7e00a1c0bf504297d1b1f7fb4f09264bb9e4fd9664c65a6c71be"
+}

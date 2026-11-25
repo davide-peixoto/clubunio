@@ -1,5 +1,12 @@
 # ClubUnio
 
+## Keycloak: Stage und PROD aktualisiert (25.11.2026)
+
+Geprüftes Glasdesign CSS-v7/JS-v6 in den stabilen Themes aktiv. Ecken blenden
+nach Kontakt aus; OTP-Automatik und Prüfstatus bleiben erhalten. Zehn DE/EN-
+Login-/Assetprüfungen sowie Stage-/PROD-Browseransichten bestanden.
+[Promotion, Sicherung und Rückweg](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Glasecken abschließen (25.11.2026)
 
 Login-/OTP-Ecken verschwinden nach dem Zusammentreffen. Prüfstatus bleibt

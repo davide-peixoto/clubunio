@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Keycloak: stabile Themes auf Stage/PROD (25.11.2026)
+
+- [x] DEV-geprüftes CSS-v7 in ClubUnio-/SV-Sissach-Themes übernommen.
+- [x] Vier bestehende Stage-/PROD-Clientzuordnungen erhalten; keine DEV-Vererbung.
+- [x] Elf Ressourcenhashes und zehn DE/EN-Login-/Assetabläufe geprüft.
+- [x] Browseransichten Stage/PROD und Rückweg dokumentiert.
+
+[Abnahme und Grenzen](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Abschluss der Eckenanimation (25.11.2026)
 
 - [x] Login-/OTP-Ecken nach 0,62 s Annäherung in 0,14 s ausblenden.

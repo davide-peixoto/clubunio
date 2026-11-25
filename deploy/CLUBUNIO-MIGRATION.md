@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Keycloak Stage/PROD: Promotion ohne Fachmigration (25.11.2026)
+
+Nur stabiles Theme-CSS und zwei Properties-Dateien geändert. Bestehendes
+JS-v6/Branding sowie Client-/Realm-Regeln erhalten; keine Schema-/Datenmigration.
+Stabile Themes unabhängig von DEV; Ressourcenzuordnung mit SHA-256 versioniert.
+[Abnahme, Sicherung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Eckenanimation ohne Fachmigration (25.11.2026)
 
 CSS-v7 in zwei DEV-Login-Themes aktiviert; bestehendes v6-JavaScript bleibt.

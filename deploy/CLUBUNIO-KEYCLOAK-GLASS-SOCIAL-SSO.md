@@ -1,6 +1,61 @@
 # Keycloak: Glasdesign, Social Login und SSO
 
-Stand: 25.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
+Stand: 25.11.2026. CSS-v7/JavaScript-v6 sind für DEV, Stage und PROD freigegeben.
+
+## Stage-/PROD-Promotion (25.11.2026)
+
+Nach ausdrücklicher Betreiberfreigabe den auf DEV geprüften Stand in die
+bereits zugeordneten stabilen Themes übernommen. Stage/PROD verwendeten bereits
+CSS-v6 und das mit DEV bytegleiche JavaScript-v6. Die verbleibende Änderung ist
+CSS-v7 (Ecken nach Kontakt ausblenden). Keine Client-/Realm-Bindung geändert.
+
+| Client | Stabiles Login-Theme |
+| --- | --- |
+| clubunio-platform-stage | clubunio-glass |
+| clubunio-verein-stage | sv-sissach-glass |
+| clubunio-platform-prod | clubunio-glass |
+| clubunio-verein-prod | clubunio-glass |
+
+Die stabilen Themes erben von `clubunio` bzw. `clubunio-glass`, niemals von
+einem DEV-Theme. Ihre Ressourcen liegen unabhängig unter
+`/opt/keycloak/themes/clubunio-glass` und `/opt/keycloak/themes/sv-sissach-glass`.
+Damit verändert eine spätere DEV-Theme-Änderung Stage/PROD nicht automatisch.
+Die vorhandene ClubUnio-/SV-Sissach-Zuordnung bleibt erhalten. Account-, Admin-
+und E-Mail-Themes sowie Benutzer, MFA, SSO, Clients, SMTP und App-Releases
+werden durch diese Promotion nicht verändert.
+
+Im Repository liegen die stabilen `login/theme.properties` separat. Die
+Ressourcen stammen aus denselben geprüften Quellartefakten wie DEV, werden bei
+der Installation aber physisch in die stabilen Theme-Verzeichnisse kopiert.
+Quellen, Zielpfade und SHA-256 stehen in
+`deploy/keycloak/glass-stable-release.json`. Für eine Neuinstallation erst die
+Hashwerte des Manifests prüfen, dann die dort genannten Dateien installieren;
+Basis-Theme `clubunio` und bestehende Keycloak-Eltern ebenfalls bereitstellen.
+Nicht pauschal einen künftigen DEV-Stand als stabil kopieren.
+
+Sicherung vor Promotion:
+`/root/clubunio-releases/keycloak-stage-prod-v7-20261125/stable-themes-before-v7.tar.gz`,
+SHA-256 `77fd83a5e54a7e00a1c0bf504297d1b1f7fb4f09264bb9e4fd9664c65a6c71be`.
+`before-manifest.json` daneben enthält die bisherigen Ressourcenhashes.
+Tatsächliches Delta: neues v7-CSS im stabilen Basistheme und zwei Properties-
+Dateien mit dem v7-CSS-Verweis; JavaScript und Branding-Ressourcen unverändert.
+Nach kontrolliertem Dienstneustart die Anmeldeseiten und ausgelieferten Assets
+prüfen. Rückweg: die zwei stabilen Theme-Verzeichnisse aus der Sicherung
+wiederherstellen und den Theme-Cache erneut kontrolliert erneuern. DEV und
+Anwendungsdatenbanken dabei nicht überschreiben.
+
+Abnahme der Promotion: elf Manifestdateien auf dem Server per SHA-256 geprüft.
+Zehn HTTPS-Prüfungen bestanden: Plattform-/Vereinslogin auf
+`stage.clubunio.com` und `app.clubunio.com` sowie Vereinslogin auf
+`stage-clubunio.svsissach.ch`, jeweils DE/EN. Alle führten zum erwarteten Client
+und stabilen Theme; CSS-v7/JS-v6 stimmen bytegenau mit DEV überein. Chrome
+zeigte SV Sissach auf Stage und ClubUnio auf PROD mit dem richtigen Logo und
+aktivierter React-Ergänzung. Keycloak aktiv, externe Discovery HTTP 200.
+[Prüfprotokoll](evidence/keycloak-stage-prod-v7-20261125/checks.json),
+[Stage-Sichtprüfung](evidence/keycloak-stage-prod-v7-20261125/stage-login.jpg),
+[PROD-Sichtprüfung](evidence/keycloak-stage-prod-v7-20261125/prod-login.jpg).
+Keine gültige Benutzer-/MFA-Anmeldung auf Stage/PROD durchgeführt; der native
+OTP-/Ladeablauf wurde zuvor auf dem identischen DEV-Stand geprüft.
 
 ## v7: Glasecken nach dem Zusammentreffen ausblenden (25.11.2026)
 
