@@ -1,5 +1,36 @@
 # Sprachauswahl im Seitenkopf
 
+## Stage und PROD – 25.11.2026
+
+Der unveraenderte Design-Fix aus `823b5a41` ist jetzt ebenfalls auf Stage und PROD
+aktiv. Nur die vier zugehoerigen Laufzeitdateien gepatcht: gemeinsame Blade-View,
+neues Sprach-CSS, Entfernung der alten Sprachregeln aus `svs.css` und gezielter
+Asset-Versionswechsel im jeweiligen vorhandenen Panel-Provider. Keine fremden
+Provider-Aenderungen, keine Authentifizierungs- oder Keycloak-Anpassung.
+
+Vorab Patch gegen jede aktive Serverbasis geprueft und private Sicherung erstellt:
+`/root/clubunio-releases/language-header-stage-20261125` beziehungsweise
+`/root/clubunio-releases/language-header-prod-20261125`. Originaldateien in
+`source.tar`, Vorher-/Nachherhashes und Abnahmeprotokoll dort. Konfiguration und
+Composer-Lock identisch. Die betroffenen Dateien behalten lesbare Webrechte;
+erste Stage-Anwendung bei fehlerhafter Dateiberechtigung automatisch restauriert,
+anschliessend gezielt korrigiert und erfolgreich erneut geprueft.
+
+Je Instanz DE/EN-Rendering, native Auswahl, Sprachsymbol/Pfeil, POST/CSRF und
+versionierter CSS-Verweis erfolgreich. CSS per HTTPS heruntergeladen und gegen
+die lokale Laufzeitdatei bytegenau verglichen. Veo und andere zuletzt deployte
+Module bleiben unberuehrt. Nur gemeinsame Sprach-View kompiliert, FPM neu geladen;
+kein globales Kompilieren aller fremden Views. Keine Datenbankmigration und keine
+Benutzer-, Rollen- oder Sprachpraeferenzen geaendert. DEV nicht erneut deployt.
+
+Rueckweg: drei vorherige Dateien aus `source.tar` wiederherstellen, die neue
+Sprach-CSS-Datei entfernen, gemeinsame Sprach-View neu kompilieren und FPM laden.
+Der Deployhelfer `promote-language-header.sh` fuehrt dies bei Fehler automatisch
+aus; fertige Laeufe werden nicht erneut angewandt. Native Pruefung durch
+`check-language-header.php`. Lokal sieben Tests / 84 Assertions erfolgreich,
+zwei opt-in-DB-Tests ausgelassen. Angemeldete Desktop-/Mobile-Sichtpruefung bleibt
+separat offen; kein erfolgreicher visueller Browser-Test behauptet.
+
 ## Stand 24.11.2026
 
 Die native DE-/EN-Auswahl ist optisch an die Kopfzeilenaktionen angeglichen:
