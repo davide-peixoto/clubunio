@@ -1,0 +1,29 @@
+{
+  "status": "applied",
+  "run_id": "7093c4572a8040d4985eb7cf4f69ff98",
+  "source_manifest_sha256": "ba03798098bc031a92d23a0155d7f5d08d77cc1b49c50a58b6307b24d0492925",
+  "backup_sha256": "e62dbc71329b8ee0ddf3bd79ec72fb60bb72d7bbe391ebb4c304fb3a58aa81d5",
+  "direction": "phpmaker_prod_to_clubunio_prod",
+  "mapping_version": "e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b",
+  "previous_run_id": 7,
+  "current_run_id": 9,
+  "inserted": 0,
+  "updated": 191,
+  "unchanged": 37728,
+  "missing_review": 0,
+  "conflicts": 0,
+  "platform_admin_unchanged": true,
+  "source_tables": 100,
+  "source_rows": 55837,
+  "completed_utc": "2026-11-25T09:35:24.466616+01:00",
+  "schema_review": {
+    "negative_gates_passed": 3,
+    "source_mapping_unchanged": true,
+    "old_migrations": 152,
+    "review_commit": "bada05fe",
+    "protected_native_tables": 14,
+    "new_migrations": 155,
+    "isolated_repeat_writes": 0,
+    "mapped_columns_unchanged": true
+  }
+}

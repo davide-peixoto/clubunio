@@ -2269,3 +2269,5 @@ MFA-/App-Abschluss auf dem iPhone noch durch Benutzer zu pruefen.
 23.11.2026: Aktiven SV-Sissach-Trainingsplan auf PROD von0 auf vorhandene Winterperiode gesetzt, ueber SettingsService auditiert. Standard-Platzkalender liefert49 Trainings/2 Spiele fuer23.-29.11.; keine Slot-/Schema-/Importaenderung. Details: deploy/CLUBUNIO-PROD-TRAINING-PERIOD.md.
 
 24.11.2026: SV-Sissach-Delta nach geprueftem Zielvertrag152 wieder erfolgreich:7 Inserts/221 Updates/0 Konflikte; Wiederholung0 Writes. Lokale Elternfreigaben, Kontostatus und Winterplan erhalten.12-Stunden-Betrieb unveraendert. Abnahme/Rueckweg: deploy/CLUBUNIO-SVS-TARGET-REVIEW-20261124.md.
+
+25.11.2026: SV-Sissach-Delta nach geprueftem Zielvertrag155 erfolgreich:0 Inserts/191 Updates/0 Konflikte. Wiederholung0 Writes, lokale Aufgaben/VEO-Korrekturen und Fachrechte erhalten. Keine Schema-/Baselineaenderung;12-Stunden-Betrieb unveraendert. Details: deploy/CLUBUNIO-SVS-TARGET-REVIEW-20261125.md.
