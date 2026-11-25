@@ -160,7 +160,7 @@ return json_decode(<<<'JSON'
   "enlarge": "Ansicht vergrössern",
   "closing_label": "GEMEINSAM MEHR BEWEGEN.",
   "origin": "Im Baselbiet entwickelt. Für Vereine, die etwas bewegen.",
-  "hosting": "Hosting in Deutschland, Backups in Finnland.",
+  "hosting": "Hosting und Backups in der EU.",
   "privacy_title": "Datenschutz für ClubUnio und die App",
   "inquiry_kind": "Anfrageart",
   "inquiry_kinds": "Demo|Angebot|Demo und Angebot",

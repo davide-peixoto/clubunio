@@ -160,7 +160,7 @@ return json_decode(<<<'JSON'
   "enlarge": "Enlarge view",
   "closing_label": "LET’S PLAY TOGETHER.",
   "origin": "Built in Basel-Landschaft, Switzerland. For clubs that make things happen.",
-  "hosting": "Hosted in Germany, with backups in Finland.",
+  "hosting": "Hosting and backups in the EU.",
   "privacy_title": "Privacy policy for ClubUnio and its app",
   "inquiry_kind": "Request type",
   "inquiry_kinds": "Demo|Quote|Demo and quote",

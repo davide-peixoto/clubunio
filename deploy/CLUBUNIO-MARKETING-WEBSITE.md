@@ -260,3 +260,11 @@ Der Anmelden-Link der Marketingseite fuehrt auf ausdruecklichen Auftrag
 zu https://app.clubunio.com. Blade-Quelle, statischer Export und die drei
 veroeffentlichten Startseiten (Root, DE, EN) sind angepasst.
 Keine Migration; Rueckweg ueber /root/clubunio-login-20261125-* auf dem VPS.
+
+## EU-Hostinghinweis 25.11.2026
+
+Auf Benutzerauftrag Fusszeile DE/EN auf „Hosting und Backups in der EU.“
+bzw. „Hosting and backups in the EU.“ umgestellt. Die entsprechenden
+Standortsaetze der beiden Datenschutzerklaerungen ebenfalls angepasst.
+Keine Infrastrukturmigration; reine Inhaltsaenderung. Statische Sicherung
+auf dem VPS unter /root/clubunio-eu-hosting-*.

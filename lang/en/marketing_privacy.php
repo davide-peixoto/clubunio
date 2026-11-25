@@ -16,7 +16,7 @@ return json_decode(<<<'JSON'
   "permissions_title": "Camera, files and notifications",
   "permissions_text": "With your permission, the app can use your camera or accept selected photos and files, for example for attachments or receipts. When push is enabled, device push identifiers and notification content may be processed through Google Firebase Cloud Messaging and, on Apple devices, through Apple Push Notification Service. You can manage notifications in your device settings.",
   "hosting_title": "Hosting, backups and recipients",
-  "hosting_text": "ClubUnio hosts its platform in Germany. Backups are kept in Finland. Depending on club settings, documents may be processed in separately selected storage. Approved integrations such as Bexio or SFV process data according to the enabled feature. Push services, external storage and other approved services are subject to their respective processing locations and agreed privacy safeguards.",
+  "hosting_text": "ClubUnio hosts its platform in the EU. Backups are also kept in the EU. Depending on club settings, documents may be processed in separately selected storage. Approved integrations such as Bexio or SFV process data according to the enabled feature. Push services, external storage and other approved services are subject to their respective processing locations and agreed privacy safeguards.",
   "retention_title": "Retention and deletion",
   "retention_text": "We retain data while needed for its purpose, legal obligations or the protection of legal claims. Club records may be retained after app access ends. Backup copies are overwritten according to the applicable backup cycle.",
   "rights_title": "Your rights and deletion requests",
