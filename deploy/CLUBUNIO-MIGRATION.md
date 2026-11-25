@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Keycloak: freigegebener Stand auf Stage/PROD (25.11.2026)
+
+CSS-v10/JS-v8 aus DEV übernommen: Ecken bleiben während der Eingabe sichtbar
+und verschwinden erst nach Kontakt beim Absenden. Zehn DE/EN-Anmeldeseiten,
+elf Serverhashes und Browseransichten geprüft. Keine Datenmigration.
+[Abnahme, Sicherung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Glasecken während der Eingabe sichtbar (25.11.2026)
 
 Öffnung von der Mitte nach außen; Ecken bleiben bis zum Absenden sichtbar.

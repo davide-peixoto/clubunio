@@ -1,6 +1,41 @@
 # Keycloak: Glasdesign, Social Login und SSO
 
-Stand: 25.11.2026. DEV: CSS-v10/JavaScript-v8. Stage/PROD: CSS-v7/JavaScript-v6.
+Stand: 25.11.2026. DEV, Stage und PROD: CSS-v10/JavaScript-v8.
+
+## Betreiberfreigabe CSS-v10/JS-v8: Stage und PROD (25.11.2026)
+
+Nach ausdrücklicher Sichtfreigabe auf DEV den identischen Stand in die beiden
+stabilen Themes übernommen. Ecken öffnen von der Mitte nach außen und bleiben
+während der Eingabe sichtbar. Erst beim Absenden erfolgen Kontakt und
+Ausblendung. OTP-Automatik und anhaltender Prüfstatus sind enthalten.
+
+Die vier bestehenden Client-Zuordnungen aus der folgenden Promotionstabelle
+bleiben erhalten; stabile Themes erben weiterhin unabhängig von DEV.
+Aktualisiert: stabiles CSS-v10, JS-v8 und zwei stabile Theme-Properties.
+Keine Benutzer-, MFA-, Realm-, SMTP-, Account-, Admin-, E-Mail-, App- oder
+Datenbankänderung. Theme-Cache per kontrolliertem Dienstneustart erneuert.
+
+Elf Serverdateien entsprechen dem aktualisierten SHA-256-Release-Manifest
+`deploy/keycloak/glass-stable-release.json`. Zehn HTTPS-Prüfungen: Plattform-
+und Vereinslogin auf Stage/PROD sowie SV-Sissach-Stage-Domain, jeweils DE/EN
+mit geprüftem HTML-Sprachattribut. CSS/JS bytegleich mit den freigegebenen
+DEV-Dateien. Chrome zeigt das korrekte SV-Sissach-/ClubUnio-Logo und beide
+Ecken nach dem Öffnen sichtbar außen. Keine erneute echte Benutzer-/MFA-
+Anmeldung; der native OTP-/Prüfablauf wurde auf DEV synthetisch geprüft und
+durch den Betreiber auf DEV visuell freigegeben.
+
+[Prüfprotokoll](evidence/keycloak-stage-prod-v10-20261125/checks.json),
+[Browserprüfung](evidence/keycloak-stage-prod-v10-20261125/browser-checks.json),
+[Stage](evidence/keycloak-stage-prod-v10-20261125/stage-login.jpg),
+[PROD](evidence/keycloak-stage-prod-v10-20261125/prod-login.jpg).
+Vorheriges Release-Manifest liegt im selben Evidenzordner.
+
+Sicherung vor Änderung:
+`/root/clubunio-releases/keycloak-stage-prod-v10-20261125/stable-before-v10.tar.gz`,
+SHA-256 `4b41cae37d71a2008a3111d4b3e05a31f5463858bf5d9e57de6df16565a70695`.
+Rückweg: nur die beiden stabilen Theme-Verzeichnisse aus dieser Sicherung
+wiederherstellen und Theme-Cache kontrolliert erneuern. DEV dabei erhalten.
+Keine Fachmigration erforderlich.
 
 ## Präzisierung: Ecken während der Eingabe sichtbar (25.11.2026)
 

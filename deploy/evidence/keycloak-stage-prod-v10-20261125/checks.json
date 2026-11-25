@@ -1,0 +1,76 @@
+{
+  "server_manifest_hashes_verified": 11,
+  "http_checks": [
+    {
+      "entry": "https://stage.clubunio.com/platform/oidc/start",
+      "lang": "de",
+      "client": "clubunio-platform-stage",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://stage.clubunio.com/platform/oidc/start",
+      "lang": "en",
+      "client": "clubunio-platform-stage",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://stage.clubunio.com/vereinslogin/oidc/start",
+      "lang": "de",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://stage.clubunio.com/vereinslogin/oidc/start",
+      "lang": "en",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://stage-clubunio.svsissach.ch/vereinslogin/oidc/start",
+      "lang": "de",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://stage-clubunio.svsissach.ch/vereinslogin/oidc/start",
+      "lang": "en",
+      "client": "clubunio-verein-stage",
+      "theme": "sv-sissach-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://app.clubunio.com/platform/oidc/start",
+      "lang": "de",
+      "client": "clubunio-platform-prod",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://app.clubunio.com/platform/oidc/start",
+      "lang": "en",
+      "client": "clubunio-platform-prod",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://app.clubunio.com/vereinslogin/oidc/start",
+      "lang": "de",
+      "client": "clubunio-verein-prod",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    },
+    {
+      "entry": "https://app.clubunio.com/vereinslogin/oidc/start",
+      "lang": "en",
+      "client": "clubunio-verein-prod",
+      "theme": "clubunio-glass",
+      "css10_js8_hash_match": true
+    }
+  ],
+  "scope": "Rendering and assets; no real user/MFA login repeated"
+}

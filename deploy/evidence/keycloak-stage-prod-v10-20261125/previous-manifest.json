@@ -1,0 +1,67 @@
+{
+  "release": "keycloak-glass-css7-js6-20261125",
+  "target_theme_root": "/opt/keycloak/themes",
+  "files": [
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass/login/theme.properties",
+      "target": "clubunio-glass/login/theme.properties",
+      "sha256": "6f61459ff87495984ea75a8e699183565717cab5346de2ee512cad240f2e7f0d"
+    },
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/messages/messages_de.properties",
+      "target": "clubunio-glass/login/messages/messages_de.properties",
+      "sha256": "78c0f3804f1df2eedc19d589eb33cd6eea564197547b6df59564601294ce038e"
+    },
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/messages/messages_en.properties",
+      "target": "clubunio-glass/login/messages/messages_en.properties",
+      "sha256": "b799a4c364c6dd8a7c5837e216c174a48890b9a96a28d1fb8baf74b14c20f1cb"
+    },
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/css/clubunio-glass-v7.css",
+      "target": "clubunio-glass/login/resources/css/clubunio-glass-v7.css",
+      "sha256": "41a1f4a4d4a5f8fdae8abc1f0042206e011f88a0b7bad19ec9633481137d485c"
+    },
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/js/clubunio-glass-v6.js",
+      "target": "clubunio-glass/login/resources/js/clubunio-glass-v6.js",
+      "sha256": "d80647807eaee1fcf1b47a09d94eec2971628371c48edbf964cf48db0afa36fa"
+    },
+    {
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/img/clubunio-logo-light.svg",
+      "target": "clubunio-glass/login/resources/img/clubunio-logo-light.svg",
+      "sha256": "8ad8ddaf27b29688e67d41c8f4da9dc2fcf78e334400cd2478787463ed350cdd"
+    },
+    {
+      "source": "deploy/keycloak/themes/sv-sissach-glass/login/theme.properties",
+      "target": "sv-sissach-glass/login/theme.properties",
+      "sha256": "39005a4dfb00f7a27d7b013a4d7eaaa0f9d8a1c4841925fe946830e7a7172483"
+    },
+    {
+      "source": "deploy/keycloak/themes/sv-sissach-glass-dev/login/messages/messages_de.properties",
+      "target": "sv-sissach-glass/login/messages/messages_de.properties",
+      "sha256": "8c61e4643ef9719b066fc33051e33bc890a9ba043d4e79d993c864fd9cf720a7"
+    },
+    {
+      "source": "deploy/keycloak/themes/sv-sissach-glass-dev/login/messages/messages_en.properties",
+      "target": "sv-sissach-glass/login/messages/messages_en.properties",
+      "sha256": "8c61e4643ef9719b066fc33051e33bc890a9ba043d4e79d993c864fd9cf720a7"
+    },
+    {
+      "source": "deploy/keycloak/themes/sv-sissach-glass-dev/login/resources/css/sv-sissach-glass.css",
+      "target": "sv-sissach-glass/login/resources/css/sv-sissach-glass.css",
+      "sha256": "8d38600bf28633d7fea319a6395de0f37ea87424fb5c29aced9c40f39836f489"
+    },
+    {
+      "source": "deploy/keycloak/themes/sv-sissach-glass-dev/login/resources/img/svs-logo.png",
+      "target": "sv-sissach-glass/login/resources/img/svs-logo.png",
+      "sha256": "9c3787321dadfb270a0b678f09e8a7f35b742a37f87188cc6b9708b731aa397f"
+    }
+  ],
+  "client_themes": {
+    "clubunio-platform-stage": "clubunio-glass",
+    "clubunio-verein-stage": "sv-sissach-glass",
+    "clubunio-platform-prod": "clubunio-glass",
+    "clubunio-verein-prod": "clubunio-glass"
+  }
+}

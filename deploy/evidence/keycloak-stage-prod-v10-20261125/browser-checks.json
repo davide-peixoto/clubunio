@@ -1,0 +1,32 @@
+{
+  "stage": {
+    "chips": [
+      {
+        "opacity": "1",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      {
+        "opacity": "1",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      }
+    ],
+    "logo": "url(\"https://auth.clubunio.com/resources/qmf7i/login/sv-sissach-glass/img/svs-logo.png\")",
+    "motion": "full",
+    "version": "motion-v8"
+  },
+  "prod": {
+    "chips": [
+      {
+        "opacity": "1",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      {
+        "opacity": "1",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      }
+    ],
+    "logo": "url(\"https://auth.clubunio.com/resources/qmf7i/login/clubunio-glass/img/clubunio-logo-light.svg\")",
+    "motion": "full",
+    "version": "motion-v8"
+  }
+}

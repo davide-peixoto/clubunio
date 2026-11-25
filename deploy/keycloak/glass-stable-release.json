@@ -1,11 +1,11 @@
 {
-  "release": "keycloak-glass-css7-js6-20261125",
+  "release": "keycloak-glass-css10-js8-20261125",
   "target_theme_root": "/opt/keycloak/themes",
   "files": [
     {
       "source": "deploy/keycloak/themes/clubunio-glass/login/theme.properties",
       "target": "clubunio-glass/login/theme.properties",
-      "sha256": "6f61459ff87495984ea75a8e699183565717cab5346de2ee512cad240f2e7f0d"
+      "sha256": "2e39b7080d9aa4a38a790eb47612e0359f2017475340abf308a14d5e4d0a459f"
     },
     {
       "source": "deploy/keycloak/themes/clubunio-glass-dev/login/messages/messages_de.properties",
@@ -18,14 +18,14 @@
       "sha256": "b799a4c364c6dd8a7c5837e216c174a48890b9a96a28d1fb8baf74b14c20f1cb"
     },
     {
-      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/css/clubunio-glass-v7.css",
-      "target": "clubunio-glass/login/resources/css/clubunio-glass-v7.css",
-      "sha256": "41a1f4a4d4a5f8fdae8abc1f0042206e011f88a0b7bad19ec9633481137d485c"
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/css/clubunio-glass-v10.css",
+      "target": "clubunio-glass/login/resources/css/clubunio-glass-v10.css",
+      "sha256": "b91f1e8fcd13c6e1f7908fc8d8d23190119e4ff7b92b2512758b85c7e59ed53d"
     },
     {
-      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/js/clubunio-glass-v6.js",
-      "target": "clubunio-glass/login/resources/js/clubunio-glass-v6.js",
-      "sha256": "d80647807eaee1fcf1b47a09d94eec2971628371c48edbf964cf48db0afa36fa"
+      "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/js/clubunio-glass-v8.js",
+      "target": "clubunio-glass/login/resources/js/clubunio-glass-v8.js",
+      "sha256": "aa4c4c8e46b8eaa70a64d18e29583b21bb1ef341b34d999c3dba814461ed554b"
     },
     {
       "source": "deploy/keycloak/themes/clubunio-glass-dev/login/resources/img/clubunio-logo-light.svg",
@@ -35,7 +35,7 @@
     {
       "source": "deploy/keycloak/themes/sv-sissach-glass/login/theme.properties",
       "target": "sv-sissach-glass/login/theme.properties",
-      "sha256": "39005a4dfb00f7a27d7b013a4d7eaaa0f9d8a1c4841925fe946830e7a7172483"
+      "sha256": "4b463c3e1d4f6f2a6f47ce6fa8d508ca4ea494ab305f18f76041aea4801a1c16"
     },
     {
       "source": "deploy/keycloak/themes/sv-sissach-glass-dev/login/messages/messages_de.properties",
