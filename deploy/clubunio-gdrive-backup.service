@@ -1,0 +1,17 @@
+[Unit]
+Description=ClubUnio encrypted Google Drive offsite backup
+Wants=network-online.target
+After=network-online.target clubunio-postgresql-backup.service
+ConditionHost=vps.clubunio.com
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /usr/local/sbin/clubunio-gdrive-backup.py
+TimeoutStartSec=60min
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/root/.config/rclone /root/clubunio-backups /run/lock
+NoNewPrivileges=true
