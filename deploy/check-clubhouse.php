@@ -1,7 +1,22 @@
 <?php
 
-// Only synthetic records inside a rolled-back DEV transaction; no outbound calls.
-require __DIR__.'/verify-pi-dev-vps-database.php';
+// Synthetic records inside a rolled-back transaction; exact target, no outbound calls.
+if (PHP_SAPI !== 'cli') { exit(1); }
+$target = $argv[1] ?? 'dev';
+$targets = ['dev' => 'https://dev.clubunio.ch', 'stage' => 'https://stage.clubunio.com', 'prod' => 'https://app.clubunio.com'];
+if (! isset($targets[$target])) { exit(1); }
+if ($target === 'dev') {
+    require __DIR__.'/verify-pi-dev-vps-database.php';
+} else {
+    if (realpath(getcwd()) !== '/home/runcloud/webapps/ClubUnio'.ucfirst($target)) { exit(1); }
+    require dirname(__DIR__).'/vendor/autoload.php';
+    $app = require dirname(__DIR__).'/bootstrap/app.php';
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    $db = Illuminate\Support\Facades\DB::connection('clubunio');
+    $identity = $db->selectOne('SELECT current_database() AS db, current_user AS role, current_schema() AS schema');
+    if ($db->getDriverName() !== 'pgsql' || $identity->db !== 'clubunio_'.$target
+        || $identity->role !== 'clubunio_'.$target.'_app' || $identity->schema !== 'clubunio') { exit(1); }
+}
 set_exception_handler(static function (Throwable $error): never {
     fwrite(STDERR, 'Clubhouse acceptance failed: '.$error::class.' at line '.$error->getLine()."\n");
     exit(1);
@@ -20,12 +35,15 @@ $assert = function (bool $ok) use (&$checks) {
         throw new LogicException('Clubhouse acceptance assertion '.($checks + 1));
     } $checks++;
 };
-$assert(config('app.url') === 'https://dev.clubunio.ch');
+$assert(config('app.url') === $targets[$target]);
 $assert($db->table('clubunio.migrations')->where('migration', '2026_11_24_030000_clubhouse')->exists());
 $before = $db->table('clubunio.tenant_accounts')->count();
 Http::preventStrayRequests();
+Illuminate\Support\Facades\Mail::fake();
+Illuminate\Support\Facades\Queue::fake();
 $db->beginTransaction();
 try {
+    $db->statement("SET LOCAL statement_timeout='30s'");
     $id = random_int(-2000000000, -1000000000);
     $db->table('clubunio.tenants')->insert(['id' => $id, 'name' => 'Synthetic clubhouse review', 'slug' => 'clubhouse-review-'.abs($id)]);
     foreach ([$id => 'admin', $id + 1 => 'trainer'] as $accountId => $role) {
@@ -40,7 +58,7 @@ try {
     $assert($access->administrator($admin, $tenant));
     $assert(! $access->allows($trainer, $tenant, 'view'));
     $access->grant($admin, $tenant, $trainer->id, ['hours_write' => true, 'menus_write' => true, 'menus_publish' => false,
-        'active' => true, 'revision' => 0, 'reason' => 'Synthetic DEV acceptance']);
+        'active' => true, 'revision' => 0, 'reason' => 'Synthetic clubhouse acceptance']);
     $assert($access->allows($trainer, $tenant, 'hours.write'));
     $assert(! $access->allows($trainer, $tenant, 'menus.publish'));
     $hours = app(ClubhouseHours::class);
@@ -70,4 +88,4 @@ try {
 }
 $assert($db->table('clubunio.tenant_accounts')->count() === $before);
 $assert(! $db->table('clubunio.tenants')->where('id', $id)->exists());
-echo "Clubhouse DEV acceptance: {$checks} checks; all synthetic records rolled back.\n";
+echo "Clubhouse {$target} acceptance: {$checks} checks; all synthetic records rolled back.\n";

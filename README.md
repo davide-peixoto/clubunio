@@ -4,6 +4,8 @@
 
 Öffnungszeiten einzeln/Serie, Ausnahmen, Menükarten Text/PDF und getrennte
 Freigabe mit zusätzlichen Pflegerechten in Backend/App im neuen Vereinsdesign.
+25.11.: Auf Stage/PROD gezielt übernommen, vorhandene Sicherheitsregeln und
+Benutzerzuordnungen erhalten; Website-Ausgabe weiterhin aus.
 [Umfang, Website-Feed und Abnahme](deploy/CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: SFV automatisch nachführen, Garderoben erhalten (24.11.2026)

@@ -9,8 +9,9 @@
 - [x] Website-Feed mit ausdrücklicher Freigabe je Verein.
 - [x] DEV-Migration und isolierte PostgreSQL-/lokale Fachtests.
 - [x] Zeitfenster-Beschriftung DE/EN und stabile Navigationsanimation auf DEV geprüft.
+- [x] Clubhaus auf Stage/PROD übernommen; Sicherung/Restore, Rechte und DE/EN geprüft.
 - [ ] Nativer Neubau: Datei-/PDF-Abnahme auf Geräten.
-- [ ] Feed in Website einbinden; Stage/PROD separat beauftragen.
+- [ ] Feed in Website einbinden; öffentliche Freigabe je Verein gesondert erteilen.
 
 [Umfang, Migration und Abnahme](CLUBUNIO-CLUBHOUSE.md).
 

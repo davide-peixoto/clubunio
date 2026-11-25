@@ -9,6 +9,10 @@ Sieben additive DEV-Tabellen, verschlüsselte Owner-Sicherung unter
 Benutzerzuordnungen erhalten, öffentliche Freigabe aus, Stage/PROD unverändert.
 25.11.: Zeitfenster DE/EN und stabile Navigation in Chrome geprüft; keine neue
 Migration. 22 PHP-Tests / 125 Assertions und acht JS-Tests bestanden.
+25.11.: Clubhaus anschließend gezielt auf Stage/PROD übernommen: je 43 Dateien,
+sieben additive Tabellen, verschlüsselte Sicherung mit isolierter Wiederherstellung.
+Je 17 Fach-, acht DE/EN-Render- und sieben HTTPS-Prüfungen bestanden; vorhandene
+Sicherheitsregeln/Rechte erhalten, öffentliche Ausgabe aus. DEV nicht verändert.
 [Bedienung und Prüfgrenzen](CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: automatische SFV-Nachführung v2 (24.11.2026)

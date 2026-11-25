@@ -1,7 +1,7 @@
 # Clubhaus
 
-25.11.2026. Ausschließlich DEV; Stage/PROD unverändert.
-Release `20261125-clubunio-clubhouse-ui-v1`, technischer Rückweg auf Clubhaus-v2;
+25.11.2026. Clubhaus auf DEV, Stage und PROD verfügbar.
+DEV-Modulstand `20261125-clubunio-clubhouse-ui-v1`, technischer Rückweg auf Clubhaus-v2;
 fachlicher Rückweg ohne Modul `20261124-clubunio-veo-calendar-v5`.
 
 ## Oberfläche
@@ -172,3 +172,49 @@ Zehn Runtime-Dateien per SHA-256 geprüft, unveränderlicher Release über
 Keine neue Schema-/Datenmigration, keine Änderung privater Konfiguration,
 Composer-Lock oder gemeinsamer Ablage. Direkter Rückweg durch Aktivieren von
 `20261124-clubunio-clubhouse-v2`, ohne Datenrücksetzung. Stage/PROD unverändert.
+
+## Stage-/PROD-Promotion (25.11.2026)
+
+Auf ausdrücklichen Auftrag nach der DEV-Abnahme übernommen. Clubhaus-Quellstand
+`46404d35`, einschließlich korrigierter Zeitfenster und stabiler Navigation.
+Je Instanz 43 gezielte Dateien; kein vollständiger DEV- oder Datenbankimport.
+Die aktuellen servereigenen Sicherheits-, Passkey-, Profilbild-, Portal- und
+Azure-Leseregeln wurden im Dreifachvergleich erhalten. Die zwei Konflikte bei
+Benutzeraktionen und Seitenregistrierung gezielt zusammengeführt, nicht durch
+eine alte Datei ersetzt. Instanzbezogene Unterschiede sind als
+`clubhouse-stage-runtime.patch` und `clubhouse-prod-runtime.patch` festgehalten.
+Diese Patches beschreiben den Abgleich dieses Releases, keine Neuinstallation.
+
+Jeweils vor Liveänderungen vollständiger verschlüsselter PostgreSQL-Dump und
+erfolgreiche Wiederherstellung in einer isolierten temporären Datenbank;
+Prüfdatenbanken danach entfernt. Sieben additive Clubhaus-Tabellen samt
+Migrationsjournal und begrenzten Tabellen-/Sequenzrechten für die jeweilige
+Anwendungsrolle. Keine DDL-Rechte für Webprozesse; keine bestehenden
+Benutzer-/Profilzuordnungen geändert. Die App-Moduloption Clubhaus wurde ergänzt,
+aber keine Zusatzrolle an bestehende Benutzer vergeben. Website-Ausgabe bleibt aus.
+
+Code root-eigen, private Konfiguration, Composer und Laufzeitverzeichnisse
+erhalten. Neue öffentliche CSS-Datei braucht zusätzlich Leserecht für
+`runcloud-www`; bei Stage nach der HTTP-Prüfung ergänzt und im PROD-Ablauf
+berücksichtigt. Route-/View-Cache erneuert, FPM sanft neu geladen; vorher aktiver
+PROD-Pushdienst anschließend wieder aktiv. Keine echten Nachrichten ausgelöst.
+
+Je Umgebung bestanden: 17 Fachprüfungen mit synthetischen Datensätzen und Rollback,
+acht Renderprüfungen der vier Clubhaus-Tabs in DE/EN, sieben HTTPS-Prüfungen.
+Health/Assets 200, Verwaltung ohne Anmeldung 302, persönliche App-API 401,
+deaktivierte öffentliche Ausgabe 404. 43 Runtime-Hashes nach Tests erneut geprüft.
+Der bestehende Sicherheitscheck bestätigt Runtime-/DB-Trennung und private
+Konfiguration; dessen bekannte Offsite-/Wartungspendenzen bleiben unverändert offen.
+Lokal 26 PHP-Tests / 158 Assertions, acht JS-Tests und Sprachprüfung erfolgreich.
+Keine neue angemeldete Stage-/PROD-Browser- oder native Geräteabnahme behauptet;
+DEV-Sichtprüfung oben bleibt der visuelle Nachweis. Kein App-/Store-Build erstellt.
+
+Root-private Sicherungen, Vorherdateien, Konfigurationshashes und Logs:
+`/root/clubunio-releases/clubhouse-promotion-20261125/{stage,prod}`.
+Bereinigte Nachweise: [Stage](evidence/clubhouse-promotion-20261125/stage.json),
+[PROD](evidence/clubhouse-promotion-20261125/prod.json).
+Rückweg je Instanz: nur gesicherte betroffene Dateien aus `before` zurückspielen,
+explizit neue Dateien laut `baseline.json` entfernen, Route-/View-Cache neu bauen
+und FPM neu laden. Neue Tabellen, Veröffentlichungen und Audit erhalten; kein
+blindes Down oder vollständiger Datenbankrestore über zwischenzeitliche Änderungen.
+DEV-Anwendung und vorhandene Vereinsdaten durch diese Promotion nicht verändert.

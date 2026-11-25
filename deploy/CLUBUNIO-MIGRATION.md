@@ -8,6 +8,10 @@ Website-Ausgabe standardmäßig aus. 17 PostgreSQL-Prüfungen mit Rollback.
 App-Build/Geräteabnahme und Website-Konsum separat erforderlich.
 25.11.: UI-Korrektur `20261125-clubunio-clubhouse-ui-v1` ohne Schema-/Datenänderung;
 View-Cache erneuert, Rückweg auf Clubhaus-v2 ohne Datenrücksetzung.
+25.11.: Stage/PROD mit sieben additiven Clubhaus-Tabellen und minimalen Runtime-
+Rechten migriert; vollständige verschlüsselte Sicherungen isoliert wiederhergestellt.
+Je 17 Fach-, acht DE/EN-Render- und sieben HTTPS-Prüfungen bestanden. Keine
+Benutzer-/Profilübernahme oder Auffrischung, öffentliche Ausgabe aus, DEV erhalten.
 [Fachregeln und Rückweg](CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: SFV-Nachführung ohne Garderobenverlust (24.11.2026)

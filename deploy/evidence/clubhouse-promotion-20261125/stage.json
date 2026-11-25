@@ -1,0 +1,86 @@
+{
+  "environment": "stage",
+  "files": 43,
+  "clubhouse_checks": 17,
+  "backup_restored": true,
+  "configuration_preserved": true,
+  "existing_rights_preserved": true,
+  "public_enabled": false,
+  "hashes": {
+    "app/ClubUnio/Http/ApiDocumentationController.php": "e5d889558c9a4731701c7c7ce01dbc939bfa69d31c166c841a11c83d19eb26ea",
+    "app/ClubUnio/Http/ClubhouseController.php": "c35158b71f7d6183727c71ecaaa21f4c90376c12e59251e7db7da4739d53410f",
+    "app/ClubUnio/Mobile/MobileAccountController.php": "574a98786cb9c7d546e1cf8b5625010c124ad5c17df303e83926dff6e17e5beb",
+    "app/ClubUnio/Mobile/MobileClubhouseController.php": "832108acb73a009b947953905e2911054136e1f91ee2d06d3e7d8b1cf7e692b0",
+    "app/ClubUnio/Mobile/MobileClubhouseDocumentation.php": "68b80e95013851bc58f3ce093e3163d8ec28d35424cb90075ec30cb7be8ce887",
+    "app/ClubUnio/Mobile/MobileClubhouseRoutes.php": "fe5acea0638da13491d47599dfdb5910fb05f4349a8ad84e2fea5b8341b410cc",
+    "app/ClubUnio/NavigationStructure.php": "591b12edc266bccc0c33a264caf870c12143183729374e84ce6bc1ec258e4421",
+    "app/ClubUnio/Pages/Clubhouse.php": "78075256cb60ba03463e76622ba27ecf866c29d1a6e197233194d882686fbdb9",
+    "app/ClubUnio/Resources/TenantAccountResource.php": "5a355917a79164eac25de6c32d85ae2ba320d9ffb415bd769302d06457f9a1d9",
+    "app/ClubUnio/Services/AzureDocumentReader.php": "9872935f3f7392b0652dc09ef1edff46c74311ee0982ec9504809ddecfb0a5fe",
+    "app/ClubUnio/Services/ClubhouseAccess.php": "bb228fe1e4728a5d97e963fe17c417a7460579fe60542be86e3df8678d417fb4",
+    "app/ClubUnio/Services/ClubhouseHours.php": "36fa7fb8f010c7f2e7bf43c4ad76636fc5681b4fa4552008540d322afb487811",
+    "app/ClubUnio/Services/ClubhouseMenus.php": "902353c101ea6e80eec27b89b27ef341dab603b7b4a8ab9f6844f759e58a7293",
+    "app/ClubUnio/Services/ClubhouseService.php": "e6f75a865bf4578905f250c7bdc5c1be1f068f585285a11f132b4563059010dc",
+    "app/ClubUnio/Services/MobileModuleSettings.php": "f95bab42e402270b6446afdcc86a07e027f78c049e337141633665b3fc8acf17",
+    "app/ClubUnio/Services/PermissionCatalog.php": "86fd01012340feb0b8f209c5cbcdf3dac32f7f3b400c3d353d8f2898a57fb2e7",
+    "app/ClubUnio/Services/RegistrationBlobStore.php": "05490238bd3bbdc6c33d08191f9e0a8f4c6352ce2d253dbd452ed157bdcac686",
+    "app/ClubUnio/Services/TenantDocumentStorage.php": "14fb0fcbeb3b6b956f7aba78735bea6d89d476cdc5f48421a29273ba877e693f",
+    "app/Livewire/ClubUnio/ClubhouseWorkspace.php": "cf9f81d08dd5e1212539d9cbe36d3b6ff326500e115cc0ef8eb01b458ddd9b65",
+    "app/Providers/AppServiceProvider.php": "cd85351817aadea86b0a51c548aecda025c9d82834cf5d1f5eff18b16759f915",
+    "app/Providers/Filament/ClubUnioPanelProvider.php": "19b151c4c565ac3d40b3ed24ff441b0d1d111cc4e338d16e2c69f73ef4ce5052",
+    "database/clubunio/2026_11_24_030000_clubhouse.php": "6ec50ce94a92d701be60296ca48af266ecfb1285ba24977451cba9f9994e7d79",
+    "deploy/check-clubhouse.php": "88525f4fc6a9e4ee3c74ed0610dc4bb203f553fb56f2550b98887175e13a71e1",
+    "deploy/emit-clubhouse-migration.php": "c0d4fb0899d5a4e202eff196499cdba9c8031eb6c03bec276ea2ea5dae4da3b4",
+    "lang/de/clubhouse.php": "9e792dc9b6e318be4405bcc88f873dac8ba5ccc5a3b750e94c17281d40d6e75b",
+    "lang/en/clubhouse.php": "0f5905a86cd2da85dd9c63a53456af21c0412a2564a7014e4afe72ab744152be",
+    "public/css/clubunio-clubhouse.css": "6dbc5c6177a6d1dc5d04fcd2e58e7a5143e211424e1bd83370fd23232a132080",
+    "public/css/clubunio-react-navigation.css": "3b27aff25e57834175df296a1c01d748b064bc7db5e1a288fde2051711ea677c",
+    "public/js/clubunio-react-navigation.js": "e246ce7da7b01397c01f4d757e3ea783b1746e72b65555813dbc4384da12a29f",
+    "resources/js/navigation-motion.mjs": "c9147202de6f38e837969f65db3746ec148d08de1ffcffe2b987a8822a9b62a4",
+    "resources/views/clubunio/api-docs.blade.php": "5de243e354f5a72db81abdb6cd3bd05dec739c8e45937537fdb9bf978cc7940d",
+    "resources/views/clubunio/clubhouse/opening-days.blade.php": "a2d2d7e951a68301c9d74a980451f3c6caa89f3234a67fc51d5a957eeba68247",
+    "resources/views/clubunio/clubhouse/page.blade.php": "ec4f352737db74ff09ee7a6a6cb0094e4fd8ff4c6c03b81f2b3c91b7c3b3dc2e",
+    "resources/views/clubunio/clubhouse/portal.blade.php": "958fc56ce75aadb85c1330f07bf4a3cfd7c7be059ecc5e027452da0babf2c86b",
+    "resources/views/clubunio/clubhouse/public.blade.php": "5ea417428009b337eba017d7a3c433ef5c6cdead4fe40553950400c6d123d618",
+    "resources/views/clubunio/clubhouse/published-menus.blade.php": "c4dd07e188d2b224e1f706ad4705feb0765f01bcc910df4c3bd8b2c03727c79a",
+    "resources/views/clubunio/clubhouse/workspace.blade.php": "dfdb0eb7ac3a1e4f2b88d30eab54109a99747d812df334dd1a346d30d6bb871d",
+    "resources/views/clubunio/portal/shell.blade.php": "321f1f285a2b306b5ffe3edb746a2470afdc798ec0e24abbc2774d3c5c840dae",
+    "resources/views/clubunio/react-navigation-head.blade.php": "606d0c68d87952fe5f775fe74c47fbfcd490632891aeec17dddebb3e7e294577",
+    "resources/views/clubunio/react-navigation.blade.php": "15b19c3a18e8ba54c27a33657380fb13698bc8318fe5d09fd272117d9f45caf4",
+    "routes/clubunio-clubhouse.php": "0cc4b51913b2c2c13147c2d3d5bf1816899875cfee048a9aa1a87e2c77aa5e48",
+    "routes/mobile.php": "73dd1702116666e9dbc82d824c5c11833be9281397f0c825d26ac2b3adb3a561",
+    "routes/web.php": "80ee5e2aaa97e0b6233caf2f3e90399fd466db63a03055c348e6e9724fe26630"
+  },
+  "http_final": {
+    "/up": {
+      "status": 200,
+      "expected": 200
+    },
+    "/clubhouse": {
+      "status": 302,
+      "expected": 302
+    },
+    "/api/mobile/v1/clubs/1/clubhouse": {
+      "status": 401,
+      "expected": 401
+    },
+    "/public/clubhouse/sv-sissach": {
+      "status": 404,
+      "expected": 404
+    },
+    "/public/clubhouse/sv-sissach/data": {
+      "status": 404,
+      "expected": 404
+    },
+    "/css/clubunio-clubhouse.css": {
+      "status": 200,
+      "expected": 200
+    },
+    "/js/clubunio-react-navigation.js?v=7": {
+      "status": 200,
+      "expected": 200
+    }
+  },
+  "render_checks": 8,
+  "source_sha256_verified_after_tests": true
+}
