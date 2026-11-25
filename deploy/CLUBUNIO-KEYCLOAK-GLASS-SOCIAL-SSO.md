@@ -1,6 +1,30 @@
 # Keycloak: Glasdesign, Social Login und SSO
 
-Stand: 24.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
+Stand: 25.11.2026. Ziel des Design-Releases ist ausschließlich DEV.
+
+## v7: Glasecken nach dem Zusammentreffen ausblenden (25.11.2026)
+
+Die gelieferten ZIP-Templates wurden erneut geprüft: `handleModeSwitch` bzw.
+`runDock` bewegen beide Ecken in 0,62 s nach innen, zeigen einen kurzen Kontakt
+und lassen sie danach zurückfedern. Auf ausdrücklichen Wunsch wird der letzte
+Teil beim Absenden stattdessen ausgeblendet: Nach 0,62 s Annäherung folgt eine
+0,14-s-Ausblendung. Während der weiteren Prüfung bleiben die Ecken unsichtbar;
+ihre eigene Leuchtanimation endet. Der separate Prüfstatus und Spinner bleiben
+bis zur Antwort/Weiterleitung erhalten. Bei reduzierter Bewegung verschwinden
+die Ecken sofort. Erneuter Formularaufruf/abgebrochene Übermittlung stellt den
+Ausgangszustand wieder her. Die Öffnungsanimation bleibt unverändert.
+
+Nur CSS ist geändert: `clubunio-glass-v7.css`, JavaScript bleibt Version 6.
+Browserprüfung mit verzögerter nativer Antwort: Login und OTP jeweils beide
+Ecken `opacity=0`, während `aria-busy` und Prüfstatus aktiv blieben; Spinner
+lief weiter. Reduzierte Bewegung ebenfalls geprüft. Alle drei synthetischen
+POSTs behielten ihre ursprünglichen Formularwerte, OTP blieb automatisch.
+[Prüfprotokoll](evidence/keycloak-corners-20261125/checks.json) und
+[synthetische OTP-Sichtprüfung](evidence/keycloak-corners-20261125/otp-corners-hidden.jpg).
+
+DEV-Rückweg: `/root/clubunio-releases/keycloak-corners-20261125/themes-before-v7.tar.gz`
+wiederherstellen und Theme-Cache kontrolliert erneuern. Keine Konten-, MFA-,
+SMTP-, DB-, Stage- oder PROD-Änderung.
 
 ## v6: Ladezustand bis zur Antwort/Weiterleitung
 

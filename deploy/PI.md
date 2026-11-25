@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: Keycloak-Glasecken (25.11.2026)
+
+Nur DEV-Theme-CSS auf dem VPS-Identitätsdienst aktualisiert. Glasecken
+verschwinden nach Kontakt; Prüfstatus bleibt bis zur Antwort bestehen.
+Keine Pi-Anwendungsdatei oder Datenbank geändert.
+[Nachweise und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: automatische SFV-Nachführung v2 (24.11.2026)
 
 Aktiv: `/var/www/svs-laravel/releases/20261124-clubunio-daily-v2`.

@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+## DEV: Eckenanimation ohne Fachmigration (25.11.2026)
+
+CSS-v7 in zwei DEV-Login-Themes aktiviert; bestehendes v6-JavaScript bleibt.
+Keine Daten-, Rechte- oder Schemaänderung. Stage/PROD unverändert.
+[Prüfung, Sicherung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: SFV-Nachführung ohne Garderobenverlust (24.11.2026)
 
 Release `20261124-clubunio-daily-v2` auf Basis von `daily-v1`; keine Migration.

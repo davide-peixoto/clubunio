@@ -1,5 +1,13 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV: Abschluss der Eckenanimation (25.11.2026)
+
+- [x] Login-/OTP-Ecken nach 0,62 s Annäherung in 0,14 s ausblenden.
+- [x] Prüfstatus, automatische OTP-Bestätigung und native POSTs erhalten.
+- [x] Verzögerte Antwort und reduzierte Bewegung synthetisch geprüft.
+
+[Prüfung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: automatische SFV-Verschiebungen mit Garderobenerhalt (24.11.2026)
 
 - [x] Datum, Anspielzeit und zugeordnetes Spielfeld automatisch vom SFV übernehmen.

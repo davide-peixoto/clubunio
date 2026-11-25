@@ -1,0 +1,67 @@
+{
+  "template_review": "620ms inward movement; original returns corners after contact; requested version fades out on contact instead",
+  "css_version": 7,
+  "javascript_version_unchanged": 6,
+  "login_full_motion": {
+    "corner_opacity": [
+      "0",
+      "0"
+    ],
+    "pending_status_visible": true,
+    "spinner": "cu-pending-spin"
+  },
+  "otp_full_motion": {
+    "corner_opacity": [
+      "0",
+      "0"
+    ],
+    "pending_status_visible": true,
+    "spinner": "cu-pending-spin"
+  },
+  "otp_reduced_motion": {
+    "corner_opacity": [
+      "0",
+      "0"
+    ],
+    "pending_status_visible": true,
+    "spinner": "none"
+  },
+  "native_posts": [
+    {
+      "native_post": true,
+      "kind": "login",
+      "synthetic_credentials_unchanged": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    }
+  ],
+  "test_scope": "Synthetic native POST fixture, held response via hidden response frame; no real credentials.",
+  "deployed_dev": [
+    {
+      "origin": "https://dev.clubunio.ch",
+      "login_status": 200,
+      "css_v7_byte_identical": true,
+      "javascript_v6_retained": true
+    },
+    {
+      "origin": "https://dev-clubunio.svsissach.ch",
+      "login_status": 200,
+      "css_v7_byte_identical": true,
+      "javascript_v6_retained": true
+    }
+  ],
+  "css_sha256": "41a1f4a4d4a5f8fdae8abc1f0042206e011f88a0b7bad19ec9633481137d485c",
+  "backup_sha256": "ae009055abaf7d5b1ec3f7e7bf1197ff7b7750e479131f3e5ee5d5c77cb78d62"
+}

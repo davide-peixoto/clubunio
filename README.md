@@ -1,5 +1,11 @@
 # ClubUnio
 
+## DEV: Glasecken abschließen (25.11.2026)
+
+Login-/OTP-Ecken verschwinden nach dem Zusammentreffen. Prüfstatus bleibt
+bis zur Antwort sichtbar. CSS-v7 auf DEV geprüft und aktiviert.
+[Details und Rückweg](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: SFV automatisch nachführen, Garderoben erhalten (24.11.2026)
 
 Neue eindeutig zugeordnete SFV-Heimspiele und Verschiebungen werden beim
