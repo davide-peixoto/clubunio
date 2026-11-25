@@ -28,6 +28,12 @@ class ReactNavigationTest extends TestCase
         foreach (['de' => 'Wohin möchtest du?', 'en' => 'Where would you like to go?'] as $locale => $label) {
             app()->setLocale($locale);
             $html = view('clubunio.react-navigation')->render();
+            $head = view('clubunio.react-navigation-head')->render();
+            $this->assertStringContainsString('clubunio-react-navigation.css', $head);
+            $this->assertStringNotContainsString('clubunio-react-navigation.css', $html);
+            $this->assertStringContainsString('clubunio-react-navigation.js?v=7', $html);
+            $this->assertStringContainsString('dataset.cuMotion', $head);
+            $this->assertStringNotContainsString('@view-transition', $head);
             preg_match('/data-props="([^"]*)"/', $html, $match);
             $props = json_decode(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5), true, flags: JSON_THROW_ON_ERROR);
             $this->assertSame($label, $props['labels']['title']);
@@ -43,5 +49,6 @@ class ReactNavigationTest extends TestCase
         auth('clubunio')->setUser($actor);
         app()->instance(ReactUi::class, new class extends ReactUi { public function enabled(?int $tenantId = null): bool { return false; } });
         $this->assertSame('', trim(view('clubunio.react-navigation')->render()));
+        $this->assertSame('', trim(view('clubunio.react-navigation-head')->render()));
     }
 }

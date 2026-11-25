@@ -11,6 +11,7 @@ return [
     'add_opening' => 'Öffnung erfassen', 'add_exception' => 'Ausnahme erfassen', 'add_menu' => 'Speisekarte erstellen', 'edit' => 'Bearbeiten',
     'label' => 'Bezeichnung', 'valid_from' => 'Gültig ab', 'valid_until' => 'Gültig bis', 'validity' => 'Gültigkeit',
     'repeat_days' => 'Wiederholung an', 'once' => 'Einmalig', 'no_end' => 'Ohne Enddatum', 'time_windows' => 'Zeitfenster',
+    'add_time_window' => 'Zeitfenster hinzufügen',
     'from_time' => 'Von', 'to_time' => 'Bis', 'next_day' => 'Ende am Folgetag', 'active' => 'Aktiv', 'inactive' => 'Inaktiv',
     'change_scope' => 'Änderung anwenden auf', 'scope_all' => 'Gesamte Serie', 'scope_this' => 'Nur diesen Termin', 'scope_future' => 'Ab diesem Termin',
     'occurrence' => 'Betroffener Termin', 'date' => 'Datum', 'closed_day' => 'Ganztägig geschlossen', 'internal_note' => 'Interne Bemerkung',

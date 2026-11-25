@@ -129,7 +129,7 @@ final class ClubhouseWorkspace extends Component implements HasActions, HasSchem
 
     private function slotSchema(): array
     {
-        return [Repeater::make('intervals')->label(trans('clubhouse.time_windows'))->minItems(1)->maxItems(8)->defaultItems(1)->columns(3)
+        return [Repeater::make('intervals')->label(trans('clubhouse.time_windows'))->addActionLabel(trans('clubhouse.add_time_window'))->minItems(1)->maxItems(8)->defaultItems(1)->columns(3)
             ->schema([TextInput::make('start')->label(trans('clubhouse.from_time'))->type('time')->required(),
                 TextInput::make('end')->label(trans('clubhouse.to_time'))->type('time')->required(),
                 Toggle::make('overnight')->label(trans('clubhouse.next_day'))->default(false)->required()])];
@@ -187,7 +187,7 @@ final class ClubhouseWorkspace extends Component implements HasActions, HasSchem
         return Action::make('exception')->label(trans('clubhouse.add_exception'))->icon('heroicon-o-calendar-days')
             ->visible(fn () => $this->can('hours.write'))->schema([DatePicker::make('date')->label(trans('clubhouse.date'))->required(),
                 Toggle::make('closed')->label(trans('clubhouse.closed_day'))->default(true)->live()->required(),
-                Repeater::make('intervals')->label(trans('clubhouse.time_windows'))->maxItems(8)->default([])
+                Repeater::make('intervals')->label(trans('clubhouse.time_windows'))->addActionLabel(trans('clubhouse.add_time_window'))->maxItems(8)->default([])
                     ->visible(fn (Get $get) => ! $get('closed'))->dehydrated()->schema([
                         TextInput::make('start')->label(trans('clubhouse.from_time'))->type('time')->required(),
                         TextInput::make('end')->label(trans('clubhouse.to_time'))->type('time')->required(),

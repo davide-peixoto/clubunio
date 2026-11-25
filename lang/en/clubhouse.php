@@ -11,6 +11,7 @@ return [
     'add_opening' => 'Add opening hours', 'add_exception' => 'Add exception', 'add_menu' => 'Create menu', 'edit' => 'Edit',
     'label' => 'Label', 'valid_from' => 'Valid from', 'valid_until' => 'Valid until', 'validity' => 'Validity',
     'repeat_days' => 'Repeat on', 'once' => 'One-off', 'no_end' => 'No end date', 'time_windows' => 'Time slots',
+    'add_time_window' => 'Add time slot',
     'from_time' => 'From', 'to_time' => 'Until', 'next_day' => 'Closes the next day', 'active' => 'Active', 'inactive' => 'Inactive',
     'change_scope' => 'Apply change to', 'scope_all' => 'Entire series', 'scope_this' => 'This occurrence only', 'scope_future' => 'This and future occurrences',
     'occurrence' => 'Affected occurrence', 'date' => 'Date', 'closed_day' => 'Closed all day', 'internal_note' => 'Internal note',

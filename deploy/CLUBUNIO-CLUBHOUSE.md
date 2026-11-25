@@ -1,7 +1,7 @@
 # Clubhaus
 
-24.11.2026. Ausschließlich DEV; Stage/PROD unverändert.
-Release `20261124-clubunio-clubhouse-v2`, technischer Rückweg auf Clubhaus-v1;
+25.11.2026. Ausschließlich DEV; Stage/PROD unverändert.
+Release `20261125-clubunio-clubhouse-ui-v1`, technischer Rückweg auf Clubhaus-v2;
 fachlicher Rückweg ohne Modul `20261124-clubunio-veo-calendar-v5`.
 
 ## Oberfläche
@@ -138,3 +138,37 @@ Sitzung nicht erneut Ende-zu-Ende ausgeführt; Fachtests bleiben deren bisherige
 Nachweis. Keine Veröffentlichung nur für eine Sichtprüfung aktivieren.
 Screenshots lokal unter `storage/app/clubhouse-review-20261125/` (gitignoriert).
 Nur Prüfprotokoll geändert, kein neuer Runtime-Release oder Datenbankeingriff.
+
+## Korrekturen und Nachprüfung (25.11.2026)
+
+Die beiden oben protokollierten Befunde sind im neuen DEV-Release behandelt:
+
+- Öffnungs- und Ausnahmedialoge verwenden explizite DE/EN-Beschriftungen
+  „Zeitfenster hinzufügen“ / „Add time slot“ statt automatisch erzeugter Texte.
+- Der Navigations-Opt-in liegt stabil im Head-Stylesheet. Die React-Initialisierung
+  ersetzt keine `@view-transition`-Regel mehr während des Seitenaufbaus. Die
+  vorhandene Bewegungseinstellung wird vor dem ersten Frame übernommen;
+  reduzierte Bewegung setzt alle Übergangsdauern auf null. Alte gespeicherte
+  Einstellungen und der Fallback bei blockiertem localStorage bleiben erhalten.
+  Keine globale Fehlerunterdrückung. Grundlage: [Chrome Cross-document View
+  Transitions](https://developer.chrome.com/docs/web-platform/view-transitions/cross-document).
+
+Angemeldet in Chrome auf DEV geprüft: DE/EN-Öffnungsdialog, zweites Zeitfenster,
+Tagesausnahme mit Sonderöffnung, Dashboard-/Clubhaus-Navigation und Sprachwechsel.
+„Animationen aus“ bleibt nach einem vollständigen Sprachwechsel wirksam
+(`--cu-nav-duration: 0ms`); anschließend ursprüngliche Einstellung wieder aktiviert.
+Kein dynamisches Opt-in-Element vorhanden, keine neuen Konsolenfehler im
+Nachprüfungszeitraum. Die zuvor einmalige Chrome-Meldung trat dabei nicht erneut
+auf. Keine Formulare gespeichert; Deutsch wiederhergestellt, Rechte und
+Veröffentlichung unverändert. Screenshot unter
+`storage/app/clubhouse-fixes-20261125/zeitfenster-korrigiert.png` (gitignoriert).
+
+22 gezielte PHP-Tests / 125 Assertions, acht JS-Tests und DE/EN-Katalogprüfung
+(3075 Schlüssel, kein Rückstand) bestanden. DEV: 17 synthetische PostgreSQL-
+Prüfungen vollständig zurückgerollt. Native PDF-/Geräteabnahme bleibt offen.
+
+Zehn Runtime-Dateien per SHA-256 geprüft, unveränderlicher Release über
+`release-clubhouse-ui.sh`; View-Cache erneuert und FPM graceful reload.
+Keine neue Schema-/Datenmigration, keine Änderung privater Konfiguration,
+Composer-Lock oder gemeinsamer Ablage. Direkter Rückweg durch Aktivieren von
+`20261124-clubunio-clubhouse-v2`, ohne Datenrücksetzung. Stage/PROD unverändert.

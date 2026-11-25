@@ -97,4 +97,21 @@ class ClubhouseWorkspaceTest extends TestCase
             ->call('callMountedAction')->assertHasNoErrors();
         $this->assertTrue(app(\App\ClubUnio\Services\ClubhouseService::class)->publicEnabled($this->club));
     }
+
+    public function test_opening_and_exception_repeaters_have_explicit_localized_add_labels(): void
+    {
+        foreach (['de' => 'Zeitfenster hinzufügen', 'en' => 'Add time slot'] as $locale => $label) {
+            app()->setLocale($locale);
+            foreach (['newOpening', 'exception'] as $action) {
+                $page = Livewire::test(ClubhouseWorkspace::class, ['tenantId' => 71])
+                    ->call('mountAction', $action);
+                $repeater = $page->instance()->getSchema('mountedActionSchema0')->getComponent(
+                    fn ($component) => $component instanceof \Filament\Forms\Components\Repeater && $component->getName() === 'intervals',
+                    withHidden: true,
+                );
+                $this->assertNotNull($repeater);
+                $this->assertSame($label, $repeater->getAddActionLabel());
+            }
+        }
+    }
 }

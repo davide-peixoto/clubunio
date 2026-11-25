@@ -8,6 +8,7 @@
 - [x] App-API/Swagger und native Pflege im neuen App-Design.
 - [x] Website-Feed mit ausdrücklicher Freigabe je Verein.
 - [x] DEV-Migration und isolierte PostgreSQL-/lokale Fachtests.
+- [x] Zeitfenster-Beschriftung DE/EN und stabile Navigationsanimation auf DEV geprüft.
 - [ ] Nativer Neubau: Datei-/PDF-Abnahme auf Geräten.
 - [ ] Feed in Website einbinden; Stage/PROD separat beauftragen.
 

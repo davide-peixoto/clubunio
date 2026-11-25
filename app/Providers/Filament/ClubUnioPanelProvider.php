@@ -126,6 +126,7 @@ class ClubUnioPanelProvider extends PanelProvider
             ->favicon(asset('brand/blue-v1/clubunio-symbol.svg'))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.head', ['withFavicon' => false]))
             ->renderHook('panels::head.end', fn () => view('clubunio.brand.backend-theme'))
+            ->renderHook('panels::head.end', fn () => view('clubunio.react-navigation-head'))
             ->renderHook('panels::footer', fn () => view('clubunio.brand.panel-attribution'))
             ->renderHook('panels::body.end', fn () => auth('clubunio')->check() ? view('clubunio.support.launcher') : '')
             ->renderHook('panels::body.end', fn () => view('clubunio.workspace.tools'))
