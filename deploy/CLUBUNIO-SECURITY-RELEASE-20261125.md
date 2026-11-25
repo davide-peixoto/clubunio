@@ -40,3 +40,9 @@ Der stÃ¼ndliche lokale PrÃ¼fdienst kontrolliert 14 Betriebsgrenzen einschliessli
 4. UnabhÃ¤ngigen Pentest vor breiter Freigabe sowie vollstÃ¤ndige Rollen-/Mandanten- und GerÃ¤teabnahme einplanen. Ein echter paralleler Mehrprozess-PostgreSQL-Racetest ist noch nicht nachgewiesen.
 
 Damit sind wesentliche konkrete LÃ¼cken behoben. Eine uneingeschrÃ¤nkte Go-live-Freigabe bleibt insbesondere wegen des fehlenden automatischen externen Backups offen.
+
+## Ergänzung: DEV-Datenbank ebenfalls täglich gesichert
+
+Auf Wunsch ist `clubunio_dev` zusätzlich im täglichen verschlüsselten PostgreSQL-Backup enthalten. Die DEV-Anwendung läuft auf dem Pi, ihre PostgreSQL-Datenbank auf dem VPS (privater Tunnel). Der Job sichert jetzt DEV, Stage, PROD und Keycloak sowie globale Rollen; zusammen zehn verschlüsselte Dateien einschliesslich der bisherigen Wiederherstellungsmaterialien. Zeitplan unverändert täglich 01:20 UTC, bis zwei Minuten Verzögerung. Der Pi-Anwendungscode und dessen lokale Dateien sind dadurch nicht zusätzlich gesichert. Die automatische externe Borg-Übertragung bleibt Aufgabe des Betreibers und weiterhin unbestätigt.
+
+Abnahme der Ergänzung: vollständige Wiederherstellung aller vier Datenbanken erfolgreich (DEV 358, Stage 368, PROD 268, Keycloak 101 Tabellen), temporäre Prüf-Datenbanken entfernt. Zehn verschlüsselte Dateien erneut ausserhalb des VPS kopiert und sämtliche Prüfsummen bestätigt; lokaler Überwachungsdienst erfolgreich.

@@ -9,7 +9,7 @@ import time
 
 BASE = Path('/home/dbbackups/clubunio-postgresql')
 KEY = Path('/root/clubunio-backups/master.key')
-DATABASES = ('clubunio_stage', 'clubunio_prod', 'keycloak')
+DATABASES = ('clubunio_dev', 'clubunio_stage', 'clubunio_prod', 'keycloak')
 
 
 def run(args, data=None):

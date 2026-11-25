@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+## DEV-PostgreSQL im täglichen Backup (25.11.2026)
+
+`clubunio_dev` zusätzlich in den verschlüsselten Tagesjob aufgenommen; keine Schemaänderung oder DEV-App-Auslieferung. Vier Datenbanken (DEV, Stage, PROD, Keycloak), täglich 01:20 UTC. Wiederherstellung und manuelle externe Kopie siehe [Abnahme](CLUBUNIO-SECURITY-RELEASE-20261125.md).
+
+
 ## Sicherheitsrelease Stage/PROD und VPS (25.11.2026)
 
 MFA, zentraler Sitzungswiderruf, Malwareprüfung und getrennte Runtime-/DB-Rechte sind aktiv und geprüft. Verschlüsselte Sicherungen wurden wiederhergestellt und extern manuell kopiert. Automatisches Hetzner-Backup und geplante VPS-Wartung bleiben offen; keine pauschale Go-live-Freigabe. DEV-App unverändert.

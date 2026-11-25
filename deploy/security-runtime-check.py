@@ -36,6 +36,7 @@ def main():
     checks['parent_replacement_blocked'] = all(Path(p).stat().st_uid == 0 and Path(p).stat().st_mode & 0o022 == 0 for p in ['/home/runcloud', '/home/runcloud/webapps'])
     latest = json.loads(Path('/home/dbbackups/clubunio-postgresql/latest.json').read_text())
     checks['recent_encrypted_backup'] = time.time() - calendar.timegm(time.strptime(latest['completed_utc'], '%Y-%m-%dT%H:%M:%SZ')) < 36 * 3600
+    checks['four_database_dumps_present'] = all(name + '.dump.enc' in latest['files'] for name in ('clubunio_dev', 'clubunio_stage', 'clubunio_prod', 'keycloak'))
     checks['backup_files_present'] = all((Path(latest['folder']) / name).is_file() for name in latest['files'])
     checks['backup_timer_active'] = command(['systemctl', 'is-active', 'clubunio-postgresql-backup.timer']).strip() == 'active'
     ssh = command(['/usr/sbin/sshd', '-T'])

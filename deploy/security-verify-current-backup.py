@@ -20,11 +20,11 @@ def main():
     folder = Path(latest['folder']).resolve()
     assert folder.parent == base and not folder.is_symlink()
     results = {}
-    for database in ('clubunio_stage', 'clubunio_prod', 'keycloak'):
+    for database in ('clubunio_dev', 'clubunio_stage', 'clubunio_prod', 'keycloak'):
         plain = run(['openssl', 'enc', '-d', '-aes-256-cbc', '-pbkdf2', '-iter', '200000',
                      '-pass', 'file:/root/clubunio-backups/master.key', '-in', str(folder / (database + '.dump.enc'))])
         target = 'security_post_restore_' + database + '_20261125'
-        assert target in ('security_post_restore_clubunio_stage_20261125', 'security_post_restore_clubunio_prod_20261125', 'security_post_restore_keycloak_20261125')
+        assert target in ('security_post_restore_clubunio_dev_20261125', 'security_post_restore_clubunio_stage_20261125', 'security_post_restore_clubunio_prod_20261125', 'security_post_restore_keycloak_20261125')
         exists = run(['runuser', '-u', 'postgres', '--', 'psql', '-XAt', '-d', 'postgres', '-c', "SELECT 1 FROM pg_database WHERE datname='" + target + "'"]).strip()
         assert not exists
         run(['runuser', '-u', 'postgres', '--', 'createdb', '--template=template0', target])
