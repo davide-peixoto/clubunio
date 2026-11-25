@@ -13,7 +13,7 @@ $app['blade.compiler']->compile($base.'/resources/views/clubunio/language-switch
 foreach (['de', 'en'] as $locale) {
     $app->setLocale($locale);
     $html = view('clubunio.language-switcher')->render();
-    foreach (['clubunio-language-switcher.css?v=1', 'cu-language-switcher-icon', 'cu-language-switcher-chevron',
+    foreach (['clubunio-language-switcher.css?v=2', 'cu-language-switcher-icon', 'cu-language-switcher-chevron', 'cu-language-switcher-compact',
         'name="_token"', 'method="POST"', 'this.form.requestSubmit()', 'aria-label="'.__('Sprache').'"', 'name="locale"'] as $needle) {
         if (! str_contains($html, $needle)) { throw new LogicException('Language header missing '.$needle); }
     }

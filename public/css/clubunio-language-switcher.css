@@ -4,7 +4,8 @@
 .cu-language-switcher-icon, .cu-language-switcher-chevron { position:absolute; pointer-events:none; width:16px; height:16px; }
 .cu-language-switcher-icon { inset-inline-start:12px; }
 .cu-language-switcher-chevron { inset-inline-end:10px; width:14px; height:14px; }
-.cu-language-switcher .cu-language-switcher-select { box-sizing:border-box; appearance:none; width:auto; max-width:100%; min-height:40px; border:1px solid var(--cu-border, #dfe5ed); border-radius:8px; padding-block:8px; padding-inline:36px 30px; background:var(--cu-surface, #fff); color:var(--cu-text, #192b40); font:inherit; font-size:14px; font-weight:500; line-height:1.4; cursor:pointer; transition:border-color .15s, background-color .15s; }
+.cu-language-switcher-compact { display:none; position:absolute; inset-inline-start:12px; pointer-events:none; font-size:14px; font-weight:600; color:var(--cu-text, #192b40); }
+.cu-language-switcher .cu-language-switcher-control .cu-language-switcher-select { box-sizing:border-box; appearance:none; width:auto; max-width:100%; min-height:40px; border:1px solid var(--cu-border, #dfe5ed); border-radius:8px; padding-block:8px; padding-inline:36px 30px; background:var(--cu-surface, #fff); color:var(--cu-text, #192b40); font:inherit; font-size:14px; font-weight:500; line-height:1.4; cursor:pointer; transition:border-color .15s, background-color .15s; }
 .cu-language-switcher .cu-language-switcher-select:hover { border-color:var(--cu-brand-color, #164b8a); background:var(--cu-brand-soft, #f4f8fd); }
 .cu-language-switcher .cu-language-switcher-select option { background:#fff; color:#192b40; }
 .cu-language-switcher .cu-language-switcher-select:focus-visible { outline:2px solid var(--cu-brand-color, #164b8a); outline-offset:2px; }
@@ -13,13 +14,24 @@
 .fi-topbar:has(> .cu-language-switcher) > .fi-topbar-end > .fi-user-menu { flex-shrink:0; min-width:32px; }
 .fi-topbar:has(> .cu-language-switcher) .fi-global-search-ctn, .fi-topbar:has(> .cu-language-switcher) .fi-global-search { min-width:0; }
 .dark .cu-language-switcher-control { color:var(--cu-muted, #acbdd2); }
-.dark .cu-language-switcher .cu-language-switcher-select { color-scheme:dark; background:var(--cu-surface, #18181b); color:var(--cu-text, #fafafa); border-color:var(--cu-border, #52525b); }
+.dark .cu-language-switcher .cu-language-switcher-control .cu-language-switcher-select { color-scheme:dark; background:var(--cu-surface, #18181b); color:var(--cu-text, #fafafa); border-color:var(--cu-border, #52525b); }
+.dark .cu-language-switcher-compact { color:var(--cu-text, #fafafa); }
 .dark .cu-language-switcher .cu-language-switcher-select:hover { border-color:var(--cu-brand-color, #48a9e8); }
 .dark .cu-language-switcher .cu-language-switcher-select option { background:#18181b; color:#fafafa; }
 .dark .cu-language-switcher .cu-language-switcher-select:focus-visible { outline-color:var(--cu-brand-color, #48a9e8); }
 @media (max-width:640px) {
-    .cu-language-switcher .cu-language-switcher-select { font-size:16px; padding-inline:32px 26px; }
+    .cu-language-switcher .cu-language-switcher-control .cu-language-switcher-select { font-size:16px; padding-inline:32px 26px; }
     .cu-language-switcher-icon { inset-inline-start:9px; }
     .cu-language-switcher-chevron { inset-inline-end:8px; }
     .fi-topbar > .cu-language-switcher { margin-inline-start:8px; }
+}
+@media (max-width:380px) {
+    .fi-topbar:has(> .cu-language-switcher) { column-gap:4px; padding-inline:8px; }
+    .fi-topbar:has(> .cu-language-switcher) > .fi-topbar-end { flex:0 0 auto; }
+    .fi-topbar:has(> .cu-language-switcher) > .fi-topbar-open-sidebar-btn,
+    .fi-topbar:has(> .cu-language-switcher) > .fi-topbar-close-sidebar-btn { flex-shrink:0; }
+    .fi-topbar > .cu-language-switcher { margin-inline-start:0; }
+    .fi-topbar .cu-language-switcher-icon { display:none; }
+    .fi-topbar .cu-language-switcher-compact { display:block; }
+    .fi-topbar .cu-language-switcher .cu-language-switcher-control .cu-language-switcher-select { width:64px; color:transparent; padding-inline:8px 24px; }
 }

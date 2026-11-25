@@ -44,7 +44,8 @@ class MobileLanguageHeaderTest extends TestCase
             $this->assertSame(0, $xpath->query('//button')->length);
             $this->assertSame(1, $xpath->query('//span[@class="cu-language-switcher-control"]/select')->length);
             $this->assertSame(2, $xpath->query('//*[local-name()="svg" and @aria-hidden="true"]')->length);
-            $this->assertSame(1, $xpath->query('//link[contains(@href, "/css/clubunio-language-switcher.css?v=1")]')->length);
+            $this->assertSame(1, $xpath->query('//link[contains(@href, "/css/clubunio-language-switcher.css?v=2")]')->length);
+            $this->assertSame(strtoupper($locale), $xpath->query('//span[@class="cu-language-switcher-compact" and @aria-hidden="true"]')->item(0)->textContent);
         }
     }
 

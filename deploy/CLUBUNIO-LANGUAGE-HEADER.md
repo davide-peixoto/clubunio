@@ -1,5 +1,49 @@
 # Sprachauswahl im Seitenkopf
 
+## Visuelle Nachpruefung – 25.11.2026
+
+PROD angemeldet in Chrome geprueft: Desktop (1280 Pixel und normale Fensterbreite)
+sowie 320, 360 und 390 Pixel. Bei 320 Pixeln schrumpfte die Profilmenue-Spalte auf
+null Breite; Suche und Avatar ueberlagerten sich und Benachrichtigungen ragten
+rechts heraus. Korrektur auf Stage/PROD installiert:
+
+- Bis 380 Pixel kompakte DE-/EN-Anzeige, native Auswahl behaelt volle Sprachnamen.
+- Profilbereich schrumpft nicht mehr; reduzierte Kopfzeilenabstaende und Innenraender.
+- Ausgeschriebene Auswahl ab 390 Pixeln und auf Desktop unveraendert.
+- Hoehere Selektorprioritaet erhaelt Symbolabstaende auch gegen Portal-Formularregeln.
+- CSS-Version 2 verhindert Wiederverwendung der alten Darstellung.
+
+Nachher auf PROD alle vier Breiten anhand Screenshot und DOM-Geometrie geprueft:
+keine abgeschnittenen oder ueberlagerten sichtbaren Kopfzeilen-Controls. Native
+Sprachauswahl wechselt DE/EN; am Ende persoenliche Sprache Deutsch und normale
+Fenstergroesse wiederhergestellt. Keine fachlichen Daten geaendert. Sieben lokale
+Tests / 86 Assertions erfolgreich; zwei opt-in-DB-Tests ausgelassen. DE/EN-Kataloge
+erfolgreich. Kein Dark-Mode- oder physischer iOS-Test als abgeschlossen behauptet.
+
+Stage-Anmeldung vom Benutzer durchgefuehrt, danach HTTP 500 beobachtet. Logursache:
+`lang/de/tenant_ai.php` nicht lesbar; sechs root-eigene KI-Quelldateien waren trotz
+0644 durch die vorhandene `users-rc`-ACL fuer den PHP-Poolbenutzer gesperrt.
+Nur diese sechs Dateien erhielten den normalen Anwendungseigentuemer wie `artisan`:
+DE-/EN-KI-Katalog, KI-Settings-View, BackofficeAssistantService, TenantAiKnowledge
+und TrainingPlanAi. Keine Inhalts- oder ACL-Regelaenderung; Bytehashes unveraendert
+und Lesbarkeit als PHP-Benutzer bestaetigt. Vorheriger ACL-/Hashstand privat unter
+`/root/clubunio-releases/language-header-stage-visual-20261125/source-owner-before.*`.
+
+Anschliessend zeigt Stage einen separat gesetzten Wartungsmodus (HTTP 503;
+`storage/framework/down` seit 25.11.2026 11:04 UTC / 12:04 Europe/Zurich). Unsere
+Dropdown-Deployhelfer setzen keinen Wartungsmodus. Ursache/Verantwortlicher der
+Wartung noch nicht bestaetigt; nicht ungeprueft aufgehoben. **Angemeldete visuelle
+Stage-Abnahme bleibt daher offen**, einschliesslich abschliessender HTTP-200-Pruefung
+nach der Eigentuemerkorrektur. Eine parallele Bereitstellung wurde beim Benutzer
+angefragt. PROD-Abnahme ist abgeschlossen, Stage nicht als bestanden ausweisen.
+
+CSS/Blade-Fix auf beiden Zielinstanzen nativ DE/EN und per bytegenauem HTTPS-CSS-
+Vergleich geprueft. Rueckweg fuer diese Version: die beiden Dateien aus
+`/root/clubunio-releases/language-header-{stage|prod}-visual-20261125/source.tar`
+wiederherstellen, gemeinsame Sprach-View neu kompilieren und FPM neu laden.
+Keine Datenbankmigration. DEV-Runtime unveraendert; Quellstand fuer naechste Releases
+aktualisiert. Kein Ruecksetzen fremder Arbeitsstaende.
+
 ## Stage und PROD – 25.11.2026
 
 Der unveraenderte Design-Fix aus `823b5a41` ist jetzt ebenfalls auf Stage und PROD
