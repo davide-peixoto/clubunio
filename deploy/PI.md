@@ -1,5 +1,11 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## DEV: Keycloak-Geometrie und Bewegung (25.11.2026)
+
+Nur DEV-Theme-Dateien auf dem VPS aktualisiert: CSS-v9/JS-v8.
+Kein Pi-App-Release; stabile Themes per elf Ressourcenhashes unverändert.
+[Prüfung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Keycloak-Promotion auf Stage/PROD (25.11.2026)
 
 Stabile Themes auf dem VPS übernehmen CSS-v7 vom geprüften DEV-Stand.

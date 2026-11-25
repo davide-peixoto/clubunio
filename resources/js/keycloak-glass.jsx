@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useId } from 'react';
+import React, { useLayoutEffect, useState, useId } from 'react';
 import { createRoot } from 'react-dom/client';
 import { messages } from './keycloak-glass-messages.js';
 
@@ -20,7 +20,7 @@ function MotionToggle() {
     return <button type="button" className="cu-motion-toggle" onClick={toggle} aria-pressed={motion === 'full'}>{motion === 'full' ? text.motionDisable : text.motionEnable}</button>;
 }
 // Geometry/docking follow the supplied Glassy Login v3 and OTP v20 templates.
-const cardPath = (w, h) => `M 88 0 H ${w - 24} Q ${w} 0 ${w} 24 V ${h - 88} Q ${w} ${h - 80} ${w - 6} ${h - 74} L ${w - 74} ${h - 6} Q ${w - 80} ${h} ${w - 88} ${h} H 24 Q 0 ${h} 0 ${h - 24} V 88 Q 0 80 6 74 L 74 6 Q 80 0 88 0 Z`;
+const cardPath = (w, h) => `M 118.3 0 L ${w - 30} 0 A 30 30 0 0 1 ${w} 30 L ${w} ${h - 118.3} Q ${w} ${h - 110} ${w - 5.9} ${h - 104.1} L ${w - 104.1} ${h - 5.9} Q ${w - 110} ${h} ${w - 118.3} ${h} L 30 ${h} A 30 30 0 0 1 0 ${h - 30} L 0 118.3 Q 0 110 5.9 104.1 L 104.1 5.9 Q 110 0 118.3 0 Z`;
 const chipPath = 'M 22 0 L 72 0 Q 88 0 84 11.2 L 11.2 84 Q 0 88 0 72 L 0 22 A 22 22 0 0 1 22 0 Z';
 
 function GlassBackground() {
@@ -41,32 +41,11 @@ function GlassBackground() {
 
 function GlassLight({ card }) {
     const [size, setSize] = useState({ w: card.offsetWidth, h: card.offsetHeight });
-    const start = useRef(null), end = useRef(null);
     const id = useId().replaceAll(':', '');
-    const [motionEpoch, setMotionEpoch] = useState(0);
-    useEffect(() => {
-        const update = () => setMotionEpoch(epoch => epoch + 1);
-        window.addEventListener('clubunio:motion-change', update);
-        return () => window.removeEventListener('clubunio:motion-change', update);
-    }, []);
     useLayoutEffect(() => {
         const observer = new ResizeObserver(() => setSize({ w: card.offsetWidth, h: card.offsetHeight }));
         observer.observe(card); return () => observer.disconnect();
     }, [card]);
-    useEffect(() => {
-        if (reducedMotion()) return;
-        const dx = (card.offsetWidth - 88) / 2, dy = (card.offsetHeight - 88) / 2;
-        const animations = [start.current, end.current].map((chip, index) => {
-            const sign = index === 0 ? 1 : -1;
-            return chip.animate([
-                { transform: `translate(${sign * dx}px, ${sign * dy}px) scale(.96)` },
-                { transform: `translate(${sign * dx}px, ${sign * dy}px) scale(1.04)`, offset: .24 },
-                { transform: 'translate(0, 0) scale(1.025)', offset: .85 },
-                { transform: 'translate(0, 0) scale(1)' },
-            ], { duration: 1350, easing: 'cubic-bezier(.22,1,.36,1)' });
-        });
-        return () => animations.forEach(animation => animation.cancel());
-    }, [card, motionEpoch]);
     const path = cardPath(size.w, size.h);
     return <>
         <div className="cu-glass-surface" style={{ clipPath: `path('${path}')` }}/>
@@ -75,11 +54,11 @@ function GlassLight({ card }) {
             <path d={path} fill="none" stroke={`url(#${id})`} strokeWidth="1.5"/>
             <path className="cu-glass-comet" d={path} fill="none" stroke="var(--cu-auth-accent)" strokeWidth="2" pathLength="1000" strokeDasharray="100 900"/>
         </svg>
-        {[start, end].map((ref, index) => <div key={index} ref={ref} className={`cu-glass-chip cu-glass-chip-${index ? 'end' : 'start'}`}
-            style={{ '--cu-dock-x': `${(index ? -1 : 1) * (size.w - 88) / 2}px`, '--cu-dock-y': `${(index ? -1 : 1) * (size.h - 88) / 2}px` }}>
-            <div className="cu-chip-float"><div className="cu-chip-glass" style={{ clipPath: `path('${chipPath}')` }}/>
+        {[0, 1].map(index => <div key={index} className={`cu-glass-chip cu-glass-chip-${index ? 'end' : 'start'}`}
+            style={{ '--cu-dock-x': `${(index ? -1 : 1) * Math.round(size.w / 2 - 46)}px`, '--cu-dock-y': `${(index ? -1 : 1) * Math.round(size.h / 2 - 46)}px` }}>
+            <div className="cu-chip-float"><div className="cu-chip-body"><div className="cu-chip-glow" style={{ clipPath: `path('${chipPath}')` }}/><div className="cu-chip-glass" style={{ clipPath: `path('${chipPath}')` }}/>
                 <svg viewBox="0 0 88 88"><path d={chipPath} fill="none" stroke={`url(#${id})`} strokeWidth="1.5"/></svg>
-            </div>
+            </div></div>
         </div>)}
         <div className="cu-glass-bloom"/><div className="cu-glass-sheen" style={{ clipPath: `path('${path}')` }}/>
     </>;
@@ -103,7 +82,7 @@ function pendingState(form, kind) {
     const card = form.closest('.card-pf');
     return {
         show() {
-            card?.querySelectorAll('.cu-glass-chip').forEach(chip => chip.getAnimations().forEach(animation => animation.cancel()));
+            card?.classList.remove('cu-auth-opening');
             card?.classList.add('cu-auth-busy'); form.classList.add('cu-auth-submitting');
             form.setAttribute('aria-busy', 'true'); status.hidden = false;
             fields.forEach(([input]) => { input.readOnly = true; });
@@ -138,7 +117,7 @@ function enhanceLogin(form) {
             // A deliberately canceled request may be retried. A real request keeps
             // the visual state until pagehide/new response, regardless of latency.
             if (resumedEvent?.defaultPrevented) reset();
-        }, 650);
+        }, 900);
     }, true);
 }
 
@@ -265,7 +244,8 @@ function enhanceOtp(input) {
 function enhance() {
     const card = document.querySelector('.card-pf');
     if (!card || card.dataset.cuGlass) return;
-    card.dataset.cuGlass = 'motion-v6';
+    card.dataset.cuGlass = 'motion-v8';
+    card.classList.add('cu-auth-opening');
     document.documentElement.dataset.cuMotion = motionPreference();
     const stage = document.createElement('div'); stage.className = 'cu-auth-stage'; card.before(stage); stage.append(card);
     const background = document.createElement('div'); background.className = 'cu-auth-background'; background.setAttribute('aria-hidden', 'true');
@@ -278,7 +258,7 @@ function enhance() {
     const login = document.querySelector('#kc-form-login'); if (login && !otp) enhanceLogin(login);
     let frame;
     stage.addEventListener('pointermove', event => {
-        if (reducedMotion() || event.pointerType !== 'mouse' || card.contains(document.activeElement)) return;
+        if (reducedMotion() || card.classList.contains('cu-auth-busy') || event.pointerType !== 'mouse' || card.contains(document.activeElement)) return;
         const rect = stage.getBoundingClientRect(); cancelAnimationFrame(frame);
         frame = requestAnimationFrame(() => {
             card.style.setProperty('--cu-tilt-x', `${(0.5 - (event.clientY - rect.top) / rect.height) * 7}deg`);

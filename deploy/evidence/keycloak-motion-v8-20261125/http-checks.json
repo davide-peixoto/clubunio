@@ -1,0 +1,26 @@
+[
+  {
+    "entry": "https://dev.clubunio.ch/platform/oidc/start",
+    "language": "de",
+    "status": 200,
+    "css9_js8_sha256_match": true
+  },
+  {
+    "entry": "https://dev.clubunio.ch/platform/oidc/start",
+    "language": "en",
+    "status": 200,
+    "css9_js8_sha256_match": true
+  },
+  {
+    "entry": "https://dev-clubunio.svsissach.ch/vereinslogin/oidc/start",
+    "language": "de",
+    "status": 200,
+    "css9_js8_sha256_match": true
+  },
+  {
+    "entry": "https://dev-clubunio.svsissach.ch/vereinslogin/oidc/start",
+    "language": "en",
+    "status": 200,
+    "css9_js8_sha256_match": true
+  }
+]

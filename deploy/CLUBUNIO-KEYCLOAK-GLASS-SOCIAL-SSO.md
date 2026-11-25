@@ -1,6 +1,67 @@
 # Keycloak: Glasdesign, Social Login und SSO
 
-Stand: 25.11.2026. CSS-v7/JavaScript-v6 sind für DEV, Stage und PROD freigegeben.
+Stand: 25.11.2026. DEV: CSS-v9/JavaScript-v8. Stage/PROD: CSS-v7/JavaScript-v6.
+
+## Erneuter Vorlagenvergleich: DEV CSS-v9/JS-v8 (25.11.2026)
+
+Beide vom Betreiber geöffneten Facebook-Reels erneut im Browser angesehen und
+mit `Glassy login v3.zip` / `Glassy otp v20.zip` vom NAS verglichen. Die vorige
+Umsetzung wich in der Geometrie und beim Öffnen ab: 88-px-Kartenausschnitt statt
+118,3 px; bereits in der Mitte beginnende Rückbewegung statt Annäherung von
+außen. Zusätzlich begrenzte ein geerbtes `max-width: 500px` die Karte innerhalb
+der 580-px-Bühne und verschob ihre Mitte. Diese Abweichungen sind korrigiert.
+
+- Kartenausschnitt und 88-px-Glasecken mit -2-px-Außenposition aus der Vorlage;
+  Dockdistanz aus der aktuellen Kartengröße und 46-px-Halbabstand berechnet.
+- Eine CSS-Zeitleiste ersetzt die konkurrierende Web-Animations-Öffnung.
+  Start außen, 520 ms Auftakt, 720 ms Annäherung, 140 ms Kontakt/Ausblendung;
+  anschließend erscheint das Formular in 500 ms. Der Vorlagen-Rücksprung wird
+  bewusst durch den vom Betreiber gewünschten Ausblendeabschluss ersetzt.
+- Beim Absenden erneut 620 ms Annäherung und 140 ms Ausblendung; Login-POST
+  nach 900 ms, OTP weiterhin 540 ms Scan und 340 ms Zusammenführung. Ein
+  einzelnes OTP-Feld bleibt in der Mitte; die anderen Felder und Ziffern
+  verschwinden. Kein vorgetäuschter Erfolg oder grüner Erfolgszustand.
+- Prüfstatus/Spinner laufen bis zur Antwort/Weiterleitung weiter. Sein Platz
+  bleibt reserviert, damit die Karte beim Absenden ihre Größe nicht ändert.
+  Native Felder, Paste, OTP-Tools und automatische Bestätigung bleiben erhalten.
+- Sprachauswahl im normalen Layout über dem Titel; keine mobile Überlagerung.
+  Lichtimpuls erzeugt keinen horizontalen Scrollbereich. Die geerbte maximale
+  Kartenbreite ist aufgehoben; Bühne und Karte haben dieselbe Mitte.
+- Reduzierte Bewegung verzichtet auf Animation und zusätzliche Wartezeit.
+
+Nur DEV-Themes aktualisiert; stabile Stage-/PROD-Dateien per elf SHA-256-Werten
+gegen das bestehende Release-Manifest unverändert bestätigt. Account-, Admin-,
+E-Mail-Themes, Clients, Realm-Regeln, Konten und MFA-Konfiguration nicht geändert.
+CSS-v9 hat einen neuen Dateinamen, damit Browser keine CSS-Zwischenfassung aus
+dem Cache weiterverwenden. Aktuelle Dateien stehen in beiden DEV-Properties;
+`node tools/build-keycloak-glass.mjs` erzeugt JavaScript-v8.
+
+Prüfung: vier echte HTTPS-Anmeldeseiten (ClubUnio-/SV-Sissach-DEV, DE/EN mit
+geprüftem HTML-Sprachattribut), CSS-/JS-Hashes bytegleich. Chrome Desktop und
+390 × 844: Karte exakt mittig, Sprachauswahl oberhalb des Titels und keine
+horizontale Bildlaufleiste. Lokale native Formular-Fixture mit synthetischen
+Werten: Login und OTP-Paste automatisch übermittelt; nach 2,5 s weiterhin
+`aria-busy=true`, sichtbarer Status und beide Glasecken unsichtbar. Kartengröße
+stabil, ursprüngliche Formularwerte und Credential-ID erhalten. Stille
+OTP-Tool-Füllung sowie reduzierte Bewegung mit konkurrierenden Submit-Aufrufen
+zusätzlich vor der abschließenden CSS-Layoutkorrektur geprüft. Keine erneute
+echte Benutzer-/MFA-Anmeldung in diesem Durchlauf.
+
+[Prüfprotokoll](evidence/keycloak-motion-v8-20261125/checks.json),
+[DEV Desktop](evidence/keycloak-motion-v8-20261125/dev-sv-sissach-login.jpg),
+[DEV Mobil](evidence/keycloak-motion-v8-20261125/dev-mobile.jpg),
+[äußere Ecken, angehaltene lokale Startphase](evidence/keycloak-motion-v8-20261125/intro-corners.jpg).
+Die Fixture unterstützt `probe=1` für zeitliche DOM-Beobachtungen und `freeze=1`
+für eine angehaltene Startansicht; sie lauscht ausschließlich auf Loopback.
+
+DEV-Sicherung/Rückweg:
+`/root/clubunio-releases/keycloak-motion-v8-20261125/dev-before-v8.tar.gz`,
+SHA-256 `90cbff82cfb237ac25856f2b0575e5c889bb0b9118ace969426ddcbe2503f7c7`.
+Zum Rückweg nur die beiden gesicherten DEV-Theme-Verzeichnisse wiederherstellen
+und den Theme-Cache durch kontrollierten Dienstneustart erneuern. Auf dem
+geteilten Keycloak-Dienst wurden für die Aktivierung kontrollierte Neustarts
+durchgeführt; Stage-/PROD-Themeinhalte blieben unverändert. Vor einer erneuten
+Promotion die neue Bewegung auf DEV durch den Betreiber ansehen lassen.
 
 ## Stage-/PROD-Promotion (25.11.2026)
 

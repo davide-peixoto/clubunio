@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+## DEV: Keycloak-Vorlagenkorrektur ohne Fachmigration (25.11.2026)
+
+CSS-v9/JS-v8 und DEV-Theme-Properties aktualisiert; keine Schema-/Datenmigration.
+Sicherung vor Änderung vorhanden; Stage-/PROD-Ressourcen unverändert geprüft.
+[Abnahmegrenzen und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Keycloak Stage/PROD: Promotion ohne Fachmigration (25.11.2026)
 
 Nur stabiles Theme-CSS und zwei Properties-Dateien geändert. Bestehendes

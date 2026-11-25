@@ -1,0 +1,14 @@
+[
+  {
+    "native_post": true,
+    "kind": "login",
+    "synthetic_credentials_unchanged": true
+  },
+  {
+    "native_post": true,
+    "kind": "otp",
+    "synthetic_code_unchanged": true,
+    "length": 6,
+    "credential_preserved": true
+  }
+]

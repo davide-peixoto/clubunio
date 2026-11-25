@@ -8,8 +8,8 @@ from threading import Event
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / 'deploy/keycloak/themes/clubunio-glass-dev/login/resources'
 ASSETS = {
-    '/css/clubunio-glass-v7.css': (RESOURCES / 'css/clubunio-glass-v7.css', 'text/css'),
-    '/js/clubunio-glass-v6.js': (RESOURCES / 'js/clubunio-glass-v6.js', 'text/javascript'),
+    '/css/clubunio-glass-v9.css': (RESOURCES / 'css/clubunio-glass-v9.css', 'text/css'),
+    '/js/clubunio-glass-v8.js': (RESOURCES / 'js/clubunio-glass-v8.js', 'text/javascript'),
     '/img/clubunio-logo-light.svg': (RESOURCES / 'img/clubunio-logo-light.svg', 'image/svg+xml'),
     '/img/svs-logo.png': (ROOT / 'deploy/keycloak/themes/sv-sissach/login/resources/img/svs-logo.png', 'image/png'),
     '/css/sv-sissach-glass.css': (ROOT / 'deploy/keycloak/themes/sv-sissach-glass-dev/login/resources/css/sv-sissach-glass.css', 'text/css'),
@@ -67,15 +67,34 @@ class Fixture(BaseHTTPRequestHandler):
             <a href="/?view=login&brand=clubunio&lang=en">ClubUnio login</a>
             </aside>''' if otp else ''
         html = '''<!doctype html><html class="login-pf" lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v7.css">%s
+            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v9.css">%s
             <style>*{box-sizing:border-box}body{margin:0}#kc-header-wrapper{width:240px;background-size:contain;background-position:center;background-repeat:no-repeat;color:transparent}.form-group{margin:8px 0 24px}label{display:block;font-size:14px}input{font:inherit;width:100%%}#kc-page-title{margin:0}h1{text-align:center}.fixture-controls{position:relative;z-index:5;display:flex;gap:12px;flex-wrap:wrap;padding:16px;color:#fff}.fixture-controls button,.fixture-controls a{font:14px system-ui;padding:12px;background:#142b44;color:#fff;border:1px solid #8ac1e0;border-radius:8px}</style>
-            <script src="/js/clubunio-glass-v6.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls)
+            <script src="/js/clubunio-glass-v8.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls)
         if query.get('slow') == ['1']:
             # Keep the top document inspectable while the native POST waits.
             # The hidden response frame redirects the fixture once it loads.
             html = html.replace('action="/"', 'action="/?delay=1" target="fixture-result"')
             html = html.replace('onsubmit="login.disabled=true;', 'onsubmit="document.getElementById(\'fixture-result\').dataset.armed=\'1\';login.disabled=true;')
             html = html.replace('</body>', '<iframe hidden name="fixture-result" id="fixture-result" onload="if(this.dataset.armed)location.href=\'/completed\'"></iframe></body>')
+        if query.get('freeze') == ['1']:
+            html = html.replace('</body>', '<script>setTimeout(()=>document.getAnimations().forEach(a=>{a.pause();a.currentTime=100}),100)</script></body>')
+        if query.get('probe') == ['1']:
+            html = html.replace('</body>', """<output id="motion-observations" style="display:block;position:relative;z-index:5;color:white;white-space:pre-wrap"></output>
+            <script>
+            const observations = [];
+            function observeMotion(label) {
+                const card=document.querySelector('.card-pf'), content=document.querySelector('#kc-content');
+                observations.push({label,card:{width:card.offsetWidth,height:card.offsetHeight},
+                    contentOpacity:getComputedStyle(content).opacity,
+                    chips:[...document.querySelectorAll('.cu-glass-chip')].map(e=>({opacity:getComputedStyle(e).opacity,transform:getComputedStyle(e).transform})),
+                    busy:document.querySelector('form').getAttribute('aria-busy'),
+                    statusVisible: getComputedStyle(document.querySelector('.cu-pending-state')).visibility});
+                document.getElementById('motion-observations').textContent=JSON.stringify(observations);
+            }
+            [100,600,1000,1300,1500,2100].forEach(t=>setTimeout(()=>observeMotion('intro-'+t),t));
+            let sampled=false;
+            document.querySelector('form').addEventListener('submit',()=>{if(sampled)return;sampled=true;[100,400,680,1000,2500].forEach(t=>setTimeout(()=>observeMotion('submit-'+t),t))},true);
+            </script></body>""")
         self.send(html)
 
     def do_POST(self):

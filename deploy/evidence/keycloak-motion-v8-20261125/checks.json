@@ -1,0 +1,34 @@
+{
+  "login-timeline": {
+    "initial_corners_untranslated": true,
+    "pending_after_2500ms": true,
+    "corners_hidden_after_contact": true,
+    "card_size_stable": true
+  },
+  "otp-timeline": {
+    "initial_corners_untranslated": true,
+    "pending_after_2500ms": true,
+    "corners_hidden_after_contact": true,
+    "card_size_stable": true
+  },
+  "stable_files_unchanged": 11,
+  "dev_desktop": {
+    "card_width": 580,
+    "stage_width": 580,
+    "card_center": 892.5,
+    "viewport_center": 892.5,
+    "locale_title_gap": 26
+  },
+  "dev_mobile": {
+    "viewport": 390,
+    "document_width": 375,
+    "no_horizontal_scroll": true,
+    "locale_above_title": true
+  },
+  "synthetic_tests_also_run_before_css_layout_refinement": [
+    "silent OTP extension fill",
+    "reduced motion and duplicate-submit race"
+  ],
+  "authentication_limit": "OTP choreography tested in loopback fixture with synthetic values; no real user/MFA authentication in this pass.",
+  "reference": "Both user-opened Facebook reels viewed; source geometry and timing compared with supplied ZIP templates. Finish intentionally fades instead of template spring return."
+}

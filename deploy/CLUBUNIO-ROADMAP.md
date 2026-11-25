@@ -1,5 +1,14 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV: Keycloak-Bewegungsablauf nach Vorlagen (25.11.2026)
+
+- [x] Ausschnitt/Glasecken, Öffnungsrichtung und Kontaktabschluss korrigiert.
+- [x] OTP-Zusammenführung, Paste/Automatik und anhaltenden Prüfstatus geprüft.
+- [x] Desktop-Mitte, Mobil und DE/EN geprüft; Rückweg dokumentiert.
+- [ ] Betreiber-Sichtprüfung auf DEV vor erneuter Stage-/PROD-Promotion.
+
+[Abnahmegrenzen](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## Keycloak: stabile Themes auf Stage/PROD (25.11.2026)
 
 - [x] DEV-geprüftes CSS-v7 in ClubUnio-/SV-Sissach-Themes übernommen.
