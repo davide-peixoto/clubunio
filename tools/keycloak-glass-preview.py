@@ -8,7 +8,7 @@ from threading import Event
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / 'deploy/keycloak/themes/clubunio-glass-dev/login/resources'
 ASSETS = {
-    '/css/clubunio-glass-v9.css': (RESOURCES / 'css/clubunio-glass-v9.css', 'text/css'),
+    '/css/clubunio-glass-v10.css': (RESOURCES / 'css/clubunio-glass-v10.css', 'text/css'),
     '/js/clubunio-glass-v8.js': (RESOURCES / 'js/clubunio-glass-v8.js', 'text/javascript'),
     '/img/clubunio-logo-light.svg': (RESOURCES / 'img/clubunio-logo-light.svg', 'image/svg+xml'),
     '/img/svs-logo.png': (ROOT / 'deploy/keycloak/themes/sv-sissach/login/resources/img/svs-logo.png', 'image/png'),
@@ -67,7 +67,7 @@ class Fixture(BaseHTTPRequestHandler):
             <a href="/?view=login&brand=clubunio&lang=en">ClubUnio login</a>
             </aside>''' if otp else ''
         html = '''<!doctype html><html class="login-pf" lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v9.css">%s
+            <title>Synthetic Keycloak UI fixture</title><link rel="stylesheet" href="/css/clubunio-glass-v10.css">%s
             <style>*{box-sizing:border-box}body{margin:0}#kc-header-wrapper{width:240px;background-size:contain;background-position:center;background-repeat:no-repeat;color:transparent}.form-group{margin:8px 0 24px}label{display:block;font-size:14px}input{font:inherit;width:100%%}#kc-page-title{margin:0}h1{text-align:center}.fixture-controls{position:relative;z-index:5;display:flex;gap:12px;flex-wrap:wrap;padding:16px;color:#fff}.fixture-controls button,.fixture-controls a{font:14px system-ui;padding:12px;background:#142b44;color:#fff;border:1px solid #8ac1e0;border-radius:8px}</style>
             <script src="/js/clubunio-glass-v8.js"></script></head><body><main class="login-pf-page"><header id="kc-header"><div id="kc-header-wrapper">%s</div></header><section class="card-pf"><header class="login-pf-header"><h1 id="kc-page-title">%s</h1></header><div id="kc-content"><form id="%s" action="/" method="post" onsubmit="login.disabled=true;return true;">%s<input type="submit" name="login" value="%s" class="pf-c-button pf-m-primary"></form></div></section></main>%s</body></html>''' % ('en' if en else 'de', brand, 'SV Sissach' if club else 'ClubUnio', title, 'kc-otp-login-form' if otp else 'kc-form-login', fields, 'Sign In' if en else 'Anmelden', controls)
         if query.get('slow') == ['1']:

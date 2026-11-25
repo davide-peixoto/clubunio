@@ -1,0 +1,28 @@
+{
+  "login": {
+    "corners_visible_outside_during_input": true,
+    "corners_hidden_after_submit": true,
+    "pending_preserved": true
+  },
+  "otp": {
+    "corners_visible_outside_during_input": true,
+    "corners_hidden_after_submit": true,
+    "pending_preserved": true
+  },
+  "native_posts": [
+    {
+      "native_post": true,
+      "kind": "login",
+      "synthetic_credentials_unchanged": true
+    },
+    {
+      "native_post": true,
+      "kind": "otp",
+      "synthetic_code_unchanged": true,
+      "length": 6,
+      "credential_preserved": true
+    }
+  ],
+  "dev_css10_hash_match": true,
+  "timing_note": "Background tabs may throttle CSS progression; final pending snapshots supplement timed samples."
+}

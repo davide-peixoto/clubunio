@@ -1,0 +1,28 @@
+{
+  "login": {
+    "busy": "true",
+    "chips": [
+      {
+        "opacity": "0",
+        "transform": "matrix(0.97, 0, 0, 0.97, 244, 217)"
+      },
+      {
+        "opacity": "0",
+        "transform": "matrix(0.97, 0, 0, 0.97, -244, -217)"
+      }
+    ]
+  },
+  "otp": {
+    "busy": "true",
+    "chips": [
+      {
+        "opacity": "0",
+        "transform": "matrix(0.97, 0, 0, 0.97, 244, 172)"
+      },
+      {
+        "opacity": "0",
+        "transform": "matrix(0.97, 0, 0, 0.97, -244, -172)"
+      }
+    ]
+  }
+}

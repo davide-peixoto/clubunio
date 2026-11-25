@@ -1,5 +1,12 @@
 # ClubUnio
 
+## DEV: Glasecken während der Eingabe sichtbar (25.11.2026)
+
+Öffnung von der Mitte nach außen; Ecken bleiben bis zum Absenden sichtbar.
+Nur beim Absenden Kontakt und Ausblendung. CSS-v10/JS-v8 auf DEV geprüft,
+keine Datenmigration; Stage/PROD unverändert.
+[Prüfung und Rückweg](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Keycloak-Vorlagenabgleich korrigiert (25.11.2026)
 
 Login/OTP mit passender Eckengeometrie, Annäherung von außen und Ausblendung

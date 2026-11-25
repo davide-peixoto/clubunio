@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## DEV: Glasecken während der Eingabe sichtbar (25.11.2026)
+
+Öffnung von der Mitte nach außen; Ecken bleiben bis zum Absenden sichtbar.
+Nur beim Absenden Kontakt und Ausblendung. CSS-v10/JS-v8 auf DEV geprüft,
+keine Datenmigration; Stage/PROD unverändert.
+[Prüfung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
 ## DEV: Keycloak-Bewegungsablauf nach Vorlagen (25.11.2026)
 
 - [x] Ausschnitt/Glasecken, Öffnungsrichtung und Kontaktabschluss korrigiert.

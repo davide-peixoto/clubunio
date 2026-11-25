@@ -1,6 +1,34 @@
 # Keycloak: Glasdesign, Social Login und SSO
 
-Stand: 25.11.2026. DEV: CSS-v9/JavaScript-v8. Stage/PROD: CSS-v7/JavaScript-v6.
+Stand: 25.11.2026. DEV: CSS-v10/JavaScript-v8. Stage/PROD: CSS-v7/JavaScript-v6.
+
+## Präzisierung: Ecken während der Eingabe sichtbar (25.11.2026)
+
+Die vorherige Interpretation des Öffnungsabschlusses war falsch: Die Ecken
+sollen sich beim Öffnen von der Mitte nach außen bewegen und während der
+Eingabe sichtbar bleiben. Nur beim Absenden treffen sie sich in der Mitte
+und blenden danach aus. Das gilt für Login und OTP.
+
+CSS-v10 korrigiert ausschließlich die Öffnungszeitleiste: 100 ms Auftakt,
+1,05 s Öffnung, durchgehend Deckkraft 1 und Endposition außen. Das Formular
+erscheint parallel ab 350 ms. Submit-Zeitleiste, JavaScript-v8, OTP-Automatik,
+Paste und anhaltender Prüfstatus bleiben erhalten. Reduzierte Bewegung zeigt
+die Ecken ohne Öffnungsanimation außen und blendet sie beim Absenden aus.
+
+Beide DEV-Themes referenzieren CSS-v10. Chrome bestätigt sichtbare äußere
+Ecken auf der echten SV-Sissach-DEV-Anmeldeseite. Synthetische native Login-
+und OTP-Formulare bestätigen sichtbare Ruheposition und ausgeblendete Ecken
+bei weiterhin aktivem Prüfstatus nach dem Absenden; unveränderte POST-Werte.
+Hintergrundtabs können CSS-Fortschritt drosseln, daher ergänzen abschließende
+DOM-Aufnahmen die zeitlichen Proben. Keine echte Benutzer-/MFA-Anmeldung.
+DE/EN-Katalogprüfung: 3075 Schlüssel. Stage/PROD unverändert.
+
+[Prüfprotokoll](evidence/keycloak-idle-corners-20261125/checks.json),
+[DEV mit sichtbaren Ecken](evidence/keycloak-idle-corners-20261125/dev-visible-corners.jpg).
+Sicherung: `/root/clubunio-releases/keycloak-idle-corners-20261125/dev-before-v10.tar.gz`,
+SHA-256 `442a0eb0a5abc17e14ff15ef9d1245f1e7b29198b7d824b118c0e6b5235c37fc`.
+Rückweg: nur gesicherte DEV-Themes wiederherstellen und Theme-Cache kontrolliert
+durch Dienstneustart erneuern. Keine Schema- oder Datenmigration.
 
 ## Erneuter Vorlagenvergleich: DEV CSS-v9/JS-v8 (25.11.2026)
 
