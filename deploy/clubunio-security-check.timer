@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly ClubUnio runtime and backup checks
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

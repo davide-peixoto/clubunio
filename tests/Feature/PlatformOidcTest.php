@@ -7,6 +7,12 @@ use Tests\TestCase;
 
 final class PlatformOidcTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['clubunio-verein-oidc.mobile_mfa_acr' => 'synthetic-mfa']);
+    }
+
     public function test_mobile_pairing_form_is_opt_in_and_rejects_invalid_pair(): void
     {
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32)), 'session.driver' => 'array',

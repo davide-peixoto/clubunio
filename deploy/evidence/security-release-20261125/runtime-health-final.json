@@ -1,0 +1,24 @@
+{
+  "critical_local_checks_ok": true,
+  "checks": {
+    "stage_runtime_config": true,
+    "stage_pool_uid": true,
+    "stage_private_env": true,
+    "stage_no_cross_read": true,
+    "prod_runtime_config": true,
+    "prod_pool_uid": true,
+    "prod_private_env": true,
+    "prod_no_cross_read": true,
+    "two_least_privilege_roles": true,
+    "parent_replacement_blocked": true,
+    "recent_encrypted_backup": true,
+    "backup_files_present": true,
+    "backup_timer_active": true,
+    "root_password_login_disabled": true
+  },
+  "warnings": [
+    "automatic_offsite_backup_requires_storage_box_key_authorization",
+    "scheduled_vps_reboot_required"
+  ],
+  "go_live_ready": false
+}

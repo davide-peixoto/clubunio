@@ -37,6 +37,10 @@ class DocumentUploadService
         $metadata['original_filename'] = mb_substr(preg_replace('/[\x00-\x1f\x7f]/', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))), 0, 255);
         $sha = hash('sha256', $bytes);
 
+        // Reject unauthorized sources before invoking the scanner; repeat authorization under lock below.
+        $this->authorizeSource($actor, $tenant, $kind, $id, $metadata, $publicRequest);
+        app(DocumentSafety::class)->assertClean($bytes);
+
         return DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $kind, $id, $metadata, $bytes, $mime, $extension, $sha, $publicRequest) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorizeSource($actor, $tenant, $kind, $id, $metadata, $publicRequest);
@@ -139,6 +143,8 @@ class DocumentUploadService
         $this->authorizeSource($actor, $tenant, $upload->kind, $upload->object_id, $metadata, $upload->public_request_id);
         $bytes = Crypt::decryptString($upload->encrypted_bytes);
         abort_unless(strlen($bytes) === (int) $upload->byte_count && hash_equals($upload->sha256, hash('sha256', $bytes)), 409, __('Dateiprüfsumme stimmt nicht überein.'));
+        // Includes pending uploads staged before scanning became mandatory, and every retry.
+        app(DocumentSafety::class)->assertClean($bytes);
         $found = false;
         if ($upload->provider_started_at) {
             try {

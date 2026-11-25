@@ -5,7 +5,7 @@ namespace App\ClubUnio\Http;
 use App\ClubUnio\Services\AccountSecurity;
 use App\ClubUnio\Services\EmergencyPasswordLogin;
 use App\ClubUnio\Services\KeycloakAccountLinks;
-use App\ClubUnio\Services\KeycloakMobileAssurance;
+use App\ClubUnio\Services\KeycloakWebAssurance;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +15,14 @@ final class RequireStrongWebSession
     public function handle(Request $request, Closure $next)
     {
         if (PlatformOidcController::guard($request) === 'platform' && $request->routeIs('clubunio.platform.*', 'clubunio.support.platform-intake')) {
+            $actor = $request->user('platform');
+            if ($actor && !$request->routeIs('clubunio.platform.oidc.*', 'clubunio.platform.logout')
+                && !KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('platform.oidc.assurance'), true)) {
+                Auth::guard('platform')->logout();
+                $request->session()->forget(['platform.oidc.expires', 'platform.oidc.assurance']);
+                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+                return redirect()->route('clubunio.platform.oidc.start');
+            }
             return $next($request);
         }
         if ($request->routeIs('clubunio.verein.oidc.*')) return $next($request);
@@ -40,7 +48,8 @@ final class RequireStrongWebSession
                 if ($actor && $actor->active && !$actor->api_only && ($proof['id'] ?? null) === (int) $actor->id
                     && ($proof['expires'] ?? 0) > time() && is_string($subject) && is_string($proof['stamp'] ?? null)
                     && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
-                    && KeycloakMobileAssurance::level() !== null && hash_equals($security->stamp($actor), $proof['stamp'])
+                    && KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('portal.oidc.assurance'))
+                    && hash_equals($security->stamp($actor), $proof['stamp'])
                     && (((array) config('clubunio-verein-oidc.subjects'))[$subject] ?? app(KeycloakAccountLinks::class)
                         ->accountId(config('clubunio-verein-oidc.issuer'), $subject)) === (int) $actor->id) continue;
                 Auth::guard($guard)->logout();
@@ -57,6 +66,7 @@ final class RequireStrongWebSession
                     $origin = $domain['origin'];
                 }
                 if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
+                    && KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('clubunio.oidc.assurance'))
                     && $request->isSecure() && $request->getSchemeAndHttpHost() === $origin
                     && $request->session()->get('clubunio.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)

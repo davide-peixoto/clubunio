@@ -1,0 +1,25 @@
+{
+  "verified_utc": "2026-11-25T11:48:27Z",
+  "results": {
+    "clubunio_stage": {
+      "full_restore_ok": true,
+      "table_count": 368
+    },
+    "clubunio_prod": {
+      "full_restore_ok": true,
+      "table_count": 268
+    },
+    "keycloak": {
+      "full_restore_ok": true,
+      "table_count": 101
+    }
+  },
+  "temporary_databases_removed": true,
+  "manual_external_copy": {
+    "encrypted_files": 9,
+    "bytes": 47769568,
+    "all_sha256_verified": true,
+    "three_pg_headers_verified": true
+  },
+  "automated_external_backup_working": false
+}

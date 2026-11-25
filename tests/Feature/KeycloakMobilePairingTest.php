@@ -28,6 +28,8 @@ final class KeycloakMobilePairingTest extends TestCase
         $db = DB::connection('clubunio');
         $db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $db->unprepared(<<<'SQL'
+CREATE TABLE clubora.accounts (id integer PRIMARY KEY, active integer, api_only integer, password text);
+INSERT INTO clubora.accounts VALUES (42,1,0,'synthetic-hash');
 CREATE TABLE clubora.account_security (account_id integer PRIMARY KEY, session_version text, totp_encrypted text);
 CREATE TABLE clubora.account_passkeys (account_id integer);
 CREATE TABLE clubora.account_security_pairs (id text PRIMARY KEY, proof_hash text, confirmation_hash text,

@@ -1,5 +1,11 @@
 # ClubUnio migration work packages
 
+## Sicherheitsrelease Stage/PROD und VPS (25.11.2026)
+
+MFA, zentraler Sitzungswiderruf, Malwareprüfung und getrennte Runtime-/DB-Rechte sind aktiv und geprüft. Verschlüsselte Sicherungen wurden wiederhergestellt und extern manuell kopiert. Automatisches Hetzner-Backup und geplante VPS-Wartung bleiben offen; keine pauschale Go-live-Freigabe. DEV-App unverändert.
+[Abnahme, Migration, Rückweg und offene Punkte](CLUBUNIO-SECURITY-RELEASE-20261125.md).
+
+
 ## Keycloak: freigegebener Stand auf Stage/PROD (25.11.2026)
 
 CSS-v10/JS-v8 aus DEV übernommen: Ecken bleiben während der Eingabe sichtbar

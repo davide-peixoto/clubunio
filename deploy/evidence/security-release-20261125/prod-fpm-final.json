@@ -1,0 +1,21 @@
+{
+  "environment": "prod",
+  "passed": true,
+  "checks": {
+    "least_privilege_db": true,
+    "other_environment_unreadable": true,
+    "source_not_writable": true,
+    "runtime_writable": true,
+    "state_enforced": true,
+    "backchannel_enabled": true,
+    "debug_disabled": true,
+    "apple_wallet_ready": true,
+    "google_wallet_ready": true,
+    "push_private_files_readable": true,
+    "scanner_clean": true,
+    "scanner_eicar_rejected": true,
+    "translation_de": true,
+    "translation_en": true,
+    "dedicated_uid": true
+  }
+}

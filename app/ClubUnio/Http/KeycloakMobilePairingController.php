@@ -83,15 +83,19 @@ final class KeycloakMobilePairingController
     public function complete(array $pair, Account $actor, \stdClass $claims, ?string $origin = null): ?string
     {
         $origin ??= config('clubunio-security.origin');
-        $stamp = app(KeycloakMobileAssurance::class)->stamp($actor, $claims);
-        abort_unless($stamp !== null, 403);
         $returnSecret = ($pair['native'] ?? false) ? bin2hex(random_bytes(32)) : null;
         $query = $this->pairs()->where('id', $pair['pair'])
             ->where('confirmation_hash', $this->pairHash($pair['pair'], $pair['confirmation'], $origin))
             ->where('expires_at', '>', now())->whereNull('account_id')->whereNull('consumed_at');
-        $this->security->db()->transaction(function () use ($query, $returnSecret, $actor, $stamp) {
+        $this->security->db()->transaction(function () use ($query, $returnSecret, $actor, $claims) {
             $row = (clone $query)->lockForUpdate()->first();
             abort_unless($row, 403);
+            // Same pair -> account lock order as redeem -> MobileSessions::issue.
+            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
+            abort_unless($fresh->active && !$fresh->api_only
+                && \App\ClubUnio\Services\KeycloakLogoutState::accepts($fresh, $claims), 403);
+            $stamp = app(KeycloakMobileAssurance::class)->stamp($fresh, $claims);
+            abort_unless($stamp !== null, 403);
             $query->update(['account_id' => $actor->id, 'session_stamp' => $stamp,
                 'proof_hash' => $returnSecret === null ? $row->proof_hash : hash('sha256', $row->proof_hash.'|'.$returnSecret)]);
         });

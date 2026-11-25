@@ -21,7 +21,13 @@ esac
 test -f "$patch"
 cd "$root"
 test -f bootstrap/cache/config.php
-backup="$root/storage/app/private/openai-model-upgrades/release-$instance-$(date -u +%Y%m%d-%H%M%S)"
+if test "$instance" = dev; then
+  backup="$root/storage/app/private/openai-model-upgrades/release-$instance-$(date -u +%Y%m%d-%H%M%S)"
+else
+  test "$(id -u)" = 0
+  umask 077
+  backup="/root/clubunio-releases/openai-model-upgrades/release-$instance-$(date -u +%Y%m%d-%H%M%S)"
+fi
 mkdir -m 0700 -p "$backup"
 cp -p bootstrap/cache/config.php "$backup/config.php"
 mapfile -t paths < <(git apply --numstat "$patch" | cut -f3)

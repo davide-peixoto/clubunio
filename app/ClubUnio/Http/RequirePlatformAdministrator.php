@@ -21,6 +21,13 @@ final class RequirePlatformAdministrator
             }
         }
         $actor = $request->user(PlatformOidcController::guard($request));
+        if ($actor && PlatformOidcController::guard($request) === 'platform'
+            && !\App\ClubUnio\Services\KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('platform.oidc.assurance'), true)) {
+            \Illuminate\Support\Facades\Auth::guard('platform')->logout();
+            $request->session()->forget(['platform.oidc.expires', 'platform.oidc.assurance']);
+            if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+            return redirect()->route('clubunio.platform.oidc.start');
+        }
         if (! $actor) {
             return redirect()->route('clubunio.platform.login');
         }

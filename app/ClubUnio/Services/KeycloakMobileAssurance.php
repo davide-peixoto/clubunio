@@ -26,7 +26,7 @@ final class KeycloakMobileAssurance
     public function stamp(Account $account, ?\stdClass $claims = null): ?string
     {
         $level = self::level();
-        if ($level === null || ($claims !== null && !self::accepts($claims, $level, time()))) {
+        if ($level === null || ($claims !== null && (!self::accepts($claims, $level, time()) || !KeycloakLogoutState::accepts($account, $claims)))) {
             return null;
         }
         $issuer = config('clubunio-verein-oidc.issuer');

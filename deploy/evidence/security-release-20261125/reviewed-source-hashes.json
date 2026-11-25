@@ -1,0 +1,82 @@
+{
+  "app/ClubUnio/Http/KeycloakBackchannelController.php": {
+    "stage_candidate_sha256": "50e46c2d65f3907d2904f4ab0f2f9ae7548ad39de2d3812af1ed53a62d9fb2e4",
+    "prod_candidate_sha256": "50e46c2d65f3907d2904f4ab0f2f9ae7548ad39de2d3812af1ed53a62d9fb2e4"
+  },
+  "app/ClubUnio/Http/KeycloakMobilePairingController.php": {
+    "stage_candidate_sha256": "86bba93dc6d322533a8f02949a5c5607fcaab051019340515e121186d5a8ae70",
+    "prod_candidate_sha256": "86bba93dc6d322533a8f02949a5c5607fcaab051019340515e121186d5a8ae70"
+  },
+  "app/ClubUnio/Http/PlatformOidcController.php": {
+    "stage_candidate_sha256": "8c895a1589137084e754df310ebdb3bfd98ad57e21489bae4e2483ab61807309",
+    "prod_candidate_sha256": "8c895a1589137084e754df310ebdb3bfd98ad57e21489bae4e2483ab61807309"
+  },
+  "app/ClubUnio/Http/RequirePlatformAdministrator.php": {
+    "stage_candidate_sha256": "cf60177b7254bc7170ed10a59159b054a9c247bffe7bc906ecbb20d8ddf56adb",
+    "prod_candidate_sha256": "cf60177b7254bc7170ed10a59159b054a9c247bffe7bc906ecbb20d8ddf56adb"
+  },
+  "app/ClubUnio/Http/RequireStrongWebSession.php": {
+    "stage_candidate_sha256": "5b079cf79e1d634a13abca7fd3a70e517946c1a95ddf71eafb5fc75e3ff95036",
+    "prod_candidate_sha256": "5b079cf79e1d634a13abca7fd3a70e517946c1a95ddf71eafb5fc75e3ff95036"
+  },
+  "app/ClubUnio/Services/AccountSecurity.php": {
+    "stage_candidate_sha256": "eb328eef8abb6336ec5eee9dd1f40cb87897cb7ef84baf8ef24eb86d295e5688",
+    "prod_candidate_sha256": "eb328eef8abb6336ec5eee9dd1f40cb87897cb7ef84baf8ef24eb86d295e5688"
+  },
+  "app/ClubUnio/Services/DocumentSafety.php": {
+    "stage_candidate_sha256": "f977e389860b52f104def1d5de6219cfe07890a0f74db2e19c5451396baf4512",
+    "prod_candidate_sha256": "f977e389860b52f104def1d5de6219cfe07890a0f74db2e19c5451396baf4512"
+  },
+  "app/ClubUnio/Services/DocumentUploadService.php": {
+    "stage_candidate_sha256": "aeef6e7cb9440b13e64765c537d77b483149805d84cf1f4c6b977e984a6be260",
+    "prod_candidate_sha256": "aeef6e7cb9440b13e64765c537d77b483149805d84cf1f4c6b977e984a6be260"
+  },
+  "app/ClubUnio/Services/KeycloakBackchannelLogout.php": {
+    "stage_candidate_sha256": "ea3050090031d2a7ba5b345330ff6084735ca1047100175f4273a4ef2df560d9",
+    "prod_candidate_sha256": "ea3050090031d2a7ba5b345330ff6084735ca1047100175f4273a4ef2df560d9"
+  },
+  "app/ClubUnio/Services/KeycloakCodeExchange.php": {
+    "stage_candidate_sha256": "bba63669e4a9861c2f6c446e32f8a6cd931cd3c92e729628fb2df71d5dd2dd71",
+    "prod_candidate_sha256": "bba63669e4a9861c2f6c446e32f8a6cd931cd3c92e729628fb2df71d5dd2dd71"
+  },
+  "app/ClubUnio/Services/KeycloakLogoutState.php": {
+    "stage_candidate_sha256": "e25ba310befa6d02babdb7d844dc2fd072bdc33235ab09222feb69efd2bed046",
+    "prod_candidate_sha256": "e25ba310befa6d02babdb7d844dc2fd072bdc33235ab09222feb69efd2bed046"
+  },
+  "app/ClubUnio/Services/KeycloakMobileAssurance.php": {
+    "stage_candidate_sha256": "21aa8c5fe854aa6225d4c7fd286507399db4a810e8a3b6bdedb7afd84672a4a4",
+    "prod_candidate_sha256": "21aa8c5fe854aa6225d4c7fd286507399db4a810e8a3b6bdedb7afd84672a4a4"
+  },
+  "app/ClubUnio/Services/KeycloakWebAssurance.php": {
+    "stage_candidate_sha256": "685a154e1833b77ed878abd7efb61dcc3a928e05eade57f643f94906795d6362",
+    "prod_candidate_sha256": "685a154e1833b77ed878abd7efb61dcc3a928e05eade57f643f94906795d6362"
+  },
+  "bootstrap/app.php": {
+    "stage_candidate_sha256": "efa534ad39de1c29ff0ee11298c4d467b409395613096d101ee7c2fb73463f5c",
+    "prod_candidate_sha256": "efa534ad39de1c29ff0ee11298c4d467b409395613096d101ee7c2fb73463f5c"
+  },
+  "config/clubunio-keycloak-backchannel.php": {
+    "stage_candidate_sha256": "3062c1d5fa5f77718dc6bcd24ab5fc878b516893abe8d7b35ee4fc79e16314a8",
+    "prod_candidate_sha256": "3062c1d5fa5f77718dc6bcd24ab5fc878b516893abe8d7b35ee4fc79e16314a8"
+  },
+  "config/clubunio-platform-oidc.php": {
+    "stage_candidate_sha256": "3d0fdca189efe4b8772739375a32d42bea5abe2b01833d8496d7d9d68db54f94",
+    "prod_candidate_sha256": "3d0fdca189efe4b8772739375a32d42bea5abe2b01833d8496d7d9d68db54f94"
+  },
+  "config/clubunio-verein-oidc.php": {
+    "stage_candidate_sha256": "95585a925fe56617abb5d3cb449344d3fa25c209468404cfa6376d741fb4574e",
+    "prod_candidate_sha256": "95585a925fe56617abb5d3cb449344d3fa25c209468404cfa6376d741fb4574e"
+  },
+  "database/clubunio/2026_11_25_010000_keycloak_logout_watermarks.php": {
+    "stage_candidate_sha256": "f09143af70fe4a9dfd42e68e1a2bfebafbefebaf074f4775c54426e5c42df4ec",
+    "prod_candidate_sha256": "f09143af70fe4a9dfd42e68e1a2bfebafbefebaf074f4775c54426e5c42df4ec"
+  },
+  "lang/de/document_safety.php": {
+    "stage_candidate_sha256": "598a4d55c58e112ad0c1f14092b7218423a12909f3fde1f827978dbd13bdff01",
+    "prod_candidate_sha256": "598a4d55c58e112ad0c1f14092b7218423a12909f3fde1f827978dbd13bdff01"
+  },
+  "lang/en/document_safety.php": {
+    "stage_candidate_sha256": "91980963ea318431d996656075761b2735d6f2959657f92256ec1bd0145318c0",
+    "prod_candidate_sha256": "91980963ea318431d996656075761b2735d6f2959657f92256ec1bd0145318c0"
+  }
+}

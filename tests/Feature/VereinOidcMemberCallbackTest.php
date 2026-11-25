@@ -21,7 +21,8 @@ class VereinOidcMemberCallbackTest extends TestCase
             'clubunio-verein-oidc.enabled'=>true,'clubunio-verein-oidc.only'=>false,
             'clubunio-verein-oidc.origin'=>'https://club.test','clubunio-verein-oidc.client'=>'synthetic',
             'clubunio-verein-oidc.secret'=>'synthetic','clubunio-verein-oidc.subjects'=>['subject'=>1],
-            'clubunio-verein-oidc.invites_enabled'=>true,'clubunio-verein-oidc.mobile_enabled'=>true]);
+            'clubunio-verein-oidc.invites_enabled'=>true,'clubunio-verein-oidc.mobile_enabled'=>true,
+            'clubunio-verein-oidc.mobile_mfa_acr'=>'synthetic-mfa']);
         DB::purge('clubunio'); $db=DB::connection('clubunio'); $db->statement("ATTACH DATABASE ':memory:' AS clubora");
         $db->unprepared("CREATE TABLE clubora.accounts(id integer primary key,active integer,api_only integer);
             INSERT INTO clubora.accounts VALUES(1,1,0);
@@ -42,7 +43,8 @@ class VereinOidcMemberCallbackTest extends TestCase
             public function configuration($request) { return ['tenant'=>$this->tenant]; }
         });
         $this->app->instance(KeycloakCodeExchange::class,new class {
-            public function verify(...$args) { return (object)['sub'=>'subject','iss'=>'https://identity.test','exp'=>time()+600]; }
+            public function verify(...$args) { return (object)['sub'=>'subject','iss'=>'https://identity.test','exp'=>time()+600,
+                'iat'=>time(),'auth_time'=>time(),'acr'=>'synthetic-mfa']; }
         });
         $this->app->instance(KeycloakAccountLinks::class,new class {
             public function accountId(...$args) { return 1; }

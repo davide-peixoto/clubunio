@@ -1,0 +1,686 @@
+--- a/app/ClubUnio/Http/KeycloakMobilePairingController.php
++++ b/app/ClubUnio/Http/KeycloakMobilePairingController.php
+@@ -12,7 +12,7 @@
+ {
+     public function __construct(private AccountSecurity $security) {}
+ 
+-    private function pairs() { return $this->security->db()->table('clubora.account_security_pairs'); }
++    private function pairs() { return $this->security->db()->table('clubunio.account_security_pairs'); }
+ 
+     public static function available(string $origin): bool
+     {
+--- a/app/ClubUnio/Http/PlatformOidcController.php
++++ b/app/ClubUnio/Http/PlatformOidcController.php
+@@ -18,14 +18,13 @@
+     public static function requiresClubOidc(Account $account): bool
+     {
+         $config = config('clubunio-verein-oidc');
+-        return $config['enabled'] && !$config['legacy_allowed']
+-            && is_array($config['subjects']) && in_array((int) $account->id, $config['subjects'], true);
++        return config('clubunio-verein-oidc.only') || ($config['enabled'] && !$config['legacy_allowed']
++            && is_array($config['subjects']) && in_array((int) $account->id, $config['subjects'], true));
+     }
+ 
+     public static function required(): bool
+     {
+-        return config('clubunio-verein-oidc.only')
+-            || (config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed'));
++        return config('clubunio-verein-oidc.only') || (config('clubunio-platform-oidc.enabled') && !config('clubunio-platform-oidc.legacy_allowed'));
+     }
+ 
+     public static function guard(Request $request): string
+@@ -56,13 +55,13 @@
+         $config = $this->configuration($request);
+         $invitation = null;
+         $pair = null;
+-        $platformMigration = $request->routeIs('clubunio.verein.oidc.platform-migration');
+-        abort_if($platformMigration && !\App\ClubUnio\Services\PlatformAdminKeycloakLink::configured(), 404);
+-        if ($request->routeIs('clubunio.verein.oidc.mobile.start', 'clubunio.verein.oidc.mobile.native')) {
++        if ($request->routeIs('clubunio.verein.oidc.mobile.native')) {
++            app(KeycloakMobilePairingController::class)->validPair($request, true);
++            $pair = $request->only(['pair', 'confirmation']) + ['native' => true];
++        } elseif ($request->routeIs('clubunio.verein.oidc.mobile.start')) {
+             abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
+-            $native = $request->routeIs('clubunio.verein.oidc.mobile.native');
+-            app(KeycloakMobilePairingController::class)->validPair($request, $native);
+-            $pair = $request->only(['pair', 'confirmation']) + ['native' => $native];
++            app(StrongLoginController::class)->validPair($request);
++            $pair = $request->only(['pair', 'confirmation']);
+         }
+         if ($request->routeIs('clubunio.verein.oidc.invite.accept')) {
+             abort_unless($config['invites_enabled'], 404);
+@@ -73,27 +72,27 @@
+         $state = bin2hex(random_bytes(32));
+         $nonce = bin2hex(random_bytes(32));
+         $verifier = bin2hex(random_bytes(32));
+-        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair','platformMigration') + [
+-            'expires' => time() + 300, 'callback' => $config['callback'], 'client' => $config['client'],
+-        ]);
+-
+-        $level = $pair !== null ? KeycloakMobileAssurance::level()
+-            : KeycloakWebAssurance::requiredLevel($config['guard'] === 'platform');
++        $request->session()->put($config['guard'].'.oidc.pending', compact('state','nonce','verifier','invitation','pair') + ['expires' => time() + 300, 'callback' => $config['callback'], 'client' => $config['client']]);
++
++        $level = $pair !== null ? KeycloakMobileAssurance::level() : KeycloakWebAssurance::requiredLevel($config['guard'] === 'platform');
+         abort_if($level === null, 503);
++
+         return redirect()->away($config['issuer'].'/protocol/openid-connect/auth?'.http_build_query([
+             'response_type' => 'code', 'scope' => 'openid', 'client_id' => $config['client'],
+             'redirect_uri' => $config['callback'], 'state' => $state, 'nonce' => $nonce,
+             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
+             'ui_locales' => app()->getLocale(),
+-            ...($invitation !== null || $pair !== null || $platformMigration ? ['prompt' => 'login'] : []),
+-            'claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0,
++            ...($invitation !== null || $pair !== null || $level !== null ? ['prompt' => 'login'] : []),
++            ...($level !== null
++                ? ['claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0]
++                : []),
+         ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
+     }
+ 
+     public function mobile(Request $request)
+     {
+         $config = $this->configuration($request);
+-        abort_unless(KeycloakMobilePairingController::available($config['origin']), 404);
++        abort_unless($config['mobile_enabled'] && $config['invites_enabled'], 404);
+         $pair = $request->validate(['pair' => 'required|uuid'])['pair'];
+ 
+         return response()->view('clubunio.keycloak-mobile', compact('pair'))
+@@ -114,45 +113,25 @@
+         $pending = $request->session()->pull($config['guard'].'.oidc.pending');
+         $state = $request->query('state');
+         $code = $request->query('code');
+-        abort_unless(is_array($pending) && $pending['expires'] >= time() && is_string($state)
++        abort_unless(is_array($pending) && $pending['expires'] >= time() && ($pending['callback'] ?? null) === $config['callback']
++            && ($pending['client'] ?? null) === $config['client'] && is_string($state)
+             && hash_equals($pending['state'], $state) && is_string($code) && $code !== '' && strlen($code) <= 4096, 403);
+         abort_if($request->query('iss') !== null && $request->query('iss') !== $config['issuer'], 403);
+-        if (isset($config['tenant']) || isset($pending['callback'])) {
+-            abort_unless(($pending['callback'] ?? null) === $config['callback']
+-                && ($pending['client'] ?? null) === $config['client'], 403);
+-        }
+         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
+         $club = $config['guard'] === 'clubunio';
+-        $clubMfa = $club;
+-        $level = is_array($pending['pair'] ?? null) ? KeycloakMobileAssurance::level()
+-            : KeycloakWebAssurance::requiredLevel(!$club);
++        $level = is_array($pending['pair'] ?? null) ? KeycloakMobileAssurance::level() : KeycloakWebAssurance::requiredLevel(!$club);
+         abort_if($level === null, 503);
+         abort_unless(KeycloakMobileAssurance::accepts($claims, $level, time()), 403);
+-        if ($club && ($pending['platformMigration'] ?? false) === true) {
+-            $actor = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class)->resolve($claims);
+-            abort_unless($actor, 403);
+-            $assurance = KeycloakWebAssurance::proof($actor, $claims, true);
+-            Auth::guard('platform')->login($actor);
+-            $request->session()->regenerate();
+-            $request->session()->put('platform.oidc.expires', min($claims->exp + 1800, time() + 1800));
+-            $request->session()->put('platform.oidc.assurance', $assurance);
+-
+-            return redirect()->route('clubunio.platform.index')->header('Cache-Control', 'no-store');
+-        }
++        $webMfa = !is_array($pending['pair'] ?? null);
+         $links = app(KeycloakAccountLinks::class);
+         $id = $config['subjects'][$claims->sub] ?? null;
+-        // An unlinked subject's earlier logout cannot yet resolve to a local account.
+-        // First linking therefore never authorizes a session with the linking token.
+         $linkedBefore = $id !== null || ($club && $config['invites_enabled']
+             && $links->accountId($claims->iss, $claims->sub) !== null);
+         if ($club && $config['invites_enabled']) {
+             if (is_string($pending['invitation'] ?? null)) {
+-                $id = (int) $links->accept($pending['invitation'], $claims, $clubMfa)->id;
++                $id = (int) $links->accept($pending['invitation'], $claims, $webMfa)->id;
+             } elseif ($id === null) {
+                 $id = $links->accountId($claims->iss, $claims->sub);
+-                if ($id === null && !isset($config['tenant']) && !is_array($pending['pair'] ?? null)) {
+-                    $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims, $clubMfa);
+-                }
+             }
+         }
+         if ($club && !$linkedBefore && is_int($id) && $id > 0 && !is_array($pending['pair'] ?? null)) {
+@@ -165,37 +144,40 @@
+             app(\App\ClubUnio\Services\ParentAccessService::class)->verifiedLogin($actor, $claims, $config['tenant'] ?? null);
+         }
+         if (isset($config['tenant'])) {
+-            abort_unless($actor?->active && ! $actor->api_only && app(MemberAccessService::class)->canEnter($actor, $config['tenant']), 403);
++            abort_unless($actor?->active && !$actor->api_only && app(MemberAccessService::class)->canEnter($actor, $config['tenant']), 403);
+         }
+         if ($club && is_array($pending['pair'] ?? null)) {
++            if (($pending['pair']['native'] ?? false) === true) {
++                abort_unless($actor?->active && !$actor->api_only && $actor->tenants()->get()
++                    ->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
++                $secret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims, $config['origin']);
++
++                return redirect()->away(($config['mobile_callback_scheme'] ?? 'clubunio-auth').'://signin?'.http_build_query([
++                    'pair' => $pending['pair']['pair'], 'return_secret' => $secret,
++                ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
++            }
+             abort_unless($config['mobile_enabled'] && $config['invites_enabled'] && $actor?->active
+                 && ! $actor->api_only && $links->accountId($claims->iss, $claims->sub) === (int) $actor->id, 403);
+             abort_unless($actor->tenants()->get()->contains(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant)), 403);
+-            $returnSecret = app(KeycloakMobilePairingController::class)->complete($pending['pair'], $actor, $claims, $config['origin']);
+-            if ($returnSecret !== null) {
+-                $scheme = $config['mobile_callback_scheme'] ?? 'clubunio-auth';
+-                return redirect()->away($scheme.'://signin?'.http_build_query([
+-                    'pair' => $pending['pair']['pair'], 'return_secret' => $returnSecret,
+-                ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
+-            }
++            app(StrongLoginController::class)->completeKeycloakPair($pending['pair'], $actor, $claims);
+ 
+             return response()->view('clubunio.keycloak-mobile', ['pair' => null])
+                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
+         }
+-        if ($club && $config['invites_enabled'] && $actor?->active && ! $actor->api_only && ! $actor->hasBackofficeTenant()) {
+-            $local = app(AccountSecurity::class);
+-            abort_if(!$clubMfa && $local->requiresStrongLogin($actor), 403);
+-            $tenant = $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
++        if ($club && ($webMfa || $config['invites_enabled']) && $actor?->active && ! $actor->api_only && ! $actor->hasBackofficeTenant()) {
++            abort_if(!$webMfa && app(AccountSecurity::class)->requiresStrongLogin($actor), 403);
++            $tenant = $config['tenant'] ?? $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
+             abort_unless($tenant, 403);
+             $assurance = KeycloakWebAssurance::proof($actor, $claims);
+             Auth::guard('portal')->login($actor);
+-            $request->session()->forget(['clubunio.emergency.portal', 'clubunio.federated.portal']);
+             $request->session()->regenerate();
+-            $request->session()->put('portal.oidc.assurance', $assurance);
+-            if ($clubMfa) {
+-                $request->session()->put('clubunio.federated.portal', [
+-                    'id' => (int) $actor->id, 'subject' => $claims->sub, 'stamp' => $local->stamp($actor),
+-                    'expires' => min($claims->exp + 1800, time() + 1800),
++            if ($webMfa) {
++                $request->session()->put([
++                    'portal.oidc.assurance' => $assurance,
++                    'portal.oidc.account' => (int) $actor->id,
++                    'portal.oidc.subject' => $claims->sub,
++                    'portal.oidc.origin' => $config['origin'],
++                    'portal.oidc.expires' => min($claims->exp + 1800, time() + 1800),
+                 ]);
+             }
+ 
+--- a/app/ClubUnio/Http/RequireStrongWebSession.php
++++ b/app/ClubUnio/Http/RequireStrongWebSession.php
+@@ -3,7 +3,6 @@
+ namespace App\ClubUnio\Http;
+ 
+ use App\ClubUnio\Services\AccountSecurity;
+-use App\ClubUnio\Services\EmergencyPasswordLogin;
+ use App\ClubUnio\Services\KeycloakAccountLinks;
+ use App\ClubUnio\Services\KeycloakWebAssurance;
+ use Closure;
+@@ -27,48 +26,20 @@
+         }
+         if ($request->routeIs('clubunio.verein.oidc.*')) return $next($request);
+         $security = app(AccountSecurity::class);
+-        if ($request->routeIs('filament.clubunio.auth.logout', 'clubunio.portal.logout', 'clubunio.platform.logout')) {
++        if ($request->routeIs('clubunio.security.*', 'filament.clubunio.auth.logout', 'clubunio.portal.logout', 'clubunio.platform.logout')) {
+             return $next($request);
+         }
+         foreach (['clubunio', 'portal'] as $guard) {
+             $actor = Auth::guard($guard)->user();
+-            if ($guard === 'portal' && $request->session()->has('clubunio.emergency.portal')) {
+-                $stamp = $request->session()->get('clubunio.emergency.portal');
+-                $active = $actor ? app(EmergencyPasswordLogin::class)->stamp($request, $actor) : null;
+-                if (is_string($stamp) && $active !== null && hash_equals($active, $stamp)) continue;
+-                Auth::guard($guard)->logout();
+-                $request->session()->forget('clubunio.emergency.portal');
+-                $request->session()->regenerate();
+-                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+-                return redirect()->route('clubunio.portal.login');
+-            }
+-            if ($guard === 'portal' && $request->session()->has('clubunio.federated.portal')) {
+-                $proof = $request->session()->get('clubunio.federated.portal');
+-                $subject = $proof['subject'] ?? null;
+-                if ($actor && $actor->active && !$actor->api_only && ($proof['id'] ?? null) === (int) $actor->id
+-                    && ($proof['expires'] ?? 0) > time() && is_string($subject) && is_string($proof['stamp'] ?? null)
+-                    && $request->isSecure() && $request->getSchemeAndHttpHost() === config('clubunio-verein-oidc.origin')
+-                    && KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('portal.oidc.assurance'))
+-                    && hash_equals($security->stamp($actor), $proof['stamp'])
+-                    && (((array) config('clubunio-verein-oidc.subjects'))[$subject] ?? app(KeycloakAccountLinks::class)
+-                        ->accountId(config('clubunio-verein-oidc.issuer'), $subject)) === (int) $actor->id) continue;
+-                Auth::guard($guard)->logout();
+-                $request->session()->forget('clubunio.federated.portal');
+-                $request->session()->regenerate();
+-                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+-                return redirect()->route('clubunio.verein.oidc.start');
+-            }
+-            if ($guard === 'clubunio' && $actor && config('clubunio-verein-oidc.enabled')) {
++            $boundTenant = $actor ? app(\App\ClubUnio\Services\VereinOidcDomain::class)->tenant($request) : null;
++            $origin = $boundTenant ? $request->getSchemeAndHttpHost() : config('clubunio-verein-oidc.origin');
++            $hostAllowed = $request->isSecure() && $request->getSchemeAndHttpHost() === $origin
++                && (!$boundTenant || $actor->canAccessTenant($boundTenant));
++            if ($guard === 'clubunio' && $actor && (config('clubunio-verein-oidc.enabled') || config('clubunio-verein-oidc.only'))) {
+                 $id = $request->session()->get('clubunio.oidc.account');
+-                $origin = config('clubunio-verein-oidc.origin');
+-                $domain = app(\App\ClubUnio\Services\VereinOidcDomain::class)->configuration($request);
+-                if ($domain && $actor->canAccessTenant($domain['tenant'])) {
+-                    $origin = $domain['origin'];
+-                }
+-                if ($id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
++                if (config('clubunio-verein-oidc.enabled') && $actor->active && !$actor->api_only && $id === (int) $actor->id && (int) $request->session()->get('clubunio.oidc.expires') > time()
+                     && KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('clubunio.oidc.assurance'))
+-                    && $request->isSecure() && $request->getSchemeAndHttpHost() === $origin
+-                    && $request->session()->get('clubunio.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
++                    && $hostAllowed && $request->session()->get('clubunio.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
+                     && (in_array($id, (array) config('clubunio-verein-oidc.subjects'), true)
+                         || (config('clubunio-verein-oidc.invites_enabled')
+                             && is_string($subject = $request->session()->get('clubunio.oidc.subject'))
+@@ -77,10 +48,24 @@
+                             ) === $id))) continue;
+                 if ($id !== null || PlatformOidcController::requiresClubOidc($actor)) {
+                     Auth::guard($guard)->logout();
+-                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject', 'clubunio.oidc.origin']);
++                    $request->session()->forget(['clubunio.oidc.expires', 'clubunio.oidc.account', 'clubunio.oidc.subject', 'clubunio.oidc.assurance']);
+                     if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+                     return redirect()->route('clubunio.verein.oidc.start');
+                 }
++            }
++            if ($guard === 'portal' && $actor && (config('clubunio-verein-oidc.only') || $request->session()->has('portal.oidc.account'))) {
++                $subject = $request->session()->get('portal.oidc.subject');
++                if (config('clubunio-verein-oidc.enabled') && $request->isSecure()
++                    && $hostAllowed && $request->session()->get('portal.oidc.origin', config('clubunio-verein-oidc.origin')) === $origin
++                    && KeycloakWebAssurance::acceptsSession($actor, $request->session()->get('portal.oidc.assurance'))
++                    && $request->session()->get('portal.oidc.account') === (int) $actor->id
++                    && (int) $request->session()->get('portal.oidc.expires') > time()
++                    && is_string($subject) && (config('clubunio-verein-oidc.subjects')[$subject] ?? null) === (int) $actor->id
++                    && $actor->active && !$actor->api_only) continue;
++                Auth::guard('portal')->logout();
++                $request->session()->forget(['portal.oidc.account', 'portal.oidc.subject', 'portal.oidc.expires', 'portal.oidc.assurance']);
++                if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
++                return redirect()->route('clubunio.portal.login');
+             }
+             if (!$actor || !$security->requiresStrongLogin($actor)) continue;
+             $stamp = $request->session()->get('clubunio.security.'.$guard);
+@@ -88,10 +73,10 @@
+             Auth::guard($guard)->logout();
+             $request->session()->regenerate();
+             if (!$request->isMethodSafe() || $request->expectsJson()) abort(401);
+-            if (config('clubunio-verein-oidc.enabled')) {
+-                return redirect()->route('clubunio.verein.oidc.start');
+-            }
+-            abort(403);
++            return redirect()->route('clubunio.security.show', [
++                'mode' => $guard === 'clubunio' && $request->routeIs('clubunio.platform.*') ? 'platform' : $guard,
++                'setup' => $security->mustEnroll($actor) ? '1' : null,
++            ]);
+         }
+         return $next($request);
+     }
+--- a/app/ClubUnio/Services/AccountSecurity.php
++++ b/app/ClubUnio/Services/AccountSecurity.php
+@@ -4,14 +4,16 @@
+ 
+ use App\ClubUnio\Models\Account;
+ use Illuminate\Http\Request;
+-use Illuminate\Support\Facades\{DB, RateLimiter};
+-
+-/** Read-only compatibility for existing factors and session stamps. */
++use Illuminate\Support\Facades\{Auth, Crypt, DB, RateLimiter};
++use Illuminate\Support\Timebox;
++use lbuchs\WebAuthn\{WebAuthn, WebAuthnException};
++use PragmaRX\Google2FA\Google2FA;
++
+ final class AccountSecurity
+ {
+     public function db() { return DB::connection('clubunio'); }
+-    public function settings() { return $this->db()->table('clubora.account_security'); }
+-    private function keys() { return $this->db()->table('clubora.account_passkeys'); }
++    public function settings() { return $this->db()->table('clubunio.account_security'); }
++    private function keys() { return $this->db()->table('clubunio.account_passkeys'); }
+ 
+     public function enabled(): bool { return config('clubunio-security.enabled') === true; }
+ 
+@@ -22,6 +24,18 @@
+             && $origin === $request->getSchemeAndHttpHost(), 404);
+ 
+         return $origin;
++    }
++
++    public function password(string $username, #[\SensitiveParameter] string $password): Account
++    {
++        return app(Timebox::class)->call(function (Timebox $timebox) use ($username, $password) {
++            $provider = Auth::createUserProvider('clubunio_users');
++            $credentials = ['username' => mb_strtolower(trim($username)), 'password' => $password, 'active' => true, 'api_only' => false];
++            $actor = $provider->retrieveByCredentials($credentials);
++            abort_unless($actor instanceof Account && $provider->validateCredentials($actor, $credentials), 401);
++            $timebox->returnEarly();
++            return $actor;
++        }, 200_000);
+     }
+ 
+     public function configured(Account $actor): bool
+@@ -43,6 +57,11 @@
+         return $this->configured($actor) || $this->mustEnroll($actor);
+     }
+ 
++    public function resetPending(Account $actor): bool
++    {
++        return $this->settings()->where('account_id', $actor->id)->where('reset_pending', true)->exists();
++    }
++
+     public function stamp(Account $actor): string
+     {
+         $row = $this->settings()->where('account_id', $actor->id)->first();
+@@ -57,8 +76,157 @@
+         abort_unless(RateLimiter::attempt($key, $limit, fn () => true, $seconds), 429);
+     }
+ 
+-    private function hash(#[\SensitiveParameter] string $value): string
+-    {
+-        return hash_hmac('sha256', $value, (string) config('app.key'));
++    public function verifySecondFactor(Account $actor, #[\SensitiveParameter] ?string $code): string
++    {
++        abort_unless($code && preg_match('/^\d{6}$/D', $code), 401);
++        $this->rate('factor', (string)$actor->id, 8, 300);
++        return $this->db()->transaction(function () use ($actor, $code) {
++            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
++            abort_unless($fresh->active && !$fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
++            $row = $this->settings()->where('account_id', $actor->id)->lockForUpdate()->first();
++            abort_unless($row?->totp_encrypted && !$row->reset_pending, 401);
++            $step = $this->totp()->verifyKeyNewer(Crypt::decryptString($row->totp_encrypted), $code, (int) $row->totp_last_step, 1);
++            abort_unless(is_int($step), 401);
++            $this->settings()->where('account_id', $actor->id)->update(['totp_last_step' => $step]);
++            return $this->stamp($fresh);
++        });
++    }
++
++    public function recover(Account $actor, #[\SensitiveParameter] string $code): string
++    {
++        $this->rate('factor', (string)$actor->id, 8, 300);
++        return $this->db()->transaction(function () use ($actor, $code) {
++            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
++            abort_unless($fresh->active && !$fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
++            $row = $this->settings()->where('account_id', $actor->id)->lockForUpdate()->first();
++            abort_unless($row && $this->configured($fresh), 401);
++            $hash = $this->hash($code);
++            $hashes = json_decode($row->recovery_hashes, true, flags: JSON_THROW_ON_ERROR);
++            $index = array_search($hash, $hashes, true);
++            abort_if($index === false, 401);
++            unset($hashes[$index]);
++            $setupCode = bin2hex(random_bytes(20));
++            $version = bin2hex(random_bytes(16));
++            $this->settings()->where('account_id', $actor->id)->update(['recovery_hashes' => json_encode(array_values($hashes), JSON_THROW_ON_ERROR),
++                'session_version' => $version, 'invitation_recovery' => true,
++                'invitation_email' => false, 'invitation_add_method' => false,
++                'invitation_hash' => $this->invitationHash($fresh, $setupCode, $version), 'invitation_expires_at' => now()->addMinutes(10)]);
++            $this->db()->table('clubunio.mobile_sessions')->where('account_id', $actor->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
++            return $setupCode;
++        });
++    }
++
++    public function invitation(Account $actor, bool $recovery = false, bool $email = false, ?string $existingStamp = null): string
++    {
++        return $this->db()->transaction(function () use ($actor, $recovery, $email, $existingStamp) {
++            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
++            $configured = $this->configured($fresh);
++            $addMethod = $configured && !$recovery && !$this->resetPending($fresh)
++                && $existingStamp && hash_equals($this->stamp($fresh), $existingStamp);
++            abort_if(!$fresh->active || $fresh->api_only || !hash_equals($fresh->password, $actor->password)
++                || ($configured && !$recovery && !$addMethod), 409);
++            abort_if($email && (!$recovery || !$this->emailRecoveryAllowed($fresh)), 403);
++            $code = bin2hex(random_bytes(20));
++            $version = $this->settings()->where('account_id', $fresh->id)->value('session_version') ?? '';
++            $this->settings()->upsert([['account_id' => $actor->id, 'invitation_hash' => $this->invitationHash($fresh, $code, $version),
++                'invitation_expires_at' => now()->addMinutes(30)->toIso8601String(),
++                'invitation_recovery' => $recovery, 'invitation_email' => $email, 'invitation_add_method' => $addMethod]], ['account_id'],
++                ['invitation_hash', 'invitation_expires_at', 'invitation_recovery', 'invitation_email', 'invitation_add_method']);
++            return $code;
++        });
++    }
++
++    public function emailRecoveryAllowed(Account $actor): bool
++    {
++        // Account-wide decision, not just the club that issued the mail.
++        $roles = $this->db()->table('clubunio.tenant_accounts')->where('account_id', $actor->id)->pluck('role');
++        return $roles->isNotEmpty() && $roles->every(fn ($role) => $role === 'member')
++            && !$this->db()->table('clubunio.platform_admins')->where('account_id', $actor->id)->where('active', true)->exists();
++    }
++
++    public function checkInvitation(Account $actor, #[\SensitiveParameter] string $code): void
++    {
++        $row = $this->settings()->where('account_id', $actor->id)->first();
++        abort_unless($row?->invitation_hash && $row->invitation_expires_at
++            && now()->lt(\Illuminate\Support\Carbon::parse($row->invitation_expires_at))
++            && hash_equals($row->invitation_hash, $this->invitationHash($actor, $code, $row->session_version ?? ''))
++            && (!$row->invitation_email || $this->emailRecoveryAllowed($actor)), 403);
++    }
++
++    public function enroll(Account $actor, string $invitation, array $updates, ?array $passkey = null): array
++    {
++        return $this->db()->transaction(function () use ($actor, $invitation, $updates, $passkey) {
++            $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
++            abort_unless($fresh->active && ! $fresh->api_only && hash_equals($fresh->password, $actor->password), 403);
++            $row = $this->settings()->where('account_id', $actor->id)->lockForUpdate()->firstOrFail();
++            $this->checkInvitation($fresh, $invitation);
++            abort_if($this->configured($fresh) && !$row->invitation_recovery && !$row->invitation_add_method, 409);
++            if ($row->invitation_add_method) {
++                abort_if(!$passkey && $row->totp_encrypted, 409);
++                abort_if($passkey && ($this->keys()->where('credential_hash', $passkey['credential_hash'])->exists()
++                    || $this->keys()->where('account_id', $actor->id)->count() >= 5), 409);
++            }
++            if ($row->invitation_recovery) {
++                $this->keys()->where('account_id', $actor->id)->delete();
++                $updates += ['totp_encrypted' => null, 'totp_last_step' => null];
++            }
++            $codes = array_map(fn () => bin2hex(random_bytes(16)), range(1, 8));
++            if ($passkey) $this->keys()->insert($passkey + ['account_id' => $actor->id]);
++            $this->settings()->where('account_id', $actor->id)->update($updates + [
++                'invitation_hash' => null, 'invitation_expires_at' => null, 'invitation_recovery' => false,
++                'invitation_email' => false, 'invitation_add_method' => false,
++                'session_version' => bin2hex(random_bytes(16)), 'reset_pending' => false,
++                'recovery_hashes' => json_encode(array_map($this->hash(...), $codes), JSON_THROW_ON_ERROR),
++            ]);
++            $this->db()->table('clubunio.mobile_sessions')->where('account_id', $actor->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
++            return $codes;
++        });
++    }
++
++    public function totp(): Google2FA { return new Google2FA; }
++    public function webAuthn(string $origin): WebAuthn { return new WebAuthn('ClubUnio', parse_url($origin, PHP_URL_HOST), ['none'], true); }
++    private function hash(#[\SensitiveParameter] string $value): string { return hash_hmac('sha256', $value, (string) config('app.key')); }
++
++    private function invitationHash(Account $actor, #[\SensitiveParameter] string $code, string $version): string
++    {
++        return $this->hash('setup|'.$actor->id.'|'.$actor->password.'|'.$version.'|'.$code);
++    }
++
++    public function base64(string $value): string
++    {
++        abort_unless(preg_match('/^[A-Za-z0-9_-]+$/D', $value), 422);
++        $bytes = base64_decode(strtr($value, '-_', '+/'), true);
++        abort_unless(is_string($bytes) && $bytes !== '', 422);
++        return $bytes;
++    }
++
++    public function clientData(string $value, string $origin): string
++    {
++        $bytes = $this->base64($value);
++        $data = json_decode($bytes, true);
++        abort_unless(is_array($data) && ($data['origin'] ?? null) === $origin && ($data['crossOrigin'] ?? false) === false
++            && !array_key_exists('topOrigin', $data), 422);
++        return $bytes;
++    }
++
++    public function passkeyLogin(string $origin, string $challenge, array $input): array
++    {
++        return $this->db()->transaction(function () use ($origin, $challenge, $input) {
++            $query = $this->keys()->where('credential_hash', hash('sha256', $this->base64($input['id'])))
++                ->where('rp_id', parse_url($origin, PHP_URL_HOST));
++            $owner = (clone $query)->value('account_id');
++            abort_unless($owner, 401);
++            $actor = Account::whereKey($owner)->where('active', true)->where('api_only', false)->lockForUpdate()->first();
++            abort_unless($actor && !$this->resetPending($actor), 401);
++            $key = (clone $query)->where('account_id', $owner)->lockForUpdate()->first();
++            abort_unless($key, 401);
++            $verifier = $this->webAuthn($origin);
++            try {
++                $verifier->processGet($this->clientData($input['client'], $origin), $this->base64($input['authenticator']),
++                    $this->base64($input['signature']), $key->public_key, $challenge, (int) $key->signature_counter, true);
++            } catch (WebAuthnException) { abort(401); }
++            $query->update(['signature_counter' => max((int) $key->signature_counter, (int) $verifier->getSignatureCounter())]);
++            return [$actor, $this->stamp($actor)];
++        });
+     }
+ }
+--- a/app/ClubUnio/Services/DocumentUploadService.php
++++ b/app/ClubUnio/Services/DocumentUploadService.php
+@@ -20,7 +20,7 @@
+ {
+     public function table()
+     {
+-        return DB::connection('clubunio')->table('clubora.document_uploads');
++        return DB::connection('clubunio')->table('clubunio.document_uploads');
+     }
+ 
+     public function stage(?Account $actor, Tenant $tenant, string $kind, int $id, array $metadata, UploadedFile $file, ?string $publicRequest = null): int
+@@ -93,13 +93,13 @@
+             if ($actor) {
+                 app(ModulePermissionService::class)->authorize($actor, $tenant, 'registrations', 'upload');
+             } else {
+-                abort_unless($publicRequest && DB::connection('clubunio')->table('clubora.public_registration_submissions')
++                abort_unless($publicRequest && DB::connection('clubunio')->table('clubunio.public_registration_submissions')
+                     ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('request_id', $publicRequest)->exists(), 403);
+             }
+             $r = Registration::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($id);
+             abort_if($r->status?->workflow_key === 'accepted', 409, __('Anmeldung ist bereits abgeschlossen.'));
+             abort_unless(in_array($metadata['kind'] ?? '', ['portrait', 'identity'], true), 422);
+-            if ($metadata['kind'] === 'portrait' && DB::connection('clubunio')->table('clubora.registration_documents')
++            if ($metadata['kind'] === 'portrait' && DB::connection('clubunio')->table('clubunio.registration_documents')
+                 ->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true)->where('kind', 'portrait')->exists()) {
+                 throw ValidationException::withMessages(['file' => __('Vor dem Ersetzen das bestehende Passfoto entfernen.')]);
+             }
+--- a/app/ClubUnio/Services/KeycloakBackchannelLogout.php
++++ b/app/ClubUnio/Services/KeycloakBackchannelLogout.php
+@@ -63,14 +63,14 @@
+                 if ($cache->has($key)) return;
+                 DB::connection('clubunio')->transaction(function () use ($claims) {
+                     $db = DB::connection('clubunio');
+-                    $linked = $db->table('clubora.keycloak_account_links')->where('issuer', $claims->iss)
++                    $linked = $db->table('clubunio.keycloak_account_links')->where('issuer', $claims->iss)
+                         ->where('subject', $claims->sub)->value('account_id');
+                     $candidates = $linked === null ? [] : [(int) $linked];
+                     $mappings = ['clubunio-verein-oidc.subjects'];
+                     if (config('clubunio-platform-oidc.issuer') === $claims->iss) {
+                         $mappings = array_merge($mappings, ['clubunio-platform-oidc.subjects', 'clubunio-platform-oidc.migrated_subjects']);
+                         if (config('clubunio-platform-oidc.invitations_enabled')) {
+-                            $invited = $db->table('clubora.platform_keycloak_invitations')->where('issuer', $claims->iss)
++                            $invited = $db->table('clubunio.platform_keycloak_invitations')->where('issuer', $claims->iss)
+                                 ->where('subject', $claims->sub)->whereNotNull('invited_at')->value('account_id');
+                             if ($invited !== null) $candidates[] = (int) $invited;
+                         }
+@@ -84,14 +84,14 @@
+                     $account = $candidates[0] ?? null;
+                     if ($account === null) return;
+                     // Serialize against MobileSessions::issue, which locks this account.
+-                    $db->table('clubora.accounts')->where('id', $account)->lockForUpdate()->first();
+-                    $watermarks = $db->table('clubora.keycloak_logout_watermarks')->where('account_id', $account);
++                    $db->table('clubunio.accounts')->where('id', $account)->lockForUpdate()->first();
++                    $watermarks = $db->table('clubunio.keycloak_logout_watermarks')->where('account_id', $account);
+                     $previous = $watermarks->value('cutoff');
+                     if ($previous === null || (int) $previous < $claims->iat) {
+-                        $db->table('clubora.keycloak_logout_watermarks')->updateOrInsert(['account_id' => $account],
++                        $db->table('clubunio.keycloak_logout_watermarks')->updateOrInsert(['account_id' => $account],
+                             ['issuer' => $claims->iss, 'subject' => $claims->sub, 'cutoff' => $claims->iat]);
+                     }
+-                    $db->table('clubora.mobile_sessions')->where('account_id', $account)->whereNull('revoked_at')
++                    $db->table('clubunio.mobile_sessions')->where('account_id', $account)->whereNull('revoked_at')
+                         // JWT times have second precision: include the entire event second.
+                         ->where('created_at', '<', \Illuminate\Support\Carbon::createFromTimestampUTC($claims->iat + 1)->toIso8601String())
+                         ->update(['revoked_at' => now()->toIso8601String()]);
+--- a/app/ClubUnio/Services/KeycloakLogoutState.php
++++ b/app/ClubUnio/Services/KeycloakLogoutState.php
+@@ -12,7 +12,7 @@
+     {
+         if (config('clubunio-keycloak-backchannel.enabled') !== true
+             && config('clubunio-keycloak-backchannel.state_enforced') !== true) return null;
+-        $cutoff = DB::connection('clubunio')->table('clubora.keycloak_logout_watermarks')
++        $cutoff = DB::connection('clubunio')->table('clubunio.keycloak_logout_watermarks')
+             ->where('account_id', $actor->id)->value('cutoff');
+ 
+         return $cutoff === null ? 0 : (int) $cutoff;
+--- a/app/ClubUnio/Services/KeycloakMobileAssurance.php
++++ b/app/ClubUnio/Services/KeycloakMobileAssurance.php
+@@ -12,7 +12,8 @@
+         $config = config('clubunio-verein-oidc');
+         $level = $config['mobile_mfa_acr'] ?? null;
+ 
+-        return $config['enabled'] && $config['invites_enabled'] && $config['mobile_enabled']
++        return $config['enabled'] && $config['mobile_enabled']
++            && ($config['invites_enabled'] || !empty($config['subjects']))
+             && is_string($level) && preg_match('/\A[A-Za-z][A-Za-z0-9_.:-]{2,80}\z/', $level) ? $level : null;
+     }
+ 
+@@ -30,8 +31,13 @@
+             return null;
+         }
+         $issuer = config('clubunio-verein-oidc.issuer');
+-        $subject = DB::connection('clubunio')->table('clubora.keycloak_account_links')
+-            ->where('issuer', $issuer)->where('account_id', $account->id)->value('subject');
++        $subjects = (array) config('clubunio-verein-oidc.subjects');
++        $matches = array_keys($subjects, (int) $account->id, true);
++        $subject = count($matches) === 1 ? $matches[0] : null;
++        if ($subject === null && config('clubunio-verein-oidc.invites_enabled')) {
++            $subject = DB::connection('clubunio')->table('clubunio.keycloak_account_links')
++                ->where('issuer', $issuer)->where('account_id', $account->id)->value('subject');
++        }
+         if (!is_string($subject) || ($claims !== null && ($claims->iss !== $issuer || $claims->sub !== $subject))) {
+             return null;
+         }
+--- a/config/clubunio-platform-oidc.php
++++ b/config/clubunio-platform-oidc.php
+@@ -3,11 +3,12 @@
+ return [
+     'enabled' => (bool) env('CLUBUNIO_PLATFORM_OIDC_ENABLED', false),
+     'legacy_allowed' => (bool) env('CLUBUNIO_PLATFORM_OIDC_LEGACY_ALLOWED', true),
++    'web_mfa_acr' => env('CLUBUNIO_PLATFORM_OIDC_WEB_MFA_ACR'),
++    'mfa_acr' => env('CLUBUNIO_PLATFORM_OIDC_MFA_ACR', env('CLUBUNIO_PLATFORM_OIDC_WEB_MFA_ACR')),
++    'migrated_subjects' => json_decode((string) env('CLUBUNIO_PLATFORM_OIDC_MIGRATED_SUBJECTS', '{}'), true),
++    'invitations_enabled' => (bool) env('CLUBUNIO_PLATFORM_OIDC_INVITATIONS_ENABLED', false),
+     'issuer' => 'https://auth.clubunio.com/realms/clubunio',
+     'origin' => env('CLUBUNIO_PLATFORM_OIDC_ORIGIN'),
+-    'mfa_acr' => env('CLUBUNIO_PLATFORM_OIDC_MFA_ACR'),
+-    'migrated_subjects' => json_decode((string) env('CLUBUNIO_PLATFORM_OIDC_MIGRATED_SUBJECTS', '{}'), true),
+-    'invitations_enabled' => (bool) env('CLUBUNIO_PLATFORM_OIDC_INVITATIONS_ENABLED', false),
+     'client' => env('CLUBUNIO_PLATFORM_OIDC_CLIENT'),
+     'secret' => env('CLUBUNIO_PLATFORM_OIDC_SECRET'),
+     'subjects' => json_decode((string) env('CLUBUNIO_PLATFORM_OIDC_SUBJECTS', '{}'), true),
+--- a/config/clubunio-verein-oidc.php
++++ b/config/clubunio-verein-oidc.php
+@@ -1,23 +1,17 @@
+ <?php
+ 
+ return [
++    'only' => (bool) env('CLUBUNIO_KEYCLOAK_ONLY', false),
+     'enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_ENABLED', false),
+-    'only' => (bool) env('CLUBUNIO_KEYCLOAK_ONLY', false),
+     'invites_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_INVITES_ENABLED', false),
+     'mobile_enabled' => (bool) env('CLUBUNIO_VEREIN_OIDC_MOBILE_ENABLED', false),
+     'mobile_mfa_acr' => env('CLUBUNIO_VEREIN_OIDC_MOBILE_MFA_ACR'),
++    'legacy_allowed' => (bool) env('CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED', true),
+     'web_mfa_acr' => env('CLUBUNIO_VEREIN_OIDC_WEB_MFA_ACR'),
+-    'legacy_allowed' => (bool) env('CLUBUNIO_VEREIN_OIDC_LEGACY_ALLOWED', true),
+-    'emergency' => [
+-        'accounts' => env('CLUBUNIO_EMERGENCY_PASSWORD_ACCOUNTS', ''),
+-        'from' => env('CLUBUNIO_EMERGENCY_PASSWORD_FROM'),
+-        'until' => env('CLUBUNIO_EMERGENCY_PASSWORD_UNTIL'),
+-        'incident' => env('CLUBUNIO_EMERGENCY_PASSWORD_INCIDENT'),
+-    ],
+     'issuer' => 'https://auth.clubunio.com/realms/clubunio',
++    'web_domains' => (array) json_decode((string) env('CLUBUNIO_VEREIN_OIDC_WEB_DOMAINS', '{}'), true),
+     'origin' => env('CLUBUNIO_VEREIN_OIDC_ORIGIN'),
+     'client' => env('CLUBUNIO_VEREIN_OIDC_CLIENT'),
+     'secret' => env('CLUBUNIO_VEREIN_OIDC_SECRET'),
+     'subjects' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_SUBJECTS', '{}'), true),
+-    'domains' => json_decode((string) env('CLUBUNIO_VEREIN_OIDC_DOMAINS', '{}'), true),
+ ];
+--- a/database/clubunio/2026_11_25_010000_keycloak_logout_watermarks.php
++++ b/database/clubunio/2026_11_25_010000_keycloak_logout_watermarks.php
+@@ -20,8 +20,8 @@
+     public function sql(): string
+     {
+         return <<<'SQL'
+-CREATE TABLE clubora.keycloak_logout_watermarks (
+- account_id bigint PRIMARY KEY REFERENCES clubora.accounts(id),
++CREATE TABLE clubunio.keycloak_logout_watermarks (
++ account_id bigint PRIMARY KEY REFERENCES clubunio.accounts(id),
+  issuer varchar(512) NOT NULL, subject varchar(255) NOT NULL,
+  cutoff bigint NOT NULL CHECK(cutoff >= 0)
+ );

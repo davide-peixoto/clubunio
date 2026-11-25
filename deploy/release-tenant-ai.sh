@@ -19,7 +19,13 @@ case "$instance" in
   *) exit 1 ;;
 esac
 cd "$root"
-backup="$root/storage/app/private/tenant-ai-releases/$instance-$(date -u +%Y%m%d-%H%M%S)"
+if test "$instance" = dev; then
+  backup="$root/storage/app/private/tenant-ai-releases/$instance-$(date -u +%Y%m%d-%H%M%S)"
+else
+  test "$(id -u)" = 0
+  umask 077
+  backup="/root/clubunio-releases/tenant-ai/$instance-$(date -u +%Y%m%d-%H%M%S)"
+fi
 mkdir -m 0700 -p "$backup"
 cp -pL .env "$backup/environment"
 cp -a bootstrap/cache "$backup/cache"

@@ -46,7 +46,9 @@ final class AccountSecurity
     public function stamp(Account $actor): string
     {
         $row = $this->settings()->where('account_id', $actor->id)->first();
-        return $this->hash($actor->id.'|'.$actor->password.'|'.($row->session_version ?? ''));
+        $cutoff = KeycloakLogoutState::cutoff($actor);
+        return $this->hash($actor->id.'|'.$actor->password.'|'.($row->session_version ?? '')
+            .($cutoff === null ? '' : '|keycloak-logout:'.$cutoff));
     }
 
     public function rate(string $scope, string $subject, int $limit, int $seconds): void

@@ -7,6 +7,7 @@ use App\ClubUnio\Services\KeycloakAccountLinks;
 use App\ClubUnio\Services\PlatformAdministrationService;
 use App\ClubUnio\Services\KeycloakCodeExchange;
 use App\ClubUnio\Services\KeycloakMobileAssurance;
+use App\ClubUnio\Services\KeycloakWebAssurance;
 use App\ClubUnio\Services\AccountSecurity;
 use App\ClubUnio\Services\MemberAccessService;
 use Illuminate\Http\Request;
@@ -76,16 +77,16 @@ final class PlatformOidcController
             'expires' => time() + 300, 'callback' => $config['callback'], 'client' => $config['client'],
         ]);
 
-        $clubMfa = $config['guard'] === 'clubunio' && config('clubunio-verein-oidc.only');
+        $level = $pair !== null ? KeycloakMobileAssurance::level()
+            : KeycloakWebAssurance::requiredLevel($config['guard'] === 'platform');
+        abort_if($level === null, 503);
         return redirect()->away($config['issuer'].'/protocol/openid-connect/auth?'.http_build_query([
             'response_type' => 'code', 'scope' => 'openid', 'client_id' => $config['client'],
             'redirect_uri' => $config['callback'], 'state' => $state, 'nonce' => $nonce,
             'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256',
             'ui_locales' => app()->getLocale(),
             ...($invitation !== null || $pair !== null || $platformMigration ? ['prompt' => 'login'] : []),
-            ...(($pair !== null || $platformMigration || $clubMfa) && ($level = KeycloakMobileAssurance::level()) !== null
-                ? ['claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0]
-                : []),
+            'claims' => json_encode(['id_token' => ['acr' => ['essential' => true, 'values' => [$level]]]], JSON_THROW_ON_ERROR), 'max_age' => 0,
         ]))->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
@@ -122,19 +123,28 @@ final class PlatformOidcController
         }
         $claims = app(KeycloakCodeExchange::class)->verify($config, $code, $pending['verifier'], $pending['nonce']);
         $club = $config['guard'] === 'clubunio';
-        $clubMfa = $club && config('clubunio-verein-oidc.only') && ($level = KeycloakMobileAssurance::level()) !== null;
-        abort_if($clubMfa && !KeycloakMobileAssurance::accepts($claims, $level, time()), 403);
+        $clubMfa = $club;
+        $level = is_array($pending['pair'] ?? null) ? KeycloakMobileAssurance::level()
+            : KeycloakWebAssurance::requiredLevel(!$club);
+        abort_if($level === null, 503);
+        abort_unless(KeycloakMobileAssurance::accepts($claims, $level, time()), 403);
         if ($club && ($pending['platformMigration'] ?? false) === true) {
             $actor = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class)->resolve($claims);
             abort_unless($actor, 403);
+            $assurance = KeycloakWebAssurance::proof($actor, $claims, true);
             Auth::guard('platform')->login($actor);
             $request->session()->regenerate();
             $request->session()->put('platform.oidc.expires', min($claims->exp + 1800, time() + 1800));
+            $request->session()->put('platform.oidc.assurance', $assurance);
 
             return redirect()->route('clubunio.platform.index')->header('Cache-Control', 'no-store');
         }
         $links = app(KeycloakAccountLinks::class);
         $id = $config['subjects'][$claims->sub] ?? null;
+        // An unlinked subject's earlier logout cannot yet resolve to a local account.
+        // First linking therefore never authorizes a session with the linking token.
+        $linkedBefore = $id !== null || ($club && $config['invites_enabled']
+            && $links->accountId($claims->iss, $claims->sub) !== null);
         if ($club && $config['invites_enabled']) {
             if (is_string($pending['invitation'] ?? null)) {
                 $id = (int) $links->accept($pending['invitation'], $claims, $clubMfa)->id;
@@ -144,6 +154,9 @@ final class PlatformOidcController
                     $id = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class)->activate($claims, $clubMfa);
                 }
             }
+        }
+        if ($club && !$linkedBefore && is_int($id) && $id > 0 && !is_array($pending['pair'] ?? null)) {
+            return $this->start($request);
         }
         $actor = is_int($id) && $id > 0 ? Account::find($id) : null;
         if ($club && $actor?->active && ! $actor->api_only
@@ -174,9 +187,11 @@ final class PlatformOidcController
             abort_if(!$clubMfa && $local->requiresStrongLogin($actor), 403);
             $tenant = $actor->tenants()->get()->first(fn ($tenant) => app(MemberAccessService::class)->canEnter($actor, $tenant));
             abort_unless($tenant, 403);
+            $assurance = KeycloakWebAssurance::proof($actor, $claims);
             Auth::guard('portal')->login($actor);
             $request->session()->forget(['clubunio.emergency.portal', 'clubunio.federated.portal']);
             $request->session()->regenerate();
+            $request->session()->put('portal.oidc.assurance', $assurance);
             if ($clubMfa) {
                 $request->session()->put('clubunio.federated.portal', [
                     'id' => (int) $actor->id, 'subject' => $claims->sub, 'stamp' => $local->stamp($actor),
@@ -188,9 +203,11 @@ final class PlatformOidcController
                 ->header('Cache-Control', 'no-store')->header('Referrer-Policy', 'no-referrer');
         }
         abort_unless($club ? ($actor?->active && !$actor->api_only && $actor->hasBackofficeTenant()) : $platform->allowed($actor), 403);
+        $assurance = KeycloakWebAssurance::proof($actor, $claims, !$club);
         Auth::guard($config['guard'])->login($actor);
         $request->session()->regenerate();
         $request->session()->put($config['guard'].'.oidc.expires', min($claims->exp + 1800, time() + 1800));
+        $request->session()->put($config['guard'].'.oidc.assurance', $assurance);
         if ($club) {
             $request->session()->put('clubunio.oidc.account', (int) $actor->id);
             $request->session()->put('clubunio.oidc.subject', $claims->sub);

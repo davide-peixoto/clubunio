@@ -1,0 +1,15 @@
+[Unit]
+Description=ClubUnio encrypted PostgreSQL and recovery material backup
+After=postgresql.service
+ConditionHost=vps.clubunio.com
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /usr/local/sbin/clubunio-postgresql-backup.py
+TimeoutStartSec=15min
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/dbbackups/clubunio-postgresql /root/clubunio-backups

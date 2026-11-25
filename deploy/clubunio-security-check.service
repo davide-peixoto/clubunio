@@ -1,0 +1,14 @@
+[Unit]
+Description=ClubUnio runtime isolation and backup drift checks
+After=postgresql.service
+ConditionHost=vps.clubunio.com
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /usr/local/sbin/clubunio-security-check.py
+TimeoutStartSec=2min
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only

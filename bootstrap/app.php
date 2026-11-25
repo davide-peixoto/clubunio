@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
+            \App\ClubUnio\Http\KeycloakBackchannelController::routes();
             \App\ClubUnio\Http\EventAppLinksController::routes();
             \App\ClubUnio\Http\EventCheckinWebRoutes::public();
             \App\ClubUnio\Http\MemberCardRoutes::public();
@@ -27,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: ['192.168.2.105']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'operator_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation', 'emergency_code']);
+        $exceptions->dontFlash(['value', 'text', 'password', 'account_password', 'operator_password', 'storage_key', 'ahv', 'invitation', 'code', 'confirmation', 'proof', 'proof_hash', 'client', 'authenticator', 'signature', 'attestation', 'emergency_code', 'logout_token']);
         $exceptions->dontReportWhen(fn (\Throwable $error) => request()->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*'));
         $exceptions->render(function (\Throwable $error, Request $request) {
             if ($request->is('api/v1', 'api/v1/*', 'api/mobile/*', 'chat-data/*', 'account/security/*')) {

@@ -25,10 +25,7 @@ final class KeycloakCodeExchange
             ])->throw()->json('id_token');
             if (!is_string($token) || strlen($token) > 16384) throw new \UnexpectedValueException;
             $keys = (clone $http)->get($endpoint.'certs')->throw()->json();
-            $rsa = array_values(array_filter($keys['keys'] ?? [], fn ($key) => is_array($key)
-                && ($key['kty'] ?? null) === 'RSA' && ($key['alg'] ?? 'RS256') === 'RS256'
-                && ($key['use'] ?? 'sig') === 'sig'));
-            $claims = JWT::decode($token, JWK::parseKeySet(['keys' => $rsa], 'RS256'));
+            $claims = self::decodeSignedToken($token, $keys);
         } catch (\Throwable) {
             abort(403);
         }
@@ -40,5 +37,16 @@ final class KeycloakCodeExchange
             && is_string($claims->sub ?? null) && $claims->sub !== '', 403);
 
         return $claims;
+    }
+
+    /** Same restricted signing algorithm for ID tokens and backchannel logout. */
+    public static function decodeSignedToken(#[\SensitiveParameter] string $token, array $keys): \stdClass
+    {
+        if (strlen($token) > 16384) throw new \UnexpectedValueException;
+        $rsa = array_values(array_filter($keys['keys'] ?? [], fn ($key) => is_array($key)
+            && ($key['kty'] ?? null) === 'RSA' && ($key['alg'] ?? 'RS256') === 'RS256'
+            && ($key['use'] ?? 'sig') === 'sig'));
+
+        return JWT::decode($token, JWK::parseKeySet(['keys' => $rsa], 'RS256'));
     }
 }
