@@ -100,6 +100,41 @@ zurückgerollt, keine ausgehenden HTTP-Aufrufe. Flutter: zehn neue Tests, 20 mit
 Nachbarmodulen; DE/EN, 320/390 px, Textscale 1.5, ClubUnio-/SV-Farben.
 Analyse und i18n-Prüfung bestanden.
 Physische Datei-/PDF-Abnahme nach neuem App-Build und Website-Einbindung offen.
-Angemeldete Chrome-Abnahme Desktop/Mobil noch offen: die vorgefundene Sitzung
-war abgelaufen, erneute Anmeldung angefragt. HTTP Health 200, geschützte Seite 302,
-persönliche API 401 und öffentlicher deaktivierter Feed 404 auf DEV bestätigt.
+HTTP Health 200, geschützte Seite 302, persönliche API 401 und öffentlicher
+deaktivierter Feed 404 bei der Bereitstellung auf DEV bestätigt.
+
+## Angemeldete Browserprüfung (25.11.2026)
+
+Chrome, vorhandenes Admin-Konto, SV Sissach auf ClubUnio DEV. Geprüft:
+
+- Menüeinstieg und alle vier Clubhaus-Tabs laden im bestehenden Vereinsdesign.
+- Öffnungsdialog: Wochentagsauswahl und zusätzliches Zeitfenster funktionieren.
+- Tagesausnahme: Wechsel von Schließtag zu Sonderöffnung blendet Zeitfenster ein.
+- Speisekarten: DE/EN-Eingaben, Gültigkeit und Web-/App-Kanäle vorhanden.
+  Ein leerer Pflichttitel verhindert das Absenden bereits im Browser.
+- Statusfilter plus Suche behalten beide Werte; danach auf leer/Alle zurückgesetzt.
+  Mangels vorhandener Menüs keine Filterung gefüllter Bestandslisten abgenommen.
+- Zusatzrechte und Einstellungen öffnen getrennte Dialoge. Keine Person ausgewählt
+  oder berechtigt, öffentliche Ausgabe blieb auf Nein, Europe/Zurich unverändert.
+- Desktop sowie responsive Webansicht bei 390 × 844 und 320 × 740 Pixeln,
+  Deutsch/Englisch und Dark Mode geprüft. Kein horizontaler Seitenüberlauf;
+  mobile Dialoge lassen sich bis Absenden/Abbrechen scrollen, Aktionen erreichbar.
+  Globale Browser-Datums-/Pflichtfeldhinweise folgen der Browser-/OS-Sprache.
+- Alle geöffneten Formulare abgebrochen, keine Clubhaus-Datensätze gespeichert,
+  hochgeladen oder veröffentlicht. Sprache Deutsch, ursprüngliches Systemthema
+  und normale Fenstergröße am Ende wiederhergestellt. Stage/PROD nicht angefasst.
+
+Keine blockierenden Fehler in diesen Ansichten beobachtet. Zwei kleine Befunde:
+der automatisch erzeugte Repeater-Text lautet noch „Zu zeitfenster hinzufügen“
+statt „Zeitfenster hinzufügen“. Beim Sprach-/Seitenwechsel wurde einmal
+`InvalidStateError: Transition was aborted because of invalid state. ViewTransition
+opt-in disabled` in Chrome erfasst; die Zielansicht und Sprachumschaltung
+funktionierten trotzdem. Ursache dieser allgemeinen Navigationsmeldung nicht
+eingegrenzt; nicht als behobener Fehler oder als Fachfehler ausgewiesen.
+
+Prüfgrenze: responsive Browserprüfung ist kein nativer iPhone-/Android-Test.
+PDF-Upload, PDF-Vorschau mit echtem Speicher und Veröffentlichung wurden in dieser
+Sitzung nicht erneut Ende-zu-Ende ausgeführt; Fachtests bleiben deren bisheriger
+Nachweis. Keine Veröffentlichung nur für eine Sichtprüfung aktivieren.
+Screenshots lokal unter `storage/app/clubhouse-review-20261125/` (gitignoriert).
+Nur Prüfprotokoll geändert, kein neuer Runtime-Release oder Datenbankeingriff.
