@@ -23,3 +23,8 @@ Das erweiterte tools/test-svs-schema-extension.php prueft14 native Tabellen, ein
 Fuer den echten Delta-Lauf bleibt die gesamte Kette verbindlich: frischer Quelldump, neues PROD-Backup, Restore, Merge/Wiederholung auf Kopie, root-eigener Permit, Rollback-Vorschau, atomarer Commit. Einseitiger12-Stunden-Agent bleibt bestehen; unbekannte zukuenftige Aenderungen stoppen weiterhin.
 
 Migrationplan: keine PROD-Schemaaenderung und kein Baselineupgrade durch diesen Release. Lokale Aufgaben, Chat-Erwaehnungen und VEO-Korrekturen bleiben erhalten. Rueckweg: Livefreigabe entfernen und den vorherigen Vertrags-/Release-Stand aus der privaten Reviewakte wiederherstellen. Der alte152er-Vertrag bleibt gegen155 bewusst gesperrt. Keine manuelle Daten-/Baseline-Ruecksetzung.
+## Erfolgreicher Live-Lauf
+
+25.11.2026 um09:35:24 Uhr Europe/Zurich: Lauf7093c4572a8040d4985eb7cf4f69ff98 erfolgreich,0 Inserts/191 Updates/37728 unveraendert/0 missing_review/0 Konflikte. Ledger7->9. Mappingversion e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b unveraendert. Wiederholung0 Writes. Nachkontrolle bestaetigt unveraenderte lokale Aufgaben/Verlauf/Erfassungsbefehle, Chat-Erwaehnungen, VEO-Korrekturen, Elternnachweise/-Einwilligungen, aktive Konten/Passwoerter, Wintereinstellung und Trainingsplaene. Vier eigene Reviewkopien werden nach Sicherung der Nachweise entfernt;12-Stunden-Betrieb wieder mit exakt155er-Zielvertrag bereit.
+
+[Sanitisierter Nachweis](evidence/svs-target-review-20261125.json).
