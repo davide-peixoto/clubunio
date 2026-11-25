@@ -1,0 +1,20 @@
+{
+  "navigation": "js/react-ui/navigation-MGOXIV63.js",
+  "dashboard": "js/react-ui/dashboard-LURFFGQ5.js",
+  "facility": "js/react-ui/facility-ROKN2V5B.js",
+  "preloads": {
+    "navigation": [
+      "js/react-ui/chunks/chunk-3SAZKM75.js",
+      "js/react-ui/chunks/chunk-PV73JN26.js"
+    ],
+    "dashboard": [
+      "js/react-ui/chunks/chunk-3SAZKM75.js",
+      "js/react-ui/chunks/chunk-PV73JN26.js",
+      "js/react-ui/chunks/chunk-75HAMQIB.js"
+    ],
+    "facility": [
+      "js/react-ui/chunks/chunk-3SAZKM75.js",
+      "js/react-ui/chunks/chunk-PV73JN26.js"
+    ]
+  }
+}

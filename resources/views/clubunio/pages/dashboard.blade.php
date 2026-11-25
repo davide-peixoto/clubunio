@@ -1,4 +1,7 @@
 <x-filament-panels::page>
+    @if(config('app.url') === 'https://dev.clubunio.ch' && request()->query('ui_perf') === '1')
+        <script src="{{ asset('js/clubunio-ui-performance.js') }}" defer></script>
+    @endif
     @if ($this->glassSelected())
         <link rel="stylesheet" href="{{ asset('css/clubunio-dashboard.css') }}?v={{ filemtime(public_path('css/clubunio-dashboard.css')) }}-spacing1">
         <section class="cu-glass-dashboard">
@@ -18,7 +21,7 @@
             </div>
             {{ $this->content }}
         </section>
-        <script src="{{ asset('js/clubunio-dashboard.js') }}?v={{ filemtime(public_path('js/clubunio-dashboard.js')) }}" defer></script>
+        @include('clubunio.react-script', ['entry' => 'dashboard', 'legacy' => asset('js/clubunio-dashboard.js').'?v='.filemtime(public_path('js/clubunio-dashboard.js'))])
     @else
         {{ $this->content }}
     @endif

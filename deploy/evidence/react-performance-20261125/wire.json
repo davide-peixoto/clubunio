@@ -1,0 +1,57 @@
+{
+  "before": [
+    {
+      "path": "public/js/clubunio-react-navigation.js",
+      "bytes": 198978,
+      "encoding": "identity",
+      "cache": null,
+      "nosniff": "nosniff"
+    },
+    {
+      "path": "public/js/clubunio-dashboard.js",
+      "bytes": 203046,
+      "encoding": "identity",
+      "cache": null,
+      "nosniff": "nosniff"
+    }
+  ],
+  "after": [
+    {
+      "path": "public/js/react-ui/chunks/chunk-3SAZKM75.js",
+      "bytes": 57741,
+      "encoding": "gzip",
+      "cache": "max-age=31536000",
+      "nosniff": "nosniff"
+    },
+    {
+      "path": "public/js/react-ui/chunks/chunk-75HAMQIB.js",
+      "bytes": 1345,
+      "encoding": "gzip",
+      "cache": "max-age=31536000",
+      "nosniff": "nosniff"
+    },
+    {
+      "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+      "bytes": 3354,
+      "encoding": "gzip",
+      "cache": "max-age=31536000",
+      "nosniff": "nosniff"
+    },
+    {
+      "path": "public/js/react-ui/dashboard-LURFFGQ5.js",
+      "bytes": 1454,
+      "encoding": "gzip",
+      "cache": "max-age=31536000",
+      "nosniff": "nosniff"
+    },
+    {
+      "path": "public/js/react-ui/navigation-MGOXIV63.js",
+      "bytes": 2294,
+      "encoding": "gzip",
+      "cache": "max-age=31536000",
+      "nosniff": "nosniff"
+    }
+  ],
+  "before_bytes": 402024,
+  "after_bytes": 66188
+}

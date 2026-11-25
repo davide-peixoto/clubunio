@@ -1,0 +1,55 @@
+{
+  "ttfb": 2003.2999999523163,
+  "dom": 2626.600000143051,
+  "load": 3274.5,
+  "paint": [
+    {
+      "name": "first-paint",
+      "ms": 2440
+    },
+    {
+      "name": "first-contentful-paint",
+      "ms": 2440
+    }
+  ],
+  "lcp": 3440,
+  "assets": [
+    {
+      "path": "/js/react-ui/navigation-MGOXIV63.js",
+      "bytes": 0,
+      "encoded": 5602,
+      "decoded": 5602,
+      "ms": 203
+    },
+    {
+      "path": "/js/react-ui/dashboard-LURFFGQ5.js",
+      "bytes": 0,
+      "encoded": 3410,
+      "decoded": 3410,
+      "ms": 203
+    },
+    {
+      "path": "/js/react-ui/chunks/chunk-3SAZKM75.js",
+      "bytes": 0,
+      "encoded": 184983,
+      "decoded": 184983,
+      "ms": 13.699999809265137
+    },
+    {
+      "path": "/js/react-ui/chunks/chunk-PV73JN26.js",
+      "bytes": 0,
+      "encoded": 8556,
+      "decoded": 8556,
+      "ms": 15.099999904632568
+    },
+    {
+      "path": "/js/react-ui/chunks/chunk-75HAMQIB.js",
+      "bytes": 0,
+      "encoded": 2856,
+      "decoded": 2856,
+      "ms": 17.90000009536743
+    }
+  ],
+  "chartsReady": 0,
+  "chartsTotal": 6
+}

@@ -1,0 +1,387 @@
+{
+  "inputs": {
+    "node_modules/react/cjs/react.production.js": {
+      "bytes": 17217,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/react/index.js": {
+      "bytes": 186,
+      "imports": [
+        {
+          "path": "node_modules/react/cjs/react.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/scheduler/cjs/scheduler.production.js": {
+      "bytes": 10181,
+      "imports": [],
+      "format": "cjs"
+    },
+    "node_modules/scheduler/index.js": {
+      "bytes": 194,
+      "imports": [
+        {
+          "path": "node_modules/scheduler/cjs/scheduler.production.js",
+          "kind": "require-call",
+          "original": "./cjs/scheduler.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom.production.js": {
+      "bytes": 6655,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/index.js": {
+      "bytes": 1359,
+      "imports": [
+        {
+          "path": "node_modules/react-dom/cjs/react-dom.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/cjs/react-dom-client.production.js": {
+      "bytes": 536016,
+      "imports": [
+        {
+          "path": "node_modules/scheduler/index.js",
+          "kind": "require-call",
+          "original": "scheduler"
+        },
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "require-call",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/index.js",
+          "kind": "require-call",
+          "original": "react-dom"
+        }
+      ],
+      "format": "cjs"
+    },
+    "node_modules/react-dom/client.js": {
+      "bytes": 1373,
+      "imports": [
+        {
+          "path": "node_modules/react-dom/cjs/react-dom-client.production.js",
+          "kind": "require-call",
+          "original": "./cjs/react-dom-client.production.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "resources/js/navigation-search.mjs": {
+      "bytes": 336,
+      "imports": [],
+      "format": "esm"
+    },
+    "resources/js/navigation-motion.mjs": {
+      "bytes": 2623,
+      "imports": [],
+      "format": "esm"
+    },
+    "resources/js/react-navigation.jsx": {
+      "bytes": 4659,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/client.js",
+          "kind": "import-statement",
+          "original": "react-dom/client"
+        },
+        {
+          "path": "resources/js/navigation-search.mjs",
+          "kind": "import-statement",
+          "original": "./navigation-search.mjs"
+        },
+        {
+          "path": "resources/js/navigation-motion.mjs",
+          "kind": "import-statement",
+          "original": "./navigation-motion.mjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "resources/js/dashboard-motion.js": {
+      "bytes": 4554,
+      "imports": [],
+      "format": "esm"
+    },
+    "resources/js/dashboard-charts.jsx": {
+      "bytes": 5365,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "resources/js/dashboard-motion.js",
+          "kind": "import-statement",
+          "original": "./dashboard-motion"
+        }
+      ],
+      "format": "esm"
+    },
+    "resources/js/dashboard-glass.jsx": {
+      "bytes": 4651,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/client.js",
+          "kind": "import-statement",
+          "original": "react-dom/client"
+        },
+        {
+          "path": "resources/js/dashboard-motion.js",
+          "kind": "import-statement",
+          "original": "./dashboard-motion"
+        },
+        {
+          "path": "resources/js/dashboard-charts.jsx",
+          "kind": "dynamic-import",
+          "original": "./dashboard-charts"
+        }
+      ],
+      "format": "esm"
+    },
+    "resources/js/facility-layout.mjs": {
+      "bytes": 1543,
+      "imports": [],
+      "format": "esm"
+    },
+    "resources/js/facility-planner-view.jsx": {
+      "bytes": 15491,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "resources/js/facility-layout.mjs",
+          "kind": "import-statement",
+          "original": "./facility-layout.mjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "resources/js/facility-planner.jsx": {
+      "bytes": 2626,
+      "imports": [
+        {
+          "path": "node_modules/react/index.js",
+          "kind": "import-statement",
+          "original": "react"
+        },
+        {
+          "path": "node_modules/react-dom/client.js",
+          "kind": "import-statement",
+          "original": "react-dom/client"
+        },
+        {
+          "path": "resources/js/facility-planner-view.jsx",
+          "kind": "import-statement",
+          "original": "./facility-planner-view"
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "public/js/react-ui/navigation-MGOXIV63.js": {
+      "imports": [
+        {
+          "path": "public/js/react-ui/chunks/chunk-3SAZKM75.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+          "kind": "import-statement"
+        }
+      ],
+      "exports": [],
+      "entryPoint": "resources/js/react-navigation.jsx",
+      "inputs": {
+        "resources/js/react-navigation.jsx": {
+          "bytesInOutput": 3546
+        },
+        "resources/js/navigation-search.mjs": {
+          "bytesInOutput": 209
+        },
+        "resources/js/navigation-motion.mjs": {
+          "bytesInOutput": 1745
+        }
+      },
+      "bytes": 5602
+    },
+    "public/js/react-ui/dashboard-LURFFGQ5.js": {
+      "imports": [
+        {
+          "path": "public/js/react-ui/chunks/chunk-3SAZKM75.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/chunk-75HAMQIB.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/dashboard-charts-CNEJZEN7.js",
+          "kind": "dynamic-import"
+        }
+      ],
+      "exports": [],
+      "entryPoint": "resources/js/dashboard-glass.jsx",
+      "inputs": {
+        "resources/js/dashboard-glass.jsx": {
+          "bytesInOutput": 3261
+        }
+      },
+      "bytes": 3410
+    },
+    "public/js/react-ui/facility-ROKN2V5B.js": {
+      "imports": [
+        {
+          "path": "public/js/react-ui/chunks/chunk-3SAZKM75.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+          "kind": "import-statement"
+        }
+      ],
+      "exports": [],
+      "entryPoint": "resources/js/facility-planner.jsx",
+      "inputs": {
+        "resources/js/facility-planner.jsx": {
+          "bytesInOutput": 1734
+        },
+        "resources/js/facility-planner-view.jsx": {
+          "bytesInOutput": 11067
+        },
+        "resources/js/facility-layout.mjs": {
+          "bytesInOutput": 831
+        }
+      },
+      "bytes": 13744
+    },
+    "public/js/react-ui/chunks/chunk-3SAZKM75.js": {
+      "imports": [
+        {
+          "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+          "kind": "import-statement"
+        }
+      ],
+      "exports": [
+        "a"
+      ],
+      "inputs": {
+        "node_modules/scheduler/cjs/scheduler.production.js": {
+          "bytesInOutput": 3638
+        },
+        "node_modules/scheduler/index.js": {
+          "bytesInOutput": 51
+        },
+        "node_modules/react-dom/cjs/react-dom.production.js": {
+          "bytesInOutput": 3343
+        },
+        "node_modules/react-dom/index.js": {
+          "bytesInOutput": 253
+        },
+        "node_modules/react-dom/cjs/react-dom-client.production.js": {
+          "bytesInOutput": 176438
+        },
+        "node_modules/react-dom/client.js": {
+          "bytesInOutput": 253
+        }
+      },
+      "bytes": 184983
+    },
+    "public/js/react-ui/chunks/dashboard-charts-CNEJZEN7.js": {
+      "imports": [
+        {
+          "path": "public/js/react-ui/chunks/chunk-75HAMQIB.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "public/js/react-ui/chunks/chunk-PV73JN26.js",
+          "kind": "import-statement"
+        }
+      ],
+      "exports": [
+        "default"
+      ],
+      "entryPoint": "resources/js/dashboard-charts.jsx",
+      "inputs": {
+        "resources/js/dashboard-charts.jsx": {
+          "bytesInOutput": 4078
+        }
+      },
+      "bytes": 4187
+    },
+    "public/js/react-ui/chunks/chunk-75HAMQIB.js": {
+      "imports": [],
+      "exports": [
+        "a",
+        "b"
+      ],
+      "inputs": {
+        "resources/js/dashboard-motion.js": {
+          "bytesInOutput": 2833
+        }
+      },
+      "bytes": 2856
+    },
+    "public/js/react-ui/chunks/chunk-PV73JN26.js": {
+      "imports": [],
+      "exports": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "inputs": {
+        "node_modules/react/cjs/react.production.js": {
+          "bytesInOutput": 7489
+        },
+        "node_modules/react/index.js": {
+          "bytesInOutput": 47
+        }
+      },
+      "bytes": 8556
+    }
+  }
+}

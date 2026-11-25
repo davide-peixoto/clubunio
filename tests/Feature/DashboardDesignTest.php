@@ -26,7 +26,7 @@ class DashboardDesignTest extends TestCase
             app()->setLocale($locale);
             Livewire::test(DashboardDesignHarness::class)->assertDontSee('wire:click="selectDesign', false)
                 ->assertSee('data-cu-dashboard-hero', false)
-                ->assertSee('Synthetic heading')->assertSee('clubunio-dashboard.js');
+                ->assertSee('Synthetic heading')->assertSee('/js/react-ui/dashboard-');
         }
     }
 

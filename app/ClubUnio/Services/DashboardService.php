@@ -34,7 +34,7 @@ class DashboardService
             $query->selectSub($count->selectRaw('count(*)')->toBase(), $name);
         }
 
-        $open = $this->summarizeOpenInvoices($this->scopeOpenInvoices(Invoice::where('tenant_id', $tenant->id)->where('active', true), $tenant));
+        $open = $this->aggregateOpenInvoices($tenant);
         $row = (array) $query->fromSub($open, 'open_totals')->crossJoinSub($this->refundableCashQuery($tenant), 'cash_totals')
             ->addSelect('open_totals.total as open_count', 'open_totals.amount as open_amount', 'cash_totals.amount as refundable_cents')->first();
         $amount = (string) $row['open_amount'];
@@ -125,9 +125,27 @@ class DashboardService
 
     public function openSummary(Account $actor, Tenant $tenant): array
     {
-        $totals = $this->summarizeOpenInvoices($this->openInvoices($actor, $tenant))->first();
+        app(ModulePermissionService::class)->authorize($actor, $tenant, 'invoices', 'view');
+        $totals = $this->aggregateOpenInvoices($tenant)->first();
 
         return ['count' => (int) $totals->total, 'amount' => $totals->amount];
+    }
+
+    /** Same balance precedence as the dossier list, with one grouped line scan. */
+    private function aggregateOpenInvoices(Tenant $tenant): \Illuminate\Database\Query\Builder
+    {
+        $db=DB::connection('clubunio');
+        $lines=$db->table('clubora.invoice_lines as p')
+            ->join('clubora.invoice_line_statuses as s',fn($join)=>$join->on('s.id','=','p.status_id')->on('s.tenant_id','=','p.tenant_id'))
+            ->where('p.tenant_id',$tenant->id)->where('p.active',true)->whereIn('s.code',['O','T','U'])
+            ->groupBy('p.invoice_id','p.tenant_id')
+            ->selectRaw('p.invoice_id,p.tenant_id,count(*) as open_count,COALESCE(sum(COALESCE(NULLIF(p.net_amount,0),NULLIF(p.gross_amount,0),0)),0) as amount');
+        return $db->table('clubora.invoices as i')
+            ->leftJoin('clubora.bexio_balances as b',fn($join)=>$join->on('b.object_id','=','i.id')->on('b.tenant_id','=','i.tenant_id')->where('b.object_type','invoice'))
+            ->leftJoinSub($lines,'l',fn($join)=>$join->on('l.invoice_id','=','i.id')->on('l.tenant_id','=','i.tenant_id'))
+            ->where('i.tenant_id',$tenant->id)->where('i.active',true)
+            ->where(fn($q)=>$q->where('b.remaining_cents','>',0)->orWhere(fn($q)=>$q->whereNull('b.object_id')->where('l.open_count','>',0)))
+            ->selectRaw('count(*) as total,COALESCE(sum(COALESCE(b.remaining_cents/100.0,l.amount+i.rounding_cents/100.0)),0) as amount');
     }
 
     private function summarizeOpenInvoices(Builder $query): \Illuminate\Database\Query\Builder

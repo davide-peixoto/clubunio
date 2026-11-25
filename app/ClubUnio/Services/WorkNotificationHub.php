@@ -39,14 +39,25 @@ class WorkNotificationHub
     }
     public function unreadCount(Account $actor,Tenant $tenant):int
     {
-        $count=0;foreach($this->groups($actor,$tenant,true) as $group)$count++;return $count;
+        // Apply the native task visibility scope in SQL; never decrypt every task for a badge.
+        $notices=$this->query($actor,$tenant);$tasks=app(WorkTaskService::class);
+        $visible=$tasks->allows($actor,$tenant,'view')?$tasks->visible($actor,$tenant)->select('id'):null;
+        $groups=$notices->whereNull('read_at')->where(function($q)use($visible){
+            $q->where('object_type','<>','workspace_task');
+            if($visible)$q->orWhere(fn($tasks)=>$tasks->where('object_type','workspace_task')->whereIn('object_id',$visible));
+        })->select('object_type','object_id')->groupBy('object_type','object_id')->cursor();
+        $count=0;
+        foreach($groups as $group)if($group->object_type==='workspace_task'||$this->target($actor,$tenant,$group))$count++;
+        return $count;
     }
     public function page(Account $actor,Tenant $tenant,int $page,bool $unread): array
     {
         $groups=iterator_to_array($this->groups($actor,$tenant,$unread),false);$count=count($groups);
         $page=max(1,min($page,max(1,(int)ceil($count/20))));$rows=[];
-        foreach(array_slice($groups,($page-1)*20,20) as $group){
-            $notice=$this->query($actor,$tenant)->where('id',$group['id'])->first();
+        $current=array_slice($groups,($page-1)*20,20);
+        $bodies=$this->query($actor,$tenant)->whereIn('id',array_column($current,'id'))->get()->keyBy('id');
+        foreach($current as $group){
+            $notice=$bodies->get($group['id']);
             if($notice)$rows[]=$group+['title'=>$notice->title,'body'=>$notice->body,'created_at'=>$notice->created_at];
         }
         return ['rows'=>$rows,'page'=>$page,'has_more'=>$page*20<$count,'count'=>$count];

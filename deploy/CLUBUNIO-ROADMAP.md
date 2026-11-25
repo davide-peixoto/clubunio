@@ -2461,3 +2461,12 @@ Bild-only-Wiki gezielt nachgezogen, Videos privat archiviert. Bestehender Gmail-
 Zugang zeigt zwei Wintertrainings beim Ba-Team.91 Wiki- und5 Trainingsprüfungen
 auf PROD grün; kein neuer nativer Build.
 [Freigabe, Prüfungen und Rückweg](CLUBUNIO-MOBILE-TODAY-TEAM-TRAININGS.md).
+
+
+## 25.11.2026: React-Ladeoptimierungen auf DEV
+
+Gemeinsame React-Laufzeit, Diagramme erst in Sichtweite und gebuendelte
+Rechnungs-/Meldungsabfragen auf DEV aktiviert; Gestaltung und Animationen erhalten.
+JavaScript gzip 126 auf 66 KB, Kennzahlen 1592 auf 167 ms, Aufgabenzaehler
+bei 24 Aufgaben 1043 auf 127 ms. 59 Tests/757 Assertions, 41 DEV-Pruefungen.
+Keine Migration; Stage/PROD unveraendert. [Messung und Rueckweg](CLUBUNIO-REACT-PERFORMANCE.md).

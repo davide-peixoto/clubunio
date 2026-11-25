@@ -2,7 +2,7 @@
     <link rel="stylesheet" href="{{ asset('css/pitch-planning.css') }}?v=6">
     <link rel="stylesheet" href="{{ asset('css/clubunio-facility-planner.css') }}?v={{ filemtime(public_path('css/clubunio-facility-planner.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/clubunio-veo-planning.css') }}?v=1">
-    <script src="{{ asset('js/clubunio-facility-planner.js') }}?v={{ filemtime(public_path('js/clubunio-facility-planner.js')) }}" defer></script>
+    @include('clubunio.react-script', ['entry' => 'facility', 'legacy' => asset('js/clubunio-facility-planner.js').'?v='.filemtime(public_path('js/clubunio-facility-planner.js'))])
     <div class="pitch-planner pitch-modern cu-veo-planner" wire:loading.class="pitch-loading">
         <div class="pitch-toolbar">
             <div class="pitch-controls">

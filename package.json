@@ -2,7 +2,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && npm run build:dashboard && npm run build:facility && npm run build:menu && npm run build:social-workspace",
+        "build": "vite build && npm run build:react-ui && npm run build:social-workspace",
+        "build:react-ui": "node tools/build-react-ui.mjs",
         "dev": "vite",
         "build:dashboard": "node tools/build-dashboard.mjs",
         "build:facility": "node tools/build-facility-planner.mjs",

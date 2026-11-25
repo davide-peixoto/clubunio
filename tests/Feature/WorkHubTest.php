@@ -106,6 +106,17 @@ class WorkHubTest extends TestCase
         $this->assertNull($db->table('clubora.notifications')->where('id',$new)->value('read_at'));
         $this->permissions=[];$this->assertSame(0,$hub->unreadCount($this->actor,$this->tenant));
     }
+    public function test_task_badge_query_count_does_not_grow_per_task():void
+    {
+        $db=DB::connection('clubunio');
+        for($i=0;$i<24;$i++){
+            $id=$this->task();
+            $db->table('clubora.notifications')->insert(['tenant_id'=>4,'account_id'=>1,'object_type'=>'workspace_task','object_id'=>$id,'title'=>'Fixture','body'=>'']);
+        }
+        $db->enableQueryLog();$db->flushQueryLog();
+        $this->assertSame(24,app(WorkNotificationHub::class)->unreadCount($this->actor,$this->tenant));
+        $this->assertLessThanOrEqual(3,count($db->getQueryLog()));$db->disableQueryLog();
+    }
     public function test_planning_signal_is_published_only_after_commit():void
     {
         $signal=app(\App\ClubUnio\Services\PlanningChangeSignal::class);$db=DB::connection('clubunio');

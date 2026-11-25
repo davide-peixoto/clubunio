@@ -2,7 +2,7 @@
     <script src="{{ asset('js/pitch-planning.js') }}?v=5"></script>
     @if($this->modernSelected())
         <link rel="stylesheet" href="{{ asset('css/clubunio-facility-planner.css') }}?v={{ filemtime(public_path('css/clubunio-facility-planner.css')) }}">
-        <script src="{{ asset('js/clubunio-facility-planner.js') }}?v={{ filemtime(public_path('js/clubunio-facility-planner.js')) }}" defer></script>
+        @include('clubunio.react-script', ['entry' => 'facility', 'legacy' => asset('js/clubunio-facility-planner.js').'?v='.filemtime(public_path('js/clubunio-facility-planner.js'))])
     @endif
     @php
         $statuses = ['approved' => __('Genehmigt'), 'pending' => __('Angefragt'), 'rejected' => __('Abgelehnt'), 'cancelled' => __('Abgesagt')];

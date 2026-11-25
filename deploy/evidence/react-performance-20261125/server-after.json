@@ -1,0 +1,167 @@
+{
+    "summary_matches_native_list": true,
+    "dashboard_classic": {
+        "median_ms": 89.36,
+        "samples": [
+            {
+                "ms": 89.36,
+                "queries": 2,
+                "db_ms": 62.48
+            },
+            {
+                "ms": 149.37,
+                "queries": 2,
+                "db_ms": 121.79
+            },
+            {
+                "ms": 69.71,
+                "queries": 2,
+                "db_ms": 42.32
+            },
+            {
+                "ms": 69.45,
+                "queries": 2,
+                "db_ms": 42.28
+            },
+            {
+                "ms": 106.88,
+                "queries": 2,
+                "db_ms": 80.01
+            }
+        ]
+    },
+    "dashboard_react": {
+        "median_ms": 108.47,
+        "samples": [
+            {
+                "ms": 129.37,
+                "queries": 2,
+                "db_ms": 101.56
+            },
+            {
+                "ms": 75.8,
+                "queries": 2,
+                "db_ms": 41.51
+            },
+            {
+                "ms": 88.08,
+                "queries": 2,
+                "db_ms": 60.93
+            },
+            {
+                "ms": 108.47,
+                "queries": 2,
+                "db_ms": 81.25
+            },
+            {
+                "ms": 162.65,
+                "queries": 2,
+                "db_ms": 134.32
+            }
+        ]
+    },
+    "overview": {
+        "median_ms": 167.36,
+        "samples": [
+            {
+                "ms": 167.21,
+                "queries": 4,
+                "db_ms": 160.53
+            },
+            {
+                "ms": 170.92,
+                "queries": 4,
+                "db_ms": 164.04
+            },
+            {
+                "ms": 120.04,
+                "queries": 4,
+                "db_ms": 113.36
+            },
+            {
+                "ms": 167.36,
+                "queries": 4,
+                "db_ms": 160.49
+            },
+            {
+                "ms": 170.96,
+                "queries": 4,
+                "db_ms": 164.92
+            }
+        ]
+    },
+    "unread_actual": {
+        "median_ms": 127.12,
+        "samples": [
+            {
+                "ms": 131.98,
+                "queries": 3,
+                "db_ms": 129.4
+            },
+            {
+                "ms": 133.92,
+                "queries": 3,
+                "db_ms": 131.21
+            },
+            {
+                "ms": 123.69,
+                "queries": 3,
+                "db_ms": 121.1
+            },
+            {
+                "ms": 127.12,
+                "queries": 3,
+                "db_ms": 124.42
+            },
+            {
+                "ms": 123.07,
+                "queries": 3,
+                "db_ms": 120.42
+            }
+        ]
+    },
+    "unread_24_tasks": {
+        "median_ms": 127.44,
+        "samples": [
+            {
+                "ms": 123.85,
+                "queries": 3,
+                "db_ms": 121.23
+            },
+            {
+                "ms": 73.58,
+                "queries": 3,
+                "db_ms": 71.16
+            },
+            {
+                "ms": 145.95,
+                "queries": 3,
+                "db_ms": 143.48
+            },
+            {
+                "ms": 127.44,
+                "queries": 3,
+                "db_ms": 124.87
+            },
+            {
+                "ms": 166.16,
+                "queries": 3,
+                "db_ms": 163.58
+            }
+        ]
+    },
+    "assets": {
+        "react-navigation": {
+            "raw": 198978,
+            "gzip": 62326
+        },
+        "dashboard": {
+            "raw": 203046,
+            "gzip": 63602
+        },
+        "facility-planner": {
+            "raw": 207304,
+            "gzip": 64822
+        }
+    }
+}

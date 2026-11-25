@@ -1,0 +1,14 @@
+{
+  "before": {
+    "files": 2,
+    "raw": 402024,
+    "gzip": 125971
+  },
+  "after": {
+    "files": 5,
+    "raw": 205407,
+    "gzip": 66230
+  },
+  "chartGzip": 1584,
+  "oneSharedReactRuntime": true
+}
