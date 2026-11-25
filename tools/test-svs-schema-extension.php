@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-// Reviewed 152-migration integration test. Only isolated databases, all writes rolled back.
+// Reviewed native-schema integration test. Only isolated databases, all writes rolled back.
 $root=dirname(__DIR__);require __DIR__.'/svs-lab-autoload.php';
 if(count($argv)!==3||!preg_match('/\Aclubunio_stage_svs_candidate_[a-f0-9]{8}\z/',$argv[1])
     ||!preg_match('/\Aclubunio_svs_rehearsal_[a-f0-9]{8}\z/',$argv[2]))throw new LogicException('Two isolated databases required');
@@ -16,7 +16,10 @@ $private=Dotenv\Dotenv::parse(file_get_contents($root.'/.env.import-target.local
 $crypt=new Illuminate\Encryption\Encrypter(base64_decode(substr($private['APP_KEY'],7),true),'AES-256-CBC');
 $make=fn()=>new App\ClubUnio\Services\SvsDeltaImporter($source,$target,$mapping,app('encrypter'),$crypt,$version);
 $assert=function(bool $ok,string $message){if(!$ok)throw new RuntimeException($message);};
-$digest=function(string $table)use($target):string{return hash('sha256',$target->table('clubunio.'.$table)->orderBy('id')->get()->toJson());};
+$digest=function(string $table)use($target):string{
+    if(!preg_match('/\A[a-z_]+\z/',$table))throw new LogicException('Invalid fixture table');
+    return $target->selectOne('SELECT coalesce(md5(string_agg(to_jsonb(t)::text,\'\' ORDER BY to_jsonb(t)::text)),\'empty\') digest FROM clubunio."'.$table.'" t')->digest;
+};
 $source->beginTransaction();$target->beginTransaction();
 try{
     $tenant=$target->table('clubunio.tenants')->where('slug','sv-sissach')->value('id');
@@ -26,8 +29,15 @@ try{
     $consent=['kind'=>'parent','state'=>'approved','adult_consent_at'=>'2026-11-24 00:00:00+00','adult_consent_by'=>$actor,'adult_consent_source'=>'office'];
     $target->table('clubunio.account_member_links')->where('id',$link->id)->update($consent);
     $target->table('clubunio.account_parent_email_proofs')->updateOrInsert(['account_id'=>$actor],['email'=>'schema-review@example.invalid','verified_at'=>'2026-11-24 00:00:00+00','issuer_hash'=>str_repeat('a',64)]);
-    $protectedTables=['tenant_ai_connections','tenant_ai_stores','tenant_ai_documents','tenant_ai_usage','tenant_ai_events','mobile_keyboxes','mobile_keybox_commands','chat_preferences','support_triage'];
-    $protected=[];foreach($protectedTables as $table){$pk=$table==='tenant_ai_connections'?'tenant_id':($table==='chat_preferences'?'account_id':($table==='support_triage'?'ticket_id':'id'));$protected[$table]=hash('sha256',$target->table('clubunio.'.$table)->orderBy($pk)->get()->toJson());}
+    $owner=$target->table('clubunio.tenant_accounts')->where('tenant_id',$tenant)->orderBy('account_id')->value('account_id');
+    $task=$target->table('clubunio.workspace_tasks')->insertGetId(['tenant_id'=>$tenant,'created_by'=>$owner,'assigned_to'=>$owner,'title_encrypted'=>$crypt->encryptString('Synthetic review task'),'body_encrypted'=>$crypt->encryptString('Synthetic review body')]);
+    $target->table('clubunio.workspace_task_events')->insert(['tenant_id'=>$tenant,'task_id'=>$task,'actor_id'=>$owner,'operation'=>'created','revision'=>1]);
+    $target->table('clubunio.workspace_capture_commands')->insert(['tenant_id'=>$tenant,'account_id'=>$owner,'command_key'=>'d7bdf453-7284-4dfe-98bf-001da1f29972','input_hash'=>str_repeat('b',64),'result_url'=>'/synthetic-schema-review']);
+    $match=$target->table('clubunio.sfv_schedule')->where('tenant_id',$tenant)->orderBy('match_id')->value('match_id');
+    $field=$target->table('clubunio.training_options')->where('tenant_id',$tenant)->where('category','field')->orderBy('id')->value('id');
+    $target->table('clubunio.veo_recording_adjustments')->updateOrInsert(['tenant_id'=>$tenant,'match_id'=>$match],['field_id'=>$field,'starts_at'=>'2026-11-25 10:00:00+00','ends_at'=>'2026-11-25 12:00:00+00','basis_hash'=>str_repeat('c',64),'revision'=>1,'updated_by'=>$owner,'fixture_starts_at'=>'2026-11-25 10:00:00+00']);
+    $protectedTables=['tenant_ai_connections','tenant_ai_stores','tenant_ai_documents','tenant_ai_usage','tenant_ai_events','mobile_keyboxes','mobile_keybox_commands','chat_preferences','support_triage','workspace_tasks','workspace_task_events','chat_mentions','workspace_capture_commands','veo_recording_adjustments'];
+    $protected=[];foreach($protectedTables as $table)$protected[$table]=$digest($table);
     $proof=$target->table('clubunio.account_parent_email_proofs')->get()->toJson();
     $accountFlags=$target->table('clubunio.accounts')->orderBy('id')->get(['id','active','api_only','password'])->toJson();
     $period=$target->table('clubunio.tenant_settings')->where('tenant_id',$tenant)->where('key','SIGNAGE_PERIOD_ID')->value('encrypted_value');
@@ -37,7 +47,7 @@ try{
     $assert($proof===$target->table('clubunio.account_parent_email_proofs')->get()->toJson(),'Parent proof changed');
     $assert($accountFlags===$target->table('clubunio.accounts')->orderBy('id')->get(['id','active','api_only','password'])->toJson(),'Account security flags changed');
     $assert($period===$target->table('clubunio.tenant_settings')->where('tenant_id',$tenant)->where('key','SIGNAGE_PERIOD_ID')->value('encrypted_value'),'Local Winter setting changed');
-    foreach($protectedTables as $table){$pk=$table==='tenant_ai_connections'?'tenant_id':($table==='chat_preferences'?'account_id':($table==='support_triage'?'ticket_id':'id'));$assert($protected[$table]===hash('sha256',$target->table('clubunio.'.$table)->orderBy($pk)->get()->toJson()),'Native data changed');}
+    foreach($protectedTables as $table)$assert($protected[$table]===$digest($table),'Native data changed');
     $note=$source->table('clubunio.member_notes')->orderBy('id')->first();
     $native=$target->table('clubunio.member_notes')->where('tenant_id',$tenant)->where('legacy_id',$note->legacy_id)->sole();
     $source->table('clubunio.member_notes')->where('id',$note->id)->update(['body'=>'Synthetic source field update']);
