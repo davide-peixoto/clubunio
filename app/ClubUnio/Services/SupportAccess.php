@@ -18,7 +18,7 @@ final class SupportAccess
         abort_unless(app(MemberAccessService::class)->canEnter($actor, $tenant)
             || app(ModulePermissionService::class)->canEnter($actor, $tenant), 403);
 
-        return (string) DB::connection('clubunio')->table('clubora.tenant_accounts')
+        return (string) DB::connection('clubunio')->table('clubunio.tenant_accounts')
             ->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->value('role');
     }
 
@@ -43,13 +43,13 @@ final class SupportAccess
 
     public function tickets(int $tenant, int $actor, bool $staff)
     {
-        return DB::connection('clubunio')->table('clubora.support_tickets')->where('audience', 'club')
+        return DB::connection('clubunio')->table('clubunio.support_tickets')->where('audience', 'club')
             ->where('tenant_id', $tenant)->when(!$staff, fn ($q) => $q->where('requester_id', $actor));
     }
 
     public function articles(?int $tenant, bool $staff, bool $platform, string $locale)
     {
-        return DB::connection('clubunio')->table('clubora.support_articles')
+        return DB::connection('clubunio')->table('clubunio.support_articles')
             ->where('published', true)->where('locale', $locale)
             ->where(function ($query) use ($tenant, $staff, $platform) {
                 $query->where('audience', 'public');

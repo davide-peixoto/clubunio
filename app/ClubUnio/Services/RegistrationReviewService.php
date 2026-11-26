@@ -27,7 +27,7 @@ class RegistrationReviewService
             return $q->whereRaw('1=0');
         }
 
-        return $q->where(fn ($q) => $q->whereIn('technical_lead_member_id', $access->represented($actor, $tenant, true)->select('clubora.members.id'))
+        return $q->where(fn ($q) => $q->whereIn('technical_lead_member_id', $access->represented($actor, $tenant, true)->select('clubunio.members.id'))
             ->orWhereIn('team_season_id', $access->responsibleTeams($actor, $tenant)));
     }
 
@@ -56,9 +56,9 @@ class RegistrationReviewService
     public function leaders(Tenant $tenant): Builder
     {
         return app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id',
-            DB::connection('clubunio')->table('clubora.account_member_links as l')
-                ->join('clubora.tenant_accounts as ta', fn ($j) => $j->on('ta.tenant_id', '=', 'l.tenant_id')->on('ta.account_id', '=', 'l.account_id'))
-                ->join('clubora.accounts as a', 'a.id', '=', 'l.account_id')
+            DB::connection('clubunio')->table('clubunio.account_member_links as l')
+                ->join('clubunio.tenant_accounts as ta', fn ($j) => $j->on('ta.tenant_id', '=', 'l.tenant_id')->on('ta.account_id', '=', 'l.account_id'))
+                ->join('clubunio.accounts as a', 'a.id', '=', 'l.account_id')
                 ->where('l.tenant_id', $tenant->id)->where('l.kind', 'self')->where('l.state', 'approved')
                 ->where('ta.role', 'technical_lead')->where('ta.portal_enabled', true)->where('a.active', true)->select('l.member_id'));
     }
@@ -130,7 +130,7 @@ class RegistrationReviewService
             }
             $r->forceFill(['revision' => $r->revision + 1, 'reviewed_by' => $actor->id, 'reviewed_at' => now()])->save();
             $db = DB::connection('clubunio');
-            $db->table('clubora.object_changes')->insert([
+            $db->table('clubunio.object_changes')->insert([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'registrations', 'object_id' => $r->id,
                 'before_value' => json_encode($before, JSON_THROW_ON_ERROR),
                 'after_value' => json_encode($r->only([...self::FIELDS, 'revision', 'member_id', 'accepted_at']) + ['reason' => trim($data['reason'])], JSON_THROW_ON_ERROR),

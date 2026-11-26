@@ -39,12 +39,12 @@ class RegistrationAcceptanceService
         }
         $db = DB::connection('clubunio');
         $type = (int) ($input['member_type_id'] ?? $member?->type_id ?? 0);
-        if (! $db->table('clubora.member_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $type)->exists()) {
+        if (! $db->table('clubunio.member_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $type)->exists()) {
             throw ValidationException::withMessages(['member_type_id' => __('Bitte eine aktive Mitgliederart auswählen.')]);
         }
-        $documents = $db->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $r->id)->where('active', true)->get();
+        $documents = $db->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $r->id)->where('active', true)->get();
         $documentType = $input['document_type_id'] ?? null;
-        if ($documents->contains('kind', 'identity') && ! $db->table('clubora.document_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $documentType)->exists()) {
+        if ($documents->contains('kind', 'identity') && ! $db->table('clubunio.document_types')->where('tenant_id', $tenant->id)->where('active', true)->where('id', $documentType)->exists()) {
             throw ValidationException::withMessages(['document_type_id' => __('Bitte den Dokumententyp für die Ausweise auswählen.')]);
         }
         $returning = $member && ($member->exit_date || $member->status?->ends_membership);
@@ -57,7 +57,7 @@ class RegistrationAcceptanceService
             if ($document->kind === 'portrait') {
                 $member->forceFill(['legacy_photo' => $document->storage_path.$document->filename]);
             } else {
-                $db->table('clubora.member_documents')->insert([
+                $db->table('clubunio.member_documents')->insert([
                     'tenant_id' => $tenant->id, 'member_id' => $member->id, 'document_type_id' => $documentType,
                     'filename' => $document->filename, 'original_filename' => $document->original_filename ?: $document->filename,
                     'storage_path' => $document->storage_path, 'registration_document_id' => $document->id,
@@ -66,17 +66,17 @@ class RegistrationAcceptanceService
         }
         $member->save();
         if (! empty($values['notes'])) {
-            $db->table('clubora.member_notes')->insert(['tenant_id' => $tenant->id, 'member_id' => $member->id, 'body' => $values['notes']]);
+            $db->table('clubunio.member_notes')->insert(['tenant_id' => $tenant->id, 'member_id' => $member->id, 'body' => $values['notes']]);
         }
         $player = null;
         if ($r->team_season_id) {
-            $player = $db->table('clubora.team_players')->where('tenant_id', $tenant->id)->where('member_id', $member->id)
+            $player = $db->table('clubunio.team_players')->where('tenant_id', $tenant->id)->where('member_id', $member->id)
                 ->where('team_season_id', $r->team_season_id)->where('active', true)->value('id');
             if (! $player) {
                 // Do not reactivate historical invoice-bound rows or move other memberships.
-                $player = $db->table('clubora.team_players')->insertGetId(['tenant_id' => $tenant->id,
+                $player = $db->table('clubunio.team_players')->insertGetId(['tenant_id' => $tenant->id,
                     'member_id' => $member->id, 'team_season_id' => $r->team_season_id, 'active' => true]);
-                $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+                $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                     'object_type' => 'team_players', 'object_id' => $player,
                     'after_value' => json_encode(['registration_id' => $r->id, 'member_id' => $member->id, 'team_season_id' => $r->team_season_id], JSON_THROW_ON_ERROR)]);
             }

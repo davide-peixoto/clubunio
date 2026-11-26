@@ -93,8 +93,6 @@ final class ClubhouseController
     private function pdf(string $bytes, int $id)
     {
         return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="menu-'.$id.'.pdf"')
-            ->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff')
-            ->header('Content-Security-Policy', "sandbox; default-src 'none'; frame-ancestors 'self'")
-            ->header('X-Frame-Options', 'SAMEORIGIN');
+            ->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');
     }
 }

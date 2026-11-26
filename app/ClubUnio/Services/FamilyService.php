@@ -33,10 +33,10 @@ class FamilyService
                 'tenant_id' => 'prohibited', 'id' => 'prohibited', 'legacy_id' => 'prohibited'];
             if ($model === Family::class) {
                 $rules += ['name' => 'required|string|max:160', 'street' => 'nullable|string|max:255', 'city' => 'nullable|string|max:255',
-                    'postal_code' => 'nullable|string|max:20', 'country_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.countries', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record->country_id ?? -1)))]];
+                    'postal_code' => 'nullable|string|max:20', 'country_id' => ['nullable', 'integer', Rule::exists('clubunio.clubunio.countries', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where(fn ($q) => $q->where('active', true)->orWhere('id', $record->country_id ?? -1)))]];
             } else {
                 foreach (['family_id' => 'families', 'member_id' => 'members'] as $field => $table) {
-                    $rules[$field] = ['required', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')->where(function ($q) use ($tenant, $table, $record, $field) {
+                    $rules[$field] = ['required', 'integer', Rule::exists('clubunio.clubunio.'.$table, 'id')->where(function ($q) use ($tenant, $table, $record, $field) {
                         $q->where('tenant_id', $tenant->id)->where(function ($q) use ($table, $record, $field) {
                             $table === 'members' ? $q->whereNull('archived_at') : $q->where('active', true);
                             $q->orWhere('id', $record->$field ?? -1);
@@ -66,7 +66,7 @@ class FamilyService
             $record->forceFill($data + ['tenant_id' => $tenant->id]);
             if (! $record->exists || $record->isDirty()) {
                 $record->save();
-                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                     'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR),
                     'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
             }

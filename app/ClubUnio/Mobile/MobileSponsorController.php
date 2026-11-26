@@ -36,7 +36,7 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
     }
     public function teams(Request $r) {
         [$a,$t,$s,$d]=$this->context($r); $s->authorize($a,$t,'create'); $v=$r->validate(['SaisonID'=>'required|integer|min:1']); $id=$this->season($t,(int)$v['SaisonID']);
-        $q=$s->db()->table('clubora.team_seasons as ts')->join('clubora.teams as tm',fn($j)=>$j->on('tm.id','=','ts.team_id')->on('tm.tenant_id','=','ts.tenant_id'))->where('ts.tenant_id',$t->id)->where('ts.season_id',$id)->where('ts.active',true)->where('tm.active',true);
+        $q=$s->db()->table('clubunio.team_seasons as ts')->join('clubunio.teams as tm',fn($j)=>$j->on('tm.id','=','ts.team_id')->on('tm.tenant_id','=','ts.tenant_id'))->where('ts.tenant_id',$t->id)->where('ts.season_id',$id)->where('ts.active',true)->where('tm.active',true);
         return $this->json(['Teams'=>$q->orderBy('ts.label')->get(['ts.id','ts.label'])->map(fn($v)=>['TeamSaisonID'=>(int)$v->id,'Mannschaftsname'=>$v->label])->all()]);
     }
     public function saveEvent(Request $r) {
@@ -99,8 +99,8 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
     }
     public function helperCandidates(Request $r) {
         [$a,$t,$s]=$this->context($r); $s->authorize($a,$t,'update'); $s->event($t,(int)$r->route('event')); $v=$r->validate(['search'=>'required|string|min:2|max:100']);
-        $q=$s->db()->table('clubora.accounts as a')->join('clubora.tenant_accounts as ta','ta.account_id','=','a.id')->where('ta.tenant_id',$t->id)->where('a.active',true)->where('a.api_only',false)
-            ->whereExists(fn($q)=>$q->selectRaw('1')->from('clubora.account_member_links as l')->join('clubora.members as m',fn($j)=>$j->on('m.id','=','l.member_id')->on('m.tenant_id','=','l.tenant_id'))->whereColumn('l.account_id','a.id')->where('l.tenant_id',$t->id)->where('l.kind','self')->where('l.state','approved')->whereIn('m.id',app(MemberAccessService::class)->activeMembers($t)->select('clubora.members.id')))
+        $q=$s->db()->table('clubunio.accounts as a')->join('clubunio.tenant_accounts as ta','ta.account_id','=','a.id')->where('ta.tenant_id',$t->id)->where('a.active',true)->where('a.api_only',false)
+            ->whereExists(fn($q)=>$q->selectRaw('1')->from('clubunio.account_member_links as l')->join('clubunio.members as m',fn($j)=>$j->on('m.id','=','l.member_id')->on('m.tenant_id','=','l.tenant_id'))->whereColumn('l.account_id','a.id')->where('l.tenant_id',$t->id)->where('l.kind','self')->where('l.state','approved')->whereIn('m.id',app(MemberAccessService::class)->activeMembers($t)->select('clubunio.members.id')))
             ->where('a.display_name','ilike','%'.$v['search'].'%')->orderBy('a.display_name')->limit(30)->get(['a.id','a.display_name']);
         return $this->json(['Candidates'=>$q->map(fn($v)=>['AccountID'=>(int)$v->id,'Username'=>$v->display_name,'Vorname'=>$v->display_name,'Nachname'=>''])->all()]);
     }
@@ -139,10 +139,10 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
     }
     public function billing(Request $r) {
         [$a,$t,$s,$d]=$this->context($r); app(SponsorRunBillingService::class)->authorize($a,$t); $event=(int)$r->route('event'); $s->event($t,$event); $v=$r->validate(['start'=>'sometimes|integer|min:0|max:100000','search'=>'sometimes|nullable|string|max:100']);
-        $q=$s->db()->table('clubora.sponsor_run_invoices as i')->where('i.tenant_id',$t->id)->where('i.event_id',$event)
-            ->join('clubora.sponsor_run_pledges as g',fn($j)=>$j->on('g.id','=','i.pledge_id')->on('g.tenant_id','=','i.tenant_id'))
-            ->join('clubora.sponsor_run_participants as p',fn($j)=>$j->on('p.id','=','g.participant_id')->on('p.tenant_id','=','g.tenant_id'))
-            ->join('clubora.members as m',fn($j)=>$j->on('m.id','=','p.member_id')->on('m.tenant_id','=','p.tenant_id'))
+        $q=$s->db()->table('clubunio.sponsor_run_invoices as i')->where('i.tenant_id',$t->id)->where('i.event_id',$event)
+            ->join('clubunio.sponsor_run_pledges as g',fn($j)=>$j->on('g.id','=','i.pledge_id')->on('g.tenant_id','=','i.tenant_id'))
+            ->join('clubunio.sponsor_run_participants as p',fn($j)=>$j->on('p.id','=','g.participant_id')->on('p.tenant_id','=','g.tenant_id'))
+            ->join('clubunio.members as m',fn($j)=>$j->on('m.id','=','p.member_id')->on('m.tenant_id','=','p.tenant_id'))
             ->when(trim($v['search']??''),fn($q,$search)=>$q->where(fn($q)=>$q->where('g.sponsor_name','ilike','%'.$search.'%')->orWhereRaw("concat_ws(' ',m.first_name,m.last_name) ILIKE ?",['%'.$search.'%'])))
             ->orderBy('i.id');
         // Local snapshots only: never provider catalogues, synchronization, mail or payment commands.
@@ -155,18 +155,18 @@ final class MobileSponsorController implements \Illuminate\Routing\Controllers\H
     }
     private function fingerprint(array $v): string { ksort($v); return hash('sha256',json_encode($v,JSON_THROW_ON_ERROR)); }
     private function oldCommand($a,$t,string $key,string $operation,string $hash): ?object {
-        $row=DB::connection('clubunio')->table('clubora.mobile_sponsor_commands')->where('tenant_id',$t->id)->where('account_id',$a->id)->where('command_key',$key)->first();
+        $row=DB::connection('clubunio')->table('clubunio.mobile_sponsor_commands')->where('tenant_id',$t->id)->where('account_id',$a->id)->where('command_key',$key)->first();
         if($row) abort_unless($row->operation===$operation && hash_equals($row->fingerprint,$hash),409,'Anfragekennung gehoert zu einem anderen Vorgang.');
         return $row;
     }
     private function record($a,$t,string $key,string $operation,string $hash,int $event,?int $participant,int $revision): void {
-        DB::connection('clubunio')->table('clubora.mobile_sponsor_commands')->insert(['tenant_id'=>$t->id,'account_id'=>$a->id,'command_key'=>$key,'operation'=>$operation,
+        DB::connection('clubunio')->table('clubunio.mobile_sponsor_commands')->insert(['tenant_id'=>$t->id,'account_id'=>$a->id,'command_key'=>$key,'operation'=>$operation,
             'fingerprint'=>$hash,'event_id'=>$event,'participant_id'=>$participant,'result_revision'=>$revision]);
     }
     private function write(Request $r,\Closure $action) {
         return DB::connection('clubunio')->transaction(function()use($r,$action){
             [$a,$t,$s,$d]=$this->context($r); Tenant::whereKey($t->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $a=app(MobileSessions::class)->authenticate($r); app(MobileAccess::class)->enter($a,$t); return $action($a,$t,$s,$d);
         });
     }

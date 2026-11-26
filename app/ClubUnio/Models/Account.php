@@ -13,9 +13,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
 
-class Account extends Authenticatable implements FilamentUser, HasName, HasTenants
+class Account extends Authenticatable implements FilamentUser, HasName, HasTenants, \Filament\Models\Contracts\HasAvatar
 {
     use UsesClubUnioSchema;
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        if (request()->attributes->has('clubunio_impersonation')) return null;
+        $domain = app(\App\ClubUnio\Services\TenantDomainService::class)->current();
+
+        return app(\App\ClubUnio\Services\ProfilePhotoService::class)->available($this, $domain)
+            ? route('clubunio.photo.personal', absolute: false) : null;
+    }
 
     protected $connection = 'clubunio';
 
@@ -32,7 +41,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
 
     public function tenants()
     {
-        return $this->belongsToMany(Tenant::class, 'clubora.tenant_accounts')->withPivot('role');
+        return $this->belongsToMany(Tenant::class, 'clubunio.tenant_accounts')->withPivot('role');
     }
 
     public function getFilamentName(): string
@@ -46,7 +55,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
             return collect();
         }
         $legacy = app(BackofficeReadContext::class)->tenantsFor($this)
-            ?? $this->tenants()->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->get();
+            ?? $this->tenants()->wherePivotIn('role', ['admin', 'office'])->get();
         $profiles = $this->tenants()->wherePivot('role', 'profile')->get()
             ->filter(fn ($tenant) => app(ModulePermissionService::class)->canEnter($this, $tenant));
         return $legacy->merge($profiles)->unique('id');
@@ -65,7 +74,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
         $snapshot = app(BackofficeReadContext::class)->tenantsFor($this);
 
         return $snapshot !== null ? $snapshot->contains(fn ($item) => (int) $item->id === (int) $tenant->getKey())
-            : $this->tenants()->whereKey($tenant->getKey())->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->exists();
+            : $this->tenants()->whereKey($tenant->getKey())->wherePivotIn('role', ['admin', 'office'])->exists();
     }
 
     public function canAccessPanel(Panel $panel): bool
@@ -80,7 +89,7 @@ class Account extends Authenticatable implements FilamentUser, HasName, HasTenan
         }
         $snapshot = app(BackofficeReadContext::class)->tenantsFor($this);
 
-        if ($snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ModulePermissionService::FULL_BACKOFFICE_ROLES)->exists()) {
+        if ($snapshot !== null ? $snapshot->isNotEmpty() : $this->tenants()->wherePivotIn('role', ['admin', 'office'])->exists()) {
             return true;
         }
         return $this->tenants()->wherePivot('role', 'profile')->get()

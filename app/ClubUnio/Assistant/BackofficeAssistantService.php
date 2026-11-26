@@ -31,12 +31,12 @@ class BackofficeAssistantService
     private function authorize(Account $actor, Tenant $tenant): void
     {
         $this->guard->authorize($actor, $tenant);
-        abort_unless(Schema::connection('clubunio')->hasTable('clubora.assistant_conversations'), 503);
+        abort_unless(Schema::connection('clubunio')->hasTable('clubunio.assistant_conversations'), 503);
     }
 
     private function table(string $name, Account $actor, Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.assistant_'.$name)
+        return DB::connection('clubunio')->table('clubunio.assistant_'.$name)
             ->where('tenant_id', $tenant->id)->where('account_id', $actor->id);
     }
 
@@ -63,7 +63,7 @@ class BackofficeAssistantService
 
     private function budget(Tenant $tenant): int
     {
-        return (int) DB::connection('clubunio')->table('clubora.assistant_runs')->where('tenant_id', $tenant->id)
+        return (int) DB::connection('clubunio')->table('clubunio.assistant_runs')->where('tenant_id', $tenant->id)
             ->where('created_at', '>=', CarbonImmutable::now('Europe/Zurich')->startOfMonth()->toIso8601String())
             ->selectRaw('COALESCE(SUM(COALESCE(actual_microusd,reserved_microusd)),0) AS spent')->value('spent');
     }

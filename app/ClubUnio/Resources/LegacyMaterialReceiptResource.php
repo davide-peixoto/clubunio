@@ -43,10 +43,13 @@ class LegacyMaterialReceiptResource extends CatalogResource
             TextColumn::make('signed_name')->label('Unterzeichnet durch'),
             TextColumn::make('signed_at')->label('Historischer Zeitpunkt')->dateTime('d.m.Y H:i'),
             TextColumn::make('source_id')->label('Alte Quittungs-ID'),
+            TextColumn::make('integrity_state')->label(__('svs.integrity'))->formatStateUsing(fn ($state) => $state === 'source_metadata_only' ? __('svs.metadata_only') : __('svs.file_verified'))->badge(),
         ])->recordActions([
             Action::make('signedPdf')->label('Nachweis')->icon('heroicon-o-document-check')->iconButton()->tooltip(__('Historischen Nachweis öffnen'))
+                ->visible(fn ($record) => ! $record->legacy_read_only && $record->integrity_state !== 'source_metadata_only')
                 ->url(fn ($record) => route('clubunio.material.history.pdf', [Filament::getTenant()->slug, $record->id]))->openUrlInNewTab(),
             Action::make('originalPdf')->label('Original')->icon('heroicon-o-document-text')->iconButton()->tooltip(__('Unsigniertes Original öffnen'))
+                ->visible(fn ($record) => ! $record->legacy_read_only && $record->integrity_state !== 'source_metadata_only')
                 ->url(fn ($record) => route('clubunio.material.history.pdf', [Filament::getTenant()->slug, $record->id, 'original' => 1]))->openUrlInNewTab(),
         ])->defaultSort('id', 'desc')->persistSearchInSession();
     }

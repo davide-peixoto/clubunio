@@ -40,12 +40,12 @@ class BusKeyboxAccessService
 
     private function codes(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.bus_keybox_codes')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.bus_keybox_codes')->where('tenant_id', $tenant->id);
     }
 
     private function audit(Account $actor, Tenant $tenant, int $id, string $action): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'bus_keybox', 'object_id' => $id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'bus_keybox', 'object_id' => $id,
             'after_value' => json_encode(['action' => $action, 'mode' => 'SIMULATION'], JSON_THROW_ON_ERROR)]);
     }
 
@@ -78,10 +78,10 @@ class BusKeyboxAccessService
             || ! $access->canEnter($fresh, $tenant)) {
             return false;
         }
-        $members = DB::connection('clubunio')->table('clubora.account_member_links')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('state', 'approved')->where('kind', 'self')
+        $members = DB::connection('clubunio')->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('state', 'approved')->where('kind', 'self')
             ->whereIn('member_id', app(MemberAccessService::class)->activeMembers($tenant)->select('id'))->pluck('member_id');
 
-        return $members->contains($row->member_id) || DB::connection('clubunio')->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('team_season_id', $row->team_season_id)->where('active', true)->whereIn('member_id', $members)->exists();
+        return $members->contains($row->member_id) || DB::connection('clubunio')->table('clubunio.team_staff')->where('tenant_id', $tenant->id)->where('team_season_id', $row->team_season_id)->where('active', true)->whereIn('member_id', $members)->exists();
     }
 
     private function scope(object $row, BusKeybox $box): string

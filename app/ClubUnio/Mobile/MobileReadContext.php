@@ -19,7 +19,7 @@ final class MobileReadContext
             || (int)$request->attributes->get('mobile.actor')?->id!==(int)$actor->id
             || (int)$request->attributes->get('mobile.tenant')?->id!==(int)$tenant->id) return $next();
         Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-        $freshSession=$db->table('clubora.mobile_sessions')->where('id',$session->id)->where('account_id',$actor->id)
+        $freshSession=$db->table('clubunio.mobile_sessions')->where('id',$session->id)->where('account_id',$actor->id)
             ->whereNull('revoked_at')->where('expires_at','>',now()->toIso8601String())->sharedLock()->first();
         abort_unless($freshSession,401);
         $fresh=Account::whereKey($actor->id)->where('active',true)->where('api_only',false)->sharedLock()->first();

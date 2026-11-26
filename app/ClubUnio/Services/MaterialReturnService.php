@@ -16,16 +16,16 @@ final class MaterialReturnService
 
     private function table(Tenant $tenant, string $name)
     {
-        return DB::connection('clubunio')->table('clubora.'.$name)->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$name)->where('tenant_id', $tenant->id);
     }
 
     public function positions(Account $actor, Tenant $tenant, ?int $member, bool $overdue, bool $completed)
     {
         abort_unless($this->allows($actor, $tenant, 'view'), 403);
         $db = DB::connection('clubunio');
-        return $db->table('clubora.material_receipts as receipt')
+        return $db->table('clubunio.material_receipts as receipt')
             ->crossJoin($db->raw("LATERAL jsonb_array_elements(receipt.snapshot->'items') WITH ORDINALITY AS item(data, position)"))
-            ->leftJoin('clubora.material_return_deadlines as due', fn ($join) => $join
+            ->leftJoin('clubunio.material_return_deadlines as due', fn ($join) => $join
                 ->on('due.tenant_id', '=', 'receipt.tenant_id')->on('due.receipt_id', '=', 'receipt.id')->on('due.position', '=', 'item.position'))
             ->leftJoinSub($this->table($tenant, 'material_returns')->selectRaw('receipt_id, position, sum(quantity) AS returned')
                 ->groupBy('receipt_id', 'position'), 'returns', fn ($join) => $join

@@ -40,7 +40,7 @@ final class TrainerWebSeasonScope
     public function currentTeams(Tenant $tenant)
     {
         return app(MobileSeasonScope::class)->teams(
-            DB::connection('clubunio')->table('clubora.team_seasons')->where('tenant_id', $tenant->id),
+            DB::connection('clubunio')->table('clubunio.team_seasons')->where('tenant_id', $tenant->id),
             $tenant,
         );
     }

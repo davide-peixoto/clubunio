@@ -17,7 +17,7 @@ class BexioRecordActions
     {
         return BexioConnectionService::canManage(Filament::auth()->user()?->fresh(), Filament::getTenant())
             && AccountingProvider::current(Filament::getTenant()) === AccountingProvider::BEXIO
-            && DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', Filament::getTenant()->id)
+            && DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', Filament::getTenant()->id)
                 ->where('kind', $kind)->where($kind.'_id', $page->getRecord()->id)->where('state', 'accepted')->exists();
     }
 
@@ -29,7 +29,7 @@ class BexioRecordActions
             ->action(function ($livewire) use ($kind) {
                 try {
                     $id = app(SyncWorkService::class)->run(Filament::auth()->user(), Filament::getTenant(), $kind.'_sync', $livewire->getRecord()->id);
-                    $state = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', Filament::getTenant()->id)->where('id', $id)->value('state');
+                    $state = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', Filament::getTenant()->id)->where('id', $id)->value('state');
                     Notification::make()->title(in_array($state, ['applied', 'unchanged'], true) ? __('Bexio-Stand abgeglichen') : __('Synchronisation prüfen'))->send();
                     $resource = $kind === 'invoice' ? InvoiceResource::class : ExpenseResource::class;
                     $livewire->redirect($resource::getUrl('view', ['record' => $livewire->getRecord()->id]));
@@ -50,8 +50,8 @@ class BexioRecordActions
             ->action(function ($livewire) use ($operation) {
                 try {
                     app(BexioInvoiceActionService::class)->execute(Filament::auth()->user(), Filament::getTenant(), $livewire->getRecord()->id, $operation);
-                    $accepted = DB::connection('clubunio')->table('clubora.bexio_invoice_actions as a')
-                        ->join('clubora.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
+                    $accepted = DB::connection('clubunio')->table('clubunio.bexio_invoice_actions as a')
+                        ->join('clubunio.bexio_sandbox_dispatches as d', 'd.id', '=', 'a.dispatch_id')
                         ->where('d.tenant_id', Filament::getTenant()->id)->where('d.invoice_id', $livewire->getRecord()->id)
                         ->where('a.operation', $operation)->where('a.state', 'accepted')->exists();
                     if (! $accepted) {

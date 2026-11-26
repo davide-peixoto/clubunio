@@ -10,8 +10,8 @@ final class CampaignMailQueue
 {
     public function enabled(): bool
     {
-        return MemberCampaignService::devTestMode() || (app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com'
-            && config('clubunio-campaign-mail.enabled') && config('clubunio-integrations.test_mail_enabled'));
+        return app()->environment('staging') && config('app.url') === 'https://stage.clubunio.com'
+            && config('clubunio-campaign-mail.enabled') && config('clubunio-integrations.test_mail_enabled');
     }
 
     private function table()
@@ -23,7 +23,6 @@ final class CampaignMailQueue
     {
         $service = app(MemberCampaignService::class);
         $member = $service->deliveryMember($tenant, $row);
-        if (MemberCampaignService::devTestMode() && ($row->channel !== 'email' || ! $member || ! $service->isDevTestRecipient($member))) return null;
         $email = $member ? strtolower((string) $service->email($member)) : '';
         if (! filter_var($email, FILTER_VALIDATE_EMAIL) || ! str_ends_with($email, '@example.invalid')) return null;
         if (! ($row->guardian_account_id ?? null) && app(MemberAccessService::class)->activeMembers($tenant)->whereKeyNot($row->member_id)
@@ -87,8 +86,7 @@ final class CampaignMailQueue
     public function runOne(?int $onlyRecipient = null): bool
     {
         if (! $this->enabled()) return false;
-        $dev = MemberCampaignService::devTestMode();
-        $tenant = Tenant::where('slug', $dev ? 'sv-sissach' : 'stage-mobile-pilot')->first();
+        $tenant = Tenant::where('slug', 'stage-mobile-pilot')->first();
         if (! $tenant) return false;
         $db = DB::connection('clubunio');
         $row = $db->transaction(function () use ($db, $tenant, $onlyRecipient) {
@@ -117,33 +115,23 @@ final class CampaignMailQueue
         try {
             $service = app(MemberCampaignService::class);
             $copy = $service->copy($service->openCampaign($tenant, $row->campaign_id));
-            $hash = $this->address($tenant, $row);
-            if (! $row->token_encrypted || ! $hash || $hash !== $row->mail_address_hash || $this->suppressed($tenant, $hash)) {
+            $url = $service->url($tenant, $row);
+            $locale = app()->getLocale();
+            $html = app(ClubUnioMailTheme::class)->render(
+                $tenant, $copy['subject'], $copy['body'], $url, trans('mail_theme.open', [], $locale), $locale,
+            );
+            if (! $row->token_encrypted || $this->address($tenant, $row) !== $row->mail_address_hash || $this->suppressed($tenant, $row->mail_address_hash)) {
                 $state = 'failed';
             } else {
-                $url = $service->url($tenant, $row);
-                $locale = app()->getLocale();
-                $text = $copy['body']."\n\n".$url;
-                $html = app(ClubUnioMailTheme::class)->render(
-                    $tenant, $copy['subject'], $copy['body'], $url, trans('mail_theme.open', [], $locale), $locale,
+                $sent = Mail::mailer('clubunio_test')->send(
+                    ['raw' => $copy['body']."\n\n".$service->url($tenant, $row)],
+                    ['clubunio_reply_to_tenant_id' => (int) $tenant->id],
+                    function ($message) use ($copy, $html) {
+                        $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject($copy['subject']);
+                        $message->getSymfonyMessage()->html($html);
+                    },
                 );
-
-                if ($dev) {
-                    $message = (new \Symfony\Component\Mime\Email())->from('campaign-test@example.invalid')
-                        ->to('campaign-test-sink@example.invalid')->subject($copy['subject'])
-                        ->text($text)->html($html);
-                    $state = (new \Illuminate\Mail\Transport\ArrayTransport())->send($message) ? 'accepted' : 'attention';
-                } else {
-                    $sent = Mail::mailer('clubunio_test')->send(
-                        ['raw' => $text],
-                        ['clubunio_reply_to_tenant_id' => (int) $tenant->id],
-                        function ($message) use ($copy, $html) {
-                            $message->from(config('clubunio-integrations.from'))->to(TestMailGuard::RECIPIENT)->subject($copy['subject']);
-                            $message->getSymfonyMessage()->html($html);
-                        },
-                    );
-                    $state = $sent ? 'accepted' : 'attention';
-                }
+                $state = $sent ? 'accepted' : 'attention';
             }
         } catch (UnexpectedResponseException $error) {
             $code = (int) $error->getCode();

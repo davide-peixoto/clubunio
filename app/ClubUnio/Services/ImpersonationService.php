@@ -17,7 +17,7 @@ class ImpersonationService
 
     public function table(string $name)
     {
-        return DB::connection('clubunio')->table('clubora.support_'.$name);
+        return DB::connection('clubunio')->table('clubunio.support_'.$name);
     }
 
     public function allowed(Account $actor, Tenant $tenant): bool

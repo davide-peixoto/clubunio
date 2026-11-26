@@ -88,7 +88,7 @@ class BexioReconciliation extends Page implements HasTable
 
         return $class::where('tenant_id', $tenant->id)->where('active', true)->whereNotNull($field)->where($field, '<>', '')->where($field, '<>', '-')
             ->when(! ProfileUi::model($class), fn ($q) => $q->whereRaw('1 = 0'))
-            ->when(app(BexioReconciliationService::class)->sandbox($tenant), fn ($q) => $q->whereIn('id', DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $this->type)->where('state', 'accepted')->select($this->type.'_id')))
+            ->when(app(BexioReconciliationService::class)->sandbox($tenant), fn ($q) => $q->whereIn('id', DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('kind', $this->type)->where('state', 'accepted')->select($this->type.'_id')))
             ->with(['member', 'status'])->when(trim($this->search) !== '', fn ($q) => $q->where(function ($q) use ($field) {
                 $q->where($field, 'ilike', '%'.trim($this->search).'%')->orWhereHas('member', fn ($m) => $m->where('first_name', 'ilike', '%'.trim($this->search).'%')->orWhere('last_name', 'ilike', '%'.trim($this->search).'%'));
             }));
@@ -124,7 +124,7 @@ class BexioReconciliation extends Page implements HasTable
     {
         abort_unless(ProfileUi::allows('bexio', 'sync'), 403);
         abort_unless(static::canAccess(), 403);
-        $check = DB::connection('clubunio')->table('clubora.bexio_checks')
+        $check = DB::connection('clubunio')->table('clubunio.bexio_checks')
             ->where('tenant_id', Filament::getTenant()->id)->where('actor_id', Filament::auth()->id())->find($id);
         abort_unless($check && static::canSync($check->object_type), 403);
         try {
@@ -150,7 +150,7 @@ class BexioReconciliation extends Page implements HasTable
         $field = $this->type === 'invoice' ? 'bexio_invoice_id' : 'bexio_bill_id';
         $sandbox = app(BexioReconciliationService::class)->sandbox($tenant);
         $visibleTypes = array_values(array_filter(['invoice', 'expense'], fn ($type) => ProfileUi::allows($type === 'invoice' ? 'invoices' : 'expenses')));
-        $checks = DB::connection('clubunio')->table('clubora.bexio_checks')->where('tenant_id', $tenant->id)
+        $checks = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('tenant_id', $tenant->id)
             ->whereIn('object_type', $visibleTypes)->orderByDesc('id')->limit(30)->get();
 
         return compact('tenant', 'checks', 'field', 'sandbox', 'documentTypes') + ['enabled' => app(BexioReconciliationService::class)->enabled($tenant)];

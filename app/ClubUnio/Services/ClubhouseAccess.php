@@ -15,7 +15,7 @@ final class ClubhouseAccess
     {
         $key = self::class.'.schema';
         if (! request()->attributes->has($key)) {
-            request()->attributes->set($key, Schema::connection('clubunio')->hasTable('clubora.clubhouse_grants'));
+            request()->attributes->set($key, Schema::connection('clubunio')->hasTable('clubunio.clubhouse_grants'));
         }
 
         return request()->attributes->get($key) === true;
@@ -26,7 +26,7 @@ final class ClubhouseAccess
         $fresh = $actor->fresh();
 
         return $tenant->fresh() !== null && $fresh?->active && ! $fresh->api_only
-            && DB::connection('clubunio')->table('clubora.tenant_accounts')
+            && DB::connection('clubunio')->table('clubunio.tenant_accounts')
                 ->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->exists();
     }
 
@@ -47,7 +47,7 @@ final class ClubhouseAccess
 
     private function grantFor(Account $actor, Tenant $tenant): ?object
     {
-        return DB::connection('clubunio')->table('clubora.clubhouse_grants')
+        return DB::connection('clubunio')->table('clubunio.clubhouse_grants')
             ->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('active', true)->first();
     }
 
@@ -111,9 +111,9 @@ final class ClubhouseAccess
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $accountId, $data) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless($this->administrator($actor, $tenant), 403);
-            DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)
+            DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)
                 ->where('account_id', $accountId)->lockForUpdate()->firstOrFail();
-            $table = DB::connection('clubunio')->table('clubora.clubhouse_grants')->where('tenant_id', $tenant->id)->where('account_id', $accountId);
+            $table = DB::connection('clubunio')->table('clubunio.clubhouse_grants')->where('tenant_id', $tenant->id)->where('account_id', $accountId);
             $old = (clone $table)->lockForUpdate()->first();
             if ((int) ($old->revision ?? 0) !== (int) $data['revision']) {
                 throw ValidationException::withMessages(['revision' => trans('clubhouse.conflict')]);
@@ -131,7 +131,7 @@ final class ClubhouseAccess
 
     public function audit(Account $actor, Tenant $tenant, string $entity, ?int $id, string $operation, array $data = []): void
     {
-        DB::connection('clubunio')->table('clubora.clubhouse_events')->insert(['tenant_id' => $tenant->id,
+        DB::connection('clubunio')->table('clubunio.clubhouse_events')->insert(['tenant_id' => $tenant->id,
             'actor_id' => $actor->id, 'entity' => $entity, 'object_id' => $id, 'operation' => $operation,
             'data' => json_encode($data, JSON_THROW_ON_ERROR), 'created_at' => now()->toIso8601String()]);
     }

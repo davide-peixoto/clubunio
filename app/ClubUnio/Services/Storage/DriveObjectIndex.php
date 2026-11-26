@@ -13,7 +13,7 @@ class DriveObjectIndex
 
     private function table()
     {
-        return DB::connection('clubunio')->table('clubora.tenant_storage_objects');
+        return DB::connection('clubunio')->table('clubunio.tenant_storage_objects');
     }
 
     public function id(object $profile, string $key): ?string

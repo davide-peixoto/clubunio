@@ -1,0 +1,32 @@
+{
+  "status": "applied",
+  "run_id": "0824d2aecea74a109355cd022135601b",
+  "source_manifest_sha256": "a27ea19ae9676df4f573a54e5122e8a490df50f87e1851e1d18f8f0774dd53c5",
+  "backup_sha256": "6564af0f42904ff9b299e538e241700a875cc7ab718ce946b36595bcbf26f625",
+  "direction": "phpmaker_prod_to_clubunio_prod",
+  "mapping_version": "e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b",
+  "previous_run_id": 3,
+  "current_run_id": 5,
+  "inserted": 7,
+  "updated": 221,
+  "unchanged": 37690,
+  "missing_review": 0,
+  "conflicts": 0,
+  "platform_admin_unchanged": true,
+  "source_tables": 100,
+  "source_rows": 55667,
+  "completed_utc": "2026-11-24T10:44:43.020082+01:00",
+  "schema_review": {
+    "new_migrations": 152,
+    "native_consent_preserved": true,
+    "adopted_training_plans": 34,
+    "mapped_columns_unchanged": true,
+    "source_mapping_unchanged": true,
+    "old_migrations": 147,
+    "account_security_preserved": true,
+    "negative_gates_passed": 3,
+    "isolated_repeat_writes": 0,
+    "review_commit": "113e81c",
+    "winter_plan_preserved": true
+  }
+}

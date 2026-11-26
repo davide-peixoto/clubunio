@@ -17,8 +17,8 @@ class ErpNextStatusReconciliation
         $now = CarbonImmutable::now();
         $currentCutoff = $now->subMinutes(4);
         $paidCutoff = $now->subDay();
-        $rows = DB::connection('clubunio')->table('clubora.erpnext_invoice_transfers as transfer')
-            ->join('clubora.tenants as tenant', 'tenant.id', '=', 'transfer.tenant_id')
+        $rows = DB::connection('clubunio')->table('clubunio.erpnext_invoice_transfers as transfer')
+            ->join('clubunio.tenants as tenant', 'tenant.id', '=', 'transfer.tenant_id')
             ->where('tenant.accounting_provider', AccountingProvider::ERPNEXT)
             ->where('transfer.state', '<>', 'cancelled')
             ->where(fn ($query) => $query->whereNull('transfer.last_status_attempt_at')

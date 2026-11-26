@@ -39,12 +39,12 @@ final class MemberTeamAccessService
     public function trainerTeams(Account $actor, Tenant $tenant)
     {
         $access = app(MemberAccessService::class);
-        $query = DB::connection('clubunio')->table('clubora.team_staff as assignment')
-            ->join('clubora.staff_functions as sf', fn($join) => $join->on('sf.id','=','assignment.staff_function_id')->on('sf.tenant_id','=','assignment.tenant_id'))
-            ->join('clubora.team_seasons as ts', fn($join) => $join->on('ts.id','=','assignment.team_season_id')->on('ts.tenant_id','=','assignment.tenant_id'))
-            ->join('clubora.teams as t', fn($join) => $join->on('t.id','=','ts.team_id')->on('t.tenant_id','=','ts.tenant_id'))
+        $query = DB::connection('clubunio')->table('clubunio.team_staff as assignment')
+            ->join('clubunio.staff_functions as sf', fn($join) => $join->on('sf.id','=','assignment.staff_function_id')->on('sf.tenant_id','=','assignment.tenant_id'))
+            ->join('clubunio.team_seasons as ts', fn($join) => $join->on('ts.id','=','assignment.team_season_id')->on('ts.tenant_id','=','assignment.tenant_id'))
+            ->join('clubunio.teams as t', fn($join) => $join->on('t.id','=','ts.team_id')->on('t.tenant_id','=','ts.tenant_id'))
             ->where('assignment.tenant_id',$tenant->id)->where('assignment.active',true)->where('ts.active',true)->where('t.active',true)
-            ->where('sf.active',true)->whereIn('assignment.member_id',$access->represented($actor,$tenant,true)->select('clubora.members.id'))
+            ->where('sf.active',true)->whereIn('assignment.member_id',$access->represented($actor,$tenant,true)->select('clubunio.members.id'))
             ->where(fn($query) => $query->whereIn(new Expression('upper(trim(sf.code))'),self::TRAINER_CODES)
                 ->orWhereIn(new Expression('lower(trim(sf.name))'),self::TRAINER_NAMES));
         if ($access->membership($actor,$tenant)?->role !== 'trainer') $query->whereRaw('1=0');
@@ -56,19 +56,19 @@ final class MemberTeamAccessService
     {
         $access=app(MemberAccessService::class);
         return $access->activeMembers($tenant)->where(function($query) use($access,$actor,$tenant) {
-            $query->whereIn('clubora.members.id',$access->represented($actor,$tenant)->select('clubora.members.id'));
-            foreach (['team_players','team_staff'] as $table) $query->orWhereIn('clubora.members.id',DB::connection('clubunio')->table('clubora.'.$table)
+            $query->whereIn('clubunio.members.id',$access->represented($actor,$tenant)->select('clubunio.members.id'));
+            foreach (['team_players','team_staff'] as $table) $query->orWhereIn('clubunio.members.id',DB::connection('clubunio')->table('clubunio.'.$table)
                 ->where('tenant_id',$tenant->id)->where('active',true)->whereIn('team_season_id',$this->trainerTeams($actor,$tenant))->select('member_id'));
         });
     }
 
     public function roster(Tenant $tenant, int $team, bool $staffOnly = false)
     {
-        $staff = DB::connection('clubunio')->table('clubora.team_staff')->where('tenant_id', $tenant->id)
+        $staff = DB::connection('clubunio')->table('clubunio.team_staff')->where('tenant_id', $tenant->id)
             ->where('team_season_id', $team)->where('active', true)->select('member_id');
         return app(MemberAccessService::class)->activeMembers($tenant)->where(function ($query) use ($tenant, $team, $staff, $staffOnly) {
-            $query->whereIn('clubora.members.id', $staff);
-            if (!$staffOnly) $query->orWhereIn('clubora.members.id', DB::connection('clubunio')->table('clubora.team_players')
+            $query->whereIn('clubunio.members.id', $staff);
+            if (!$staffOnly) $query->orWhereIn('clubunio.members.id', DB::connection('clubunio')->table('clubunio.team_players')
                 ->where('tenant_id', $tenant->id)->where('team_season_id', $team)->where('active', true)->select('member_id'));
         });
     }

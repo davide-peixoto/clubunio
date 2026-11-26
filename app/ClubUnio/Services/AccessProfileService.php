@@ -24,7 +24,7 @@ final class AccessProfileService
                 $input['name'] = trim($input['name']);
             }
             $data = Validator::make($input, [
-                'name' => ['required', 'string', 'max:120', Rule::unique('clubunio.clubora.access_profiles', 'name')->where('tenant_id', $tenant->id)->ignore($id)],
+                'name' => ['required', 'string', 'max:120', Rule::unique('clubunio.clubunio.access_profiles', 'name')->where('tenant_id', $tenant->id)->ignore($id)],
                 'description' => 'nullable|string|max:2000', 'active' => 'required|boolean',
                 'permissions' => 'present|array', 'permissions.*' => ['string', 'distinct', Rule::in(PermissionCatalog::keys())],
                 'revision' => $id ? 'required|integer|min:1' : 'nullable|integer|max:0',
@@ -48,7 +48,7 @@ final class AccessProfileService
             }
             $record->forceFill(['tenant_id' => $tenant->id, 'name' => trim($data['name']), 'description' => $data['description'] ?? null,
                 'permissions' => array_values($data['permissions']), 'active' => $data['active'], 'revision' => ($record->revision ?? 0) + 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'access_profiles', 'object_id' => $record->id,
                 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($record->only(['name', 'description', 'permissions', 'active', 'revision', 'mobile_modules']) + ['reason' => $data['reason']], JSON_THROW_ON_ERROR),

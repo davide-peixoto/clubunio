@@ -119,9 +119,9 @@ final class ChatAccess
         if (!$this->admin($actor, $tenant) && !$this->isProfile($actor, $tenant)) {
             return app(MobileAccess::class)->teams($actor, $tenant, $staffOnly);
         }
-        $q = DB::connection('clubunio')->table('clubora.team_seasons as ts')
-            ->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
-            ->join('clubora.seasons as s', fn ($j) => $j->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
+        $q = DB::connection('clubunio')->table('clubunio.team_seasons as ts')
+            ->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))
+            ->join('clubunio.seasons as s', fn ($j) => $j->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
             ->where('ts.tenant_id', $tenant->id)->where('ts.active', true)->where('t.active', true);
         app(MobileSeasonScope::class)->teams($q, $tenant, 'ts.season_id');
         if (!$this->admin($actor, $tenant)) $q->whereRaw('1=0');
@@ -143,11 +143,11 @@ final class ChatAccess
     private function profileContacts(Account $actor, Tenant $tenant)
     {
         // Profiles can initiate contact with the office, never discover arbitrary private pairs.
-        return DB::connection('clubunio')->table('clubora.accounts as a')
-            ->join('clubora.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
+        return DB::connection('clubunio')->table('clubunio.accounts as a')
+            ->join('clubunio.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
             ->where('ta.tenant_id', $tenant->id)->whereIn('ta.role', ['admin', 'office'])
             ->where('a.active', true)->where('a.api_only', false)->where('a.id', '<>', $actor->id)
-            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubora.chat_blocks as b')->where('b.tenant_id', $tenant->id)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('clubunio.chat_blocks as b')->where('b.tenant_id', $tenant->id)
                 ->where(fn ($q) => $q->where(fn ($q) => $q->where('b.account_id', $actor->id)->whereColumn('b.other_account_id', 'a.id'))
                     ->orWhere(fn ($q) => $q->whereColumn('b.account_id', 'a.id')->where('b.other_account_id', $actor->id))));
     }

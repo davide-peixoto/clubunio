@@ -41,13 +41,14 @@ class DocumentSeriesService
     {
         $this->authorize($actor, $tenant);
 
-        return DocumentSeriesTemplate::where('tenant_id', $tenant->id)->orderBy('name')->orderByDesc('version')->get();
+        return DocumentSeriesTemplate::where('tenant_id', $tenant->id)->where('legacy_read_only', false)->orderBy('name')->orderByDesc('version')->get();
     }
 
     public function saveTemplate(Account $actor, Tenant $tenant, array $input, ?int $previous = null): DocumentSeriesTemplate
     {
         return $this->transaction($tenant, function () use ($actor, $tenant, $input, $previous) {
             $this->authorize($actor, $tenant, $previous ? 'update' : 'create');
+            if ($previous) abort_if(DocumentSeriesTemplate::where('tenant_id', $tenant->id)->findOrFail($previous)->legacy_read_only, 409, __('svs.history_read_only'));
             $d = app(DocumentSeriesRenderer::class)->definition($input);
             DocumentType::where('tenant_id', $tenant->id)->where('active', true)->findOrFail($d['type_id']);
             $family = $previous ? DocumentSeriesTemplate::where('tenant_id', $tenant->id)->findOrFail($previous)->family_key : (string) Str::uuid();
@@ -106,6 +107,7 @@ class DocumentSeriesService
             'common' => 'sometimes|array', 'individual' => 'sometimes|array|max:500', 'portal_visible' => 'required|boolean',
         ])->validate();
         $template = DocumentSeriesTemplate::where('tenant_id', $tenant->id)->findOrFail($input['template_id']);
+        abort_if($template->legacy_read_only, 409, __('svs.history_read_only'));
         abort_unless(hash_equals($template->definition_hash, DocumentSeriesRenderer::hash($template->definition)), 409);
         $d = $template->definition;
         $d['signature_required'] = (bool) $input['signature_required'];
@@ -115,7 +117,7 @@ class DocumentSeriesService
         $labels = $teams->mapWithKeys(fn ($t) => [$t->id => $t->team->name.' / '.$t->season->name])->all();
         $links = collect();
         foreach ($input['target'] === 'both' ? ['team_players', 'team_staff'] : [$input['target'] === 'players' ? 'team_players' : 'team_staff'] as $table) {
-            $links = $links->concat(DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)
+            $links = $links->concat(DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('team_season_id', $input['teams'])->orderBy('team_season_id')->get(['member_id', 'team_season_id']));
         }
         $people = Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->whereIn('id', $links->pluck('member_id')->unique())->orderBy('id')->get();
@@ -219,6 +221,7 @@ class DocumentSeriesService
     public function process(Account $actor, Tenant $tenant, int $series): array
     {
         $this->authorize($actor, $tenant, 'create', 'upload', 'send');
+        abort_if($this->series($actor, $tenant, $series)->legacy_read_only, 409, __('svs.history_read_only'));
         $claim = $this->transaction($tenant, function () use ($actor, $tenant, $series) {
             $this->authorize($actor, $tenant, 'create', 'upload', 'send');
             $row = $this->series($actor, $tenant, $series)->recipients()->where('tenant_id', $tenant->id)->whereNull('document_id')->orderBy('id')->lockForUpdate()->first();
@@ -326,6 +329,7 @@ class DocumentSeriesService
         $row = $this->transaction($tenant, function () use ($actor, $tenant, $series, $recipient, $file, $originalHash, $sha) {
             $this->authorize($actor, $tenant, 'upload', 'update');
             $row = $this->recipient($actor, $tenant, $series, $recipient);
+            abort_if($row->legacy_read_only, 409, __('svs.history_read_only'));
             abort_unless($row->document_id && $row->snapshot['definition']['signature_required'] && hash_equals($row->original_sha256, $originalHash), 409);
             abort_if(hash_equals($row->original_sha256, $sha), 422, __('Rückgabe ist identisch mit dem Original.'));
             if ($row->signed_upload_id) {
@@ -349,6 +353,7 @@ class DocumentSeriesService
     {
         $this->authorize($actor, $tenant, 'upload', 'update');
         $row = $this->recipient($actor, $tenant, $series, $recipient);
+        abort_if($row->legacy_read_only, 409, __('svs.history_read_only'));
         abort_unless($row->signed_upload_id, 409);
         if ($row->signed_document_id) {
             return $row;
@@ -376,7 +381,7 @@ class DocumentSeriesService
             $access = app(MemberAccessService::class);
             abort_unless($actor->fresh() && $access->canEnter($actor->fresh(), $tenant), 403);
             $row = DocumentSeriesRecipient::where('tenant_id', $tenant->id)->where('series_id', $series)
-                ->whereIn('member_id', $access->represented($actor->fresh(), $tenant)->select('clubora.members.id'))->findOrFail($recipient);
+                ->whereIn('member_id', $access->represented($actor->fresh(), $tenant)->select('clubunio.members.id'))->findOrFail($recipient);
             $parent = DocumentSeries::where('tenant_id', $tenant->id)->findOrFail($series);
             abort_unless(hash_equals($parent->snapshot_hash, DocumentSeriesRenderer::hash($parent->snapshot))
                 && hash_equals($row->snapshot_hash, DocumentSeriesRenderer::hash($row->snapshot)), 409);
@@ -385,6 +390,7 @@ class DocumentSeriesService
             $this->authorize($actor, $tenant, 'download');
             $row = $this->recipient($actor, $tenant, $series, $recipient);
         }
+        abort_if($row->legacy_read_only, 409, __('svs.receipt_unverified'));
         $id = $signed ? $row->signed_document_id : $row->document_id;
         abort_unless($id, 404);
         $hash = $signed ? $row->signed_sha256 : $row->original_sha256;
@@ -407,7 +413,7 @@ class DocumentSeriesService
 
     private function audit(Account $actor, Tenant $tenant, string $type, int $id, string $action): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => $type, 'object_id' => $id, 'after_value' => json_encode(['action' => $action], JSON_THROW_ON_ERROR)]);
     }
 }

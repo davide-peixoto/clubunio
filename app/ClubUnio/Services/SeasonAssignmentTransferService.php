@@ -51,7 +51,7 @@ final class SeasonAssignmentTransferService
             $assignmentsByModel[$model] = $assignments->groupBy('team_season_id');
         }
         $activeMembers = array_fill_keys(app(MemberAccessService::class)->activeMembers($tenant)->whereIn('id', $memberIds->unique())->pluck('id')->all(), true);
-        $validFunctions = array_fill_keys(DB::connection('clubunio')->table('clubora.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)->pluck('id')->all(), true);
+        $validFunctions = array_fill_keys(DB::connection('clubunio')->table('clubunio.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)->pluck('id')->all(), true);
         $rows = [];
         $seen = [];
         $fingerprint = [$actor->id, $tenant->id, $source, $target, $sources->toArray(), $targets->toArray()];

@@ -31,7 +31,7 @@ class AnnouncementChoices
         [$query, $label, $key] = match ($type) {
             'roles' => [AccountRole::where('active', true), 'name', 'code'],
             'teams' => [TeamSeason::where('tenant_id', $tenant->id)->where('active', true), 'label', 'id'],
-            'accounts' => [Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', $tenant->id)), 'display_name', 'id'],
+            'accounts' => [Account::where('active', true)->whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', $tenant->id)), 'display_name', 'id'],
             default => [null, null, null],
         };
         if (! $query) {

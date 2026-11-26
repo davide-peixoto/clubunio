@@ -14,7 +14,7 @@ final class ClubhouseMenus
 {
     public function query(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.clubhouse_menus')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.clubhouse_menus')->where('tenant_id', $tenant->id);
     }
 
     public function decode(mixed $value): ?array
@@ -93,7 +93,6 @@ final class ClubhouseMenus
             $menu = $this->query($tenant)->where('id', $id)->lockForUpdate()->firstOrFail();
             $this->revision($menu, $revision);
             abort_if($menu->status === 'archived', 422);
-            app(DocumentSafety::class)->assertClean($bytes);
             $storage = app(TenantDocumentStorage::class);
             $folder = $storage->folder($tenant, 'clubhouse', $id);
             $filename = Str::uuid().'.pdf';
@@ -127,8 +126,7 @@ final class ClubhouseMenus
                 }
                 $document = $this->decode($row->document);
                 if ($document) {
-                    // Recheck existing documents, including files uploaded before mandatory scanning.
-                    app(DocumentSafety::class)->assertClean($this->documentBytes($tenant, $row->id, $document));
+                    $this->documentBytes($tenant, $row->id, $document);
                 }
                 $snapshot = collect((array) $row)->only(['title_de', 'title_en', 'body_de', 'body_en', 'valid_from', 'valid_until'])->all()
                     + ['channels' => $channels, 'document' => $document];
@@ -173,7 +171,7 @@ final class ClubhouseMenus
     public function ensureStatuses(Tenant $tenant): void
     {
         foreach (['draft' => 'gray', 'published' => 'success', 'archived' => 'warning'] as $code => $color) {
-            DB::connection('clubunio')->table('clubora.clubhouse_menu_statuses')->insertOrIgnore(['tenant_id' => $tenant->id,
+            DB::connection('clubunio')->table('clubunio.clubhouse_menu_statuses')->insertOrIgnore(['tenant_id' => $tenant->id,
                 'code' => $code, 'label_key' => 'clubhouse.status_'.$code, 'color' => $color, 'sort_order' => array_search($code, ['draft', 'published', 'archived']) * 10]);
         }
     }

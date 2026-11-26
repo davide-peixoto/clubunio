@@ -7,5 +7,5 @@ use App\ClubUnio\Models\CatalogModel;
 /** Internal read projection; no API mutation adapter is registered. */
 final class RegistrationDocumentMetadata extends CatalogModel
 {
-    protected $table = 'clubora.registration_documents';
+    protected $table = 'clubunio.registration_documents';
 }

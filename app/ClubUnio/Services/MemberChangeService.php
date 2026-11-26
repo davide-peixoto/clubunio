@@ -142,9 +142,7 @@ class MemberChangeService
             if ($portrait) {
                 $request->forceFill(['portrait_encrypted' => $portrait])->save();
             }
-            if ($actor || ! MemberCampaignService::devTestMode()) {
-                $this->notify($tenant, $request, 'member.change.requested', true);
-            }
+            $this->notify($tenant, $request, 'member.change.requested', true);
 
             return $request;
     }
@@ -260,6 +258,7 @@ class MemberChangeService
 
     private function pending(MemberChangeRequest $r, int $revision): void
     {
+        abort_if($r->legacy_read_only, 409, __('svs.history_read_only'));
         if ($r->state !== 'pending' || $r->revision !== $revision) {
             throw ValidationException::withMessages(['revision' => __('Antrag wurde inzwischen bearbeitet. Bitte neu öffnen.')]);
         }

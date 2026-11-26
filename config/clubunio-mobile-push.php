@@ -25,7 +25,7 @@ return [
     // Separate source/device/provider activation. No credential discovery or legacy fallback.
     'enabled' => $flag('CLUBUNIO_MOBILE_PUSH_ENABLED'),
     'delivery_enabled' => $flag('CLUBUNIO_MOBILE_PUSH_DELIVERY_ENABLED'),
-    // Operator-reviewed entries: native app ID or platform:native app ID => scoped settings.
+    // Operator-reviewed entries: native app ID => platform/origin/fixed_tenant_id/project_id/credentials_file.
     // Platform entry has fixed_tenant_id=null; custom entry must have a verified custom tenant domain.
     'apps' => $apps,
 ];

@@ -10,7 +10,7 @@ final class MobileExpenseData
 {
     public function table(Tenant $tenant, string $table) {
         $alias = str_contains($table, ' as ') ? substr($table, strrpos($table, ' as ') + 4).'.' : '';
-        return DB::connection('clubunio')->table('clubora.'.$table)->where($alias.'tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.'.$table)->where($alias.'tenant_id', $tenant->id);
     }
     public function receipt(Account $actor, Tenant $tenant, Expense $e, ?array $capabilities = null): array {
         $service = app(ExpenseService::class);
@@ -72,7 +72,7 @@ final class MobileExpenseData
         $teams = $this->table($tenant, 'team_seasons as ts')->where('ts.active', true)
             ->when(! app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'create'), fn ($q) => $q
                 ->whereIn('ts.id', $this->table($tenant, 'team_staff')->where('active', true)->whereIn('member_id', $own->pluck('id'))->select('team_season_id')))
-            ->join('clubora.teams as t', fn ($j) => $j->on('t.id','=','ts.team_id')->on('t.tenant_id','=','ts.tenant_id'))
+            ->join('clubunio.teams as t', fn ($j) => $j->on('t.id','=','ts.team_id')->on('t.tenant_id','=','ts.tenant_id'))
             ->where('t.active', true);
         app(MobileSeasonScope::class)->teams($teams, $tenant, 'ts.season_id');
         $teams = $teams->orderBy('ts.label')->get(['ts.id','ts.label','ts.team_id','t.laundry_allowance'])

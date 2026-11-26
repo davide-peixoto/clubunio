@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 final class MobilePublicIntake
 {
-    private function table() { return DB::connection('clubunio')->table('clubora.mobile_public_intake_commands'); }
+    private function table() { return DB::connection('clubunio')->table('clubunio.mobile_public_intake_commands'); }
     private function canUpload(Tenant $tenant): bool
     {
         return config('clubunio-mobile.uploads_enabled', false) && app(\App\ClubUnio\Services\TenantDocumentStorage::class)->canUpload($tenant)
@@ -22,7 +22,7 @@ final class MobilePublicIntake
         foreach (['Countries'=>'countries','Genders'=>'genders','BillingRecipients'=>'billing_recipients'] as $field=>$table) {
             $columns=['id','code','name']; if ($table==='countries') { $columns[]='iso3'; }
             if ($complete && $table==='billing_recipients') { $columns[]='email_field'; }
-            $data[$field]=DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id',$tenant->id)->where('active',true)->orderBy('id')->get($columns)->map(fn ($row)=>(array)$row)->all();
+            $data[$field]=DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id',$tenant->id)->where('active',true)->orderBy('id')->get($columns)->map(fn ($row)=>(array)$row)->all();
         }
         return $data;
     }
@@ -130,7 +130,7 @@ final class MobilePublicIntake
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $this->authorize($tenant, $family);
             if ($family) {
-                DB::connection('clubunio')->table('clubora.mobile_sessions')
+                DB::connection('clubunio')->table('clubunio.mobile_sessions')
                     ->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
                 $actor = app(MobileSessions::class)->authenticate($request);
                 abort_unless((int) $actor->id === $claim['actor'], 403);
@@ -150,7 +150,7 @@ final class MobilePublicIntake
             $ahv = $complete ? preg_replace('/\D/', '', $raw['AHVNummer']) : null;
             $registration=app(RegistrationDataService::class)->submitPublic($tenant,$values,$claim['key'],$ahv);
             if ($family) {
-                DB::connection('clubunio')->table('clubora.mobile_registration_requests')->insert([
+                DB::connection('clubunio')->table('clubunio.mobile_registration_requests')->insert([
                     'tenant_id'=>$tenant->id,'account_id'=>$claim['actor'],'request_key'=>$claim['key'],
                     'payload_sha256'=>$hash,'registration_id'=>$registration->id,
                 ]);
@@ -169,7 +169,7 @@ final class MobilePublicIntake
                 abort_unless(app(MobilePublicIdentityPolicy::class)->membershipAccount($tenant), 503);
                 $accountEmail = $registration->email;
                 if ($complete && ! $accountEmail) {
-                    $emailField = DB::connection('clubunio')->table('clubora.billing_recipients')
+                    $emailField = DB::connection('clubunio')->table('clubunio.billing_recipients')
                         ->where('tenant_id', $tenant->id)->where('id', $values['billing_recipient_id'])->value('email_field');
                     $accountEmail = $values[$emailField] ?? null;
                 }

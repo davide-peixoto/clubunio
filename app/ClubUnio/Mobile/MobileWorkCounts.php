@@ -12,7 +12,7 @@ final class MobileWorkCounts
         return match ($module) {
             'Mitglieder' => MemberChangeRequest::withoutGlobalScopes()
                 ->where('tenant_id', $tenant->id)->where('state', 'pending')
-                ->whereIn('member_id', app(MobileMemberData::class)->scope($actor, $tenant)->select('clubora.members.id'))
+                ->whereIn('member_id', app(MobileMemberData::class)->scope($actor, $tenant)->select('clubunio.members.id'))
                 ->count(),
             'MitgliederAnmeldungen' => app(RegistrationReviewService::class)->visible($actor, $tenant)->count(),
             'Platzverfugbarkeit' => app(PitchPlanningService::class)->pendingRequestCount($actor, $tenant),

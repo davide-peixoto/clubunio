@@ -53,7 +53,7 @@ class TeamPlanningTable extends PlanningAdminTable
                     ->where(fn ($q) => $q->whereIn('team_season_id', $service->teams($actor, $tenant)->select('id'))
                         ->orWhereIn('id', $service->invitedEvents($actor, $tenant)->select('event_id')))
                     ->select(['id', 'title', 'team_season_id', 'starts_at', 'kind', 'location', 'status', 'deadline_at'])
-                    ->selectSub($service->table($tenant, 'team_seasons')->select('label')->whereColumn('id', 'clubora.team_events.team_season_id')->limit(1), 'team_label');
+                    ->selectSub($service->table($tenant, 'team_seasons')->select('label')->whereColumn('id', 'clubunio.team_events.team_season_id')->limit(1), 'team_label');
                 if (filled($filters['team']['value'] ?? null)) {
                     $query->where('team_season_id', (int) $filters['team']['value']);
                 }

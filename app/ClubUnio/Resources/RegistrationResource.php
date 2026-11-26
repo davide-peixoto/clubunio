@@ -118,13 +118,13 @@ class RegistrationResource extends CatalogResource
             Action::make('removeDocument')->label('Anhang entfernen')->icon('heroicon-o-trash')->iconButton()->tooltip(__('Anhang entfernen'))->requiresConfirmation()
                 ->visible(fn (Registration $record) => $record->active && $record->status?->workflow_key !== 'accepted')
                 ->fillForm(fn (Registration $record) => ['revision' => $record->revision])
-                ->schema([Hidden::make('revision'), Select::make('document')->label('Anhang')->required()->options(fn (Registration $record) => DB::connection('clubunio')->table('clubora.registration_documents')
+                ->schema([Hidden::make('revision'), Select::make('document')->label('Anhang')->required()->options(fn (Registration $record) => DB::connection('clubunio')->table('clubunio.registration_documents')
                     ->where('tenant_id', Filament::getTenant()->id)->where('registration_id', $record->id)->where('active', true)->get()->mapWithKeys(fn ($d) => [$d->id => ($d->kind === 'portrait' ? 'Passfoto: ' : 'Ausweis: ').($d->original_filename ?: $d->filename)]))])
                 ->action(fn (Registration $record, array $data, $livewire) => FormMutation::run($livewire,
                     fn () => app(RegistrationDocumentService::class)->remove(Filament::auth()->user(), Filament::getTenant(), $record->id, (int) $data['document'], (int) $data['revision']))),
             Action::make('testMail')->label('E-Mail testen')->icon('heroicon-o-paper-airplane')->iconButton()->tooltip(__('E-Mail nur an admin@svsissach.ch testen'))->requiresConfirmation()
                 ->modalDescription(__('Nur die ausgewählte Nachricht wird an admin@svsissach.ch gesendet. Keine echten Empfänger oder CC. Versandfehler werden nicht automatisch wiederholt.'))
-                ->schema([Select::make('event')->label('Nachricht')->required()->options(fn (Registration $record) => DB::connection('clubunio')->table('clubora.registration_events')
+                ->schema([Select::make('event')->label('Nachricht')->required()->options(fn (Registration $record) => DB::connection('clubunio')->table('clubunio.registration_events')
                     ->where('tenant_id', Filament::getTenant()->id)->where('registration_id', $record->id)->where('delivery_state', 'ready')->orderByDesc('id')->get()->mapWithKeys(fn ($e) => [$e->id => $e->event_key.' · Revision '.$e->revision]))])
                 ->action(function (Registration $record, array $data, $livewire) {
                     FormMutation::run($livewire, function () use ($record, $data) {
@@ -134,13 +134,13 @@ class RegistrationResource extends CatalogResource
                 }),
             Action::make('messages')->label('Benachrichtigungen')->icon('heroicon-o-envelope')->iconButton()->tooltip(__('Benachrichtigungen'))->slideOver()
                 ->modalContent(fn (Registration $record) => view('clubunio.registration-messages', [
-                    'events' => DB::connection('clubunio')->table('clubora.registration_events')
+                    'events' => DB::connection('clubunio')->table('clubunio.registration_events')
                         ->where('tenant_id', Filament::getTenant()->id)->where('registration_id', $record->id)
                         ->orderByDesc('id')->limit(100)->get(['event_key', 'revision', 'delivery_state', 'created_at', 'finished_at', 'error_code']),
                 ]))->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen')),
             Action::make('documents')->label('Dokumente')->icon('heroicon-o-paper-clip')->iconButton()->tooltip(__('Dokumente'))->slideOver()
                 ->modalContent(fn (Registration $record) => view('clubunio.registration-documents', [
-                    'tenant' => Filament::getTenant(), 'documents' => DB::connection('clubunio')->table('clubora.registration_documents')
+                    'tenant' => Filament::getTenant(), 'documents' => DB::connection('clubunio')->table('clubunio.registration_documents')
                         ->where('tenant_id', Filament::getTenant()->id)->where('registration_id', $record->id)->where('active', true)->get(),
                 ]))->modalSubmitAction(false)->modalCancelActionLabel(__('Schliessen')),
             Action::make('applicant')->label('Formulardaten')->icon('heroicon-o-user')->iconButton()->tooltip(__('Formulardaten'))->slideOver()

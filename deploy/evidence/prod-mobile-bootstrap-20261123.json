@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "bootstrap_http": 200,
+  "flutter_contract_valid": true,
+  "login_allowed": true,
+  "keycloak_available": true,
+  "password_fallback_disabled": true,
+  "anonymous_club_access": 401,
+  "tenant_query_rejected": 422,
+  "native_pair_begin_http": 200,
+  "native_oidc_redirect_http": 302,
+  "pkce_s256": true,
+  "required_mfa": "clubunio-mobile-mfa",
+  "no_authenticated_session_created": true,
+  "synthetic_pair_removed": true,
+  "unapproved_origin_rejected": true,
+  "invitations_remain_disabled": true
+}

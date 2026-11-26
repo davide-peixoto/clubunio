@@ -11,8 +11,8 @@ use Illuminate\Support\Str;
 
 final class MobileKeyboxService
 {
-    private function table(string $name) { return DB::connection('clubunio')->table('clubora.mobile_keybox_'.$name); }
-    private function boxes(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_keyboxes')->where('tenant_id',$tenant->id); }
+    private function table(string $name) { return DB::connection('clubunio')->table('clubunio.mobile_keybox_'.$name); }
+    private function boxes(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_keyboxes')->where('tenant_id',$tenant->id); }
     private function allowed(Account $actor,Tenant $tenant,object $box): bool
     {
         if (!$actor->fresh()?->active || !$box->active) return false;
@@ -148,7 +148,7 @@ final class MobileKeyboxService
         $actor=$request->attributes->get('mobile.actor'); $tenant=$request->attributes->get('mobile.tenant'); $session=$request->attributes->get('mobile.session');
         $result=DB::connection('clubunio')->transaction(function () use ($request,$actor,$tenant,$session,$d,$boxId,$reservationId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$session->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$session->id)->sharedLock()->firstOrFail();
             $actor=app(MobileSessions::class)->authenticate($request); app(MobileAccess::class)->enter($actor,$tenant);
             $reservation=null;
             if ($reservationId) {
@@ -198,7 +198,7 @@ final class MobileKeyboxService
             $snapshot=$this->snapshot($actor,$tenant,$box,$reservation,Time::parse($row->valid_from),Time::parse($row->valid_until));
             foreach ($snapshot as $key=>$value) if (($saved[$key]??null)!==$value) return false;
             return hash_equals($saved['provider'],app(MobileKeyboxProvider::class)->fingerprint(app(MobileKeyboxProvider::class)->credentials($tenant)))
-                &&DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$row->session_id)->where('account_id',$actor->id)->whereNull('revoked_at')->where('expires_at','>',now()->toIso8601String())->exists();
+                &&DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$row->session_id)->where('account_id',$actor->id)->whereNull('revoked_at')->where('expires_at','>',now()->toIso8601String())->exists();
         } catch (\Throwable) { return false; }
     }
     private function result(Account $actor,Tenant $tenant,object $box,object $row,?object $reservation=null): array
@@ -291,7 +291,7 @@ final class MobileKeyboxService
         $tenant=$request->attributes->get('mobile.tenant'); $session=$request->attributes->get('mobile.session');
         return DB::connection('clubunio')->transaction(function() use($request,$tenant,$session,$d,$boxId,$reservationId) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id',$session->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id',$session->id)->sharedLock()->firstOrFail();
             $actor=app(MobileSessions::class)->authenticate($request); app(MobileAccess::class)->enter($actor,$tenant);
             $reservation=null; $windowEnd=null;
             if($reservationId) {
@@ -317,7 +317,7 @@ final class MobileKeyboxService
             abort_unless(preg_match('/^[0-9]{4,16}$/D',$code),503);
             if(!$first) {
                 $group->update(['emergency_exposed_at'=>$exposed->toIso8601String()]);
-                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id'=>$tenant->id,'actor_id'=>$actor->id,
                     'object_type'=>'mobile_keybox','object_id'=>$box->id,'after_value'=>json_encode(['action'=>'emergency_disclosed','reservation_id'=>$reservationId,'expires_at'=>$until->toIso8601String()],JSON_THROW_ON_ERROR)]);
             }
             return ['emergencyCode'=>$code,'emergencySeconds'=>$seconds,'emergencyExpiresAt'=>$until->toIso8601String()];
