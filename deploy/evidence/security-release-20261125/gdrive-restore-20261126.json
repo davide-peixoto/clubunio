@@ -1,0 +1,23 @@
+{
+  "verified_utc": "2026-11-26T14:06:28Z",
+  "snapshot": "20261126T012007Z",
+  "results": {
+    "clubunio_dev": {
+      "full_restore_from_google_drive_ok": true,
+      "table_count": 358
+    },
+    "clubunio_stage": {
+      "full_restore_from_google_drive_ok": true,
+      "table_count": 375
+    },
+    "clubunio_prod": {
+      "full_restore_from_google_drive_ok": true,
+      "table_count": 275
+    },
+    "keycloak": {
+      "full_restore_from_google_drive_ok": true,
+      "table_count": 101
+    }
+  },
+  "temporary_databases_removed": true
+}

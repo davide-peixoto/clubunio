@@ -1,5 +1,10 @@
 # ClubUnio migration work packages
 
+## Google Drive Backup am 26.11.2026
+
+Zusätzliches verschlüsseltes Offsite-Ziel aktiv; vollständige Wiederherstellung von DEV, Stage, PROD und Keycloak direkt aus Google Drive bestanden. Keine Anwendungs-/Datenmigration. OAuth-Produktionsfreigabe und frische Autorisierung für dauerhaften Betrieb noch offen; Details im [Sicherheitsrelease](CLUBUNIO-SECURITY-RELEASE-20261125.md).
+
+
 ## Releaseabgleich ohne Fachmigration (26.11.2026)
 
 Gemeinsame 32 Runtime-Dateien auf DEV, Stage und PROD nachgefuehrt. Keine

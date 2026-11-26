@@ -41,7 +41,22 @@ def main():
     checks['backup_timer_active'] = command(['systemctl', 'is-active', 'clubunio-postgresql-backup.timer']).strip() == 'active'
     ssh = command(['/usr/sbin/sshd', '-T'])
     checks['root_password_login_disabled'] = 'permitrootlogin without-password' in ssh or 'permitrootlogin prohibit-password' in ssh
-    warnings = ['automatic_offsite_backup_requires_storage_box_key_authorization']
+    warnings = ['hetzner_borg_requires_operator_repair']
+    drive_enabled = subprocess.run(['systemctl', 'is-enabled', '--quiet', 'clubunio-gdrive-backup.timer'], capture_output=True).returncode == 0
+    if drive_enabled:
+        checks['gdrive_timer_active'] = command(['systemctl', 'is-active', 'clubunio-gdrive-backup.timer']).strip() == 'active'
+        try:
+            drive = json.loads(Path('/root/clubunio-backups/gdrive-latest.json').read_text())
+            age = time.time() - calendar.timegm(time.strptime(drive['verified_utc'], '%Y-%m-%dT%H:%M:%SZ'))
+            checks['gdrive_recent_verified_copy'] = 0 <= age < 36 * 3600 and drive['full_remote_sha256_verified'] is True and drive['encrypted_files'] >= 10
+        except (OSError, ValueError, KeyError):
+            checks['gdrive_recent_verified_copy'] = False
+        auth_path = Path('/root/clubunio-backups/gdrive-auth-status.json')
+        if auth_path.exists():
+            auth = json.loads(auth_path.read_text())
+            if auth.get('testing_mode'):
+                warnings.append('gdrive_google_testing_mode_requires_production_authorization')
+                checks['gdrive_oauth_not_expiring_soon'] = auth['refresh_deadline_epoch'] - time.time() > 48 * 3600
     if Path('/run/reboot-required').exists(): warnings.append('scheduled_vps_reboot_required')
     ok = all(checks.values())
     print(json.dumps({'critical_local_checks_ok': ok, 'checks': checks, 'warnings': warnings, 'go_live_ready': False}))
