@@ -1,0 +1,875 @@
+{
+  "note": "Static legacy path literals, not a complete operation inventory. Interpolated paths and method-dependent workflows require manual review. No inferred v1 support.",
+  "references": [
+    {
+      "file": "lib/app_state.dart",
+      "line": 67,
+      "literal": "/api/app/team-planning/access"
+    },
+    {
+      "file": "lib/core/api/api_client.dart",
+      "line": 299,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/core/api/api_client.dart",
+      "line": 319,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/core/api/field_lookup.dart",
+      "line": 24,
+      "literal": "/api/lookup"
+    },
+    {
+      "file": "lib/core/config/season_repository.dart",
+      "line": 26,
+      "literal": "/api/view/IniParameter/1"
+    },
+    {
+      "file": "lib/core/push/profile_push_registrar.dart",
+      "line": 10,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/core/push/profile_push_registrar.dart",
+      "line": 29,
+      "literal": "/api/app/push/$endpoint"
+    },
+    {
+      "file": "lib/core/push/push_notification_service.dart",
+      "line": 31,
+      "literal": "/api/app/push/register-token"
+    },
+    {
+      "file": "lib/core/push/push_notification_service.dart",
+      "line": 32,
+      "literal": "/api/app/push/unregister-token"
+    },
+    {
+      "file": "lib/core/push/push_notification_service.dart",
+      "line": 33,
+      "literal": "/api/app/push/send"
+    },
+    {
+      "file": "lib/features/app_config/data/remote_config_repository.dart",
+      "line": 15,
+      "literal": "/api/list/iniApp"
+    },
+    {
+      "file": "lib/features/app_config/data/remote_config_repository.dart",
+      "line": 28,
+      "literal": "/api/list/AppAnkuendigungen"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 163,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 446,
+      "literal": "/api/list/Users"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 470,
+      "literal": "/api/view/Users/${Uri.encodeComponent(candidate)}"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 507,
+      "literal": "/api/app/change-password"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 520,
+      "literal": "/api/app/forgot-password"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 539,
+      "literal": "/api/app/reset-password"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 563,
+      "literal": "/api/register"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 610,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 625,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 633,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 643,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/auth/data/auth_repository.dart",
+      "line": 666,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 24,
+      "literal": "/api/app/bus-reservations"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 55,
+      "literal": "/api/app/bus-reservations"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 90,
+      "literal": "/api/list/bus"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 91,
+      "literal": "/api/list/Bus"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 92,
+      "literal": "/api/list/BusReservationBus"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 93,
+      "literal": "/api/list/BusReservationenBus"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 94,
+      "literal": "/api/list/Busse"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 127,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 137,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 142,
+      "literal": "/api/list/Saison"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 189,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 213,
+      "literal": "/api/app/bus-reservations/request"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 254,
+      "literal": "/api/app/bus-reservations/$reservationId/$action"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 273,
+      "literal": "/api/app/bus-reservations"
+    },
+    {
+      "file": "lib/features/bus_reservations/data/bus_reservations_repository.dart",
+      "line": 341,
+      "literal": "/api/app/bus-reservations"
+    },
+    {
+      "file": "lib/features/bus_reservations/presentation/bus_keybox_card.dart",
+      "line": 65,
+      "literal": "/api/app/bus-reservations/${widget.reservationId}/keybox"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 27,
+      "literal": "/api/view/Mitglieder/$id"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 155,
+      "literal": "/api/file/"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 168,
+      "literal": "/api/file/"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 284,
+      "literal": "/api/list/Spesenbelege"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 328,
+      "literal": "/api/view/Spesenbelege/$receiptId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 379,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 397,
+      "literal": "/api/view/Teams/$teamId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 416,
+      "literal": "/api/list/SpesenPositionen"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 441,
+      "literal": "/api/list/SpesenTyp"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 458,
+      "literal": "/api/app/expense-suggest"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 473,
+      "literal": "/api/app/expense-suggest"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 662,
+      "literal": "/api/file/${attachment.tableName}/${attachment.fieldName}/$recordId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 866,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 909,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 950,
+      "literal": "/api/view/TeamsSaison/$teamSaisonId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 959,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 982,
+      "literal": "/api/view/Teams/$teamId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1027,
+      "literal": "/api/list/BankkontoStaff"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1043,
+      "literal": "/api/view/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1058,
+      "literal": "/api/list/Institut"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1103,
+      "literal": "/api/list/Institut"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1146,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1158,
+      "literal": "/api/view/Teams/$teamId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1188,
+      "literal": "/api/add/BankkontoStaff"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1193,
+      "literal": "/api/add/BankkontoStaff"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1235,
+      "literal": "/api/edit/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1240,
+      "literal": "/api/edit/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1259,
+      "literal": "/api/delete/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1267,
+      "literal": "/api/delete/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1272,
+      "literal": "/api/delete/BankkontoStaff/$bankAccountId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1312,
+      "literal": "/api/add/Spesenbelege"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1315,
+      "literal": "/api/add/Spesenbelege"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1346,
+      "literal": "/api/list/Users"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1406,
+      "literal": "/api/app/expense-position"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1412,
+      "literal": "/api/app/expense-position"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1455,
+      "literal": "/api/edit/SpesenPositionen/$positionId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1460,
+      "literal": "/api/edit/SpesenPositionen/$positionId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1476,
+      "literal": "/api/delete/SpesenPositionen/$positionId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1483,
+      "literal": "/api/delete/SpesenPositionen/$positionId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1487,
+      "literal": "/api/delete/SpesenPositionen/$positionId"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1508,
+      "literal": "/api/edit/Spesenbelege/${receipt.id}"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1519,
+      "literal": "/api/edit/Spesenbelege/${receipt.id}"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1562,
+      "literal": "/api/upload"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1578,
+      "literal": "/api/upload"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1608,
+      "literal": "/api/app/expense-receipt"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1632,
+      "literal": "/api/app/expense-receipt"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1650,
+      "literal": "/api/app/expense-receipt/discard"
+    },
+    {
+      "file": "lib/features/expenses/data/expense_repository.dart",
+      "line": 1656,
+      "literal": "/api/app/expense-receipt/discard"
+    },
+    {
+      "file": "lib/features/member_documents/data/member_documents_repository.dart",
+      "line": 8,
+      "literal": "/api/app/member-documents"
+    },
+    {
+      "file": "lib/features/member_documents/presentation/member_documents_screen.dart",
+      "line": 352,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 164,
+      "literal": "/api/list/AnmeldungStatus"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 194,
+      "literal": "/api/lookup"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 237,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 247,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 261,
+      "literal": "/api/view/Mitglieder/$memberId"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 320,
+      "literal": "/api/list/MitgliederAnmeldungen"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 339,
+      "literal": "/api/view/MitgliederAnmeldungen/$anmeldungId"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 359,
+      "literal": "/api/list/MitgliederAnmeldungen"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 380,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 439,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 449,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 454,
+      "literal": "/api/list/Saison"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 544,
+      "literal": "/api/upload"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 619,
+      "literal": "/api/edit/MitgliederAnmeldungen/$anmeldungId"
+    },
+    {
+      "file": "lib/features/member_registrations/data/member_registrations_repository.dart",
+      "line": 629,
+      "literal": "/api/add/MitgliederAnmeldungen"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 116,
+      "literal": "/api/list/MitgliederStatus"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 121,
+      "literal": "/api/list/MitgliederArt"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 126,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 177,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 186,
+      "literal": "/api/list/Rechnung"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 194,
+      "literal": "/api/list/Saison"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 199,
+      "literal": "/api/list/BexioStatusMapping"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 257,
+      "literal": "/api/app/invoices/${invoice.invoiceId}/bexio-pdf"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 305,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 329,
+      "literal": "/api/view/Mitglieder/$mitgliederId"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 399,
+      "literal": "/api/app/members/$mitgliederId/contact"
+    },
+    {
+      "file": "lib/features/members/data/members_repository.dart",
+      "line": 430,
+      "literal": "/api/app/members/change-requests"
+    },
+    {
+      "file": "lib/features/notifications/data/notifications_repository.dart",
+      "line": 10,
+      "literal": "/api/app/notifications/unread-count"
+    },
+    {
+      "file": "lib/features/notifications/data/notifications_repository.dart",
+      "line": 24,
+      "literal": "/api/app/notifications"
+    },
+    {
+      "file": "lib/features/notifications/data/notifications_repository.dart",
+      "line": 46,
+      "literal": "/api/app/notifications/$notificationId/read"
+    },
+    {
+      "file": "lib/features/notifications/data/notifications_repository.dart",
+      "line": 55,
+      "literal": "/api/app/notifications/read-all"
+    },
+    {
+      "file": "lib/features/penalty/data/penalty_repository.dart",
+      "line": 8,
+      "literal": "/api/app/penalty"
+    },
+    {
+      "file": "lib/features/pitch_availability/data/pitch_availability_repository.dart",
+      "line": 76,
+      "literal": "/api/list/Platzverfugbarkeit"
+    },
+    {
+      "file": "lib/features/pitch_availability/data/pitch_availability_repository.dart",
+      "line": 115,
+      "literal": "/api/edit/Platzverfugbarkeit/$id"
+    },
+    {
+      "file": "lib/features/profile/data/igloo_keybox_repository.dart",
+      "line": 41,
+      "literal": "/api/list/iniApp"
+    },
+    {
+      "file": "lib/features/profile/presentation/igloo_keybox_screen.dart",
+      "line": 148,
+      "literal": "/api/view/Mitglieder/$memberId"
+    },
+    {
+      "file": "lib/features/profile/presentation/profile_screen.dart",
+      "line": 52,
+      "literal": "/api/login"
+    },
+    {
+      "file": "lib/features/profile/presentation/push_admin_screen.dart",
+      "line": 286,
+      "literal": "/api/list/Mitglieder"
+    },
+    {
+      "file": "lib/features/profile/presentation/push_admin_screen.dart",
+      "line": 300,
+      "literal": "/api/list/Users"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_billing_screen.dart",
+      "line": 30,
+      "literal": "/api/app/sponsor-run/events/${widget.eventId}/billing"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_billing_screen.dart",
+      "line": 257,
+      "literal": "/api/app/sponsor-run/billing/invoices/$invoice/$action"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_billing_screen.dart",
+      "line": 294,
+      "literal": "/api/app/sponsor-run/billing/invoices/$invoice/pdf"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 29,
+      "literal": "/api/app/sponsor-run/events"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 30,
+      "literal": "/api/app/sponsor-run/events/${_event!["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 113,
+      "literal": "/api/app/sponsor-run/participants/${p["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 345,
+      "literal": "/api/app/sponsor-run/events/${_event!["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 439,
+      "literal": "/api/app/sponsor-run/participants/${p["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 475,
+      "literal": "/api/app/sponsor-run/participants/${p["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 497,
+      "literal": "/api/app/sponsor-run/participants/${p["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 517,
+      "literal": "/api/app/sponsor-run/participants/${p["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 543,
+      "literal": "/api/app/sponsor-run/events/${widget.event["
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_run_screen.dart",
+      "line": 754,
+      "literal": "/api/app/sponsor-run/teams"
+    },
+    {
+      "file": "lib/features/sponsor_run/sponsor_share_screen.dart",
+      "line": 44,
+      "literal": "/api/app/sponsor-run/participants/${widget.participantId}/share-link"
+    },
+    {
+      "file": "lib/features/team_planning/data/team_planning_repository.dart",
+      "line": 37,
+      "literal": "/api/app/team-planning"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 282,
+      "literal": "/api/list/Mitglieder?search=$encodedSearch&allMembers=1&recperpage=20"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 323,
+      "literal": "/api/list/TeamSatffFunktion"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 347,
+      "literal": "/api/add/TeamStaff"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 371,
+      "literal": "/api/delete/TeamStaff/$teamStaffId"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 398,
+      "literal": "/api/list/TeamStaff"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 420,
+      "literal": "/api/add/TeamList"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 443,
+      "literal": "/api/delete/TeamList/$teamListId"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 470,
+      "literal": "/api/list/TeamList"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 656,
+      "literal": "/api/view/Mitglieder/$memberId"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 695,
+      "literal": "/api/list/Spielerliste_mit_Eltern"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 713,
+      "literal": "/api/list/Spielerliste_mit_Eltern"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 733,
+      "literal": "/api/list/Trainingszeiten"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 760,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 790,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 805,
+      "literal": "/api/list/Saison"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 846,
+      "literal": "/api/list/TeamStaff"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 856,
+      "literal": "/api/list/MitgliederAnmeldungen"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 861,
+      "literal": "/api/list/TeamSatffFunktion"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 866,
+      "literal": "/api/list/AnmeldungStatus"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 871,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 956,
+      "literal": "/api/list/TeamStaff"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 962,
+      "literal": "/api/list/TeamList"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 968,
+      "literal": "/api/list/TeamSatffFunktion"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 973,
+      "literal": "/api/list/TeamsSaison"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 984,
+      "literal": "/api/list/AnmeldungStatus"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 989,
+      "literal": "/api/list/MitgliederAnmeldungen"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 994,
+      "literal": "/api/list/Countries"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 1099,
+      "literal": "/api/list/Teams"
+    },
+    {
+      "file": "lib/features/teams/data/my_teams_repository.dart",
+      "line": 1128,
+      "literal": "/api/list/Saison"
+    },
+    {
+      "file": "lib/features/training_planner/data/training_planner_repository.dart",
+      "line": 12,
+      "literal": "/api/app/training-plans"
+    }
+  ]
+}

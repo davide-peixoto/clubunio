@@ -1,5 +1,12 @@
 # ClubUnio DEV auf dem Pi: dev.clubunio.ch
 
+## Gemeinsamer Releaseabgleich (26.11.2026)
+
+DEV aktiv: 20261126-clubunio-alignment-v1. Gemeinsame React-, Dashboard-,
+Assistenten- und Navigationsdateien auch auf Stage/PROD geprueft. Instanzbezogene
+Sicherheitskonfiguration nicht angleichen. Kein blindes Server-Checkout von main.
+[Abnahme, Branch-Verfahren und Rueckweg](CLUBUNIO-ALIGNMENT-20261126.md).
+
 ## Sicherheitsrelease Stage/PROD und VPS (25.11.2026)
 
 MFA, zentraler Sitzungswiderruf, Malwareprüfung und getrennte Runtime-/DB-Rechte sind aktiv und geprüft. Verschlüsselte Sicherungen wurden wiederhergestellt und extern manuell kopiert. Automatisches Hetzner-Backup und geplante VPS-Wartung bleiben offen; keine pauschale Go-live-Freigabe. DEV-App unverändert.
@@ -26,6 +33,7 @@ Nur DEV-Theme-Dateien auf dem VPS aktualisiert: CSS-v9/JS-v8.
 Kein Pi-App-Release; stabile Themes per elf Ressourcenhashes unverändert.
 [Prüfung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
+
 ## Keycloak-Promotion auf Stage/PROD (25.11.2026)
 
 Stabile Themes auf dem VPS übernehmen CSS-v7 vom geprüften DEV-Stand.
@@ -38,6 +46,21 @@ Nur DEV-Theme-CSS auf dem VPS-Identitätsdienst aktualisiert. Glasecken
 verschwinden nach Kontakt; Prüfstatus bleibt bis zur Antwort bestehen.
 Keine Pi-Anwendungsdatei oder Datenbank geändert.
 [Nachweise und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
+## Clubhaus (24.11.2026)
+
+Release `20261125-clubunio-clubhouse-ui-v1`, Rückweg Clubhaus-v2 bzw. ohne Modul
+`20261124-clubunio-veo-calendar-v5`.
+Sieben additive DEV-Tabellen, verschlüsselte Owner-Sicherung unter
+`/root/clubunio-releases/clubhouse-20261124`; 17 native Prüfungen mit Rollback.
+Benutzerzuordnungen erhalten, öffentliche Freigabe aus, Stage/PROD unverändert.
+25.11.: Zeitfenster DE/EN und stabile Navigation in Chrome geprüft; keine neue
+Migration. 22 PHP-Tests / 125 Assertions und acht JS-Tests bestanden.
+25.11.: Clubhaus anschließend gezielt auf Stage/PROD übernommen: je 43 Dateien,
+sieben additive Tabellen, verschlüsselte Sicherung mit isolierter Wiederherstellung.
+Je 17 Fach-, acht DE/EN-Render- und sieben HTTPS-Prüfungen bestanden; vorhandene
+Sicherheitsregeln/Rechte erhalten, öffentliche Ausgabe aus. DEV nicht verändert.
+[Bedienung und Prüfgrenzen](CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: automatische SFV-Nachführung v2 (24.11.2026)
 

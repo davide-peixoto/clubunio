@@ -35,8 +35,6 @@ export function navigationMotion() {
 export function setNavigationMotion(mode) {
     const full = mode === 'full' || (mode !== 'reduced' && !matchMedia('(prefers-reduced-motion: reduce)').matches);
     document.documentElement.dataset.cuMotion = full ? 'full' : 'reduced';
-    let style = document.querySelector('#cu-navigation-transition');
-    if (!style) { style = document.createElement('style'); style.id = 'cu-navigation-transition'; document.head.append(style); }
-    style.textContent = `@view-transition { navigation: ${full ? 'auto' : 'none'}; }`;
+    // Keep cross-document opt-in stable while Chrome reveals the incoming page.
     return full;
 }

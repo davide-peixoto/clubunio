@@ -1,5 +1,12 @@
 # ClubUnio migration work packages
 
+## Releaseabgleich ohne Fachmigration (26.11.2026)
+
+Gemeinsame 32 Runtime-Dateien auf DEV, Stage und PROD nachgefuehrt. Keine
+Schema-/Bestands-/Rechteaenderung. Synthetische Abnahme nur mit Rollback und
+gesperrtem Versand. Geschuetzte Login-/Azure-/Importvarianten bleiben erhalten.
+[Paket, Pruefungen und Rueckweg](CLUBUNIO-ALIGNMENT-20261126.md).
+
 ## DEV-PostgreSQL im täglichen Backup (25.11.2026)
 
 `clubunio_dev` zusätzlich in den verschlüsselten Tagesjob aufgenommen; keine Schemaänderung oder DEV-App-Auslieferung. Vier Datenbanken (DEV, Stage, PROD, Keycloak), täglich 01:20 UTC. Wiederherstellung und manuelle externe Kopie siehe [Abnahme](CLUBUNIO-SECURITY-RELEASE-20261125.md).
@@ -31,6 +38,7 @@ CSS-v9/JS-v8 und DEV-Theme-Properties aktualisiert; keine Schema-/Datenmigration
 Sicherung vor Änderung vorhanden; Stage-/PROD-Ressourcen unverändert geprüft.
 [Abnahmegrenzen und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
+
 ## Keycloak Stage/PROD: Promotion ohne Fachmigration (25.11.2026)
 
 Nur stabiles Theme-CSS und zwei Properties-Dateien geändert. Bestehendes
@@ -43,6 +51,20 @@ Stabile Themes unabhängig von DEV; Ressourcenzuordnung mit SHA-256 versioniert.
 CSS-v7 in zwei DEV-Login-Themes aktiviert; bestehendes v6-JavaScript bleibt.
 Keine Daten-, Rechte- oder Schemaänderung. Stage/PROD unverändert.
 [Prüfung, Sicherung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
+## Clubhaus (24.11.2026, nur DEV)
+
+Sieben additive Tabellen, private PDF-Speicherung und zusätzliche Rechte ohne
+bestehende Rollen zu ändern. Owner-Migration nach verschlüsselter Sicherung,
+Website-Ausgabe standardmäßig aus. 17 PostgreSQL-Prüfungen mit Rollback.
+App-Build/Geräteabnahme und Website-Konsum separat erforderlich.
+25.11.: UI-Korrektur `20261125-clubunio-clubhouse-ui-v1` ohne Schema-/Datenänderung;
+View-Cache erneuert, Rückweg auf Clubhaus-v2 ohne Datenrücksetzung.
+25.11.: Stage/PROD mit sieben additiven Clubhaus-Tabellen und minimalen Runtime-
+Rechten migriert; vollständige verschlüsselte Sicherungen isoliert wiederhergestellt.
+Je 17 Fach-, acht DE/EN-Render- und sieben HTTPS-Prüfungen bestanden. Keine
+Benutzer-/Profilübernahme oder Auffrischung, öffentliche Ausgabe aus, DEV erhalten.
+[Fachregeln und Rückweg](CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: SFV-Nachführung ohne Garderobenverlust (24.11.2026)
 
@@ -420,17 +442,17 @@ nachgelagerte aggregierte JSON-Nachweise sind in den verlinkten Protokollen enth
 
 ## Chronologischer Nachweis
 
-03.11.2026 approved historical expense correction: receipt season retained;
-fourteen same-team links moved to the corresponding TeamSeason only in ClubUnio.
-Encrypted verified backup, revision/audit events;191 lines and financial fields
-unchanged. No schema/legacy change. Preserve this approved delta on future imports;
-never replay native IDs blindly. CLUBUNIO-EXPENSE-SEASON-CORRECTION.md.
-
 03.11.2026 retired general parameters: migration000091 removes only general/
 SommerWinter and StatusPlatz1/2/3 after verified private encrypted-row/audit
 backup. SaisonID, SIGNAGE_PERIOD_ID and actual field availability stay intact.
 Foundation import no longer recreates retired keys. Tests and reviewed restore:
 CLUBUNIO-RETIRED-GENERAL-PARAMETERS.md. ClubUnio only, no legacy refresh.
+
+03.11.2026 approved historical expense correction: receipt season retained;
+fourteen same-team links moved to the corresponding TeamSeason only in ClubUnio.
+Encrypted verified backup, revision/audit events;191 lines and financial fields
+unchanged. No schema/legacy change. Preserve this approved delta on future imports;
+never replay native IDs blindly. CLUBUNIO-EXPENSE-SEASON-CORRECTION.md.
 
 03.11.2026 active training plan: move SIGNAGE_PERIOD_ID to general, preserving
 native period ID and audit row. Admin lookup controls training-slot heading and

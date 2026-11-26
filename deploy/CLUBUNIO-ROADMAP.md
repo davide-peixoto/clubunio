@@ -1,5 +1,12 @@
 # ClubUnio: fortlaufender Aufbau- und Migrationsplan
 
+## Releaseabgleich DEV/Stage/PROD (26.11.2026)
+
+Gemeinsamen React-/Dashboard-/Assistentenstand nachgefuehrt, Sicherheits- und
+Instanzvarianten erhalten. 119 lokale Tests, 19 native Pruefungen je VPS-Ziel;
+keine Datenmigration oder echten Sendungen. Kein pauschaler Git-Checkout.
+[Abnahme, Branch-Abgleich und Rueckweg](CLUBUNIO-ALIGNMENT-20261126.md).
+
 ## Sicherheitsrelease Stage/PROD und VPS (25.11.2026)
 
 MFA, zentraler Sitzungswiderruf, Malwareprüfung und getrennte Runtime-/DB-Rechte sind aktiv und geprüft. Verschlüsselte Sicherungen wurden wiederhergestellt und extern manuell kopiert. Automatisches Hetzner-Backup und geplante VPS-Wartung bleiben offen; keine pauschale Go-live-Freigabe. DEV-App unverändert.
@@ -29,6 +36,7 @@ keine Datenmigration; Stage/PROD unverändert.
 
 [Abnahmegrenzen](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
+
 ## Keycloak: stabile Themes auf Stage/PROD (25.11.2026)
 
 - [x] DEV-geprüftes CSS-v7 in ClubUnio-/SV-Sissach-Themes übernommen.
@@ -45,6 +53,21 @@ keine Datenmigration; Stage/PROD unverändert.
 - [x] Verzögerte Antwort und reduzierte Bewegung synthetisch geprüft.
 
 [Prüfung und Rückweg](CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
+## Clubhaus (24.11.2026, DEV)
+
+- [x] Einzel-/Serienöffnungen, Tagesausnahmen und Zeitfenster.
+- [x] Menükarten DE/EN/PDF, Gültigkeit, Entwurf und getrennte Freigabe.
+- [x] Additive Rechte ohne bestehende Profilzuordnungen zu ändern.
+- [x] App-API/Swagger und native Pflege im neuen App-Design.
+- [x] Website-Feed mit ausdrücklicher Freigabe je Verein.
+- [x] DEV-Migration und isolierte PostgreSQL-/lokale Fachtests.
+- [x] Zeitfenster-Beschriftung DE/EN und stabile Navigationsanimation auf DEV geprüft.
+- [x] Clubhaus auf Stage/PROD übernommen; Sicherung/Restore, Rechte und DE/EN geprüft.
+- [ ] Nativer Neubau: Datei-/PDF-Abnahme auf Geräten.
+- [ ] Feed in Website einbinden; öffentliche Freigabe je Verein gesondert erteilen.
+
+[Umfang, Migration und Abnahme](CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: automatische SFV-Verschiebungen mit Garderobenerhalt (24.11.2026)
 
@@ -211,6 +234,33 @@ Webredaktion mit Vorlageneditor, Medienbibliothek, Spieltags- und Resultatgrafik
 sowie Freigabe. Meta ist auf ausdruecklich konfigurierte DEV-Testziele begrenzt.
 Naechste Ausbauschritte: Redaktionskalender, Terminierung und nachgewiesener
 SFV-Resultatrueckfluss. [Bedienung und Migration](CLUBUNIO-SOCIAL-STUDIO.md).
+
+## Geplant: Materialrückgabe V1 (10.11.2026)
+
+Grundlage sind die bestehenden Materialquittungen unter Dokumente. Berechtigte
+Mitarbeitende buchen die physische Rückgabe je Position einer ausgestellten
+oder bestätigten Quittung. Jede Buchung erfasst Menge, Datum, Rückgabezustand
+und das erfassende Konto. Ein optionaler Solltermin je Position dient der
+Rückgabeplanung. Ausgestellte Quittungen und Empfangsbestätigungen bleiben als
+Nachweis erhalten. Rückgaben werden separat protokolliert.
+
+- Teilrückgaben können mehrfach erfasst werden, auch mit unterschiedlichem
+  Zustand je Teilmenge. Die offene Menge ergibt sich aus der ausgegebenen
+  Menge abzüglich der erfassten Rückgaben. Die Summe darf die ausgegebene
+  Menge auch bei gleichzeitiger Erfassung nicht überschreiten.
+- Die mandantenbezogene Übersicht zeigt Mitglied, Quittung, Materialposition,
+  ausgegebene und offene Menge sowie den Solltermin. Sie lässt sich nach
+  Mitglied und überfälligen Rückgaben filtern. Vollständig zurückgegebene
+  Positionen bleiben im Verlauf nachvollziehbar.
+- V1 umfasst die Webverwaltung mit Berechtigungsprüfung und DE/EN-Oberfläche.
+  Inventarbestand, QR-Etiketten und automatische Erinnerungen sind späterer
+  Ausbau.
+
+Abnahme mit einer bestehenden Quittung über fünf Stück: Zwei werden intakt
+zurückgegeben, eines beschädigt. Die Übersicht zeigt zwei offene Stück.
+Nach Rückgabe der letzten zwei Stück verschwindet die Position aus der
+offenen Liste. Rückgabeverlauf und ursprüngliche Quittung bleiben einsehbar.
+[Grundlage: Dokumentenserien und Materialquittungen](CLUBUNIO-DOCUMENT-SERIES.md).
 
 ## Sportneutrale Anlagen (09.11.2026)
 
@@ -1733,6 +1783,22 @@ und21 Quellhashes geprueft.60 Grenztests plus41 ueberlappende finale Integration
 tests gruen. Angemeldete Browser-Sichtpruefung nach erneuter Anmeldung offen.
 Keine Abos/SaaS-Abrechnung, App-Neubau oder PHPMaker-DEV-/PROD-Aenderung.
 Details und Grenzen: CLUBUNIO-PLATFORM-ADMINISTRATION.md.
+
+## Flutter-App-Uebernahme gestartet (26.10.2026)
+
+Weiterentwicklung der vorhandenen SVS-Flutter-App vom Benutzer freigegeben.
+Lokale Source-/Testuebernahme mit Hashmanifest, frische native App-Kennungen,
+erste lokale Designvorschau und v1-Terminleseadapter. Persoenlicher App-Login,
+Eltern-/Trainerkontext und vollstaendige Prozessanbindung noch offen. Keine
+Umstellung der SVS-App, kein Deployment/Store-Build oder Schemaeingriff.
+Details und Abnahmegrenzen: CLUBUNIO-MOBILE.md.
+
+## Eigenes Flutter-Repository (27.10.2026)
+
+App-Quellen unter C:\ClubUnio\mobile werden auf Benutzerauftrag separat in
+https://github.com/davide-peixoto/clubunio_mobile.git versioniert. Backend
+ignoriert /mobile/, App-Doku/Audit sind dort eigenstaendig enthalten.
+Keine Server-/Schema-/Store-Aenderung. Details: CLUBUNIO-MOBILE.md.
 
 ## DEV-Kommunikation aktiviert (02.11.2026)
 

@@ -13,7 +13,9 @@ ausdruecklich erwaehnt. Die separaten PHPMaker-Quellen liegen unter
 C:\Projects\SVS\backend. Nie ungefragt importieren oder Datenbanken auffrischen.
 
 Die eigene ClubUnio-API ist seit 25.10.2026 freigegeben, siehe deploy/CLUBUNIO-API.md.
-App-Neubau, SaaS und Betrieb bleiben ohne weitere Freigabe ausgeschlossen.
+Flutter-Weiterentwicklung auf Basis der bestehenden SVS-App ist seit 26.10.2026
+freigegeben; siehe deploy/CLUBUNIO-MOBILE.md. SaaS, Store-Veroeffentlichung und
+Betriebsumstellungen bleiben ohne weitere Freigabe ausgeschlossen.
 Keine echten Bankzahlungen.
 Nach Releases Doku und Migrationsplan nachfuehren, gezielt testen, Commit&Sync.
 Keine Secrets, .env-Dateien, Uploads, Laufzeitdateien oder vendor committen.

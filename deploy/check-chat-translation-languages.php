@@ -14,7 +14,8 @@ function clubunioChatTranslationLanguageChecks($app,$db,callable $expect): void
     config(['app.key'=>'base64:'.base64_encode(random_bytes(32)),'clubunio-verein-oidc.invites_enabled'=>false,
         'clubunio-languages.enabled'=>['de'=>'Deutsch','en'=>'English'],'clubunio-languages.default'=>'de',
         'clubunio-mobile.ai.enabled'=>true,'clubunio-mobile.ai.translation_provider'=>'openai','clubunio-mobile.ai.writing_provider'=>'openai',
-        'clubunio-mobile.ai.openai.key'=>'synthetic-no-paid-request','clubunio-mobile.ai.openai.model'=>'gpt-5.4-mini',
+        'clubunio-tenant-ai.enabled'=>false,
+        'clubunio-mobile.ai.openai.key'=>'synthetic-no-paid-request','clubunio-mobile.ai.openai.model'=>App\ClubUnio\Services\OpenAiModels::TEXT,
         'clubunio-mobile.ai.monthly_limit_microusd'=>20000000]);
     $enabled=config('clubunio-chat-translation.enabled');
     $expect(count(app(App\ClubUnio\Mobile\ChatTranslationLanguages::class)->policy()['enabled'])===24,'reviewed independent translation catalog has24targets');

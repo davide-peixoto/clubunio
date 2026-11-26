@@ -1,5 +1,11 @@
 # React-Ladeoptimierung auf DEV – 25.11.2026
 
+26.11.2026: Gemeinsame Runtime jetzt auch auf Stage und PROD bereitgestellt;
+je 19 native DE/EN-/Fachpruefungen, identische Paketdateien und HTTP geprueft.
+DEV ebenfalls auf gemeinsamen Abschlussstand nachgefuehrt. Die folgenden
+Messwerte beschreiben weiterhin DEV vom 25.11., keine neuen VPS-Benchmarks.
+[Releaseabgleich und Rueckweg](CLUBUNIO-ALIGNMENT-20261126.md).
+
 Benutzerfreigabe: zuerst DEV messen, danach gemeinsame React-Laufzeit,
 bedarfsgerechte Diagramme und Serverabfragen optimieren; Design/Animationen erhalten.
 Aktiv: `20261125-clubunio-react-performance-v1` auf dem Pi.

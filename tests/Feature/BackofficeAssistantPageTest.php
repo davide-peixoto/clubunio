@@ -9,6 +9,7 @@ use App\ClubUnio\Pages\BackofficeAssistant;
 use App\ClubUnio\Services\BackofficeReadContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -106,6 +107,34 @@ class BackofficeAssistantPageTest extends TestCase
         Livewire::test(BackofficeAssistant::class)->assertSee('AI is disabled.')->assertSee('Daily overview')
             ->set('question', 'Question')->assertStatus(200)->call('send')->assertStatus(200)->assertHasErrors('assistant')
             ->call('dailyOverview')->assertHasNoErrors()->assertSet('conversationId', 9)->assertSee('Synthetic answer');
+        Http::assertNothingSent();
+    }
+
+    public function test_local_examples_work_without_enabling_the_provider(): void
+    {
+        $this->service->shouldNotReceive('ask');
+        $this->service->shouldReceive('localQuery')->once()->with($this->actor, $this->tenant, null, 'invoices')
+            ->andReturn($this->conversationState());
+        $page = Livewire::test(BackofficeAssistant::class)
+            ->assertSee('Local queries')->assertSee('wire:click="localQuery(\'reservations\')"', false)
+            ->assertSee('wire:click="localQuery(\'invoices\')"', false)
+            ->set('question', 'Which invoices are still outstanding?')->call('prepareQuestion')->assertHasNoErrors()
+            ->call('send')->assertHasNoErrors()->assertSet('question', '')->assertSee('Synthetic answer')
+            ->assertDispatched('assistant-updated');
+        $this->assertStringContainsString('data-role="assistant"', $page->html());
+        $this->assertStringContainsString('x-ref="log"', $page->html());
+        $this->assertStringContainsString('x-on:keydown.enter', $page->html());
+        Http::assertNothingSent();
+    }
+
+    public function test_local_query_rejects_unknown_tools_and_ignores_ai_budget(): void
+    {
+        $this->state['budget'] = ['limit_usd' => 10, 'used_usd' => 10];
+        $this->service->shouldNotReceive('ask');
+        $this->service->shouldReceive('localQuery')->once()->with($this->actor, $this->tenant, null, 'reservations')
+            ->andReturn($this->conversationState());
+        Livewire::test(BackofficeAssistant::class)->call('localQuery', 'reservations')->assertHasNoErrors()
+            ->call('localQuery', 'delete_members')->assertStatus(422);
         Http::assertNothingSent();
     }
 
@@ -444,5 +473,67 @@ class BackofficeAssistantPageTest extends TestCase
             'invoices' => ['matching' => null, 'returned' => '<script>unsafe</script>', 'overdue' => ['unknown' => true]]]]);
         $this->assertSame([['key' => 'matching', 'label' => 'Matching records', 'value' => 0]], $groups[0]['metrics']);
         $this->assertSame([['key' => 'matching', 'label' => 'Matching records', 'value' => 'Not available']], $groups[1]['metrics']);
+    }
+
+    public function test_daily_dashboard_separates_work_from_day_reservations_and_membership(): void
+    {
+        foreach (['de', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $counts = [];
+            foreach (['members', 'registrations', 'expenses', 'invoices', 'bus', 'pitch'] as $module) {
+                $counts[$module] = ['matching' => 31, 'returned' => 3];
+            }
+            $counts['bus'] += ['bus_pending_all_dates' => 9, 'bus_on_date' => 2];
+            $counts['pitch'] += ['pitch_pending_all_dates' => 0, 'pitch_on_date' => 0];
+            $result = ['counts' => $counts, 'coverage' => ['date' => '2026-11-23'], 'rows' => [
+                ['module' => 'invoices', 'label' => '<b>Synthetic invoice</b>', 'url' => '/invoices/7',
+                    'open_amount' => '380.000000000000000000', 'currency' => 'CHF', 'status_label' => 'Synthetic status'],
+                ['module' => 'untrusted', 'label' => 'Unexpected row'],
+            ]];
+            $dashboard = (new BackofficeAssistant)->dailyDashboard($result);
+            $tiles = collect($dashboard['tiles'])->keyBy('module');
+            $this->assertSame('23.11.2026', $dashboard['date']);
+            $this->assertSame(9, $tiles['bus']['count']);
+            $this->assertSame(2, $tiles['bus']['day_count']);
+            $this->assertSame(0, $tiles['pitch']['count']);
+            $this->assertSame(31, $tiles['members']['count']);
+            $this->assertCount(1, $tiles['invoices']['rows']);
+            $this->state['messages'] = [['role' => 'assistant', 'content' => 'Local overview', 'results' => [$result]]];
+            $html = Livewire::test(BackofficeAssistant::class)
+                ->assertSee(trans('assistant_chat.key_figures'))->assertSee(trans('assistant_chat.kpi_members'))
+                ->assertSee(trans('assistant_chat.coverage_note'))->assertSee('CHF 380.00')
+                ->assertDontSee('380.000000000')->assertDontSee('Unexpected row')
+                ->assertDontSee('<b>Synthetic invoice</b>', false)->html();
+            $document = new \DOMDocument;
+            $document->loadHTML('<?xml encoding="UTF-8">'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($document);
+            $this->assertCount(6, $xpath->query('//*[@data-overview-list]'));
+            $this->assertCount(0, $xpath->query('//*[@data-overview-list and @open]'));
+            if (getenv('CLUBUNIO_ASSISTANT_PREVIEW') === '1') {
+                $directory = storage_path('app/assistant-dashboard-preview');
+                File::ensureDirectoryExists($directory);
+                file_put_contents($directory.'/'.$locale.'.html',
+                    '<!doctype html><html lang="'.$locale.'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+                    .'<title>ClubUnio dashboard preview</title><style>'
+                    .file_get_contents(public_path('css/filament/filament/app.css'))
+                    .file_get_contents(public_path('css/clubunio-assistant.css'))
+                    .'body{padding:24px;background:#f7f8fa;color:#18181b;font-family:Arial,sans-serif} [wire\\:loading]{display:none} .fi-btn-icon{width:1.25rem;height:1.25rem}</style></head><body>'
+                    .$html.'</body></html>');
+            }
+        }
+    }
+
+    public function test_overview_numbers_and_partial_results_have_safe_fallbacks(): void
+    {
+        $page = new BackofficeAssistant;
+        $this->assertNull($page->dailyDashboard([]));
+        $this->assertNull($page->dailyDashboard(['counts' => ['invoices' => ['matching' => 4]]]));
+        app()->setLocale('en');
+        $this->assertSame('CHF 1,234.50', $page->overviewAmount('1234.50000', 'CHF'));
+        app()->setLocale('de');
+        $this->assertSame("CHF 1'234.50", $page->overviewAmount('1234.50000', 'CHF'));
+        $this->assertSame('-', $page->overviewAmount(null, 'CHF'));
+        $this->assertSame('-', $page->overviewAmount(INF, 'CHF'));
+        $this->assertSame('1.00', $page->overviewAmount('1', '<script>'));
     }
 }

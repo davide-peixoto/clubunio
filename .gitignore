@@ -29,5 +29,12 @@ yarn-error.log
 /.vscode
 /.zed
 
+# Independent Flutter repository: davide-peixoto/clubunio_mobile
+/mobile/
+
+# Local Python interpreter caches are never release sources.
+__pycache__/
+*.py[cod]
+
 # Generated public training media; rebuild from authored catalogs.
 /public/support-media/

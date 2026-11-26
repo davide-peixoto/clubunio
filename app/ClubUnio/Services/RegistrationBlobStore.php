@@ -49,7 +49,7 @@ class RegistrationBlobStore
     public function putAt(string $folder, string $filename, string $bytes, string $mime, ?array $destination): void
     {
         $ai = (TenantDocumentStorage::parse($folder)['namespace'] ?? null)==='ai' || preg_match('~^clubunio/ai/[1-9][0-9]*/[1-9][0-9]*/$~D',$folder);
-        if (! ($destination ? TenantDocumentStorage::parse($folder) : preg_match('~^clubunio/(registrations|members|expenses|ai)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder))
+        if (! ($destination ? TenantDocumentStorage::parse($folder) : preg_match('~^clubunio/(registrations|members|expenses|ai|clubhouse)/[1-9][0-9]*/[1-9][0-9]*/$~D', $folder))
             || ! ($ai ? TenantDocumentStorage::filename($filename,true) : preg_match('/^[a-f0-9-]{36}\.(pdf|png|jpg|webp)$/D',$filename))
             || strlen($bytes) === 0 || strlen($bytes) > AzureDocumentReader::MAX_BYTES) {
             throw new \InvalidArgumentException('Invalid registration document');

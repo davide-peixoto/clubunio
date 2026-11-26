@@ -111,13 +111,27 @@ class BackofficeAssistantService
 
     public function briefing(Account $actor, Tenant $tenant, ?int $conversationId = null): array
     {
+        return $this->localQuery($actor, $tenant, $conversationId, 'daily');
+    }
+
+    public function localQuery(Account $actor, Tenant $tenant, ?int $conversationId, string $query): array
+    {
         $this->authorize($actor, $tenant);
-        $result = $this->reads->execute($actor, $tenant, 'read_daily_briefing', ['date' => null]);
+        [$tool, $arguments, $question] = match ($query) {
+            'daily' => ['read_daily_briefing', ['date' => null], trans('assistant_chat.daily_question')],
+            'reservations' => ['read_reservations', ['kind' => 'all', 'date' => null], __('Which reservation requests are pending?')],
+            'invoices' => ['read_invoices', ['status' => 'open'], __('Which invoices are still outstanding?')],
+            default => abort(422),
+        };
         if ($conversationId) {
             $this->conversation($actor, $tenant, $conversationId);
         }
+        $result = $this->reads->execute($actor, $tenant, $tool, $arguments);
         $conversationId ??= $this->createConversation($actor, $tenant);
-        $this->append($actor, $tenant, $conversationId, [['role' => 'assistant', 'content' => __('assistant.local_briefing'), 'results' => [$result]]]);
+        $this->append($actor, $tenant, $conversationId, [
+            ['role' => 'user', 'content' => $question],
+            ['role' => 'assistant', 'content' => __('assistant.local_briefing'), 'results' => [$result]],
+        ]);
 
         return $this->state($actor, $tenant, $conversationId);
     }

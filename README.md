@@ -1,5 +1,11 @@
 # ClubUnio
 
+## Gemeinsamer Releaseabgleich (26.11.2026)
+
+React-/Dashboard-/Assistentenstand auf DEV, Stage und PROD nachgefuehrt.
+Private Konfiguration, Daten und gehaertete Instanzvarianten bleiben getrennt.
+[Abnahme und Rueckweg](deploy/CLUBUNIO-ALIGNMENT-20261126.md).
+
 ## Sicherheitsrelease Stage/PROD und VPS (25.11.2026)
 
 MFA, zentraler Sitzungswiderruf, Malwareprüfung und getrennte Runtime-/DB-Rechte sind aktiv und geprüft. Verschlüsselte Sicherungen wurden wiederhergestellt und extern manuell kopiert. Automatisches Hetzner-Backup und geplante VPS-Wartung bleiben offen; keine pauschale Go-live-Freigabe. DEV-App unverändert.
@@ -27,6 +33,7 @@ nach Kontakt. Karte exakt mittig; mobile Sprachauswahl ohne Überlagerung.
 DEV CSS-v9/JS-v8 geprüft, Stage/PROD unverändert.
 [Prüfung und Rückweg](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
 
+
 ## Keycloak: Stage und PROD aktualisiert (25.11.2026)
 
 Geprüftes Glasdesign CSS-v7/JS-v6 in den stabilen Themes aktiv. Ecken blenden
@@ -39,6 +46,14 @@ Login-/Assetprüfungen sowie Stage-/PROD-Browseransichten bestanden.
 Login-/OTP-Ecken verschwinden nach dem Zusammentreffen. Prüfstatus bleibt
 bis zur Antwort sichtbar. CSS-v7 auf DEV geprüft und aktiviert.
 [Details und Rückweg](deploy/CLUBUNIO-KEYCLOAK-GLASS-SOCIAL-SSO.md).
+
+## Clubhaus (24.11.2026)
+
+Öffnungszeiten einzeln/Serie, Ausnahmen, Menükarten Text/PDF und getrennte
+Freigabe mit zusätzlichen Pflegerechten in Backend/App im neuen Vereinsdesign.
+25.11.: Auf Stage/PROD gezielt übernommen, vorhandene Sicherheitsregeln und
+Benutzerzuordnungen erhalten; Website-Ausgabe weiterhin aus.
+[Umfang, Website-Feed und Abnahme](deploy/CLUBUNIO-CLUBHOUSE.md).
 
 ## DEV: SFV automatisch nachführen, Garderoben erhalten (24.11.2026)
 
@@ -359,6 +374,18 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 Read [PILOT.md](PILOT.md) before running commands. Shared DEV database,
 read-only; no migrations or production deployment.
+
+## Flutter-App auf bestehender SVS-Basis (26.10.2026)
+
+Lokaler Einstieg unter `mobile/`: uebernommene Flutter-Prozesse, erste
+Designvorschau und separater v1-Terminadapter. Persoenlicher App-Login und
+Modulmigration folgen; kein Store-Release. [Stand und API-Abgleich](deploy/CLUBUNIO-MOBILE.md).
+
+## Eigenes Flutter-Repository (27.10.2026)
+
+Die App unter `mobile/` gehoert zum separaten Repository
+https://github.com/davide-peixoto/clubunio_mobile.git und wird vom Backend-Git
+ausgeschlossen. App-eigene Anweisungen und Migrationsdoku liegen im App-Repository.
 
 
 Elternlogins: [Altersabhaengige Freigabe und Profilverwaltung](deploy/CLUBUNIO-PARENT-ACCESS.md).

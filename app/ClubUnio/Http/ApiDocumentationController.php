@@ -17,7 +17,7 @@ final class ApiDocumentationController
     {
         $tenant = $this->authorize($request);
 
-        return response()->view('clubunio.api-docs', ['tenant' => $tenant, 'pitch' => $this->pitch($request)])
+        return response()->view('clubunio.api-docs', ['tenant' => $tenant, 'pitch' => $this->pitch($request), 'clubhouse' => $request->query('surface') === 'clubhouse'])
             ->header('Cache-Control', 'private, no-store')
             ->header('Referrer-Policy', 'no-referrer')
             ->header('X-Content-Type-Options', 'nosniff');
@@ -27,7 +27,9 @@ final class ApiDocumentationController
     {
         $this->authorize($request);
 
-        $documentation = $this->pitch($request) ? app(\App\ClubUnio\Mobile\MobilePitchDocumentation::class) : app(ApiDocumentation::class);
+        $pitch = $this->pitch($request);
+        $documentation = $request->query('surface') === 'clubhouse' ? app(\App\ClubUnio\Mobile\MobileClubhouseDocumentation::class)
+            : ($pitch ? app(\App\ClubUnio\Mobile\MobilePitchDocumentation::class) : app(ApiDocumentation::class));
         return response()->json($documentation->specification())
             ->header('Cache-Control', 'private, no-store')
             ->header('Referrer-Policy', 'no-referrer')
@@ -36,7 +38,7 @@ final class ApiDocumentationController
 
     private function pitch(Request $request): bool
     {
-        $data = $request->validate(['surface' => 'sometimes|in:pitch-planning']);
+        $data = $request->validate(['surface' => 'sometimes|in:pitch-planning,clubhouse']);
         return ($data['surface'] ?? null) === 'pitch-planning';
     }
 
