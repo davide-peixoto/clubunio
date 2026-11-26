@@ -40,7 +40,7 @@ final class LanguagePreferences
             }
             $before = $current->default_locale;
             $current->forceFill(['default_locale'=>$data['locale']])->save();
-            \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.object_changes')->insert([
+            \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                 'tenant_id'=>$current->id,'actor_id'=>$actor->id,'object_type'=>'tenants','object_id'=>$current->id,
                 'before_value'=>json_encode(['default_locale'=>$before],JSON_THROW_ON_ERROR),
                 'after_value'=>json_encode(['default_locale'=>$data['locale'],'reason'=>$data['reason']],JSON_THROW_ON_ERROR),

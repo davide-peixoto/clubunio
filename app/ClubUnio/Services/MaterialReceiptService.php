@@ -19,7 +19,7 @@ class MaterialReceiptService
 
     public function states(Tenant $tenant): array
     {
-        return DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
+        return DB::connection('clubunio')->table('clubunio.material_receipt_statuses')->where('tenant_id', $tenant->id)->orderBy('sort_order')->localizedPluck('name', 'code')->all();
     }
 
     public function visible(Account $actor, Tenant $tenant, bool $administration = false): Builder
@@ -34,7 +34,7 @@ class MaterialReceiptService
         $access = app(MemberAccessService::class);
         abort_unless($actor && $access->canEnter($actor, $tenant), 403);
 
-        return $query->where('state', '<>', 'draft')->whereIn('member_id', $access->represented($actor, $tenant)->select('clubora.members.id'));
+        return $query->where('state', '<>', 'draft')->whereIn('member_id', $access->represented($actor, $tenant)->select('clubunio.members.id'));
     }
 
     public function save(Account $actor, Tenant $tenant, ?int $id, array $input): MaterialReceipt
@@ -58,7 +58,7 @@ class MaterialReceiptService
                 $record->forceFill(['tenant_id' => $tenant->id, 'created_by' => $actor->id, 'state' => 'draft', 'revision' => 0]);
             }
             Member::where('tenant_id', $tenant->id)->whereNull('archived_at')->findOrFail($data['member_id']);
-            abort_unless(DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', 'draft')->where('active', true)->exists(), 409);
+            abort_unless(DB::connection('clubunio')->table('clubunio.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', 'draft')->where('active', true)->exists(), 409);
             unset($data['revision']);
             $data['items'] = array_values($data['items']);
             $data['note'] = $data['note'] ?? '';
@@ -106,7 +106,7 @@ class MaterialReceiptService
                 $data = Validator::make($input, ['reason' => 'required|string|min:3|max:1000'])->validate();
                 $record->forceFill(['state' => 'cancelled', 'cancelled_by' => $actor->id, 'cancelled_at' => now(), 'cancellation_reason' => $data['reason']]);
             }
-            abort_unless(DB::connection('clubunio')->table('clubora.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', $record->state)->where('active', true)->exists(), 409, __('Zielstatus ist nicht aktiv.'));
+            abort_unless(DB::connection('clubunio')->table('clubunio.material_receipt_statuses')->where('tenant_id', $tenant->id)->where('code', $record->state)->where('active', true)->exists(), 409, __('Zielstatus ist nicht aktiv.'));
             $record->revision++;
             $record->save();
             $this->audit($actor, $tenant, $record, $operation);
@@ -142,7 +142,7 @@ class MaterialReceiptService
 
     private function audit(Account $actor, Tenant $tenant, MaterialReceipt $record, string $operation): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'material_receipts', 'object_id' => $record->id,
             'after_value' => json_encode(['action' => $operation, 'state' => $record->state, 'revision' => $record->revision, 'snapshot_hash' => $record->snapshot_hash], JSON_THROW_ON_ERROR)]);
     }

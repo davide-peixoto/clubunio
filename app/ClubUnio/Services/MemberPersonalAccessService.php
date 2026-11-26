@@ -19,11 +19,11 @@ class MemberPersonalAccessService
 
     public function scope(Builder $query, Tenant $tenant): Builder
     {
-        return $query->select('clubora.account_member_links.*')
-            ->join('clubora.tenant_accounts as personal_membership', function ($join) {
-                $join->on('personal_membership.tenant_id', '=', 'clubora.account_member_links.tenant_id')
-                    ->on('personal_membership.account_id', '=', 'clubora.account_member_links.account_id');
-            })->where('clubora.account_member_links.tenant_id', $tenant->id)
+        return $query->select('clubunio.account_member_links.*')
+            ->join('clubunio.tenant_accounts as personal_membership', function ($join) {
+                $join->on('personal_membership.tenant_id', '=', 'clubunio.account_member_links.tenant_id')
+                    ->on('personal_membership.account_id', '=', 'clubunio.account_member_links.account_id');
+            })->where('clubunio.account_member_links.tenant_id', $tenant->id)
             ->addSelect(['personal_membership.role as personal_role', 'personal_membership.portal_enabled as personal_portal'])
             ->with('account:id,username,display_name,active,api_only');
     }

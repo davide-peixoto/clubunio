@@ -28,7 +28,7 @@ class ClubUnioMailTheme
     private function hasCustomDesign(Tenant $tenant): bool
     {
         return in_array($tenant->slug, config('clubunio-domains.hosts', []), true)
-            || DB::connection('clubunio')->table('clubora.tenant_domains')
+            || DB::connection('clubunio')->table('clubunio.tenant_domains')
                 ->where('tenant_id', $tenant->id)->where('active', true)
                 ->where('ownership_verified', true)->where('dns_verified', true)
                 ->where('tls_verified', true)->exists();

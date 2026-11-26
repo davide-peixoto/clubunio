@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-23",
+  "scope": "authorized SV Sissach PROD import and recurring one-way delta",
+  "direction": "PHPMaker PROD -> ClubUnio PROD",
+  "first_import": {
+    "status": "applied",
+    "run_id": "ca627d75c43b4ac2945b9ee60fb61408",
+    "source_manifest_sha256": "90d4fb0dfa3e80a00ca7004a48fdbf3fbaf21670005d8c7ab08aa78b2342937d",
+    "backup_sha256": "593f5728ec4c113e19b714fcef6bc7bb84ba5aa63f294c6c8f41945bb2370ec6",
+    "direction": "phpmaker_prod_to_clubunio_prod",
+    "mapping_version": "e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b",
+    "previous_run_id": 0,
+    "current_run_id": 1,
+    "inserted": 37911,
+    "updated": 0,
+    "unchanged": 0,
+    "missing_review": 0,
+    "conflicts": 0,
+    "platform_admin_unchanged": true,
+    "source_tables": 100,
+    "source_rows": 55588,
+    "completed_utc": "2026-11-22T23:04:36.757917+00:00"
+  },
+  "first_real_delta": {
+    "status": "applied",
+    "run_id": "23be4e77455d4bcabd33a703826ac374",
+    "source_manifest_sha256": "2ab01210d5166efea3df02a609b7aa2b6b67c1e7073949b63dad1a2bfbd42c4d",
+    "backup_sha256": "811e587ba9fbaeecffd0893b68ee3461a2049dc7f327aaf400b052c3d78eb615",
+    "direction": "phpmaker_prod_to_clubunio_prod",
+    "mapping_version": "e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b",
+    "previous_run_id": 1,
+    "current_run_id": 3,
+    "inserted": 0,
+    "updated": 181,
+    "unchanged": 37730,
+    "missing_review": 0,
+    "conflicts": 0,
+    "platform_admin_unchanged": true,
+    "source_tables": 100,
+    "source_rows": 55588,
+    "completed_utc": "2026-11-22T23:10:08.380735+00:00"
+  },
+  "post_import_checks": {
+    "tenant_slug": "sv-sissach",
+    "tenant_name": "SV Sissach",
+    "tenants": 1,
+    "migrations": 147,
+    "baseline_rows": 37911,
+    "members": 2448,
+    "invoices": 6799,
+    "expenses": 487,
+    "expense_lines": 3865,
+    "svs_expense_season_reviews": 14,
+    "legacy_material_receipts": 19,
+    "team_guests": 2,
+    "sfv_schedule": 231,
+    "expense_season_mismatches": 0,
+    "active_imported_accounts": 0,
+    "enabled_imported_portals": 0,
+    "imported_nonempty_secrets": 0,
+    "enabled_imported_secrets": 0,
+    "receipt_metadata_only": 19,
+    "raw_source_schema_in_prod": false,
+    "unknown_series_authors": 4,
+    "local_administrator_assigned": true,
+    "outbox_counts": {
+      "mobile_push_devices": 0,
+      "mobile_push_outbox": 0,
+      "sponsor_run_public_outbox": 0
+    },
+    "status": "passed"
+  },
+  "runtime_release": {
+    "commit": "77bbc457606a4e1032fbb9b858877bf3d0e70596",
+    "unrelated_files_preserved": 13
+  },
+  "production_permit_negative_tests": {
+    "without_permit": true,
+    "invalid_permit": true
+  },
+  "service_and_language_tests": {
+    "status": "passed",
+    "passed": {
+      "historical_templates_not_offered": true,
+      "series_processing_blocked": true,
+      "series_download_blocked": true,
+      "signed_return_publish_blocked": true,
+      "signed_return_stage_blocked": true,
+      "history_template_reuse_blocked": true,
+      "history_preview_blocked": true,
+      "unverified_receipt_download_blocked": true,
+      "historical_training_import_blocked": true,
+      "historical_member_review_blocked": true,
+      "normal_template_creation_preserved": true,
+      "history_ui_metadata_only_de": true,
+      "history_ui_metadata_only_en": true,
+      "no_outbound": true
+    },
+    "all_fixtures_rolled_back": true
+  },
+  "delta_copy_repeat": {
+    "inserted": 0,
+    "updated": 0,
+    "unchanged": 37911,
+    "missing_review": 0,
+    "conflicts": 0,
+    "committed": true,
+    "mapping_version": "e3a5c7251a07a870f7b5c138620b0920238be8469eeef291ff62c74bf9f8928b"
+  },
+  "raw_source_delta_blockers": [],
+  "verified_raw_source_changes": {
+    "dbo.Rechnung": 50,
+    "dbo.Wettkaempfe": 46,
+    "dbo.Verbandsspiele": 85
+  },
+  "temporary_databases_cleaned": true,
+  "automation": {
+    "id": "sv-sissach-prod-delta-alle-12-stunden",
+    "kind": "heartbeat",
+    "interval_hours": 12,
+    "status": "ACTIVE",
+    "notifications": "failed_runs_only"
+  },
+  "secrets_imported": false,
+  "source_writes": false,
+  "provider_jobs_activated": false
+}

@@ -12,8 +12,8 @@ class EventCheckinService
 {
     public function enabled(): bool { return config('clubunio-event-checkin.enabled', false) === true; }
     private function requireEnabled(): void { abort_unless($this->enabled(), 503); }
-    private function codes() { return DB::connection('clubunio')->table('clubora.event_checkin_codes'); }
-    private function attendance() { return DB::connection('clubunio')->table('clubora.event_checkins'); }
+    private function codes() { return DB::connection('clubunio')->table('clubunio.event_checkin_codes'); }
+    private function attendance() { return DB::connection('clubunio')->table('clubunio.event_checkins'); }
 
     public function origin(Tenant $tenant): string
     {
@@ -61,7 +61,7 @@ class EventCheckinService
 
     private function audit(Account $actor, Tenant $tenant, int $event, string $operation, int $revision): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id,
             'actor_id' => $actor->id, 'object_type' => 'event_checkin', 'object_id' => $event,
             'after_value' => json_encode(['operation' => $operation, 'revision' => $revision], JSON_THROW_ON_ERROR)]);
     }
@@ -150,15 +150,15 @@ class EventCheckinService
             ->whereHas('status', fn ($q) => $q->where('active', true));
         if ($event->team_id) {
             $query->where(function ($q) use ($tenant, $event) {
-                $q->whereExists(fn ($a) => $a->selectRaw('1')->from('clubora.event_guests as invite')
+                $q->whereExists(fn ($a) => $a->selectRaw('1')->from('clubunio.event_guests as invite')
                     ->where('invite.tenant_id', $tenant->id)->where('invite.club_event_id', $event->id)
-                    ->where('invite.active', true)->whereColumn('invite.member_id', 'clubora.members.id'));
+                    ->where('invite.active', true)->whereColumn('invite.member_id', 'clubunio.members.id'));
                 foreach (['team_players', 'team_staff'] as $table) {
-                    $q->orWhereExists(fn ($a) => $a->selectRaw('1')->from('clubora.'.$table.' as assignment')
-                        ->join('clubora.team_seasons as ts', fn ($j) => $j->on('ts.id', '=', 'assignment.team_season_id')->on('ts.tenant_id', '=', 'assignment.tenant_id'))
+                    $q->orWhereExists(fn ($a) => $a->selectRaw('1')->from('clubunio.'.$table.' as assignment')
+                        ->join('clubunio.team_seasons as ts', fn ($j) => $j->on('ts.id', '=', 'assignment.team_season_id')->on('ts.tenant_id', '=', 'assignment.tenant_id'))
                         ->where('assignment.tenant_id', $tenant->id)->where('assignment.active', true)->where('ts.active', true)
                         ->where('ts.team_id', $event->team_id)->where('ts.season_id', $event->season_id)
-                        ->whereColumn('assignment.member_id', 'clubora.members.id'));
+                        ->whereColumn('assignment.member_id', 'clubunio.members.id'));
                 }
             });
         }
@@ -194,7 +194,7 @@ class EventCheckinService
             $actor = Account::whereKey($actor->id)->where('active', true)->where('api_only', false)->sharedLock()->first();
             abort_unless($actor, 401);
             app(MobileAccess::class)->enter($actor, $tenant);
-            $link = DB::connection('clubunio')->table('clubora.account_member_links')->where('tenant_id', $tenant->id)
+            $link = DB::connection('clubunio')->table('clubunio.account_member_links')->where('tenant_id', $tenant->id)
                 ->where('account_id', $actor->id)->where('member_id', $d['MemberID'])->where('kind', 'self')->where('state', 'approved')->sharedLock()->first();
             abort_unless($link, 403);
             $member = $this->candidates($actor, $tenant, $event)->whereKey($d['MemberID'])->sharedLock()->firstOrFail();

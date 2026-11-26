@@ -49,9 +49,9 @@ class AccountMemberLinkResource extends CatalogResource
     {
         return [
             Select::make('account_id')->label('Benutzer')->required()->searchable()->disabled($edit)->dehydrated()
-                ->getSearchResultsUsing(fn (string $search) => Account::whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', Filament::getTenant()->id))
+                ->getSearchResultsUsing(fn (string $search) => Account::whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', Filament::getTenant()->id))
                     ->where('username', 'ilike', '%'.$search.'%')->limit(30)->pluck('username', 'id'))
-                ->getOptionLabelUsing(fn ($value) => Account::whereHas('tenants', fn ($q) => $q->where('clubora.tenants.id', Filament::getTenant()->id))->whereKey($value)->value('username')),
+                ->getOptionLabelUsing(fn ($value) => Account::whereHas('tenants', fn ($q) => $q->where('clubunio.tenants.id', Filament::getTenant()->id))->whereKey($value)->value('username')),
             Select::make('member_id')->label('Mitglied')->required()->searchable()->disabled($edit)->dehydrated()
                 ->getSearchResultsUsing(fn (string $search) => Member::where('tenant_id', Filament::getTenant()->id)->whereNull('archived_at')
                     ->where(fn ($q) => $q->where('first_name', 'ilike', '%'.$search.'%')->orWhere('last_name', 'ilike', '%'.$search.'%'))

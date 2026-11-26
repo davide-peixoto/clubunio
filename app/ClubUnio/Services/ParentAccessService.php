@@ -10,8 +10,8 @@ class ParentAccessService
 {
     public function enabled(): bool { return config('clubunio-parent-access.enabled', false) === true; }
     private function db() { return DB::connection('clubunio'); }
-    private function links() { return $this->db()->table('clubora.account_member_links'); }
-    private function proofs() { return $this->db()->table('clubora.account_parent_email_proofs'); }
+    private function links() { return $this->db()->table('clubunio.account_member_links'); }
+    private function proofs() { return $this->db()->table('clubunio.account_parent_email_proofs'); }
     public function minor(Member $member): bool
     {
         $birth = $member->birth_date?->toDateString();
@@ -98,7 +98,7 @@ class ParentAccessService
 
     private function membershipForParent(Account $actor, Tenant $tenant): void
     {
-        $table = $this->db()->table('clubora.tenant_accounts');
+        $table = $this->db()->table('clubunio.tenant_accounts');
         $row = (clone $table)->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->first();
         if (! $row) $table->insert(['tenant_id' => $tenant->id, 'account_id' => $actor->id, 'role' => 'member', 'portal_enabled' => true]);
         // An explicit portal suspension or administrative role is never overwritten.
@@ -118,7 +118,7 @@ class ParentAccessService
         $members = app(MemberAccessService::class)->represented($actor, $tenant, true)->orderBy('id')->get();
         return ['Members' => $members->map(function ($member) use ($tenant) {
             $parents = $this->links()->where('tenant_id', $tenant->id)->where('member_id', $member->id)->where('kind', 'parent')
-                ->join('clubora.accounts as parent_account', 'parent_account.id', '=', 'account_member_links.account_id')
+                ->join('clubunio.accounts as parent_account', 'parent_account.id', '=', 'account_member_links.account_id')
                 ->orderBy('account_member_links.id')->get(['account_member_links.*', 'parent_account.display_name', 'parent_account.username']);
             return ['MemberID' => (int) $member->id, 'Name' => trim($member->first_name.' '.$member->last_name),
                 'Adult' => $this->adult($member), 'Parents' => $parents->map(fn ($row) => $this->parentDto($row, $member))->all()];
@@ -183,7 +183,7 @@ class ParentAccessService
             abort_unless($actor?->active && ! $actor->api_only && $this->own($actor, $tenant, $memberId), 403);
             $member = app(MemberAccessService::class)->activeMembers($tenant)->findOrFail($memberId);
             abort_unless($this->adult($member), 422);
-            $proofs = $this->proofs()->where('email', $this->email($email))->join('clubora.accounts as a', 'a.id', '=', 'account_parent_email_proofs.account_id')
+            $proofs = $this->proofs()->where('email', $this->email($email))->join('clubunio.accounts as a', 'a.id', '=', 'account_parent_email_proofs.account_id')
                 ->where('a.active', true)->where('a.api_only', false)->get(['a.id']);
             abort_unless($proofs->count() === 1 && (int) $proofs->sole()->id !== (int) $actor->id, 422,
                 __('parent_access.verified_login_required'));
@@ -202,7 +202,7 @@ class ParentAccessService
 
     private function audit(Account $actor, Tenant $tenant, int $id, ?object $before, array $after): void
     {
-        $this->db()->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        $this->db()->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'account_member_links', 'object_id' => $id,
             'before_value' => $before ? json_encode(['state' => $before->state, 'revision' => $before->revision], JSON_THROW_ON_ERROR) : null,
             'after_value' => json_encode($after, JSON_THROW_ON_ERROR)]);

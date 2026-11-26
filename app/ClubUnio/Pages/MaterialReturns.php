@@ -66,7 +66,7 @@ class MaterialReturns extends Page
         $this->position = $position;
         $this->bookingKey = (string) Str::uuid();
         $this->booking = ['quantity' => 1, 'returned_on' => now('Europe/Zurich')->toDateString(), 'condition' => ''];
-        $this->dueOn = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.material_return_deadlines')
+        $this->dueOn = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.material_return_deadlines')
             ->where('tenant_id', Filament::getTenant()->id)->where('receipt_id', $receipt)->where('position', $position)->value('due_on');
         $this->resetErrorBag();
     }

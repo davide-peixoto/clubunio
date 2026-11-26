@@ -8,7 +8,7 @@ class ApiAccessToken extends PersonalAccessToken
 {
     protected $connection = 'clubunio';
 
-    protected $table = 'clubora.api_access_tokens';
+    protected $table = 'clubunio.api_access_tokens';
 
     protected $hidden = ['token'];
 

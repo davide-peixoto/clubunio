@@ -19,13 +19,13 @@ final class MobileFacilitiesController implements \Illuminate\Routing\Controller
         return DB::connection('clubunio')->transaction(function () use ($request) {
             $tenant = $request->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobileAccess::class)->enter($actor, $tenant);
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'field_availability', 'update');
             $d = $request->validate(['revision' => 'required|integer|min:1', 'status_id' => 'required|integer|min:1', 'status_revision' => 'required|integer|min:1']);
             $record = FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)->findOrFail((int) $request->route('field'));
-            abort_unless(DB::connection('clubunio')->table('clubora.facility_statuses')->where('tenant_id', $tenant->id)->where('active', true)
+            abort_unless(DB::connection('clubunio')->table('clubunio.facility_statuses')->where('tenant_id', $tenant->id)->where('active', true)
                 ->where('id', $d['status_id'])->where('revision', $d['status_revision'])->exists(), 409, 'Statusauswahl wurde geaendert.');
             app(FacilityService::class)->save($actor, $tenant, FieldAvailability::class, (int) $record->id,
                 ['revision' => $d['revision'], 'field_id' => $record->field_id, 'active' => (bool) $record->active, 'status_id' => $d['status_id'], 'note' => $record->note]);

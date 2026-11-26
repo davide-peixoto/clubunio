@@ -15,7 +15,7 @@ final class MobileInvoiceController
         $access->enter($actor, $tenant);
         $query = app(InvoiceAccessService::class)->visible($actor, $tenant);
         if (! $access->admin($actor, $tenant)) {
-            $query->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubora.members.id'));
+            $query->whereIn('member_id', app(MemberAccessService::class)->represented($actor, $tenant)->select('clubunio.members.id'));
         }
 
         return app(MobileSeasonScope::class)->finance($query, $tenant);
@@ -50,7 +50,7 @@ final class MobileInvoiceController
         $tenant = $request->attributes->get('mobile.tenant');
         $query = $this->query($request->attributes->get('mobile.actor'), $tenant);
         $db = DB::connection('clubunio');
-        $members = $db->table('clubora.members')->where('tenant_id', $tenant->id)->whereIn('id', (clone $query)->select('member_id'));
+        $members = $db->table('clubunio.members')->where('tenant_id', $tenant->id)->whereIn('id', (clone $query)->select('member_id'));
         if (! empty($d['search'])) {
             $search = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $d['search']).'%';
             $members->where(fn ($q) => $q->where('first_name', 'like', $search)->orWhere('last_name', 'like', $search));
@@ -60,7 +60,7 @@ final class MobileInvoiceController
         return response()->json(['data' => [
             'seasons' => $season ? [['id' => (int) $season->id, 'label' => $season->name]] : [],
             'members' => $members->orderBy('last_name')->orderBy('first_name')->orderBy('id')->limit(100)->get(['id', 'first_name', 'last_name']),
-            'statuses' => $db->table('clubora.invoice_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('id')->get(['id', 'name']),
+            'statuses' => $db->table('clubunio.invoice_statuses')->where('tenant_id', $tenant->id)->where('active', true)->orderBy('id')->get(['id', 'name']),
         ]]);
     }
 }

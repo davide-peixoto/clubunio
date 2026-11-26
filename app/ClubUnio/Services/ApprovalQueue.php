@@ -15,7 +15,7 @@ class ApprovalQueue
         $kinds = [];
         foreach (['expense' => ['expenses','approve'], 'change' => ['member_changes','approve'], 'bus' => ['bus','approve'], 'pitch' => ['competitions','update']] as $kind => [$module,$operation]) {
             if (! $permissions->allows($actor, $tenant, $module, 'view') || ! $permissions->allows($actor, $tenant, $module, $operation)) continue;
-            if ($kind === 'pitch' && ! in_array(DB::connection('clubunio')->table('clubora.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->value('role'), ['admin','office'], true)) continue;
+            if ($kind === 'pitch' && ! in_array(DB::connection('clubunio')->table('clubunio.tenant_accounts')->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->value('role'), ['admin','office'], true)) continue;
             if ($kind === 'expense' && ! ExpenseResource::canViewAny()) continue;
             if ($kind === 'change' && ! MemberChangeRequestResource::canViewAny()) continue;
             $kinds[$kind] = trans('workspace.kind_'.$kind);
@@ -31,7 +31,7 @@ class ApprovalQueue
                 ->whereHas('status', fn ($q) => $q->where('tenant_id', $tenant->id)->where('code', 'F')),
             'change' => MemberChangeRequestResource::getEloquentQuery()->where('tenant_id', $tenant->id)->where('state', 'pending'),
             'bus' => app(BusReservationService::class)->visible($actor, $tenant)->where('status', 'ANGEFRAGT')->where('ends_at', '>', now()->toIso8601String()),
-            'pitch' => DB::connection('clubunio')->table('clubora.pitch_requests')->where('tenant_id', $tenant->id)->where('status','pending'),
+            'pitch' => DB::connection('clubunio')->table('clubunio.pitch_requests')->where('tenant_id', $tenant->id)->where('status','pending'),
         };
     }
 

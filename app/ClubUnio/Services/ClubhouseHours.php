@@ -15,17 +15,17 @@ final class ClubhouseHours
 {
     public function rules(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.clubhouse_opening_rules')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.clubhouse_opening_rules')->where('tenant_id', $tenant->id);
     }
 
     public function exceptions(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.clubhouse_opening_exceptions')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.clubhouse_opening_exceptions')->where('tenant_id', $tenant->id);
     }
 
     public function timezone(Tenant $tenant): string
     {
-        $zone = DB::connection('clubunio')->table('clubora.clubhouse_settings')->where('tenant_id', $tenant->id)->value('timezone') ?? 'Europe/Zurich';
+        $zone = DB::connection('clubunio')->table('clubunio.clubhouse_settings')->where('tenant_id', $tenant->id)->value('timezone') ?? 'Europe/Zurich';
 
         return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'Europe/Zurich';
     }

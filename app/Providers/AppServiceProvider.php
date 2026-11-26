@@ -68,8 +68,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Auth::provider('clubunio-account', fn ($app, array $config) =>
-            new \App\ClubUnio\Services\ClubUnioUserProvider($app['hash'], $config['model']));
         \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\App\ClubUnio\Models\ApiAccessToken::class);
         \Laravel\Sanctum\Sanctum::authenticateAccessTokensUsing(fn ($token, $valid) => $valid
             && $token instanceof \App\ClubUnio\Models\ApiAccessToken && ! $token->revoked_at);
@@ -140,8 +138,9 @@ class AppServiceProvider extends ServiceProvider
         foreach ([Registration::class] as $model) {
             Gate::policy($model, ReadOnlyPolicy::class);
         }
-        if (! app()->environment(['local', 'testing', 'staging'])) {
-            throw new \LogicException('ClubUnio currently only supports local, testing and staging.');
+        if (! app()->environment(['local', 'testing', 'staging'])
+            && ! (app()->environment('production') && config('clubunio.production_enabled'))) {
+            throw new \LogicException('ClubUnio production requires explicit configuration approval.');
         }
     }
 }

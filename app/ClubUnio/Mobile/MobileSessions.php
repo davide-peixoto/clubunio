@@ -4,7 +4,6 @@ namespace App\ClubUnio\Mobile;
 
 use App\ClubUnio\Models\Account;
 use App\ClubUnio\Services\AccountSecurity;
-use App\ClubUnio\Services\EmergencyPasswordLogin;
 use App\ClubUnio\Services\TenantDomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +15,7 @@ final class MobileSessions
 {
     public function login(Request $request): array
     {
+        abort_if(config('clubunio-verein-oidc.only'), 404);
         app(MobileBootstrapState::class)->authorizeLogin($request);
         $data = $request->validate(['username' => 'required|string|max:255', 'password' => 'required|string|max:4096', 'device_name' => 'required|string|max:100']);
         $username = mb_strtolower(trim($data['username']));
@@ -24,16 +24,6 @@ final class MobileSessions
         foreach ($keys as $key => $limit) {
             abort_if(RateLimiter::tooManyAttempts($key, $limit), 429);
             RateLimiter::hit($key, 60);
-        }
-        if (config('clubunio-verein-oidc.only')) {
-            $emergency = app(EmergencyPasswordLogin::class);
-            abort_unless($emergency->expires($request), 401);
-            [$actor, $stamp] = $emergency->authenticate($request, $username, $data['password']);
-            $result = $this->issue($request, $actor, $data['device_name'], $stamp, emergency: true);
-            $emergency->record($actor, 'mobile');
-            RateLimiter::clear(array_key_first($keys));
-
-            return $result;
         }
         $provider = Auth::createUserProvider('clubunio_users');
         $credentials = ['username' => $username, 'password' => $data['password'], 'active' => true, 'api_only' => false];
@@ -46,7 +36,7 @@ final class MobileSessions
         return $result;
     }
 
-    public function issue(Request $request, Account $actor, string $deviceName, ?string $strongStamp = null, bool $emergency = false): array
+    public function issue(Request $request, Account $actor, string $deviceName, ?string $strongStamp = null): array
     {
         $security = app(AccountSecurity::class);
         $bound = app(TenantDomainService::class)->resolve($request);
@@ -60,16 +50,12 @@ final class MobileSessions
         abort_if($tenants->isEmpty() && !$canTrack, 401);
         $id = (string) Str::uuid();
         $secret = bin2hex(random_bytes(32));
-        $expiry = $emergency
-            ? \Illuminate\Support\Carbon::createFromTimestamp(app(EmergencyPasswordLogin::class)->expires($request) ?? 0)
-            : now()->addDays((int) config('clubunio-mobile.session_days', 30));
-        DB::connection('clubunio')->transaction(function () use ($request, $actor, $security, $strongStamp, $id, $secret, $deviceName, $expiry, $emergency) {
+        $expiry = now()->addDays((int) config('clubunio-mobile.session_days', 30));
+        DB::connection('clubunio')->transaction(function () use ($actor, $security, $strongStamp, $id, $secret, $deviceName, $expiry) {
             $fresh = Account::whereKey($actor->id)->lockForUpdate()->firstOrFail();
             abort_unless($fresh->active && ! $fresh->api_only && hash_equals($fresh->password, $actor->password), 401);
-            abort_unless($emergency
-                ? $this->isEmergencyStamp($request, $fresh, $strongStamp)
-                : $this->satisfiesSecurity($fresh, $security, $strongStamp), 428);
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
+            abort_unless($this->satisfiesSecurity($fresh, $security, $strongStamp), 428);
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->insert(['id' => $id, 'account_id' => $actor->id,
                 'token_hash' => hash('sha256', $secret), 'device_name' => $deviceName, 'expires_at' => $expiry->toIso8601String(), 'created_at' => now()->toIso8601String()]
                 + ($strongStamp === null ? [] : ['security_stamp' => $strongStamp]));
         });
@@ -83,27 +69,25 @@ final class MobileSessions
     {
         $token = $request->bearerToken();
         abort_unless(is_string($token) && preg_match('/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([0-9a-f]{64})$/D', $token, $parts), 401);
-        $session = DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $parts[1])->whereNull('revoked_at')
+        $session = DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $parts[1])->whereNull('revoked_at')
             ->where('expires_at', '>', now()->toIso8601String())->first();
         abort_unless($session && hash_equals($session->token_hash, hash('sha256', $parts[2])), 401);
         $actor = Account::whereKey($session->account_id)->where('active', true)->where('api_only', false)->first();
         abort_unless($actor, 401);
         $security = app(AccountSecurity::class);
-        $stamp = $session->security_stamp ?? null;
-        abort_unless($this->isEmergencyStamp($request, $actor, $stamp) || $this->satisfiesSecurity($actor, $security, $stamp), 401);
+        abort_unless($this->satisfiesSecurity($actor, $security, $session->security_stamp ?? null), 401);
         $request->attributes->set('mobile.session', $session);
 
         return $actor;
     }
 
-    private function isEmergencyStamp(Request $request, Account $actor, ?string $stamp): bool
-    {
-        return $stamp !== null && ($active = app(EmergencyPasswordLogin::class)->stamp($request, $actor)) !== null
-            && hash_equals($active, $stamp);
-    }
-
     private function satisfiesSecurity(Account $actor, AccountSecurity $security, ?string $stamp): bool
     {
+        if (config('clubunio-verein-oidc.only')) {
+            $federated = app(\App\ClubUnio\Services\KeycloakMobileAssurance::class)->stamp($actor);
+
+            return $stamp !== null && $federated !== null && hash_equals($federated, $stamp);
+        }
         if ($stamp === null) {
             return !$security->requiresStrongLogin($actor);
         }

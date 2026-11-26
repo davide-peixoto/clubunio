@@ -70,7 +70,7 @@ final class MobileRegistrationController implements \Illuminate\Routing\Controll
     public function file(Request $r) {
         $actor = $r->attributes->get('mobile.actor'); $tenant = $r->attributes->get('mobile.tenant'); $id = (int) $r->route('registration');
         $this->data()->registration($actor, $tenant, $id);
-        $file = DB::connection('clubunio')->table('clubora.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true)->find((int) $r->route('file'));
+        $file = DB::connection('clubunio')->table('clubunio.registration_documents')->where('tenant_id', $tenant->id)->where('registration_id', $id)->where('active', true)->find((int) $r->route('file'));
         abort_unless($file, 404);
         $response = app(MemberDocumentService::class)->openRegistration($actor, $tenant, (int) $file->id);
         $bytes = $response->getContent(); abort_unless(is_string($bytes) && strlen($bytes) > 0 && strlen($bytes) <= 20971520, 422);
@@ -84,7 +84,7 @@ final class MobileRegistrationController implements \Illuminate\Routing\Controll
         abort_if(! $r->hasFile('file') && strlen($r->getContent()) > 200000, 422);
         return DB::connection('clubunio')->transaction(function () use ($r, $action) {
             $tenant = $r->attributes->get('mobile.tenant'); Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r); app(MobileAccess::class)->enter($actor, $tenant);
             return $action($actor, $tenant);
         });

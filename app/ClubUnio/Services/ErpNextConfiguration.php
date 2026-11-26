@@ -92,7 +92,7 @@ class ErpNextConfiguration
                 'encrypted_value' => Crypt::encryptString(json_encode($data, JSON_THROW_ON_ERROR)),
                 'enabled' => true, 'is_secret' => true, 'value_type' => 'string',
             ])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert([
                 'tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id,
             ]);
         });

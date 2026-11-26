@@ -13,9 +13,9 @@ final class ExpireMobileExpenseReceipts extends Command
     protected $description = 'Remove expired encrypted personal expense receipt draft bytes.';
     public function handle(): int {
         $db = DB::connection('clubunio');
-        if (! $db->getSchemaBuilder()->hasTable('clubora.mobile_expense_receipts')) { $this->info('Expense receipt drafts not installed.'); return self::SUCCESS; }
+        if (! $db->getSchemaBuilder()->hasTable('clubunio.mobile_expense_receipts')) { $this->info('Expense receipt drafts not installed.'); return self::SUCCESS; }
         $count = 0;
-        $affected = $db->table('clubora.mobile_expense_receipts')->where('state', 'clean')->where('expires_at', '<=', now()->toIso8601String())->select('tenant_id');
+        $affected = $db->table('clubunio.mobile_expense_receipts')->where('state', 'clean')->where('expires_at', '<=', now()->toIso8601String())->select('tenant_id');
         foreach (Tenant::query()->whereIn('id', $affected)->orderBy('id')->cursor() as $tenant) {
             $count += $db->transaction(function () use ($tenant) {
                 DB::connection('clubunio')->statement("SET LOCAL lock_timeout TO '5s'");

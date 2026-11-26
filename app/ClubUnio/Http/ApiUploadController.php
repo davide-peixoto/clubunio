@@ -77,7 +77,7 @@ final class ApiUploadController
 
     private function status(ApiContext $c, int $id): array
     {
-        $row = DB::connection('clubunio')->table('clubora.document_uploads')->where('tenant_id', $c->tenant->id)
+        $row = DB::connection('clubunio')->table('clubunio.document_uploads')->where('tenant_id', $c->tenant->id)
             ->where('created_by', $c->actor->id)->where('id', $id)->firstOrFail();
         $this->authorize($c, $row->kind);
 

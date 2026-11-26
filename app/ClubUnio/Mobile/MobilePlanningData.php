@@ -48,7 +48,7 @@ final class MobilePlanningData
         $names = $p->table($tenant, 'members')->whereIn('id', $ids)->get(['id', 'first_name', 'last_name'])->keyBy('id');
         $editable = $deletable = [];
         try {
-            $editable = array_fill_keys($p->absenceMembers($actor, $tenant, 'update')->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+            $editable = array_fill_keys($p->absenceMembers($actor, $tenant, 'update')->whereIn('clubunio.members.id', $ids)->pluck('id')->all(), true);
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             if ($e->getStatusCode() !== 403) { throw $e; }
         }
@@ -57,7 +57,7 @@ final class MobilePlanningData
             $access = app(MemberAccessService::class);
             $members = app(\App\ClubUnio\Services\ModulePermissionService::class)->allows($actor, $tenant, 'planning', 'deactivate')
                 ? $access->activeMembers($tenant) : $access->represented($actor, $tenant);
-            $deletable = array_fill_keys($members->whereIn('clubora.members.id', $ids)->pluck('id')->all(), true);
+            $deletable = array_fill_keys($members->whereIn('clubunio.members.id', $ids)->pluck('id')->all(), true);
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             if ($e->getStatusCode() !== 403) { throw $e; }
         }

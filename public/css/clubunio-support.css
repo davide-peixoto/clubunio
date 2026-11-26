@@ -6,25 +6,4 @@
 .cu-support button { justify-self: start; }
 .cu-support details { margin-block: 12px; }
 .cu-support summary { cursor: pointer; }
-.cu-support { margin-inline: auto; color: #18354d; font: 14px/1.55 system-ui, sans-serif; box-sizing: border-box; }
-body:has(> .cu-support) { margin: 0; background: #f5f8fc; }
-.cu-support h1 { font-size: 22px; margin: 0 0 20px; }
-.cu-support h2 { font-size: 18px; overflow-wrap: anywhere; }
-.cu-support label { font-weight: 600; }
-.cu-support :is(input:not([type=checkbox]), textarea, select) {
-    box-sizing: border-box; min-height: 42px; margin-top: 5px; padding: 9px 11px;
-    border: 1px solid #bccbd8; border-radius: 6px; background: white; color: #18354d;
-    font: inherit;
-}
-.cu-support button {
-    min-height: 42px; padding: 9px 15px; border: 1px solid #075ca8;
-    border-radius: 6px; background: #075ca8; color: white; font: 600 14px/1.4 system-ui, sans-serif;
-    cursor: pointer;
-}
-.cu-support button:disabled { opacity: .6; cursor: wait; }
-.cu-support :is(button, input, textarea, select, summary, a):focus-visible { outline: 3px solid #10a9e4; outline-offset: 2px; }
-.cu-support a { color: #075ca8; text-underline-offset: 3px; }
-.cu-support summary { padding-block: 10px; color: #075ca8; font-weight: 600; }
-.cu-support output:not(:empty) { display: block; padding: 14px; border-left: 3px solid #10a9e4; background: #eaf4fc; border-radius: 6px; }
-.cu-support article { padding-block: 12px; border-bottom: 1px solid #d9e3ec; }
 .cu-support :is(p, output) { white-space: pre-wrap; overflow-wrap: anywhere; }

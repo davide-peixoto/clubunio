@@ -20,8 +20,8 @@ class AccountLinkService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $record = $id ? AccountMemberLink::withoutGlobalScopes()->where('tenant_id', $tenant->id)->lockForUpdate()->findOrFail($id) : new AccountMemberLink;
             $data = Validator::make($input, [
-                'account_id' => ['required', 'integer', Rule::exists('clubunio.clubora.tenant_accounts', 'account_id')->where('tenant_id', $tenant->id)],
-                'member_id' => ['required', 'integer', Rule::exists('clubunio.clubora.members', 'id')->where('tenant_id', $tenant->id)],
+                'account_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.tenant_accounts', 'account_id')->where('tenant_id', $tenant->id)],
+                'member_id' => ['required', 'integer', Rule::exists('clubunio.clubunio.members', 'id')->where('tenant_id', $tenant->id)],
                 'kind' => ['required', Rule::in(['self', 'parent'])], 'state' => ['required', Rule::in(['pending', 'approved', 'revoked'])],
                 'revision' => $id ? 'required|integer' : 'prohibited', 'reason' => 'required|string|min:10|max:500',
                 'tenant_id' => 'prohibited', 'reviewed_by' => 'prohibited',
@@ -70,7 +70,7 @@ class AccountLinkService
                 'tenant_id' => $tenant->id, 'source' => config('clubunio-parent-access.enabled', false) && $data['kind'] === 'parent' ? 'backoffice_review' : ($record->source ?? 'backoffice_review'), 'revision' => $id ? $record->revision + 1 : 1,
                 'reviewed_by' => $actor->id, 'reviewed_at' => now(),
             ] + $consent)->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'account_member_links', 'object_id' => $record->id, 'before_value' => $before ? json_encode($before, JSON_THROW_ON_ERROR) : null,
                 'after_value' => json_encode($record->only($fields) + ['reason' => $data['reason']], JSON_THROW_ON_ERROR)]);
 

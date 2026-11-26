@@ -38,7 +38,7 @@ class SponsorRunPublicService
             $setting = Setting::where('tenant_id', $tenant->id)->where('area', 'sponsor_run')->where('key', 'PUBLIC_WEB_ENABLED')->lockForUpdate()->first() ?? new Setting;
             $setting->forceFill(['tenant_id' => $tenant->id, 'area' => 'sponsor_run', 'key' => 'PUBLIC_WEB_ENABLED', 'label' => 'Sponsorenlauf öffentliche Testzusagen',
                 'value_type' => 'boolean', 'enabled' => true, 'is_secret' => false, 'encrypted_value' => Crypt::encryptString($enabled ? 'true' : 'false')])->save();
-            $this->core->db()->table('clubora.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id]);
+            $this->core->db()->table('clubunio.setting_changes')->insert(['tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id]);
         });
     }
 
@@ -58,7 +58,7 @@ class SponsorRunPublicService
             $manage = $this->core->allows($actor, $tenant, $action === 'show' ? 'view' : 'send');
             $own = app(MemberAccessService::class)->represented($actor, $tenant)->whereKey($p->member_id)->first();
             abort_unless($manage || $own, 403);
-            $table = $this->core->db()->table('clubora.sponsor_run_links')->where('tenant_id', $tenant->id)->where('participant_id', $participantId);
+            $table = $this->core->db()->table('clubunio.sponsor_run_links')->where('tenant_id', $tenant->id)->where('participant_id', $participantId);
             $old = (clone $table)->lockForUpdate()->first();
             if ($action === 'revoke') {
                 if ($old) {
@@ -98,7 +98,7 @@ class SponsorRunPublicService
                 $table->update($row);
                 $this->erasePending($old->id);
             } else {
-                $row['id'] = $this->core->db()->table('clubora.sponsor_run_links')->insertGetId($row);
+                $row['id'] = $this->core->db()->table('clubunio.sponsor_run_links')->insertGetId($row);
             }
             $this->core->audit($e, $actor, 'link_consented', null, ['participant_id' => $p->id, 'revision' => $row['revision']]);
 
@@ -114,25 +114,25 @@ class SponsorRunPublicService
 
     private function erasePending(int $linkId): void
     {
-        $ids = $this->core->db()->table('clubora.sponsor_run_public_pending')->where('link_id', $linkId)->whereNull('pledge_id')->pluck('id');
-        $this->core->db()->table('clubora.sponsor_run_public_pending')->whereIn('id', $ids)->update(['payload_encrypted' => null]);
-        $this->core->db()->table('clubora.sponsor_run_public_outbox')->whereIn('pending_id', $ids)->where('delivery_state', 'held')->update(['payload_encrypted' => null]);
+        $ids = $this->core->db()->table('clubunio.sponsor_run_public_pending')->where('link_id', $linkId)->whereNull('pledge_id')->pluck('id');
+        $this->core->db()->table('clubunio.sponsor_run_public_pending')->whereIn('id', $ids)->update(['payload_encrypted' => null]);
+        $this->core->db()->table('clubunio.sponsor_run_public_outbox')->whereIn('pending_id', $ids)->where('delivery_state', 'held')->update(['payload_encrypted' => null]);
     }
 
     public function rate(string $kind, string $identity, int $limit): void
     {
         $this->enabled();
         $bucket = hash_hmac('sha256', $kind.'|'.$identity.'|'.now('UTC')->format('Y-m-d-H'), config('app.key'));
-        $row = $this->core->db()->selectOne('INSERT INTO clubora.sponsor_run_public_rates(bucket_hash,hits,expires_at) VALUES (?,1,?)
-            ON CONFLICT(bucket_hash) DO UPDATE SET hits=clubora.sponsor_run_public_rates.hits+1 RETURNING hits', [$bucket, now()->addHours(2)]);
+        $row = $this->core->db()->selectOne('INSERT INTO clubunio.sponsor_run_public_rates(bucket_hash,hits,expires_at) VALUES (?,1,?)
+            ON CONFLICT(bucket_hash) DO UPDATE SET hits=clubunio.sponsor_run_public_rates.hits+1 RETURNING hits', [$bucket, now()->addHours(2)]);
         abort_if((int) $row->hits > $limit, 429, __('Zu viele Anfragen. Bitte später erneut versuchen.'));
-        $this->core->db()->statement('DELETE FROM clubora.sponsor_run_public_rates WHERE bucket_hash IN (SELECT bucket_hash FROM clubora.sponsor_run_public_rates WHERE expires_at<? LIMIT 100)', [now()]);
+        $this->core->db()->statement('DELETE FROM clubunio.sponsor_run_public_rates WHERE bucket_hash IN (SELECT bucket_hash FROM clubunio.sponsor_run_public_rates WHERE expires_at<? LIMIT 100)', [now()]);
     }
 
     private function link(string $hash, bool $lock = false): array
     {
         $db = $this->core->db();
-        $initial = $db->table('clubora.sponsor_run_links')->where('token_hash', $hash)->first();
+        $initial = $db->table('clubunio.sponsor_run_links')->where('token_hash', $hash)->first();
         abort_unless($initial, 404, __('Link ist ungültig oder abgelaufen.'));
         $bound = app(TenantDomainService::class)->current();
         abort_if($bound && (int) $bound->id !== (int) $initial->tenant_id, 404);
@@ -144,7 +144,7 @@ class SponsorRunPublicService
             $p = SponsorRunParticipant::where('tenant_id', $tenant->id)->findOrFail($initial->participant_id);
             $e = $this->core->event($tenant, $initial->event_id);
         }
-        $link = $db->table('clubora.sponsor_run_links')->where('id', $initial->id)->where('token_hash', $hash)->when($lock, fn ($q) => $q->lockForUpdate())->first();
+        $link = $db->table('clubunio.sponsor_run_links')->where('id', $initial->id)->where('token_hash', $hash)->when($lock, fn ($q) => $q->lockForUpdate())->first();
         abort_unless($link && ! $link->revoked_at && CarbonImmutable::parse($link->expires_at)->greaterThan(now()), 404, __('Link ist ungültig oder abgelaufen.'));
         $this->core->requireOpen($e, $p);
 
@@ -172,7 +172,7 @@ class SponsorRunPublicService
             [$tenant, $e, $p, $link] = $this->link($hash, true);
             $this->core->db()->selectOne('SELECT pg_advisory_xact_lock(hashtextextended(?,0))', ['sponsor-run-pending|'.$tenant->id.'|'.$data['request_key']]);
             $payloadHash = hash('sha256', json_encode([$hash, $link->revision, $data], JSON_THROW_ON_ERROR));
-            $table = $this->core->db()->table('clubora.sponsor_run_public_pending');
+            $table = $this->core->db()->table('clubunio.sponsor_run_public_pending');
             $old = (clone $table)->where('tenant_id', $tenant->id)->where('request_key', $data['request_key'])->lockForUpdate()->first();
             if ($old) {
                 abort_unless(hash_equals($old->payload_hash, $payloadHash), 409, __('Anfragekennung bereits verwendet.'));
@@ -187,7 +187,7 @@ class SponsorRunPublicService
             $language = app(MessageLanguageService::class)->email($tenant, $data['email']);
             $body = __('Testbestätigung Sponsorenlauf', [], $language)."\n".rtrim(config('app.url'), '/').'/sponsor-run#confirm='.$confirm;
             // Never queue an external recipient. The shared test transport and guard remain mandatory.
-            $this->core->db()->table('clubora.sponsor_run_public_outbox')->insert(['tenant_id' => $tenant->id, 'pending_id' => $pendingId,
+            $this->core->db()->table('clubunio.sponsor_run_public_outbox')->insert(['tenant_id' => $tenant->id, 'pending_id' => $pendingId,
                 'payload_encrypted' => Crypt::encryptString(json_encode(['to' => TestMailGuard::RECIPIENT, 'title' => __('Sponsorenlauf bestätigen', [], $language), 'body' => $body], JSON_THROW_ON_ERROR))]);
             $this->cleanup();
         });
@@ -199,12 +199,12 @@ class SponsorRunPublicService
         $hash = $this->hash($token);
         $this->core->db()->transaction(function () use ($hash) {
             $db = $this->core->db();
-            $initial = $db->table('clubora.sponsor_run_public_pending')->where('token_hash', $hash)->first();
+            $initial = $db->table('clubunio.sponsor_run_public_pending')->where('token_hash', $hash)->first();
             abort_unless($initial && CarbonImmutable::parse($initial->expires_at)->greaterThan(now()), 404);
-            $initialLink = $db->table('clubora.sponsor_run_links')->where('id', $initial->link_id)->first();
+            $initialLink = $db->table('clubunio.sponsor_run_links')->where('id', $initial->link_id)->first();
             abort_unless($initialLink, 404);
             [$tenant, $e, $p, $link] = $this->link($initialLink->token_hash, true);
-            $q = $db->table('clubora.sponsor_run_public_pending')->where('id', $initial->id)->where('tenant_id', $tenant->id);
+            $q = $db->table('clubunio.sponsor_run_public_pending')->where('id', $initial->id)->where('tenant_id', $tenant->id);
             $pending = (clone $q)->lockForUpdate()->first();
             abort_unless($pending && (int) $pending->link_revision === (int) $link->revision && CarbonImmutable::parse($pending->expires_at)->greaterThan(now()), 404);
             if ($pending->pledge_id) {
@@ -216,16 +216,16 @@ class SponsorRunPublicService
             $data['request_key'] = 'public-'.hash('sha256', $tenant->id.'|'.$pending->request_key);
             $pledge = $this->core->storePledge($tenant, $e, $p, $data, null);
             $q->update(['pledge_id' => $pledge->id, 'confirmed_at' => now(), 'payload_encrypted' => null]);
-            $db->table('clubora.sponsor_run_public_outbox')->where('pending_id', $pending->id)->update(['payload_encrypted' => null]);
+            $db->table('clubunio.sponsor_run_public_outbox')->where('pending_id', $pending->id)->update(['payload_encrypted' => null]);
         });
     }
 
     private function cleanup(): void
     {
         $db = $this->core->db();
-        $ids = $db->table('clubora.sponsor_run_public_pending')->where('expires_at', '<', now()->subDay())->whereNotNull('payload_encrypted')->limit(100)->pluck('id');
-        $db->table('clubora.sponsor_run_public_pending')->whereIn('id', $ids)->update(['payload_encrypted' => null]);
-        $db->table('clubora.sponsor_run_public_outbox')->whereIn('pending_id', $ids)->update(['payload_encrypted' => null]);
+        $ids = $db->table('clubunio.sponsor_run_public_pending')->where('expires_at', '<', now()->subDay())->whereNotNull('payload_encrypted')->limit(100)->pluck('id');
+        $db->table('clubunio.sponsor_run_public_pending')->whereIn('id', $ids)->update(['payload_encrypted' => null]);
+        $db->table('clubunio.sponsor_run_public_outbox')->whereIn('pending_id', $ids)->update(['payload_encrypted' => null]);
     }
 
     public function dispatchTestOutbox(Account $actor, Tenant $tenant, int $id): void
@@ -236,13 +236,13 @@ class SponsorRunPublicService
         abort_unless($this->core->db()->transactionLevel() === 0, 409, __('Nur bestätigte Outbox-Eintraege versenden.'));
         $row = $this->core->db()->transaction(function () use ($tenant, $id) {
             $db = $this->core->db();
-            $initial = $db->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
-            $pending = $db->table('clubora.sponsor_run_public_pending')->where('tenant_id', $tenant->id)->where('id', $initial->pending_id)->firstOrFail();
-            $link = $db->table('clubora.sponsor_run_links')->where('tenant_id', $tenant->id)->where('id', $pending->link_id)->firstOrFail();
+            $initial = $db->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
+            $pending = $db->table('clubunio.sponsor_run_public_pending')->where('tenant_id', $tenant->id)->where('id', $initial->pending_id)->firstOrFail();
+            $link = $db->table('clubunio.sponsor_run_links')->where('tenant_id', $tenant->id)->where('id', $pending->link_id)->firstOrFail();
             [, , , $activeLink] = $this->link($link->token_hash, true);
-            $pending = $db->table('clubora.sponsor_run_public_pending')->where('tenant_id', $tenant->id)->where('id', $pending->id)->lockForUpdate()->firstOrFail();
+            $pending = $db->table('clubunio.sponsor_run_public_pending')->where('tenant_id', $tenant->id)->where('id', $pending->id)->lockForUpdate()->firstOrFail();
             abort_unless(! $pending->pledge_id && $pending->payload_encrypted && (int) $pending->link_revision === (int) $activeLink->revision && CarbonImmutable::parse($pending->expires_at)->greaterThan(now()), 409);
-            $q = $this->core->db()->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->where('delivery_state', 'held')->whereNotNull('payload_encrypted');
+            $q = $this->core->db()->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->where('delivery_state', 'held')->whereNotNull('payload_encrypted');
             $row = (clone $q)->lockForUpdate()->firstOrFail();
             $q->update(['delivery_state' => 'sending']);
 
@@ -256,6 +256,6 @@ class SponsorRunPublicService
         } catch (\Throwable) {
             // Ambiguous transport outcomes are never automatically retried.
         }
-        $this->core->db()->table('clubora.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->update(['delivery_state' => $state, 'finished_at' => now(), 'payload_encrypted' => null]);
+        $this->core->db()->table('clubunio.sponsor_run_public_outbox')->where('tenant_id', $tenant->id)->where('id', $id)->update(['delivery_state' => $state, 'finished_at' => now(), 'payload_encrypted' => null]);
     }
 }

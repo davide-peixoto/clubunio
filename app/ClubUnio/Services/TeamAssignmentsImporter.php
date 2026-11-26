@@ -14,26 +14,26 @@ class TeamAssignmentsImporter
         }
         $db->transaction(function () use ($db) {
             $db->select('SELECT pg_advisory_xact_lock(20261011)');
-            if ($db->table('clubora.imports')->where('name', 'team-assignments-v1')->exists()) {
+            if ($db->table('clubunio.imports')->where('name', 'team-assignments-v1')->exists()) {
                 return;
             }
-            $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->value('id');
+            $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->value('id');
             if (! $tenant) {
                 throw new \LogicException('Foundation required');
             }
             foreach (['team_players', 'team_staff', 'technical_leads', 'staff_functions'] as $table) {
-                if ($db->table('clubora.'.$table)->where('tenant_id', $tenant)->exists()) {
+                if ($db->table('clubunio.'.$table)->where('tenant_id', $tenant)->exists()) {
                     throw new \LogicException('Target already populated');
                 }
             }
             foreach ($db->table('legacy_prod.TeamSatffFunktion')->get() as $r) {
-                $db->table('clubora.staff_functions')->insert([
+                $db->table('clubunio.staff_functions')->insert([
                     'tenant_id' => $tenant, 'legacy_id' => $r->TeamSatffFunktionID, 'code' => 'legacy_'.$r->TeamSatffFunktionID,
                     'name' => $r->Bezeichnung, 'active' => $r->sdeletedAt === null]);
             }
-            $members = $db->table('clubora.members')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
-            $seasons = $db->table('clubora.team_seasons')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
-            $functions = $db->table('clubora.staff_functions')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $members = $db->table('clubunio.members')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $seasons = $db->table('clubunio.team_seasons')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
+            $functions = $db->table('clubunio.staff_functions')->where('tenant_id', $tenant)->pluck('id', 'legacy_id');
             foreach ([['TeamList', 'team_players', 'TeamlistID'], ['TeamStaff', 'team_staff', 'TeamStaffID'], ['TechnischeLeiterTeams', 'technical_leads', 'TechnischeLeiterTeamID']] as [$source,$target,$key]) {
                 $rows = [];
                 foreach ($db->table('legacy_prod.'.$source)->get() as $r) {
@@ -54,10 +54,10 @@ class TeamAssignmentsImporter
                     $rows[] = $data;
                 }
                 foreach (array_chunk($rows, 200) as $batch) {
-                    $db->table('clubora.'.$target)->insert($batch);
+                    $db->table('clubunio.'.$target)->insert($batch);
                 }
             }
-            $db->table('clubora.imports')->insert(['name' => 'team-assignments-v1']);
+            $db->table('clubunio.imports')->insert(['name' => 'team-assignments-v1']);
         });
     }
 }

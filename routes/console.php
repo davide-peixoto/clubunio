@@ -79,17 +79,16 @@ Artisan::command('clubunio:campaign-reminders', function () {
     $this->info((string) app(\App\ClubUnio\Services\CampaignOperations::class)->automaticReminders());
 });
 Schedule::command('clubunio:campaign-reminders')->hourly()->withoutOverlapping();
-if (\App\ClubUnio\Services\MemberCampaignService::devTestMode()) {
-    Artisan::command('clubunio:campaign-dev-test-mail', function () {
-        $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();
-        $this->info($processed ? 'DEV test message processed in memory.' : 'No due DEV test message.');
-    });
-    Schedule::command('clubunio:campaign-dev-test-mail')->everyMinute()->withoutOverlapping();
+Artisan::command('clubunio:campaign-test-mail', function () {
+    $processed = app(\App\ClubUnio\Services\CampaignMailQueue::class)->runOne();
+    $this->line($processed ? 'One queue item processed.' : 'No queue item processed.');
+});
+if (config('clubunio-campaign-mail.enabled') && app()->environment('staging')) {
+    Schedule::command('clubunio:campaign-test-mail')->everyTenSeconds()->withoutOverlapping();
 }
 Schedule::command('clubunio:expire-mobile-expense-receipts')->hourly()->withoutOverlapping();
 Schedule::command('clubunio:expire-mobile-expense-ocr')->hourly()->withoutOverlapping();
 Schedule::command('clubunio:member-wallet-refresh')->everyMinute()->withoutOverlapping();
-Schedule::command('clubunio:google-wallet-refresh')->everyMinute()->withoutOverlapping();
 Schedule::command('clubunio:assistant:purge --apply')->dailyAt('03:35')->withoutOverlapping();
 
 Artisan::command('clubunio:bexio-preview {tenant} {actor} {--type=invoice} {--after=0} {--limit=10}', function () {
@@ -115,7 +114,7 @@ Artisan::command('clubunio:bexio-preview {tenant} {actor} {--type=invoice} {--af
             break;
         }
         $check = $service->preview($actor, $tenant, $type, $row->id);
-        $state = DB::connection('clubunio')->table('clubora.bexio_checks')->where('id', $check)->value('state');
+        $state = DB::connection('clubunio')->table('clubunio.bexio_checks')->where('id', $check)->value('state');
         $cursor = $row->id;
         $failed += $state === 'failed' ? 1 : 0;
         $this->line('Check '.$check.': '.$state);

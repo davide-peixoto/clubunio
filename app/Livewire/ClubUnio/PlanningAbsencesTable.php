@@ -28,9 +28,9 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
         $tenant = $this->authorizedTenant();
 
         $service = app(TeamPlanningService::class);
-        $query = $service->absences(auth('clubunio')->user()->fresh(), $tenant)->select('clubora.team_absences.*');
+        $query = $service->absences(auth('clubunio')->user()->fresh(), $tenant)->select('clubunio.team_absences.*');
         $query->selectSub($service->table($tenant, 'members')
-            ->whereColumn('clubora.members.id', 'clubora.team_absences.member_id')
+            ->whereColumn('clubunio.members.id', 'clubunio.team_absences.member_id')
             ->selectRaw("concat(first_name, ' ', last_name)"), 'member_name');
 
         return PlanningAbsence::query()->setQuery($query);
@@ -61,7 +61,7 @@ class PlanningAbsencesTable extends WorkspaceScopedTable
         $service = app(TeamPlanningService::class);
         $editable = $context['profileAllows']('update')
             ? $service->absenceMembers($context['actor'], $context['tenant'], 'update')
-                ->whereIn('clubora.members.id', $service->absences($context['actor'], $context['tenant'])->select('member_id'))->pluck('id')->all()
+                ->whereIn('clubunio.members.id', $service->absences($context['actor'], $context['tenant'])->select('member_id'))->pluck('id')->all()
             : [];
 
         return $table->query(fn () => $this->absences())

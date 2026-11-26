@@ -1,0 +1,39 @@
+{
+  "publicClient": false,
+  "standardFlowEnabled": true,
+  "serviceAccountsEnabled": false,
+  "enabled": true,
+  "authenticationFlowBindingOverrides": {
+    "browser": "a2a7c913-75b6-4aed-8328-fc2ddba086a0"
+  },
+  "attributes": {
+    "login_theme": "clubunio",
+    "acr.loa.map": "{\"clubunio-mobile-mfa\":\"2\"}",
+    "post.logout.redirect.uris": "https://app.clubunio.com/",
+    "pkce.code.challenge.method": "S256"
+  },
+  "redirectUris": [
+    "https://app.clubunio.com/vereinslogin/oidc/callback"
+  ],
+  "protocol": "openid-connect",
+  "consentRequired": false,
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "email",
+    "roles",
+    "basic"
+  ],
+  "fullScopeAllowed": true,
+  "directAccessGrantsEnabled": false,
+  "rootUrl": "https://app.clubunio.com",
+  "implicitFlowEnabled": false,
+  "clientId": "clubunio-verein-prod",
+  "baseUrl": "https://app.clubunio.com/",
+  "webOrigins": [
+    "https://app.clubunio.com"
+  ],
+  "clientAuthenticatorType": "client-secret",
+  "name": "ClubUnio PROD (verein)"
+}
