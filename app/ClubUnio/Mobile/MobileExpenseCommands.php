@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 final class MobileExpenseCommands
 {
-    private function table(Account $actor, Tenant $tenant) { return DB::connection('clubunio')->table('clubora.mobile_expense_commands')->where('tenant_id', $tenant->id)->where('account_id', $actor->id); }
+    private function table(Account $actor, Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.mobile_expense_commands')->where('tenant_id', $tenant->id)->where('account_id', $actor->id); }
     public function fingerprint(array $input): string {
         $normalize = function ($value, $field = null) use (&$normalize) {
             if (in_array($field, ['member_id','team_season_id','bank_account_id','round_id','expense_id','expense_type_id','game_type_id','revision','expense_revision','receipt_revision'], true) && $value !== null) return (int) $value;

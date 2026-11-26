@@ -36,7 +36,7 @@ final class MobileIdentityMailGuard
             if (iterator_count($headers->all('X-ClubUnio-Identity')) !== 1 || iterator_count($headers->all('X-ClubUnio-Identity-Proof')) !== 1
                 || $headers->get('X-ClubUnio-Identity')->getBodyAsString() !== $mail->challenge()
                 || !hash_equals($mail->signature(), $headers->get('X-ClubUnio-Identity-Proof')->getBodyAsString())) { return false; }
-            $row = DB::connection('clubunio')->table('clubora.mobile_identity_challenges')->where('id', $mail->challenge())->where('tenant_id', $mail->tenant())
+            $row = DB::connection('clubunio')->table('clubunio.mobile_identity_challenges')->where('id', $mail->challenge())->where('tenant_id', $mail->tenant())
                 ->where('state', 'pending')->where('delivery_state', 'sending')->where('expires_at', '>', now()->toIso8601String())->first();
             if (!$row || !$row->delivery_encrypted) { return false; }
             $data = json_decode(Crypt::decryptString($row->delivery_encrypted), true, 32, JSON_THROW_ON_ERROR);

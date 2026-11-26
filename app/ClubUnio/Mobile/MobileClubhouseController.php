@@ -33,7 +33,7 @@ final class MobileClubhouseController
         return DB::connection('clubunio')->transaction(function () use ($request, $operation) {
             $tenant = $request->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')
                 ->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request);
             app(MobileAccess::class)->enter($actor, $tenant);
@@ -103,9 +103,6 @@ final class MobileClubhouseController
         $bytes = $request->boolean('draft') ? app(ClubhouseMenus::class)->document($actor, $tenant, $id)
             : app(ClubhouseMenus::class)->publishedDocument($tenant, $id, 'app');
 
-        return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="menu-'.$id.'.pdf"')
-            ->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff')
-            ->header('Content-Security-Policy', "sandbox; default-src 'none'; frame-ancestors 'self'")
-            ->header('X-Frame-Options', 'SAMEORIGIN');
+        return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="menu-'.$id.'.pdf"');
     }
 }

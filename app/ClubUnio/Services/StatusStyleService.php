@@ -46,7 +46,7 @@ class StatusStyleService
             unset($data['revision']);
             $before = $id ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id, 'revision' => $id ? $record->revision + 1 : 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'status_styles', 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'status_styles', 'object_id' => $record->id, 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
             $this->colors = [];
 
             return $record;
@@ -61,10 +61,10 @@ class StatusStyleService
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $count = 0;
             foreach (['member_statuses', 'member_change_statuses', 'registration_statuses', 'expense_statuses', 'invoice_statuses', 'facility_statuses', 'training_options', 'member_types', 'genders'] as $table) {
-                foreach ($db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->pluck('name') as $name) {
+                foreach ($db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->pluck('name') as $name) {
                     $key = StatusAppearance::key($name);
                     if ($key !== '' && ! StatusStyle::where('tenant_id', $tenant->id)->where('value_key', $key)->exists()) {
-                        $db->table('clubora.status_styles')->insert(['tenant_id' => $tenant->id, 'name' => $name, 'value_key' => $key, 'color' => StatusAppearance::defaultHex($name)]);
+                        $db->table('clubunio.status_styles')->insert(['tenant_id' => $tenant->id, 'name' => $name, 'value_key' => $key, 'color' => StatusAppearance::defaultHex($name)]);
                         $count++;
                     }
                 }

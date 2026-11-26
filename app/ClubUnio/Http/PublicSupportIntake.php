@@ -18,7 +18,7 @@ final class PublicSupportIntake
             $validator = Validator::make($request->only(['email','body']), ['email' => 'required|email:rfc|max:254', 'body' => 'required|string|max:2000']);
             if ($validator->fails()) return redirect()->route('clubunio.support.login-help')->withErrors($validator);
             $data = $validator->validated();
-            DB::connection('clubunio')->table('clubora.support_public_requests')->insert([
+            DB::connection('clubunio')->table('clubunio.support_public_requests')->insert([
                 'id' => (string) Str::uuid(), 'tenant_id' => $tenant?->id,
                 'payload' => encrypt(json_encode($data, JSON_THROW_ON_ERROR)),
             ]);
@@ -38,7 +38,7 @@ final class PublicSupportIntake
         } else {
             abort_unless($access->staff($access->role($request, $actor, \App\ClubUnio\Models\Tenant::findOrFail($club))), 403);
         }
-        $rows = DB::connection('clubunio')->table('clubora.support_public_requests')
+        $rows = DB::connection('clubunio')->table('clubunio.support_public_requests')
             ->where('tenant_id', $club)->latest()->limit(50)->get();
         $view = $club === null ? 'clubunio.support.platform-intake' : 'clubunio.support.intake-inbox';
         return response()->view($view, compact('rows', 'actor'))

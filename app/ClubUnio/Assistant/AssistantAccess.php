@@ -17,9 +17,9 @@ class AssistantAccess
         }
 
         // Deliberately bypass request-level permission snapshots for every agent step.
-        return DB::connection('clubunio')->table('clubora.accounts as a')
-            ->join('clubora.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
-            ->join('clubora.tenants as t', 't.id', '=', 'ta.tenant_id')
+        return DB::connection('clubunio')->table('clubunio.accounts as a')
+            ->join('clubunio.tenant_accounts as ta', 'ta.account_id', '=', 'a.id')
+            ->join('clubunio.tenants as t', 't.id', '=', 'ta.tenant_id')
             ->where('a.id', $actor->id)->where('a.active', true)->where('a.api_only', false)
             ->where('ta.tenant_id', $tenant->id)->whereIn('ta.role', ['admin', 'office'])->exists();
     }

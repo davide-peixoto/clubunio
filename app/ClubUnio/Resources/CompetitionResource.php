@@ -70,7 +70,7 @@ class CompetitionResource extends FacilityResource
             Filter::make('upcoming')->label('Ab heute')->default()->query(fn ($query) => $query->where('plays_on', '>=', now('Europe/Zurich')->toDateString())),
             Filter::make('missing_club')->label('Vereinszuordnung prüfen')->query(fn ($query) => $query->where(function ($q) {
                 foreach (['host', 'guest'] as $side) {
-                    $q->orWhereNotExists(fn ($clubs) => $clubs->selectRaw('1')->from('clubora.football_clubs')
+                    $q->orWhereNotExists(fn ($clubs) => $clubs->selectRaw('1')->from('clubunio.football_clubs')
                         ->whereColumn('football_clubs.tenant_id', 'competitions.tenant_id')
                         ->whereColumn('football_clubs.club_number', 'competitions.'.$side.'_club_number')->where('football_clubs.active', true));
                 }

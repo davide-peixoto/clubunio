@@ -10,7 +10,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class GoogleMemberWalletService
 {
-    public function passes() { return DB::connection('clubunio')->table('clubora.member_google_wallet_passes'); }
+    public function passes() { return DB::connection('clubunio')->table('clubunio.member_google_wallet_passes'); }
 
     public function available(?Tenant $tenant = null): bool
     {
@@ -24,7 +24,7 @@ class GoogleMemberWalletService
         $card = app(MemberCardService::class)->ensureCard($tenant, $member);
         $client = app(GoogleWalletClient::class);
         $row = DB::connection('clubunio')->transaction(function () use ($card, $tenant, $member, $client) {
-            DB::connection('clubunio')->table('clubora.member_cards')->where('id', $card->id)->lockForUpdate()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.member_cards')->where('id', $card->id)->lockForUpdate()->firstOrFail();
             $existing = $this->passes()->where('card_id', $card->id)->first();
             if ($existing) return $existing;
             $id = (string) Str::uuid();

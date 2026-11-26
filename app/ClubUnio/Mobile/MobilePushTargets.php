@@ -20,7 +20,7 @@ final class MobilePushTargets
             case 'expense': app(ExpenseService::class)->visible($actor, $tenant)->findOrFail($id); break;
             case 'member': app(MobileMemberData::class)->member($actor, $tenant, $id); break;
             case 'member_change':
-                $change = DB::connection('clubunio')->table('clubora.member_change_requests')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
+                $change = DB::connection('clubunio')->table('clubunio.member_change_requests')->where('tenant_id', $tenant->id)->where('id', $id)->firstOrFail();
                 app(MobileMemberData::class)->member($actor, $tenant, (int) $change->member_id);
                 if (! app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view')) {
                     abort_unless((int) $change->requested_by === (int) $actor->id, 403);

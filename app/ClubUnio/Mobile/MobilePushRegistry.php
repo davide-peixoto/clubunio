@@ -10,7 +10,6 @@ final class MobilePushRegistry
     public function app(string $id, string $platform, string $origin): array
     {
         abort_unless(config('clubunio-mobile-push.enabled', false), 503);
-        abort_unless(preg_match('/^[a-zA-Z0-9_.-]{3,180}$/D', $id), 403);
         // Config keys contain dots: read exact keys rather than treating native IDs as config paths.
         $apps = config('clubunio-mobile-push.apps', []);
         $app = $apps[$platform.':'.$id] ?? $apps[$id] ?? null;

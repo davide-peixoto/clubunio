@@ -37,11 +37,11 @@ class TeamAssignmentService
             }
             $rows = Validator::make(['rows' => array_values($inputs)], $rules)->validate()['rows'];
             $db = DB::connection('clubunio');
-            $members = array_fill_keys($db->table('clubora.members')->where('tenant_id', $tenant->id)->whereNull('archived_at')
+            $members = array_fill_keys($db->table('clubunio.members')->where('tenant_id', $tenant->id)->whereNull('archived_at')
                 ->whereIn('id', array_column($rows, 'member_id'))->pluck('id')->all(), true);
-            $teams = array_fill_keys($db->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('active', true)
+            $teams = array_fill_keys($db->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('id', array_column($rows, 'team_season_id'))->pluck('id')->all(), true);
-            $functions = $model === TeamStaff::class ? array_fill_keys($db->table('clubora.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)
+            $functions = $model === TeamStaff::class ? array_fill_keys($db->table('clubunio.staff_functions')->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('id', array_column($rows, 'staff_function_id'))->pluck('id')->all(), true) : [];
             $identity = fn ($row) => $row['team_season_id'].':'.$row['member_id'].':'.($row['staff_function_id'] ?? '');
             $seen = [];
@@ -71,7 +71,7 @@ class TeamAssignmentService
                     'before_value' => null, 'after_value' => json_encode($row, JSON_THROW_ON_ERROR)];
             }
             foreach (array_chunk($audit, 100) as $chunk) {
-                $db->table('clubora.object_changes')->insert($chunk);
+                $db->table('clubunio.object_changes')->insert($chunk);
             }
             app(ModulePermissionService::class)->authorize($actor, $tenant, 'teams', 'create');
 
@@ -100,7 +100,7 @@ class TeamAssignmentService
                 $references['staff_function_id'] = 'staff_functions';
             }
             foreach ($references as $field => $table) {
-                $rules[$field] = [$id && $field === 'staff_function_id' && $record->$field === null ? 'nullable' : 'required', 'integer', Rule::exists('clubunio.clubora.'.$table, 'id')->where(function ($q) use ($tenant, $table, $record, $field) {
+                $rules[$field] = [$id && $field === 'staff_function_id' && $record->$field === null ? 'nullable' : 'required', 'integer', Rule::exists('clubunio.clubunio.'.$table, 'id')->where(function ($q) use ($tenant, $table, $record, $field) {
                     $q->where('tenant_id', $tenant->id)->where(function ($q) use ($table, $record, $field) {
                         $table === 'members' ? $q->whereNull('archived_at') : $q->where('active', true);
                         $q->orWhere('id', $record->$field ?? -1);
@@ -134,13 +134,13 @@ class TeamAssignmentService
             }
             $data = array_intersect_key($data, array_flip(array_merge(['active'], array_keys($references))));
             if ($model === TeamSeason::class) {
-                $data['label'] = DB::connection('clubunio')->table('clubora.teams')->where('tenant_id', $tenant->id)->where('id', $data['team_id'])->value('name').' / '.DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('id', $data['season_id'])->value('name');
+                $data['label'] = DB::connection('clubunio')->table('clubunio.teams')->where('tenant_id', $tenant->id)->where('id', $data['team_id'])->value('name').' / '.DB::connection('clubunio')->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('id', $data['season_id'])->value('name');
             }
             $before = $record->exists ? $record->only(array_keys($data)) : null;
             $record->forceFill($data + ['tenant_id' => $tenant->id]);
             if (! $record->exists || $record->isDirty()) {
                 $record->save();
-                DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id,
+                DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => str($record->getTable())->afterLast('.')->toString(), 'object_id' => $record->id,
                     'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR), 'after_value' => json_encode($data, JSON_THROW_ON_ERROR)]);
             }
 

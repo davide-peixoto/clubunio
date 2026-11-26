@@ -26,7 +26,7 @@ class TestOutboxDispatcher
         if ($db->transactionLevel() !== 0) {
             throw new \LogicException('Dispatch requires a committed transaction');
         }
-        $table = 'clubora.'.$table;
+        $table = 'clubunio.'.$table;
         for ($i = 0; $i < min(50, max(0, $limit)); $i++) {
             $event = $db->transaction(function () use ($db, $table, $tenantId, $eventId, $pitch) {
                 $row = $db->table($table)
@@ -59,9 +59,9 @@ class TestOutboxDispatcher
                     $language = isset($delivery['locale']) ? strtolower(explode('-', str_replace('_', '-', $delivery['locale']))[0]) : null;
                     $locale = app(MessageLanguageService::class)->resolve($tenant, $language);
                     $path = match ($table) {
-                        'clubora.expense_events' => '/expenses/'.(int) $event->expense_id,
-                        'clubora.registration_events' => '/registrations',
-                        'clubora.pitch_planning_events' => '/pitch-planning',
+                        'clubunio.expense_events' => '/expenses/'.(int) $event->expense_id,
+                        'clubunio.registration_events' => '/registrations',
+                        'clubunio.pitch_planning_events' => '/pitch-planning',
                     };
                     $url = rtrim(config('app.url'), '/').$path;
                     $html = app(ClubUnioMailTheme::class)->render($tenant, $delivery['title'], $body, $url,

@@ -10,7 +10,7 @@ final class MobileTrainingData
     public function plan(Account $actor, Tenant $tenant, object $row): array
     {
         $service = app(MobileTrainingPlanService::class);
-        $editor = DB::connection('clubunio')->table('clubora.object_changes as changes')->join('clubora.accounts as account', 'account.id', '=', 'changes.actor_id')
+        $editor = DB::connection('clubunio')->table('clubunio.object_changes as changes')->join('clubunio.accounts as account', 'account.id', '=', 'changes.actor_id')
             ->where('changes.tenant_id', $tenant->id)->where('changes.object_type', 'training_plan')->where('changes.object_id', $row->id)
             ->orderByDesc('changes.id')->value('account.display_name');
         return array_merge($this->content($row->plan), [

@@ -18,8 +18,8 @@ class MemberWalletService
             'GoogleAvailable' => app(GoogleMemberWalletService::class)->available($tenant)];
     }
 
-    public function passes() { return DB::connection('clubunio')->table('clubora.member_wallet_passes'); }
-    public function registrations() { return DB::connection('clubunio')->table('clubora.member_wallet_registrations'); }
+    public function passes() { return DB::connection('clubunio')->table('clubunio.member_wallet_passes'); }
+    public function registrations() { return DB::connection('clubunio')->table('clubunio.member_wallet_registrations'); }
 
     private function projection(Tenant $tenant, int $member): array
     {
@@ -76,7 +76,7 @@ class MemberWalletService
         $db = DB::connection('clubunio');
         return $db->transaction(function () use ($tenant, $member, $snapshot, $artwork, $db) {
             // Serialize first issuance with the existing stable card row.
-            $db->table('clubora.member_cards')->where('id', $snapshot['CardId'])->lockForUpdate()->firstOrFail();
+            $db->table('clubunio.member_cards')->where('id', $snapshot['CardId'])->lockForUpdate()->firstOrFail();
             $row = $this->passes()->where('card_id', $snapshot['CardId'])->lockForUpdate()->first();
             if ($row) {
                 abort_unless($row->pass_type === config('clubunio-wallet.pass_type_identifier'), 503);
@@ -91,7 +91,7 @@ class MemberWalletService
                 'artwork_encrypted' => Crypt::encryptString(json_encode($artwork, JSON_THROW_ON_ERROR)),
                 'fingerprint' => $this->fingerprint($snapshot, $artwork), 'revision' => 1,
             ]);
-            $tag = $db->table('clubora.member_wallet_changes')->insertGetId(['serial' => $serial]);
+            $tag = $db->table('clubunio.member_wallet_changes')->insertGetId(['serial' => $serial]);
             $this->passes()->where('serial', $serial)->update(['update_tag' => $tag]);
             return $this->passes()->where('serial', $serial)->firstOrFail();
         });
@@ -101,7 +101,7 @@ class MemberWalletService
     {
         $fingerprint = $this->fingerprint($snapshot, $artwork);
         if (hash_equals($row->fingerprint, $fingerprint)) { return $row; }
-        $tag = DB::connection('clubunio')->table('clubora.member_wallet_changes')->insertGetId(['serial' => $row->serial]);
+        $tag = DB::connection('clubunio')->table('clubunio.member_wallet_changes')->insertGetId(['serial' => $row->serial]);
         $this->passes()->where('serial', $row->serial)->update([
             'snapshot_encrypted' => Crypt::encryptString(json_encode($snapshot, JSON_THROW_ON_ERROR)),
             'artwork_encrypted' => Crypt::encryptString(json_encode($artwork, JSON_THROW_ON_ERROR)),
@@ -202,7 +202,7 @@ class MemberWalletService
             catch (\Throwable) { $result['failed']++; }
             finally { $this->passes()->where('serial', $serial)->update(['scanned_at' => now()]); }
         }
-        $pending = $this->registrations()->join('clubora.member_wallet_passes as p', 'p.serial', '=', 'member_wallet_registrations.serial')
+        $pending = $this->registrations()->join('clubunio.member_wallet_passes as p', 'p.serial', '=', 'member_wallet_registrations.serial')
             ->whereColumn('notified_revision', '<', 'p.revision')
             ->where('attempts', '<', 8)
             ->where(fn ($q) => $q->whereNull('next_attempt_at')->orWhere('next_attempt_at', '<=', now()))

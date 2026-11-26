@@ -338,11 +338,11 @@ final class ClubhouseWorkspace extends Component implements HasActions, HasSchem
                 ->options(function () {
                     [, $tenant] = $this->context();
 
-                    return DB::connection('clubunio')->table('clubora.tenant_accounts as m')->join('clubora.accounts as a', 'a.id', '=', 'm.account_id')
+                    return DB::connection('clubunio')->table('clubunio.tenant_accounts as m')->join('clubunio.accounts as a', 'a.id', '=', 'm.account_id')
                         ->where('m.tenant_id', $tenant->id)->where('a.active', true)->orderBy('a.display_name')->pluck('a.display_name', 'a.id')->all();
                 })->afterStateUpdated(function ($state, Set $set) {
                     [, $tenant] = $this->context();
-                    $grant = DB::connection('clubunio')->table('clubora.clubhouse_grants')->where('tenant_id', $tenant->id)->where('account_id', (int) $state)->first();
+                    $grant = DB::connection('clubunio')->table('clubunio.clubhouse_grants')->where('tenant_id', $tenant->id)->where('account_id', (int) $state)->first();
                     foreach (['hours_write', 'menus_write', 'menus_publish', 'active'] as $key) {
                         $set($key, (bool) ($grant?->{$key} ?? ($key === 'active')));
                     }
@@ -370,8 +370,8 @@ final class ClubhouseWorkspace extends Component implements HasActions, HasSchem
         abort_unless(in_array($this->previewChannel, ['web', 'app'], true), 422);
         $overview = app(ClubhouseService::class)->overview($tenant, $this->previewChannel);
         $menus = collect($data['menus']);
-        $grants = $data['capabilities']['admin'] ? DB::connection('clubunio')->table('clubora.clubhouse_grants as g')
-            ->join('clubora.accounts as a', 'a.id', '=', 'g.account_id')->where('g.tenant_id', $tenant->id)
+        $grants = $data['capabilities']['admin'] ? DB::connection('clubunio')->table('clubunio.clubhouse_grants as g')
+            ->join('clubunio.accounts as a', 'a.id', '=', 'g.account_id')->where('g.tenant_id', $tenant->id)
             ->orderBy('a.display_name')->get(['g.*', 'a.display_name']) : collect();
 
         return view('clubunio.clubhouse.workspace', compact('tenant', 'data', 'overview', 'menus', 'grants'));

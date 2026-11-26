@@ -61,7 +61,7 @@ class BexioSandbox extends Page implements HasTable
             $actor = Filament::auth()->user();
             $tenant = Filament::getTenant();
             $invoiceId = app(BexioGeneralSandboxFixtureService::class)->prepareParent($actor, $tenant);
-            if (! DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoiceId)->exists()) {
+            if (! DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('tenant_id', $tenant->id)->where('invoice_id', $invoiceId)->exists()) {
                 $trial = app(BexioDispatchTrialService::class)->preview($actor, $tenant, 'invoice', $invoiceId);
                 $service->prepareTrial($actor, $tenant, $trial);
             }
@@ -158,7 +158,7 @@ class BexioSandbox extends Page implements HasTable
         abort_unless(static::canAccess(), 403);
         $tenant = Filament::getTenant();
         $search = mb_substr(trim($search ?? ''), 0, 100);
-        $rows = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+        $rows = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
             ->where('tenant_id', $tenant->id)
             ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search) {
                 foreach (['id', 'invoice_id', 'expense_id', 'remote_id'] as $column) {
@@ -190,12 +190,12 @@ class BexioSandbox extends Page implements HasTable
             'eligibleInvoices' => Invoice::where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('invoice_id')->filter())->whereHas('workflowStatus', fn ($q) => $q->where('code', 'released'))->pluck('id')->all(),
             'eligibleExpenses' => Expense::where('tenant_id', $tenant->id)->whereIn('id', $rows->pluck('expense_id')->filter())
                 ->whereHas('status', fn ($q) => $q->where('code', 'Z'))->whereNotNull('payment_released_on')->pluck('id')->all(),
-            'financialActions' => DB::connection('clubunio')->table('clubora.bexio_financial_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'),
-            'balances' => DB::connection('clubunio')->table('clubora.bexio_balances')->where('tenant_id', $tenant->id)
+            'financialActions' => DB::connection('clubunio')->table('clubunio.bexio_financial_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'),
+            'balances' => DB::connection('clubunio')->table('clubunio.bexio_balances')->where('tenant_id', $tenant->id)
                 ->where(fn ($query) => $query->where(fn ($q) => $q->where('object_type', 'invoice')->whereIn('object_id', $rows->pluck('invoice_id')->filter()))
                     ->orWhere(fn ($q) => $q->where('object_type', 'expense')->whereIn('object_id', $rows->pluck('expense_id')->filter())))
                 ->get()->keyBy(fn ($balance) => $balance->object_type.':'.$balance->object_id),
-            'actions' => DB::connection('clubunio')->table('clubora.bexio_invoice_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'), 'steps' => DB::connection('clubunio')->table('clubora.bexio_sandbox_steps')
+            'actions' => DB::connection('clubunio')->table('clubunio.bexio_invoice_actions')->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id'), 'steps' => DB::connection('clubunio')->table('clubunio.bexio_sandbox_steps')
                 ->whereIn('dispatch_id', $rows->pluck('id'))->orderBy('id')->get()->groupBy('dispatch_id')];
         $rows->setCollection($rows->getCollection()->map(fn ($row) => (array) $row + [
             '__key' => (string) $row->id,

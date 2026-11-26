@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'enabled' => (bool) env('CLUBUNIO_SOCIAL_ENABLED', false),
     // Kept separate from every existing feed credential. DEV only; no configurable endpoint.
     'test_enabled' => (bool) env('CLUBUNIO_SOCIAL_META_TEST_ENABLED', false),
     'jobs_enabled' => (bool) env('CLUBUNIO_SOCIAL_JOBS_ENABLED', false),

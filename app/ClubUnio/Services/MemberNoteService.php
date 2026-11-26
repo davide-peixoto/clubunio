@@ -39,7 +39,7 @@ class MemberNoteService
                 return $note;
             }
             $note->forceFill(['tenant_id' => $tenant->id, 'member_id' => $memberId, 'revision' => $id ? $note->revision + 1 : 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert([
                 'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'member_notes', 'object_id' => $note->id,
                 'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR),
                 'after_value' => json_encode($note->only(['body', 'active', 'revision']), JSON_THROW_ON_ERROR),

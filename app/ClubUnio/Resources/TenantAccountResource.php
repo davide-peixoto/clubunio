@@ -6,6 +6,7 @@ use App\ClubUnio\Models\AccountRole;
 use App\ClubUnio\Models\AccessProfile;
 use App\ClubUnio\Models\TenantAccount;
 use App\ClubUnio\Services\AccountAdministrationService;
+use App\ClubUnio\Services\TenantSecurityRecovery;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
@@ -45,7 +46,10 @@ class TenantAccountResource extends CatalogResource
 
     public static function canViewAny(): bool
     {
-        return static::canManageAccounts();
+        $actor = Filament::auth()->user();
+        $tenant = Filament::getTenant();
+
+        return $actor && $tenant && (static::canManageAccounts() || app(TenantSecurityRecovery::class)->operator($actor, $tenant));
     }
 
     public static function canManageAccounts(): bool
@@ -117,6 +121,10 @@ class TenantAccountResource extends CatalogResource
                 ->visible(static::canManageAccounts(...))
                 ->action(fn (array $data, $livewire) => FormMutation::run($livewire, fn () => app(AccountAdministrationService::class)->save(Filament::auth()->user(), Filament::getTenant(), null, $data)))])
             ->recordActions([
+                Action::make('securityRecovery')->label(fn () => trans('account-security.reset_title'))->icon('heroicon-o-key')->iconButton()
+                    ->tooltip(fn () => trans('account-security.reset_title'))
+                    ->visible(fn (TenantAccount $record) => !config('clubunio-verein-oidc.only') && app(TenantSecurityRecovery::class)->allowed(Filament::auth()->user(), Filament::getTenant(), $record))
+                    ->url(fn (TenantAccount $record) => route('clubunio.security.recovery', ['tenantId' => $record->tenant_id, 'linkId' => $record->id])),
                 Action::make('clubhouseRole')->label(trans('clubhouse.additional_role'))->icon('heroicon-o-building-storefront')->iconButton()
                     ->tooltip(trans('clubhouse.additional_role'))
                     ->visible(fn () => static::canManageAccounts() && app(\App\ClubUnio\Services\ClubhouseAccess::class)->ready())
@@ -126,7 +134,7 @@ class TenantAccountResource extends CatalogResource
                         Toggle::make('active')->label(trans('clubhouse.active'))->required(), Hidden::make('revision'),
                         Textarea::make('reason')->label(trans('clubhouse.reason'))->required()->minLength(10)->maxLength(500)])
                     ->fillForm(function (TenantAccount $record) {
-                        $grant = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.clubhouse_grants')
+                        $grant = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.clubhouse_grants')
                             ->where('tenant_id', Filament::getTenant()->id)->where('account_id', $record->account_id)->first();
 
                         return ['hours_write' => (bool) ($grant->hours_write ?? false), 'menus_write' => (bool) ($grant->menus_write ?? false),

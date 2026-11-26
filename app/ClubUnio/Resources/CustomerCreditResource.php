@@ -57,8 +57,8 @@ class CustomerCreditResource extends CatalogResource
     {
         return $table->columns(static::columns())->recordActions([ViewAction::make()->iconButton()->tooltip(__('Guthaben anzeigen'))])
             ->filters([TernaryFilter::make('remaining')->label('Restguthaben')->queries(
-                true: fn ($q) => $q->whereRaw('amount_cents > (select coalesce(sum(a.amount_cents),0) from clubora.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
-                false: fn ($q) => $q->whereRaw('amount_cents = (select coalesce(sum(a.amount_cents),0) from clubora.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
+                true: fn ($q) => $q->whereRaw('amount_cents > (select coalesce(sum(a.amount_cents),0) from clubunio.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
+                false: fn ($q) => $q->whereRaw('amount_cents = (select coalesce(sum(a.amount_cents),0) from clubunio.customer_credit_allocations a where a.customer_credit_id=customer_credits.id)'),
                 blank: fn ($q) => $q)])->deferFilters(false)->persistFiltersInSession()->persistSearchInSession()->defaultSort('id', 'desc');
     }
 

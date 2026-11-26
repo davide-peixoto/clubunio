@@ -25,12 +25,12 @@ final class ZammadSupport
     }
 
     private function db() { return DB::connection('clubunio'); }
-    private function exports() { return $this->db()->table('clubora.support_zammad_exports'); }
+    private function exports() { return $this->db()->table('clubunio.support_zammad_exports'); }
 
     public function summary(string $ticketId): ?object
     {
-        return $this->db()->table('clubora.support_tickets as ticket')
-            ->join('clubora.support_posts as post', 'ticket.id', '=', 'post.ticket_id')
+        return $this->db()->table('clubunio.support_tickets as ticket')
+            ->join('clubunio.support_posts as post', 'ticket.id', '=', 'post.ticket_id')
             ->where('ticket.id', $ticketId)->where('ticket.audience', 'platform')->whereNotNull('ticket.source_id')
             ->where('post.internal', false)->orderBy('post.id')->first(['ticket.subject', 'post.body', 'ticket.status']);
     }
@@ -55,7 +55,7 @@ final class ZammadSupport
         abort_unless($cfg, 503);
         abort_unless(Str::isUuid($id), 422);
         $draft = $this->db()->transaction(function () use ($cfg, $id) {
-            $ticket = $this->db()->table('clubora.support_tickets')->where('id', $id)->where('audience', 'platform')
+            $ticket = $this->db()->table('clubunio.support_tickets')->where('id', $id)->where('audience', 'platform')
                 ->whereNotNull('source_id')->lockForUpdate()->first(['id', 'status']);
             abort_unless($ticket, 404);
             abort_if($ticket->status === 'closed', 409);

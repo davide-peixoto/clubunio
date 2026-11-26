@@ -74,7 +74,7 @@ final class MemberWalletController
         abort_unless($request->route('type') === config('clubunio-wallet.pass_type_identifier'), 404);
         $since = $request->query('passesUpdatedSince');
         abort_if($since !== null && (! is_string($since) || ! preg_match('/\A[0-9]{1,18}\z/D', $since)), 400);
-        $passes = $service->passes()->join('clubora.member_wallet_registrations as r', 'r.serial', '=', 'member_wallet_passes.serial')
+        $passes = $service->passes()->join('clubunio.member_wallet_registrations as r', 'r.serial', '=', 'member_wallet_passes.serial')
             ->where('r.device_hash', $device)->where('member_wallet_passes.pass_type', $request->route('type'))
             ->when($since !== null, fn ($q) => $q->where('update_tag', '>', (int) $since))
             ->orderBy('update_tag')->get(['member_wallet_passes.serial', 'member_wallet_passes.update_tag']);

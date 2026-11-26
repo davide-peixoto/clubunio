@@ -42,7 +42,7 @@ final class VeoRecordingAdjustments
         abort_unless($this->canManage($actor, $tenant), 403);
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $matchId, $input, $reset) {
             // Serialize camera moves for this club, including previously unadjusted fixtures.
-            DB::connection('clubunio')->table('clubora.tenants')->where('id', $tenant->id)->lockForUpdate()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.tenants')->where('id', $tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless($this->canManage($actor, $tenant), 403);
             $entry = $this->current($tenant, $matchId);
             abort_unless(isset($input['revision']) && hash_equals($entry['revision'], (string) $input['revision']), 409, trans('veo_calendar.stale'));

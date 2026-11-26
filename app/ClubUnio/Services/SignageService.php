@@ -49,7 +49,7 @@ class SignageService
         }
         $data = Validator::make($input, [
             'date' => 'required|date_format:Y-m-d',
-            'period_id' => ['nullable', 'integer', Rule::exists('clubunio.clubora.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true)->where('category', 'period'))],
+            'period_id' => ['nullable', 'integer', Rule::exists('clubunio.clubunio.training_options', 'id')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->where('active', true)->where('category', 'period'))],
         ])->validate();
         $date = CarbonImmutable::createFromFormat('!Y-m-d', $data['date'], 'Europe/Zurich');
         $fields = FieldAvailability::where('tenant_id', $tenant->id)->where('active', true)->whereHas('field', fn ($q) => $q->where('active', true))->with(['field', 'status'])->get();

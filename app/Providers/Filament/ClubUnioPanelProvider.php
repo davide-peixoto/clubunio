@@ -228,14 +228,13 @@ class ClubUnioPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])->authMiddleware([Authenticate::class])
             ->pages([\App\ClubUnio\Pages\TenantAiSettings::class])
-            ->pages([\App\ClubUnio\Pages\PersonalProfile::class])
             ->pages([\App\ClubUnio\Pages\Clubhouse::class])
             ->userMenuItems([
-                'personal-profile' => \Filament\Actions\Action::make('personal-profile')
-                    ->label(fn () => trans('account-security.profile_title'))
-                    ->icon('heroicon-o-user-circle')
-                    ->url(fn () => \App\ClubUnio\Pages\PersonalProfile::getUrl())
-                    ->visible(fn () => \App\ClubUnio\Pages\PersonalProfile::canAccess()),
+                'account-security' => \Filament\Actions\Action::make('account-security')
+                    ->label(fn () => trans('account-security.setup'))
+                    ->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('clubunio.security.show'))
+                    ->visible(fn () => app(\App\ClubUnio\Services\AccountSecurity::class)->enabled()),
             ]);
     }
 }

@@ -12,7 +12,7 @@ final class KeycloakLogoutState
     {
         if (config('clubunio-keycloak-backchannel.enabled') !== true
             && config('clubunio-keycloak-backchannel.state_enforced') !== true) return null;
-        $cutoff = DB::connection('clubunio')->table('clubora.keycloak_logout_watermarks')
+        $cutoff = DB::connection('clubunio')->table('clubunio.keycloak_logout_watermarks')
             ->where('account_id', $actor->id)->value('cutoff');
 
         return $cutoff === null ? 0 : (int) $cutoff;

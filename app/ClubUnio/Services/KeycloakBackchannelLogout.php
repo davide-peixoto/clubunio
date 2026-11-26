@@ -63,14 +63,14 @@ final class KeycloakBackchannelLogout
                 if ($cache->has($key)) return;
                 DB::connection('clubunio')->transaction(function () use ($claims) {
                     $db = DB::connection('clubunio');
-                    $linked = $db->table('clubora.keycloak_account_links')->where('issuer', $claims->iss)
+                    $linked = $db->table('clubunio.keycloak_account_links')->where('issuer', $claims->iss)
                         ->where('subject', $claims->sub)->value('account_id');
                     $candidates = $linked === null ? [] : [(int) $linked];
                     $mappings = ['clubunio-verein-oidc.subjects'];
                     if (config('clubunio-platform-oidc.issuer') === $claims->iss) {
                         $mappings = array_merge($mappings, ['clubunio-platform-oidc.subjects', 'clubunio-platform-oidc.migrated_subjects']);
                         if (config('clubunio-platform-oidc.invitations_enabled')) {
-                            $invited = $db->table('clubora.platform_keycloak_invitations')->where('issuer', $claims->iss)
+                            $invited = $db->table('clubunio.platform_keycloak_invitations')->where('issuer', $claims->iss)
                                 ->where('subject', $claims->sub)->whereNotNull('invited_at')->value('account_id');
                             if ($invited !== null) $candidates[] = (int) $invited;
                         }
@@ -84,14 +84,14 @@ final class KeycloakBackchannelLogout
                     $account = $candidates[0] ?? null;
                     if ($account === null) return;
                     // Serialize against MobileSessions::issue, which locks this account.
-                    $db->table('clubora.accounts')->where('id', $account)->lockForUpdate()->first();
-                    $watermarks = $db->table('clubora.keycloak_logout_watermarks')->where('account_id', $account);
+                    $db->table('clubunio.accounts')->where('id', $account)->lockForUpdate()->first();
+                    $watermarks = $db->table('clubunio.keycloak_logout_watermarks')->where('account_id', $account);
                     $previous = $watermarks->value('cutoff');
                     if ($previous === null || (int) $previous < $claims->iat) {
-                        $db->table('clubora.keycloak_logout_watermarks')->updateOrInsert(['account_id' => $account],
+                        $db->table('clubunio.keycloak_logout_watermarks')->updateOrInsert(['account_id' => $account],
                             ['issuer' => $claims->iss, 'subject' => $claims->sub, 'cutoff' => $claims->iat]);
                     }
-                    $db->table('clubora.mobile_sessions')->where('account_id', $account)->whereNull('revoked_at')
+                    $db->table('clubunio.mobile_sessions')->where('account_id', $account)->whereNull('revoked_at')
                         // JWT times have second precision: include the entire event second.
                         ->where('created_at', '<', \Illuminate\Support\Carbon::createFromTimestampUTC($claims->iat + 1)->toIso8601String())
                         ->update(['revoked_at' => now()->toIso8601String()]);

@@ -15,7 +15,7 @@ final class SfvLocalOverride
 
     public static function recorded(Tenant $tenant, object $competition): ?array
     {
-        $payload = DB::connection('clubunio')->table('clubora.object_changes')
+        $payload = DB::connection('clubunio')->table('clubunio.object_changes')
             ->where('tenant_id', $tenant->id)->where('object_type', 'sfv_local_override')
             ->where('object_id', $competition->id)->orderByDesc('id')->value('after_value');
         $override = $payload ? json_decode($payload, true, flags: JSON_THROW_ON_ERROR) : null;

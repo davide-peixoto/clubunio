@@ -29,7 +29,7 @@ final class StageMigrationTarget
 
     public static function allows(Connection $connection): bool
     {
-        return $connection->getDatabaseName() === 'db_acdf8d_dclubora' || self::isStage($connection);
+        return self::isStage($connection);
     }
 
     public static function isStage(Connection $connection): bool

@@ -12,7 +12,7 @@ final class KeycloakMobilePairingController
 {
     public function __construct(private AccountSecurity $security) {}
 
-    private function pairs() { return $this->security->db()->table('clubora.account_security_pairs'); }
+    private function pairs() { return $this->security->db()->table('clubunio.account_security_pairs'); }
 
     public static function available(string $origin): bool
     {

@@ -11,7 +11,7 @@ final class TenantAiConfiguration
     public function table(string $name = 'connections')
     {
         abort_unless(in_array($name, ['connections','stores','documents','usage','events'], true), 500);
-        return DB::connection('clubunio')->table('clubora.tenant_ai_'.$name);
+        return DB::connection('clubunio')->table('clubunio.tenant_ai_'.$name);
     }
 
     public function authorize(?Account $actor, Tenant $tenant): void

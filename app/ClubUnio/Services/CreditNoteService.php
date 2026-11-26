@@ -55,8 +55,8 @@ class CreditNoteService
         }
         $sources = $invoice->activeLines()->where('tenant_id', $tenant->id)->orderBy('id')->get();
         $capacities = $this->capacities($sources, $summary);
-        $used = DB::connection('clubunio')->table('clubora.credit_note_lines as l')->join('clubora.credit_notes as n', 'n.id', '=', 'l.credit_note_id')
-            ->join('clubora.financial_adjustment_statuses as s', 's.id', '=', 'n.status_id')->where('n.tenant_id', $tenant->id)
+        $used = DB::connection('clubunio')->table('clubunio.credit_note_lines as l')->join('clubunio.credit_notes as n', 'n.id', '=', 'l.credit_note_id')
+            ->join('clubunio.financial_adjustment_statuses as s', 's.id', '=', 'n.status_id')->where('n.tenant_id', $tenant->id)
             ->where('n.invoice_id', $invoiceId)->where('s.code', '<>', 'cancelled')->groupBy('l.invoice_line_id')->selectRaw('l.invoice_line_id,SUM(l.amount_cents) as amount')->pluck('amount', 'invoice_line_id');
 
         return $sources->map(fn ($line) => ['invoice_line_id' => $line->id, 'amount_cents' => max(0, $capacities[$line->id] - (int) ($used[$line->id] ?? 0))])
@@ -90,7 +90,7 @@ class CreditNoteService
 
     private function audit(Account $actor, Tenant $tenant, string $type, $record, string $operation, array $before = []): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => $type, 'object_id' => $record->id, 'before_value' => json_encode($before, JSON_THROW_ON_ERROR),
             'after_value' => json_encode(['action' => $operation, 'revision' => $record->revision, 'status_id' => $record->status_id,
                 'amount_cents' => $record->amount_cents], JSON_THROW_ON_ERROR)]);
@@ -146,8 +146,8 @@ class CreditNoteService
                 $line = $sources->firstWhere('id', (int) $entry['invoice_line_id']);
                 abort_unless($line, 404);
                 $amount = $money->cents((string) $entry['amount']);
-                $prior = DB::connection('clubunio')->table('clubora.credit_note_lines as l')
-                    ->join('clubora.credit_notes as n', 'n.id', '=', 'l.credit_note_id')->join('clubora.financial_adjustment_statuses as s', 's.id', '=', 'n.status_id')
+                $prior = DB::connection('clubunio')->table('clubunio.credit_note_lines as l')
+                    ->join('clubunio.credit_notes as n', 'n.id', '=', 'l.credit_note_id')->join('clubunio.financial_adjustment_statuses as s', 's.id', '=', 'n.status_id')
                     ->where('n.tenant_id', $tenant->id)->where('n.invoice_id', $invoiceId)->where('l.invoice_line_id', $line->id)->where('s.code', '<>', 'cancelled')
                     ->selectRaw('COALESCE(SUM(l.amount_cents),0) AS amount, COALESCE(SUM(l.included_tax),0) AS tax')->first();
                 $capacity = $capacities[$line->id];
@@ -168,7 +168,7 @@ class CreditNoteService
                 'source_snapshot' => ['revision' => $invoice->revision, 'summary' => $summary, 'tax_mode' => $invoice->tax_mode, 'bexio_invoice_id' => $invoice->bexio_invoice_id],
                 'created_by' => $actor->id])->save();
             foreach ($rows as $row) {
-                DB::connection('clubunio')->table('clubora.credit_note_lines')->insert($row + ['credit_note_id' => $note->id]);
+                DB::connection('clubunio')->table('clubunio.credit_note_lines')->insert($row + ['credit_note_id' => $note->id]);
             }
             $this->audit($actor, $tenant, 'credit_notes', $note, 'create');
 

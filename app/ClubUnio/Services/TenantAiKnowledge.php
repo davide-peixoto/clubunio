@@ -30,8 +30,8 @@ final class TenantAiKnowledge
     public function documents(Account $actor, Tenant $tenant): array
     {
         $this->config()->authorize($actor,$tenant);
-        return $this->config()->table('documents')->from('clubora.tenant_ai_documents as d')
-            ->join('clubora.tenant_ai_stores as s',fn ($j)=>$j->on('s.id','=','d.store_id')->on('s.tenant_id','=','d.tenant_id'))
+        return $this->config()->table('documents')->from('clubunio.tenant_ai_documents as d')
+            ->join('clubunio.tenant_ai_stores as s',fn ($j)=>$j->on('s.id','=','d.store_id')->on('s.tenant_id','=','d.tenant_id'))
             ->where('d.tenant_id',$tenant->id)->where('d.state','!=','archived')
             ->orderByDesc('d.id')->limit(200)->get(['d.*','s.name as store_name'])->all();
     }
