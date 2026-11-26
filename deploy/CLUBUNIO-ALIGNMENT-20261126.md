@@ -70,3 +70,17 @@ Umgebungsvarianten bleiben versioniert. Aktive RunCloud-Push-Webhooks muessen
 waehrend des kontrollierten Ref-Abgleichs pausiert und danach wiederhergestellt
 werden, damit kein ungepruefter Komplettcheckout den gehaerteten Code ersetzt.
 Ein Push allein ist kein Ersatz fuer Paket-, DB-, ACL- und HTTP-Abnahme.
+
+Der erste atomare Git-Abgleich war erfolgreich, beide RunCloud-Webhooks wurden
+danach wieder aktiviert. Die Laufzeitdateien wurden vorher kontrolliert deployt,
+nicht durch den Push. record-runtime-release.py erstellt die Promotion-Commits
+aus dem geprueften gemeinsamen Commit und den tatsaechlich gelesenen
+Anwendungsquellen des jeweiligen Servers. Beide bisherigen Historien sind Eltern;
+umgebungseigene Skripte/Dokumente bleiben erhalten. Kein Force-Push oder Reset.
+Die versionierten Quellhashes unter evidence/alignment-20261126 ermoeglichen
+den spaeteren Abgleich, ohne Secrets oder private Laufzeitdateien zu speichern.
+
+Waehrend des Abschlusses wurde parallel der abgeschlossene Google-Drive-
+Sicherungsnachweis 6feddfea committet. Dieser betrifft nur Diagnose-/Backupskripte
+und Dokumentation, keine Anwendungslogik. Er wird mit in die Historie aufgenommen;
+das eigentliche Anwendungsrelease und seine 32 Hashes bleiben unveraendert.

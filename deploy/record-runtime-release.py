@@ -41,7 +41,7 @@ def main():
     canonical = git('rev-parse', args.canonical).decode().strip()
     previous = git('rev-parse', args.previous).decode().strip()
     env = args.environment
-    branch = 'refs/heads/codex/align-' + env + '-20261126'
+    branch = 'refs/heads/codex/align-' + env + '-20261126-' + canonical[:8]
     if subprocess.run(['git', 'show-ref', '--verify', '--quiet', branch], cwd=ROOT).returncode == 0:
         raise RuntimeError('Review branch already exists')
     entries = {}
