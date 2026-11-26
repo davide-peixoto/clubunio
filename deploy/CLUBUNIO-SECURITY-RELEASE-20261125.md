@@ -1,5 +1,14 @@
 # ClubUnio: Sicherheitsrelease Stage, PROD und VPS â€“ 25.11.2026
 
+## Google Drive Dauerbetrieb bestätigt am 26.11.2026
+
+Der Kontoinhaber hat den Google-OAuth-Status auf **In production** umgestellt. Danach wurde der bestehende Zugriff mit unverändertem Scope `drive.file` neu autorisiert. Die neue Tokenantwort enthält keine siebentägige Refresh-Laufzeit. Zusätzlich wurde auf dem VPS ein echter Refresh gegen Googles Token-Endpunkt erfolgreich ausgeführt und der damit erneuerte Zugang installiert. Die frühere Testmodus-Warnung ist damit erledigt; Widerruf oder andere Google-Kontoregeln können den Zugang weiterhin beenden.
+
+Google-Timer täglich 01:40 UTC plus bis zwei Minuten Verzögerung (Schweiz im Winter 02:40, im Sommer 03:40). Der Upload erstellt getrennte verschlüsselte Sicherungssätze, liest alle Dateien zur SHA-256-Prüfung zurück und löscht keine bestehenden Drive-Dateien. DEV-, Stage-, PROD- und Keycloak-Datenbanken sind enthalten; die vollständige Testwiederherstellung direkt aus Google Drive ist dokumentiert. Der Schlüssel bleibt getrennt vom Drive-Backup. Der lokale stündliche Prüfdienst kontrolliert frische geprüfte Google-Sätze und den Timer. Hetzner-Borg bleibt beim Betreiber; externe Alarmierung und automatische Aufbewahrungsbereinigung bleiben separate Betriebsaufgaben.
+
+Die folgenden Abschnitte dokumentieren die Einrichtung einschliesslich inzwischen erledigter Zwischenschritte. Massgeblich für den Google-Zugang ist dieser Abschlussstand.
+
+
 Stage und PROD sind aktualisiert und wieder erreichbar. DEV auf dem Pi wurde durch dieses Arbeitspaket nicht verÃ¤ndert. Dies ist eine technische SicherheitsprÃ¼fung mit gezielten aktiven Tests und Korrekturen, kein unabhÃ¤ngiges Penetrationstest-Zertifikat.
 
 ## Anwendung und IdentitÃ¤t
@@ -74,3 +83,5 @@ Der tägliche Google-Timer ist jetzt aktiv: 01:40 UTC plus bis zwei Minuten Verzö
 **Noch offen für Dauerbetrieb:** Google-OAuth steht weiter auf Testing. Der tatsächlich ausgestellte Refresh-Token hat eine Laufzeit von knapp sieben Tagen. In Google Branding wurden die vorhandene öffentliche Homepage, Datenschutzseite und eigene Domain ergänzt; Publish app ist nun verfügbar. Der Kontoinhaber muss den OAuth-Produktionsstatus bestätigen. Das erlaubt OAuth-Anmeldungen ausserhalb der Testliste, gibt aber weder Backups frei noch veröffentlicht es ClubUnio im Store. Danach eine neue Autorisierung durchführen und Tokenlebensdauer/Refresh prüfen; ein bereits befristet ausgestellter Testtoken gilt nicht als Dauerbetriebsnachweis. Der Prüfdienst warnt vor Testmodus und schlägt spätestens 48 Stunden vor Ablauf fehl. Noch keine externe Alarmzustellung oder automatische Lösch-/Aufbewahrungsregel eingerichtet.
 
 Google beschreibt die siebentägige Testtoken-Laufzeit in der [OAuth-Dokumentation](https://developers.google.com/identity/protocols/oauth2).
+
+Abschlusskontrolle nach Token-Erneuerung: kompletter Google-Upload mit Rückleseprüfung erneut erfolgreich; täglicher Timer aktiv und stündlicher Betriebscheck erfolgreich, ohne Testmodus-/Tokenablaufwarnung.

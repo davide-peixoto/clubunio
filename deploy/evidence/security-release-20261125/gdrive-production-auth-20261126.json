@@ -1,0 +1,8 @@
+{
+  "testing_mode": false,
+  "production_status_observed": true,
+  "refresh_endpoint_verified": true,
+  "refresh_has_seven_day_expiry": false,
+  "scope": "drive.file",
+  "verified_utc": "2026-11-26T14:11:02Z"
+}
