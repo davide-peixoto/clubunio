@@ -11,7 +11,7 @@ class WorkTaskService
     {
         return app(WorkspaceAccess::class)->allowed($actor,$tenant) && app(ModulePermissionService::class)->allows($actor,$tenant,'tasks',$function);
     }
-    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubora.workspace_tasks')->where('tenant_id',$tenant->id); }
+    public function table(Tenant $tenant) { return DB::connection('clubunio')->table('clubunio.workspace_tasks')->where('tenant_id',$tenant->id); }
     public function visible(Account $actor,Tenant $tenant)
     {
         abort_unless($this->allows($actor,$tenant,'view'),403);
@@ -50,7 +50,7 @@ class WorkTaskService
             $this->audit($actor,$tenant,$id,$old?'updated':'created',$revision);
             if((int)$target->id!==(int)$actor->id && (!$old || (int)$old->assigned_to!==(int)$target->id)) {
                 $locale=app(LanguagePreferences::class)->resolve($target->preferred_locale,$tenant->default_locale);
-                DB::connection('clubunio')->table('clubora.notifications')->insert(['tenant_id'=>$tenant->id,'account_id'=>$target->id,
+                DB::connection('clubunio')->table('clubunio.notifications')->insert(['tenant_id'=>$tenant->id,'account_id'=>$target->id,
                     'title'=>trans('work_hub.task_notice',[], $locale),'body'=>'','object_type'=>'workspace_task','object_id'=>$id]);
             }
             return $id;
@@ -73,6 +73,6 @@ class WorkTaskService
     }
     private function audit(Account $actor,Tenant $tenant,int $id,string $operation,int $revision): void
     {
-        DB::connection('clubunio')->table('clubora.workspace_task_events')->insert(['tenant_id'=>$tenant->id,'task_id'=>$id,'actor_id'=>$actor->id,'operation'=>$operation,'revision'=>$revision]);
+        DB::connection('clubunio')->table('clubunio.workspace_task_events')->insert(['tenant_id'=>$tenant->id,'task_id'=>$id,'actor_id'=>$actor->id,'operation'=>$operation,'revision'=>$revision]);
     }
 }

@@ -22,11 +22,11 @@ final class MobilePushSquad
         $players = array_values(array_filter($roster, fn ($member) => ! in_array($member, $staff)
             && ($byMember->get($member)->status ?? ($event->mode === 'ABMELDEN' ? 'DABEI' : 'OFFEN')) === 'DABEI'));
         $ids = $planning->table($tenant, 'account_member_links')->whereIn('member_id', $players)->where('state', 'approved')
-            ->where(fn ($q) => app(\App\ClubUnio\Services\ParentAccessPolicy::class)->scopePersonalLinks($q, $tenant, 'clubora.account_member_links'))
+            ->where(fn ($q) => app(\App\ClubUnio\Services\ParentAccessPolicy::class)->scopePersonalLinks($q, $tenant, 'clubunio.account_member_links'))
             ->distinct()->pluck('account_id');
         $recipients = [];
         foreach (Account::whereIn('id', $ids)->where('active', true)->where('api_only', false)->orderBy('id')->get() as $candidate) {
-            if (! app(MemberAccessService::class)->represented($candidate, $tenant)->whereIn('clubora.members.id', $players)->exists()
+            if (! app(MemberAccessService::class)->represented($candidate, $tenant)->whereIn('clubunio.members.id', $players)->exists()
                 || ! app(MobilePushOutbox::class)->targetAllowed($candidate, $tenant, 'planning', $id)) continue;
             $recipients[] = (int) $candidate->id;
         }
@@ -43,7 +43,7 @@ final class MobilePushSquad
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             $snapshot = $this->snapshot($actor, $tenant, $event);
             $fingerprint = hash('sha256', json_encode([$event, $input['revision'], $input['recipient_fingerprint']], JSON_THROW_ON_ERROR));
-            $commands = DB::connection('clubunio')->table('clubora.mobile_push_commands');
+            $commands = DB::connection('clubunio')->table('clubunio.mobile_push_commands');
             $prior = (clone $commands)->where('tenant_id', $tenant->id)->where('account_id', $actor->id)->where('command_key', $input['command_key'])->first();
             if ($prior) {
                 abort_unless($prior->operation === 'publish_squad' && hash_equals($prior->fingerprint, $fingerprint), 409);

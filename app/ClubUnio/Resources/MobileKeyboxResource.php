@@ -34,7 +34,7 @@ class MobileKeyboxResource extends CatalogResource {
             Toggle::make('emergency_rotated')->label(__('keybox.emergency_rotation_confirmed'))
                 ->helperText(__('keybox.emergency_rotation_help'))->default(false)
                 ->visible(fn($record)=>$record!==null&&config('clubunio-mobile.keybox.emergency_enabled',false)),
-            Select::make('bus_id')->label('Bus (optional)')->options(fn ()=>DB::connection('clubunio')->table('clubora.buses')->where('tenant_id',Filament::getTenant()->id)->where('active',true)->localizedPluck('name','id')),
+            Select::make('bus_id')->label('Bus (optional)')->options(fn ()=>DB::connection('clubunio')->table('clubunio.buses')->where('tenant_id',Filament::getTenant()->id)->where('active',true)->localizedPluck('name','id')),
             Toggle::make('active')->label('Persönliche Zuordnung aktiv')->default(false)->required(),
             Textarea::make('reason')->label('Begründung')->required()->minLength(10)->maxLength(500)->helperText(__('Jede Änderung invalidiert lokale PINs; bereits bekannte Offlinecodes brauchen physische Maßnahmen.'))]);
     }
@@ -42,7 +42,7 @@ class MobileKeyboxResource extends CatalogResource {
         $save=fn ($record,$data,$livewire)=>FormMutation::run($livewire,fn ()=>self::service()->saveBox(Filament::auth()->user(),Filament::getTenant(),$record?->id,$data));
         return $table->columns([TextColumn::make('id')->label('Box-ID'),TextColumn::make('name')->label('Name')->searchable(),TextColumn::make('bus.name')->label('Bus'),
             IconColumn::make('active')->label('Aktiv')->boolean(),TextColumn::make('revision')->label('Version'),
-            TextColumn::make('physical_revocation')->label('Physischer Widerruf')->state(fn ($record)=>DB::connection('clubunio')->table('clubora.mobile_keybox_commands')
+            TextColumn::make('physical_revocation')->label('Physischer Widerruf')->state(fn ($record)=>DB::connection('clubunio')->table('clubunio.mobile_keybox_commands')
                 ->where('tenant_id',$record->tenant_id)->where('keybox_id',$record->id)->where('remote_revocation_state','required')->where(fn($q)=>$q->where('valid_until','>',now()->toIso8601String())->when(config('clubunio-mobile.keybox.emergency_enabled',false),fn($q)=>$q->orWhereNotNull('emergency_exposed_at')))->exists()?__('Erforderlich – keine weitere Ausgabe'):__('Kein offener lokaler Nachweis'))])
             ->headerActions([CreateAction::make()->using(fn ($data,$livewire)=>$save(null,$data,$livewire)),
                 Action::make('provider')->label('Providerzugang')->fillForm(fn ()=>self::service()->providerSnapshot(Filament::auth()->user(),Filament::getTenant()))

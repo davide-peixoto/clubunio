@@ -63,7 +63,7 @@ class PitchCompetitionEdits
             'action' => $action, 'actor_id' => (int) $actor->id, 'requester_account_id' => null,
             'team_season_ids' => array_values(array_unique(array_merge($before['team_season_ids'] ?? [], $after['team_season_ids']))),
             'before' => $before, 'after' => $after];
-        DB::connection('clubunio')->table('clubora.object_changes')->insert([
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert([
             'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'pitch_planning', 'object_id' => $record->id,
             'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR),
             'after_value' => json_encode($event, JSON_THROW_ON_ERROR),

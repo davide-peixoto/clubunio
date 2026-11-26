@@ -21,13 +21,14 @@ final class PlatformAdministrationController
     public function loginForm(Request $request, PlatformAdministrationService $service)
     {
         abort_if(app(TenantDomainService::class)->resolve($request), 404);
-        if (PlatformOidcController::required() && !$request->user('platform')) {
+        if (PlatformOidcController::required() && (!$request->user('platform') || (int) $request->session()->get('platform.oidc.expires') <= time())) {
             return redirect()->route('clubunio.platform.oidc.start');
         }
         if ($service->allowed($request->user(PlatformOidcController::guard($request)))) {
             return redirect()->route('clubunio.platform.index');
         }
 
+        abort_if(PlatformOidcController::required(), 403);
         return response()->view('clubunio.platform.login')->header('Cache-Control', 'private, no-store');
     }
 
@@ -40,9 +41,9 @@ final class PlatformAdministrationController
         if (! $actor || ! Hash::check($data['password'], $actor->password) || ! $service->allowed($actor)) {
             throw ValidationException::withMessages(['username' => __('Anmeldung nicht möglich.')]);
         }
-        if (app(AccountSecurity::class)->requiresStrongLogin($actor)) {
-            abort_unless(config('clubunio-platform-oidc.enabled'), 403);
-            return redirect()->route('clubunio.platform.oidc.start');
+        $security = app(AccountSecurity::class);
+        if ($security->requiresStrongLogin($actor)) {
+            return redirect()->route('clubunio.security.show', ['mode' => 'platform', 'setup' => $security->mustEnroll($actor) ? '1' : null]);
         }
         Auth::guard('clubunio')->login($actor);
         $request->session()->regenerate();
@@ -77,114 +78,25 @@ final class PlatformAdministrationController
         return redirect()->route('clubunio.platform.index')->with('notice', __('Persönliches Konto erstellt.'));
     }
 
-    public function platformUsers(Request $request)
-    {
-        $actor = $request->user(PlatformOidcController::guard($request));
-        $rows = DB::connection('clubunio')->table('clubora.platform_admins as p')
-            ->join('clubora.accounts as a', 'a.id', '=', 'p.account_id')->where('a.api_only', false)
-            ->orderBy('a.display_name')->orderBy('a.id')
-            ->paginate(30, ['a.id', 'a.username', 'a.display_name', 'a.active', 'p.active as platform_active']);
-        $mappedIds = array_merge(array_values((array) config('clubunio-platform-oidc.subjects')),
-            array_values((array) config('clubunio-platform-oidc.migrated_subjects')));
-        $link = app(\App\ClubUnio\Services\PlatformAdminKeycloakLink::class);
-        $invitesEnabled = $link::invitationsEnabled();
-        $invites = $invitesEnabled ? $link->invitations()->whereIn('account_id', $rows->pluck('id'))
-            ->get(['account_id', 'invited_at', 'activated_at'])->keyBy('account_id') : collect();
-
-        return response()->view('clubunio.platform.users', compact('actor', 'rows', 'mappedIds', 'invitesEnabled', 'invites'))->header('Cache-Control', 'no-store');
-    }
-
-    public function invitePlatformUser(Request $request, int $account, \App\ClubUnio\Services\PlatformAdminKeycloakLink $link)
-    {
-        $data = $request->validate(['email' => 'required|email:rfc|max:254', 'confirmed' => 'accepted']);
-        $operator = $request->user(PlatformOidcController::guard($request));
-        try {
-            $status = $link->send($operator, $account, $data['email']);
-        } catch (\Illuminate\Http\Client\HttpClientException | \RuntimeException $e) {
-            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
-                throw $e;
-            }
-            $status = 'failed';
-        }
-        $key = 'keycloak.status.'.$status;
-
-        return redirect()->route('clubunio.platform.users')->with('notice', __($key));
-    }
-
-    public function createPlatformUser(Request $request, PlatformAdministrationService $service)
-    {
-        $service->createAccount($request->user(PlatformOidcController::guard($request)), $request->except('_token'), true);
-
-        return redirect()->route('clubunio.platform.users')->with('notice', __('Persönliches Konto erstellt.'));
-    }
-
-    public function changePlatformUser(Request $request, int $account, PlatformAdministrationService $service)
-    {
-        $service->updatePlatformAccount($request->user(PlatformOidcController::guard($request)), $account, $request->except('_token'));
-
-        return redirect()->route('clubunio.platform.users')->with('notice', __('Änderung gespeichert.'));
-    }
-
     public function show(Request $request, int $id)
     {
         $tenant = Tenant::findOrFail($id);
         $db = DB::connection('clubunio');
-        $accounts = $db->table('clubora.tenant_accounts as m')->join('clubora.accounts as a', 'a.id', '=', 'm.account_id')
+        $accounts = $db->table('clubunio.tenant_accounts as m')->join('clubunio.accounts as a', 'a.id', '=', 'm.account_id')
             ->where('m.tenant_id', $id)->where('a.api_only', false)->orderBy('a.display_name')->limit(201)
-            ->get(['a.id', 'a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
-
-        $migration = app(\App\ClubUnio\Services\PlatformKeycloakMigration::class);
-        $migrationRows = $migration::enabled() && $accounts->isNotEmpty()
-            ? collect($migration->preview($id, $accounts->take(200)->pluck('id')->map(fn ($key) => (int) $key)->all()))->keyBy('id')
-            : collect();
+            ->get(['a.username', 'a.display_name', 'a.active', 'm.role', 'm.portal_enabled', 'm.access_profile_id']);
 
         return view('clubunio.platform.show', ['tenant' => $tenant, 'actor' => $request->user(PlatformOidcController::guard($request)),
             'metrics' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->overview([$id])[$id],
             'syncOperations' => app(\App\ClubUnio\Services\PlatformTenantMetrics::class)->operations($id),
-            'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts, 'migrationRows' => $migrationRows,
+            'brand' => app(SignageBrandService::class)->read($tenant), 'accounts' => $accounts,
             'storageProfile' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->active($tenant),
             'storageDestinations' => app(\App\ClubUnio\Services\TenantDocumentStorage::class)->destinations($tenant),
             'roles' => AccountRole::where('active', true)->orderBy('sort_order')->get(),
             'profiles' => AccessProfile::where('tenant_id', $id)->where('active', true)->orderBy('name')->get(['id', 'name']),
-            'domains' => $db->table('clubora.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
-            'changes' => $db->table('clubora.platform_changes as c')->join('clubora.accounts as a', 'a.id', '=', 'c.actor_id')
+            'domains' => $db->table('clubunio.tenant_domains')->where('tenant_id', $id)->orderBy('host')->get(),
+            'changes' => $db->table('clubunio.platform_changes as c')->join('clubunio.accounts as a', 'a.id', '=', 'c.actor_id')
                 ->where('c.tenant_id', $id)->orderByDesc('c.id')->limit(30)->get(['c.action', 'c.details', 'c.created_at', 'a.display_name'])]);
-    }
-
-    public function keycloakMigration(Request $request, int $id, \App\ClubUnio\Services\PlatformKeycloakMigration $migration)
-    {
-        abort_unless($migration::enabled(), 404);
-        $actor = $request->user(PlatformOidcController::guard($request));
-        $admins = app(PlatformAdministrationService::class);
-        $admins->authorize($actor);
-        $tenant = Tenant::findOrFail($id);
-        if (!$request->boolean('confirm')) {
-            $data = $request->validate(['account_ids' => 'required_without:account_id|array|min:1|max:10',
-                'account_ids.*' => 'required|integer|min:1|distinct', 'account_id' => 'sometimes|integer|min:1']);
-            $ids = isset($data['account_id']) ? [(int) $data['account_id']] : array_map('intval', $data['account_ids']);
-            $rows = $migration->preview($id, $ids);
-            $previewToken = bin2hex(random_bytes(24));
-            $request->session()->put('platform.keycloak.preview', ['tenant' => $id, 'actor' => (int) $actor->id,
-                'rows' => $rows, 'expires' => time() + 600, 'token' => $previewToken]);
-
-            return response()->view('clubunio.platform.keycloak-migration', compact('tenant', 'actor', 'rows', 'previewToken'))
-                ->header('Cache-Control', 'no-store');
-        }
-        $preview = $request->session()->pull('platform.keycloak.preview');
-        abort_unless($preview && $preview['tenant'] === $id && $preview['actor'] === (int) $actor->id && $preview['expires'] >= time()
-            && is_string($request->input('preview_token')) && hash_equals($preview['token'], $request->input('preview_token')), 409);
-        $rows = [];
-        foreach ($preview['rows'] as $row) {
-            $admins->authorize($actor);
-            try {
-                $row['status'] = $migration->send($id, $row);
-            } catch (\Exception) {
-                $row['status'] = 'failed';
-            }
-            $rows[] = $row;
-        }
-        return response()->view('clubunio.platform.keycloak-migration', compact('tenant', 'actor', 'rows') + ['sent' => true])
-            ->header('Cache-Control', 'no-store');
     }
 
     public function change(Request $request, int $id, PlatformAdministrationService $service)

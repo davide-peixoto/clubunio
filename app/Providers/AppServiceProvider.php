@@ -68,8 +68,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Auth::provider('clubunio-account', fn ($app, array $config) =>
-            new \App\ClubUnio\Services\ClubUnioUserProvider($app['hash'], $config['model']));
         \Laravel\Sanctum\Sanctum::usePersonalAccessTokenModel(\App\ClubUnio\Models\ApiAccessToken::class);
         \Laravel\Sanctum\Sanctum::authenticateAccessTokensUsing(fn ($token, $valid) => $valid
             && $token instanceof \App\ClubUnio\Models\ApiAccessToken && ! $token->revoked_at);

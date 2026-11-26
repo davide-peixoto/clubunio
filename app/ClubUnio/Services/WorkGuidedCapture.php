@@ -44,7 +44,7 @@ class WorkGuidedCapture
         $hash=hash('sha256',json_encode($hashParts,JSON_THROW_ON_ERROR));
         $url=DB::connection('clubunio')->transaction(function()use($actor,$tenant,$kind,$first,$second,$command,$hash,$receipt,$receiptHash,$verdict){
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $commands=DB::connection('clubunio')->table('clubora.workspace_capture_commands')->where('tenant_id',$tenant->id)->where('account_id',$actor->id)->where('command_key',$command);
+            $commands=DB::connection('clubunio')->table('clubunio.workspace_capture_commands')->where('tenant_id',$tenant->id)->where('account_id',$actor->id)->where('command_key',$command);
             if($old=(clone $commands)->first()){abort_unless(hash_equals($old->input_hash,$hash),409);return $old->result_url;}
             $url=null;
             if($kind==='member'){
@@ -60,7 +60,7 @@ class WorkGuidedCapture
                 $id=app(TeamPlanningService::class)->saveEvent($actor,$tenant,null,$first+$second+['kind'=>'TRAINING','mode'=>'ANMELDEN','status'=>'AKTIV','capacity'=>18]);
                 $url=route('clubunio.planning.show',[$tenant->slug,$id]);
             }
-            DB::connection('clubunio')->table('clubora.workspace_capture_commands')->insert(['tenant_id'=>$tenant->id,'account_id'=>$actor->id,'command_key'=>$command,'input_hash'=>$hash,'result_url'=>$url]);
+            DB::connection('clubunio')->table('clubunio.workspace_capture_commands')->insert(['tenant_id'=>$tenant->id,'account_id'=>$actor->id,'command_key'=>$command,'input_hash'=>$hash,'result_url'=>$url]);
             return $url;
         });
         if($receipt&&DB::connection('clubunio')->transactionLevel()===0){

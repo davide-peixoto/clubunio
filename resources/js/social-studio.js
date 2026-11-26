@@ -1,5 +1,4 @@
 import './social-studio.css';
-import { civilDate, weekDates } from './module-layout.mjs';
 
 const dimensions = { portrait: 1350, square: 1080 };
 const channels = ['instagram', 'facebook'];
@@ -156,25 +155,6 @@ function mount(root) {
     function render() {
         if ($('[data-tab="jobs"]')) $('[data-tab="jobs"]').hidden = !perm('schedule');
         const items = [];
-        root.classList.toggle('cu-social-modern', Boolean(config.module_ui));
-        workspace.dataset.section = tab;
-        if (config.module_ui && tab === 'today') {
-            const labels = config.module_ui;
-            const calendar = el('section', '', { className: 'cu-editorial-calendar' });
-            calendar.setAttribute('aria-label', labels.calendar);
-            const controls = box(el('h2', labels.calendar));
-            for (const [offset, label, symbol] of [[-7, labels.previous_week, '‹'], [7, labels.next_week, '›']]) {
-                const control = el('button', symbol, { type: 'button', title: label }); control.setAttribute('aria-label', label);
-                control.onclick = () => { date.value = civilDate(state.date, offset); load(); }; controls.append(control);
-            }
-            const days = el('div', '', { className: 'cu-editorial-week' });
-            weekDates(state.date).forEach(day => {
-                const control = el('button', new Intl.DateTimeFormat(config.locale, { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' }).format(new Date(day + 'T12:00:00Z')), { type: 'button' });
-                if (day === state.date) control.setAttribute('aria-current', 'date');
-                control.onclick = () => { date.value = day; load(); }; days.append(control);
-            });
-            calendar.append(controls, days, el('p', labels.calendar_scope, { className: 'cu-module-note' })); items.push(calendar);
-        }
         if (tab === 'today') {
             const primary = box();
             if (perm('create')) {
@@ -202,17 +182,10 @@ function mount(root) {
             })));
         }
         if (tab === 'posts') {
-            if (config.module_ui) items.push(el('p', `${config.module_ui.loaded_posts}: ${state.posts.length}`, { className: 'cu-module-note' }));
             if (perm('create') && !archive.checked) items.push(button('free', () => openPost('free', []), { primary: true }));
             if (perm('send') && !state.test_channels.length) items.push(el('p', t('test_disabled')));
             items.push(list(state.posts.map(post => {
                 const content = title(post.title, t(post.kind) + ' · ' + t(post.state));
-                if (config.module_ui) {
-                    const preview = el('button', '', { type: 'button', className: 'cu-post-preview' });
-                    preview.setAttribute('aria-label', `${config.module_ui.preview}: ${post.title}`);
-                    preview.append(postImage(post, true));
-                    preview.onclick = () => previewPost(post); content.prepend(preview);
-                }
                 post.deliveries.forEach(item => {
                     const info = el('div', t(item.channel) + ': ' + t(item.state));
                     if (item.remote_id) info.append(document.createTextNode(' · ' + item.remote_id));
@@ -308,17 +281,9 @@ function mount(root) {
         modal.showModal();
         return modal;
     }
-    function postImage(post, lazy = false) {
-        const img = el('img', '', { alt: post.title, loading: lazy ? 'lazy' : 'eager' });
-        if (config.module_ui) img.addEventListener('error', () => {
-            img.replaceWith(el('span', config.module_ui.preview_unavailable, { className: 'cu-preview-unavailable' }));
-        }, { once: true });
-        img.src = url('image', { id: post.id }).href;
-        return img;
-    }
     function previewPost(post) {
         const content = el('div');
-        const img = postImage(post);
+        const img = el('img', '', { alt: post.title, src: url('image', { id: post.id }).href });
         img.style.cssText = 'max-height:60vh;width:auto;display:block;margin:.6rem auto';
         content.append(img, el('p', post.caption));
         auxiliary(post.title, content);

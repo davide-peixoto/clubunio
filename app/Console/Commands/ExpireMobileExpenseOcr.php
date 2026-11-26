@@ -12,7 +12,7 @@ final class ExpireMobileExpenseOcr extends Command
 
     public function handle(): int
     {
-        $count = DB::connection('clubunio')->table('clubora.mobile_ai_work')
+        $count = DB::connection('clubunio')->table('clubunio.mobile_ai_work')
             ->where('operation', 'expense_ocr')->where('provider', 'azure_document_intelligence')
             ->where('created_at', '<=', now()->subHours(24))
             ->whereNotNull('result_encrypted')->update(['result_encrypted' => null, 'state' => 'expired']);

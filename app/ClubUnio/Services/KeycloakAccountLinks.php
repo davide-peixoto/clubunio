@@ -30,11 +30,11 @@ final class KeycloakAccountLinks
         return $secret;
     }
 
-    public function accept(string $digest, \stdClass $claims, bool $freshMfa = false): Account
+    public function accept(string $digest, \stdClass $claims): Account
     {
         abort_unless(config('clubunio-verein-oidc.invites_enabled'), 404);
 
-        return DB::connection('clubunio')->transaction(function () use ($digest, $claims, $freshMfa) {
+        return DB::connection('clubunio')->transaction(function () use ($digest, $claims) {
             $invite = $this->invitations()->where('token_hash', $digest)->whereNull('accepted_at')
                 ->where('expires_at', '>', now())->lockForUpdate()->first();
             abort_unless($invite && self::matches($invite, $claims), 403);
@@ -51,7 +51,8 @@ final class KeycloakAccountLinks
             }
             $backoffice = app(ModulePermissionService::class)->canEnter($account, $tenant);
             if (! $backoffice) {
-                abort_if(!$freshMfa && app(AccountSecurity::class)->requiresStrongLogin($account), 403);
+                // Do not use this pilot as an alternative to enrolled local factors.
+                abort_if(app(AccountSecurity::class)->requiresStrongLogin($account), 403);
                 abort_unless(app(MemberAccessService::class)->canEnter($account, $tenant), 403);
             }
             $inserted = $this->links()->insertOrIgnore([
@@ -68,7 +69,7 @@ final class KeycloakAccountLinks
     {
         $db = DB::connection('clubunio');
         $scope = ['tenant_id' => $tenant->id, 'account_id' => $account->id];
-        $links = $db->table('clubora.account_member_links')->where($scope);
+        $links = $db->table('clubunio.account_member_links')->where($scope);
         $own = (clone $links)->where('kind', 'self')->where('state', 'approved')->value('member_id');
         abort_if($own !== null && $matches['member_id'] !== null && (int) $own !== $matches['member_id'], 409);
         foreach (['self' => array_filter([$matches['member_id']]), 'parent' => $matches['child_ids']] as $kind => $ids) {
@@ -79,10 +80,10 @@ final class KeycloakAccountLinks
                     // Existing approvals remain intact; a manual pending or revoked decision wins.
                     continue;
                 }
-                $link = $db->table('clubora.account_member_links')->insertGetId($key + [
+                $link = $db->table('clubunio.account_member_links')->insertGetId($key + [
                     'state' => 'approved', 'source' => 'keycloak_invitation',
                 ]);
-                $db->table('clubora.object_changes')->insert([
+                $db->table('clubunio.object_changes')->insert([
                     'tenant_id' => $tenant->id, 'actor_id' => $account->id,
                     'object_type' => 'account_member_links', 'object_id' => $link,
                     'after_value' => json_encode($key + ['state' => 'approved', 'source' => 'keycloak_invitation'], JSON_THROW_ON_ERROR),
@@ -108,11 +109,11 @@ final class KeycloakAccountLinks
 
     private function invitations()
     {
-        return DB::connection('clubunio')->table('clubora.keycloak_account_invitations');
+        return DB::connection('clubunio')->table('clubunio.keycloak_account_invitations');
     }
 
     private function links()
     {
-        return DB::connection('clubunio')->table('clubora.keycloak_account_links');
+        return DB::connection('clubunio')->table('clubunio.keycloak_account_links');
     }
 }

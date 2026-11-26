@@ -26,9 +26,9 @@ final class ChatReadReceipts
         $member=$s->table($tenant,'chat_memberships')->where('conversation_id',$chat->id)->where('account_id',$actor->id)->first();
         abort_unless($member && $member->left_at===null && $id>(int)$member->joined_after,404);
 
-        $candidates=DB::connection('clubunio')->table('clubora.chat_memberships as cm')
-            ->join('clubora.accounts as a','a.id','=','cm.account_id')
-            ->join('clubora.tenant_accounts as ta',fn($j)=>$j->on('ta.account_id','=','a.id')->on('ta.tenant_id','=','cm.tenant_id'))
+        $candidates=DB::connection('clubunio')->table('clubunio.chat_memberships as cm')
+            ->join('clubunio.accounts as a','a.id','=','cm.account_id')
+            ->join('clubunio.tenant_accounts as ta',fn($j)=>$j->on('ta.account_id','=','a.id')->on('ta.tenant_id','=','cm.tenant_id'))
             ->where('cm.tenant_id',$tenant->id)->where('cm.conversation_id',$chat->id)->whereNull('cm.left_at')
             ->where('cm.account_id','>',$after)->where('cm.account_id','<>',$actor->id)
             ->where('cm.joined_after','<',$id)->where('cm.read_message_id','>=',$id)

@@ -18,7 +18,7 @@ class BexioDispatchTrialService
     public function validatedRequest(Account $actor, Tenant $tenant, int $id): array
     {
         $this->authorize($actor, $tenant);
-        $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+        $trial = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')
             ->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
         abort_unless($trial && $trial->state === 'ready', 409, __('Keine offene eigene Versandpruefung.'));
         abort_if(CarbonImmutable::parse($trial->created_at)->lt(now()->subMinutes(10)), 409, __('Vorschau abgelaufen.'));
@@ -155,7 +155,7 @@ class BexioDispatchTrialService
                 $this->invalid(__('Dokument wurde während der Prüfung geändert. Bitte erneut prüfen.'));
             }
             unset($snapshot['_attachments'], $snapshot['_request']);
-            $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials');
+            $query = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials');
             $existing = (clone $query)->where('tenant_id', $tenant->id)->where('object_type', $type)->where('object_id', $id)->where('fingerprint', $snapshot['fingerprint'])->first();
             if ($existing) {
                 if ($existing->actor_id != $actor->id) {
@@ -179,9 +179,9 @@ class BexioDispatchTrialService
     public function simulate(Account $actor, Tenant $tenant, int $id, string $outcome): void
     {
         $this->authorize($actor, $tenant);
-        abort_if(DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')->where('source_trial_id', $id)->exists(), 409, __('Echter Sandbox-Auftrag vorhanden.'));
+        abort_if(DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')->where('source_trial_id', $id)->exists(), 409, __('Echter Sandbox-Auftrag vorhanden.'));
         abort_unless(in_array($outcome, ['simulated', 'rejected', 'uncertain'], true), 422);
-        $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
+        $trial = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->find($id);
         abort_unless($trial, 404);
         $this->authorizeDocument($actor, $tenant, $trial->object_type, 'send');
         if ($trial->state !== 'ready') {
@@ -195,14 +195,14 @@ class BexioDispatchTrialService
         $claimed = DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $prepared, $token) {
             $this->authorize($actor, $tenant);
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
+            $query = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
             $trial = (clone $query)->lockForUpdate()->first();
             abort_unless($trial, 404);
             $this->authorizeDocument($actor, $tenant, $trial->object_type, 'send');
             if ($trial->state !== 'ready') {
                 return false;
             }
-            if (DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')
+            if (DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')
                 ->where('tenant_id', $tenant->id)->where('object_type', $trial->object_type)->where('object_id', $trial->object_id)
                 ->where('id', '<>', $id)->whereIn('state', ['running', 'uncertain'])->exists()) {
                 $this->invalid(__('Ein anderer Testlauf dieses Dokuments muss zuerst geklärt werden.'));
@@ -253,11 +253,11 @@ class BexioDispatchTrialService
             }
         } catch (\Throwable) {
             // A crash after claiming a step is deliberately not assumed to be a rejection.
-            $started = DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->where('trial_id', $id)->where('state', 'started')->exists();
+            $started = DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->where('trial_id', $id)->where('state', 'started')->exists();
             $result = ['state' => $started ? 'uncertain' : 'rejected'];
         }
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $token, $result) {
-            $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $id)->where('execution_token', $token)->where('state', 'running');
+            $query = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('id', $id)->where('execution_token', $token)->where('state', 'running');
             $trial = (clone $query)->lockForUpdate()->first();
             if (! $trial) {
                 return;
@@ -272,23 +272,23 @@ class BexioDispatchTrialService
     private function startStep(int $id, string $token, string $operation): int
     {
         return DB::connection('clubunio')->transaction(function () use ($id, $token, $operation) {
-            $trial = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('id', $id)->lockForUpdate()->first();
+            $trial = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('id', $id)->lockForUpdate()->first();
             abort_unless($trial && $trial->state === 'running' && $trial->execution_token === $token, 409);
 
-            return DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->insertGetId(['trial_id' => $id, 'operation' => $operation, 'state' => 'started']);
+            return DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->insertGetId(['trial_id' => $id, 'operation' => $operation, 'state' => 'started']);
         });
     }
 
     private function endStep(int $id, array $result): void
     {
-        DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->where('id', $id)->where('state', 'started')->update([
+        DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->where('id', $id)->where('state', 'started')->update([
             'state' => $result['state'], 'http_status' => $result['http_status'] ?? null,
             'simulation_reference' => isset($result['id']) ? 'simulation:'.$result['id'] : null]);
     }
 
     private function auditTrial(Account $actor, Tenant $tenant, object $trial, string $state): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'bexio_dispatch_trials', 'object_id' => $trial->id,
             'after_value' => json_encode(['mode' => 'simulation', 'state' => $state, 'reference' => $trial->reference], JSON_THROW_ON_ERROR)]);
     }
@@ -299,7 +299,7 @@ class BexioDispatchTrialService
         abort_unless(in_array($decision, ['found', 'not_created'], true), 422);
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $id, $decision) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            $query = DB::connection('clubunio')->table('clubora.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
+            $query = DB::connection('clubunio')->table('clubunio.bexio_dispatch_trials')->where('tenant_id', $tenant->id)->where('actor_id', $actor->id)->where('id', $id);
             $trial = (clone $query)->lockForUpdate()->first();
             abort_unless($trial, 404);
             $this->authorizeDocument($actor, $tenant, $trial->object_type, 'sync');
@@ -309,7 +309,7 @@ class BexioDispatchTrialService
             if ($trial->state === 'running' && CarbonImmutable::parse($trial->run_started_at)->gt(now()->subMinutes(15))) {
                 $this->invalid(__('Testlauf läuft noch. Bitte später erneut prüfen.'));
             }
-            $last = DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->where('trial_id', $id)->orderByDesc('id')->first();
+            $last = DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->where('trial_id', $id)->orderByDesc('id')->first();
             if ($decision === 'found' && (! $last || $last->operation !== 'create' || $trial->state === 'rejected')) {
                 $this->invalid(__('Es wurde keine unklare Dokumentanlage protokolliert.'));
             }
@@ -317,7 +317,7 @@ class BexioDispatchTrialService
             $query->update(['state' => $state, 'execution_token' => null, 'created_at' => now(),
                 'simulation_reference' => $decision === 'found' ? 'simulation:reconciled:'.$trial->reference : null,
                 'completed_at' => $decision === 'found' ? now() : null]);
-            DB::connection('clubunio')->table('clubora.bexio_dispatch_steps')->insert(['trial_id' => $id, 'operation' => 'resolve', 'state' => $decision === 'found' ? 'accepted' : 'reset']);
+            DB::connection('clubunio')->table('clubunio.bexio_dispatch_steps')->insert(['trial_id' => $id, 'operation' => 'resolve', 'state' => $decision === 'found' ? 'accepted' : 'reset']);
             $this->auditTrial($actor, $tenant, $trial, $state);
         });
     }

@@ -22,6 +22,19 @@ final class MobileMemberController
         return response()->json(['data' => ['Member' => app(MobileMemberData::class)->details($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'), $this->teamContext($r))]]);
     }
 
+    public function photo(Request $r, \App\ClubUnio\Services\ProfilePhotoService $photos)
+    {
+        $actor = $r->attributes->get('mobile.actor');
+        $tenant = $r->attributes->get('mobile.tenant');
+        $id = (int) $r->route('member');
+        $details = app(MobileMemberData::class)->details($actor, $tenant, $id, $this->teamContext($r));
+        abort_unless($details['PhotoAvailable'] ?? false, 404);
+        $image = $photos->member($tenant, $id)?->image_encrypted;
+        abort_unless($image, 404);
+
+        return $photos->response(\Illuminate\Support\Facades\Crypt::decryptString($image));
+    }
+
     public function options(Request $r)
     {
         return response()->json(['data' => app(MobileMemberData::class)->options($r->attributes->get('mobile.actor'), $r->attributes->get('mobile.tenant'), (int) $r->route('member'), $this->teamContext($r))]);
@@ -42,7 +55,7 @@ final class MobileMemberController
         return DB::connection('clubunio')->transaction(function () use ($r) {
             $tenant = $r->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             app(MobileAccess::class)->enter($actor, $tenant);
             $member = (int) $r->route('member');
@@ -59,7 +72,7 @@ final class MobileMemberController
         return DB::connection('clubunio')->transaction(function () use ($r) {
             $tenant = $r->attributes->get('mobile.tenant');
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             app(MobileAccess::class)->enter($actor, $tenant);
             $data = app(MobileMemberData::class);

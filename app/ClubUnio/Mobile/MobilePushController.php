@@ -26,7 +26,7 @@ final class MobilePushController
         abort_unless(app(MobilePushReady::class)->available($r), 503);
         $input = $r->validate(['command_key' => 'required|uuid', 'revision' => 'required|regex:/^[0-9a-f]{64}$/D', 'recipient_fingerprint' => 'required|regex:/^[0-9a-f]{64}$/D']);
         return DB::connection('clubunio')->transaction(function () use ($r, $input) {
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $r->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($r);
             return response()->json(['data' => app(MobilePushSquad::class)->publish($actor, $r->attributes->get('mobile.tenant'), (int) $r->route('event'), $input)]);
         });

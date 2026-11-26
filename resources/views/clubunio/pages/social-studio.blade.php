@@ -5,8 +5,9 @@
     @else
         @vite('resources/js/social-studio.js')
     @endif
+    <link rel="stylesheet" href="{{ asset('css/clubunio-social-list.css') }}?v=2">
     <section class="cu-social" data-social-studio data-config="{{ json_encode($this->studioConfig(), JSON_THROW_ON_ERROR) }}" wire:ignore>
-        <nav class="cu-social-toolbar cu-admin-toolbar" aria-label="{{ trans('social.title') }}">
+        <nav class="cu-social-toolbar cu-admin-toolbar cu-social-navigation" aria-label="{{ trans('social.title') }}">
             <div class="cu-social-tabs">
             @foreach (['today', 'posts', 'templates', 'media'] as $tab)
                 <button type="button" data-tab="{{ $tab }}" class="fi-tabs-item"><span class="fi-tabs-item-label">{{ trans('social.'.$tab) }}</span></button>

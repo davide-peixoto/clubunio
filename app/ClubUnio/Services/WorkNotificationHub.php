@@ -10,7 +10,7 @@ class WorkNotificationHub
     private function query(Account $actor,Tenant $tenant)
     {
         abort_unless(app(WorkspaceAccess::class)->allowed($actor,$tenant),403);
-        return DB::connection('clubunio')->table('clubora.notifications')->where('tenant_id',$tenant->id)->where('account_id',$actor->id);
+        return DB::connection('clubunio')->table('clubunio.notifications')->where('tenant_id',$tenant->id)->where('account_id',$actor->id);
     }
     public function target(Account $actor,Tenant $tenant,object $row): ?array
     {

@@ -25,13 +25,13 @@ final class MobileExpenseOptions
             || app(ModulePermissionService::class)->allows($actor, $tenant, 'expenses', 'view'), 403);
         $db = DB::connection('clubunio');
         $own = app(MemberAccessService::class)->represented($actor, $tenant, true)->get(['id', 'first_name', 'last_name']);
-        $teams = $db->table('clubora.team_seasons as ts')->where('ts.tenant_id', $tenant->id)->where('ts.active', true)
-            ->whereIn('ts.id', $db->table('clubora.team_staff')->where('tenant_id', $tenant->id)->where('active', true)
+        $teams = $db->table('clubunio.team_seasons as ts')->where('ts.tenant_id', $tenant->id)->where('ts.active', true)
+            ->whereIn('ts.id', $db->table('clubunio.team_staff')->where('tenant_id', $tenant->id)->where('active', true)
                 ->whereIn('member_id', $own->pluck('id'))->select('team_season_id'))
-            ->join('clubora.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))->where('t.active', true);
+            ->join('clubunio.teams as t', fn ($j) => $j->on('t.id', '=', 'ts.team_id')->on('t.tenant_id', '=', 'ts.tenant_id'))->where('t.active', true);
         app(MobileSeasonScope::class)->teams($teams, $tenant, 'ts.season_id');
         $season = app(MobileSeasonScope::class)->current($tenant);
-        $catalog = fn ($table) => $db->table('clubora.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->orderBy('id');
+        $catalog = fn ($table) => $db->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->where('active', true)->orderBy('name')->orderBy('id');
         $teamRows = $teams->orderBy('ts.label')->orderBy('ts.id')->get(['ts.id', 'ts.label', 'ts.team_id', 't.laundry_allowance']);
 
         return ['members' => $own->map(fn ($m) => ['id' => (int) $m->id, 'name' => trim($m->first_name.' '.$m->last_name)])->all(),

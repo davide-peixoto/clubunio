@@ -140,7 +140,7 @@ class Tenant extends Model
 
     public function accounts()
     {
-        return $this->belongsToMany(Account::class, 'clubora.tenant_accounts')->withPivot('role');
+        return $this->belongsToMany(Account::class, 'clubunio.tenant_accounts')->withPivot('role');
     }
 
     public function members()

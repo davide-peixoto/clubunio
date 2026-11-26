@@ -49,7 +49,7 @@ class TrainingPlanController
         app(TrainingPlanService::class)->authorizeOperation($request->user(), $tenant, 'create');
         $context = $this->context($request, $tenant);
         $request->validate(['season' => 'nullable|integer']);
-        $seasons = DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)
+        $seasons = DB::connection('clubunio')->table('clubunio.seasons')->where('tenant_id', $tenant->id)
             ->whereIn('id', $context['teams']->pluck('season_id'))->orderByDesc('name')->get();
         $selectedSeason = (int) $request->input('season', $seasons->first()?->id);
         $context['teams'] = $context['teams']->where('season_id', $selectedSeason);

@@ -23,7 +23,7 @@ class LegacyMaterialReceiptService
         $access = app(MemberAccessService::class);
         abort_unless($actor && $access->canEnter($actor, $tenant), 403);
 
-        return $query->whereIn('member_id', $access->represented($actor, $tenant)->select('clubora.members.id'));
+        return $query->whereIn('member_id', $access->represented($actor, $tenant)->select('clubunio.members.id'));
     }
 
     public function import(Account $actor, Tenant $tenant): array
@@ -68,7 +68,7 @@ class LegacyMaterialReceiptService
                     'title' => $source->Titel, 'source_state' => $source->Status, 'signed_name' => $source->SigniertName, 'signed_at' => $source->SigniertAm,
                     'original_document_id' => $documents['original']['id'], 'signed_document_id' => $documents['signed']['id'] ?? null,
                     'original_sha256' => $documents['original']['hash'], 'signed_sha256' => $documents['signed']['hash'] ?? null, 'imported_by' => $actor->id])->save();
-                $db->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'legacy_material_receipts', 'object_id' => $record->id,
+                $db->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'legacy_material_receipts', 'object_id' => $record->id,
                     'after_value' => json_encode(['action' => 'archive_import', 'source_id' => $record->source_id, 'source_hash' => $hash], JSON_THROW_ON_ERROR)]);
                 $counts['imported']++;
             });

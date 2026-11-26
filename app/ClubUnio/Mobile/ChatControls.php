@@ -110,8 +110,8 @@ final class ChatControls
         $data = \Illuminate\Support\Facades\Validator::make($request->query(),
             ['after' => 'sometimes|required|integer|min:0', 'limit' => 'sometimes|required|integer|min:1|max:50'])->validate();
         $after = (int)($data['after'] ?? 0); $limit = (int)($data['limit'] ?? 30);
-        $rows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.chat_reactions as reaction')
-            ->join('clubora.accounts as account','account.id','=','reaction.account_id')
+        $rows = \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.chat_reactions as reaction')
+            ->join('clubunio.accounts as account','account.id','=','reaction.account_id')
             ->where('reaction.tenant_id',$tenant->id)->where('reaction.message_id',$id)->where('reaction.account_id','>',$after)
             ->orderBy('reaction.account_id')->limit($limit + 1)->get(['reaction.account_id','reaction.emoji','account.display_name']);
         $more = $rows->count() > $limit; $page = $rows->take($limit);
@@ -146,7 +146,7 @@ final class ChatControls
     {
         app(ChatAccess::class)->enter($actor, $tenant);
         app(ChatAccess::class)->authorize($actor, $tenant, 'announce');
-        $people = $tenant->accounts()->where('active', true)->where('api_only', false)->orderBy('clubora.accounts.id')->get()
+        $people = $tenant->accounts()->where('active', true)->where('api_only', false)->orderBy('clubunio.accounts.id')->get()
             ->filter(fn ($a) => app(ChatAccess::class)->allows($a, $tenant, 'view'))
             ->map(fn ($a) => ['id' => (int) $a->id, 'name' => $a->display_name])->values()->all();
         return ['count' => count($people), 'recipients' => $people,

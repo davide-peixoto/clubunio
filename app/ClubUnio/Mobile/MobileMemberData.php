@@ -15,7 +15,7 @@ final class MobileMemberData
         'EmailMutter' => 'mother_email', 'Vater' => 'father_name', 'MobileVater' => 'father_mobile', 'EmailVater' => 'father_email', 'RechnungAn' => 'billing_recipient_id'];
     public const STATES = ['pending' => 'OFFEN', 'approved' => 'GENEHMIGT', 'rejected' => 'ABGELEHNT', 'withdrawn' => 'ZURUECKGEZOGEN'];
 
-    public function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id); }
+    public function table(Tenant $tenant, string $table) { return DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id); }
 
     public function scope(Account $actor, Tenant $tenant)
     {
@@ -59,6 +59,8 @@ final class MobileMemberData
             && ($own || app(ModulePermissionService::class)->allows($actor, $tenant, 'documents', 'view'));
         $dto = ['MitgliederID' => (int) $m->id, 'Vorname' => $m->first_name, 'Nachname' => $m->last_name,
             'Email' => $m->email, 'Mobile' => $m->mobile, 'Ort' => $m->city, 'CanEdit' => $editable,
+            'PhotoAvailable' => !$teamRestricted && ($own || $direct)
+                && app(\App\ClubUnio\Services\ProfilePhotoService::class)->memberAvailable($tenant, $id),
             'ChangeMode' => $editable ? ($direct ? 'direct' : 'request') : 'none', 'EditableFields' => $fields,
             'TeamSaisonID' => $teamId, 'ContactOnly' => !$full, 'CanRequestChanges' => $editable && !$direct,
             'CanReadChangeRequests' => !$teamRestricted && app(ModulePermissionService::class)->allows($actor, $tenant, 'member_changes', 'view'),

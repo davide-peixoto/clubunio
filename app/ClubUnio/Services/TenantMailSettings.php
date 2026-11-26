@@ -44,7 +44,7 @@ class TenantMailSettings
                 'label' => 'mail_delivery.reply_to', 'value_type' => 'string', 'is_secret' => false,
                 'enabled' => $value !== '', 'encrypted_value' => Crypt::encryptString($value),
             ])->save();
-            DB::connection('clubunio')->table('clubora.setting_changes')->insert([
+            DB::connection('clubunio')->table('clubunio.setting_changes')->insert([
                 'tenant_id' => $tenant->id, 'setting_id' => $setting->id, 'actor_id' => $actor->id,
             ]);
         });

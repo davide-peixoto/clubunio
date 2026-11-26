@@ -16,18 +16,18 @@ class RegistrationDetailsImporter
 
         return $db->transaction(function () use ($db) {
             $db->select('SELECT pg_advisory_xact_lock(20261011)');
-            if ($db->table('clubora.imports')->where('name', 'registration-details-v2')->exists()) {
+            if ($db->table('clubunio.imports')->where('name', 'registration-details-v2')->exists()) {
                 return 0;
             }
-            $tenant = $db->table('clubora.tenants')->where('slug', 'sv-sissach')->sole()->id;
+            $tenant = $db->table('clubunio.tenants')->where('slug', 'sv-sissach')->sole()->id;
             $count = 0;
             $maps = [];
             foreach (['country_id' => ['countries', 'code'], 'nationality_id' => ['countries', 'iso3'],
                 'gender_id' => ['genders', 'code'], 'billing_recipient_id' => ['billing_recipients', 'code']] as $field => [$table, $key]) {
-                $maps[$field] = $db->table('clubora.'.$table)->where('tenant_id', $tenant)->pluck('id', $key);
+                $maps[$field] = $db->table('clubunio.'.$table)->where('tenant_id', $tenant)->pluck('id', $key);
             }
             foreach ($db->table('legacy_prod.MitgliederAnmeldungen')->whereNull('sdeletedAt')->get() as $source) {
-                $target = $db->table('clubora.registrations')->where('tenant_id', $tenant)->where('legacy_id', $source->AnmeldungID)->sole();
+                $target = $db->table('clubunio.registrations')->where('tenant_id', $tenant)->where('legacy_id', $source->AnmeldungID)->sole();
                 $data = [];
                 foreach (['street' => 'Strasse', 'house_number' => 'HausNr', 'postal_code' => 'PLZ', 'mobile' => 'Mobile',
                     'phone_private' => 'TelefonPrivat', 'mother_name' => 'Mutter', 'mother_email' => 'EmailMutter',
@@ -53,7 +53,7 @@ class RegistrationDetailsImporter
                     }
                     $data = $existing;
                 }
-                $db->table('clubora.registrations')->where('tenant_id', $tenant)->where('id', $target->id)
+                $db->table('clubunio.registrations')->where('tenant_id', $tenant)->where('id', $target->id)
                     ->update(['applicant_encrypted' => Crypt::encryptString(json_encode($data, JSON_THROW_ON_ERROR)), 'details_complete' => true]);
                 foreach (['portrait' => 'PassfotoUpload', 'identity' => 'AusweisUpload'] as $kind => $column) {
                     foreach (array_unique(array_filter(array_map('trim', explode(',', (string) ($source->$column ?? ''))))) as $file) {
@@ -64,7 +64,7 @@ class RegistrationDetailsImporter
                             continue;
                         }
                         app(AzureDocumentReader::class)->blobPath('upload/anmeldungen/', $file);
-                        $db->table('clubora.registration_documents')->insertOrIgnore([
+                        $db->table('clubunio.registration_documents')->insertOrIgnore([
                             'tenant_id' => $tenant, 'registration_id' => $target->id, 'kind' => $kind,
                             'filename' => $file, 'storage_path' => 'upload/anmeldungen/',
                         ]);
@@ -72,7 +72,7 @@ class RegistrationDetailsImporter
                 }
                 $count++;
             }
-            $db->table('clubora.imports')->insert(['name' => 'registration-details-v2']);
+            $db->table('clubunio.imports')->insert(['name' => 'registration-details-v2']);
 
             return $count;
         });

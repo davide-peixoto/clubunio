@@ -91,7 +91,7 @@ class BexioBillingRecipientService
             $before = $member->only(['billing_bexio_contact_id', 'billing_bexio_revision']);
             $member->forceFill(['billing_bexio_contact_id' => $contact, 'billing_bexio_identity_hash' => $hash,
                 'billing_bexio_revision' => $member->billing_bexio_revision + 1])->save();
-            DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+            DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
                 'object_type' => 'members', 'object_id' => $id, 'before_value' => json_encode($before, JSON_THROW_ON_ERROR),
                 'after_value' => json_encode($member->only(['billing_bexio_contact_id', 'billing_bexio_revision']), JSON_THROW_ON_ERROR)]);
         });

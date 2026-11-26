@@ -17,11 +17,11 @@ final class ApiIdempotency
         $hash = hash('sha256', $request->method().' '.$request->path().' '.$context->authorizationFingerprint().' '.json_encode($fingerprint ?? $request->json()->all(), JSON_THROW_ON_ERROR));
         $db = DB::connection('clubunio');
         $keyHash = hash('sha256', $key);
-        $id = $db->table('clubora.api_idempotency')->insertOrIgnore([
+        $id = $db->table('clubunio.api_idempotency')->insertOrIgnore([
             'integration_id' => $context->integration->id, 'key_hash' => $keyHash, 'payload_hash' => $hash, 'state' => 'processing',
         ]);
         if (! $id) {
-            $previous = $db->table('clubora.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->first();
+            $previous = $db->table('clubunio.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->first();
             abort_unless(hash_equals($previous->payload_hash, $hash), 409);
             abort_unless($previous->state === 'complete', 409);
 
@@ -34,7 +34,7 @@ final class ApiIdempotency
                 Tenant::whereKey($context->tenant->id)->lockForUpdate()->firstOrFail();
                 $context->authorizationFingerprint();
                 $response = $operation();
-                $db->table('clubora.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->update([
+                $db->table('clubunio.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->update([
                     'state' => 'complete', 'status' => $response->getStatusCode(),
                     'response_encrypted' => Crypt::encryptString($response->getContent()),
                 ]);
@@ -43,7 +43,7 @@ final class ApiIdempotency
             });
         } catch (\Throwable $error) {
             // Failed/abandoned attempts cannot replay a possibly partially completed side effect.
-            $db->table('clubora.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->update(['state' => 'uncertain']);
+            $db->table('clubunio.api_idempotency')->where('integration_id', $context->integration->id)->where('key_hash', $keyHash)->update(['state' => 'uncertain']);
             throw $error;
         }
     }

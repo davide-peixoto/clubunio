@@ -21,7 +21,7 @@ class ErpNextExpenseTransferService
 
     public static function query(Tenant $tenant): Builder
     {
-        return DB::connection('clubunio')->table('clubora.erpnext_expense_transfers')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.erpnext_expense_transfers')->where('tenant_id', $tenant->id);
     }
 
     public static function approved(Expense $expense): bool
@@ -40,7 +40,7 @@ class ErpNextExpenseTransferService
                 return;
             }
             $this->ensureApproved($expense, $revision);
-            $bexio = DB::connection('clubunio')->table('clubora.bexio_sandbox_dispatches')
+            $bexio = DB::connection('clubunio')->table('clubunio.bexio_sandbox_dispatches')
                 ->where('tenant_id', $tenant->id)->where('kind', 'expense')->where('expense_id', $id)->exists();
             abort_if($bexio || $expense->bexio_bill_id, 409, trans('erpnext.errors.expense_already_linked'));
             $config = $this->configuration->verifiedConnection($tenant);

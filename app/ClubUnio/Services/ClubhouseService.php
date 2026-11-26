@@ -85,8 +85,8 @@ final class ClubhouseService
 
                 return (array) $row;
             })->all();
-        $settings = DB::connection('clubunio')->table('clubora.clubhouse_settings')->where('tenant_id', $tenant->id)->first();
-        $statuses = DB::connection('clubunio')->table('clubora.clubhouse_menu_statuses')->where('tenant_id', $tenant->id)
+        $settings = DB::connection('clubunio')->table('clubunio.clubhouse_settings')->where('tenant_id', $tenant->id)->first();
+        $statuses = DB::connection('clubunio')->table('clubunio.clubhouse_menu_statuses')->where('tenant_id', $tenant->id)
             ->orderBy('sort_order')->get()->map(fn ($row) => ['code' => $row->code, 'label' => trans($row->label_key), 'color' => $row->color])->all();
 
         return ['capabilities' => $access->capabilities($actor, $tenant), 'rules' => $rules, 'exceptions' => $exceptions,
@@ -105,7 +105,7 @@ final class ClubhouseService
         DB::connection('clubunio')->transaction(function () use ($actor, $tenant, $data, $access) {
             Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
             abort_unless($access->administrator($actor, $tenant), 403);
-            $table = DB::connection('clubunio')->table('clubora.clubhouse_settings')->where('tenant_id', $tenant->id);
+            $table = DB::connection('clubunio')->table('clubunio.clubhouse_settings')->where('tenant_id', $tenant->id);
             $old = (clone $table)->lockForUpdate()->first();
             if ((int) ($old->revision ?? 0) !== (int) $data['revision']) {
                 throw ValidationException::withMessages(['revision' => trans('clubhouse.conflict')]);
@@ -119,6 +119,6 @@ final class ClubhouseService
     public function publicEnabled(Tenant $tenant): bool
     {
         return $tenant->fresh() !== null && app(ClubhouseAccess::class)->ready()
-            && (bool) DB::connection('clubunio')->table('clubora.clubhouse_settings')->where('tenant_id', $tenant->id)->value('public_enabled');
+            && (bool) DB::connection('clubunio')->table('clubunio.clubhouse_settings')->where('tenant_id', $tenant->id)->value('public_enabled');
     }
 }

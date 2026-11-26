@@ -26,7 +26,7 @@ final class SeasonPlanningService
 
     public function table(Tenant $tenant)
     {
-        return DB::connection('clubunio')->table('clubora.season_plans')->where('tenant_id', $tenant->id);
+        return DB::connection('clubunio')->table('clubunio.season_plans')->where('tenant_id', $tenant->id);
     }
 
     public function authorize(Account $actor, Tenant $tenant, bool $edit = false): void
@@ -58,7 +58,7 @@ final class SeasonPlanningService
         foreach (['teams' => ['id', 'name', 'laundry_allowance'], 'genders' => ['id', 'name'],
             'staff_functions' => ['id', 'name'], 'training_options' => ['id', 'name', 'category'],
             'seasons' => ['id', 'name', 'starts_on', 'ends_on']] as $table => $columns) {
-            $facts[$table] = DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)
+            $facts[$table] = DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)
                 ->where('active', true)->orderBy('id')->get($columns)->keyBy('id')->all();
         }
         $facts['members'] = app(MemberAccessService::class)->activeMembers($tenant)->orderBy('id')
@@ -80,10 +80,10 @@ final class SeasonPlanningService
             return $doc;
         }
         $db = DB::connection('clubunio');
-        $sourceRules = $db->table('clubora.contribution_rules')->where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->orderBy('id')->get();
-        $sourcePrices = $db->table('clubora.contribution_prices')->where('tenant_id', $tenant->id)->where('active', true)
+        $sourceRules = $db->table('clubunio.contribution_rules')->where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->orderBy('id')->get();
+        $sourcePrices = $db->table('clubunio.contribution_prices')->where('tenant_id', $tenant->id)->where('active', true)
             ->whereIn('id', $sourceRules->pluck('price_id')->unique())->get()->keyBy('id');
-        $sourceTeams = $db->table('clubora.team_seasons')->where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->orderBy('id')->get();
+        $sourceTeams = $db->table('clubunio.team_seasons')->where('tenant_id', $tenant->id)->where('season_id', $source)->where('active', true)->orderBy('id')->get();
         $sourceAssignments = [];
         foreach (self::KINDS as $kind => $model) {
             $sourceAssignments[$kind] = $model::where('tenant_id', $tenant->id)->whereIn('team_season_id', $sourceTeams->pluck('id'))
@@ -159,7 +159,7 @@ final class SeasonPlanningService
                 return $this->get($actor, $tenant, $id);
             }
             if (! $old && $source !== null) {
-                abort_unless(DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('id', $source)->exists(), 404);
+                abort_unless(DB::connection('clubunio')->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('id', $source)->exists(), 404);
             }
             $data = ['name' => ($doc['season']['name'] ?? null) ?: 'Neue Saison', 'document_encrypted' => Crypt::encryptString(json_encode($doc, JSON_THROW_ON_ERROR)),
                 'revision' => ($old->revision ?? 0) + 1, 'updated_at' => now()];
@@ -266,7 +266,7 @@ final class SeasonPlanningService
         if (empty($season['name']) || empty($season['starts_on']) || empty($season['ends_on']) || $season['ends_on'] < $season['starts_on']) {
             $errors[] = __('Saisonbezeichnung und gültiger Zeitraum sind erforderlich.');
         }
-        if (DB::connection('clubunio')->table('clubora.seasons')->where('tenant_id', $tenant->id)->where('name', $season['name'] ?? '')->exists()) {
+        if (DB::connection('clubunio')->table('clubunio.seasons')->where('tenant_id', $tenant->id)->where('name', $season['name'] ?? '')->exists()) {
             $errors[] = __('Eine Saison mit dieser Bezeichnung besteht bereits.');
         }
         $teams = collect($doc['teams'])->keyBy('key');
@@ -383,9 +383,9 @@ final class SeasonPlanningService
         }
         $existingSlots = [];
         if ($doc['slots'] && ! empty($season['starts_on']) && ! empty($season['ends_on'])) {
-            $existingSlots = DB::connection('clubunio')->table('clubora.training_slots as slot')
-                ->join('clubora.team_seasons as ts', fn ($join) => $join->on('ts.id', '=', 'slot.team_season_id')->on('ts.tenant_id', '=', 'slot.tenant_id'))
-                ->join('clubora.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
+            $existingSlots = DB::connection('clubunio')->table('clubunio.training_slots as slot')
+                ->join('clubunio.team_seasons as ts', fn ($join) => $join->on('ts.id', '=', 'slot.team_season_id')->on('ts.tenant_id', '=', 'slot.tenant_id'))
+                ->join('clubunio.seasons as s', fn ($join) => $join->on('s.id', '=', 'ts.season_id')->on('s.tenant_id', '=', 'ts.tenant_id'))
                 ->where('slot.tenant_id', $tenant->id)->where('slot.active', true)->where('ts.active', true)->where('s.active', true)
                 ->where('s.starts_on', '<=', $season['ends_on'])->where('s.ends_on', '>=', $season['starts_on'])->orderBy('slot.id')
                 ->get(['slot.id', 'slot.period_id', 'slot.weekday_id', 'slot.starts_at', 'slot.ends_at', 'slot.field_id', 'slot.hall', 'ts.team_id'])->all();
@@ -424,9 +424,9 @@ final class SeasonPlanningService
             // Keep the referenced eligibility/catalog rows stable until all domain writes finish.
             $document = $this->get($actor, $tenant, $id)->document;
             foreach (['member_statuses', 'genders', 'staff_functions', 'training_options'] as $table) {
-                DB::connection('clubunio')->table('clubora.'.$table)->where('tenant_id', $tenant->id)->orderBy('id')->sharedLock()->get(['id']);
+                DB::connection('clubunio')->table('clubunio.'.$table)->where('tenant_id', $tenant->id)->orderBy('id')->sharedLock()->get(['id']);
             }
-            DB::connection('clubunio')->table('clubora.members')->where('tenant_id', $tenant->id)
+            DB::connection('clubunio')->table('clubunio.members')->where('tenant_id', $tenant->id)
                 ->whereIn('id', collect($document['assignments'])->pluck('member_id')->unique()->all())->orderBy('id')->sharedLock()->get(['id']);
             $review = $this->review($actor, $tenant, $id);
             if ($review['errors'] || ! hash_equals($review['token'], $token) || ($review['warnings'] && ! $acknowledge)) {
@@ -488,7 +488,7 @@ final class SeasonPlanningService
                 $remember($key, $contributions->save($actor, $tenant, TrainingSlot::class, null, $slot + ['active' => true]));
             }
             foreach (array_chunk($results, 100) as $chunk) {
-                DB::connection('clubunio')->table('clubora.season_plan_results')->insert($chunk);
+                DB::connection('clubunio')->table('clubunio.season_plan_results')->insert($chunk);
             }
             $this->authorizeCompletion($actor, $tenant);
             $this->table($tenant)->where('id', $id)->update(['state' => 'completed', 'revision' => $revision + 1, 'season_id' => $season, 'completed_at' => now(), 'updated_at' => now()]);
@@ -514,7 +514,7 @@ final class SeasonPlanningService
 
     private function audit(Account $actor, Tenant $tenant, int $id, int $before, int $after, string $event): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert(['tenant_id' => $tenant->id, 'actor_id' => $actor->id,
             'object_type' => 'season_plans', 'object_id' => $id, 'before_value' => json_encode(['revision' => $before]),
             'after_value' => json_encode(['revision' => $after, 'event' => $event])]);
     }

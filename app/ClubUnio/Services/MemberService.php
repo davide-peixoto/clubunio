@@ -181,7 +181,7 @@ class MemberService
                 'billing_recipients' => ['id', 'active', 'email_field'],
                 default => ['id', 'active'],
             };
-            $rows[$table] = $ids === [] ? collect() : DB::connection('clubunio')->table('clubora.'.$table)
+            $rows[$table] = $ids === [] ? collect() : DB::connection('clubunio')->table('clubunio.'.$table)
                 ->where('tenant_id', $tenant->id)->whereIn('id', array_unique($ids))->get($columns)->keyBy('id');
         }
 
@@ -204,7 +204,7 @@ class MemberService
 
     private function audit(Account $actor, Tenant $tenant, Member $member, ?array $before, array $after): void
     {
-        DB::connection('clubunio')->table('clubora.object_changes')->insert([
+        DB::connection('clubunio')->table('clubunio.object_changes')->insert([
             'tenant_id' => $tenant->id, 'actor_id' => $actor->id, 'object_type' => 'members', 'object_id' => $member->id,
             'before_value' => $before === null ? null : json_encode($before, JSON_THROW_ON_ERROR),
             'after_value' => json_encode($after, JSON_THROW_ON_ERROR),

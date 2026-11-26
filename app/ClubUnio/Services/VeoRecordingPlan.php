@@ -168,10 +168,10 @@ final class VeoRecordingPlan
 
     private function eligibleTeams(Tenant $tenant, Collection $enabled): Collection
     {
-        return DB::connection('clubunio')->table('clubora.team_seasons as assignments')
-            ->join('clubora.teams as teams', fn ($join) => $join
+        return DB::connection('clubunio')->table('clubunio.team_seasons as assignments')
+            ->join('clubunio.teams as teams', fn ($join) => $join
                 ->on('teams.id', '=', 'assignments.team_id')->on('teams.tenant_id', '=', 'assignments.tenant_id'))
-            ->join('clubora.seasons as seasons', fn ($join) => $join
+            ->join('clubunio.seasons as seasons', fn ($join) => $join
                 ->on('seasons.id', '=', 'assignments.season_id')->on('seasons.tenant_id', '=', 'assignments.tenant_id'))
             ->where('assignments.tenant_id', $tenant->id)->whereIn('assignments.id', $enabled)->where('assignments.active', true)
             ->where('teams.active', true)->where('seasons.active', true)

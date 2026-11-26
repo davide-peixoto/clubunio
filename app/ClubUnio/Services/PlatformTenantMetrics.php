@@ -36,8 +36,8 @@ final class PlatformTenantMetrics
     {
         $now = now();
 
-        return DB::connection('clubunio')->table('clubora.sync_work_items as work')
-            ->leftJoin('clubora.sync_work_events as event', 'event.work_item_id', '=', 'work.id')
+        return DB::connection('clubunio')->table('clubunio.sync_work_items as work')
+            ->leftJoin('clubunio.sync_work_events as event', 'event.work_item_id', '=', 'work.id')
             ->selectRaw("count(*) FILTER (WHERE event.event = 'attention' AND event.created_at >= ?) AS errors_7", [$now->copy()->subDays(7)])
             ->selectRaw("count(*) FILTER (WHERE event.event = 'attention' AND event.created_at >= ?) AS errors_30", [$now->copy()->subDays(30)])
             ->selectRaw("max(event.created_at) FILTER (WHERE event.event = 'succeeded') AS last_success");

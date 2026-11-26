@@ -33,9 +33,9 @@ class WorkChatMentions
             }
             $message=$s->send($actor,$tenant,$chatId,$input);
             if(!$exists)foreach($targets as $target){
-                DB::connection('clubunio')->table('clubora.chat_mentions')->insert(['tenant_id'=>$tenant->id,'message_id'=>$message->id,'account_id'=>$target->id]);
+                DB::connection('clubunio')->table('clubunio.chat_mentions')->insert(['tenant_id'=>$tenant->id,'message_id'=>$message->id,'account_id'=>$target->id]);
                 $locale=app(LanguagePreferences::class)->resolve($target->preferred_locale,$tenant->default_locale);
-                DB::connection('clubunio')->table('clubora.notifications')->insert(['tenant_id'=>$tenant->id,'account_id'=>$target->id,'object_type'=>'chat_mention','object_id'=>$message->id,
+                DB::connection('clubunio')->table('clubunio.notifications')->insert(['tenant_id'=>$tenant->id,'account_id'=>$target->id,'object_type'=>'chat_mention','object_id'=>$message->id,
                     'title'=>trans('work_hub.mention_notice',[],$locale),'body'=>'']);
             }
             return $message;
@@ -44,7 +44,7 @@ class WorkChatMentions
     public function target(Account $actor,Tenant $tenant,int $messageId): ?array
     {
         $s=app(ChatService::class);
-        if(!DB::connection('clubunio')->table('clubora.chat_mentions')->where('tenant_id',$tenant->id)->where('account_id',$actor->id)->where('message_id',$messageId)->exists())return null;
+        if(!DB::connection('clubunio')->table('clubunio.chat_mentions')->where('tenant_id',$tenant->id)->where('account_id',$actor->id)->where('message_id',$messageId)->exists())return null;
         $message=$s->table($tenant,'chat_messages')->where('id',$messageId)->whereNull('deleted_at')->first();if(!$message)return null;
         $s->chat($actor,$tenant,$message->conversation_id);
         $membership=$s->table($tenant,'chat_memberships')->where('conversation_id',$message->conversation_id)->where('account_id',$actor->id)->whereNull('left_at')->where('joined_after','<',$messageId)->exists();

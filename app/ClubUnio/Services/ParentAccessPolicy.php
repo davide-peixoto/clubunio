@@ -10,8 +10,8 @@ final class ParentAccessPolicy
     public function scopePersonalLinks($query, \App\ClubUnio\Models\Tenant $tenant, string $linkAlias): void
     {
         $members = app(MemberAccessService::class)->activeMembers($tenant)->selectRaw('1')
-            ->whereColumn('clubora.members.id', $linkAlias.'.member_id')
-            ->where(fn ($q) => $q->where($linkAlias.'.kind', 'self')->orWhere(fn ($q) => $this->scope($q, $linkAlias, 'clubora.members')));
+            ->whereColumn('clubunio.members.id', $linkAlias.'.member_id')
+            ->where(fn ($q) => $q->where($linkAlias.'.kind', 'self')->orWhere(fn ($q) => $this->scope($q, $linkAlias, 'clubunio.members')));
         $query->where($linkAlias.'.state', 'approved')->whereExists($members->toBase());
     }
 
@@ -38,7 +38,7 @@ final class ParentAccessPolicy
                     $q->whereRaw($birth." + interval '18 years' > CAST(? AS date)", [$today])
                         ->where(fn ($q) => $q->where($linkAlias.'.source', '!=', 'verified_parent_login')
                             ->orWhereExists(function ($proof) use ($linkAlias, $mother, $father) {
-                                $proof->selectRaw('1')->from('clubora.account_parent_email_proofs as parent_proof')
+                                $proof->selectRaw('1')->from('clubunio.account_parent_email_proofs as parent_proof')
                                     ->whereColumn('parent_proof.account_id', $linkAlias.'.account_id')->whereNotNull('parent_proof.verified_at')
                                     ->where(fn ($p) => $p->whereRaw('parent_proof.email = lower(trim('.$mother.'))')
                                         ->orWhereRaw('parent_proof.email = lower(trim('.$father.'))'));
@@ -60,7 +60,7 @@ final class ParentAccessPolicy
             && ($link->adult_consent_by ?? null) !== null && in_array($link->adult_consent_source ?? null, ['member', 'office'], true);
         if (($link->source ?? null) !== 'verified_parent_login') return true;
         $emails = array_filter(array_map(fn ($v) => mb_strtolower(trim((string) $v)), [$member->mother_email ?? null, $member->father_email ?? null]));
-        return $emails !== [] && \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubora.account_parent_email_proofs')
+        return $emails !== [] && \Illuminate\Support\Facades\DB::connection('clubunio')->table('clubunio.account_parent_email_proofs')
             ->where('account_id', $link->account_id)->whereNotNull('verified_at')->whereIn('email', $emails)->exists();
     }
 }

@@ -21,7 +21,7 @@ final class MobileSponsorBillingController implements \Illuminate\Routing\Contro
             $d = $request->validate(['PledgeID' => 'required|integer|min:1', 'SourceVersion' => 'required|regex:/^[0-9a-f]{64}$/', 'Confirm' => 'required|accepted']);
             abort_unless($request->input('Confirm') === true, 422);
             $this->data()->enter($actor, $tenant, 'approve'); $event = (int) $request->route('event');
-            $pledge = DB::connection('clubunio')->table('clubora.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('event_id', $event)->find($d['PledgeID']);
+            $pledge = DB::connection('clubunio')->table('clubunio.sponsor_run_pledges')->where('tenant_id', $tenant->id)->where('event_id', $event)->find($d['PledgeID']);
             abort_unless($pledge, 404);
             $service = $this->data()->service();
             $existing = $service->table($tenant)->where('pledge_id', $pledge->id)->first();
@@ -92,7 +92,7 @@ final class MobileSponsorBillingController implements \Illuminate\Routing\Contro
         abort_if(strlen($request->getContent()) > 20000, 422);
         return DB::connection('clubunio')->transaction(function () use ($request, $operation) {
             $tenant = $request->attributes->get('mobile.tenant'); Tenant::whereKey($tenant->id)->lockForUpdate()->firstOrFail();
-            DB::connection('clubunio')->table('clubora.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
+            DB::connection('clubunio')->table('clubunio.mobile_sessions')->where('id', $request->attributes->get('mobile.session')->id)->sharedLock()->firstOrFail();
             $actor = app(MobileSessions::class)->authenticate($request); app(MobileAccess::class)->enter($actor, $tenant);
             return $operation($actor, $tenant);
         });
