@@ -1,5 +1,5 @@
 {
-    "columns_sha256": "89878c3e5d0482d46406acc52d96b1fa4fac088386995cbeb44320fa96207cf9",
+    "columns_sha256": "2cebc97e448f248be84ea5242ceb9920dc4ff68abbeed5e8eef91766e359b513",
     "migrations": [
         "2026_10_11_000001_create_foundation",
         "2026_10_11_000002_add_club_objects",
@@ -155,6 +155,8 @@
         "2026_11_23_000200_tenant_ai",
         "2026_11_24_010000_work_hub",
         "2026_11_24_020000_veo_recording_adjustments",
-        "2026_11_24_021000_veo_fixture_anchor"
+        "2026_11_24_021000_veo_fixture_anchor",
+        "2026_11_24_030000_clubhouse",
+        "2026_11_25_010000_keycloak_logout_watermarks"
     ]
 }

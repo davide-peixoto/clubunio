@@ -36,7 +36,15 @@ try{
     $match=$target->table('clubunio.sfv_schedule')->where('tenant_id',$tenant)->orderBy('match_id')->value('match_id');
     $field=$target->table('clubunio.training_options')->where('tenant_id',$tenant)->where('category','field')->orderBy('id')->value('id');
     $target->table('clubunio.veo_recording_adjustments')->updateOrInsert(['tenant_id'=>$tenant,'match_id'=>$match],['field_id'=>$field,'starts_at'=>'2026-11-25 10:00:00+00','ends_at'=>'2026-11-25 12:00:00+00','basis_hash'=>str_repeat('c',64),'revision'=>1,'updated_by'=>$owner,'fixture_starts_at'=>'2026-11-25 10:00:00+00']);
-    $protectedTables=['tenant_ai_connections','tenant_ai_stores','tenant_ai_documents','tenant_ai_usage','tenant_ai_events','mobile_keyboxes','mobile_keybox_commands','chat_preferences','support_triage','workspace_tasks','workspace_task_events','chat_mentions','workspace_capture_commands','veo_recording_adjustments'];
+    $target->table('clubunio.clubhouse_settings')->updateOrInsert(['tenant_id'=>$tenant],['public_enabled'=>false,'timezone'=>'Europe/Zurich','revision'=>17]);
+    $target->table('clubunio.clubhouse_grants')->updateOrInsert(['tenant_id'=>$tenant,'account_id'=>$owner],['hours_write'=>true,'menus_write'=>true,'menus_publish'=>false,'active'=>true,'revision'=>17]);
+    $rule=$target->table('clubunio.clubhouse_opening_rules')->insertGetId(['tenant_id'=>$tenant,'title'=>'Synthetic review hours','starts_on'=>'2026-11-27','weekdays'=>'[1]','intervals'=>'[]']);
+    $target->table('clubunio.clubhouse_opening_exceptions')->insert(['tenant_id'=>$tenant,'rule_id'=>$rule,'date'=>'2026-11-28','closed'=>true,'intervals'=>'[]','note'=>'Synthetic review exception']);
+    $target->table('clubunio.clubhouse_menu_statuses')->updateOrInsert(['tenant_id'=>$tenant,'code'=>'review'],['label_key'=>'synthetic.review','color'=>'gray','sort_order'=>999]);
+    $menu=$target->table('clubunio.clubhouse_menus')->insertGetId(['tenant_id'=>$tenant,'status'=>'review','title_de'=>'Synthetic review menu','title_en'=>'Synthetic review menu','valid_from'=>'2026-11-27','valid_until'=>'2026-11-28','channels'=>'[]']);
+    $target->table('clubunio.clubhouse_events')->insert(['tenant_id'=>$tenant,'actor_id'=>$owner,'entity'=>'menus','object_id'=>$menu,'operation'=>'synthetic_review','data'=>'{}']);
+    $target->table('clubunio.keycloak_logout_watermarks')->updateOrInsert(['account_id'=>$owner],['issuer'=>'https://schema-review.example.invalid','subject'=>'synthetic-schema-review','cutoff'=>1800000000]);
+    $protectedTables=['tenant_ai_connections','tenant_ai_stores','tenant_ai_documents','tenant_ai_usage','tenant_ai_events','mobile_keyboxes','mobile_keybox_commands','chat_preferences','support_triage','workspace_tasks','workspace_task_events','chat_mentions','workspace_capture_commands','veo_recording_adjustments','clubhouse_settings','clubhouse_grants','clubhouse_opening_rules','clubhouse_opening_exceptions','clubhouse_menu_statuses','clubhouse_menus','clubhouse_events','keycloak_logout_watermarks','security_replay_cache','security_replay_locks'];
     $protected=[];foreach($protectedTables as $table)$protected[$table]=$digest($table);
     $proof=$target->table('clubunio.account_parent_email_proofs')->get()->toJson();
     $accountFlags=$target->table('clubunio.accounts')->orderBy('id')->get(['id','active','api_only','password'])->toJson();
