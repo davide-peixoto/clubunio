@@ -17,7 +17,7 @@ Keine öffentliche Produktionsveröffentlichung beauftragt.
 - Noch keine früheren App-Bundles oder Releases in der Console vorhanden.
 
 Interne Tests ignorieren die Länderauswahl und verwenden eingeladene Konten.
-Eine Rückfrage zur Wahl zwischen geschlossenem und internem Test ist offen.
+Der Benutzer hat den INTERNEN Test gewählt. Die konkreten Google-Testkonten sind noch zu bestätigen.
 Länder richten sich nach dem Google-Play-Kontoland; einzelne Territorien werden
 von Google mit dem jeweiligen Land gruppiert.
 
@@ -50,3 +50,19 @@ unter 13-Jährige gewünscht; keine Erwachsenen-Zielgruppe als Umgehung deklarie
 Keine Änderungen an Serverbetrieb, Datenbanken oder PROD-Konfiguration nötig.
 
 [Google-Länderregeln](https://support.google.com/googleplay/android-developer/answer/7550024?hl=en)
+
+## Lokaler Build geprüft
+
+Android-Release 0.1.0 (19), Paket `com.my.clubunio.core`, 88.862.400 Bytes,
+min API 24 / target API 36. PROD-Origin und persönliche Firebase-Konfiguration.
+AAB-SHA256: `4d5713c53db0867107bd7ac509627ae8363195fc3270a21fdedd08a2055062f8`.
+Bundletool validiert; Manifest/Identität/Version und Signatur geprüft. Signierer
+entspricht dem geschützt abgelegten Upload-Zertifikat. Alle zwölf 64-Bit-Libraries
+im finalen Bundle besitzen mindestens 16-KB-LOAD-Ausrichtung; BundleConfig 16K.
+Release ohne Schlüssel wird abgewiesen; Debug funktioniert weiterhin ohne ihn.
+15 Markenprüfungen bestanden, eine plattformbedingt übersprungen; Iconprüfung
+bestanden. Backend-Sprachkatalogprüfung: 3075 Schlüssel in DE/EN ohne Fehler.
+
+Buildpfad lokal: `C:\ClubUnio\mobile\build\app\outputs\bundle\release\app-release.aab`.
+Kein Bundle/Schlüssel in Git. Kein erfolgreicher Upload und keine Testverteilung
+behauptet. Mobile-Prüfmetadaten: `store/google-play/build-review.json`.
