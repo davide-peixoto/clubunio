@@ -3104,3 +3104,8 @@ Rechnungs-/Meldungsabfragen auf DEV aktiviert; Gestaltung und Animationen erhalt
 JavaScript gzip 126 auf 66 KB, Kennzahlen 1592 auf 167 ms, Aufgabenzaehler
 bei 24 Aufgaben 1043 auf 127 ms. 59 Tests/757 Assertions, 41 DEV-Pruefungen.
 Keine Migration; Stage/PROD unveraendert. [Messung und Rueckweg](CLUBUNIO-REACT-PERFORMANCE.md).
+
+
+## Google Play Testvorbereitung – 27.11.2026
+
+ClubUnio-Storeentwurf und Alpha-Zielregion EU27 + Schweiz gespeichert. Signierter Android-Testbuild in Vorbereitung; Upload/Testrollout wegen Chrome-Dateifreigabe und Testkanalauswahl noch offen. Keine öffentliche Veröffentlichung. [Stand und Abnahme](CLUBUNIO-GOOGLE-PLAY.md).
